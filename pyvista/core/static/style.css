@@ -47,6 +47,23 @@ body.vscode-dark {
   --pv-badge-tcoords: #b39ddb;
 }
 
+/* OS-level dark mode fallback: applies when no explicit data-theme is set */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --pv-font-color0: rgba(255, 255, 255, 1);
+    --pv-font-color2: rgba(255, 255, 255, 0.54);
+    --pv-font-color3: rgba(255, 255, 255, 0.38);
+    --pv-border-color: #424242;
+    --pv-disabled-color: #616161;
+    --pv-background-color-row-even: #1a1a1a;
+    --pv-background-color-row-odd: #252525;
+    --pv-badge-active: #66bb6a;
+    --pv-badge-normals: #64b5f6;
+    --pv-badge-vectors: #4db6ac;
+    --pv-badge-tcoords: #b39ddb;
+  }
+}
+
 .pv-wrap {
   display: block !important;
   min-width: 300px;

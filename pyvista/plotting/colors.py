@@ -2291,23 +2291,29 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
                 obj = getattr(obj, attr)
             return obj
 
-        # Try importing and returning cmap from each package
+        # Try importing and returning cmap from each package. Restrict lookup to
+        # the curated set of names unique to each package so matplotlib
+        # colormaps are never shadowed by a third-party package that happens to
+        # define the same name (e.g. colorcet's ``coolwarm`` vs matplotlib's).
         for cmap_import, known_cmaps in cmap_sources.items():
+            if cmap_ not in known_cmaps:
+                continue
+
             parts = cmap_import.split('.')
             top_module = parts[0]
 
-            with contextlib.suppress(ImportError):
+            try:
                 mod = importlib.import_module(top_module)
-                cmap_dict = get_nested_attr(mod, parts[1:])
-                with contextlib.suppress(KeyError):
-                    return cmap_dict[cmap_]
-
-            if cmap_ in known_cmaps:  # pragma: no cover
+            except ImportError:
                 msg = (
                     f'Package `{top_module}` is required to use colormap {cmap_!r}.\n'
                     'Install PyVista with `pyvista[colormaps]` to install it by default.'
                 )
-                raise ModuleNotFoundError(msg)
+                raise ModuleNotFoundError(msg) from None
+
+            cmap_dict = get_nested_attr(mod, parts[1:])
+            with contextlib.suppress(KeyError):
+                return cmap_dict[cmap_]
         return None
 
     if isinstance(cmap, colors.Colormap):

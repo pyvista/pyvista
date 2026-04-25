@@ -63,7 +63,7 @@ def load_ant():
     return _dataset_ant.load()
 
 
-_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pv.PolyData)  # type: ignore[arg-type]
+_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pv.PolyData)
 
 
 def load_airplane():
@@ -89,7 +89,7 @@ def load_airplane():
     return _dataset_airplane.load()
 
 
-_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pv.PolyData)  # type: ignore[arg-type]
+_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pv.PolyData)
 
 
 def load_sphere():
@@ -115,7 +115,7 @@ def load_sphere():
     return _dataset_sphere.load()
 
 
-_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pv.PolyData)  # type: ignore[arg-type]
+_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pv.PolyData)
 
 
 def load_uniform():
@@ -141,7 +141,7 @@ def load_uniform():
     return _dataset_uniform.load()
 
 
-_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pv.ImageData)  # type: ignore[arg-type]
+_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pv.ImageData)
 
 
 def load_rectilinear():
@@ -169,7 +169,7 @@ def load_rectilinear():
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
     rectfile,
-    read_func=pv.RectilinearGrid,  # type: ignore[arg-type]
+    read_func=pv.RectilinearGrid,
 )
 
 
@@ -198,7 +198,7 @@ def load_hexbeam():
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
     hexbeamfile,
-    read_func=pv.UnstructuredGrid,  # type: ignore[arg-type]
+    read_func=pv.UnstructuredGrid,
 )
 
 
@@ -296,7 +296,7 @@ def load_globe():
     return _dataset_globe.load()
 
 
-_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pv.PolyData)  # type: ignore[arg-type]
+_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pv.PolyData)
 
 
 def load_globe_texture():
@@ -324,7 +324,7 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pv.read_texture,  # type: ignore[arg-type]
+    read_func=pv.read_texture,
 )
 
 

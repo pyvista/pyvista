@@ -25,14 +25,29 @@ from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
+from pyvista.core.utilities.accessor_registry import AccessorRegistration as AccessorRegistration
+from pyvista.core.utilities.accessor_registry import DataSetAccessor as DataSetAccessor
+from pyvista.core.utilities.accessor_registry import (
+    register_dataset_accessor as register_dataset_accessor,
+)
+from pyvista.core.utilities.accessor_registry import registered_accessors as registered_accessors
+from pyvista.core.utilities.accessor_registry import (
+    unregister_dataset_accessor as unregister_dataset_accessor,
+)
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from pyvista.core.utilities.reader_registry import ReaderRegistration as ReaderRegistration
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
 from pyvista.core.utilities.reader_registry import register_reader as register_reader
+from pyvista.core.utilities.reader_registry import registered_readers as registered_readers
+from pyvista.core.utilities.writer_registry import WriterRegistration as WriterRegistration
 from pyvista.core.utilities.writer_registry import register_writer as register_writer
+from pyvista.core.utilities.writer_registry import registered_writers as registered_writers
 from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
+from pyvista.jupyter import JupyterBackendRegistration as JupyterBackendRegistration
 from pyvista.jupyter import register_jupyter_backend as register_jupyter_backend
+from pyvista.jupyter import registered_jupyter_backends as registered_jupyter_backends
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report

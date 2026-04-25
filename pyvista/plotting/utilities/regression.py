@@ -238,15 +238,7 @@ def compare_images(  # noqa: PLR0917
         elif isinstance(img, _vtk.vtkImageData):  # pragma: no cover
             return wrap(img)
         elif isinstance(img, (str, Path)):
-            dataset = read(img)
-            if not isinstance(dataset, ImageData):
-                msg = (
-                    f'The file {img} may not be an image. PyVista read it in as a '
-                    f'{type(dataset)!r}.'
-                )
-                raise TypeError(msg)
-
-            return dataset
+            return read(img, cls=ImageData)
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
         elif isinstance(img, Plotter):
