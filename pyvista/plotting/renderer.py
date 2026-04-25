@@ -360,7 +360,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         'zx': 'view_zx',
         'zy': 'view_zy',
         'iso': 'view_isometric',
+        # Axis strings; the negative entries share the positive method and
+        # are dispatched with negative=True via _CAMERA_STR_NEGATIVE.
+        '+x': 'view_x',
+        'x': 'view_x',
+        '-x': 'view_x',
+        '+y': 'view_y',
+        'y': 'view_y',
+        '-y': 'view_y',
+        '+z': 'view_z',
+        'z': 'view_z',
+        '-z': 'view_z',
     }
+
+    # Axis strings that should invoke their mapped method with negative=True.
+    _CAMERA_STR_NEGATIVE: ClassVar[frozenset[str]] = frozenset({'-x', '-y', '-z'})
 
     @_deprecate_positional_args(allowed=['parent'])
     def __init__(  # noqa: PLR0917
@@ -530,7 +544,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 )
                 raise InvalidCameraError(msg)
 
-            getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
+            method = getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])
+            if camera_location in self._CAMERA_STR_NEGATIVE:
+                method(negative=True)
+            else:
+                method()
 
         elif isinstance(camera_location[0], (int, float)):
             if len(camera_location) != 3:
@@ -3465,6 +3483,111 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         self.view_vector(*view_vectors('zy', negative=negative), render=render, bounds=bounds)
+
+    def view_x(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: Sequence[float] | None = None,
+    ) -> None:
+        """View along the X axis.
+
+        Places the camera on ``+X`` with ``+Z`` as the view-up vector.
+
+        Parameters
+        ----------
+        negative : bool, default: False
+            View from ``-X`` instead of ``+X``.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
+
+        bounds : sequence[float], optional
+            Bounding box used to fit the camera,
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> pl.view_x()
+        >>> pl.show()
+
+        """
+        self.view_vector(*view_vectors('+x', negative=negative), render=render, bounds=bounds)
+
+    def view_y(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: Sequence[float] | None = None,
+    ) -> None:
+        """View along the Y axis.
+
+        Places the camera on ``+Y`` with ``+Z`` as the view-up vector.
+
+        Parameters
+        ----------
+        negative : bool, default: False
+            View from ``-Y`` instead of ``+Y``.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
+
+        bounds : sequence[float], optional
+            Bounding box used to fit the camera,
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> pl.view_y()
+        >>> pl.show()
+
+        """
+        self.view_vector(*view_vectors('+y', negative=negative), render=render, bounds=bounds)
+
+    def view_z(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: Sequence[float] | None = None,
+    ) -> None:
+        """View along the Z axis.
+
+        Places the camera on ``+Z`` with ``+Y`` as the view-up vector.
+
+        Parameters
+        ----------
+        negative : bool, default: False
+            View from ``-Z`` instead of ``+Z``.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the camera position.
+
+        bounds : sequence[float], optional
+            Bounding box used to fit the camera,
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> pl.view_z()
+        >>> pl.show()
+
+        """
+        self.view_vector(*view_vectors('+z', negative=negative), render=render, bounds=bounds)
 
     def disable(self) -> None:
         """Disable this renderer's camera from being interactive."""
