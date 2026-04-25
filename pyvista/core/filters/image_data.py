@@ -5225,8 +5225,8 @@ class ImageDataFilters(DataSetFilters):
 
         fill_value : float | VectorLike[float] | None, default: 0
             Value used to fill the image. Can be a single value or a multi-component
-            vector. Non-selected parts of the image will have this value. Set this to ``None``
-            to use the input array's original values unmodified as the fill.
+            vector. Non-selected parts of the image will have this value. Set this to
+            ``None`` to keep the input array's original values for non-selected regions.
 
         replacement_value : float | VectorLike[float], optional
             Replacement value for the output array. Can be a single value or a
@@ -5427,19 +5427,19 @@ class ImageDataFilters(DataSetFilters):
         fill_value,
         replacement_value,
     ):
-        # For special cases where we have a single range and don't have multi-component scalars
-        # use image_threshold since it's much faster
+        # Fast path: a single range over single-component point data is equivalent to
+        # ``image_threshold``, which is implemented as a VTK image filter and is
+        # substantially faster than the generic numpy-based path below.
         if (
             array.ndim == 1
             and association == FieldAssociation.POINT
             and not invert
             and values is None
+            and ranges is not None
             and len(ranges) == 1
         ):
-            values = None if values is None else values[0]
-            ranges = None if ranges is None else ranges[0]
             return self.image_threshold(
-                values or ranges,
+                ranges[0],
                 in_value=replacement_value,
                 out_value=fill_value,
                 scalars=array_name,
