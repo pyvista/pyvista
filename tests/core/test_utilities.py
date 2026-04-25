@@ -63,6 +63,7 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
 from pyvista.core.utilities.cell_quality import CellQualityInfo
+from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
@@ -1232,6 +1233,35 @@ def test_linkcode_resolve():
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
+
+
+def test_fix_edit_link_button_gallery_example():
+    # Gallery examples should point to the source .py file in /examples
+    link = fix_edit_link_button('examples/00-load/create_draped_surface', 'default-link')
+    assert link == (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+
+
+def test_fix_edit_link_button_gallery_index_falls_through():
+    # Gallery index pages are not source examples and should fall through
+    link = fix_edit_link_button('examples/index', 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_autosummary_stub():
+    # Autosummary stubs should resolve to a linkcode edit URL for the object
+    pagename = 'api/core/_autosummary/pyvista.core.DataObject'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link is not None
+    assert '/edit/' in link
+    assert 'dataobject.py' in link
+
+
+def test_fix_edit_link_button_other_pages_fall_through():
+    # Other pages should return the default link unchanged
+    link = fix_edit_link_button('user-guide/intro', 'default-link')
+    assert link == 'default-link'
 
 
 def test_coerce_point_like_arg():
