@@ -2061,6 +2061,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        :ref:`point_cloud_distance_example`
+        :ref:`point_cloud_neighbors_example`
 
         Examples
         --------

@@ -1930,6 +1930,9 @@ def download_horse_points(load=True):  # noqa: FBT002
 
         :ref:`Horse Dataset <horse_dataset>`
 
+        :ref:`farthest_point_sampling_example`
+            Example using this dataset.
+
     """
     return _download_dataset(_dataset_horse_points, load=load)
 
