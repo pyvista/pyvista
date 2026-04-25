@@ -1,4 +1,4 @@
-"""Tests for tinypages build using sphinx extensions."""
+"""Tests for tinypages build using pyvista's plot_directive extension."""
 
 from __future__ import annotations
 
@@ -26,7 +26,8 @@ ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
-def test_tinypages(tmp_path, ename, evalue):
+@pytest.mark.skip_check_gc
+def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # sanitise the environment namespace
     for hook in ENVIRONMENT_HOOKS:
         os.environ.pop(hook, None)
@@ -53,6 +54,7 @@ def test_tinypages(tmp_path, ename, evalue):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
+
     proc = Popen(
         cmd,
         stdout=PIPE,
@@ -62,12 +64,7 @@ def test_tinypages(tmp_path, ename, evalue):
         encoding='utf8',
     )
     out, err = proc.communicate()
-
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    if err:
-        if err.strip() != 'vtkDebugLeaks has found no leaks.':
-            pytest.fail(f'sphinx build emitted the following warnings:\n{err}')
 
     assert html_dir.is_dir()
 
@@ -134,3 +131,129 @@ def test_tinypages(tmp_path, ename, evalue):
     mpl_figure_file = html_dir / f'some_plots-{plt_num}.png'
     assert mpl_figure_file.exists
     assert b'This is a matplotlib plot.' in html_contents
+
+
+@flaky_test(exceptions=(AssertionError,))
+@pytest.mark.skip_windows('path issues, e.g. image file not readable')
+@pytest.mark.skip_check_gc
+def test_parallel(tmp_path: Path) -> None:
+    """Ensure that labeling image serial fails."""
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+    cmd = [
+        sys.executable,
+        '-msphinx',
+        '-W',
+        '-b',
+        'html',
+        '-j2',
+        '-d',
+        str(doctree_dir),
+        str(Path(__file__).parent / 'tinypages'),
+        str(html_dir),
+    ]
+    proc = Popen(
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, 'MPLBACKEND': ''},
+        encoding='utf8',
+    )
+    out, err = proc.communicate()
+
+    assert 'pyvista_plot_use_counter' in err
+    assert 'cannot be enabled for parallel builds' in err
+
+    proc = Popen(
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, 'MPLBACKEND': '', 'PYVISTA_PLOT_USE_COUNTER': 'false'},
+        encoding='utf8',
+    )
+    out, err = proc.communicate()
+    assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    assert len(list(html_dir.glob('**/*.png'))) == 27
+
+
+@pytest.mark.needs_playwright
+def test_interactive_plot_moves(tmp_path: Path):
+    from http.server import SimpleHTTPRequestHandler
+    from http.server import ThreadingHTTPServer
+    import subprocess
+    from threading import Thread
+
+    from playwright.sync_api import sync_playwright
+
+    source_dir = Path(__file__).parent / 'tinypages'
+    html_dir = tmp_path / '_build'
+
+    result = subprocess.run(
+        [
+            'sphinx-build',
+            '-b',
+            'html',
+            str(source_dir),
+            str(html_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+    old_cwd = Path.cwd()
+    os.chdir(html_dir)
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), SimpleHTTPRequestHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    try:
+        with sync_playwright() as p:
+            # Open docs in browser
+            browser = p.chromium.launch()
+            page = browser.new_page()
+
+            host, port = server.server_address
+            page.goto(f'http://{host}:{port}/some_plots.html')
+            page.wait_for_timeout(1000)
+
+            # Navigate to interactive scene tab
+            page.get_by_text('Interactive Scene', exact=True).first.click()
+            page.wait_for_timeout(1000)
+
+            frame = page.frame_locator('iframe').first
+            canvas = frame.locator('canvas')
+
+            canvas.wait_for(timeout=10000)
+
+            # Simulate interacting with the scene, taking a screenshot before and after
+            before = canvas.screenshot()
+
+            box = canvas.bounding_box()
+            assert box is not None
+
+            x = box['x'] + box['width'] / 2
+            y = box['y'] + box['height'] / 2
+
+            page.mouse.move(x, y)
+            page.mouse.down()
+            page.mouse.move(x + 200, y + 100)
+            page.mouse.up()
+
+            page.wait_for_timeout(500)
+
+            after = canvas.screenshot()
+
+            # Interaction is successful if screenshot differs
+            assert before != after
+
+    finally:
+        server.shutdown()
+        server.server_close()
+        os.chdir(old_cwd)

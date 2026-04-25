@@ -204,7 +204,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):  # type: ignore[misc]
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],  # type: ignore[union-attr]
+            [ren.axes_widget for ren in self._plotter().renderers if ren.axes_widget is not None],  # type: ignore[union-attr]
         )
 
     def update_image(self, *args, **kwargs):  # pragma: no cover
@@ -278,5 +278,5 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):  # type: ign
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],  # type: ignore[union-attr]
+            [ren.axes_widget for ren in self._plotter().renderers if ren.axes_widget is not None],  # type: ignore[union-attr]
         )

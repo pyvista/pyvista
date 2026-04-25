@@ -5,14 +5,18 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
+from pyvista.core.utilities.misc import _BoundsSizeMixin
+from pyvista.core.utilities.misc import _NameMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
@@ -50,7 +54,9 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     return labels
 
 
-class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
+class CubeAxesActor(
+    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkCubeAxesActor
+):
     """Wrap :vtk:`vtkCubeAxesActor`.
 
     This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
@@ -90,17 +96,17 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     x_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the x-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     y_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the y-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     z_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the z-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     x_label_visibility : bool, default: True
         The visibility of the x-axis labels.
@@ -192,18 +198,19 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
+        default_fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
         if x_label_format is None:
-            x_label_format = pyvista.global_theme.font.fmt
+            x_label_format = pv.global_theme.font.fmt
             if x_label_format is None:
-                x_label_format = '%.1f'
+                x_label_format = default_fmt
         if y_label_format is None:
-            y_label_format = pyvista.global_theme.font.fmt
+            y_label_format = pv.global_theme.font.fmt
             if y_label_format is None:
-                y_label_format = '%.1f'
+                y_label_format = default_fmt
         if z_label_format is None:
-            z_label_format = pyvista.global_theme.font.fmt
+            z_label_format = pv.global_theme.font.fmt
             if z_label_format is None:
-                z_label_format = '%.1f'
+                z_label_format = default_fmt
 
         self.x_label_format = x_label_format
         self.y_label_format = y_label_format
@@ -317,7 +324,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     @property
     def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
-        if (9, 3, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+        if (9, 3, 0) <= pv.vtk_version_info < (9, 5, 0):
             offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
             self.GetTitleOffset(offx, offy)  # type: ignore[call-arg]
             return offx, offy  # type: ignore[return-value]
@@ -326,7 +333,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     @title_offset.setter
     def title_offset(self, offset: float | MutableSequence[float]):
-        vtk_geq_9_3 = pyvista.vtk_version_info >= (9, 3)
+        vtk_geq_9_3 = pv.vtk_version_info >= (9, 3)
 
         if vtk_geq_9_3:
             if isinstance(offset, float):
@@ -335,7 +342,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
                     f'Accepts now a sequence of (x,y) offsets. '
                     f'Setting the x offset to {(x := 0.0)}'
                 )
-                warnings.warn(msg, UserWarning)
+                warn_external(msg, UserWarning)
                 self.SetTitleOffset([x, offset])
             else:
                 self.SetTitleOffset(offset)
@@ -346,19 +353,19 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
                 f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
                 f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
             )
-            warnings.warn(msg, UserWarning)
+            warn_external(msg, UserWarning)
             self.SetTitleOffset(y)  # type: ignore[arg-type]
             return
 
         self.SetTitleOffset(offset)  # type: ignore[arg-type]
 
     @property
-    def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
+    def camera(self) -> pv.Camera:  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: pyvista.Camera):
+    def camera(self, camera: pv.Camera):
         self.SetCamera(camera)
 
     @property
@@ -568,7 +575,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(0, self._empty_str)
         else:
-            self.SetXTitle('')
+            self.SetXTitle(' ')
             self.SetAxisLabels(0, self._empty_str)
 
     def _update_y_labels(self):
@@ -586,7 +593,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(1, self._empty_str)
         else:
-            self.SetYTitle('')
+            self.SetYTitle(' ')
             self.SetAxisLabels(1, self._empty_str)
 
     def _update_z_labels(self):
@@ -604,7 +611,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(2, self._empty_str)
         else:
-            self.SetZTitle('')
+            self.SetZTitle(' ')
             self.SetAxisLabels(2, self._empty_str)
 
     @property

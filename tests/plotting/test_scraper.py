@@ -33,7 +33,7 @@ def test_scraper_with_app(tmpdir, monkeypatch):
 
     # add cone, change view to test that it takes effect
     plotters[0].iren.initialize()
-    plotters[0].app = QApplication([])  # fake QApplication
+    pv.set_new_attribute(plotters[0], 'app', QApplication([]))  # fake QApplication
     plotters[0].add_mesh(pv.Cone())
     plotters[0].camera_position = 'xy'
 
@@ -129,7 +129,7 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
 def test_scraper_raise(tmpdir):
     pytest.importorskip('sphinx_gallery')
     pv.close_all()
-    plotter = pv.Plotter(off_screen=True)
+    pl = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = str(Path(tmpdir) / '_build' / 'html')
@@ -146,10 +146,10 @@ def test_scraper_raise(tmpdir):
     assert not Path(img_fname).is_file()
     Path(out_dir).mkdir(parents=True)
 
-    with pytest.raises(RuntimeError, match='pyvista.BUILDING_GALLERY'):
+    with pytest.raises(RuntimeError, match=r'pyvista.BUILDING_GALLERY'):
         scraper(block, block_vars, gallery_conf)
 
-    plotter.close()
+    pl.close()
 
 
 def test_namespace_contract():

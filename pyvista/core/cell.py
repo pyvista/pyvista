@@ -4,26 +4,29 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataobject import DataObject
 from .errors import CellSizeError
-from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
+from .utilities.misc import _BoundsSizeMixin
+from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from typing import Any
 
     from typing_extensions import Self
 
+    from pyvista import PolyData
     from pyvista import UnstructuredGrid
 
     from ._typing_core import CellsLike
@@ -41,7 +44,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
     return np.int32
 
 
-class Cell(DataObject, _vtk.vtkGenericCell):
+class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
@@ -58,6 +61,10 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     deep : bool, default: False
         Perform a deep copy of the original cell.
+
+    See Also
+    --------
+    pyvista.CellType
 
     Notes
     -----
@@ -154,6 +161,10 @@ class Cell(DataObject, _vtk.vtkGenericCell):
     def is_linear(self: Self) -> bool:
         """Return if the cell is linear.
 
+        See Also
+        --------
+        pyvista.CellType.is_linear
+
         Returns
         -------
         bool
@@ -188,7 +199,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
 
-    def cast_to_polydata(self: Self) -> pyvista.PolyData:
+    def cast_to_polydata(self: Self) -> PolyData:
         """Cast this cell to PolyData.
 
         Can only be used for 0D, 1D, or 2D cells.
@@ -217,14 +228,14 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
         if self.dimension == 0:
-            return pyvista.PolyData(self.points.copy(), verts=cells)
+            return pv.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
-            return pyvista.PolyData(self.points.copy(), lines=cells)
+            return pv.PolyData(self.points.copy(), lines=cells)
         if self.dimension == 2:
             if self.type == CellType.TRIANGLE_STRIP:
-                return pyvista.PolyData(self.points.copy(), strips=cells)
+                return pv.PolyData(self.points.copy(), strips=cells)
             else:
-                return pyvista.PolyData(self.points.copy(), faces=cells)
+                return pv.PolyData(self.points.copy(), faces=cells)
         else:
             msg = f'3D cells cannot be cast to PolyData: got cell type {self.type}'
             raise ValueError(msg)
@@ -262,7 +273,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
             cell_ids.insert(0, len(cell_ids))
         else:
             cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
-        return pyvista.UnstructuredGrid(
+        return pv.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
             self.points.copy(),
@@ -274,6 +285,10 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
         This returns the dimensionality of the cell. For example, 1 for an edge,
         2 for a triangle, and 3 for a tetrahedron.
+
+        See Also
+        --------
+        pyvista.CellType.dimension
 
         Returns
         -------
@@ -294,6 +309,10 @@ class Cell(DataObject, _vtk.vtkGenericCell):
     def n_points(self: Self) -> int:
         """Get the number of points composing the cell.
 
+        See Also
+        --------
+        pyvista.CellType.n_points
+
         Returns
         -------
         int
@@ -313,6 +332,10 @@ class Cell(DataObject, _vtk.vtkGenericCell):
     def n_faces(self: Self) -> int:
         """Get the number of faces composing the cell.
 
+        See Also
+        --------
+        pyvista.CellType.n_faces
+
         Returns
         -------
         int
@@ -331,6 +354,10 @@ class Cell(DataObject, _vtk.vtkGenericCell):
     @property
     def n_edges(self: Self) -> int:
         """Get the number of edges composing the cell.
+
+        See Also
+        --------
+        pyvista.CellType.n_edges
 
         Returns
         -------
@@ -562,7 +589,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         attrs.append(('N Faces', self.n_faces, '{}'))  # type: ignore[arg-type]
         attrs.append(('N Edges', self.n_edges, '{}'))  # type: ignore[arg-type]
         bds = self.bounds
-        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        fmt = f'{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}'
         attrs.append(('X Bounds', (bds[0], bds[1]), fmt))  # type: ignore[arg-type]
         attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))  # type: ignore[arg-type]
         attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))  # type: ignore[arg-type]
@@ -616,7 +643,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
+class CellArray(
+    _NoNewAttrMixin,
+    DisableVtkSnakeCase,
+    vtkPyVistaOverride,
+    _vtk.vtkCellArray,
+):
     """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -672,10 +704,8 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
             if v is not None:
-                warnings.warn(
-                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'CellArray parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
@@ -696,7 +726,9 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
-        imported_size = self.GetNumberOfConnectivityEntries()
+
+        self.ExportLegacyFormat(idarr := _vtk.vtkIdTypeArray())
+        imported_size = _vtk.vtk_to_numpy(idarr).size
 
         # https://github.com/pyvista/pyvista/pull/5404
         if imported_size != cells.size:
@@ -815,7 +847,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         cls: type[CellArray],
         cells: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
-    ) -> pyvista.CellArray:
+    ) -> CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -832,15 +864,15 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
             Constructed ``CellArray``.
 
         """
-        cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
+        cells = np.asarray(cells, dtype=pv.ID_TYPE)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
+        offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
         cellarr = cls()
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> pyvista.CellArray:
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -855,8 +887,8 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
 
         """
         offsets = np.cumsum([len(c) for c in cells])
-        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
-        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        offsets = np.concatenate([[0], offsets], dtype=pv.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pv.ID_TYPE)
         return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
@@ -884,7 +916,15 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 
     offsets = _get_offset_array(cellarr)
     cell_size = offsets[1] - offsets[0]
-    return cells.reshape(-1, cell_size)
+    try:
+        return cells.reshape(-1, cell_size)
+    except ValueError:
+        sizes = sorted(np.unique(np.diff(offsets)).tolist())
+        msg = (
+            f'Cell array does not have regular cells. '
+            f'Multiple cell sizes detected with different number of points: {sizes}'
+        )
+        raise ValueError(msg)
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:

@@ -16,6 +16,7 @@ from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
 radius = 0.5
 
@@ -98,7 +99,14 @@ def test_init_from_arrays(faces_is_cell_array):
 @pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
     vertices = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]]
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0.5, 0.5, -1],
+            [0, 1.5, 1.5],
+        ]
     )
 
     # mesh faces
@@ -196,21 +204,26 @@ def test_invalid_file():
 
 
 @pytest.mark.parametrize(
-    ('arr', 'value'),
+    ('arr', 'value', 'expected'),
     [
-        ('faces', [3, 1, 2, 3, 3, 0, 1]),
-        ('strips', np.array([5, 4, 3, 2, 0])),
-        ('lines', [4, 0, 1, 2, 2, 3, 4]),
-        ('verts', [1, 0, 1]),
-        ('faces', [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
-        ('faces', [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
+        ('faces', [3, 1, 2, 3, 3, 0, 1], 8),
+        ('strips', np.array([5, 4, 3, 2, 0]), 6),
+        ('lines', [4, 0, 1, 2, 2, 3, 4], 9),
+        ('verts', [1, 0, 1], 4),
+        ('faces', [[3, 0, 1], [3, 2, 1], [4, 0, 1]], 10),
+        ('faces', [[2, 0, 1], [2, 2, 1], [1, 0, 1]], 10),
     ],
 )
-def test_invalid_connectivity_arrays(arr, value):
+def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expected: int):
     generator = np.random.default_rng(seed=None)
     points = generator.random((10, 3))
     mesh = pv.PolyData(points)
-    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
+
+    # np.ravel()
+    match = re.escape(
+        f'Cell array size is invalid. Size ({len(np.ravel(value))}) does not match expected size ({expected}).'  # noqa: E501
+    )
+    with pytest.raises(CellSizeError, match=match):
         setattr(mesh, arr, value)
 
     with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
@@ -340,9 +353,37 @@ def test_ray_trace(sphere):
 def test_ray_trace_origin():
     # https://github.com/pyvista/pyvista/issues/5372
     plane = pv.Plane(i_resolution=1, j_resolution=1)
-    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    _pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
     assert len(cells) == 1
     assert cells[0] == 0
+
+
+def test_vtk_obb_tree_raises():
+    poly = pv.PolyData()
+    match = 'Building the OBB tree requires PolyData with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.points = [[0.0, 0.0, 0.0]]
+    assert poly.n_points == 1
+    assert poly.n_cells == 0
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.faces = [3, 0, 0, 0]
+    assert poly.n_points == 0
+    assert poly.n_cells == 1
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+
+def test_polydata_subclass_del():
+    class PolyDataDerived(pv.PolyData): ...
+
+    poly = PolyDataDerived()
+    del poly
 
 
 def test_multi_ray_trace(sphere):
@@ -581,7 +622,7 @@ def test_merge_main_has_priority(input_, main_has_priority):
         """Return True if scalars on two meshes only differ by point order."""
         return all(
             new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name])
+            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
             for j in (this.points == point).all(-1).nonzero()
         )
 
@@ -690,7 +731,9 @@ def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
 
     if extension == '.vtkhdf' and not binary:
-        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+        with pytest.raises(
+            ValueError, match=r'.vtkhdf files can only be written in binary format'
+        ):
             sphere.save(filename, binary=binary)
         return
 
@@ -699,9 +742,13 @@ def test_save(sphere, extension, binary, tmpdir):
         if extension == '.vtp':
             with Path(filename).open() as f:
                 assert 'binary' in f.read(1000)
+        elif extension in ('.geo', '.obj', '.iv'):
+            # Binary is not supported
+            assert not is_binary(filename)
         else:
-            is_binary(filename)
+            assert is_binary(filename)
     else:
+        assert not is_binary(filename)
         with Path(filename).open() as f:
             fst = f.read(100).lower()
             assert (
@@ -959,8 +1006,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
     sphere.clip(
         origin=[0, 0, 0],
@@ -969,8 +1015,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
 
 def test_extract_largest(sphere):
@@ -983,7 +1028,7 @@ def test_extract_largest(sphere):
 
 
 def test_clean(sphere):
-    mesh = sphere.merge(sphere, merge_points=False).extract_surface()
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1e-5)
     assert cleaned.n_points == sphere.n_points
@@ -1073,11 +1118,12 @@ def test_project_points_to_plane():
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
-    poly = pv.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
+    poly = pv.StructuredGrid(xx, yy, zz).extract_surface(algorithm=None, progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
-    with pytest.raises(TypeError):
+    match = 'normal has shape (4,) which is not allowed.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         poly.project_points_to_plane(normal=(0, 0, 1, 1))
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
@@ -1205,7 +1251,11 @@ def test_is_all_triangles():
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]
+        [
+            [4, 0, 1, 2, 3],
+            [3, 0, 1, 4],
+            [3, 1, 2, 4],
+        ]
     )  # [square, triangle, triangle]
 
     mesh = pv.PolyData(vertices, faces)
@@ -1294,47 +1344,57 @@ def test_n_faces_strict():
 
 @pytest.fixture
 def default_n_faces():
-    pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
     yield
-    pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
-def test_n_faces():
-    if pv._version.version_info[:2] > (0, 46):
-        msg = 'Convert non-strict n_faces use to error'
-        raise RuntimeError(msg)
+def test_n_faces(default_n_faces):  # noqa: ARG001
+    if pv._version.version_info[:2] >= (0, 46):
+        # At version 0.46, n_faces should raise an error instead of warning
+        mesh = pv.PolyData(
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+            faces=[3, 0, 1, 2],
+            lines=[2, 0, 1],
+        )
+
+        # Should raise an AttributeError
+        with pytest.raises(
+            AttributeError,
+            match=r'The non-strict behavior of `pv.PolyData.n_faces` has been removed',
+        ):
+            _ = mesh.n_faces
+    else:
+        # Pre-0.46 behavior: warning
+        mesh = pv.PolyData(
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+            faces=[3, 0, 1, 2],
+            lines=[2, 0, 1],
+        )
+
+        # Should raise a warning the first time
+        with pytest.warns(
+            pv.PyVistaDeprecationWarning,
+            match='The current behavior of `pv.PolyData.n_faces` has been deprecated',
+        ):
+            nf = mesh.n_faces
+
+        # Current (deprecated) behavior is that n_faces is aliased to n_cells
+        assert nf == mesh.n_cells
+
+        # Shouldn't raise deprecation warning the second time
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            nf1 = mesh.n_faces
+
+        assert nf1 == nf
 
     if pv._version.version_info[:2] > (0, 49):
         msg = 'Convert default n_faces behavior to strict'
         raise RuntimeError(msg)
 
-    mesh = pv.PolyData(
-        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
-        faces=[3, 0, 1, 2],
-        lines=[2, 0, 1],
-    )
 
-    # Should raise a warning the first time
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='The current behavior of `pv.PolyData.n_faces` has been deprecated',
-    ):
-        nf = mesh.n_faces
-
-    # Current (deprecated) behavior is that n_faces is aliased to n_cells
-    assert nf == mesh.n_cells
-
-    # Shouldn't raise deprecation warning the second time
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
-        nf1 = mesh.n_faces
-
-    assert nf1 == nf
-
-
-def test_opt_in_n_faces_strict():
+def test_opt_in_n_faces_strict(default_n_faces):  # noqa: ARG001
     pv.PolyData.use_strict_n_faces(True)
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1393,9 +1453,31 @@ def test_regular_faces_mutable():
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
 
 
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Merge order changed')
+def test_regular_faces_raises():
+    tri = pv.examples.cells.Triangle().extract_surface(algorithm=None)
+    quad = pv.examples.cells.Quadrilateral().extract_surface(algorithm=None)
+
+    mesh = tri + quad
+    match = (
+        'Cell array does not have regular cells. '
+        'Multiple cell sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+    mesh = tri + quad + quad + quad
+    match = (
+        'Mesh does not have regular faces. '
+        'Multiple face sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+
 def _assert_irregular_faces_equal(faces, expected):
     assert len(faces) == len(expected)
-    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+    assert all(map(np.array_equal, faces, expected))
 
 
 def test_irregular_faces():
@@ -1408,7 +1490,7 @@ def test_irregular_faces():
 
 
 def test_set_irregular_faces():
-    mesh = pv.Pyramid().extract_surface()
+    mesh = pv.Pyramid().extract_surface(algorithm=None)
     flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
     mesh.irregular_faces = flipped_faces
     _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)
@@ -1432,14 +1514,11 @@ def test_irregular_faces_mutable():
 def test_n_faces_etc_deprecated(cells: str):
     n_cells = 'n_' + cells
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match=f'`PolyData` constructor parameter `{n_cells}` is deprecated and no longer used',
+    with pytest.raises(
+        TypeError,
+        match=f'PolyData constructor parameter `{n_cells}` is deprecated and no longer used',
     ):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
-        raise RuntimeError(msg)
     if pv._version.version_info[:2] > (0, 48):
         msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
         raise RuntimeError(msg)

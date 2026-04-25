@@ -34,16 +34,46 @@ body:
       label: System Information
       placeholder: The log will automatically be formatted! No need to type backticks.
       description: |
-        Please run the following code wherever you are experiencing the bug, and paste the output below.
+        Please run the following wherever you are experiencing the bug, and paste the output below.
         This report helps us track down bugs and will be critical to addressing your bug.
+
+        With python code (e.g. inside IPython or Jupyter Notebook):
+
         ```python
         # Get system info
         import pyvista as pv
         print(pv.Report())
         ```
+
+        Or with a shell command (requires `pyvista>=0.47`):
+
+        ```shell
+        pyvista report
+        ```
       render: shell
     validations:
       required: true
+  - type: textarea
+    id: dataset-information
+    attributes:
+      label: Dataset Information
+      description: |
+        If a custom dataset is needed to reproduce the bug, upload the dataset here or provide a download link.
+        In addition, use the `validate_mesh` filter on it and paste the output below.
+
+        For a dataset 'file.vtk', run python code:
+
+        ```python
+        import pyvista as pv
+        mesh = pv.read('file.vtk')
+        print(mesh.validate_mesh())
+        ```
+
+        Or with a shell command (requires `pyvista>=0.48`):
+
+        ```shell
+        pyvista validate file.vtk --report
+        ```
   - type: textarea
     id: screenshots
     attributes:

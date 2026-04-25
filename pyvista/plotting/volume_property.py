@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING
 import weakref
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
+if TYPE_CHECKING:
+    from pyvista import LookupTable
 
-@no_new_attr
-class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
+
+class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume
@@ -82,8 +85,6 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_lookup_table_', '_lookup_table_observer_id']
-
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
         self,
@@ -118,14 +119,14 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
             self.opacity_unit_distance = opacity_unit_distance
 
     @property
-    def _lookup_table(self) -> pyvista.LookupTable | None:
+    def _lookup_table(self) -> LookupTable | None:
         """Get the lookup table if applied via apply_lookup_table."""
         if self._lookup_table_ is not None:
             return self._lookup_table_()
         return None
 
     @_lookup_table.setter
-    def _lookup_table(self, lookup_table: pyvista.LookupTable):
+    def _lookup_table(self, lookup_table: LookupTable):
         """Set the lookup table if applied via apply_lookup_table."""
         if self._lookup_table is not None and self._lookup_table_observer_id is not None:
             # Clean up the old lookup table observer
@@ -153,7 +154,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         if self._lookup_table is not None:
             self.apply_lookup_table(self._lookup_table)
 
-    def apply_lookup_table(self, lookup_table: pyvista.LookupTable):
+    def apply_lookup_table(self, lookup_table: LookupTable):
         """Apply a lookup table to the volume property.
 
         Applies both the color and opacity of the lookup table as transfer
@@ -181,7 +182,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         >>> pl.show()
 
         """
-        if not isinstance(lookup_table, pyvista.LookupTable):
+        if not isinstance(lookup_table, pv.LookupTable):
             msg = '`lookup_table` must be a `pyvista.LookupTable`'
             raise TypeError(msg)
         if self._lookup_table != lookup_table:

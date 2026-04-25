@@ -17,9 +17,9 @@ Here's a quick example to demonstrate the usage of :func:`pyvista.DataSet.get_ce
    :hide-code:
 
    # jupyterlab boiler plate setup
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
 
 .. jupyter-execute::
 

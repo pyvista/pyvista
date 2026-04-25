@@ -31,8 +31,9 @@ def button(click, icon, tooltip):  # numpydoc ignore=PR01
                 icon=True,
                 v_bind=('props',),
                 variant='text',
-                size='small',
+                size='default',
                 click=click,
+                density='comfortable',
             ):
                 vuetify.VIcon(icon)
         html.Span(tooltip)
@@ -47,9 +48,8 @@ def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
                     v_model=model,
                     true_icon=icons[0],
                     false_icon=icons[1],
-                    density='compact',
+                    density='comfortable',
                     hide_details=True,
-                    classes='ma-1 py-1',
                 )
         html.Span(tooltip)
 
@@ -280,7 +280,7 @@ class Viewer(BaseViewer):
 
         Returns
         -------
-        PyVistaRemoteLocalView, PyVistaRemoteView, or PyVistaLocalView
+        output : PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
             Trame view interface for pyvista.
 
         """
@@ -302,9 +302,9 @@ class Viewer(BaseViewer):
             # Initialize state variables
             server.state[self.EDGES] = False
             server.state[self.GRID] = self.plotter.renderer.cube_axes_actor is not None
-            server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
+            server.state[self.OUTLINE] = self.plotter.renderer._box_object is not None
             server.state[self.AXIS] = (
-                hasattr(self.plotter.renderer, 'axes_widget')
+                self.plotter.renderer.axes_widget is not None
                 and self.plotter.renderer.axes_widget.GetEnabled()
             )
             server.state[self.SERVER_RENDERING] = default_server_rendering

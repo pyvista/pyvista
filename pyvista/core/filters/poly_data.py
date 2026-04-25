@@ -5,19 +5,18 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -26,7 +25,8 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
-from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import _NormalsLiteral
+from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import _PolyDataType
 
 
 @abstract_class
@@ -75,8 +76,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
-            poly_data = pyvista.PolyData(poly_data)  # type: ignore[arg-type]
+        if not isinstance(poly_data, pv.PolyData):  # pragma: no cover
+            poly_data = pv.PolyData(poly_data)
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -87,7 +88,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
+        orig_id = cast('NumpyArray[float]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -99,7 +100,7 @@ class PolyDataFilters(DataSetFilters):
                 'Unable to perform boolean operations on an identical surface.'
             )
             raise ValueError(msg)
-        if not isinstance(other_mesh, pyvista.PolyData):
+        if not isinstance(other_mesh, pv.PolyData):
             msg = 'Input mesh must be PolyData.'
             raise TypeError(msg)
         if not self.is_all_triangles or not other_mesh.is_all_triangles:  # type: ignore[attr-defined]
@@ -276,7 +277,7 @@ class PolyDataFilters(DataSetFilters):
         if bool_inter.is_empty:
             inter, s1, s2 = self.intersection(other_mesh)
             if inter.is_empty and s1.is_empty and s2.is_empty:
-                warnings.warn(
+                warn_external(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
                 )
@@ -414,7 +415,7 @@ class PolyDataFilters(DataSetFilters):
         >>> appended.plot()
 
         """
-        if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
+        if not all(isinstance(mesh, pv.PolyData) for mesh in meshes):
             msg = 'All meshes need to be of PolyData type'
             raise TypeError(msg)
 
@@ -534,10 +535,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # check if dataset or datasets are not polydata
-        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
+        if isinstance(dataset, (list, tuple, pv.MultiBlock)):
+            is_polydata = all(isinstance(data, pv.PolyData) for data in dataset)
         else:
-            is_polydata = isinstance(dataset, pyvista.PolyData)
+            is_polydata = isinstance(dataset, pv.PolyData)
 
         if inplace and not is_polydata:
             msg = 'In-place merge requires both input datasets to be PolyData.'
@@ -556,10 +557,10 @@ class PolyDataFilters(DataSetFilters):
         # convert back to a polydata if both inputs were polydata
         if is_polydata:
             # if either of the input datasets contained lines or strips, we
-            # must use extract_geometry to ensure they get converted back
+            # must use extract_surface to ensure they get converted back
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
-            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+            if isinstance(dataset, (list, tuple, pv.MultiBlock)):
                 dataset_has_lines_strips = any(
                     ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset
                 )
@@ -567,9 +568,11 @@ class PolyDataFilters(DataSetFilters):
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
-                merged = merged.extract_geometry()
+                merged = merged.extract_surface(
+                    algorithm=None, pass_cellid=False, pass_pointid=False
+                )
             else:
-                polydata_merged = pyvista.PolyData(
+                polydata_merged = pv.PolyData(
                     merged.points,
                     faces=merged.GetCells(),
                     deep=False,
@@ -1386,8 +1389,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pyvista.PolyData(poly_data)  # type: ignore[arg-type]
+        if not isinstance(poly_data, pv.PolyData):
+            poly_data = pv.PolyData(poly_data)
         n_sides = max(n_sides, 3)
         tube = _vtk.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
@@ -1794,7 +1797,7 @@ class PolyDataFilters(DataSetFilters):
 
         has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
-            warnings.warn(
+            warn_external(
                 'Since 0.45, use of `attribute_error=True` is deprecated.'
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
@@ -1828,9 +1831,9 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
-        if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
+        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
             if boundary_constraints:
-                warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
+                warn_external('`boundary_constraints` requires vtk >= 9.3.')
         else:
             alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
             alg.SetBoundaryWeightFactor(boundary_weight)
@@ -1981,7 +1984,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined]
+                np.arange(self.n_points, dtype=pv.ID_TYPE),  # type: ignore[attr-defined]
                 'pyvistaOriginalPointIds',
             )
 
@@ -2026,15 +2029,22 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     @_deprecate_positional_args(allowed=['normal'])
-    def clip_closed_surface(  # noqa: PLR0917
-        self,
-        normal='x',
-        origin=None,
+    def clip_closed_surface(  # type: ignore[misc]  # noqa: PLR0917
+        self: PolyData,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        origin: VectorLike[float] | None = None,
         tolerance=1e-06,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        plane: PolyData | None = None,
     ):
         """Clip a closed polydata surface with a plane.
+
+        The origin and normal may be set explicitly or implicitly using a
+        :func:`~pyvista.Plane`.
+
+        If no parameters are given, the clip will occur in the center
+        of the dataset along the x-axis.
 
         This currently only supports one plane but could be
         implemented to handle a plane collection.
@@ -2051,16 +2061,15 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        normal : str, list, optional
-            Plane normal to clip with.  Plane is centered at
-            ``origin``.  Normal can be either a 3 member list
-            (e.g. ``[0, 0, 1]``) or one of the following strings:
-            ``'x'``, ``'y'``, ``'z'``, ``'-x'``, ``'-y'``, or
-            ``'-z'``.
+        normal : VectorLike[float] | str, optional
+            Length-3 vector for the normal vector direction. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+            The ``'x'`` direction is used by default.
 
-        origin : list, optional
-            Coordinate of the origin (e.g. ``[1, 0, 0]``).  Defaults
-            to the center of the mesh.
+        origin : VectorLike[float], optional
+            The center ``(x, y, z)`` coordinate of the plane on which the clip
+            occurs. The default is the center of the dataset.
 
         tolerance : float, optional
             The tolerance for creating new points while clipping.  If
@@ -2072,6 +2081,14 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to use for clipping. Use this as an
+            alternative to setting ``origin`` and ``normal``. The mean of the
+            plane's normal vectors is used for the ``normal`` parameter and
+            the mean of the plane's points is used for the ``origin`` parameter.
+
+            .. versionadded:: 0.47
 
         Returns
         -------
@@ -2097,19 +2114,16 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # verify it is manifold
-        if self.n_open_edges > 0:  # type: ignore[attr-defined]
+        if self.n_open_edges > 0:
             msg = 'This surface appears to be non-manifold.'
             raise ValueError(msg)
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
-        # find center of data if origin not specified
-        if origin is None:
-            origin = self.center  # type: ignore[attr-defined]
-
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='x'
+        )
         # create the plane for clipping
-        plane = generate_plane(normal, origin)
+        vtk_plane = generate_plane(normal_, origin_)
         collection = _vtk.vtkPlaneCollection()
-        collection.AddItem(plane)
+        collection.AddItem(vtk_plane)
 
         alg = _vtk.vtkClipClosedSurface()
         alg.SetGenerateFaces(True)
@@ -2120,7 +2134,7 @@ class PolyDataFilters(DataSetFilters):
         result = _get_output(alg)
 
         if inplace:
-            self.copy_from(result, deep=False)  # type: ignore[attr-defined]
+            self.copy_from(result, deep=False)
             return self
         else:
             return result
@@ -2245,6 +2259,14 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Cleaned mesh.
+
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :meth:`~pyvista.DataObjectFilters.cell_validator`
+        :meth:`~pyvista.DataObjectFilters.validate_mesh`
 
         Examples
         --------
@@ -2458,6 +2480,12 @@ class PolyDataFilters(DataSetFilters):
         This requires a mesh and a line segment defined by an origin
         and end_point.
 
+        .. warning::
+
+            This filter uses the mesh's :attr:`~pyvista.PolyData.obbTree` property internally to
+            compute the intersection. Since the obb tree is cached, the intersection may not be
+            valid if the mesh's geometry is modified in between filter calls.
+
         Parameters
         ----------
         origin : sequence[float]
@@ -2511,7 +2539,7 @@ class PolyDataFilters(DataSetFilters):
         """
         points = _vtk.vtkPoints()
         cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
+        self.obbTree.IntersectWithLine(list(origin), list(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
@@ -2525,16 +2553,14 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells = np.array(intersection_cells)  # type: ignore[assignment]
 
         if plot:
-            plotter = pyvista.Plotter(off_screen=off_screen)
-            plotter.add_mesh(self, label='Test Mesh')
+            pl = pv.Plotter(off_screen=off_screen)
+            pl.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
-            plotter.add_lines(segment, color='b', label='Ray Segment')
-            plotter.add_mesh(
-                intersection_points, color='r', point_size=10, label='Intersection Points'
-            )
-            plotter.add_legend()
-            plotter.add_axes()
-            plotter.show()
+            pl.add_lines(segment, color='b', label='Ray Segment')
+            pl.add_mesh(intersection_points, color='r', point_size=10, label='Intersection Points')
+            pl.add_legend()
+            pl.add_axes()
+            pl.show()
 
         return intersection_points, intersection_cells
 
@@ -2666,7 +2692,9 @@ class PolyDataFilters(DataSetFilters):
                 origin_to_centre_lengths + self.length
             )
 
-            for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
+            for id_r, origin, second_point in zip(
+                retry_ray_indices, origins_retry, second_points, strict=True
+            ):
                 locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
                 if locs.any():
                     if first_point:
@@ -2724,20 +2752,20 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
-        plotter = pyvista.Plotter(
+        pl = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None),
             notebook=kwargs.pop('notebook', None),
         )
-        plotter.add_mesh(
+        pl.add_mesh(
             edges,
             color=edge_color,
             style='wireframe',
             label='Edges',
             line_width=line_width,
         )
-        plotter.add_mesh(self, label='Mesh', **kwargs)
-        plotter.add_legend()  # type: ignore[call-arg]
-        return plotter.show()
+        pl.add_mesh(self, label='Mesh', **kwargs)
+        pl.add_legend()  # type: ignore[call-arg]
+        return pl.show()
 
     @_deprecate_positional_args
     def plot_normals(  # type: ignore[misc]  # noqa: PLR0917
@@ -2800,14 +2828,14 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
-        plotter = pyvista.Plotter(
+        pl = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None),
             notebook=kwargs.pop('notebook', None),
         )
         if show_mesh:
-            plotter.add_mesh(self, **kwargs)
+            pl.add_mesh(self, **kwargs)
 
-        color = pyvista.Color(color, default_color=pyvista.global_theme.edge_color)
+        color = pv.Color(color, default_color=pv.global_theme.edge_color)
 
         if faces:
             centers = self.cell_centers().points[::use_every]
@@ -2819,7 +2847,7 @@ class PolyDataFilters(DataSetFilters):
         if flip:
             normals *= -1  # type: ignore[misc]
 
-        plotter.add_arrows(
+        pl.add_arrows(
             centers,
             normals[::use_every],
             mag=mag,
@@ -2827,7 +2855,7 @@ class PolyDataFilters(DataSetFilters):
             show_scalar_bar=False,
         )
 
-        return plotter.show()
+        return pl.show()
 
     @_deprecate_positional_args(allowed=['remove', 'mode'])
     def remove_points(  # noqa: PLR0917
@@ -2905,11 +2933,11 @@ class PolyDataFilters(DataSetFilters):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
+        faces = np.empty((nfaces, 4), dtype=pv.ID_TYPE)
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
-        newmesh = pyvista.PolyData(new_points, faces, deep=True)
+        newmesh = pv.PolyData(new_points, faces, deep=True)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested
@@ -2920,8 +2948,8 @@ class PolyDataFilters(DataSetFilters):
             for key in self.cell_data:  # type: ignore[attr-defined]
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
-                except:
-                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
+                except (ValueError, TypeError, KeyError):  # pragma: no cover
+                    warn_external(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -2949,7 +2977,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
+        warn_external(
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
             'Note that `inplace` is now `False` by default for the new filter.',
             PyVistaDeprecationWarning,
@@ -3305,22 +3333,42 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace: bool = False):  # noqa: FBT001, FBT002
+    def project_points_to_plane(  # type: ignore[misc]  # noqa: PLR0917
+        self: PolyData,
+        origin: VectorLike[float] | None = None,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        plane: PolyData | None = None,
+    ):
         """Project points of this mesh to a plane.
+
+        The origin and normal may be set explicitly or implicitly using a
+        :func:`~pyvista.Plane`.
 
         Parameters
         ----------
-        origin : sequence[float], optional
+        origin : VectorLike[float], optional
             Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
-        normal : sequence[float], default: (0.0, 0.0, 1.0)
-            Plane normal.  Defaults to +Z.
+        normal : VectorLike[float] | str, optional
+            Length-3 vector for the plane's normal. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+            The ``'z'`` direction is used by default.
 
         inplace : bool, default: False
             Whether to overwrite the original mesh with the projected
             points.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to project to. Use this as an
+            alternative to setting ``origin`` and ``normal``. The mean of the
+            plane's normal vectors is used for the ``normal`` parameter and
+            the mean of the plane's points is used for the ``origin`` parameter.
+
+            .. versionadded:: 0.47
 
         Returns
         -------
@@ -3339,18 +3387,32 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> projected = sphere.project_points_to_plane()
-        >>> projected.plot(show_edges=True, line_width=3)
+
+        Plot the projected sphere along with the original.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(projected, show_edges=True, line_width=3)
+        >>> _ = pl.add_mesh(sphere)
+        >>> _ = pl.show_grid()
+        >>> cpos = pv.CameraPosition(
+        ...     position=(2.5, 2.5, 1.1),
+        ...     focal_point=(0.0, 0.0, -0.3),
+        ...     viewup=(-0.25, -0.25, 1.0),
+        ... )
+        >>> pl.camera_position = cpos
+        >>> pl.show()
 
         """
-        if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
-            msg = 'Normal must be a length three vector'
-            raise TypeError(msg)
-        if origin is None:
-            origin = np.array(self.center) - np.array(normal) * self.length / 2.0  # type: ignore[attr-defined]
-        # choose what mesh to use
-        mesh = self.copy() if not inplace else self  # type: ignore[attr-defined]
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='z'
+        )
+        if origin is None and plane is None:
+            # Default validated origin is the mesh's center which we need to translate
+            origin_ -= normal_ * self.length / 2.0
         # Make plane
-        plane = generate_plane(normal, origin)
+        plane = generate_plane(normal_, origin_)
+        # choose what mesh to use
+        mesh = self.copy() if not inplace else self
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
         np.apply_along_axis(f, 1, mesh.points)
@@ -3547,7 +3609,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if capping is None:
             capping = False
-            warnings.warn(
+            warn_external(
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
@@ -3642,7 +3704,6 @@ class PolyDataFilters(DataSetFilters):
 
         rotation_axis : numpy.ndarray or sequence, optional
             The direction vector of the axis around which the rotation is done.
-            It requires vtk>=9.1.0.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3699,7 +3760,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if capping is None:
             capping = False
-            warnings.warn(
+            warn_external(
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
@@ -3720,14 +3781,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        if pyvista.vtk_version_info >= (9, 1, 0):
-            alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
-        elif rotation_axis != (0, 0, 1):
-            msg = (
-                'The installed version of VTK does not support '
-                'setting the direction vector of the axis around which the rotation is done.'
-            )
-            raise VTKVersionError(msg)
+        alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
         output = wrap(alg.GetOutput())
@@ -4069,8 +4123,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # other mesh must be a polydata
-        if not isinstance(other_mesh, pyvista.PolyData):
-            other_mesh = other_mesh.extract_surface()
+        if not isinstance(other_mesh, pv.PolyData):
+            other_mesh = other_mesh.extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
 
         # according to VTK limitations
         poly_data = self
@@ -4201,7 +4257,7 @@ class PolyDataFilters(DataSetFilters):
         Extract the surface from the uniform grid dataset and plot its contours
         alongside the output from the banded contour filter.
 
-        >>> surf = examples.load_uniform().extract_surface()
+        >>> surf = examples.load_uniform().extract_surface(algorithm=None)
         >>> n_contours = 5
         >>> rng = [200, 500]
         >>> output, edges = surf.contour_banded(n_contours, rng=rng)
@@ -4357,7 +4413,11 @@ class PolyDataFilters(DataSetFilters):
         return wrap(mc.GetOutput())
 
     @_deprecate_positional_args
-    def triangulate_contours(self, display_errors: bool = False, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def triangulate_contours(  # type: ignore[misc]
+        self: _PolyDataType,
+        display_errors: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> _PolyDataType:
         """Triangulate and fill all 2D contours to create polygons.
 
         .. versionadded:: 0.44.0
@@ -4395,6 +4455,11 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        Raises
+        ------
+        RuntimeError
+            If the mesh does not contain lines.
+
         Returns
         -------
         pyvista.PolyData
@@ -4421,6 +4486,10 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
+        if self.n_lines == 0:
+            msg = '`triangulate_contours` requires the input PolyData to have lines.'
+            raise RuntimeError(msg)
+
         alg = _vtk.vtkContourTriangulator()
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
@@ -4517,3 +4586,73 @@ class PolyDataFilters(DataSetFilters):
             alg.SetResolution(resolution)  # type: ignore[arg-type]
         _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
         return _get_output(alg)
+
+    def remove_unused_points(  # type: ignore[misc]
+        self: _PolyDataType,
+        *,
+        inplace: bool = False,
+    ) -> _PolyDataType:
+        """Remove points which are not used by any cells.
+
+        This filter is similar to :meth:`clean` but does `not` merge points or convert cells.
+        The point order is also unchanged by this filter.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.UnstructuredGridFilters.remove_unused_points
+
+        Returns
+        -------
+        PolyData
+            Mesh with unused points removed.
+
+        Examples
+        --------
+        Create :class:`~pyvista.PolyData` with three points. The first two points are coincident
+        and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point is
+        "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> faces = [1, 0, 1, 1]
+        >>> poly = pv.PolyData(points, faces)
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   3
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> poly = poly.remove_unused_points()
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   2
+          N Strips:   0
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
+        """
+        removed = (
+            self.cast_to_unstructured_grid()
+            .remove_unused_points()
+            .extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+        )
+        out = self if inplace else type(self)()
+        out.copy_from(removed, deep=not inplace)
+        return out

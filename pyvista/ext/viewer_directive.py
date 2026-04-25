@@ -76,7 +76,7 @@ class OfflineViewerDirective(Directive):
         if source_file != dest_file:
             try:
                 shutil.copy(source_file, dest_file)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
         # Compute the relative path of the current source to the source directory,

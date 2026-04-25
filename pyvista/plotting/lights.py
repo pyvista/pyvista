@@ -3,25 +3,18 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-# imports here rather than in _vtk to avoid circular imports
-try:
-    from vtkmodules.vtkCommonMath import vtkMatrix4x4
-    from vtkmodules.vtkRenderingCore import vtkLight
-    from vtkmodules.vtkRenderingCore import vtkLightActor
-except ImportError:  # pragma: no cover
-    from vtk import vtkLight  # type: ignore[no-redef]
-    from vtk import vtkLightActor  # type: ignore[no-redef]
-    from vtk import vtkMatrix4x4  # type: ignore[no-redef]
-
-from typing import TYPE_CHECKING
-
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core._vtk_core import DisableVtkSnakeCase
+from pyvista.core._vtk_core import vtkMatrix4x4
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.plotting._vtk import vtkLight
+from pyvista.plotting._vtk import vtkLightActor
 
 from .colors import Color
 
@@ -43,7 +36,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(DisableVtkSnakeCase, vtkLight):
+class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
     """Light class.
 
     Parameters
@@ -510,15 +503,15 @@ class Light(DisableVtkSnakeCase, vtkLight):
         brightness.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
-        >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
+        >>> pl = pv.Plotter(lighting='none')
+        >>> _ = pl.add_mesh(pv.Cube(), color='cyan')
         >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
         >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
-        ...     plotter.add_light(light)
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.show()
 
         """
         return self.GetIntensity()
@@ -637,9 +630,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         beam.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
+        ...     _ = pl.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -647,9 +640,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         ...     light.exponent = exponent
         ...     light.positional = True
         ...     light.cone_angle = 80
-        ...     plotter.add_light(light)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         return self.GetExponent()
@@ -686,16 +679,16 @@ class Light(DisableVtkSnakeCase, vtkLight):
         variation of the intensity of the beams.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
+        ...     _ = pl.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
-        ...     plotter.add_light(light)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         return self.GetConeAngle()
@@ -734,11 +727,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         box gets lit by both lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset in 1, 2.5, 4:
-        ...     _ = plotter.add_mesh(
-        ...         pv.Cube(center=(offset, offset, 0)), color='white'
-        ...     )
+        ...     _ = pl.add_mesh(pv.Cube(center=(offset, offset, 0)), color='white')
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
@@ -750,9 +741,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         ...     light.cone_angle = 90
         ...     light.positional = True
         ...     light.attenuation_values = attenuation_constants
-        ...     plotter.add_light(light)
-        >>> plotter.view_vector((-1, -1, 1))
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_vector((-1, -1, 1))
+        >>> pl.show()
 
         """
         return self.GetAttenuationValues()
@@ -848,16 +839,16 @@ class Light(DisableVtkSnakeCase, vtkLight):
         light kit of plotters.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights[:2]
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights[:2]
         >>> [light.light_type for light in lights]
         [<LightType.HEADLIGHT: 1>, <LightType.CAMERA_LIGHT: 2>]
 
         Change the light type of the default light kit's headlight to a scene light.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights[:2]
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights[:2]
         >>> lights[0].light_type = pv.Light.SCENE_LIGHT
         >>> [light.light_type for light in lights]
         [<LightType.SCENE_LIGHT: 3>, <LightType.CAMERA_LIGHT: 2>]
@@ -882,8 +873,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         Verify that the first light of the default light kit is a headlight.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights
         >>> [light.is_headlight for light in lights]
         [True, False, False, False, False]
 
@@ -900,8 +891,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         are camera lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights
         >>> [light.is_camera_light for light in lights]
         [False, True, True, True, True]
 
@@ -918,8 +909,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         scene lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights
         >>> [light.is_scene_light for light in lights]
         [False, False, False, False, False]
 
@@ -1180,9 +1171,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         visualize the light using an actor.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(), color='white')
-        >>> for light in plotter.renderer.lights:
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(), color='white')
+        >>> for light in pl.renderer.lights:
         ...     light.intensity /= 5
         >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
         >>> spotlight.positional = True
@@ -1190,8 +1181,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         >>> spotlight.intensity = 10
         >>> spotlight.exponent = 40
         >>> spotlight.show_actor()
-        >>> plotter.add_light(spotlight)
-        >>> plotter.show()
+        >>> pl.add_light(spotlight)
+        >>> pl.show()
 
         """
         if not self.positional or self.cone_angle >= 90:

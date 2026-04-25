@@ -7,8 +7,6 @@ Parametric Geometric Objects
 Creating parametric objects from :ref:`parametric_api`.
 """
 
-from __future__ import annotations
-
 from math import pi
 
 # sphinx_gallery_thumbnail_number = 12
@@ -37,11 +35,11 @@ ellipsoid.plot(color='lightblue')
 # ++++++++++++++++++++++++++++
 
 # cool plotting direction
-cpos = [
-    (21.9930, 21.1810, -30.3780),
-    (-1.1640, -1.3098, -0.1061),
-    (0.8498, -0.2515, 0.4631),
-]
+cpos = pv.CameraPosition(
+    position=(21.9930, 21.1810, -30.3780),
+    focal_point=(-1.1640, -1.3098, -0.1061),
+    viewup=(0.8498, -0.2515, 0.4631),
+)
 
 
 # half ellipsoid
@@ -212,7 +210,7 @@ center = [0, 0, 0]
 resolution = 100
 
 arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
-poly = arc.extrude([0, 0, 1])
+poly = arc.extrude([0, 0, 1], capping=False)
 poly.plot(color='lightblue', cpos='iso', show_edges=True)
 # %%
 # .. tags:: load

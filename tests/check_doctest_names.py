@@ -11,7 +11,6 @@ like this:
 Examples
 --------
     >>> import numpy
-    >>> import pyvista
     >>> from pyvista import CellType
     >>> offset = np.array([0, 9])
     >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
@@ -50,10 +49,10 @@ import sys
 from textwrap import indent
 from types import ModuleType
 
-import pyvista
+import pyvista as pv
 
 
-def discover_modules(entry=pyvista, recurse=True):
+def discover_modules(entry=pv, recurse=True):
     """Discover the submodules present under an entry point.
 
     If ``recurse=True``, search goes all the way into descendants of the
@@ -141,7 +140,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     # find and parse all docstrings; this will also remove any duplicates
     doctests = {
         dt.name: dt
-        for module_name, module in modules.items()
+        for module in modules.values()
         for dt in DocTestFinder(recurse=True).find(module, globs={})
     }
 
@@ -161,8 +160,8 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             ):
                 continue
             try:
-                exec(example.source, globs)
-            except Exception as exc:
+                exec(example.source, globs)  # noqa: S102
+            except Exception as exc:  # noqa: BLE001
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')
                 erroring_code = ''.join([example.source for example in dt.examples[:iline]])

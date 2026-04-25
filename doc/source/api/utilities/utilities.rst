@@ -19,10 +19,16 @@ Object Conversions or Wrapping
    array_from_vtkmatrix
    cubemap
    cubemap_from_filenames
+   from_meshio
+   from_trimesh
    image_to_texture
+   is_meshio_mesh
+   is_trimesh_mesh
    is_pyvista_dataset
    numpy_to_texture
    pyvista_ndarray
+   to_meshio
+   to_trimesh
    vtkmatrix_from_array
    wrap
 
@@ -50,32 +56,39 @@ File IO
 .. autosummary::
    :toctree: _autosummary
 
-   from_meshio
    get_ext
-   is_meshio_mesh
    read
    read_exodus
    read_grdecl
    read_meshio
+   read_pickle
    read_texture
    save_meshio
+   save_pickle
    set_pickle_format
-   set_vtkwriter_mode
-   to_meshio
-
 
 Mesh Creation
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
-   CellType
    fit_line_to_points
    fit_plane_to_points
+   generate_plane
+   line_segments_from_points
    lines_from_points
+   make_tri_mesh
+   translate
    vector_poly_data
    vtk_points
 
+Enums
+~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   CellType
+   CellStatus
 
 Array Access
 ~~~~~~~~~~~~
@@ -86,6 +99,7 @@ Array Access
    convert_array
    field_array
    get_array
+   get_array_association
    point_array
 
 
@@ -135,10 +149,49 @@ Miscellaneous
 .. autosummary::
    :toctree: _autosummary
 
+   set_new_attribute
+   allow_new_attributes
+   get_gpu_info
+   GPUInfo
+   Observer
+   ProgressMonitor
+   register_jupyter_backend
+   registered_jupyter_backends
+   JupyterBackendRegistration
+   send_errors_to_logging
+   set_jupyter_backend
    start_xvfb
    Report
+   enable_smp_tools
+   set_default_active_scalars
+   set_default_active_vectors
    vtk_verbosity
    vtk_snake_case
+
+Errors and Warnings
+~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   core.errors.AmbiguousDataError
+   core.errors.DeprecationError
+   core.errors.InvalidMeshError
+   core.errors.InvalidMeshWarning
+   core.errors.MissingDataError
+   core.errors.NotAllTrianglesError
+   core.errors.PointSetCellOperationError
+   core.errors.PointSetDimensionReductionError
+   core.errors.PointSetNotSupported
+   core.errors.PyVistaAttributeError
+   core.errors.PyVistaDeprecationWarning
+   core.errors.PyVistaEfficiencyWarning
+   core.errors.PyVistaFutureWarning
+   core.errors.PyVistaPipelineError
+   core.errors.VTKExecutionError
+   core.errors.VTKExecutionWarning
+   core.errors.VTKVersionError
+
 
 PyVista Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,8 +199,8 @@ The PyVista library provides a way of getting the version installed in your
 environment.
 
 >>> # Output the version of PyVista.
->>> import pyvista
->>> pyvista.version_info
+>>> import pyvista as pv
+>>> pv.version_info
 (0, 44, 0)
 
 VTK Version Information
@@ -156,10 +209,10 @@ The PyVista library is heavily dependent on VTK and provides an easy
 way of getting the version of VTK in your environment.
 
 >>> # Output the version of VTK.
->>> import pyvista
->>> pyvista.vtk_version_info
+>>> import pyvista as pv
+>>> pv.vtk_version_info
 VTKVersionInfo(major=9, minor=1, micro=0)
 
 >>> # Get the major version of VTK
->>> pyvista.vtk_version_info.major
+>>> pv.vtk_version_info.major
 9

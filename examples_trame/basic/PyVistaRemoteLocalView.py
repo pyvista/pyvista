@@ -26,8 +26,8 @@ state.trame__title = 'PyVistaRemoteView'
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap='viridis')
+pl = pv.Plotter()
+actor = pl.add_mesh(mesh, cmap='viridis')
 
 
 @state.change('cmap')
@@ -73,7 +73,7 @@ with SinglePageLayout(server) as layout:
             classes='pa-0 fill-height',
         ):
             view = PyVistaRemoteLocalView(
-                plotter,
+                pl,
                 mode=("use_server_rendering ? 'remote' : 'local'", 'local'),
             )
             ctrl.view_update = view.update

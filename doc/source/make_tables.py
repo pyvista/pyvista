@@ -12,10 +12,10 @@ from dataclasses import dataclass
 from enum import auto
 import inspect
 import io
+from itertools import starmap
 import os
 from pathlib import Path
 import re
-import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
@@ -23,11 +23,11 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
-import warnings
 
 import cmcrameri
 import cmocean
 import colorcet
+import docutils
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,11 +36,15 @@ from scipy.stats import linregress
 import pyvista as pv
 from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
+from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
+from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -51,17 +55,6 @@ from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
 from pyvista.plotting.colors import _VTK_COLORS
-from pyvista.plotting.colors import _format_color_dict
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        def __str__(self) -> str:
-            return self.value
-
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -70,6 +63,8 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
+READERS_DIR = 'api/readers'
+MESHIO_DIR = 'api/utilities/io_table'
 CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
@@ -88,14 +83,15 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/plot_directive/api/examples/_autosummary'
 # Generated docstring images are assumed to have '.png' extension
 # Define special cases for specific datasets here. Use `None` if no image is generated.
 DATASET_GALLERY_IMAGE_EXT_DICT = {
-    'can': None,
     'cavity': None,
-    'osmnx_graph': None,
     'gpr_data_array': None,
     'sphere_vectors': None,
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
+
+SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
+ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
 
 def _aligned_dedent(txt):
@@ -181,6 +177,235 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
+def _swap_extension_mapping(mapping: dict[str, type[Any]]) -> dict[type[Any], set[str]]:
+    # Convert extension->cls mapping into cls->extension mapping
+    class_extensions: dict[pv.BaseReader, set[str]] = {cls: set() for cls in set(mapping.values())}
+    for ext, cls in mapping.items():
+        class_extensions[cls].add(ext)
+    # Sort by the class name of the reader
+    return _sort_by_class_name(class_extensions)
+
+
+def _sort_by_class_name(mapping: dict[Any, Any]):
+    return sorted(
+        mapping.items(),
+        key=lambda item: item[0].__name__.lower(),
+    )
+
+
+def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
+    # Create dict for reader info: extension(s) and output type(s)
+    reader_info: dict[pv.BaseReader, tuple[set[str], set[str]]] = {
+        reader: (set(), set()) for reader in set(CLASS_READERS.values())
+    }
+    # Store extensions
+    for reader, extensions in _swap_extension_mapping(CLASS_READERS):
+        info_extensions, _ = reader_info[reader]
+        info_extensions.update(extensions)
+
+    # Store output type(s)
+    for reader, types in _CLASS_READER_RETURN_TYPE.items():
+        _, ouput_types = reader_info[reader]
+        if isinstance(types, tuple):
+            ouput_types.update(types)
+        else:
+            ouput_types.add(types)
+
+    # Sort by the class name of the reader
+    return _sort_by_class_name(reader_info)
+
+
+READER_INFO: dict[pv.BaseReader, tuple[set[str], set[str]]] = _reader_info_dict()
+
+
+@dataclass
+class FileFormatInfo:
+    name: str
+    extensions: set[str]
+    readable: bool = False
+    writeable: bool = False
+
+
+def _meshio_info_dict():
+    def get_format_name(io_class: type, extensions: set[str]) -> str:
+        # Clean up the names of both reader and writer classes
+        name = io_class.__name__.removeprefix('vtk').removesuffix('Reader').removesuffix('Writer')
+        if not name.startswith('VTKP'):
+            name = name.removeprefix('VTK')
+        # Remove terms from name
+        class_names = get_args(_mesh_types)
+        other_names = ['DataSet', 'Image', 'Data', 'Partitioned']
+        for class_name in [*class_names, *other_names]:
+            name = name.replace(class_name, '')
+        if name == '':
+            # Use a single extension as the format name
+            assert len(extensions) == 1, (
+                f'File format name could not be determined for {io_class.__name__}'
+            )
+            name = next(iter(extensions)).removeprefix('.').upper()
+        return name
+
+    meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
+    reader_info = _reader_info_dict()
+    for class_name in get_args(_mesh_types):
+        meshio_info[class_name]: dict[str, FileFormatInfo] = {}
+
+        # Store reader info first
+        for reader, (extensions, return_type) in reader_info:
+            return_types = [return_type] if isinstance(return_type, str) else return_type
+            if class_name in return_types:
+                # This reader may return this class, so include it
+                format_name = get_format_name(reader, extensions)
+                info = FileFormatInfo(name=format_name, extensions=extensions, readable=True)
+                meshio_info[class_name][format_name] = info
+
+        # Store writer info next
+        cls = eval('pv.' + class_name)
+        writer_extensions = _swap_extension_mapping(cls._WRITERS)
+        for writer, extensions in writer_extensions:
+            # Check if the format was already added from the reader
+            format_name = get_format_name(writer, extensions)
+            if format_name in meshio_info[class_name].keys():
+                # Ensure reader and writer have compatible extensions
+                reader_extensions = meshio_info[class_name][format_name].extensions
+                msg = (
+                    f'Writable extensions {extensions} should be a subset of readable extensions'
+                    f' {reader_extensions} for file format {format_name!r}.'
+                )
+                assert extensions <= reader_extensions, msg
+
+                meshio_info[class_name][format_name].writeable = True
+            else:
+                info = FileFormatInfo(name=format_name, extensions=extensions, writeable=True)
+                meshio_info[class_name][format_name] = info
+
+    return meshio_info
+
+
+MESHIO_INFO = _meshio_info_dict()
+
+
+class ReadersTable(DocTable):
+    """Class to generate table for readers."""
+
+    path = f'{READERS_DIR}/readers_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table:: PyVista Readers
+        |   :widths: 33 33 33
+        |   :header-rows: 1
+        |
+        |   * - Reader
+        |     - File Extension(s)
+        |     - Return Type(s)
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        return READER_INFO
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, _, row_data):
+        reader, info = row_data
+        extensions, output_types = info
+        reader_fmt = f':class:`~pyvista.{reader.__name__}`'
+        extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
+        output_types_fmt = ', '.join(f':class:`~pyvista.{typ}`' for typ in sorted(output_types))
+        return cls.row_template.format(reader_fmt, extensions_fmt, output_types_fmt)
+
+
+class MeshIOTable(DocTable):
+    """Class to generate table for reading/saving a mesh type."""
+
+    header = _aligned_dedent(
+        """
+        |.. list-table::
+        |   :widths: 25 25 25 25
+        |   :header-rows: 1
+        |
+        |   * - File Format
+        |     - File Extension(s)
+        |     - :func:`~pyvista.read`
+        |     - :func:`~pyvista.DataObject.save`
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    class_name: str
+
+    @property
+    @final
+    def path(self):
+        assert isinstance(self.class_name, str), 'Class name must be defined.'
+        return f'{MESHIO_DIR}/{self.class_name}_io_table.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        return MESHIO_INFO[cls.class_name].values()
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, _, row_data: FileFormatInfo):
+        extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(row_data.extensions)])
+        readable = SUCCESS_SYMBOL if row_data.readable else ERROR_SYMBOL
+        writeable = SUCCESS_SYMBOL if row_data.writeable else ERROR_SYMBOL
+        return cls.row_template.format(row_data.name, extensions_fmt, readable, writeable)
+
+
+class ImageDataIOTable(MeshIOTable):
+    class_name = 'ImageData'
+
+
+class RectilinearGridIOTable(MeshIOTable):
+    class_name = 'RectilinearGrid'
+
+
+class StructuredGridIOTable(MeshIOTable):
+    class_name = 'StructuredGrid'
+
+
+class PointSetIOTable(MeshIOTable):
+    class_name = 'PointSet'
+
+
+class PolyDataIOTable(MeshIOTable):
+    class_name = 'PolyData'
+
+
+class UnstructuredGridIOTable(MeshIOTable):
+    class_name = 'UnstructuredGrid'
+
+
+class MultiBlockIOTable(MeshIOTable):
+    class_name = 'MultiBlock'
+
+
+class PartitionedDataSetIOTable(MeshIOTable):
+    class_name = 'PartitionedDataSet'
+
+
 class CellQualityMeasuresTable(DocTable):
     """Class to generate table for cell quality measures."""
 
@@ -247,11 +472,8 @@ class CellQualityMeasuresTable(DocTable):
     def get_row(cls, _, row_data):
         measures, measure = row_data
 
-        success = ':material-regular:`check;2em;sd-text-success`'
-        error = ':material-regular:`close;2em;sd-text-error`'
-
         def _get_table_entry(cell_type):
-            return success if cell_type in measures[measure] else error
+            return SUCCESS_SYMBOL if cell_type in measures[measure] else ERROR_SYMBOL
 
         table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
         return cls.row_template.format(f'``{measure}``', *table_entries)
@@ -414,15 +636,15 @@ class LineStyleTable(DocTable):
     @staticmethod
     def generate_img(line_style, img_path):
         """Generate and save an image of the given line_style."""
-        p = pv.Plotter(off_screen=True, window_size=[100, 50])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[100, 50])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         chart.line([0, 1], [0, 0], color='b', width=3.0, style=line_style)
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # Generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[18:25, 22:85, :]
 
         # exit early if the image already exists and is the same
@@ -430,7 +652,7 @@ class LineStyleTable(DocTable):
             return
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
 
 class MarkerStyleTable(DocTable):
@@ -480,15 +702,15 @@ class MarkerStyleTable(DocTable):
     @staticmethod
     def generate_img(marker_style, img_path):
         """Generate and save an image of the given marker_style."""
-        p = pv.Plotter(off_screen=True, window_size=[100, 100])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[100, 100])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         chart.scatter([0], [0], color='b', size=9, style=marker_style)
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[40:53, 47:60, :]
 
         # exit early if the image already exists and is the same
@@ -496,7 +718,7 @@ class MarkerStyleTable(DocTable):
             return
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
 
 class ColorSchemeTable(DocTable):
@@ -551,8 +773,8 @@ class ColorSchemeTable(DocTable):
     @staticmethod
     def generate_img(color_scheme, img_path):
         """Generate and save an image of the given color_scheme."""
-        p = pv.Plotter(off_screen=True, window_size=[240, 120])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[240, 120])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         # Use a temporary plot to determine the total number of colors in this scheme
         tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation='H')
@@ -562,10 +784,10 @@ class ColorSchemeTable(DocTable):
         plot.pen.color = 'w'
         chart.x_range = [0, n_colors]
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # Generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[34:78, 22:225, :]
 
         # exit early if the image already exists and is the same
@@ -573,7 +795,7 @@ class ColorSchemeTable(DocTable):
             return n_colors
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
         return n_colors
 
@@ -619,7 +841,7 @@ class ColorTable(DocTable):
             c.name: {'name': c.name, 'hex': c.hex_rgb, 'synonyms': []} for c in colors
         }
         assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
-        # Add synonyms defined in ``color_synonyms`` dictionary.
+        # Include synonyms
         for s, name in pv.colors.color_synonyms.items():
             if name in colors_dict:
                 colors_dict[name]['synonyms'].append(s)
@@ -639,13 +861,13 @@ class ColorTable(DocTable):
 
 
 def _get_color_source_badge(name: str) -> str:
-    if name in _format_color_dict(_CSS_COLORS):
+    if name in _CSS_COLORS:
         return ':bdg-primary:`CSS`'
-    elif name in _format_color_dict(_TABLEAU_COLORS):
+    elif name in _TABLEAU_COLORS:
         return ':bdg-success:`TAB`'
-    elif name in _format_color_dict(_PARAVIEW_COLORS):
+    elif name in _PARAVIEW_COLORS:
         return ':bdg-danger:`PV`'
-    elif name in _format_color_dict(_VTK_COLORS):
+    elif name in _VTK_COLORS:
         return ':bdg-secondary:`VTK`'
     else:
         msg = f'Invalid color name "{name}".'
@@ -656,7 +878,7 @@ def _sort_colors_by_hls(colors: Sequence[Color]):
     return sorted(colors, key=lambda c: c._float_hls)
 
 
-ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hexcolors.keys())
+ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hex_colors.keys())
 
 # Saturation constants
 GRAYS_SATURATION_THRESHOLD = 0.15
@@ -1256,6 +1478,8 @@ class ColormapTable(DocTable):
     @staticmethod
     def generate_img_swatch(cmap, img_path):
         """Generate and save an image of the given colormap."""
+        if os.path.isfile(img_path):
+            return
         width = 256
         height = 100
         N = 256
@@ -1286,7 +1510,8 @@ class ColormapTable(DocTable):
         lab = rgb_to_cam02ucs(rgb)
         y = lab[0, :, 0]
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
+        if not os.path.isfile(img_path):
+            ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
 
         # Compute linearity of the lightness.
         # r^2 is good for ramps, but not for iso-luminant colormaps
@@ -1314,7 +1539,8 @@ class ColormapTable(DocTable):
         delta_e = delta_e_cie2000(rgb)
         y = np.concatenate([[0], np.cumsum(delta_e)])
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        if not os.path.isfile(img_path):
+            ColormapTable.save_scatter_plot(x, y, cmap, img_path)
         return ColormapTable.linear_regression(x, y)
 
     @staticmethod
@@ -1403,7 +1629,7 @@ class ColormapTable(DocTable):
                 return colors[order]
 
             else:  # sort_by == 'hue':
-                hls = np.array([rgb_to_hls(*color) for color in colors])
+                hls = np.array(list(starmap(rgb_to_hls, colors)))
                 hue_sorted_indices = np.argsort(hls[:, 0])
                 return colors[hue_sorted_indices]
 
@@ -1421,7 +1647,7 @@ class ColormapTable(DocTable):
                 xyz = colour.sRGB_to_XYZ(rgb_sampled)
                 return colour.XYZ_to_CAM02UCS(xyz)
             else:  # sort_by == 'hue':
-                hls = np.array([rgb_to_hls(*color) for color in rgb_sampled])
+                hls = np.array(list(starmap(rgb_to_hls, rgb_sampled)))
                 return hls[:, 0]
 
         def compute_delta_between_swatches(swatch1, swatch2, weights):
@@ -1490,7 +1716,7 @@ class ColormapTable(DocTable):
 
         # Sort colormaps based on selected method
         weights = np.ones((n_samples,))
-        sorted_groups, order = sort_color_groups_by_similarity(
+        _sorted_groups, order = sort_color_groups_by_similarity(
             grouped_colors, start_index, weights
         )
         return [data[i] for i in order]
@@ -1588,7 +1814,7 @@ def _get_fullname(typ: type[Any]) -> str:
 
 def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
     """Left-justify a list of lines."""
-    min_width = min_width if min_width else _max_width(lines)
+    min_width = min_width or _max_width(lines)
     return [line.ljust(min_width) for line in lines]
 
 
@@ -1938,7 +2164,9 @@ class DatasetCard:
             img_path = self._create_default_image()
         else:
             # Use the first image generated by the .. pyvista_plot:: directive
-            filename = f'{module_name}-{func_name}-1_00_00{ext}'
+            # We use a placeholder here since each image is named using the
+            # hash of the directive code
+            filename = f'{module_name}-{func_name}-{PLACEHOLDER}_00_00{ext}'
             img_path = Path(DATASET_GALLERY_IMAGE_DIR, filename).as_posix()
 
         # Get rst file and instance metadata
@@ -2020,44 +2248,25 @@ class DatasetCard:
 
     @staticmethod
     def _generate_dataset_properties(loader):
-        try:
-            # Get data from loader
-            if isinstance(loader, _Downloadable):
-                loader.download()
+        # Get data from loader
+        if isinstance(loader, _Downloadable):
+            loader.download()
 
-            # properties collected by the loader
-            file_size = DatasetPropsGenerator.generate_file_size(loader)
-            num_files = DatasetPropsGenerator.generate_num_files(loader)
-            file_ext = DatasetPropsGenerator.generate_file_ext(loader)
-            reader_type = DatasetPropsGenerator.generate_reader_type(loader)
-            dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
-            datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
+        # properties collected by the loader
+        file_size = DatasetPropsGenerator.generate_file_size(loader)
+        num_files = DatasetPropsGenerator.generate_num_files(loader)
+        file_ext = DatasetPropsGenerator.generate_file_ext(loader)
+        reader_type = DatasetPropsGenerator.generate_reader_type(loader)
+        dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+        datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
-            # properties collected directly from the dataset
-            n_cells = DatasetPropsGenerator.generate_n_cells(loader)
-            n_points = DatasetPropsGenerator.generate_n_points(loader)
-            length = DatasetPropsGenerator.generate_length(loader)
-            dimensions = DatasetPropsGenerator.generate_dimensions(loader)
-            spacing = DatasetPropsGenerator.generate_spacing(loader)
-            n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
-
-        except VTKVersionError:
-            # Exception is caused by 'download_can'
-            # Set default values
-            NOT_AVAILABLE = '``Not available``'
-            file_size = NOT_AVAILABLE
-            num_files = NOT_AVAILABLE
-            file_ext = NOT_AVAILABLE
-            reader_type = NOT_AVAILABLE
-            dataset_type = NOT_AVAILABLE
-            datasource_links = NOT_AVAILABLE
-
-            n_cells = None
-            n_points = None
-            length = None
-            dimensions = None
-            spacing = None
-            n_arrays = None
+        # properties collected directly from the dataset
+        n_cells = DatasetPropsGenerator.generate_n_cells(loader)
+        n_points = DatasetPropsGenerator.generate_n_points(loader)
+        length = DatasetPropsGenerator.generate_length(loader)
+        dimensions = DatasetPropsGenerator.generate_dimensions(loader)
+        spacing = DatasetPropsGenerator.generate_spacing(loader)
+        n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
 
         return (
             file_size,
@@ -2224,13 +2433,13 @@ class DatasetCard:
             return img_path
         IMG_WIDTH, IMG_HEIGHT = 400, 300
         not_available_mesh = pv.Text3D('Not Available')
-        p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
-        p.background_color = 'white'
-        p.add_mesh(not_available_mesh, color='black')
-        p.view_xy()
-        p.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
-        p.enable_parallel_projection()
-        img_array = p.show(screenshot=True)
+        pl = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
+        pl.background_color = 'white'
+        pl.add_mesh(not_available_mesh, color='black')
+        pl.view_xy()
+        pl.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
+        pl.enable_parallel_projection()
+        img_array = pl.show(screenshot=True)
         img = Image.fromarray(img_array)
         img.save(img_path)
         return img_path
@@ -2269,7 +2478,7 @@ class DatasetCard:
 
         Any fields with a `None` value are completely excluded from the block.
         """
-        field_grids = [DatasetCard._generate_field_grid(name, value) for name, value in fields]
+        field_grids = list(starmap(DatasetCard._generate_field_grid, fields))
         block = '\n'.join([grid for grid in field_grids if grid])
         return _indent_multi_line_string(block, indent_level=indent_level)
 
@@ -2483,7 +2692,7 @@ class DatasetPropsGenerator:
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
-        url_dict = {url: name for name, url in zip(names, urls)}
+        url_dict = {url: name for name, url in zip(names, urls, strict=True)}
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         return '\n'.join(rst_links)
@@ -2604,16 +2813,10 @@ class DatasetCardFetcher:
 
                 # Load data
                 print(f'loading datasets... {dataset_name}', flush=True)
-                try:
-                    if isinstance(dataset_loader, _Downloadable):
-                        dataset_loader.download()
-                except pv.VTKVersionError as err:
-                    # caused by 'download_can', this error is handled later
-                    msg = f'could not load {dataset_name} due to {err!r}'
-                    warnings.warn(msg, UserWarning)
-                else:
-                    dataset_loader.load_and_store_dataset()
-                    assert dataset_loader.dataset is not None
+                if isinstance(dataset_loader, _Downloadable):
+                    dataset_loader.download()
+                dataset_loader.load_and_store_dataset()
+                assert dataset_loader.dataset is not None
 
     @classmethod
     def generate_rst_all_cards(cls):
@@ -3096,8 +3299,8 @@ class PointCloudCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         pointset_names = DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
-        vertex_polydata_filter = (
-            lambda poly: isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
+        vertex_polydata_filter = lambda poly: (
+            isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
         )
         vertex_polydata_names = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
         return sorted(list(pointset_names) + list(vertex_polydata_names))
@@ -3112,9 +3315,8 @@ class SurfaceMeshCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        surface_polydata_filter = (
-            lambda poly: isinstance(poly, pv.PolyData)
-            and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
+        surface_polydata_filter = lambda poly: (
+            isinstance(poly, pv.PolyData) and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
         )
         surface_polydata_names = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
         return sorted(surface_polydata_names)
@@ -3153,8 +3355,11 @@ class ImageData3DCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        image_3d_filter = lambda img: isinstance(img, pv.ImageData) and not np.any(
-            np.array(img.dimensions) == 1,
+        image_3d_filter = lambda img: (
+            isinstance(img, pv.ImageData)
+            and not np.any(
+                np.array(img.dimensions) == 1,
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
 
@@ -3168,8 +3373,11 @@ class ImageData2DCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        image_2d_filter = lambda img: isinstance(img, pv.ImageData) and np.any(
-            np.array(img.dimensions) == 1,
+        image_2d_filter = lambda img: (
+            isinstance(img, pv.ImageData)
+            and np.any(
+                np.array(img.dimensions) == 1,
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
 
@@ -3256,9 +3464,11 @@ class MiscCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        misc_dataset_filter = lambda obj: not isinstance(
-            obj,
-            (pv.MultiBlock, pv.Texture, pv.DataSet),
+        misc_dataset_filter = lambda obj: (
+            not isinstance(
+                obj,
+                (pv.MultiBlock, pv.Texture, pv.DataSet),
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
 
@@ -3294,7 +3504,23 @@ class MedicalCarousel(DatasetGalleryCarousel):
         )
 
 
-def make_all_carousels(carousels: list[DatasetGalleryCarousel]):  # noqa: D103
+def _resolve_path(cls):
+    """Resolve a DocTable class path, handling property descriptors."""
+    path = cls.path
+    if isinstance(path, property):
+        path = path.fget(cls)
+    return path
+
+
+def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
+    # Check if all carousel RST files already exist - if so, skip the
+    # expensive dataset download/load step on incremental builds
+    carousel_paths = [_resolve_path(carousel) for carousel in carousels]
+    all_exist = all(Path(p).exists() for p in carousel_paths)
+    if all_exist:
+        print('All carousel RST files already exist, skipping dataset loading', flush=True)
+        return carousel_paths
+
     # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
 
@@ -3317,6 +3543,8 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]):  # noqa: D103
 
     # Clear loaded datasets from memory
     DatasetCardFetcher.clear_datasets()
+
+    return [carousel.path for carousel in carousels]
 
 
 CAROUSEL_LIST = [
@@ -3346,7 +3574,21 @@ CAROUSEL_LIST = [
 ]
 
 
-def make_all_tables():  # noqa: D103
+def make_all_tables() -> list[str]:  # noqa: D103
+    # Make reader tables
+    os.makedirs(READERS_DIR, exist_ok=True)
+    ReadersTable.generate()
+
+    # Make mesh IO tables
+    os.makedirs(MESHIO_DIR, exist_ok=True)
+    ImageDataIOTable.generate()
+    RectilinearGridIOTable.generate()
+    StructuredGridIOTable.generate()
+    PolyDataIOTable.generate()
+    UnstructuredGridIOTable.generate()
+    MultiBlockIOTable.generate()
+    PartitionedDataSetIOTable.generate()
+
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
     CellQualityMeasuresTable.generate()
@@ -3394,8 +3636,33 @@ def make_all_tables():  # noqa: D103
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    make_all_carousels(CAROUSEL_LIST)
+    return make_all_carousels(CAROUSEL_LIST)
+
+
+def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
+    def find_matching_image(filename_with_placeholder: str) -> bool | str:
+        """Find the image in the gallery without the placeholder."""
+        basename = Path(filename_with_placeholder).name.replace(PLACEHOLDER, '*')
+
+        # move up one since sphinx runs at the Makefile directory
+        gallery_path = Path(DATASET_GALLERY_IMAGE_DIR).relative_to('..')
+        actual_file = next(Path(gallery_path).glob(basename), None)
+        if actual_file:
+            return str(Path(node_image['uri']).parent / actual_file.name)
+        return filename_with_placeholder
+
+    uri = node_image.get('uri', '')
+    if PLACEHOLDER in uri:
+        node_image['uri'] = find_matching_image(uri)
+
+
+def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname: str) -> None:
+    """Patch the gallery card placeholders inplace."""
+    for img in doctree.traverse(docutils.nodes.image):
+        _update_image_placeholders(img)
 
 
 if __name__ == '__main__':
-    make_all_tables()
+    new_rsts = make_all_tables()
+    print('Generated rsts:')
+    print('\n'.join(new_rsts))

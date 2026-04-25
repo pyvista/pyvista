@@ -11,11 +11,13 @@ from typing import overload
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from pyvista import CellType
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
 
@@ -73,8 +75,8 @@ def numpy_to_idarr(
     Parameters
     ----------
     ind : sequence[int]
-        Input sequence to be converted to a :vtk:`vtkIdTypeArray`. Can be either a mask
-        or an integer array-like.
+        Input sequence to be converted to a :vtk:`vtkIdTypeArray`. Can be
+        either a mask or an integer array-like.
     deep : bool, default: False
         If ``True``, deep copy the input data. If ``False``, do not deep copy
         the input data.
@@ -99,25 +101,31 @@ def numpy_to_idarr(
     ind = np.asarray(ind)
 
     # np.asarray will eat anything, so we have to weed out bogus inputs
-    if not issubclass(ind.dtype.type, (np.bool_, np.integer)):
+    if not (np.issubdtype(ind.dtype, np.integer) or ind.dtype == np.bool_):
         msg = 'Indices must be either a mask or an integer array-like'
         raise TypeError(msg)
 
     if ind.dtype == np.bool_:
-        ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
-    elif ind.dtype != pyvista.ID_TYPE:
-        ind = ind.astype(pyvista.ID_TYPE)
+        ind = ind.nonzero()[0].astype(pv.ID_TYPE)
+    elif ind.dtype != pv.ID_TYPE:
+        ind = ind.astype(pv.ID_TYPE)
     elif not ind.flags['C_CONTIGUOUS']:
-        ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
+        ind = np.ascontiguousarray(ind, dtype=pv.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
-    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
+    # but skip the ``ravel()`` allocation when the array is already
+    # 1D and contiguous (the common case), since ndarray.ravel() of
+    # a non-1D shape returns a copy.
+    ravelled = ind if ind.ndim == 1 else ind.ravel()
+    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ravelled, deep=deep)
     if return_ind:
         return vtk_idarr, ind
     return vtk_idarr
 
 
-def create_mixed_cells(mixed_cell_dict, nr_points=None):
+def create_mixed_cells(
+    mixed_cell_dict: dict[np.uint8, NumpyArray[int]], nr_points: int | None = None
+) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
     """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
     This function generates all required cell arrays according to a given cell
@@ -170,22 +178,17 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     ... )
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
-
-    if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
-        msg = 'Found unknown or unsupported VTK cell type in your requested cells'
-        raise ValueError(msg)
-
-    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
+    mixed_cells = {pv.CellType(k): v for k, v in mixed_cell_dict.items()}  # type: ignore[arg-type]
+    if not all(k.n_points > 0 for k in mixed_cells.keys()):
         msg = "You requested a cell type with variable length, which can't be used in this method"
         raise ValueError(msg)
 
     final_cell_types = []
     final_cell_arr = []
-    for elem_t, cells_arr in mixed_cell_dict.items():
-        nr_points_per_elem = enum_cell_type_nr_points_map[elem_t]
+    for elem_t, cells_arr in mixed_cells.items():
+        nr_points_per_elem = elem_t.n_points
         if (
-            not isinstance(cells_arr, np.ndarray)
+            not isinstance(cells_arr, np.ndarray)  # type: ignore[redundant-expr]
             or not np.issubdtype(cells_arr.dtype, np.integer)
             or cells_arr.ndim not in [1, 2]
             or (cells_arr.ndim == 1 and cells_arr.size % nr_points_per_elem != 0)
@@ -222,13 +225,13 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             ).reshape([-1]),
         )
 
-    final_cell_types = np.concatenate(final_cell_types)  # type: ignore[assignment]
-    final_cell_arr = np.concatenate(final_cell_arr)
+    cell_types_out = np.concatenate(final_cell_types)
+    cell_arr_out = np.concatenate(final_cell_arr)
 
-    return final_cell_types, final_cell_arr
+    return cell_types_out, cell_arr_out
 
 
-def get_mixed_cells(vtkobj):
+def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]:
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
     This functions creates a cells dictionary (see
@@ -260,28 +263,21 @@ def get_mixed_cells(vtkobj):
         like VTK_POLYGON.
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
-
-    return_dict = {}  # type: ignore[var-annotated]
-
-    if not isinstance(vtkobj, pyvista.UnstructuredGrid):
-        msg = 'Expected a pyvista object'
+    if not isinstance(vtkobj, pv.UnstructuredGrid):
+        msg = 'Expected a pyvista object'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
-        return return_dict
+        return {}
 
+    return_dict: dict[CellType, NumpyArray[int]] = {}
     cell_types = vtkobj.celltypes
     cells = vtkobj.cells
 
-    unique_cell_types = np.unique(cell_types)
+    distinct_cell_types = vtkobj.distinct_cell_types
 
-    if not np.all([k in enum_cell_type_nr_points_map for k in unique_cell_types]):
-        msg = 'Found unknown or unsupported VTK cell type in the present cells'
-        raise ValueError(msg)
-
-    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
+    if not all(k.n_points > 0 for k in distinct_cell_types):
         msg = (
             'You requested a cell-dictionary with a variable length cell, which is not supported '
             'currently'
@@ -289,15 +285,15 @@ def get_mixed_cells(vtkobj):
         raise ValueError(msg)
 
     cell_sizes = np.zeros_like(cell_types)
-    for cell_type in unique_cell_types:
+    for cell_type in distinct_cell_types:
         mask = cell_types == cell_type
-        cell_sizes[mask] = enum_cell_type_nr_points_map[cell_type]
+        cell_sizes[mask] = cell_type.n_points
 
     cell_ends = np.cumsum(cell_sizes + 1)
     cell_starts = np.concatenate([np.array([0], dtype=cell_ends.dtype), cell_ends[:-1]]) + 1
 
-    for cell_type in unique_cell_types:
-        cell_size = enum_cell_type_nr_points_map[cell_type]
+    for cell_type in distinct_cell_types:
+        cell_size = cell_type.n_points
         mask = cell_types == cell_type
         current_cell_starts = cell_starts[mask]
 
@@ -309,4 +305,4 @@ def get_mixed_cells(vtkobj):
 
         return_dict[cell_type] = cells[cells_inds]
 
-    return return_dict
+    return {np.uint8(k): v for k, v in return_dict.items()}
