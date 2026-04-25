@@ -4,48 +4,64 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Annotated
+import warnings
 
 from cyclopts import Parameter
+from rich.progress import BarColumn
+from rich.progress import MofNCompleteColumn
+from rich.progress import Progress
+from rich.progress import TextColumn
+from rich.progress import TimeElapsedColumn
+from rich.progress import TimeRemainingColumn
 
 import pyvista as pv
 
 from .app import app
 from .utils import HELP_FORMATTER
+from .utils import _check_paths_exist
 from .utils import _console_error
-from .utils import _converter_files
 
 
-def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
-    path = Path(value)
-    has_suffix = bool(path.suffix)
-    is_suffix = not path.suffix and path.stem.startswith('.')
-    if not (has_suffix or is_suffix):
-        msg = '\nOutput file must have a file extension.'
+def _is_extension_only(file_out: str) -> bool:
+    """Return ``True`` when ``file_out`` specifies only an extension (``.pv`` or ``dir/.pv``)."""
+    path = Path(file_out)
+    return not path.suffix and path.stem.startswith('.')
+
+
+def _validate_out_has_extension(file_out: str) -> None:
+    if not Path(file_out).suffix and not _is_extension_only(file_out):
+        msg = 'Output file must have a file extension.'
         raise ValueError(msg)
 
 
 @app.command(
-    usage=f'Usage: [bold]{pv.__name__} convert FILE-IN FILE-OUT',
+    usage=f'Usage: [bold]{pv.__name__} convert FILE-IN [FILE-IN...] FILE-OUT',
     help_formatter=HELP_FORMATTER,
 )
 def _convert(
-    file_in: Annotated[
-        str,
+    files: Annotated[
+        list[str],
         Parameter(
-            help='File to convert. Must be readable with ``pyvista.read``.',
-            converter=_converter_files,
-        ),
-    ],
-    file_out: Annotated[
-        str,
-        Parameter(
-            help='Output file. If only an file extension is given, '
-            'the output has the same name as the input.',
-            validator=_validator_has_extension,
+            name='files',
+            consume_multiple=True,
+            negative='',
+            help=(
+                'One or more input files followed by the output spec. '
+                'Inputs may include glob patterns (e.g. ``*.vtu``) and must be readable '
+                'with ``pyvista.read``. The final token is the output: a full filename '
+                '(``bar.xyz``) when converting a single input, or an extension-only spec '
+                '(``.xyz`` or ``dir/.xyz``) which reuses each input stem. A bare ``.xyz`` '
+                'writes adjacent to each input; ``dir/.xyz`` writes into ``dir/``.'
+            ),
         ),
     ],
 ) -> None:
     """Convert a mesh file to another format.
+
+    One or more inputs may be supplied, and glob patterns are expanded. When multiple
+    inputs are given, the output must be an extension-only spec (``.xyz`` or
+    ``dir/.xyz``) so each input's stem is reused. A bare ``.xyz`` writes the output
+    adjacent to each input; ``dir/.xyz`` writes into the given ``dir``.
 
     Sample usage:
     ```bash
@@ -54,32 +70,118 @@ def _convert(
 
     pyvista convert foo.abc .xyz
     Saved: foo.xyz
+
+    pyvista convert sub/*.vtu .pv
+    # Writes sub/a.pv, sub/b.pv, ... next to each input
+
+    pyvista convert sub/*.vtu out/.pv
+    # Writes out/a.pv, out/b.pv, ... into the explicit out directory
     ```
     """
-    # get input mesh and input path from file_in str token
-    # which was converted to a (mesh, path) pair
-    mesh_in = file_in[0].mesh  # type: ignore[attr-defined]
-    path_in = file_in[0].path  # type: ignore[attr-defined]
+    if len(files) < 2:
+        _console_error(
+            app=app,
+            message='convert requires at least one input file and an output spec.',
+        )
 
-    # Parse output specification
+    file_out = files[-1]
+    file_in_tokens = files[:-1]
+
+    try:
+        _validate_out_has_extension(file_out)
+    except ValueError as e:
+        _console_error(app=app, message=str(e))
+
+    try:
+        input_paths = _check_paths_exist(file_in_tokens)
+    except ValueError as e:
+        _console_error(app=app, message=str(e))
+
     path_out = Path(file_out)
-    out_dir = path_out.parent
-    if not path_out.suffix:
-        # Extension-only, use the input stem
-        out_stem = path_in.stem
-        out_suffix = path_out.stem
-    else:
-        # Explicit filename provided
-        out_stem = path_out.stem
-        out_suffix = path_out.suffix
+    ext_only = _is_extension_only(file_out)
+    if not ext_only and len(input_paths) > 1:
+        _console_error(
+            app=app,
+            message=(
+                f'Cannot write {len(input_paths)} inputs to a single named output '
+                f'{file_out!r}. Use an extension-only output spec (e.g. '
+                f"'{path_out.suffix}') to reuse each input's stem."
+            ),
+        )
 
-    # Construct final output path
-    out_path = out_dir / f'{out_stem}{out_suffix}'
+    if len(input_paths) > 1:
+        _convert_many(input_paths, path_out)
+    else:
+        _convert_one(input_paths[0], path_out, ext_only=ext_only, announce=True)
+
+
+def _read_mesh(path_in: Path) -> pv.DataObject:
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
+        return pv.read(path_in)
+
+
+def _resolve_out_path(path_in: Path, path_out: Path, *, ext_only: bool) -> Path:
+    """Compute the per-input output path.
+
+    A bare extension-only spec (``.pv``) is written next to each input. An extension-only
+    spec with an explicit parent (``out/.pv``) is written into that parent.
+    """
+    if not ext_only:
+        return path_out
+    out_dir = path_in.parent if str(path_out.parent) == '.' else path_out.parent
+    return out_dir / f'{path_in.stem}{path_out.stem}'
+
+
+def _convert_one(
+    path_in: Path,
+    path_out: Path,
+    *,
+    ext_only: bool,
+    announce: bool,
+) -> None:
+    out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        mesh_in.save(out_path)
+        mesh = _read_mesh(path_in)
+    except Exception as e:  # noqa: BLE001
+        _console_error(app=app, message=f'Failed to read input file: {path_in}\n{e}')
+
+    try:
+        mesh.save(out_path)
     except Exception as e:  # noqa: BLE001
         _console_error(app=app, message=f'Failed to save output file: {out_path}\n{e}')
 
-    app.console.print(f'[green]Saved:[/green] {out_path}')
+    if announce:
+        app.console.print(f'[green]Saved:[/green] {out_path}')
+
+
+def _convert_many(input_paths: list[Path], path_out: Path) -> None:
+    columns = (
+        TextColumn('[progress.description]{task.description}'),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn('•'),
+        TimeElapsedColumn(),
+        TextColumn('<'),
+        TimeRemainingColumn(),
+    )
+    out_dirs: set[Path] = set()
+    with Progress(*columns, console=app.console, transient=False) as progress:
+        task = progress.add_task('Converting', total=len(input_paths))
+        for path_in in input_paths:
+            progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
+            out_path = _resolve_out_path(path_in, path_out, ext_only=True)
+            out_dirs.add(out_path.parent)
+            _convert_one(path_in, path_out, ext_only=True, announce=False)
+            progress.update(task, advance=1)
+
+    if len(out_dirs) == 1:
+        app.console.print(
+            f'[green]Saved {len(input_paths)} files to:[/green] {next(iter(out_dirs))}/'
+        )
+    else:
+        app.console.print(
+            f'[green]Saved {len(input_paths)} files across {len(out_dirs)} directories.[/green]'
+        )
