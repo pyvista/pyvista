@@ -93,19 +93,40 @@ class Grid(DataSet):
         self.SetDimensions(*dims)
         self.Modified()
 
-    def to_hexahedra(self) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
+    def to_hexahedra(self: Self) -> UnstructuredGrid:
         """Convert voxels to hexahedra.
 
         Convert this mesh to :class:`~pyvista.UnstructuredGrid` with
-        :attr:`~pyvista.CellType.HEXAHEDRON` cells.
+        :attr:`~pyvista.CellType.HEXAHEDRON` cells. Equivalent to
+        :meth:`~pyvista.DataSet.cast_to_unstructured_grid` except the output has
+        hexahedra instead of :attr:`~pyvista.CellType.VOXEL` cells.
 
-        This is similar to using :meth:`~pyvista.DataSet.cast_to_unstructured_grid`, except
-        the output has hexahedra instead of :attr:`~pyvista.CellType.VOXEL` cells.
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Mesh with :attr:`~pyvista.CellType.HEXAHEDRON` cells.
+
+        Raises
+        ------
+        ValueError
+            If the input is not 3-dimensional.
 
         See Also
         --------
         to_quads, to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
+
+        Examples
+        --------
+        Convert a 3D :class:`~pyvista.ImageData` to hexahedra.
+
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(2, 2, 2))
+        >>> hexes = image.to_hexahedra()
+        >>> hexes.distinct_cell_types == {pv.CellType.HEXAHEDRON}
+        True
 
         """
         if (dim := self.dimensionality) != 3:
@@ -115,19 +136,40 @@ class Grid(DataSet):
             raise ValueError(msg)
         return self.cast_to_structured_grid().cast_to_unstructured_grid()
 
-    def to_quads(self) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
+    def to_quads(self: Self) -> UnstructuredGrid:
         """Convert pixels to quads.
 
         Convert this mesh to :class:`~pyvista.UnstructuredGrid` with
-        :attr:`~pyvista.CellType.QUAD` cells.
+        :attr:`~pyvista.CellType.QUAD` cells. Equivalent to
+        :meth:`~pyvista.DataSet.cast_to_unstructured_grid` except the output has
+        quads instead of :attr:`~pyvista.CellType.PIXEL` cells.
 
-        This is similar to using :meth:`~pyvista.DataSet.cast_to_unstructured_grid`, except
-        the output has quads instead of :attr:`~pyvista.CellType.PIXEL` cells.
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Mesh with :attr:`~pyvista.CellType.QUAD` cells.
+
+        Raises
+        ------
+        ValueError
+            If the input is not 2-dimensional.
 
         See Also
         --------
         to_hexahedra, to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
+
+        Examples
+        --------
+        Convert a 2D :class:`~pyvista.ImageData` to quads.
+
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(3, 2, 1))
+        >>> quads = image.to_quads()
+        >>> quads.distinct_cell_types == {pv.CellType.QUAD}
+        True
 
         """
         if (dim := self.dimensionality) != 2:

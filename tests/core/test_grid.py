@@ -999,6 +999,8 @@ def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
     assert isinstance(hexahedra, pv.UnstructuredGrid)
     assert hexahedra.distinct_cell_types == {pv.CellType.HEXAHEDRON}
     assert hexahedra.n_cells == grid.n_cells
+    assert hexahedra.n_points == grid.n_points
+    assert hexahedra.active_scalars_name == grid.active_scalars_name
     match = 'Input must be 3-dimensional. Got 0-dimensional input instead.'
     with pytest.raises(ValueError, match=match):
         type(grid)().to_hexahedra()
@@ -1010,14 +1012,20 @@ def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
     with pytest.raises(ValueError, match=match):
         pv.ImageData(dimensions=(2, 2, 1)).to_hexahedra()
 
+    match = 'Input must be 3-dimensional. Got 1-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(3, 1, 1)).to_hexahedra()
+
 
 @pytest.mark.parametrize('as_rectilinear', [True, False])
 def test_to_quads(image, as_rectilinear):
     grid = image.cast_to_rectilinear_grid() if as_rectilinear else image
-    hexahedra = grid.to_quads()
-    assert isinstance(hexahedra, pv.UnstructuredGrid)
-    assert hexahedra.distinct_cell_types == {pv.CellType.QUAD}
-    assert hexahedra.n_cells == grid.n_cells
+    quads = grid.to_quads()
+    assert isinstance(quads, pv.UnstructuredGrid)
+    assert quads.distinct_cell_types == {pv.CellType.QUAD}
+    assert quads.n_cells == grid.n_cells
+    assert quads.n_points == grid.n_points
+    assert quads.active_scalars_name == grid.active_scalars_name
     match = 'Input must be 2-dimensional. Got 0-dimensional input instead.'
     with pytest.raises(ValueError, match=match):
         type(grid)().to_quads()
@@ -1028,6 +1036,10 @@ def test_to_quads(image, as_rectilinear):
     )
     with pytest.raises(ValueError, match=match):
         pv.ImageData(dimensions=(2, 2, 2)).to_quads()
+
+    match = 'Input must be 2-dimensional. Got 1-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(3, 1, 1)).to_quads()
 
 
 def test_create_image_data_from_specs():
