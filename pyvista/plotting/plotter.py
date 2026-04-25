@@ -7213,7 +7213,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if self._theme.notebook is not None:
                 notebook = self._theme.notebook
             else:
-                notebook = scooby.in_ipykernel()
+                from pyvista.jupyter import _is_marimo  # noqa: PLC0415
+
+                notebook = scooby.in_ipykernel() or _is_marimo()
 
         self.notebook = notebook
         if self.notebook or pv.ON_SCREENSHOT:
