@@ -2153,8 +2153,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if self.render_window is None:
             msg = 'The render window has been closed.'
             raise AttributeError(msg)
-        # TODO: add check to make sure this is called before the window is realized
-        self.render_window.GetStereoCapableWindow()
+        if not self.render_window.GetNeverRendered():
+            msg = 'Stereo rendering must be enabled before the window is realized.'
+            raise RuntimeError(msg)
+        self.render_window.SetStereoCapableWindow(1)
         self.render_window.SetStereoType(stereo_type.value)
         self.render_window.SetStereoRender(1)
         self.render_window.StereoUpdate()
