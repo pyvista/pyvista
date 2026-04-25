@@ -19,7 +19,6 @@ from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
 
 from . import _vtk
-from .colors import _ALL_COLORS_LITERAL
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
@@ -32,6 +31,7 @@ if TYPE_CHECKING:
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
     from .charts import ChartPie as ChartPie
+    from .colors import _ALL_COLORS_LITERAL
     from .colors import _CMCRAMERI_CMAPS_LITERAL
     from .colors import _CMOCEAN_CMAPS_LITERAL
     from .colors import _COLORCET_CMAPS_LITERAL
@@ -64,7 +64,7 @@ ColorLike = Union[
     str,
     'Color',
     _vtk.vtkColor3ub,
-    _ALL_COLORS_LITERAL,
+    '_ALL_COLORS_LITERAL',
 ]
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']

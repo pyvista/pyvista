@@ -127,6 +127,6 @@ def _cubemap_from_paths(image_paths):
     # add each image to the cubemap
     for i, fn in enumerate(image_paths):
         # Read and flip along y-axis
-        texture.SetInputDataObject(i, pv.read(fn)._flip_uniform(1))
+        texture.SetInputDataObject(i, pv.read(fn, cls=pv.ImageData)._flip_uniform(1))
 
     return texture

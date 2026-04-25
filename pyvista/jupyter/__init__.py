@@ -2,28 +2,64 @@
 
 from __future__ import annotations
 
-import contextlib
+# noqa-reason: ``Callable`` is used in the ``JupyterBackendRegistration``
+# NamedTuple field annotations and must be available at runtime so that
+# ``typing.get_type_hints`` (called by Sphinx autodoc) can resolve them.
+from collections.abc import Callable  # noqa: TC003
+from importlib.metadata import entry_points
 import importlib.util
-from typing import TYPE_CHECKING
 from typing import Literal
+from typing import NamedTuple
 from typing import get_args
 
 from typing_extensions import TypeIs
 
 import pyvista as pv
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from pyvista.core.utilities._registry_helpers import handler_source
 
 JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
+JUPYTER_BACKEND_ENTRY_POINT_GROUP = 'pyvista.jupyter_backends'
+
 _custom_backends: dict[str, Callable[..., object]] = {}
+_custom_backend_sources: dict[str, str] = {}
 _entry_points_loaded: bool = False
 
 
-def register_jupyter_backend(name: str, handler: Callable[..., object]) -> None:
+class JupyterBackendRegistration(NamedTuple):
+    """Describe one registered custom Jupyter backend.
+
+    Returned by :func:`~pyvista.registered_jupyter_backends`.
+
+    .. versionadded:: 0.48.0
+
+    Attributes
+    ----------
+    name : str
+        Backend name.
+    handler : callable
+        The backend handler callable.
+    source : str
+        Human-readable origin in the form ``'module.qualname'`` for
+        explicit registrations or the entry-point ``value`` for
+        plugin-discovered registrations.
+
+    """
+
+    name: str
+    handler: Callable[..., object]
+    source: str
+
+
+def register_jupyter_backend(
+    name: str,
+    handler: Callable[..., object],
+    *,
+    override: bool = False,
+) -> None:
     """Register a custom Jupyter backend handler.
 
     .. versionadded:: 0.48.0
@@ -32,15 +68,27 @@ def register_jupyter_backend(name: str, handler: Callable[..., object]) -> None:
     ----------
     name : str
         Name of the backend (e.g. ``'custom'``). Must not collide with
-        a built-in backend name.
+        a built-in backend name unless ``override=True`` is passed.
     handler : callable
         A callable with signature ``handler(plotter, **kwargs)`` that
         returns an IPython-displayable object.
+    override : bool, default: False
+        If ``True``, allow registering a name that collides with a
+        built-in backend. Also silences the warning emitted when
+        replacing an existing custom registration.
 
     Raises
     ------
     ValueError
-        If ``name`` collides with a built-in backend.
+        If ``name`` collides with a built-in backend and ``override``
+        is ``False``.
+
+    Warns
+    -----
+    UserWarning
+        If ``name`` already refers to a registered custom backend. The
+        new registration replaces the old one (last wins); pass
+        ``override=True`` to silence the warning.
 
     Examples
     --------
@@ -50,10 +98,49 @@ def register_jupyter_backend(name: str, handler: Callable[..., object]) -> None:
 
     """
     name = name.lower()
-    if name in ALLOWED_BACKENDS:
-        msg = f'Cannot register custom backend "{name}": collides with built-in backend.'
+    if not override and name in ALLOWED_BACKENDS:
+        msg = (
+            f'Cannot register custom backend "{name}": collides with built-in backend. '
+            'Use override=True to replace it.'
+        )
         raise ValueError(msg)
+    if not override and name in _custom_backends:
+        existing_source = _custom_backend_sources.get(name, '<unknown>')
+        warn_external(
+            f'Registering Jupyter backend "{name}" replaces an existing custom '
+            f'registration from {existing_source}.',
+        )
     _custom_backends[name] = handler
+    _custom_backend_sources[name] = handler_source(handler)
+
+
+def registered_jupyter_backends() -> tuple[JupyterBackendRegistration, ...]:
+    """Return every custom Jupyter backend currently registered.
+
+    Forces discovery of any pending entry-point plugins so the returned
+    list reflects every backend visible to PyVista. A plugin that fails
+    to import emits a ``UserWarning`` and is skipped; the rest still
+    appear in the result.
+
+    .. versionadded:: 0.48.0
+
+    Returns
+    -------
+    tuple[JupyterBackendRegistration, ...]
+        One record per registered backend. Each record exposes
+        ``name``, ``handler``, and ``source``. Built-in backends are
+        not included; only custom registrations.
+
+    """
+    _ensure_entry_points()
+    return tuple(
+        JupyterBackendRegistration(
+            name=name,
+            handler=handler,
+            source=_custom_backend_sources.get(name, '<unknown>'),
+        )
+        for name, handler in _custom_backends.items()
+    )
 
 
 def _get_custom_backend_handler(name: str) -> Callable[..., object] | None:
@@ -75,24 +162,35 @@ def _get_custom_backend_handler(name: str) -> Callable[..., object] | None:
     handler = _custom_backends.get(name)
     if handler is not None:
         return handler
-    _discover_entry_points()
+    _ensure_entry_points()
     return _custom_backends.get(name)
 
 
-def _discover_entry_points() -> None:
-    """Scan ``pyvista.jupyter.backends`` entry point group and load handlers."""
+def _ensure_entry_points() -> None:
+    """Scan ``pyvista.jupyter_backends`` entry point group and load handlers."""
     global _entry_points_loaded  # noqa: PLW0603
     if _entry_points_loaded:
         return
     _entry_points_loaded = True
-    from importlib.metadata import entry_points  # noqa: PLC0415
 
-    eps = entry_points(group='pyvista.jupyter.backends')
+    eps = entry_points(group=JUPYTER_BACKEND_ENTRY_POINT_GROUP)
     for ep in eps:
         name = ep.name.lower()
-        if name not in ALLOWED_BACKENDS and name not in _custom_backends:
-            with contextlib.suppress(Exception):
-                _custom_backends[name] = ep.load()
+        if name in ALLOWED_BACKENDS or name in _custom_backends:
+            continue
+        try:
+            # ep.load() runs third-party import machinery — it can raise
+            # literally anything. Convert to a warning so one broken
+            # plugin cannot take down the Jupyter integration.
+            handler = ep.load()
+        except Exception as err:  # noqa: BLE001
+            warn_external(
+                f'Failed to load {JUPYTER_BACKEND_ENTRY_POINT_GROUP} entry point '
+                f'"{ep.value}" for "{name}": {err}',
+            )
+            continue
+        _custom_backends[name] = handler
+        _custom_backend_sources[name] = ep.value
 
 
 def _resolve_backend() -> str:
@@ -106,7 +204,7 @@ def _resolve_backend() -> str:
         Name of the best available backend.
 
     """
-    _discover_entry_points()
+    _ensure_entry_points()
     if _custom_backends:
         return next(iter(_custom_backends))
 

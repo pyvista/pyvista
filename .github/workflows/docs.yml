@@ -43,9 +43,9 @@ jobs:
           name: pr-info
           path: pr-info/
 
-  cache-vtk-data:
-    name: Cache vtk-data
-    uses: ./.github/workflows/cache-vtk-data.yml
+  cache-pyvista-data:
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
       runs-on: "ubuntu-24.04-self-hosted-gpu"
@@ -53,11 +53,11 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
-    needs: cache-vtk-data
+    needs: cache-pyvista-data
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
-      PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
       - uses: actions/checkout@v6
         with:
@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: 3.14
           cache: "pip"
 
       - name: Set environment for self-hosted
@@ -79,11 +79,11 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Restore vtk-data cache
+      - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
-          path: vtk-data
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          path: pyvista-data
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -180,7 +180,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: 3.14
           cache: "pip"
 
       - name: Install tox-uv
@@ -224,7 +224,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: 3.14
       - name: Install Dependencies
         run: |
           pip install cookiecutter

@@ -17,6 +17,7 @@ import pytest
 
 import pyvista as pv
 from pyvista.plotting import _vtk
+from pyvista.plotting import colors as _colors_module
 from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
@@ -47,6 +48,63 @@ if importlib.util.find_spec('cmcrameri'):
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
+
+
+# Regression test for https://github.com/pyvista/pyvista/issues/8553
+# These names exist in both matplotlib and third-party colormap packages.
+# ``get_cmap_safe`` must return matplotlib's version so that rendering is
+# reproducible regardless of which optional packages happen to be installed.
+_SHADOWED_MATPLOTLIB_CMAPS = [
+    'coolwarm',
+    'coolwarm_r',
+    'gray',
+    'gray_r',
+    'rainbow',
+    'rainbow_r',
+    'berlin',
+    'berlin_r',
+    'managua',
+    'managua_r',
+    'vanimo',
+    'vanimo_r',
+]
+
+
+@pytest.mark.parametrize('name', _SHADOWED_MATPLOTLIB_CMAPS)
+def test_get_cmap_safe_prefers_matplotlib(name):
+    if name not in mpl.colormaps:
+        pytest.xfail(reason=f'Matplotlib is missing colormap {name!r}.')
+    resolved = get_cmap_safe(name)
+    expected = mpl.colormaps[name]
+    # Matplotlib returns fresh instances on each access, so compare sampled
+    # RGBA values rather than object identity.
+    xs = np.linspace(0, 1, 64)
+    np.testing.assert_allclose(resolved(xs), expected(xs))
+
+
+def test_get_cmap_safe_third_party_unique_names():
+    # Names only in the 3rd-party packages still resolve through them.
+    if importlib.util.find_spec('colorcet'):
+        assert get_cmap_safe('fire').name == 'fire'
+    if importlib.util.find_spec('cmocean'):
+        assert get_cmap_safe('algae').name == 'algae'
+    if importlib.util.find_spec('cmcrameri'):
+        assert get_cmap_safe('batlow').name == 'batlow'
+
+
+def test_get_cmap_safe_missing_third_party_raises(monkeypatch):
+    # If the 3rd-party package is missing but the name is in the curated
+    # set, raise ModuleNotFoundError pointing the user to `pyvista[colormaps]`.
+    real_import_module = _colors_module.importlib.import_module
+
+    def fake_import_module(name, *args, **kwargs):
+        if name == 'colorcet':
+            raise ImportError(name)
+        return real_import_module(name, *args, **kwargs)
+
+    monkeypatch.setattr(_colors_module.importlib, 'import_module', fake_import_module)
+    with pytest.raises(ModuleNotFoundError, match='colorcet'):
+        get_cmap_safe('fire')
 
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])

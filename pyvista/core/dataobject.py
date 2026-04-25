@@ -101,8 +101,34 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
     def __getattr__(self: Self, item: str) -> Any:
-        """Get attribute from base class if not found."""
+        """Get attribute from base class if not found.
+
+        Before falling through to the VTK base class, check whether
+        ``item`` matches a pending ``pyvista.accessors`` entry point.
+        A match triggers a one-shot plugin import, after which normal
+        attribute resolution finds the newly-attached accessor
+        descriptor.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
+
+        if _resolve_pending_accessor(item):
+            return object.__getattribute__(self, item)
         return super().__getattribute__(item)
+
+    def __dir__(self: Self) -> list[str]:
+        """Include pending accessor names so tab completion surfaces them.
+
+        Plugin-contributed accessors registered via the ``pyvista.accessors``
+        entry-point group are imported lazily on first attribute access.
+        Listing their names alongside the normal attribute set lets IPython
+        / Jupyter / REPL tab completion surface them without paying the
+        plugin import cost ahead of time.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.core.utilities.accessor_registry import _pending_accessor_names
+
+        return sorted({*super().__dir__(), *_pending_accessor_names()})
 
     def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.

@@ -92,6 +92,8 @@ Registration can be done programmatically or via Python entry points
 for zero-config discovery at install time.
 
 .. autofunction:: pyvista.register_reader
+.. autofunction:: pyvista.registered_readers
+.. autoclass:: pyvista.ReaderRegistration
 
 **Entry points**
 
@@ -129,6 +131,8 @@ and supports programmatic calls, decorators, and Python entry points
 for zero-config discovery at install time.
 
 .. autofunction:: pyvista.register_writer
+.. autofunction:: pyvista.registered_writers
+.. autoclass:: pyvista.WriterRegistration
 
 **Handler signature**
 
@@ -194,6 +198,43 @@ over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.
 
 
+Writer Classes
+~~~~~~~~~~~~~~
+
+PyVista provides built-in writer classes for saving datasets to various file
+formats. These are used internally by :meth:`pyvista.DataObject.save`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   BaseWriter
+   BMPWriter
+   DataSetWriter
+   HDFWriter
+   HoudiniPolyDataWriter
+   IVWriter
+   JPEGWriter
+   NIFTIImageWriter
+   OBJWriter
+   PLYWriter
+   PNGWriter
+   PNMWriter
+   PolyDataWriter
+   RectilinearGridWriter
+   STLWriter
+   SimplePointsWriter
+   StructuredGridWriter
+   TIFFWriter
+   UnstructuredGridWriter
+   XMLImageDataWriter
+   XMLMultiBlockDataWriter
+   XMLPartitionedDataSetWriter
+   XMLPolyDataWriter
+   XMLRectilinearGridWriter
+   XMLStructuredGridWriter
+   XMLUnstructuredGridWriter
+
+
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
 
@@ -212,6 +253,8 @@ and setting time or iterations for reading.
 
    BaseReader
    PointCellDataSelection
+   PVDDataSet
+   SeriesDataSet
    TimeReader
 
 

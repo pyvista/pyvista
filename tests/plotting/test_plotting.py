@@ -1514,6 +1514,37 @@ def test_screenshot_bytes():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_repr_png_before_render():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    assert pl._repr_png_() is None
+    assert pl._first_time
+
+
+def test_repr_png_after_show(verify_image_cache):
+    verify_image_cache.skip = True
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show()
+    png = pl._repr_png_()
+    assert isinstance(png, bytes)
+    im = Image.open(io.BytesIO(png))
+    assert im.format == 'PNG'
+
+
+def test_repr_png_after_close(verify_image_cache):
+    verify_image_cache.skip = True
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show()
+    pl.close()
+    png = pl._repr_png_()
+    assert isinstance(png, bytes)
+    im = Image.open(io.BytesIO(png))
+    assert im.format == 'PNG'
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_rendering(tmpdir):
     pl = pv.Plotter()
     pl.add_mesh(examples.load_airplane(), smooth_shading=True)

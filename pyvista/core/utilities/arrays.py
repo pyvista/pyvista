@@ -416,7 +416,7 @@ def get_array_association(  # noqa: PLR0917
 
     Parameters
     ----------
-    mesh : Dataset
+    mesh : pyvista.DataSet
         Dataset to get the array association from.
 
     name : str
@@ -834,10 +834,10 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
 
     Raises
     ------
-    MissingDataError
+    pyvista.core.errors.MissingDataError
         If no vector-like arrays exist.
 
-    AmbiguousDataError
+    pyvista.core.errors.AmbiguousDataError
         If more than one vector-like arrays exist.
 
     Returns
@@ -902,10 +902,10 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
 
     Raises
     ------
-    MissingDataError
+    pyvista.core.errors.MissingDataError
         If no arrays exist.
 
-    AmbiguousDataError
+    pyvista.core.errors.AmbiguousDataError
         If more than one array exists.
 
     Returns
