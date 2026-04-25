@@ -5213,11 +5213,19 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if render is None:
             kwargs['render'] = not self._first_time
 
-        # check if maper exists
+        # check if mapper, lookup_table, or cmap exists; the three ways of
+        # specifying the mapping. Only use saved mapper if none are specified.
+        # No input validation here; ScalarBars.add_scalar_bar will raise
+        # ValueError if more than one of mapper/lookup_table/cmap is provided.
         mapper = kwargs.get('mapper')
-        if mapper is None:
+        lookup_table = kwargs.get('lookup_table')
+        cmap = kwargs.get('cmap')
+        if mapper is None and lookup_table is None and cmap is None:
             if self.mapper is None:
-                msg = 'Mapper does not exist.  Add a mesh with scalars first.'
+                msg = (
+                    'Neither `cmap`/`clim`, `lookup_table`, or `mapper` provided.'
+                    ' To use an existing Mapper, add a mesh with scalars first.'
+                )
                 raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
 

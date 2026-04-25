@@ -1015,6 +1015,40 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     pl.show()
 
 
+def test_plot_add_scalar_bar_cmap(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+
+    pl = pv.Plotter()
+
+    ltable = pv.LookupTable()
+    with pytest.raises(ValueError, match='Exactly one of'):
+        pl.add_scalar_bar(cmap='jet', lookup_table=ltable)
+
+    cmap = 'bwr'
+    pl.add_scalar_bar(cmap=cmap)
+
+    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
+    if pv.vtk_version_info >= (9, 4, 0):
+        assert pl.scalar_bar.lookup_table.cmap.name == cmap
+
+    pl.show()
+
+
+def test_plot_add_scalar_bar_lookup_table(verify_image_cache):
+    """Verify we can add a scalar bar just by specifying a lookup table."""
+    verify_image_cache.windows_skip_image_cache = True
+
+    ltable = pv.LookupTable(cmap='reds')
+    pl = pv.Plotter()
+    pl.add_scalar_bar(lookup_table=ltable)
+
+    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
+    if pv.vtk_version_info >= (9, 4, 0):
+        pl.add_scalar_bar(lookup_table=ltable)
+
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_plot_invalid_add_scalar_bar():
     pl = pv.Plotter()
