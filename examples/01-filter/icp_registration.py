@@ -8,8 +8,6 @@ Recover the rigid transform between two surfaces with the iterative closest
 point implementation behind :func:`pyvista.DataSetFilters.align`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

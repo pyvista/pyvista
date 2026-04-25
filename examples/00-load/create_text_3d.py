@@ -7,8 +7,6 @@ Create 3D Text
 Generate extruded text geometry with :func:`pyvista.Text3D`.
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

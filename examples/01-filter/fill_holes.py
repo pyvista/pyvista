@@ -8,8 +8,6 @@ Seal small openings in a surface with
 :func:`pyvista.PolyDataFilters.fill_holes`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

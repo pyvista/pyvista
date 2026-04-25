@@ -8,8 +8,6 @@ Integrate the Lorenz system and render the trajectory as a colored tube
 built from :func:`pyvista.lines_from_points`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

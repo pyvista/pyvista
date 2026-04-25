@@ -8,8 +8,6 @@ Compare a standard planar clip, which leaves an open boundary, with
 :func:`pyvista.PolyDataFilters.clip_closed_surface`, which seals the cut face.
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

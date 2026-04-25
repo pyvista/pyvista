@@ -8,8 +8,6 @@ Color a source point cloud by the distance to its nearest neighbors in a target
 cloud using :func:`pyvista.DataSet.find_closest_point`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

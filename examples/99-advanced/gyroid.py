@@ -8,8 +8,6 @@ Contour an implicit gyroid field stored on :class:`pyvista.ImageData` into a
 periodic surface with :func:`pyvista.DataSetFilters.contour`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

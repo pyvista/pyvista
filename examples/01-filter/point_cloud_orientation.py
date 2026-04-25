@@ -8,8 +8,6 @@ Fit a line, plane, and oriented bounding box to a tilted point cloud with
 PyVista's principal-axis utilities.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

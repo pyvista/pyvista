@@ -8,8 +8,6 @@ Assemble a simple molecule from :func:`pyvista.Sphere` atoms and
 :func:`pyvista.Cylinder` bonds.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

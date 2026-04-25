@@ -8,8 +8,6 @@ Generate arc geometry with :func:`pyvista.CircularArc` and
 :func:`pyvista.CircularArcFromNormal`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

@@ -20,8 +20,6 @@ Y. Eldar et al., "The farthest point strategy for progressive image sampling,"
 """
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples
