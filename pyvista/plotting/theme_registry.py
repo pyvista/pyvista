@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from importlib import import_module
+from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -11,6 +12,7 @@ from typing import NamedTuple
 from typing import TypedDict
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._registry_helpers import handler_source
 
 if TYPE_CHECKING:
     from .themes import Theme
@@ -43,7 +45,7 @@ class ThemeRegistration(NamedTuple):
     Inspect how a name became registered.
 
     >>> import pyvista as pv
-    >>> pv.registered_themes()['dark']
+    >>> next(r for r in pv.registered_themes() if r.name == 'dark')
     ThemeRegistration(name='dark', kind='subclass', source='pyvista.plotting.themes.DarkTheme')
 
     """
@@ -61,6 +63,7 @@ class _ThemeRegistryState(TypedDict):
     aliases: set[str]
     discovered: dict[str, type[Theme] | Theme]
     discovered_sources: dict[str, str]
+    pending: dict[str, list[EntryPoint]]
     loaded: bool
 
 
@@ -69,6 +72,12 @@ _registered_theme_classes_sources: dict[str, str] = {}
 _registered_theme_aliases: set[str] = set()
 _discovered_entry_point_themes: dict[str, type[Theme] | Theme] = {}
 _discovered_entry_point_sources: dict[str, str] = {}
+# Entry-point metadata, populated by ``_ensure_entry_points``. Maps each
+# theme name to the list of ``EntryPoint`` records that declared it. The
+# plugin module itself is *not* imported until that name is actually
+# requested via :func:`_resolve_theme`, keeping ``set_plot_theme`` calls
+# for built-in themes free of third-party plugin import cost.
+_pending_ep_themes: dict[str, list[EntryPoint]] = {}
 _entry_points_loaded: bool = False
 
 
@@ -85,6 +94,7 @@ def _save_registry_state() -> _ThemeRegistryState:
         'aliases': _registered_theme_aliases.copy(),
         'discovered': _discovered_entry_point_themes.copy(),
         'discovered_sources': _discovered_entry_point_sources.copy(),
+        'pending': {k: list(v) for k, v in _pending_ep_themes.items()},
         'loaded': _entry_points_loaded,
     }
 
@@ -102,6 +112,8 @@ def _restore_registry_state(state: _ThemeRegistryState) -> None:
     _discovered_entry_point_themes.update(state['discovered'])
     _discovered_entry_point_sources.clear()
     _discovered_entry_point_sources.update(state['discovered_sources'])
+    _pending_ep_themes.clear()
+    _pending_ep_themes.update({k: list(v) for k, v in state['pending'].items()})
     _entry_points_loaded = state['loaded']
 
 
@@ -109,7 +121,8 @@ def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
     """Register a ``Theme`` subclass. Called from ``Theme.__init_subclass__``.
 
     Collisions warn (do not raise) so that a subclass definition at
-    import time cannot crash the interpreter.
+    import time cannot crash the interpreter. Last wins, mirroring the
+    behavior of every other PyVista plugin registry.
     """
     normalized = _normalize_theme_name(name)
     if not normalized:
@@ -120,10 +133,9 @@ def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
     if normalized in _registered_theme_classes:
         existing = _registered_theme_classes_sources.get(normalized, '<unknown>')
         warn_external(
-            f'Theme name "{normalized}" is already registered by {existing}; '
-            f'ignoring duplicate registration from {source}.',
+            f'Registering theme "{normalized}" from {source} replaces an '
+            f'existing registration from {existing}.',
         )
-        return
     _registered_theme_classes[normalized] = cls
     _registered_theme_classes_sources[normalized] = source
 
@@ -136,7 +148,7 @@ def _register_alias(name: str, cls: type[Theme]) -> None:
     """
     normalized = _normalize_theme_name(name)
     _registered_theme_classes[normalized] = cls
-    _registered_theme_classes_sources[normalized] = f'{cls.__module__}.{cls.__qualname__}'
+    _registered_theme_classes_sources[normalized] = handler_source(cls)
     _registered_theme_aliases.add(normalized)
 
 
@@ -152,10 +164,20 @@ def _lookup_explicit(normalized: str) -> Theme | None:
     return None
 
 
+def _lookup_discovered(normalized: str) -> Theme | None:
+    """Look up a normalized name in the loaded entry-point registry."""
+    discovered = _discovered_entry_point_themes.get(normalized)
+    if isinstance(discovered, type):
+        return discovered()
+    return discovered
+
+
 def _resolve_theme(name: str) -> Theme | None:
     """Look up a theme by name and return a usable ``Theme`` instance.
 
     Explicit subclass registrations win over entry-point discoveries.
+    Entry-point plugins are imported lazily — only the plugin claiming
+    *name* loads, sibling plugins stay pending.
     """
     normalized = _normalize_theme_name(name)
 
@@ -165,28 +187,51 @@ def _resolve_theme(name: str) -> Theme | None:
 
     _ensure_entry_points()
 
+    # Fast path: load the plugin claiming this exact name.
+    if normalized in _pending_ep_themes:
+        _resolve_pending_theme(normalized)
+
     # Loading an entry point's module may have triggered __init_subclass__
     # on a Theme subclass, which populates the explicit registry. Re-check
     # before falling back to the discovered registry.
     resolved = _lookup_explicit(normalized)
     if resolved is not None:
         return resolved
+    resolved = _lookup_discovered(normalized)
+    if resolved is not None:
+        return resolved
 
-    discovered = _discovered_entry_point_themes.get(normalized)
-    if isinstance(discovered, type):
-        return discovered()
-    return discovered
+    # Final fallback: a Mapping-style entry point may expose names that
+    # differ from its ``ep.name``. The fast path above only matches by
+    # ``ep.name``, so resolve any remaining pending EPs as a last resort.
+    for pending_name in list(_pending_ep_themes):
+        _resolve_pending_theme(pending_name)
+        resolved = _lookup_explicit(normalized)
+        if resolved is not None:
+            return resolved
+        resolved = _lookup_discovered(normalized)
+        if resolved is not None:
+            return resolved
+    return None
 
 
 def _available_theme_names() -> tuple[str, ...]:
-    """Return all currently registered theme names."""
+    """Return all currently registered theme names.
+
+    Pending entry-point names appear in the result without triggering
+    plugin imports — only metadata is consulted.
+    """
     _ensure_entry_points()
-    names = set(_registered_theme_classes) | set(_discovered_entry_point_themes)
+    names = (
+        set(_registered_theme_classes)
+        | set(_discovered_entry_point_themes)
+        | set(_pending_ep_themes)
+    )
     return tuple(sorted(names))
 
 
-def registered_themes() -> dict[str, ThemeRegistration]:
-    """Return all registered themes, keyed by name.
+def registered_themes() -> tuple[ThemeRegistration, ...]:
+    """Return all registered themes.
 
     Use this to discover which names can be passed to
     :func:`~pyvista.set_plot_theme` or the ``PYVISTA_PLOT_THEME``
@@ -195,17 +240,17 @@ def registered_themes() -> dict[str, ThemeRegistration]:
 
     Returns
     -------
-    dict[str, pyvista.ThemeRegistration]
-        Mapping of theme name to a :class:`~pyvista.ThemeRegistration`
-        record describing how the name was registered.
+    tuple[pyvista.ThemeRegistration, ...]
+        One record per registered theme, sorted by name. Each record
+        exposes ``name``, ``kind``, and ``source``.
 
     Examples
     --------
     List available theme names.
 
     >>> import pyvista as pv
-    >>> for name in sorted(pv.registered_themes()):
-    ...     print(name)
+    >>> for record in pv.registered_themes():
+    ...     print(record.name)
     dark
     default
     document
@@ -217,30 +262,36 @@ def registered_themes() -> dict[str, ThemeRegistration]:
 
     Inspect how a name became registered.
 
-    >>> pv.registered_themes()['dark'].kind
+    >>> next(r for r in pv.registered_themes() if r.name == 'dark').kind
     'subclass'
 
     """
     _ensure_entry_points()
-    out: dict[str, ThemeRegistration] = {}
+    # Force every pending plugin to load so the result reflects every
+    # theme visible to PyVista. A plugin that fails to import emits a
+    # ``UserWarning`` and is skipped; the rest still appear.
+    for pending_name in list(_pending_ep_themes):
+        _resolve_pending_theme(pending_name)
+    records: list[ThemeRegistration] = []
     for name, cls in _registered_theme_classes.items():
         kind: Literal['subclass', 'alias'] = (
             'alias' if name in _registered_theme_aliases else 'subclass'
         )
-        source = _registered_theme_classes_sources.get(
-            name, f'{cls.__module__}.{cls.__qualname__}'
-        )
-        out[name] = ThemeRegistration(name=name, kind=kind, source=source)
+        source = _registered_theme_classes_sources.get(name, handler_source(cls))
+        records.append(ThemeRegistration(name=name, kind=kind, source=source))
+    seen = {r.name for r in records}
     for name in _discovered_entry_point_themes:
-        if name in out:
+        if name in seen:
             # Explicit registrations always win over entry-point providers.
             continue
-        out[name] = ThemeRegistration(
-            name=name,
-            kind='entry_point',
-            source=_discovered_entry_point_sources.get(name, '<unknown>'),
+        records.append(
+            ThemeRegistration(
+                name=name,
+                kind='entry_point',
+                source=_discovered_entry_point_sources.get(name, '<unknown>'),
+            )
         )
-    return dict(sorted(out.items()))
+    return tuple(sorted(records, key=lambda r: r.name))
 
 
 def _resolve_dotted_path(spec: str) -> type[Theme]:
@@ -272,36 +323,88 @@ def _resolve_dotted_path(spec: str) -> type[Theme]:
 
 
 def _ensure_entry_points() -> None:
-    """Discover ``pyvista.themes`` entry points once."""
+    """Scan ``pyvista.themes`` entry-point metadata once.
+
+    Populates :data:`_pending_ep_themes` with every name declared by an
+    installed plugin. The plugin modules themselves are **not** imported
+    here; the cost is one ``importlib.metadata.entry_points`` call.
+    Plugin imports are deferred to :func:`_resolve_pending_theme`, which
+    runs only when a theme with that specific name is actually requested.
+    """
     global _entry_points_loaded  # noqa: PLW0603
     if _entry_points_loaded:
         return
-
     _entry_points_loaded = True
-    for theme_entry_point in entry_points(group=THEME_ENTRY_POINT_GROUP):
-        source = theme_entry_point.value
-        try:
-            loaded = theme_entry_point.load()
-        except Exception as exc:  # noqa: BLE001
-            msg = (
-                f'Failed to load {THEME_ENTRY_POINT_GROUP} entry point '
-                f'"{theme_entry_point.name}" from {source}: {exc}'
+
+    for ep in entry_points(group=THEME_ENTRY_POINT_GROUP):
+        normalized = _normalize_theme_name(ep.name)
+        if not normalized:
+            warn_external(
+                f'Ignoring {THEME_ENTRY_POINT_GROUP} entry point from '
+                f'{ep.value}: theme name must not be empty.',
             )
-            warn_external(msg)
             continue
-
-        if isinstance(loaded, Mapping):
-            for theme_name, theme_obj in loaded.items():
-                if not isinstance(theme_name, str):
-                    warn_external(
-                        f'Ignoring {THEME_ENTRY_POINT_GROUP} entry point from '
-                        f'{source}: theme names must be strings.',
-                    )
-                    continue
-                _register_discovered_theme(theme_name, theme_obj, source=source)
+        if normalized in _registered_theme_classes:
+            # Explicit registration wins silently — user-owned registrations
+            # shouldn't be shouted at just because a plugin also defines it.
             continue
+        _pending_ep_themes.setdefault(normalized, []).append(ep)
 
-        _register_discovered_theme(theme_entry_point.name, loaded, source=source)
+
+def _resolve_pending_theme(name: str) -> bool:
+    """Import the plugin claiming *name*, if any.
+
+    Returns
+    -------
+    bool
+        ``True`` if a plugin loaded successfully and contributed at least
+        one registration. ``False`` if no pending plugin matches, or if
+        the plugin failed to import.
+
+    Notes
+    -----
+    A plugin that fails to import emits a ``UserWarning`` and is dropped
+    from the pending list, so subsequent lookups of the same name fall
+    straight through without re-triggering the import or re-emitting the
+    warning.
+
+    """
+    eps = _pending_ep_themes.pop(name, None)
+    if not eps:
+        return False
+    winner = eps[0]
+    source = winner.value
+    try:
+        # ep.load() runs third-party import machinery — it can raise
+        # literally anything. Convert to a warning so one broken plugin
+        # cannot take down every theme lookup.
+        loaded = winner.load()
+    except Exception as exc:  # noqa: BLE001
+        warn_external(
+            f'Failed to load {THEME_ENTRY_POINT_GROUP} entry point '
+            f'"{winner.name}" from {source}: {exc}',
+        )
+        return False
+
+    if isinstance(loaded, Mapping):
+        for theme_name, theme_obj in loaded.items():
+            if not isinstance(theme_name, str):
+                warn_external(
+                    f'Ignoring {THEME_ENTRY_POINT_GROUP} entry point from '
+                    f'{source}: theme names must be strings.',
+                )
+                continue
+            _register_discovered_theme(theme_name, theme_obj, source=source)
+    else:
+        _register_discovered_theme(winner.name, loaded, source=source)
+
+    if len(eps) > 1:
+        providers = ', '.join(ep.value for ep in eps)
+        warn_external(
+            f'Multiple {THEME_ENTRY_POINT_GROUP} providers registered for '
+            f'"{name}": {providers}. Using {source}.',
+        )
+    return name in _registered_theme_classes or name in _discovered_entry_point_themes
 
 
 def _register_discovered_theme(name: str, obj: object, *, source: str) -> None:
