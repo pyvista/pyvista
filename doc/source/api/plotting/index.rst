@@ -7,7 +7,7 @@ Plotting
 * Plotting tools built for interactivity (see :ref:`widgets`).
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
 
    plotting
    qt_plotting
@@ -36,6 +36,7 @@ all plotting functionality in PyVista.
    CornerAnnotation
    CubeAxesActor
    DataSetMapper
+   Follower
    Label
    LookupTable
    PlanesAssembly
@@ -104,6 +105,54 @@ class.
    :toctree: _autosummary
 
    plotting.picking.PickingHelper
+
+
+Interactor Style API
+--------------------
+An interactor style sets mouse and key bindings to interact with
+the plot. Most often methods like :func:`pyvista.Plotter.enable_trackball_style`
+would be used, but this API can be used as a starting point for customizing the
+interaction styles.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plotting.render_window_interactor.InteractorStyleCaptureMixin
+   plotting.render_window_interactor.InteractorStyleImage
+   plotting.render_window_interactor.InteractorStyleJoystickActor
+   plotting.render_window_interactor.InteractorStyleJoystickCamera
+   plotting.render_window_interactor.InteractorStyleRubberBand2D
+   plotting.render_window_interactor.InteractorStyleRubberBandPick
+   plotting.render_window_interactor.InteractorStyleTrackballActor
+   plotting.render_window_interactor.InteractorStyleTrackballCamera
+   plotting.render_window_interactor.InteractorStyleTerrain
+   plotting.render_window_interactor.InteractorStyleZoom
+
+
+VTK Algorithm Utilities
+~~~~~~~~~~~~~~~~~~~~~~~
+These functions create VTK algorithm pipeline nodes for use with PyVista's
+pipeline-based rendering. They are useful for advanced users who need
+fine-grained control over the VTK pipeline.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plotting.utilities.active_scalars_algorithm
+   plotting.utilities.add_ids_algorithm
+   plotting.utilities.algorithm_to_mesh_handler
+   plotting.utilities.callback_algorithm
+   plotting.utilities.cell_data_to_point_data_algorithm
+   plotting.utilities.crinkle_algorithm
+   plotting.utilities.decimation_algorithm
+   plotting.utilities.extract_surface_algorithm
+   plotting.utilities.outline_algorithm
+   plotting.utilities.point_data_to_cell_data_algorithm
+   plotting.utilities.pointset_to_polydata_algorithm
+   plotting.utilities.set_algorithm_input
+   plotting.utilities.smooth_shading_algorithm
+   plotting.utilities.source_algorithm
+   plotting.utilities.triangulate_algorithm
 
 
 Convenience Functions

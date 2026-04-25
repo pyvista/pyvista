@@ -1,4 +1,4 @@
-"""Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+"""Sub-classes for :vtk:`vtkRectilinearGrid` and :vtk:`vtkImageData`."""
 
 from __future__ import annotations
 
@@ -8,25 +8,25 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import Literal
 from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing_extensions import Self
-
-    from pyvista import StructuredGrid
-    from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import RotationLike
-    from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
-
+from pyvista.core.utilities.writer import BaseWriter
+from pyvista.core.utilities.writer import BMPWriter
+from pyvista.core.utilities.writer import DataSetWriter
+from pyvista.core.utilities.writer import JPEGWriter
+from pyvista.core.utilities.writer import NIFTIImageWriter
+from pyvista.core.utilities.writer import PNGWriter
+from pyvista.core.utilities.writer import PNMWriter
+from pyvista.core.utilities.writer import RectilinearGridWriter
+from pyvista.core.utilities.writer import TIFFWriter
+from pyvista.core.utilities.writer import XMLImageDataWriter
+from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -38,6 +38,20 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
 from .utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from pyvista import StructuredGrid
+    from pyvista import UnstructuredGrid
+    from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
+
+    from .filters.data_object import _NestedMeshValidationFields
 
 
 @abstract_class
@@ -85,28 +99,6 @@ class Grid(DataSet):
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
-    @property
-    def dimensionality(self: Self) -> int:
-        """Return the dimensionality of the grid.
-
-        Returns
-        -------
-        int
-            The grid dimensionality.
-
-        Examples
-        --------
-        Get the dimensionality of a uniform grid with dimensions ``(1, 2, 3)``.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(2, 3, 4))
-        >>> grid.dimensionality
-        3
-
-        """
-        dims = np.asarray(self.dimensions)
-        return int(3 - (dims == 1).sum())
-
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
@@ -114,15 +106,15 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     Can be initialized in several ways:
 
     * Create empty grid
-    * Initialize from a ``vtk.vtkRectilinearGrid`` object
+    * Initialize from a :vtk:`vtkRectilinearGrid` object
     * Initialize directly from the point arrays
 
     Parameters
     ----------
-    uinput : str, pathlib.Path, vtk.vtkRectilinearGrid, numpy.ndarray, optional
+    uinput : str, pathlib.Path, :vtk:`vtkRectilinearGrid`, numpy.ndarray, optional
         Filename, dataset, or array to initialize the rectilinear grid from. If a
         filename is passed, pyvista will attempt to load it as a
-        :class:`RectilinearGrid`. If passed a ``vtk.vtkRectilinearGrid``, it
+        :class:`RectilinearGrid`. If passed a :vtk:`vtkRectilinearGrid`, it
         will be wrapped. If a :class:`numpy.ndarray` is passed, this will be
         loaded as the x range.
 
@@ -140,8 +132,15 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         values in any of the array-valued input arguments.
 
     deep : bool, optional
-        Whether to deep copy a ``vtk.vtkRectilinearGrid`` object.
+        Whether to deep copy a :vtk:`vtkRectilinearGrid` object.
         Default is ``False``.  Keyword only.
+
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     Examples
     --------
@@ -153,7 +152,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     >>> grid = pv.RectilinearGrid()
 
-    Initialize from a vtk.vtkRectilinearGrid object
+    Initialize from a :vtk:`vtkRectilinearGrid` object
 
     >>> vtkgrid = vtk.vtkRectilinearGrid()
     >>> grid = pv.RectilinearGrid(vtkgrid)
@@ -168,14 +167,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     """
 
-    _WRITERS: ClassVar[
-        dict[
-            str,
-            type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
-        ]
-    ] = {  # type: ignore[assignment]
-        '.vtk': _vtk.vtkRectilinearGridWriter,
-        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.vtk': RectilinearGridWriter,
+        '.vtr': XMLRectilinearGridWriter,
     }
 
     def __init__(
@@ -183,6 +177,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         *args,
         check_duplicates: bool = False,
         deep: bool = False,
+        validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -197,9 +192,15 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], (np.ndarray, Sequence)):
-                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)  # type: ignore[arg-type]
+                self._from_arrays(
+                    x=np.asanyarray(args[0]),
+                    y=None,  # type: ignore[arg-type]
+                    z=None,  # type: ignore[arg-type]
+                    check_duplicates=check_duplicates,
+                )
             else:
-                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
+                msg = f'Type ({type(args[0])}) not understood by `RectilinearGrid`'
+                raise TypeError(msg)
 
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
@@ -208,20 +209,24 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    np.asanyarray(args[2]),  # type: ignore[misc]
-                    check_duplicates,
+                    x=np.asanyarray(args[0]),
+                    y=np.asanyarray(args[1]),
+                    z=np.asanyarray(args[2]),  # type: ignore[misc]
+                    check_duplicates=check_duplicates,
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    None,  # type: ignore[arg-type]
-                    check_duplicates,
+                    x=np.asanyarray(args[0]),
+                    y=np.asanyarray(args[1]),
+                    z=None,  # type: ignore[arg-type]
+                    check_duplicates=check_duplicates,
                 )
             else:
-                raise TypeError('Arguments not understood by `RectilinearGrid`.')
+                msg = 'Arguments not understood by `RectilinearGrid`.'
+                raise TypeError(msg)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -237,6 +242,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     def _from_arrays(
         self: Self,
+        *,
         x: NumpyArray[float],
         y: NumpyArray[float],
         z: NumpyArray[float],
@@ -308,11 +314,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         # We also know this is 3-length so make it so in typing
         out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
-        if TYPE_CHECKING:  # pragma: no cover
-            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+        if TYPE_CHECKING:
+            out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
-    @property  # type: ignore[explicit-override, override]
+    @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
@@ -346,23 +352,28 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                [  0.,   0.,   0.]])
 
         """
+        if pv.vtk_version_info >= (9, 4, 0):
+            return convert_array(self.GetPoints().GetData())
+
         xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
     def points(
-        self: Self, points: MatrixLike[float] | _vtk.vtkPoints
+        self: Self,
+        points: MatrixLike[float] | _vtk.vtkPoints,  # noqa: ARG002
     ) -> None:  # numpydoc ignore=PR01
         """Raise an AttributeError.
 
         This setter overrides the base class's setter to ensure a user
         does not attempt to set them.
         """
-        raise AttributeError(
+        msg = (
             'The points cannot be set. The points of '
             '`RectilinearGrid` are defined in each axial direction. Please '
-            'use the `x`, `y`, and `z` setters individually.',
+            'use the `x`, `y`, and `z` setters individually.'
         )
+        raise AttributeError(msg)
 
     @property
     def x(self: Self) -> NumpyArray[float]:
@@ -485,10 +496,10 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             Ignored dimensions.
 
         """
-        raise AttributeError(
-            'The dimensions of a `RectilinearGrid` are implicitly '
-            'defined and thus cannot be set.',
+        msg = (
+            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.'
         )
+        raise AttributeError(msg)
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
         """Cast this rectilinear grid to a structured grid.
@@ -511,12 +522,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     Can be initialized in one of several ways:
 
     - Create empty grid
-    - Initialize from a vtk.vtkImageData object
+    - Initialize from a :vtk:`vtkImageData` object
     - Initialize based on dimensions, cell spacing, and origin.
 
     .. versionchanged:: 0.33.0
         First argument must now be either a path or
-        ``vtk.vtkImageData``. Use keyword arguments to specify the
+        :vtk:`vtkImageData`. Use keyword arguments to specify the
         dimensions, spacing, and origin of the uniform grid.
 
     .. versionchanged:: 0.37.0
@@ -524,7 +535,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     Parameters
     ----------
-    uinput : str, vtk.vtkImageData, pyvista.ImageData, optional
+    uinput : str | :vtk:`vtkImageData` | ImageData, optional
         Filename or dataset to initialize the uniform grid from.  If
         set, remainder of arguments are ignored.
 
@@ -538,7 +549,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         :attr:`origin` of the uniform grid.
 
     deep : bool, default: False
-        Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
+        Whether to deep copy a :vtk:`vtkImageData` object. Keyword only.
 
     direction_matrix : RotationLike, optional
         The :attr:`direction_matrix` is a 3x3 matrix which controls the orientation of
@@ -553,6 +564,17 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.45
 
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
+
+    See Also
+    --------
+    :ref:`create_uniform_grid_example`
+
     Examples
     --------
     Create an empty ImageData.
@@ -560,7 +582,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     >>> import pyvista as pv
     >>> grid = pv.ImageData()
 
-    Initialize from a ``vtk.vtkImageData`` object.
+    Initialize from a :vtk:`vtkImageData` object.
 
     >>> import vtk
     >>> vtkgrid = vtk.vtkImageData()
@@ -599,20 +621,32 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {  # type: ignore[assignment]
-        '.vtk': _vtk.vtkDataSetWriter,
-        '.vti': _vtk.vtkXMLImageDataWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.bmp': BMPWriter,
+        '.jpeg': JPEGWriter,
+        '.jpg': JPEGWriter,
+        '.nii': NIFTIImageWriter,
+        '.nii.gz': NIFTIImageWriter,
+        '.png': PNGWriter,
+        '.pnm': PNMWriter,
+        '.tif': TIFFWriter,
+        '.tiff': TIFFWriter,
+        '.vtk': DataSetWriter,
+        '.vti': XMLImageDataWriter,
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['uinput'])
+    def __init__(  # noqa: PLR0917
         self: Self,
         uinput: ImageData | str | Path | None = None,
-        dimensions: VectorLike[float] | None = None,
+        dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
+        *,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""
         super().__init__()
@@ -627,25 +661,29 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             elif isinstance(uinput, (str, Path)):
                 self._from_file(uinput)
             else:
-                raise TypeError(
-                    'First argument, ``uinput`` must be either ``vtk.vtkImageData`` '
+                msg = (  # type: ignore[unreachable]
+                    'First argument, ``uinput`` must be either ``vtkImageData`` '
                     f'or a path, not {type(uinput)}.  Use keyword arguments to '
                     'specify dimensions, spacing, and origin. For example:\n\n'
                     '    >>> grid = pv.ImageData(\n'
                     '    ...     dimensions=(10, 10, 10),\n'
                     '    ...     spacing=(2, 1, 5),\n'
                     '    ...     origin=(10, 35, 50),\n'
-                    '    ... )\n',
+                    '    ... )\n'
                 )
+                raise TypeError(msg)
         else:
             if dimensions is not None:
-                self.dimensions = dimensions  # type: ignore[assignment]
-            self.origin = origin  # type: ignore[assignment]
-            self.spacing = spacing  # type: ignore[assignment]
+                self.dimensions = dimensions
+            self.origin = origin
+            self.spacing = spacing
             if direction_matrix is not None:
-                self.direction_matrix = direction_matrix  # type: ignore[assignment]
+                self.direction_matrix = direction_matrix
             if offset is not None:
-                self.offset = offset  # type: ignore[assignment]
+                self.offset = offset
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -655,7 +693,97 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    @property  # type: ignore[explicit-override, override]
+    def __getitem__(  # type: ignore[override]
+        self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
+    ) -> ImageData | pyvista_ndarray:
+        """Search for a data array or slice with IJK indexing."""
+        # Return point, cell, or field data
+        if isinstance(key, str) or (
+            isinstance(key, tuple) and len(key) > 0 and isinstance(key[0], str)  # type: ignore[redundant-expr]
+        ):
+            return super().__getitem__(key)
+        return self.extract_subset(self._compute_voi_from_index(key), rebase_coordinates=False)
+
+    def _compute_voi_from_index(
+        self,
+        indices: tuple[
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+        ],
+        *,
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        strict_index: bool = False,
+    ) -> NumpyArray[int]:
+        """Compute VOI extents from indexing values."""
+        _validation.check_contains(
+            ['extent', 'dimensions'], must_contain=index_mode, name='index_mode'
+        )
+        if not (isinstance(indices, tuple) and len(indices) == 3):  # type: ignore[redundant-expr]
+            msg = 'Exactly 3 slices must be specified, one for each IJK-coordinate axis.'  # type: ignore[unreachable]
+            raise IndexError(msg)
+
+        dims = self.dimensions
+        extent = self.extent
+        voi = list(extent)
+
+        for axis, slicer in enumerate(indices):
+            _validation.check_instance(slicer, (int, tuple, list, slice), name='index')
+
+            offset = extent[axis * 2]
+            index_offset = 0 if index_mode == 'extent' else offset
+
+            if isinstance(slicer, (list, tuple)):
+                rng = _validation.validate_array(
+                    slicer, must_have_dtype=int, must_have_length=2, to_list=True
+                )
+                slicer = slice(*rng)  # noqa: PLW2901
+
+            if isinstance(slicer, slice):
+                start = slicer.start if slicer.start is not None else 0
+                stop = slicer.stop if slicer.stop is not None else dims[axis]
+                step = slicer.step
+                if step not in (None, 1):
+                    msg = 'Only contiguous slices with step=1 are supported.'
+                    raise ValueError(msg)
+
+                # Handle negative indices
+                if start < 0:
+                    start += dims[axis]
+                if stop < 0:
+                    stop += dims[axis]
+
+            else:  # isinstance(slicer, int)
+                min_allowed = offset - dims[axis] - index_offset
+                max_allowed = min_allowed + dims[axis] * 2 - 1
+                if slicer < min_allowed or slicer > max_allowed:
+                    msg = (
+                        f'index {slicer} is out of bounds for axis {axis} with size {dims[axis]}.'
+                        f'\nValid range of valid index values (inclusive) is '
+                        f'[{min_allowed}, {max_allowed}].'
+                    )
+                    raise IndexError(msg)
+                if slicer < 0:
+                    slicer += dims[axis]  # noqa: PLW2901
+                start = slicer
+                stop = start + 1
+
+            voi[axis * 2] = index_offset + start
+            voi[axis * 2 + 1] = index_offset + stop - 1
+
+        clipped = pv.ImageDataFilters._clip_extent(voi, clip_to=self.extent)
+        if strict_index and (
+            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2], strict=True))
+            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2], strict=True))
+        ):
+            msg = (
+                f'The requested volume of interest {tuple(voi)} '
+                f"is outside the input's extent {extent}."
+            )
+            raise IndexError(msg)
+        return clipped
+
+    @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Build a copy of the implicitly defined points as a numpy array.
 
@@ -683,6 +811,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                [1., 1., 1.]])
 
         """
+        if pv.vtk_version_info >= (9, 4, 0):
+            return convert_array(self.GetPoints().GetData())
+
         # Handle empty case
         if not all(self.dimensions):
             return np.zeros((0, 3))
@@ -704,14 +835,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         direction = self.direction_matrix
         if not np.array_equal(direction, np.eye(3)):
-            return (
-                pyvista.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
-            )
+            return pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
         return points
 
     @points.setter
     def points(
-        self: Self, points: MatrixLike[float] | _vtk.vtkPoints
+        self: Self,
+        points: MatrixLike[float] | _vtk.vtkPoints,  # noqa: ARG002
     ) -> None:  # numpydoc ignore=PR01
         """Points cannot be set.
 
@@ -719,11 +849,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         attempt to set them. See https://github.com/pyvista/pyvista/issues/713.
 
         """
-        raise AttributeError(
+        msg = (
             'The points cannot be set. The points of '
             '`ImageData`/`vtkImageData` are implicitly defined by the '
-            '`origin`, `spacing`, and `dimensions` of the grid.',
+            '`origin`, `spacing`, and `dimensions` of the grid.'
         )
+        raise AttributeError(msg)
 
     @property
     def x(self: Self) -> NumpyArray[float]:  # numpydoc ignore=RT01
@@ -844,7 +975,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
-        fmt = '{}, {}, {}'.format(*[pyvista.FLOAT_FORMAT] * 3)
+        fmt = '{}, {}, {}'.format(*[pv.FLOAT_FORMAT] * 3)
         attrs.append(('Spacing', self.spacing, fmt))
         return attrs
 
@@ -872,7 +1003,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         rectilinear_coords = self._generate_rectilinear_coords()
-        grid = pyvista.RectilinearGrid(*rectilinear_coords)
+        grid = pv.RectilinearGrid(*rectilinear_coords)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
@@ -890,14 +1021,31 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             Rectilinear coordinates over the three dimensions.
 
         """
-        # Use linspace to avoid rounding error accumulation
         dims = self.dimensions
         spacing = self.spacing
         origin = self.origin
-        return [(np.linspace(0, (dims[i] - 1) * spacing[i], dims[i]) + origin[i]) for i in range(3)]
+        offset = self.offset
+        direction = self.direction_matrix
+
+        # Off-axis rotation is not supported by RectilinearGrid
+        if np.allclose(np.abs(direction), np.eye(3)):
+            sign = np.diagonal(direction)
+        else:
+            msg = (
+                'Rectilinear grid does not support off-axis rotations.\n'
+                'Consider removing off-axis rotations from the `direction_matrix`, '
+                'or casting to StructuredGrid instead.'
+            )
+            raise ValueError(msg)
+
+        # Use linspace to avoid rounding error accumulation
+        ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
+        return [ijk[axis] * spacing[axis] * sign[axis] + origin[axis] for axis in range(3)]
 
     @property
-    def extent(self: Self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
+    def extent(
+        self: Self,
+    ) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
@@ -927,7 +1075,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         (4, 4, 4)
 
         >>> grid.bounds
-        BoundsTuple(x_min=2.0, x_max=5.0, y_min=2.0, y_max=5.0, z_min=2.0, z_max=5.0)
+        BoundsTuple(x_min = 2.0,
+                    x_max = 5.0,
+                    y_min = 2.0,
+                    y_max = 5.0,
+                    z_min = 2.0,
+                    z_max = 5.0)
 
         """
         return self.GetExtent()
@@ -935,7 +1088,11 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @extent.setter
     def extent(self: Self, new_extent: VectorLike[int]) -> None:
         new_extent_ = _validation.validate_arrayN(
-            new_extent, must_be_integer=True, must_have_length=6, to_list=True, dtype_out=int
+            new_extent,
+            must_be_integer=True,
+            must_have_length=6,
+            to_list=True,
+            dtype_out=int,
         )
         self.SetExtent(new_extent_)
 
@@ -960,6 +1117,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         (0, 0, 0)
 
         The offset defines the minimum extent.
+
         >>> grid.extent
         (0, 9, 0, 9, 0, 9)
 
@@ -999,7 +1157,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         )
 
     @wraps(RectilinearGridFilters.to_tetrahedra)
-    def to_tetrahedra(self: Self, *args, **kwargs) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
+    def to_tetrahedra(
+        self: Self, *args, **kwargs
+    ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
 
@@ -1026,7 +1186,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def index_to_physical_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
+        """Return or set 4x4 matrix to transform index space (ijk) to physical space (xyz).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
@@ -1044,21 +1204,25 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
 
     @index_to_physical_matrix.setter
-    def index_to_physical_matrix(self: Self, matrix: TransformLike) -> None:  # numpydoc ignore=GL08
-        T, R, N, S, K = pyvista.Transform(matrix).decompose()
+    def index_to_physical_matrix(
+        self: Self, matrix: TransformLike
+    ) -> None:  # numpydoc ignore=GL08
+        T, R, N, S, K = pv.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
-            warnings.warn(
-                'The transformation matrix has a shear component which has been removed. \n'
-                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.'
+            msg = (
+                'The transformation has a shear component which is not supported by ImageData.\n'
+                'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+                '`Transform.decompose()` to remove this component.'
             )
+            raise ValueError(msg)
 
-        self.origin = T  # type: ignore[assignment]
+        self.origin = T
         self.direction_matrix = R * N
-        self.spacing = S  # type: ignore[assignment]
+        self.spacing = S
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
+        """Return or set 4x4 matrix to transform from physical space (xyz) to index space (ijk).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
@@ -1076,5 +1240,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
 
     @physical_to_index_matrix.setter
-    def physical_to_index_matrix(self: Self, matrix: TransformLike) -> None:  # numpydoc ignore=GL08
-        self.index_to_physical_matrix = pyvista.Transform(matrix).inverse_matrix
+    def physical_to_index_matrix(
+        self: Self, matrix: TransformLike
+    ) -> None:  # numpydoc ignore=GL08
+        self.index_to_physical_matrix = pv.Transform(matrix).inverse_matrix

@@ -33,31 +33,30 @@ import numpy.typing as npt
 # Define numeric types
 NumberType = TypeVar(
     'NumberType',
-    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+    bound=np.floating | np.integer | np.bool_ | float | int | bool,
 )
-NumberType.__doc__ = """Type variable for numeric data types."""
 
 # Create a copy of the typevar which can be used for annotating a second variable.
 # Its definition should be identical to `NumberType`
 _NumberType = TypeVar(  # noqa: PYI018
     '_NumberType',
-    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+    bound=np.floating | np.integer | np.bool_ | float | int | bool,
 )
 
 NumpyArray = npt.NDArray[NumberType]
 
-_FiniteNestedList = Union[
-    list[NumberType],
-    list[list[NumberType]],
-    list[list[list[NumberType]]],
-    list[list[list[list[NumberType]]]],
-]
-_FiniteNestedTuple = Union[
-    tuple[NumberType],
-    tuple[tuple[NumberType]],
-    tuple[tuple[tuple[NumberType]]],
-    tuple[tuple[tuple[tuple[NumberType]]]],
-]
+_FiniteNestedList = (
+    list[NumberType]
+    | list[list[NumberType]]
+    | list[list[list[NumberType]]]
+    | list[list[list[list[NumberType]]]]
+)
+_FiniteNestedTuple = (
+    tuple[NumberType]
+    | tuple[tuple[NumberType]]
+    | tuple[tuple[tuple[NumberType]]]
+    | tuple[tuple[tuple[tuple[NumberType]]]]
+)
 
 _ArrayLike1D = Union[
     NumpyArray[NumberType],

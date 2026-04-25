@@ -1,5 +1,5 @@
 """
-.. _blur_example:
+.. _blurring_example:
 
 Blurring
 ~~~~~~~~
@@ -9,8 +9,6 @@ This example shows how you can use :func:`add_blurring
 to highlight part of your plot.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 

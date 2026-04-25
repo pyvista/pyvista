@@ -24,10 +24,18 @@ class InvalidCameraError(ValueError):  # numpydoc ignore=PR01
         super().__init__(message)
 
 
-class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01
+class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01 # noqa: N818
     """Exception when the render window is not available."""
 
     def __init__(self, message='Render window is not available.'):
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
+class MismatchedInteractorError(RuntimeError):  # numpydoc ignore=PR01  # pragma: no cover
+    """Exception when the interactor and render window backends are incompatible."""
+
+    def __init__(self, message='Interactor and render window backends are incompatible.'):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 

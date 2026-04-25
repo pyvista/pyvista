@@ -6,16 +6,18 @@ from __future__ import annotations
 
 import gc
 import inspect
+import platform
 
 import pytest
 
 import pyvista as pv
+from pyvista.core import _vtk_core as _vtk
 from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests
-pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
 pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
+APPLE_SILICON = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 # Configure skip_plotting marker
@@ -32,41 +34,77 @@ def pytest_runtest_setup(item):
         pytest.skip('Test requires system to support plotting')
 
 
-def _is_vtk(obj):
-    try:
-        return obj.__class__.__name__.startswith('vtk')
-    except Exception:  # old Python sometimes no __class__.__name__
-        return False
+@pytest.fixture(autouse=True)
+def _clean_trame_env(monkeypatch):
+    # Isolate trame/jupyter-hub env vars so tests don't inherit developer
+    # machine state (e.g. PYVISTA_TRAME_SERVER_PROXY_PREFIX set by a tailnet
+    # proxy). Tests that need these set should call monkeypatch.setenv.
+    for var in (
+        'PYVISTA_TRAME_SERVER_PROXY_PREFIX',
+        'JUPYTERHUB_SERVICE_PREFIX',
+        'TRAME_JUPYTER_WWW',
+        'PYVISTA_TRAME_JUPYTER_MODE',
+    ):
+        monkeypatch.delenv(var, raising=False)
 
 
-@pytest.fixture
-def skip_check_gc(check_gc):  # noqa: PT004
-    """Skip check_gc fixture."""
-    check_gc.skip = True
+if APPLE_SILICON:
+
+    @pytest.fixture(autouse=True)
+    def macos_memory_leak(request):  # noqa: ARG001
+        # Without this, only 500 render windows can be created in a single Python
+        # process on MacOS using Apple silicon
+        # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+        from Foundation import NSAutoreleasePool  # for macOS
+
+        pool = NSAutoreleasePool.alloc().init()
+        yield
+
+        # pool goes out of scope and resources get collected
+        del pool
 
 
 @pytest.fixture(autouse=True)
-def check_gc():
+def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
-    gc.collect()
-    before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
-
-    class GcHandler:
-        def __init__(self) -> None:
-            # if set to True, will entirely skip checking in this fixture
-            self.skip = False
-
-    gc_handler = GcHandler()
-
-    yield gc_handler
-
-    if gc_handler.skip:
+    if request.node.get_closest_marker('skip_check_gc'):
+        yield
         return
+
+    # Get all VTK objects before calling the test
+    gc.collect()
+    before = set()
+    for obj in gc.get_objects():
+        # Micro-optimized for performance as this is called millions of times
+        try:
+            if isinstance(obj, _vtk.vtkObjectBase) and obj.__class__.__name__.startswith('vtk'):
+                before.add(id(obj))
+        except ReferenceError:
+            pass
+
+    yield
 
     pv.close_all()
 
+    # Skip GC check if test failed
+    if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
+        return
+
+    # get all vtk objects after the test
     gc.collect()
-    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    after = []
+    for obj in gc.get_objects():
+        # Micro-optimized for performance as this is called millions of times
+        try:
+            if (
+                isinstance(obj, _vtk.vtkObjectBase)
+                and obj.__class__.__name__.startswith('vtk')
+                and id(obj) not in before
+            ):
+                after.append(obj)
+        except ReferenceError:
+            pass
+
     msg = 'Not all objects GCed:\n'
     for obj in after:
         cn = obj.__class__.__name__
@@ -92,6 +130,11 @@ def check_gc():
             del ri, referrer
         msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
         del cn, referrers
+
+    if request.node.get_closest_marker('expect_check_gc_fail'):
+        assert after
+        return
+
     assert len(after) == 0, msg
 
 
@@ -100,6 +143,14 @@ def colorful_tetrahedron():
     mesh = pv.Tetrahedron()
     mesh.cell_data['colors'] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
     return mesh
+
+
+@pytest.fixture(autouse=True)
+def set_default_theme():
+    """Reset the testing theme for every test."""
+    pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
+    yield
+    pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
 
 
 def make_two_char_img(text):
@@ -117,8 +168,34 @@ def make_two_char_img(text):
     return pv.Texture(pl.screenshot()).to_image()
 
 
+def get_actor_mapper_input(actor):
+    """Return a detached deep copy of the mapper's current pipeline input.
+
+    The deep copy detaches the returned dataset from the live VTK
+    pipeline so ``check_gc`` teardown doesn't race with test assertions
+    that inspect its arrays.
+    """
+    actor.mapper.update()
+    return pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
+
+
+class AlgorithmExecutionTracker:
+    """Callable filter body that records whether it was invoked.
+
+    Used to assert that mapper configuration is lazy, i.e. does not
+    force the pipeline to run before ``show()`` or ``render()``.
+    """
+
+    def __init__(self) -> None:
+        self.executed = False
+
+    def __call__(self, mesh: pv.DataSet) -> pv.DataSet:
+        self.executed = True
+        return mesh
+
+
 @pytest.fixture
-def cubemap(texture):
+def cubemap():
     """Sample texture as a cubemap."""
     return pv.Texture(
         [

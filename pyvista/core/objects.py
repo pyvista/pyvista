@@ -1,4 +1,4 @@
-"""Wrappers for vtkDataObjects.
+"""Wrappers for :vtk:`vtkDataObject`.
 
 The data objects does not have any sort of spatial reference.
 
@@ -6,22 +6,27 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
 
-import pyvista
+import numpy as np
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .formatting_html import _data_array_section
+from .formatting_html import build_repr_html
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
+if TYPE_CHECKING:
+    import pyarrow
+
 
 class Table(DataObject, _vtk.vtkTable):
-    """Wrapper for the ``vtkTable`` class.
+    """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
@@ -35,7 +40,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):
+    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
         """Initialize the table."""
         super().__init__()
         if len(args) == 1:
@@ -51,7 +56,8 @@ class Table(DataObject, _vtk.vtkTable):
             elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
                 self._from_pandas(args[0])
             else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
+                msg = f'Table unable to be made from ({type(args[0])})'
+                raise TypeError(msg)
 
     @staticmethod
     def _prepare_arrays(arrays):
@@ -61,7 +67,8 @@ class Table(DataObject, _vtk.vtkTable):
         elif arrays.ndim == 2:
             return arrays.T
         else:
-            raise ValueError('Only 1D or 2D arrays are supported by Tables.')
+            msg = 'Only 1D or 2D arrays are supported by Tables.'
+            raise ValueError(msg)
 
     def _from_arrays(self, arrays) -> None:
         np_table = self._prepare_arrays(arrays)
@@ -71,7 +78,8 @@ class Table(DataObject, _vtk.vtkTable):
     def _from_dict(self, array_dict):
         for array in array_dict.values():
             if not isinstance(array, np.ndarray) and array.ndim < 3:
-                raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
+                msg = 'Dictionary must contain only NumPy arrays with maximum of 2D.'
+                raise ValueError(msg)
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
@@ -278,41 +286,34 @@ class Table(DataObject, _vtk.vtkTable):
         It includes header details and information about all arrays.
 
         """
-        fmt = ''
-        if self.n_arrays > 0:
-            fmt += "<table style='width: 100%;'>"
-            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
-            fmt += '<tr><td>'
-        # Get the header info
-        fmt += self.head(display=False, html=True)
-        # Fill out scalars arrays
-        if self.n_arrays > 0:
-            fmt += '</td><td>'
-            fmt += '\n'
-            fmt += "<table style='width: 100%;'>\n"
-            titles = ['Name', 'Type', 'N Comp', 'Min', 'Max']
-            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
-            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
-            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
+        sections: list[str] = []
 
-            def format_array(key):
-                """Format array information for printing (internal helper)."""
-                arr = row_array(self, key)
-                dl, dh = self.get_data_range(key)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
-                ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
-                dtype = None if arr is None else arr.dtype
-                return row.format(key, dtype, ncomp, dl, dh)
+        # Row data arrays
+        arrays: list[tuple[str, int, str, str, str]] = []
+        for i in range(self.n_arrays):
+            key = self.GetRowData().GetArrayName(i)
+            arr = row_array(self, key)
+            ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
+            dtype = 'None' if arr is None else str(arr.dtype)
+            range_str = ''
+            if arr is not None and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                fmt = '{:.3e}'
+                range_str = f'[{fmt.format(np.nanmin(arr))}, {fmt.format(np.nanmax(arr))}]'
+            arrays.append((key, ncomp, dtype, '', range_str))
 
-            for i in range(self.n_arrays):
-                key = self.GetRowData().GetArrayName(i)
-                fmt += format_array(key)
+        if arrays:
+            sections.append(_data_array_section('Row Data', arrays))
 
-            fmt += '</table>\n'
-            fmt += '\n'
-            fmt += '</td></tr> </table>'
-        return fmt
+        return build_repr_html(
+            obj_type='Table',
+            mesh_type='ImageData',
+            header_badges=[
+                f'{self.n_rows:,} rows',
+                f'{self.n_arrays} arrays',
+            ],
+            sections=sections,
+            text_repr=self.head(display=False, html=False),
+        )
 
     def __repr__(self):
         """Return the object representation."""
@@ -332,21 +333,70 @@ class Table(DataObject, _vtk.vtkTable):
 
         """
         try:
-            import pandas as pd
+            import pandas as pd  # noqa: PLC0415
         except ImportError:  # pragma: no cover
-            raise ImportError('Install ``pandas`` to use this feature.')
+            msg = 'Install ``pandas`` to use this feature.'
+            raise ImportError(msg)
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
         return data_frame
 
+    def to_arrow(self) -> pyarrow.Table:
+        """Return this table as a :class:`pyarrow.Table`.
+
+        Each row array becomes a column with the same name and dtype.
+
+        Requires :mod:`pyarrow`.
+
+        Returns
+        -------
+        pyarrow.Table
+            This table represented as an Arrow Table.
+
+        Notes
+        -----
+        1D contiguous numeric columns wrap the underlying VTK buffer
+        zero-copy. Booleans, complex numbers, and strings go through
+        pyvista's existing VTK conversion and are copied. Arrow buffers
+        are immutable by contract, so consumers cannot mutate VTK memory
+        through the returned table.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> table = pv.Table({'a': np.arange(3), 'b': np.array([0.5, 1.5, 2.5])})
+        >>> table.to_arrow().schema.names
+        ['a', 'b']
+
+        """
+        try:
+            import pyarrow as pa  # noqa: PLC0415
+        except ImportError:  # pragma: no cover
+            msg = 'Install ``pyarrow`` to use this feature.'
+            raise ImportError(msg) from None
+        return pa.table({name: np.asarray(array) for name, array in self.items()})
+
+    def __arrow_c_stream__(self, requested_schema: object | None = None) -> object:
+        """Export via the Arrow PyCapsule interface.
+
+        Implements `the Arrow PyCapsule interface
+        <https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html>`_
+        by delegating to :meth:`to_arrow`, so pandas, polars, DuckDB,
+        ibis, narwhals, and other Arrow-aware consumers can ingest this
+        table directly. Scalar 1D columns cross the boundary zero-copy.
+
+        Requires :mod:`pyarrow`.
+        """
+        return self.to_arrow().__arrow_c_stream__(requested_schema)
+
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
-        raise NotImplementedError(
-            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
-        )
+        msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+        raise NotImplementedError(msg)
 
-    def get_data_range(
+    def get_data_range(  # type: ignore[override]
         self,
         arr: str | None = None,
         preference: FieldLiteral | RowLiteral = 'row',
@@ -380,3 +430,25 @@ class Table(DataObject, _vtk.vtkTable):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
+
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the table has no rows and no columns.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> table = pv.Table()
+        >>> table.is_empty
+        True
+
+        >>> arrays = np.random.default_rng().random((100, 3))
+        >>> table = pv.Table(arrays)
+        >>> table.is_empty
+        False
+
+        """
+        return self.n_rows == 0 and self.n_columns == 0

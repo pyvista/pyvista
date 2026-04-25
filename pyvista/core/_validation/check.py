@@ -18,6 +18,7 @@ from collections.abc import Sequence
 from collections.abc import Sized
 from numbers import Number
 import reprlib
+import types
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
@@ -30,7 +31,7 @@ import numpy.typing as npt
 
 from pyvista.core._validation._cast_array import _cast_to_numpy
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumberType
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -38,14 +39,14 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._array_like import _NumberType
 
 
-_Shape = Union[tuple[()], tuple[int, ...]]
-_ShapeLike = Union[int, _Shape]
+_Shape = tuple[()] | tuple[int, ...]
+_ShapeLike = int | _Shape
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
+    input_obj: npt.DTypeLike | _ArrayLikeOrScalar[NumberType],
     /,
-    base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
+    base_dtype: npt.DTypeLike | tuple[npt.DTypeLike, ...] | list[npt.DTypeLike],
     *,
     name: str = 'Input',
 ) -> None:
@@ -102,7 +103,7 @@ def check_subdtype(
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
 
-    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):  # type: ignore[arg-type]
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
         if len(base_dtype) == 1:
@@ -163,7 +164,8 @@ def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array')
     try:
         check_subdtype(array, (np.floating, np.integer), name=name)
     except TypeError as e:
-        raise TypeError(f'{name} must have real numbers.') from e
+        msg = f'{name} must have real numbers.'
+        raise TypeError(msg) from e
 
 
 def check_sorted(
@@ -232,7 +234,8 @@ def check_sorted(
         try:
             check_range(axis, rng=[-ndim, ndim - 1], name='Axis')
         except ValueError:
-            raise ValueError(f'Axis {axis} is out of bounds for ndim {ndim}.')
+            msg = f'Axis {axis} is out of bounds for ndim {ndim}.'
+            raise ValueError(msg)
 
     if axis is None and ndim >= 1:  # type: ignore[unreachable]
         # Emulate np.sort(), which flattens array when axis is None
@@ -251,23 +254,24 @@ def check_sorted(
     second_item = array[tuple(second_slice)]
 
     if ascending and not strict:
-        is_sorted = np.all(first_item <= second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item <= second_item)
     elif ascending and strict:
-        is_sorted = np.all(first_item < second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item < second_item)
     elif not ascending and not strict:
-        is_sorted = np.all(first_item >= second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item >= second_item)
     else:  # not ascending and strict
-        is_sorted = np.all(first_item > second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item > second_item)
 
     if not is_sorted:
         # Show the array's elements in error msg if array is small
         msg_body = f'with {array.size} elements'
         order = 'ascending' if ascending else 'descending'
         strict_ = 'strict ' if strict else ''
-        raise ValueError(
+        msg = (
             f'{name} {msg_body} must be sorted in {strict_}{order} order. '
-            f'Got:\n    {reprlib.repr(array)}',
+            f'Got:\n    {reprlib.repr(array)}'
         )
+        raise ValueError(msg)
 
 
 def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
@@ -300,7 +304,8 @@ def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     if not np.all(np.isfinite(array)):
-        raise ValueError(f'{name} must have finite values.')
+        msg = f'{name} must have finite values.'
+        raise ValueError(msg)
 
 
 def check_integer(
@@ -350,7 +355,8 @@ def check_integer(
     if strict:
         check_subdtype(array, np.integer)
     elif not np.array_equal(array, np.floor(array)):
-        raise ValueError(f'{name} must have integer-like values.')
+        msg = f'{name} must have integer-like values.'
+        raise ValueError(msg)
 
 
 def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
@@ -440,9 +446,11 @@ def check_greater_than(
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     valid_value = _validate_real_value(value)
     if strict and not np.all(array > valid_value):
-        raise ValueError(f'{name} values must all be greater than {value}.')
+        msg = f'{name} values must all be greater than {value}.'
+        raise ValueError(msg)
     elif not np.all(array >= valid_value):
-        raise ValueError(f'{name} values must all be greater than or equal to {value}.')
+        msg = f'{name} values must all be greater than or equal to {value}.'
+        raise ValueError(msg)
 
 
 def check_less_than(
@@ -494,9 +502,11 @@ def check_less_than(
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     valid_value = _validate_real_value(value)
     if strict and not np.all(array < valid_value):
-        raise ValueError(f'{name} values must all be less than {value}.')
+        msg = f'{name} values must all be less than {value}.'
+        raise ValueError(msg)
     elif not np.all(array <= valid_value):
-        raise ValueError(f'{name} values must all be less than or equal to {value}.')
+        msg = f'{name} values must all be less than or equal to {value}.'
+        raise ValueError(msg)
 
 
 def check_range(
@@ -622,10 +632,10 @@ def check_shape(
     if not isinstance(shape, list):
         shape = [shape]
 
-    array_shape = np.shape(array)
+    array_shape = np.shape(array)  # type: ignore[arg-type]
     for input_shape in shape:
-        input_shape = _validate_shape_value(input_shape)
-        if _shape_is_allowed(array_shape, input_shape):
+        valid_shape = _validate_shape_value(input_shape)
+        if _shape_is_allowed(array_shape, valid_shape):
             return
 
     msg = f'{name} has shape {array_shape} which is not allowed. '
@@ -897,10 +907,12 @@ def check_instance(
 
     """
     if not isinstance(name, str):
-        raise TypeError(f'Name must be a string, got {type(name)} instead.')
+        msg = f'Name must be a string, got {type(name)} instead.'  # type: ignore[unreachable]
+        raise TypeError(msg)
 
     # Get class info from generics
-    if get_origin(classinfo) is Union:
+    origin = get_origin(classinfo)
+    if origin is Union or origin is types.UnionType:
         classinfo = get_args(classinfo)
 
     # Count num classes
@@ -933,7 +945,9 @@ def check_instance(
         raise TypeError(msg)
 
 
-def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object') -> None:
+def check_type(
+    obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object'
+) -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -1036,7 +1050,9 @@ def check_iterable_items(
     )
 
 
-def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
+def check_contains(
+    container: Container[Any], /, must_contain: Any, *, name: str = 'Input'
+) -> None:
     """Check if an item is in a container.
 
     Parameters
@@ -1162,10 +1178,11 @@ def check_length(
     if exact_length is not None:
         check_integer(exact_length, name="'exact_length'")
         if array_len not in np.atleast_1d(exact_length):
-            raise ValueError(
+            msg = (
                 f'{name} must have a length equal to any of: {exact_length}. '
-                f'Got length {array_len} instead.',
+                f'Got length {array_len} instead.'
             )
+            raise ValueError(msg)
 
     # Validate min/max length
     if min_length is not None:
@@ -1176,15 +1193,11 @@ def check_length(
         check_sorted((min_length, max_length), name='Range')
 
     if min_length is not None and array_len < min_length:
-        raise ValueError(
-            f'{name} must have a minimum length of {min_length}. '
-            f'Got length {array_len} instead.',
-        )
+        msg = f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.'
+        raise ValueError(msg)
     if max_length is not None and array_len > max_length:
-        raise ValueError(
-            f'{name} must have a maximum length of {max_length}. '
-            f'Got length {array_len} instead.',
-        )
+        msg = f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.'
+        raise ValueError(msg)
 
 
 def _validate_shape_value(shape: _ShapeLike) -> _Shape:
@@ -1193,19 +1206,20 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
         # `None` is used to mean `any shape is allowed` by the array
         #  validation methods, so raise an error here.
         #  Also, setting `None` as a shape is deprecated by NumPy.
-        raise TypeError('`None` is not a valid shape. Use `()` instead.')
+        msg = '`None` is not a valid shape. Use `()` instead.'  # type: ignore[unreachable]
+        raise TypeError(msg)
 
     # Return early for common inputs
     if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
-        return cast(_Shape, shape)
+        return cast('_Shape', shape)
 
     def _is_valid_dim(d: Any) -> bool:
         return isinstance(d, int) and d >= -1
 
     if _is_valid_dim(shape):
-        return (cast(int, shape),)
+        return (cast('int', shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast(_Shape, shape)
+        return shape
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error
@@ -1215,4 +1229,5 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     else:
         check_iterable_items(shape, int, name='Shape')
     check_greater_than(shape, -1, name='Shape', strict=False)
-    raise RuntimeError('This line should not be reachable.')  # pragma: no cover
+    msg = 'This line should not be reachable.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover

@@ -38,8 +38,10 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     actor.GetProperty().SetOpacity(0.5)
     renderer = _vtk.vtkRenderer()
     renderWindow = _vtk.vtkRenderWindow()
-    renderWindow.AddRenderer(renderer)
     renderWindow.SetOffScreenRendering(True)
+    if hasattr(renderWindow, 'SetConnectContextToNSView'):
+        renderWindow.SetConnectContextToNSView(False)
+    renderWindow.AddRenderer(renderer)
     renderWindow.SetAlphaBitPlanes(True)
     renderWindow.SetMultiSamples(0)
     renderer.AddActor(actor)

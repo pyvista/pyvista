@@ -5,13 +5,12 @@ Create a GIF Movie of a Static Object with a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generate a gif movie of a Hopf torus with a moving colormap,
 by updating the scalars.
+This example uses :meth:`~pyvista.Plotter.open_gif` and
+:meth:`~pyvista.Plotter.write_frame` to create the gif.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 
@@ -19,7 +18,9 @@ import pyvista as pv
 def scurve(t):
     alpha = np.pi / 2 - (np.pi / 2 - 0.44) * np.cos(3 * t)
     beta = t + 0.44 * np.sin(6 * t)
-    return np.array([np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)])
+    return np.array(
+        [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)]
+    )
 
 
 # Hopf fiber
@@ -50,7 +51,7 @@ angle_v = np.linspace(0, np.pi, 200)
 u, v = np.meshgrid(angle_u, angle_v)
 x, y, z = hopf_torus(u, v)
 grid = pv.StructuredGrid(x, y, z)
-mesh = grid.extract_geometry().clean(tolerance=1e-6)
+mesh = grid.extract_surface(algorithm=None).clean(tolerance=1e-6)
 
 # Distances normalized to [0, 2*pi]
 dists = np.linalg.norm(mesh.points, axis=1)
@@ -59,10 +60,10 @@ dists = 2 * np.pi * (dists - dists.min()) / (dists.max() - dists.min())
 mesh['distances'] = np.sin(dists)
 
 # Make the movie
-pltr = pv.Plotter(window_size=[512, 512])
-pltr.set_focus([0, 0, 0])
-pltr.set_position([40, 0, 0])
-pltr.add_mesh(
+pl = pv.Plotter(window_size=[512, 512])
+pl.set_focus([0, 0, 0])
+pl.set_position([40, 0, 0])
+pl.add_mesh(
     mesh,
     scalars='distances',
     smooth_shading=True,
@@ -70,12 +71,12 @@ pltr.add_mesh(
     cmap='nipy_spectral',
     show_scalar_bar=False,
 )
-pltr.open_gif('Hopf_torus.gif')
+pl.open_gif('Hopf_torus.gif')
 
-for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
+for t in np.linspace(0, 2 * np.pi, 30, endpoint=False):
     mesh['distances'] = np.sin(dists - t)
-    pltr.write_frame()
+    pl.write_frame()
 
-pltr.show()
+pl.show()
 # %%
 # .. tags:: plot

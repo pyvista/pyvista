@@ -123,11 +123,11 @@ through a range of examples and tutorials.
       Learn more about why we created PyVista as an interface to the
       Visualization Toolkit (VTK).
 
-      .. code:: python
+      .. code-block:: python
 
-          import pyvista
+          import pyvista as pv
 
-          mesh = pyvista.read('bunny.stl')
+          mesh = pv.read('bunny.stl')
           mesh.plot()
 
       .. pyvista-plot::
