@@ -56,11 +56,18 @@ class WriterRegistration(NamedTuple):
 class _RegistryState(TypedDict):
     ext: dict[str, WriterHandler]
     sources: dict[str, str]
+    pending: dict[str, list[EntryPoint]]
     entry_points_loaded: bool
 
 
 _custom_ext_writers: dict[str, WriterHandler] = {}
 _custom_ext_writer_sources: dict[str, str] = {}
+# Entry-point metadata, populated by ``_ensure_entry_points``. Maps each
+# extension to the list of ``EntryPoint`` records that declared it.
+# The plugin module itself is *not* imported until that extension is
+# actually requested via :func:`_get_ext_handler`, keeping ``pv.save``
+# calls for built-in formats free of third-party plugin import cost.
+_pending_ext_writers: dict[str, list[EntryPoint]] = {}
 _entry_points_loaded: bool = False
 _builtin_writer_exts: frozenset[str] | None = None
 
@@ -70,6 +77,7 @@ def _save_registry_state() -> _RegistryState:
     return {
         'ext': _custom_ext_writers.copy(),
         'sources': _custom_ext_writer_sources.copy(),
+        'pending': {k: list(v) for k, v in _pending_ext_writers.items()},
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -81,6 +89,8 @@ def _restore_registry_state(state: _RegistryState) -> None:
     _custom_ext_writers.update(state['ext'])
     _custom_ext_writer_sources.clear()
     _custom_ext_writer_sources.update(state['sources'])
+    _pending_ext_writers.clear()
+    _pending_ext_writers.update({k: list(v) for k, v in state['pending'].items()})
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -259,63 +269,96 @@ def _register(
 
 
 def _get_ext_handler(ext: str) -> WriterHandler | None:
-    """Look up a custom extension handler, discovering entry points lazily."""
+    """Look up a custom extension handler, importing the plugin lazily.
+
+    Built-in extensions never trigger entry-point plugin imports — only
+    extensions that an installed plugin has actually claimed do.
+    """
     handler = _custom_ext_writers.get(ext)
     if handler is not None:
         return handler
     _ensure_entry_points()
+    if ext in _pending_ext_writers:
+        _resolve_pending_writer(ext)
     return _custom_ext_writers.get(ext)
 
 
 def _ensure_entry_points() -> None:
-    """Scan the ``pyvista.writers`` entry-point group and load handlers."""
+    """Scan ``pyvista.writers`` entry-point metadata once.
+
+    Populates :data:`_pending_ext_writers` with every extension declared
+    by an installed plugin. The plugin modules themselves are **not**
+    imported here; the cost is one ``importlib.metadata.entry_points``
+    call. Plugin imports are deferred to :func:`_resolve_pending_writer`,
+    which runs only when a writer for that specific extension is
+    actually requested.
+    """
     global _entry_points_loaded  # noqa: PLW0603
     if _entry_points_loaded:
         return
     _entry_points_loaded = True
 
-    # Group entry points by normalized key so we can detect duplicate
-    # providers *and* guarantee a deterministic winner (the first one).
-    eps_by_key: dict[str, list[EntryPoint]] = {}
     for ep in entry_points(group='pyvista.writers'):
         key = ep.name.lower()
         if not key.startswith('.'):
             key = f'.{key}'
-        eps_by_key.setdefault(key, []).append(ep)
-
-    for key, eps in eps_by_key.items():
         if key in _custom_ext_writers:
             continue
-        winner = eps[0]
-        try:
-            # ep.load() runs third-party import machinery — it can raise
-            # literally anything. Convert to a warning so one broken plugin
-            # cannot take down every pyvista.save call.
-            handler = winner.load()
-        except Exception as err:  # noqa: BLE001
-            warn_external(
-                f'Failed to load pyvista.writers entry point "{winner.value}" for "{key}": {err}'
-            )
-            continue
-        _custom_ext_writers[key] = handler
-        _custom_ext_writer_sources[key] = winner.value
-        if len(eps) > 1:
-            providers = ', '.join(ep.value for ep in eps)
-            warn_external(
-                f'Multiple pyvista.writers entry points registered for '
-                f'"{key}": {providers}. Using {winner.value}.'
-            )
+        _pending_ext_writers.setdefault(key, []).append(ep)
+
+
+def _resolve_pending_writer(ext: str) -> bool:
+    """Import the plugin claiming *ext*, if any.
+
+    Returns
+    -------
+    bool
+        ``True`` if a plugin loaded successfully for ``ext``. ``False``
+        if no pending plugin matches, or if the plugin failed to import.
+
+    Notes
+    -----
+    A plugin that fails to import emits a ``UserWarning`` and is dropped
+    from the pending list, so subsequent lookups of the same extension
+    fall straight through without re-triggering the import or
+    re-emitting the warning.
+
+    """
+    eps = _pending_ext_writers.pop(ext, None)
+    if not eps:
+        return False
+    winner = eps[0]
+    try:
+        # ep.load() runs third-party import machinery — it can raise
+        # literally anything. Convert to a warning so one broken plugin
+        # cannot take down every pyvista.save call.
+        handler = winner.load()
+    except Exception as err:  # noqa: BLE001
+        warn_external(
+            f'Failed to load pyvista.writers entry point "{winner.value}" for "{ext}": {err}'
+        )
+        return False
+    _custom_ext_writers[ext] = handler
+    _custom_ext_writer_sources[ext] = winner.value
+    if len(eps) > 1:
+        providers = ', '.join(ep.value for ep in eps)
+        warn_external(
+            f'Multiple pyvista.writers entry points registered for '
+            f'"{ext}": {providers}. Using {winner.value}.'
+        )
+    return True
 
 
 def _list_custom_exts() -> list[str]:
     """Return the list of extensions with registered custom writers.
 
-    Triggers lazy entry-point discovery so that extensions contributed
-    by installed packages appear in error messages listing supported
-    formats.
+    Triggers lazy entry-point *metadata* discovery so that extensions
+    contributed by installed packages appear in error messages listing
+    supported formats. The plugin modules themselves are **not**
+    imported.
     """
     _ensure_entry_points()
-    return list(_custom_ext_writers.keys())
+    return list(_custom_ext_writers.keys() | _pending_ext_writers.keys())
 
 
 def registered_writers() -> tuple[WriterRegistration, ...]:
@@ -348,6 +391,8 @@ def registered_writers() -> tuple[WriterRegistration, ...]:
 
     """
     _ensure_entry_points()
+    for ext in list(_pending_ext_writers):
+        _resolve_pending_writer(ext)
     return tuple(
         WriterRegistration(
             extension=ext,

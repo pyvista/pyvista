@@ -458,3 +458,97 @@ def test_register_custom_collision_override_silent():
         warnings.simplefilter('error')
         pv.register_writer('.collide', replacement, override=True)
     assert _reg_mod._custom_ext_writers['.collide'] is replacement
+
+
+def test_metadata_scan_does_not_load_plugin():
+    """``_ensure_entry_points`` records metadata without importing plugins."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+
+    mock_ep = MagicMock()
+    mock_ep.name = '.lazy'
+    mock_ep.value = 'lazy_pkg:writer'
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+        _reg_mod._ensure_entry_points()
+
+    mock_ep.load.assert_not_called()
+    assert '.lazy' in _reg_mod._pending_ext_writers
+    assert '.lazy' not in _reg_mod._custom_ext_writers
+
+
+def test_save_builtin_extension_does_not_load_plugin(tmp_path):
+    """Saving to a built-in extension never imports any plugin module."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+
+    plugin_ep = MagicMock()
+    plugin_ep.name = '.someplugin'
+    plugin_ep.value = 'someplugin:writer'
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[plugin_ep]):
+        pv.Sphere().save(tmp_path / 'out.vtp')
+
+    plugin_ep.load.assert_not_called()
+    assert '.someplugin' in _reg_mod._pending_ext_writers
+
+
+def test_matching_extension_loads_only_its_plugin():
+    """Looking up an extension a plugin claims loads *only* that plugin."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+
+    wanted = MagicMock()
+    wanted.name = '.wanted'
+    wanted.value = 'wanted_pkg:writer'
+    wanted.load.return_value = _noop_writer
+
+    other = MagicMock()
+    other.name = '.other'
+    other.value = 'other_pkg:writer'
+
+    with patch(
+        'pyvista.core.utilities.writer_registry.entry_points',
+        return_value=[wanted, other],
+    ):
+        handler = _reg_mod._get_ext_handler('.wanted')
+
+    assert handler is _noop_writer
+    wanted.load.assert_called_once()
+    other.load.assert_not_called()
+    assert '.other' in _reg_mod._pending_ext_writers
+
+
+def test_list_custom_exts_includes_pending_without_loading():
+    """``_list_custom_exts`` reports pending extensions without loading."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+
+    mock_ep = MagicMock()
+    mock_ep.name = '.discoverable'
+    mock_ep.value = 'discoverable_pkg:writer'
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+        exts = _reg_mod._list_custom_exts()
+
+    assert '.discoverable' in exts
+    mock_ep.load.assert_not_called()
+
+
+def test_registered_writers_forces_full_discovery():
+    """``registered_writers`` resolves every pending plugin so callers see all."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+
+    mock_ep = MagicMock()
+    mock_ep.name = '.eager'
+    mock_ep.value = 'eager_pkg:writer'
+    mock_ep.load.return_value = _noop_writer
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+        records = pv.registered_writers()
+
+    matches = [r for r in records if r.extension == '.eager']
+    assert len(matches) == 1
+    assert matches[0].handler is _noop_writer
+    mock_ep.load.assert_called_once()

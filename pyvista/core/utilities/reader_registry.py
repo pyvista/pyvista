@@ -62,6 +62,7 @@ class ReaderRegistration(NamedTuple):
 class _RegistryState(TypedDict):
     ext: dict[str, ReaderHandler]
     sources: dict[str, str]
+    pending: dict[str, list[EntryPoint]]
     entry_points_loaded: bool
 
 
@@ -87,6 +88,13 @@ class LocalFileRequiredError(Exception):
 
 _custom_ext_readers: dict[str, ReaderHandler] = {}
 _custom_ext_reader_sources: dict[str, str] = {}
+# Entry-point metadata, populated by ``_ensure_entry_points``. Maps each
+# extension to the list of ``EntryPoint`` records that declared it.
+# The plugin module itself is *not* imported until that extension is
+# actually requested via :func:`_get_ext_handler`, keeping
+# ``pv.read``/``pv.save`` calls for built-in formats free of third-party
+# plugin import cost.
+_pending_ext_readers: dict[str, list[EntryPoint]] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 
@@ -106,6 +114,7 @@ def _save_registry_state() -> _RegistryState:
     return {
         'ext': _custom_ext_readers.copy(),
         'sources': _custom_ext_reader_sources.copy(),
+        'pending': {k: list(v) for k, v in _pending_ext_readers.items()},
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -117,6 +126,8 @@ def _restore_registry_state(state: _RegistryState) -> None:
     _custom_ext_readers.update(state['ext'])
     _custom_ext_reader_sources.clear()
     _custom_ext_reader_sources.update(state['sources'])
+    _pending_ext_readers.clear()
+    _pending_ext_readers.update({k: list(v) for k, v in state['pending'].items()})
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -323,62 +334,95 @@ def _register(
 
 
 def _get_ext_handler(ext: str) -> ReaderHandler | None:
-    """Look up a custom extension handler, discovering entry points lazily."""
+    """Look up a custom extension handler, importing the plugin lazily.
+
+    Built-in extensions never trigger entry-point plugin imports — only
+    extensions that an installed plugin has actually claimed do.
+    """
     handler = _custom_ext_readers.get(ext)
     if handler is not None:
         return handler
     _ensure_entry_points()
+    if ext in _pending_ext_readers:
+        _resolve_pending_reader(ext)
     return _custom_ext_readers.get(ext)
 
 
 def _ensure_entry_points() -> None:
-    """Scan the ``pyvista.readers`` entry-point group and load handlers."""
+    """Scan ``pyvista.readers`` entry-point metadata once.
+
+    Populates :data:`_pending_ext_readers` with every extension declared
+    by an installed plugin. The plugin modules themselves are **not**
+    imported here; the cost is one ``importlib.metadata.entry_points``
+    call. Plugin imports are deferred to :func:`_resolve_pending_reader`,
+    which runs only when a reader for that specific extension is
+    actually requested.
+    """
     global _entry_points_loaded  # noqa: PLW0603
     if _entry_points_loaded:
         return
     _entry_points_loaded = True
 
-    # Group entry points by normalized key so we can detect duplicate
-    # providers *and* guarantee a deterministic winner (the first one).
-    eps_by_key: dict[str, list[EntryPoint]] = {}
     for ep in entry_points(group='pyvista.readers'):
         key = ep.name.lower()
         if not key.startswith('.'):
             key = f'.{key}'
-        eps_by_key.setdefault(key, []).append(ep)
-
-    for key, eps in eps_by_key.items():
         if key in _custom_ext_readers:
             continue
-        winner = eps[0]
-        try:
-            # ep.load() runs third-party import machinery — it can raise
-            # literally anything. Convert to a warning so one broken plugin
-            # cannot take down every pyvista.read call.
-            handler = winner.load()
-        except Exception as err:  # noqa: BLE001
-            warn_external(
-                f'Failed to load pyvista.readers entry point "{winner.value}" for "{key}": {err}'
-            )
-            continue
-        _custom_ext_readers[key] = handler
-        _custom_ext_reader_sources[key] = winner.value
-        if len(eps) > 1:
-            providers = ', '.join(ep.value for ep in eps)
-            warn_external(
-                f'Multiple pyvista.readers entry points registered for '
-                f'"{key}": {providers}. Using {winner.value}.'
-            )
+        _pending_ext_readers.setdefault(key, []).append(ep)
+
+
+def _resolve_pending_reader(ext: str) -> bool:
+    """Import the plugin claiming *ext*, if any.
+
+    Returns
+    -------
+    bool
+        ``True`` if a plugin loaded successfully for ``ext``. ``False``
+        if no pending plugin matches, or if the plugin failed to import.
+
+    Notes
+    -----
+    A plugin that fails to import emits a ``UserWarning`` and is dropped
+    from the pending list, so subsequent lookups of the same extension
+    fall straight through without re-triggering the import or
+    re-emitting the warning.
+
+    """
+    eps = _pending_ext_readers.pop(ext, None)
+    if not eps:
+        return False
+    winner = eps[0]
+    try:
+        # ep.load() runs third-party import machinery — it can raise
+        # literally anything. Convert to a warning so one broken plugin
+        # cannot take down every pyvista.read call.
+        handler = winner.load()
+    except Exception as err:  # noqa: BLE001
+        warn_external(
+            f'Failed to load pyvista.readers entry point "{winner.value}" for "{ext}": {err}'
+        )
+        return False
+    _custom_ext_readers[ext] = handler
+    _custom_ext_reader_sources[ext] = winner.value
+    if len(eps) > 1:
+        providers = ', '.join(ep.value for ep in eps)
+        warn_external(
+            f'Multiple pyvista.readers entry points registered for '
+            f'"{ext}": {providers}. Using {winner.value}.'
+        )
+    return True
 
 
 def _list_custom_exts() -> list[str]:
     """Return the list of extensions with registered custom readers.
 
-    Triggers lazy entry-point discovery so that extensions contributed
-    by installed packages appear in listings of supported formats.
+    Triggers lazy entry-point *metadata* discovery so that extensions
+    contributed by installed packages appear in listings of supported
+    formats. The plugin modules themselves are **not** imported.
     """
     _ensure_entry_points()
-    return list(_custom_ext_readers.keys())
+    return list(_custom_ext_readers.keys() | _pending_ext_readers.keys())
 
 
 def registered_readers() -> tuple[ReaderRegistration, ...]:
@@ -411,6 +455,8 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
 
     """
     _ensure_entry_points()
+    for ext in list(_pending_ext_readers):
+        _resolve_pending_reader(ext)
     return tuple(
         ReaderRegistration(
             extension=ext,
