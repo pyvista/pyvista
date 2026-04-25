@@ -39,6 +39,7 @@ from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
+from .utilities.arrays import parse_field_choice
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
@@ -51,6 +52,8 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from collections.abc import Iterator
 
+    import pandas
+    import pyarrow
     from typing_extensions import Self
 
     from pyvista import Cell
@@ -1100,6 +1103,99 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
+
+    def _attributes_for_association(
+        self: Self, association: FieldAssociation
+    ) -> DataSetAttributes:
+        """Return :attr:`point_data` or :attr:`cell_data`; raise ``ValueError`` otherwise."""
+        if association is FieldAssociation.POINT:
+            return self.point_data
+        if association is FieldAssociation.CELL:
+            return self.cell_data
+        msg = f"association must resolve to 'point' or 'cell'; got {association.name}."
+        raise ValueError(msg)
+
+    def to_pandas(
+        self: Self, association: PointLiteral | CellLiteral = 'point'
+    ) -> pandas.DataFrame:
+        """Return this dataset's point or cell arrays as a :class:`pandas.DataFrame`.
+
+        Thin wrapper around :meth:`DataSetAttributes.to_pandas`. See that
+        method for column-expansion rules and dtype handling.
+
+        Requires :mod:`pandas`.
+
+        Parameters
+        ----------
+        association : str | pyvista.core.utilities.arrays.FieldAssociation, default: 'point'
+            Which attribute set to convert. Accepts ``'point'`` or
+            ``FieldAssociation.POINT``, which maps to :attr:`point_data`
+            (``n_points`` rows); or ``'cell'`` or ``FieldAssociation.CELL``,
+            which maps to :attr:`cell_data` (``n_cells`` rows). Field data is
+            not supported because its arrays may have differing lengths.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame with one column per (expanded) array.
+
+        See Also
+        --------
+        :ref:`dataframe_export_example`
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['scalars'] = range(mesh.n_points)
+        >>> df = mesh.to_pandas()
+        >>> list(df.columns)
+        ['scalars']
+
+        """
+        return self._attributes_for_association(parse_field_choice(association)).to_pandas()
+
+    def to_arrow(self: Self, association: PointLiteral | CellLiteral = 'point') -> pyarrow.Table:
+        """Return this dataset's point or cell arrays as a :class:`pyarrow.Table`.
+
+        Thin wrapper around :meth:`DataSetAttributes.to_arrow`.
+
+        Requires :mod:`pyarrow`.
+
+        Parameters
+        ----------
+        association : str | pyvista.core.utilities.arrays.FieldAssociation, default: 'point'
+            Which attribute set to convert. Accepts ``'point'`` /
+            ``FieldAssociation.POINT`` or ``'cell'`` / ``FieldAssociation.CELL``.
+
+        Returns
+        -------
+        pyarrow.Table
+            Table with one column per (expanded) array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['scalars'] = range(mesh.n_points)
+        >>> mesh.to_arrow().num_rows
+        8
+
+        """
+        return self._attributes_for_association(parse_field_choice(association)).to_arrow()
+
+    def __arrow_c_stream__(self: Self, requested_schema: object | None = None) -> object:
+        """Export :attr:`point_data` via the Arrow PyCapsule interface.
+
+        Delegates to :meth:`DataSetAttributes.__arrow_c_stream__` on
+        :attr:`point_data`. Callers wanting :attr:`cell_data` should use
+        ``mesh.cell_data`` directly or ``mesh.to_arrow('cell')``.
+
+        Requires :mod:`pyarrow`.
+        """
+        return self.point_data.__arrow_c_stream__(requested_schema)
 
     @property
     def cell_data(self: Self) -> DataSetAttributes:

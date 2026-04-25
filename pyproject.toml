@@ -90,6 +90,7 @@ test = [
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
+  'pyarrow<25.0.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
@@ -137,6 +138,8 @@ docs = [
   'mypy==1.19.1',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
+  'pandas==2.3.3',
+  'pyarrow==24.0.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
