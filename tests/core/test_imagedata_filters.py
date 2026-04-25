@@ -1455,6 +1455,73 @@ def test_select_values(uniform):
     assert np.allclose(selected.active_scalars, uniform.active_scalars)
 
 
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+def test_select_values_like_threshold(
+    frog_tissues,
+    replacement_value,
+    fill_value,
+):
+    rng = frog_tissues.get_data_range()
+
+    selected = frog_tissues.select_values(
+        ranges=rng,
+        replacement_value=replacement_value,
+        fill_value=fill_value,
+    )
+    thresholded = frog_tissues.image_threshold(
+        rng, in_value=replacement_value, out_value=fill_value
+    )
+
+    assert selected == thresholded
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        # invert=True excludes the fast path
+        dict(ranges=[10, 20], invert=True),
+        # multiple ranges excludes the fast path
+        dict(ranges=[[10, 20], [50, 60]]),
+        # ``values`` excludes the fast path
+        dict(values=[10, 20, 30]),
+        # cell preference excludes the fast path
+        dict(ranges=[10, 20], preference='cell', scalars='Spatial Cell Data'),
+    ],
+)
+def test_select_values_slow_path(uniform, kwargs):
+    selected = uniform.select_values(
+        replacement_value=99,
+        fill_value=-1,
+        **kwargs,
+    )
+    assert isinstance(selected, pv.ImageData)
+    array_name = kwargs.get('scalars') or uniform.active_scalars_name
+    out_values = set(np.asarray(selected[array_name]).tolist())
+    assert out_values <= {99, -1}
+
+
+def test_select_values_fast_and_slow_path_match(uniform):
+    rng = [10, 20]
+    fast = uniform.select_values(ranges=rng, replacement_value=1, fill_value=-1)
+    # Use ``invert=True`` then re-invert to force the slow path with equivalent semantics
+    arr = uniform.active_scalars
+    expected_mask = (arr >= rng[0]) & (arr <= rng[1])
+    slow = uniform.select_values(
+        ranges=[[float('-inf'), rng[0] - 1], [rng[1] + 1, float('inf')]],
+        replacement_value=-1,
+        fill_value=1,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(fast.active_scalars),
+        np.where(expected_mask, 1, -1).astype(fast.active_scalars.dtype),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(slow.active_scalars),
+        np.where(expected_mask, 1, -1).astype(slow.active_scalars.dtype),
+    )
+
+
 def test_select_values_split(uniform):
     unique_values = np.unique(uniform.active_scalars)
     selected = uniform.select_values(values=unique_values, split=True)
