@@ -99,6 +99,44 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
+def fix_edit_link_button(pagename: str, link: str) -> str | None:
+    """Rewrite an "edit on GitHub" link to point at the actual source file.
+
+    The default Sphinx "edit this page" link points at the rendered page
+    (for example, the generated ``.rst`` for a gallery example), which
+    404s on GitHub. Two cases need rewriting:
+
+    - Gallery examples ``.rst`` to the source ``.py`` under ``examples/``.
+    - Autosummary stubs to the file defining the Python object.
+
+    Parameters
+    ----------
+    pagename : str
+        The Sphinx pagename for the page being rendered.
+
+    link : str
+        The default GitHub edit URL, used as a fallback.
+
+    Returns
+    -------
+    str or None
+        The corrected edit URL, or the original ``link`` for pages that
+        do not need rewriting. ``None`` if no source location can be
+        resolved for an autosummary stub.
+
+    """
+    if pagename.startswith('examples') and 'index' not in pagename:
+        # Gallery example. The ``examples`` segment in ``pagename`` matches
+        # the ``examples`` directory in the repo, so we can use it directly.
+        return f'https://github.com/pyvista/pyvista/edit/main/{pagename}.py'
+    if '_autosummary' in pagename:
+        # API summary stub: resolve the source via the Python object.
+        fullname = pagename.split('_autosummary')[1].lstrip('/')
+        return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
+    # Fall back to the default link for everything else.
+    return link
+
+
 def pv_html_page_context(  # noqa: PLR0917
     app,  # noqa: ARG001
     pagename: str,
@@ -106,48 +144,10 @@ def pv_html_page_context(  # noqa: PLR0917
     context,
     doctree,  # noqa: ARG001
 ) -> None:  # pragma: no cover
-    """Add a function for returning an "edit this page" link pointing to `main`.
+    """Inject the ``fix_edit_link_button`` helper into the Jinja context.
 
-    This is specific to PyVista to ensure that the "edit this page" link always
-    goes to the right page, specifically for:
-
-    - Gallery examples
-    - Autosummary examples (using _autosummary)
-
+    The Sphinx ``html-page-context`` event fires per page, so the helper
+    is bound here to the current ``pagename`` and called from the
+    ``edit-this-page.html`` template.
     """
-
-    def fix_edit_link_button(link: str) -> str | None:
-        """Transform "edit on github" links to the correct url.
-
-        This is specific to PyVista to ensure that the "edit this page" link
-        always goes to the right page, specifically for:
-
-        - Gallery examples
-        - Autosummary examples (using _autosummary)
-
-        Parameters
-        ----------
-        link : str
-            The link to the github edit interface.
-
-        Returns
-        -------
-        str
-            The link to the tip of the main branch for the same file.
-
-        """
-        if pagename.startswith('examples') and 'index' not in pagename:
-            # This is a gallery example.
-
-            # We can get away with directly using the pagename since "examples"
-            # in the pagename is the same as the "examples" directory in the
-            # repo
-            return f'https://github.com/pyvista/pyvista/edit/main/{pagename}.py'
-        elif '_autosummary' in pagename:
-            # This is an API summary stub
-            fullname = pagename.split('_autosummary')[1].lstrip('/')
-            return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
-        else:
-            return link  # fallback to default
-
-    context['fix_edit_link_button'] = fix_edit_link_button
+    context['fix_edit_link_button'] = lambda link: fix_edit_link_button(pagename, link)
