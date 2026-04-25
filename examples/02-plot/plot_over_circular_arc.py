@@ -10,8 +10,6 @@ using :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -53,7 +51,12 @@ pl.show()
 # %%
 # Run the filter and produce a line plot.
 mesh.plot_over_circular_arc_normal(
-    center=center, resolution=100, normal=normal, polar=polar, angle=angle, scalars='height'
+    center=center,
+    resolution=100,
+    normal=normal,
+    polar=polar,
+    angle=angle,
+    scalars='height',
 )
 # %%
 # .. tags:: plot

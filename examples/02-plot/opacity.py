@@ -9,8 +9,6 @@ or opacity mapping based on a scalar array.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -58,10 +56,10 @@ pl.show()
 #   range from low to high
 # - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted scalar
 #   range from high to low
-# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar
-#   range from low to high
-# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar
-#   range from high to low
+# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted
+#   scalar range from low to high
+# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted
+#   scalar range from high to low
 
 # Show the linear opacity transfer function
 mesh.plot(opacity='linear')
@@ -115,15 +113,21 @@ pl.add_mesh(knee, cmap='bone', scalar_bar_args={'title': 'No Opacity'})
 pl.view_xy()
 
 pl.subplot(0, 1)
-pl.add_mesh(knee, cmap='bone', opacity='linear', scalar_bar_args={'title': 'Linear Opacity'})
+pl.add_mesh(
+    knee, cmap='bone', opacity='linear', scalar_bar_args={'title': 'Linear Opacity'}
+)
 pl.view_xy()
 
 pl.subplot(1, 0)
-pl.add_mesh(knee, cmap='bone', opacity='sigmoid', scalar_bar_args={'title': 'Sigmoidal Opacity'})
+pl.add_mesh(
+    knee, cmap='bone', opacity='sigmoid', scalar_bar_args={'title': 'Sigmoidal Opacity'}
+)
 pl.view_xy()
 
 pl.subplot(1, 1)
-pl.add_mesh(knee, cmap='bone', opacity='geom_r', scalar_bar_args={'title': 'Log Scale Opacity'})
+pl.add_mesh(
+    knee, cmap='bone', opacity='geom_r', scalar_bar_args={'title': 'Log Scale Opacity'}
+)
 pl.view_xy()
 
 
@@ -153,9 +157,6 @@ contours.array_names
 # the temperature variance array by the maximum value.  That way high
 # variance will be completely transparent.
 
-# sphinx_gallery_start_ignore
-PYVISTA_GALLERY_FORCE_STATIC = True
-# sphinx_gallery_end_ignore
 contours['Temperature_var'] /= contours['Temperature_var'].max()
 
 pl = pv.Plotter(shape=(1, 2))

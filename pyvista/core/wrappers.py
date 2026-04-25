@@ -16,7 +16,7 @@ A user-defined Foo class is defined that extends the functionality of
 ...     pass  # Extend PolyData here
 >>> pv._wrappers['vtkPolyData'] = Foo
 >>> image = pv.ImageData()
->>> surface = image.extract_surface()
+>>> surface = image.extract_surface(algorithm=None)
 >>> assert isinstance(surface, Foo)
 >>> pv._wrappers = default_wrappers  # reset back to default
 

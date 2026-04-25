@@ -13,10 +13,7 @@ Integrate a vector field to generate streamlines.
 # by experimenting with the data.
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -97,7 +94,13 @@ seed_mesh = source_mesh.decimate_boundary(0.4)
 streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction='forward')
 # print *only* added arrays from streamlines filter
 print('Added arrays from streamlines filter:')
-print([array_name for array_name in streamlines.array_names if array_name not in mesh.array_names])
+print(
+    [
+        array_name
+        for array_name in streamlines.array_names
+        if array_name not in mesh.array_names
+    ]
+)
 
 # %%
 # Plot streamlines colored by the time along the streamlines.
@@ -159,7 +162,9 @@ z = mesh.points[:, 2]
 vectors = np.empty((mesh.n_points, 3))
 vectors[:, 0] = np.sin(np.pi * x) * np.cos(np.pi * y) * np.cos(np.pi * z)
 vectors[:, 1] = -np.cos(np.pi * x) * np.sin(np.pi * y) * np.cos(np.pi * z)
-vectors[:, 2] = np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.sin(np.pi * z)
+vectors[:, 2] = (
+    np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.sin(np.pi * z)
+)
 
 mesh['vectors'] = vectors
 # %%

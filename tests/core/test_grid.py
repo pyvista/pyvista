@@ -372,7 +372,7 @@ def test_destructor():
 
 
 def test_surface_indices(hexbeam):
-    surf = hexbeam.extract_surface()
+    surf = hexbeam.extract_surface(algorithm=None)
     surf_ind = surf.point_data['vtkOriginalPointIds']
     assert np.allclose(surf_ind, hexbeam.surface_indices())
 
@@ -439,18 +439,25 @@ def test_init_bad_filename():
 
 
 def test_save_bad_extension():
-    valid_ext = ['.vtu', '.vtk', '.pkl', '.pickle']
+    # Don't assert on the full list of valid extensions because plugin
+    # packages registered via the ``pyvista.writers`` entry-point group
+    # can extend it (e.g. pyvista_zarr adding ``.zarr``). Verify the
+    # bad-extension framing and that all the built-in extensions are
+    # listed; that's the contract users rely on.
+    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle', '.pv', '.zvtk']
     if pv.vtk_version_info >= (9, 4):
-        valid_ext.insert(2, '.vtkhdf')
+        builtin_exts.append('.vtkhdf')
 
-    match = (
-        "Invalid file extension '.abc' for data type <class "
-        "'pyvista.core.pointset.UnstructuredGrid'>.\n"
-        f'Must be one of: {valid_ext}'
-    )
-
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
         pv.UnstructuredGrid().save('file.abc')
+
+    message = str(excinfo.value)
+    assert (
+        "Invalid file extension '.abc' for data type "
+        "<class 'pyvista.core.pointset.UnstructuredGrid'>" in message
+    )
+    for ext in builtin_exts:
+        assert f"'{ext}'" in message, f'Built-in extension {ext} missing from error message'
 
 
 @pytest.mark.parametrize(
@@ -1151,7 +1158,7 @@ def test_cast_uniform_to_structured():
 def test_cast_uniform_to_rectilinear():
     grid = examples.load_uniform()
     grid.offset = (1, 2, 3)
-    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))
+    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))  # on-axis rotation is allowed
     grid.spacing = (1.1, 2.2, 3.3)
     rectilinear = grid.cast_to_rectilinear_grid()
     assert rectilinear.n_points == grid.n_points
@@ -1160,16 +1167,12 @@ def test_cast_uniform_to_rectilinear():
 
     grid.direction_matrix = pv.Transform().rotate_x(30).matrix[:3, :3]
     match = (
-        'The direction matrix is not a diagonal matrix and cannot be used when casting to '
-        'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid instead.'
+        'Rectilinear grid does not support off-axis rotations.\n'
+        'Consider removing off-axis rotations from the `direction_matrix`, '
+        'or casting to StructuredGrid instead.'
     )
-    with pytest.warns(RuntimeWarning, match=match):
-        rectilinear = grid.cast_to_rectilinear_grid()
-    # Input has orientation, output does not
-    assert rectilinear.bounds != grid.bounds
-    # Test output has orientation component removed
-    grid.direction_matrix = np.eye(3)
-    assert rectilinear.bounds == grid.bounds
+    with pytest.raises(ValueError, match=match):
+        grid.cast_to_rectilinear_grid()
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():
@@ -1288,14 +1291,15 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
 
     if extension == '.vtk' and not is_identity_matrix:
         match = re.escape(
-            'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.'
+            'The direction matrix for ImageData cannot be saved using the legacy `.vtk` format.'
             '\nSee https://gitlab.kitware.com/vtk/vtk/-/issues/19663 '
             '\nUse the `.vti` extension instead (XML format).'
         )
-        with pytest.warns(UserWarning, match=match):
+        with pytest.raises(ValueError, match=match):
             uniform.save(filename, binary=binary)
-    else:
-        uniform.save(filename, binary=binary)
+        return
+
+    uniform.save(filename, binary=binary)
 
     grid = reader(filename)
 
@@ -1967,7 +1971,7 @@ def test_rect_grid_dimensions_raises():
 def empty_poly_cast_to_ugrid():
     def get_cell_types(mesh):
         return (
-            mesh.GetCellTypes() if pv.vtk_version_info > (9, 5, 99) else mesh.GetCellTypesArray()
+            mesh.GetCellTypes() if pv.vtk_version_info >= (9, 6, 0) else mesh.GetCellTypesArray()
         )
 
     cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
@@ -1998,17 +2002,6 @@ def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
     connectivity = empty_poly_cast_to_ugrid.cell_connectivity
     assert connectivity.size == 0
     assert connectivity.dtype == hexbeam.cell_connectivity.dtype
-
-
-def test_distinct_cell_types():
-    wedge = pv.examples.cells.Wedge()
-    quad = pv.examples.cells.Quadrilateral()
-    mesh = pv.merge([wedge, wedge.translate((1.0, 1.0, 1.0)), quad.translate((2.0, 2.0, 2.0))])
-
-    distinct_cell_types = mesh.distinct_cell_types
-    assert isinstance(distinct_cell_types, set)
-    assert all(isinstance(val, pv.CellType) for val in distinct_cell_types)
-    assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
 
 
 @pytest.fixture

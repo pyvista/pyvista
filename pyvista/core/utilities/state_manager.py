@@ -15,6 +15,7 @@ from typing import get_args
 from typing import overload
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -298,15 +299,11 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     @property
     def _state(self) -> _VtkSnakeCaseOptions:
-        import pyvista as pv  # noqa: PLC0415
-
-        return pv._VTK_SNAKE_CASE_STATE
+        return _vtk_utilities._VTK_SNAKE_CASE_STATE
 
     @_state.setter
     def _state(self, state: _VtkSnakeCaseOptions) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
-        pv._VTK_SNAKE_CASE_STATE = state
+        _vtk_utilities._VTK_SNAKE_CASE_STATE = state
 
 
 vtk_snake_case = _vtkSnakeCase()

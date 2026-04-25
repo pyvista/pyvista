@@ -3,7 +3,7 @@
 Once downloaded, these datasets are stored locally allowing for the
 rapid reuse of these datasets.
 
-Files are all hosted in https://github.com/pyvista/vtk-data/ and are downloaded
+Files are all hosted in https://github.com/pyvista/data/ and are downloaded
 using the ``download_file`` function. If you add a file to the example data
 repository, you should add a ``download-<dataset>`` method here which will
 rendered on this page.
@@ -39,6 +39,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
@@ -52,6 +53,7 @@ from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoade
 if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PolyData
 # disable pooch verbose logging
 POOCH_LOGGER = pooch.get_logger()  # type: ignore[attr-defined]
 POOCH_LOGGER.setLevel(logging.CRITICAL)
@@ -63,7 +65,7 @@ _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
-_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
 
 
 def _warn_invalid_dir_not_used(path, env_var):
@@ -72,7 +74,7 @@ def _warn_invalid_dir_not_used(path, env_var):
 
 
 def _get_vtk_data_source() -> tuple[str, bool]:
-    # If available, a local vtk-data instance will be used for examples
+    # If available, a local pyvista/data instance will be used for examples
     # Set default output
     source = _DEFAULT_VTK_DATA_SOURCE
     file_cache = False
@@ -193,10 +195,10 @@ def _file_copier(input_file, output_file, *_, **__):
 
 
 def download_file(filename):
-    """Download a single file from the PyVista vtk-data repository.
+    """Download a single file from the pyvista/data repository.
 
-    You can add an example file at `pyvista/vtk_data
-    <https://github.com/pyvista/vtk-data>`_.
+    You can add an example file at `pyvista/data
+    <https://github.com/pyvista/data>`_.
 
     Parameters
     ----------
@@ -376,7 +378,7 @@ def download_masonry_texture(load=True):  # noqa: FBT002
 
 _dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
     'masonry.bmp',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -415,7 +417,7 @@ def download_usa_texture(load=True):  # noqa: FBT002
 
 _dataset_usa_texture = _SingleFileDownloadableDatasetLoader(
     'usa_image.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -454,7 +456,7 @@ def download_puppy_texture(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_puppy_texture, load=load)
 
 
-_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -579,6 +581,15 @@ _dataset_st_helens = _SingleFileDownloadableDatasetLoader('SainteHelens.dem')
 def download_bunny(load=True):  # noqa: FBT002
     """Download bunny dataset.
 
+    The Stanford Bunny from the `Stanford 3D Scanning Repository
+    <http://graphics.stanford.edu/data/3Dscanrep/>`_. Please credit the
+    Stanford Computer Graphics Laboratory (Turk and Levoy, SIGGRAPH '94)
+    when using this model.
+
+    Stanford permits free redistribution for research and mirroring.
+    Inclusion in a product-for-sale requires permission from the Stanford
+    Computer Graphics Laboratory.
+
     Parameters
     ----------
     load : bool, default: True
@@ -622,6 +633,15 @@ _dataset_bunny = _SingleFileDownloadableDatasetLoader('bunny.ply')
 @_deprecate_positional_args
 def download_bunny_coarse(load=True):  # noqa: FBT002
     """Download coarse bunny dataset.
+
+    A decimated version of the Stanford Bunny from the `Stanford 3D
+    Scanning Repository <http://graphics.stanford.edu/data/3Dscanrep/>`_.
+    Please credit the Stanford Computer Graphics Laboratory
+    (Turk and Levoy, SIGGRAPH '94) when using this model.
+
+    Stanford permits free redistribution for research and mirroring.
+    Inclusion in a product-for-sale requires permission from the Stanford
+    Computer Graphics Laboratory.
 
     Parameters
     ----------
@@ -987,7 +1007,7 @@ def download_clown(load=True):  # noqa: FBT002
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_clown()
-    >>> dataset.plot()
+    >>> dataset.plot(color=True)
 
     .. seealso::
 
@@ -1286,6 +1306,27 @@ _dataset_exodus = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
 def download_nefertiti(load=True):  # noqa: FBT002
     """Download mesh of Queen Nefertiti.
 
+    .. warning::
+
+        **Non-commercial license.** This dataset is "The Other Nefertiti"
+        (2016) by Nora Al-Badri and Jan Nikolai Nelles, released under
+        `CC BY-NC-SA 4.0 <https://creativecommons.org/licenses/by-nc-sa/4.0/>`_.
+        The license prohibits commercial use and imposes a ShareAlike
+        requirement on derivative works. Do not use this dataset in
+        commercial products or in any distribution that is incompatible
+        with the NonCommercial or ShareAlike clauses.
+
+        The official Neues Museum / Staatliche Museen zu Berlin scan is
+        also non-commercial (CC BY-NC-SA 3.0 DE). No permissively licensed
+        Nefertiti scan is currently known to exist.
+
+    Required attribution: *Nora Al-Badri and Jan Nikolai Nelles,
+    The Other Nefertiti (2016), CC BY-NC-SA 4.0*.
+
+    For a permissively licensed bust suitable for commercial use, see
+    :func:`download_washington_bust` or :func:`download_lincoln_life_mask`,
+    both released under CC0 by the Smithsonian.
+
     Parameters
     ----------
     load : bool, default: True
@@ -1300,8 +1341,8 @@ def download_nefertiti(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_nefertiti()
-    >>> dataset.plot(cpos='xz')
+    >>> dataset = examples.download_nefertiti()  # doctest: +SKIP
+    >>> dataset.plot(cpos='xz')  # doctest: +SKIP
 
     .. seealso::
 
@@ -1318,12 +1359,117 @@ def download_nefertiti(load=True):  # noqa: FBT002
         * :ref:`box_widget_example`
 
     """
+    warn_external(
+        'download_nefertiti returns a dataset licensed under CC BY-NC-SA 4.0 '
+        '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
+        'used for commercial purposes, and derivative works must be shared '
+        'under the same license. For a CC0 alternative suitable for commercial '
+        'use, see download_washington_bust or download_lincoln_life_mask.',
+        UserWarning,
+    )
     return _download_dataset(_dataset_nefertiti, load=load)
 
 
 _dataset_nefertiti = _SingleFileDownloadableDatasetLoader(
     'nefertiti.ply.zip',
     target_file='nefertiti.ply',
+)
+
+
+def download_washington_bust(*, load: bool = True) -> PolyData | str:
+    """Download a bust of George Washington.
+
+    A marble bust of George Washington (after Giuseppe Ceracchi, ca. 1819),
+    collection of the Smithsonian National Portrait Gallery (NPG.70.4).
+
+    This dataset is released by the Smithsonian under the `CC0 Public
+    Domain Dedication <https://creativecommons.org/publicdomain/zero/1.0/>`_:
+    *"This media file is in the public domain (free of copyright
+    restrictions). You can copy, modify, and distribute this work without
+    contacting the Smithsonian."*
+
+    Source: https://3d.si.edu/
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_washington_bust()  # doctest: +SKIP
+    >>> dataset.plot()  # doctest: +SKIP
+
+    .. seealso::
+
+        :ref:`Washington Bust Dataset <washington_bust_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :func:`download_lincoln_life_mask`
+            Another CC0 head sculpture from the Smithsonian.
+
+    """
+    return _download_dataset(_dataset_washington_bust, load=load)
+
+
+_dataset_washington_bust = _SingleFileDownloadableDatasetLoader(
+    'washington_bust/washington_bust.obj',
+)
+
+
+def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
+    """Download the life mask of Abraham Lincoln.
+
+    A 3D scan of the Mills life mask of Abraham Lincoln (plaster, 1865),
+    collection of the Smithsonian. The mask was cast from Lincoln's face
+    two months before his assassination.
+
+    This dataset is released by the Smithsonian under the `CC0 Public
+    Domain Dedication <https://creativecommons.org/publicdomain/zero/1.0/>`_:
+    *"This media file is in the public domain (free of copyright
+    restrictions). You can copy, modify, and distribute this work without
+    contacting the Smithsonian."*
+
+    Source: https://3d.si.edu/
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_lincoln_life_mask()  # doctest: +SKIP
+    >>> dataset.plot()  # doctest: +SKIP
+
+    .. seealso::
+
+        :ref:`Lincoln Life Mask Dataset <lincoln_life_mask_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :func:`download_washington_bust`
+            A proper head-and-shoulders bust, also CC0.
+
+    """
+    return _download_dataset(_dataset_lincoln_life_mask, load=load)
+
+
+_dataset_lincoln_life_mask = _SingleFileDownloadableDatasetLoader(
+    'lincoln_life_mask/lincoln_life_mask.obj',
 )
 
 
@@ -1716,7 +1862,7 @@ def download_bird_texture(load=True):  # noqa: FBT002
 
 _dataset_bird_texture = _SingleFileDownloadableDatasetLoader(
     'Pileated.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -1898,7 +2044,7 @@ def download_cake_easy_texture(load=True):  # noqa: FBT002
 
 _dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
     'cake_easy.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -2028,9 +2174,9 @@ def download_gourds_texture(zoom=False, load=True):  # noqa: FBT002
 # Use '__' on the zoomed version to label it as private
 _dataset_gourds_texture = _SingleFileDownloadableDatasetLoader(
     'Gourds.png',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
-__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)  # type: ignore[arg-type]
+__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -2644,12 +2790,22 @@ def download_emoji_texture(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_emoji_texture, load=load)
 
 
-_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)
 
 
 @_deprecate_positional_args
 def download_teapot(load=True):  # noqa: FBT002
     """Download teapot dataset.
+
+    The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
+    originally modeled by Martin Newell at the University of Utah in
+    1975. The specific mesh distributed here was tessellated by Martin
+    Isenburg (UNC Chapel Hill) for Isenburg and Snoeyink, "Face Fixer:
+    Compressing Polygon Meshes with Properties" (SIGGRAPH 2000).
+
+    No formal license has ever been issued for the original Newell
+    dataset. The model has been freely distributed in computer graphics
+    software for 50 years and is conventionally treated as public domain.
 
     Parameters
     ----------
@@ -2729,6 +2885,42 @@ def download_brain(load=True):  # noqa: FBT002
 
 
 _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
+
+
+def download_frd(*, load=True):
+    """Download a sample CalculiX FRD file.
+
+    .. versionadded:: 0.48
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_frd()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Frd Dataset <frd_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`calculix_colormap_example`
+            Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
+
+    """
+    return _download_dataset(_dataset_frd, load=load)
+
+
+_dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd')
 
 
 @_deprecate_positional_args
@@ -2948,7 +3140,7 @@ def download_sky_box_nz_texture(load=True):  # noqa: FBT002
 
 _dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
     'skybox-nz.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -3079,7 +3271,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Show non-linear subdivision.
 
-    >>> surf = dataset.extract_surface(nonlinear_subdivision=5)
+    >>> surf = dataset.extract_surface(algorithm=None, nonlinear_subdivision=5)
     >>> surf.plot(smooth_shading=True)
 
     .. seealso::
@@ -3357,6 +3549,15 @@ def download_great_white_shark(load=True):  # noqa: FBT002
 
     .. versionadded:: 0.45
 
+    .. note::
+
+        The origin and license of this model could not be definitively
+        established. The file was imported from the `VTK Examples test
+        data repository
+        <https://gitlab.kitware.com/vtk/vtk-examples/-/blob/master/src/Testing/Data/greatWhite.stl>`_,
+        which does not document its source. Use with caution in
+        redistributed or commercial contexts.
+
     Parameters
     ----------
     load : bool, default: True
@@ -3405,6 +3606,20 @@ def download_grey_nurse_shark(load=True):  # noqa: FBT002
     """Download grey nurse shark dataset.
 
     .. versionadded:: 0.45
+
+    Model by `rogerpeng1 on Thingiverse
+    <https://www.thingiverse.com/thing:137954>`_, licensed under
+    `Creative Commons Attribution-ShareAlike (CC BY-SA 3.0)
+    <https://creativecommons.org/licenses/by-sa/3.0/>`_.
+
+    .. note::
+
+        The ShareAlike clause requires derivative works to be distributed
+        under the same license. Incorporating this mesh into a proprietary
+        or differently-licensed work may be restricted.
+
+    Required attribution: *Grey Nurse Shark by rogerpeng1
+    (thingiverse.com/thing:137954), licensed under CC BY-SA.*
 
     Parameters
     ----------
@@ -3680,7 +3895,7 @@ def _kitchen_split_load_func(mesh):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = pv.core.filters._get_output(alg)
+        result = _get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -4010,7 +4225,7 @@ def download_crater_imagery(load=True):  # noqa: FBT002
 
 _dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
     'BJ34_GeoTifv1-04_crater_clip.tif',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -4048,7 +4263,7 @@ def download_dolfin(load=True):  # noqa: FBT002
 
 _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
     'dolfin_fine.xml',
-    read_func=functools.partial(read, file_format='dolfin-xml'),  # type: ignore[arg-type]
+    read_func=functools.partial(read, file_format='dolfin-xml'),
 )
 
 
@@ -4340,7 +4555,7 @@ def download_rgba_texture(load=True):  # noqa: FBT002
 
 _dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
     'alphachannel.png',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -4376,7 +4591,7 @@ def download_vtk_logo(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_vtk_logo, load=load)
 
 
-_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -4494,7 +4709,7 @@ def download_cubemap_park(load=True):  # noqa: FBT002
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
     'cubemap_park/cubemap_park.zip',
     target_file='',
-    read_func=_load_as_cubemap,  # type: ignore[arg-type]
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4506,8 +4721,8 @@ def download_cubemap_space_4k(load=True):  # noqa: FBT002
     Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
     https://jaxry.github.io/panorama-to-cubemap/
 
-    See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_
+    See `data/cubemap_space
+    <https://github.com/pyvista/data/tree/master/Data/cubemap_space#readme>`_
     for more details.
 
     Parameters
@@ -4553,7 +4768,7 @@ def download_cubemap_space_4k(load=True):  # noqa: FBT002
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/4k.zip',
     target_file='',
-    read_func=_load_as_cubemap,  # type: ignore[arg-type]
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4565,8 +4780,8 @@ def download_cubemap_space_16k(load=True):  # noqa: FBT002
     Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
     https://jaxry.github.io/panorama-to-cubemap/
 
-    See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_ for
+    See `data/cubemap_space
+    <https://github.com/pyvista/data/tree/master/Data/cubemap_space#readme>`_ for
     more details.
 
     Parameters
@@ -4618,7 +4833,7 @@ def download_cubemap_space_16k(load=True):  # noqa: FBT002
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/16k.zip',
     target_file='',
-    read_func=_load_as_cubemap,  # type: ignore[arg-type]
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4743,7 +4958,7 @@ def download_gpr_path(load=True):  # noqa: FBT002
 
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
-    read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
+    read_func=functools.partial(np.loadtxt, skiprows=1),
     load_func=pv.PolyData,  # type: ignore[arg-type]
 )
 
@@ -5084,7 +5299,7 @@ def download_notch_stress(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed.vtk')
 
 
 @_deprecate_positional_args
@@ -6074,6 +6289,15 @@ def download_dicom_stack(
     Clinical Proteomic Tumor Analysis Consortium Sarcomas (CPTAC-SAR)
     collection.
 
+    The CPTAC-SAR collection is distributed under the `Creative Commons
+    Attribution 3.0 Unported License (CC BY 3.0)
+    <https://creativecommons.org/licenses/by/3.0/>`_. Use of this dataset
+    requires attribution (see the citations below) and is subject to the
+    `TCIA Data Usage Policy
+    <https://www.cancerimagingarchive.net/data-usage-policies-and-restrictions/>`_,
+    which prohibits using the data to identify or contact the individual
+    participants.
+
     Parameters
     ----------
     load : bool, default: True
@@ -6178,7 +6402,7 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
 _dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
     'parched_canal_4k.hdr',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -6501,7 +6725,7 @@ def download_cloud_dark_matter(load=True):  # noqa: FBT002
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pv.PointSet,  # type: ignore[arg-type]
+    load_func=pv.PointSet,
 )
 
 
@@ -6567,7 +6791,7 @@ def download_cloud_dark_matter_dense(load=True):  # noqa: FBT002
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pv.PointSet,  # type: ignore[arg-type]
+    load_func=pv.PointSet,
 )
 
 
@@ -6583,7 +6807,7 @@ def download_stars_cloud_hyg(load=True):  # noqa: FBT002
     <https://creativecommons.org/licenses/by-sa/2.5/>`_
 
     See the `README.md
-    <https://github.com/pyvista/vtk-data/blob/master/Data/point-clouds/hyg-database/README.md>`_
+    <https://github.com/pyvista/data/blob/master/Data/point-clouds/hyg-database/README.md>`_
     for more details for how the star colors were computed.
 
     Distances are in parsecs from Earth.
@@ -6780,7 +7004,7 @@ def download_black_vase(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -6857,7 +7081,7 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -6940,7 +7164,7 @@ def download_bird_bath(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7015,7 +7239,7 @@ def download_owl(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7095,7 +7319,7 @@ def download_plastic_vase(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7172,7 +7396,7 @@ def download_sea_vase(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7296,7 +7520,7 @@ def _dikhololo_night_load_func(texture):
 
 _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
     'dikhololo_night_4k.hdr',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -7455,7 +7679,7 @@ def download_coil_magnetic_field(load=True):  # noqa: FBT002
     """Download the magnetic field of a coil.
 
     These examples were generated from the following `script
-    <https://github.com/pyvista/vtk-data/tree/master/Data/magpylib/>`_.
+    <https://github.com/pyvista/data/tree/master/Data/magpylib/>`_.
 
     Parameters
     ----------
@@ -7703,7 +7927,7 @@ def _reservoir_load_func(grid):
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
-    read_func=pv.ExplicitStructuredGrid,  # type: ignore[arg-type]
+    read_func=pv.ExplicitStructuredGrid,
     load_func=_reservoir_load_func,
 )
 
@@ -8632,6 +8856,9 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 def download_biplane(load=True):  # noqa: FBT002
     """Download biplane dataset.
 
+    .. warning::
+        This dataset is known to cause segmentation faults on Windows.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8645,9 +8872,11 @@ def download_biplane(load=True):  # noqa: FBT002
 
     Examples
     --------
+    >>> import sys
     >>> from pyvista import examples
-    >>> dataset = examples.download_biplane()
-    >>> dataset.plot(cpos='zy', zoom=1.5)
+    >>> if sys.platform != 'win32':  # segfaults on Windows
+    ...     dataset = examples.download_biplane()
+    ...     dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
 

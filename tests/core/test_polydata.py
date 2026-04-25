@@ -1006,8 +1006,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
     sphere.clip(
         origin=[0, 0, 0],
@@ -1016,8 +1015,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
 
 def test_extract_largest(sphere):
@@ -1030,7 +1028,7 @@ def test_extract_largest(sphere):
 
 
 def test_clean(sphere):
-    mesh = sphere.merge(sphere, merge_points=False).extract_surface()
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1e-5)
     assert cleaned.n_points == sphere.n_points
@@ -1120,7 +1118,7 @@ def test_project_points_to_plane():
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
-    poly = pv.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
+    poly = pv.StructuredGrid(xx, yy, zz).extract_surface(algorithm=None, progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
@@ -1351,7 +1349,7 @@ def default_n_faces():
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
-def test_n_faces():
+def test_n_faces(default_n_faces):  # noqa: ARG001
     if pv._version.version_info[:2] >= (0, 46):
         # At version 0.46, n_faces should raise an error instead of warning
         mesh = pv.PolyData(
@@ -1396,7 +1394,7 @@ def test_n_faces():
         raise RuntimeError(msg)
 
 
-def test_opt_in_n_faces_strict():
+def test_opt_in_n_faces_strict(default_n_faces):  # noqa: ARG001
     pv.PolyData.use_strict_n_faces(True)
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1455,6 +1453,28 @@ def test_regular_faces_mutable():
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
 
 
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Merge order changed')
+def test_regular_faces_raises():
+    tri = pv.examples.cells.Triangle().extract_surface(algorithm=None)
+    quad = pv.examples.cells.Quadrilateral().extract_surface(algorithm=None)
+
+    mesh = tri + quad
+    match = (
+        'Cell array does not have regular cells. '
+        'Multiple cell sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+    mesh = tri + quad + quad + quad
+    match = (
+        'Mesh does not have regular faces. '
+        'Multiple face sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+
 def _assert_irregular_faces_equal(faces, expected):
     assert len(faces) == len(expected)
     assert all(map(np.array_equal, faces, expected))
@@ -1470,7 +1490,7 @@ def test_irregular_faces():
 
 
 def test_set_irregular_faces():
-    mesh = pv.Pyramid().extract_surface()
+    mesh = pv.Pyramid().extract_surface(algorithm=None)
     flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
     mesh.irregular_faces = flipped_faces
     _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)

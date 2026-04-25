@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import re
+import threading
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,7 +18,6 @@ import pytest
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError
-from pyvista.plotting import _plotting
 from pyvista.plotting import _vtk
 from pyvista.plotting.errors import RenderWindowUnavailable
 
@@ -118,22 +118,6 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
     )
     with pytest.raises(TypeError, match=match):
         pl.add_mesh({})
-
-
-def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
-
-    m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), {}
-
-    pl = pv.Plotter()
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
-        ),
-    ):
-        pl.add_mesh({}, smooth_shading=True)
 
 
 def test_plotter_add_mesh_scalars_rgb_raises():
@@ -445,60 +429,6 @@ def test_plotter_image_scale():
 
     pl.image_scale = 2
     assert pl.image_scale == 2
-
-
-def test_prepare_smooth_shading_texture(globe):
-    """Test edge cases for smooth shading"""
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        mesh=globe,
-        scalars=None,
-        texture=True,
-        split_sharp_edges=True,
-        feature_angle=False,
-        preference=None,
-    )
-    assert scalars is None
-    assert 'Normals' in mesh.point_data
-    assert 'Texture Coordinates' in mesh.point_data
-
-
-def test_prepare_smooth_shading_not_poly(hexbeam):
-    """Test edge cases for smooth shading"""
-    scalars_name = 'sample_point_scalars'
-    scalars = hexbeam.point_data[scalars_name]
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        mesh=hexbeam,
-        scalars=scalars,
-        texture=False,
-        split_sharp_edges=True,
-        feature_angle=True,
-        preference=None,
-    )
-
-    assert 'Normals' in mesh.point_data
-
-    expected_mesh = hexbeam.extract_surface().compute_normals(
-        cell_normals=False,
-        split_vertices=True,
-    )
-
-    assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
-
-
-@pytest.mark.parametrize('split_sharp_edges', [True, False])
-def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
-    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
-    assert point_cloud.n_verts == point_cloud.n_cells
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        mesh=point_cloud,
-        scalars=None,
-        texture=True,
-        split_sharp_edges=split_sharp_edges,
-        feature_angle=False,
-        preference=None,
-    )
-    assert scalars is None
-    assert 'Normals' not in mesh.point_data
 
 
 def test_smooth_shading_shallow_copy(sphere):
@@ -914,3 +844,31 @@ def test_import_obj_with_filename_mtl():
     pl = pv.Plotter()
     pl.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
     assert pl.actors
+
+
+def test_off_screen_background_thread_rendering():
+    """Off-screen plotters must work on background threads.
+
+    On macOS, vtkCocoaRenderWindow creates an NSWindow by default which
+    requires the main thread. `SetConnectContextToNSView(False)` creates
+    a standalone CGL context instead. On Linux (EGL), background thread
+    rendering works out of the box.
+    """
+    errors = []
+
+    def render_on_thread():
+        try:
+            pl = pv.Plotter(off_screen=True, window_size=(200, 200))
+            pl.add_mesh(pv.Sphere(), color='red')
+            img = pl.screenshot()
+            assert img is not None
+            assert img.shape[0] > 0
+            pl.close()
+        except Exception as e:  # noqa: BLE001
+            errors.append(e)
+
+    t = threading.Thread(target=render_on_thread)
+    t.start()
+    t.join(timeout=10)
+
+    assert not errors, f'Background thread rendering failed: {errors[0]}'

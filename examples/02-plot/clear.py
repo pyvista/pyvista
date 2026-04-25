@@ -10,8 +10,6 @@ This example demonstrates how to remove elements from a scene using
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

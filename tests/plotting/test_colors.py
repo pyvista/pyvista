@@ -4,6 +4,7 @@ import colorsys
 import importlib.util
 import itertools
 import re
+from typing import get_args
 
 import cmcrameri
 import cmocean
@@ -16,12 +17,20 @@ import pytest
 
 import pyvista as pv
 from pyvista.plotting import _vtk
+from pyvista.plotting import colors as _colors_module
+from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
+from pyvista.plotting.colors import _format_color_name
+from pyvista.plotting.colors import _formatted_hex_colors
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
+from pyvista.plotting.colors import hex_colors
+
+_ALL_ANNOTATED_COLORS = sorted(get_args(_ALL_COLORS_LITERAL))
+_FORMATED_TO_DELIMITED = dict(zip(_formatted_hex_colors, hex_colors, strict=True))
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
@@ -39,6 +48,63 @@ if importlib.util.find_spec('cmcrameri'):
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
+
+
+# Regression test for https://github.com/pyvista/pyvista/issues/8553
+# These names exist in both matplotlib and third-party colormap packages.
+# ``get_cmap_safe`` must return matplotlib's version so that rendering is
+# reproducible regardless of which optional packages happen to be installed.
+_SHADOWED_MATPLOTLIB_CMAPS = [
+    'coolwarm',
+    'coolwarm_r',
+    'gray',
+    'gray_r',
+    'rainbow',
+    'rainbow_r',
+    'berlin',
+    'berlin_r',
+    'managua',
+    'managua_r',
+    'vanimo',
+    'vanimo_r',
+]
+
+
+@pytest.mark.parametrize('name', _SHADOWED_MATPLOTLIB_CMAPS)
+def test_get_cmap_safe_prefers_matplotlib(name):
+    if name not in mpl.colormaps:
+        pytest.xfail(reason=f'Matplotlib is missing colormap {name!r}.')
+    resolved = get_cmap_safe(name)
+    expected = mpl.colormaps[name]
+    # Matplotlib returns fresh instances on each access, so compare sampled
+    # RGBA values rather than object identity.
+    xs = np.linspace(0, 1, 64)
+    np.testing.assert_allclose(resolved(xs), expected(xs))
+
+
+def test_get_cmap_safe_third_party_unique_names():
+    # Names only in the 3rd-party packages still resolve through them.
+    if importlib.util.find_spec('colorcet'):
+        assert get_cmap_safe('fire').name == 'fire'
+    if importlib.util.find_spec('cmocean'):
+        assert get_cmap_safe('algae').name == 'algae'
+    if importlib.util.find_spec('cmcrameri'):
+        assert get_cmap_safe('batlow').name == 'batlow'
+
+
+def test_get_cmap_safe_missing_third_party_raises(monkeypatch):
+    # If the 3rd-party package is missing but the name is in the curated
+    # set, raise ModuleNotFoundError pointing the user to `pyvista[colormaps]`.
+    real_import_module = _colors_module.importlib.import_module
+
+    def fake_import_module(name, *args, **kwargs):
+        if name == 'colorcet':
+            raise ImportError(name)
+        return real_import_module(name, *args, **kwargs)
+
+    monkeypatch.setattr(_colors_module.importlib, 'import_module', fake_import_module)
+    with pytest.raises(ModuleNotFoundError, match='colorcet'):
+        get_cmap_safe('fire')
 
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
@@ -164,7 +230,7 @@ def test_color_invalid_type():
 def test_color_name_delimiter(delimiter):
     name = f'medium{delimiter}spring{delimiter}green'
     c = pv.Color(name)
-    assert c.name == name.replace(delimiter, '')
+    assert c.name == name.replace(delimiter, '_')
 
 
 def test_color_hls():
@@ -202,21 +268,44 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('vtk_color', test_cases, ids=color_names)
 
+    if 'paraview_color' in metafunc.fixturenames:
+        color_names = list(pv.plotting.colors._PARAVIEW_COLORS.keys())
+        color_values = list(pv.plotting.colors._PARAVIEW_COLORS.values())
+
+        test_cases = zip(color_names, color_values, strict=True)
+        metafunc.parametrize('paraview_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
-        synonyms = list(pv.colors.color_synonyms.keys())
+        synonyms = list(pv.colors._formatted_color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
+
+
+def assert_color_in_annotations(name: str, invert: bool = False):
+    msg = f'Color {name!r} is missing from type annotations.'
+    if invert:
+        assert name not in _ALL_ANNOTATED_COLORS, msg
+    else:
+        assert name in _ALL_ANNOTATED_COLORS, msg
 
 
 @pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
-    assert pv.Color(name).hex_rgb.lower() == value.lower()
+    color = pv.Color(name)
+    assert color.hex_rgb.lower() == value.lower()
 
     # Test name
-    if name not in pv.plotting.colors._CSS_COLORS:
-        alt_name = pv.plotting.colors.color_synonyms[name]
-        assert alt_name in pv.plotting.colors._CSS_COLORS
+    assert color.name in pv.plotting.colors._CSS_COLORS
+
+    if _format_color_name(color.name) != name:
+        # Must be a synonym
+        assert name in pv.plotting.colors._formatted_color_synonyms
+    else:
+        # Test non-synonyms are included in annotations
+        delimited_name = _FORMATED_TO_DELIMITED[name]
+        assert _format_color_name(delimited_name) == name  # Sanity check
+        assert_color_in_annotations(delimited_name)
 
 
 @pytest.mark.skip_check_gc
@@ -227,11 +316,13 @@ def test_tab_colors(tab_color):
 
     # Test name
     assert name in pv.plotting.colors._TABLEAU_COLORS
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
+    assert_color_in_annotations(name)
 
     # Some pyvista colors are technically not valid VTK colors. We need to map their
     # synonym manually for the tests
@@ -245,27 +336,59 @@ def test_vtk_colors(vtk_color):
         'light_viridian': 'viridian_light',
     }
     name = vtk_synonyms.get(name, name)
+    expected_hex = _vtk_named_color_as_hex(name)
+    assert value.lower() == expected_hex
 
+
+def _vtk_named_color_as_hex(name: str) -> str:
     # Get expected hex value from vtkNamedColors
     color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
-    expected_hex = pv.Color(int_rgb).hex_rgb
+    return pv.Color(int_rgb).hex_rgb
 
+
+@pytest.mark.skip_check_gc
+@pytest.mark.needs_vtk_version(9, 6, 99)  # >= 9.7.0
+def test_paraview_colors(paraview_color):
+    name, value = paraview_color
+
+    # Map PyVista color names to names used by vtkNamedColors
+    paraview_map = {
+        'paraview_background': 'ParaViewBlueGrayBkg',
+        'paraview_background_warm': 'ParaViewWarmGrayBkg',
+    }
+    vtk_color_name = paraview_map[name]
+    expected_hex = _vtk_named_color_as_hex(vtk_color_name)
     assert value.lower() == expected_hex
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
+    assert color.name != color_synonym
+    # Test that synonyms are NOT included in annotations
+    # Since this leads to confusing double entries for the same color
+    assert_color_in_annotations(color_synonym, invert=True)
 
 
 def test_unique_colors():
-    duplicates = np.rec.find_duplicate(pv.hexcolors.values())
+    duplicates = np.rec.find_duplicate(pv.hex_colors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
+
+    assert len(pv.hex_colors) == len(_ALL_ANNOTATED_COLORS)
+    assert set(pv.hex_colors.keys()) == set(_ALL_ANNOTATED_COLORS)
+
+
+@pytest.mark.skip_check_gc
+@pytest.mark.parametrize('color_annotation', _ALL_ANNOTATED_COLORS)
+def test_color_annotations(color_annotation):
+    color = pv.Color(color_annotation)
+    assert isinstance(color, pv.Color)
 
 
 @pytest.fixture
@@ -318,3 +441,16 @@ def test_cmaps_cmcrameri_required():
     actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
     expected = set(_CMCRAMERI_CMAPS)
     assert actual == expected
+
+
+def test_hexcolors_deprecated():
+    msg = (
+        "'hexcolors' is deprecated; use 'hex_colors' instead. "
+        'The color names in `hex_colors` are delimited with `_`.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.colors.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.hexcolors

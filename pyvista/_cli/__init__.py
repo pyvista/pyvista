@@ -11,3 +11,4 @@ from .app import app as app
 from . import report as report
 from . import convert as convert
 from . import plot as plot
+from . import validate as validate

@@ -70,7 +70,8 @@ def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     actor0 = pl.show_bounds()
-    assert actor0.GetUseTextActor3D()
+    expected_default = pv.vtk_version_info < (9, 6, 0)
+    assert actor0.GetUseTextActor3D() == expected_default
     pl.set_scale(0.5, 0.5, 2)
     actor1 = pl.show_bounds()
     assert not actor1.GetUseTextActor3D()

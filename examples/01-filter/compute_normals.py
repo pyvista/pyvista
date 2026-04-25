@@ -7,15 +7,11 @@ Compute normals on a surface.
 
 """
 
-from __future__ import annotations
-
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
-import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 2
 from pyvista import examples
@@ -51,7 +47,7 @@ warp.plot(cmap='gist_earth', show_scalar_bar=False)
 # facing a general direction. In the following snippet, we take a mesh, compute
 # the normals along its cell faces, and extract the faces that face upward.
 
-mesh = examples.download_nefertiti()
+mesh = examples.download_washington_bust()
 # Compute normals
 mesh.compute_normals(cell_normals=True, point_normals=False, inplace=True)
 
@@ -61,12 +57,6 @@ ids = np.arange(mesh.n_cells)[mesh['Normals'][:, 2] > 0.0]
 # Extract those cells
 top = mesh.extract_cells(ids)
 
-cpos = pv.CameraPosition(
-    position=(-834.3184529757553, -918.4677714398535, 236.5468795300025),
-    focal_point=(11.03829376004883, -13.642289291587957, -35.91218884207208),
-    viewup=(0.19212361465657216, 0.11401076390090074, 0.9747256344254143),
-)
-
-top.plot(cpos=cpos, color=True)
+top.plot(color=True)
 # %%
 # .. tags:: filter

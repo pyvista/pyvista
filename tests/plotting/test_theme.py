@@ -190,7 +190,7 @@ def test_axes_eq(default_theme):
     assert default_theme.axes == pv.plotting.themes.Theme().axes
 
     theme = pv.plotting.themes.Theme()
-    theme.axes.box = True
+    theme.axes.box = not default_theme.axes.box
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
 
@@ -390,6 +390,20 @@ def test_volume_mapper(default_theme):
         default_theme.volume_mapper = 'invalid'
 
 
+def test_interactor_style(default_theme):
+    default_theme.interactor_style = 'terrain_style'
+
+    assert default_theme.interactor_style == 'terrain_style'
+
+
+def test_interactor_style_raises(default_theme):
+    with pytest.raises(TypeError, match='Interactor style must be a string'):
+        default_theme.interactor_style = 1
+
+    with pytest.raises(ValueError, match='Invalid interactor style'):
+        default_theme.interactor_style = 'not_a_style'
+
+
 def test_set_hidden_line_removal(default_theme):
     default_theme.hidden_line_removal = True
     assert default_theme.hidden_line_removal is True
@@ -541,6 +555,21 @@ def test_load_theme(tmpdir, default_theme):
 
     default_theme.load_theme(filename)
     assert default_theme == pv.plotting.themes.DarkTheme()
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
+)
+def test_save_interactor_style(tmpdir, default_theme):
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
+    default_theme.interactor_style = 'terrain_style'
+
+    default_theme.save(filename)
+    loaded_theme = pv.load_theme(filename)
+
+    assert loaded_theme.interactor_style == 'terrain_style'
+    assert loaded_theme == default_theme
 
 
 @pytest.mark.filterwarnings(
@@ -728,6 +757,39 @@ def test_trame_config():
     trame_config.jupyter_extension_enabled = False
     assert not trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
+
+
+@pytest.mark.parametrize(
+    ('service', 'prefix', 'expected'),
+    [
+        ('/user/afie/', '/proxy/', '/user/afie/proxy/'),
+        ('/user/afie/', 'proxy/', '/user/afie/proxy/'),
+        ('/user/afie', '/proxy', '/user/afie/proxy/'),
+        ('/user/afie/', '/proxy/port/', '/user/afie/proxy/port/'),
+    ],
+)
+def test_trame_config_server_proxy_prefix_jupyterhub(monkeypatch, service, prefix, expected):
+    # Regression test for #7595: when running under JupyterHub, the trame
+    # server proxy prefix must be joined with JUPYTERHUB_SERVICE_PREFIX and
+    # end with a trailing slash. See PR #7390 for the regression that #7595
+    # hotfixed.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', service)
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', prefix)
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == expected
+
+
+def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
+    # When PYVISTA_TRAME_SERVER_PROXY_PREFIX is an absolute http(s) URL,
+    # JUPYTERHUB_SERVICE_PREFIX must not be prepended.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', '/user/afie/')
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', 'https://example.com/proxy/')
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == 'https://example.com/proxy/'
 
 
 def test_box_axes(default_theme):

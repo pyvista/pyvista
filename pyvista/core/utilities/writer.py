@@ -11,7 +11,6 @@ from typing import get_args
 
 import numpy as np
 
-from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
@@ -21,7 +20,7 @@ from pyvista.core.utilities.misc import abstract_class
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from vtk import vtkWriter
+    from vtkmodules.vtkIOCore import vtkWriter
 
     from pyvista import DataObject
     from pyvista import NumpyArray
@@ -194,12 +193,12 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
             mesh.direction_matrix, np.eye(3)
         ):
             msg = (
-                'The direction matrix for ImageData will not be saved using the '
+                'The direction matrix for ImageData cannot be saved using the '
                 'legacy `.vtk` format.\n'
                 'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
                 'Use the `.vti` extension instead (XML format).'
             )
-            warn_external(msg)
+            raise ValueError(msg)
 
 
 class HDFWriter(BaseWriter):

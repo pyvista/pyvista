@@ -8,8 +8,6 @@ Multi-Window Plot
 Subplotting: having multiple scenes in a single window
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -126,7 +124,9 @@ groups = [
     (slice(1, -1), 3),  # Fourth group spans over rows 1-3 of the last column (3)
 ]
 
-pl = pv.Plotter(shape=shape, row_weights=row_weights, col_weights=col_weights, groups=groups)
+pl = pv.Plotter(
+    shape=shape, row_weights=row_weights, col_weights=col_weights, groups=groups
+)
 
 # A grouped subplot can be activated through any of its composing cells using
 # the subplot() method.

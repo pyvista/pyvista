@@ -52,6 +52,9 @@ Status badges
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
+.. |nix| image:: https://img.shields.io/badge/nix-unstable-blue.svg?logo=nixos&logoColor=white
+   :target: https://search.nixos.org/packages?channel=unstable&show=python3Packages.pyvista&query=pyvista
+
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
@@ -109,30 +112,30 @@ Status badges
     :target: https://pypi.org/project/pyvista
     :alt: Python versions
 
-+----------------------+------------------------------------------------+
-| Deployment           | |pypi| |pyversions| |conda| |Packaging status| |
-+----------------------+------------------------------------------------+
-| Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
-+----------------------+------------------------------------------------+
-| Metrics              | |codacy| |codecov|                             |
-+----------------------+------------------------------------------------+
-| Activity             | |PyPIact| |condaact|                           |
-+----------------------+------------------------------------------------+
-| Citation             | |joss| |zenodo|                                |
-+----------------------+------------------------------------------------+
-| License              | |MIT|                                          |
-+----------------------+------------------------------------------------+
-| Community            | |slack| |discuss| |Good first issue|           |
-|                      | |GitHub Repo stars|                            |
-+----------------------+------------------------------------------------+
-| Formatter            | |prettier|                                     |
-+----------------------+------------------------------------------------+
-| Linter               | |Ruff|                                         |
-+----------------------+------------------------------------------------+
-| Affiliated           | |NumFOCUS Affiliated|                          |
-+----------------------+------------------------------------------------+
-| Mentioned            | |Awesome Scientific Computing|                 |
-+----------------------+------------------------------------------------+
++----------------------+------------------------------------------------------+
+| Deployment           | |pypi| |pyversions| |conda| |nix| |Packaging status| |
++----------------------+------------------------------------------------------+
+| Build Status         | |GH-CI| |python| |pre-commit.ci status|              |
++----------------------+------------------------------------------------------+
+| Metrics              | |codacy| |codecov|                                   |
++----------------------+------------------------------------------------------+
+| Activity             | |PyPIact| |condaact|                                 |
++----------------------+------------------------------------------------------+
+| Citation             | |joss| |zenodo|                                      |
++----------------------+------------------------------------------------------+
+| License              | |MIT|                                                |
++----------------------+------------------------------------------------------+
+| Community            | |slack| |discuss| |Good first issue|                 |
+|                      | |GitHub Repo stars|                                  |
++----------------------+------------------------------------------------------+
+| Formatter            | |prettier|                                           |
++----------------------+------------------------------------------------------+
+| Linter               | |Ruff|                                               |
++----------------------+------------------------------------------------------+
+| Affiliated           | |NumFOCUS Affiliated|                                |
++----------------------+------------------------------------------------------+
+| Mentioned            | |Awesome Scientific Computing|                       |
++----------------------+------------------------------------------------------+
 
 
 Highlights
@@ -234,7 +237,7 @@ Made with `contrib rocks`_.
 Contributing
 ============
 
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg
    :target: CODE_OF_CONDUCT.md
 
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
@@ -259,13 +262,6 @@ their ideas. To learn more about contributing to PyVista, please see the
 
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
-
-Star History
-============
-
-.. image:: https://api.star-history.com/svg?repos=pyvista/pyvista&type=Date
-   :alt: Star History Chart
-   :target: https://star-history.com/#pyvista/pyvista&Date
 
 Citing PyVista
 ==============

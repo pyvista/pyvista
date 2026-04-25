@@ -20,6 +20,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
@@ -1765,8 +1766,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['threshold'])
-    def image_threshold(  # noqa: PLR0917
-        self,
+    def image_threshold(  # type: ignore[misc] # noqa: PLR0917
+        self: ImageData,
         threshold,
         in_value=1.0,
         out_value=0.0,
@@ -1843,54 +1844,110 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            field, scalars = self.active_scalars_info
         else:
-            field = self.get_array_association(scalars, preference=preference)  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference=preference)
 
         # For some systems integer scalars won't threshold
-        # correctly. Cast to float to be robust.
-        cast_dtype = np.issubdtype(
-            array_dtype := self.active_scalars.dtype,  # type: ignore[attr-defined]
-            int,
-        ) and array_dtype != np.dtype(np.uint8)
+        # correctly. Cast to float to be robust. See https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
+        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[union-attr]
         if cast_dtype:
-            self[scalars] = self[scalars].astype(float, casting='safe')  # type: ignore[index]
+            alg_input = self.copy(deep=False)
+            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')
+        else:
+            alg_input = self
 
-        alg = _vtk.vtkImageThreshold()
-        alg.SetInputDataObject(self)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
-        )  # args: (idx, port, connection, field, name)
-        # set the threshold(s) and mode
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
             msg = f'Threshold must have one or two values, got {size}.'
             raise ValueError(msg)
-        if size == 2:
-            alg.ThresholdBetween(threshold_val[0], threshold_val[1])
-        else:
-            alg.ThresholdByUpper(threshold_val[0])
-        # set the replacement values / modes
-        if in_value is not None:
-            alg.SetReplaceIn(True)
-            alg.SetInValue(np.array(in_value).astype(array_dtype))  # type: ignore[arg-type]
-        else:
-            alg.SetReplaceIn(False)
-        if out_value is not None:
-            alg.SetReplaceOut(True)
-            alg.SetOutValue(np.array(out_value).astype(array_dtype))  # type: ignore[arg-type]
-        else:
-            alg.SetReplaceOut(False)
-        # run the algorithm
-        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
-        output = _get_output(alg)
+
+        def _image_threshold(
+            *,
+            threshold_val,
+            in_value,
+            out_value,
+            scalars,
+            field,
+            progress_bar: bool,
+        ):
+            """Threshold using vtkImageThreshold."""
+            alg = _vtk.vtkImageThreshold()
+            alg.SetInputDataObject(alg_input)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+
+            if threshold_val.size == 2:
+                alg.ThresholdBetween(threshold_val[0], threshold_val[1])
+            else:
+                alg.ThresholdByUpper(threshold_val[0])
+            # set the replacement values / modes
+            if in_value is not None:
+                alg.SetReplaceIn(True)
+                alg.SetInValue(in_value)
+            else:
+                alg.SetReplaceIn(False)
+            if out_value is not None:
+                alg.SetReplaceOut(True)
+                alg.SetOutValue(out_value)
+            else:
+                alg.SetReplaceOut(False)
+
+            _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
+            return _get_output(alg)
+
+        def _binary_image_threshold(
+            *,
+            threshold_val,
+            in_value,
+            out_value,
+            scalars,
+            field,
+            progress_bar: bool,
+        ):
+            """Threshold using vtkImageBinaryThreshold."""
+            alg = _vtk.vtkImageBinaryThreshold()
+            alg.SetInputDataObject(alg_input)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+
+            if threshold_val.size == 2:
+                alg.SetThresholdFunction(_vtk.vtkImageBinaryThreshold.THRESHOLD_BETWEEN)
+                alg.SetLowerThreshold(threshold_val[0])
+                alg.SetUpperThreshold(threshold_val[1])
+            else:
+                alg.SetThresholdFunction(_vtk.vtkImageBinaryThreshold.THRESHOLD_UPPER)
+                alg.SetLowerThreshold(threshold_val[0])
+
+            if in_value is not None:
+                alg.ReplaceInOn()
+                alg.SetInValue(in_value)
+            else:
+                alg.ReplaceInOff()
+
+            if out_value is not None:
+                alg.ReplaceOutOn()
+                alg.SetOutValue(out_value)
+            else:
+                alg.ReplaceOutOff()
+
+            _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
+            return _get_output(alg)
+
+        threshold_filter = (
+            _binary_image_threshold
+            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
+            else _image_threshold
+        )
+        output = threshold_filter(
+            threshold_val=threshold_val,
+            in_value=in_value,
+            out_value=out_value,
+            scalars=scalars,
+            field=field,
+            progress_bar=progress_bar,
+        )
+
         if cast_dtype:
-            self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
@@ -2999,7 +3056,7 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError(msg)
 
         if orient_faces is None:
-            orient_faces = bool(pv.vtk_version_info < (9, 5, 99))
+            orient_faces = bool(pv.vtk_version_info < (9, 6, 0))
         else:
             warn_external(
                 'Use of `orient_faces` is deprecated and should not be used. It will be removed '
@@ -3760,20 +3817,20 @@ class ImageDataFilters(DataSetFilters):
         ...     actor = vtk.vtkImageActor()
         ...     actor.GetMapper().SetInputData(image)
         ...     actor.GetProperty().SetInterpolationTypeToNearest()
-        ...     plot = pv.Plotter()
-        ...     plot.add_actor(actor)
-        ...     plot.view_xy()
-        ...     plot.camera.tight()
-        ...     return plot
+        ...     pl = pv.Plotter()
+        ...     pl.add_actor(actor)
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
         >>>
-        >>> plot = grayscale_image_plotter(padded)
-        >>> plot.show()
+        >>> pl = grayscale_image_plotter(padded)
+        >>> pl.show()
 
         Pad only the x-axis with a white border.
 
         >>> padded = gray_image.pad_image(pad_value=255, pad_size=(200, 0))
-        >>> plot = grayscale_image_plotter(padded)
-        >>> plot.show()
+        >>> pl = grayscale_image_plotter(padded)
+        >>> pl.show()
 
         Pad with wrapping.
 
@@ -3815,19 +3872,16 @@ class ImageDataFilters(DataSetFilters):
         # Deprecated on v0.45.0, estimated removal on v0.48.0
         if pad_singleton_dims is not None:
             if pad_singleton_dims:
-                warn_external(
+                msg = (
                     'Use of `pad_singleton_dims=True` is deprecated. '
-                    'Use `dimensionality="3D"` instead',
-                    PyVistaDeprecationWarning,
+                    'Use `dimensionality="3D"` instead'
                 )
-                dimensionality = '3D'
             else:
-                warn_external(
+                msg = (
                     'Use of `pad_singleton_dims=False` is deprecated. '
-                    'Use `dimensionality="preserve"` instead',
-                    PyVistaDeprecationWarning,
+                    'Use `dimensionality="preserve"` instead'
                 )
-                dimensionality = 'preserve'
+            raise DeprecationError(msg)
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]
@@ -4783,7 +4837,7 @@ class ImageDataFilters(DataSetFilters):
 
         Use a reference image to control the resampling instead. Here we load two
         images with different dimensions:
-        :func:`~pyvista.examples.downloads.download_puppy` and
+        :func:`~pyvista.examples.downloads.download_bird` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
         >>> bird = examples.download_bird()

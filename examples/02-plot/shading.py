@@ -8,8 +8,6 @@ Comparison of default, flat shading vs. smooth shading.
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -72,7 +70,9 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 
 pl = pv.Plotter()
 pl.enable_anti_aliasing()
-pl.add_mesh(mesh, color='w', split_sharp_edges=True, pbr=True, metallic=1.0, roughness=0.5)
+pl.add_mesh(
+    mesh, color='w', split_sharp_edges=True, pbr=True, metallic=1.0, roughness=0.5
+)
 pl.show()
 # %%
 # .. tags:: plot

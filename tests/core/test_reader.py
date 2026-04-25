@@ -43,11 +43,156 @@ def test_reader_output_type_defined():
     assert actual == expected, 'Return type must be defined for every reader'
 
 
+def test_reader_output_type_derived_from_generic():
+    """Single-type reader outputs are derived from ``BaseReader[X]``.
+
+    This guards the automation in ``_derive_reader_output_types``: if a
+    new reader is added as ``class NewReader(BaseReader['PolyData'])``,
+    its entry in :data:`_CLASS_READER_RETURN_TYPE` should come from the
+    generic parameter with no manual dict edit.
+    """
+    assert _CLASS_READER_RETURN_TYPE[pv.XMLPolyDataReader] == 'PolyData'
+    assert _CLASS_READER_RETURN_TYPE[pv.STLReader] == 'PolyData'
+    assert _CLASS_READER_RETURN_TYPE[pv.DICOMReader] == 'ImageData'
+    assert _CLASS_READER_RETURN_TYPE[pv.XMLUnstructuredGridReader] == 'UnstructuredGrid'
+
+
+def test_reader_output_type_override_for_multi_output():
+    """Readers that emit more than one concrete type use the override list."""
+    assert _CLASS_READER_RETURN_TYPE[pv.GaussianCubeReader] == ('ImageData', 'PolyData')
+    assert _CLASS_READER_RETURN_TYPE[pv.XdmfReader] == (
+        'MultiBlock',
+        'UnstructuredGrid',
+        'StructuredGrid',
+        'RectilinearGrid',
+    )
+
+
+def test_extract_base_reader_generic_arg_returns_none_for_unparameterized():
+    """``_extract_base_reader_generic_arg`` returns ``None`` when no ``BaseReader[X]``
+    is present in ``__orig_bases__``.
+    """
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    class _NotAReader:
+        pass
+
+    assert _extract_base_reader_generic_arg(_NotAReader) is None  # type: ignore[arg-type]
+
+
+def test_extract_base_reader_generic_arg_handles_real_class_parameterization():
+    """The helper resolves ``BaseReader[ActualClass]`` (not only forward refs)."""
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    class _RealPolyReader(pv.BaseReader[pv.PolyData]):  # uses the actual class, not 'PolyData'
+        _vtk_module_name = 'vtkIOXML'
+        _vtk_class_name = 'vtkXMLPolyDataReader'
+
+    assert _extract_base_reader_generic_arg(_RealPolyReader) == 'PolyData'
+
+
+def test_derive_reader_output_types_raises_for_unparameterized():
+    """``_derive_reader_output_types`` raises on classes it cannot classify."""
+    from pyvista.core.utilities.reader import _derive_reader_output_types
+
+    class _UnparameterizedReader:
+        pass
+
+    with pytest.raises(TypeError, match='Cannot derive output type'):
+        _derive_reader_output_types(_UnparameterizedReader)  # type: ignore[arg-type]
+
+
+def test_extract_base_reader_generic_arg_forward_ref_path():
+    """The helper resolves the ForwardRef branch used by real reader subclasses."""
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    # Every real *Reader subclass uses ``BaseReader['PolyData']`` (string),
+    # which stores a ForwardRef; the helper returns its text.
+    assert _extract_base_reader_generic_arg(pv.XMLPolyDataReader) == 'PolyData'
+    assert _extract_base_reader_generic_arg(pv.DICOMReader) == 'ImageData'
+    assert _extract_base_reader_generic_arg(pv.XMLMultiBlockDataReader) == 'MultiBlock'
+
+
+def test_extract_base_reader_generic_arg_skips_non_base_reader_generics():
+    """Generic bases that are not ``BaseReader`` subclasses are skipped."""
+    from typing import Generic
+    from typing import TypeVar
+
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    _T = TypeVar('_T')
+
+    class _UnrelatedGeneric(Generic[_T]): ...
+
+    class _MixedClass(_UnrelatedGeneric[int]):  # Generic, but not a BaseReader
+        pass
+
+    assert _extract_base_reader_generic_arg(_MixedClass) is None  # type: ignore[arg-type]
+
+
+def test_derive_reader_output_types_uses_override_for_multi_output():
+    """``_derive_reader_output_types`` returns the override tuple for multi-output readers."""
+    from pyvista.core.utilities.reader import _derive_reader_output_types
+
+    assert _derive_reader_output_types(pv.GaussianCubeReader) == ('ImageData', 'PolyData')
+    assert _derive_reader_output_types(pv.HDFReader) == (
+        'ImageData',
+        'PolyData',
+        'UnstructuredGrid',
+        'PartitionedDataSet',
+        'MultiBlock',
+    )
+
+
+def test_derive_reader_output_types_uses_generic_arg_for_single_output():
+    """``_derive_reader_output_types`` returns the generic parameter for single-output readers."""
+    from pyvista.core.utilities.reader import _derive_reader_output_types
+
+    assert _derive_reader_output_types(pv.XMLPolyDataReader) == 'PolyData'
+    assert _derive_reader_output_types(pv.STLReader) == 'PolyData'
+    assert _derive_reader_output_types(pv.XMLUnstructuredGridReader) == 'UnstructuredGrid'
+    assert _derive_reader_output_types(pv.DICOMReader) == 'ImageData'
+
+
 def test_read_raises():
     with pytest.raises(
         ValueError, match=r'Only one of `file_format` and `force_ext` may be specified.'
     ):
         pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
+
+
+def test_read_cls_narrows(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    result = pv.read(filepath, cls=pv.PolyData)
+    assert isinstance(result, pv.PolyData)
+    assert result.n_points == mesh.n_points
+
+
+def test_read_cls_mismatch_raises(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    match = (
+        r'Expected an instance of UnstructuredGrid when reading .*sphere\.vtp.*, '
+        r'but got PolyData\.'
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(filepath, cls=pv.UnstructuredGrid)
+
+
+def test_read_cls_none_behaves_like_default(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    explicit = pv.read(filepath, cls=None)
+    default = pv.read(filepath)
+    assert type(explicit) is type(default)
+    assert explicit.n_points == default.n_points
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])

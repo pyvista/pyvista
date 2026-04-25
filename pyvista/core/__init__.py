@@ -8,6 +8,7 @@ from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
 from .composite import MultiBlock as MultiBlock
+from .config import global_config as global_config
 from .dataobject import DataObject as DataObject
 from .dataset import DataSet as DataSet
 from .datasetattributes import DataSetAttributes as DataSetAttributes
@@ -34,6 +35,7 @@ from .filters import DataSetFilters as DataSetFilters
 from .filters import ImageDataFilters as ImageDataFilters
 from .filters import PolyDataFilters as PolyDataFilters
 from .filters import UnstructuredGridFilters as UnstructuredGridFilters
+from .filters.data_object import CellStatus as CellStatus
 from .grid import Grid as Grid
 from .grid import ImageData as ImageData
 from .grid import RectilinearGrid as RectilinearGrid

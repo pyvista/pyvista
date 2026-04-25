@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING
+import warnings
 
 import numpy as np
 import pytest
@@ -11,6 +12,7 @@ import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.utilities import reader as reader_module
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.examples import cells
@@ -34,7 +36,7 @@ def test_wrap_pyvista_ndarray(sphere):
 def test_wrap_raises():
     with pytest.raises(
         NotImplementedError,
-        match=r'NumPy array could not be wrapped pyvista.',
+        match=r'NumPy array could not be wrapped.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
 
@@ -72,6 +74,130 @@ def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
     vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
     with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
         pv.wrap(vtk_poly)
+
+
+@pytest.fixture
+def vtk_poly_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
+    # sphere_with_invalid_arrays is a pv.PolyData, we need a vtkPolyData
+    # to validate pv.wrap()'s validation behavior.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
+    return vtk_poly
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
+def test_wrap_validate_false_suppresses_warning(vtk_poly_with_invalid_arrays):
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.InvalidMeshWarning)
+        pv.wrap(vtk_poly_with_invalid_arrays, validate=False)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
+def test_wrap_validate_true_still_warns(vtk_poly_with_invalid_arrays):
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_poly_with_invalid_arrays, validate=True)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
+def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
+    # validate=None (default) defers to pv.global_config.validate_on_wrap.
+    assert pv.global_config.validate_on_wrap is True
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', False)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.InvalidMeshWarning)
+        pv.wrap(vtk_poly_with_invalid_arrays)
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', True)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_poly_with_invalid_arrays)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='fast path requires validate_mesh')
+def test_wrap_auto_names_unnamed_arrays():
+    # The pre-optimization wrap() path validated via keys(), which has the
+    # side effect of renaming unnamed arrays to ``Unnamed_<i>``. Filters
+    # like ``contour`` rely on that rename to remap filter output back to
+    # the caller's requested scalar name. The fast path must preserve it.
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    arr = _vtk.vtkFloatArray()
+    arr.SetNumberOfTuples(vtk_poly.GetNumberOfPoints())
+    vtk_poly.GetPointData().AddArray(arr)
+    assert not arr.GetName()
+    pv.wrap(vtk_poly)
+    assert arr.GetName() == 'Unnamed_0'
+
+
+def test_global_config_to_dict():
+    assert pv.global_config.to_dict() == {
+        'show_vtk_api': False,
+        'validate_on_wrap': True,
+    }
+
+
+def test_global_config_repr():
+    text = repr(pv.global_config)
+    assert text.startswith('PyVista Config')
+    assert 'validate_on_wrap' in text
+    assert 'True' in text
+
+
+def test_global_config_from_dict_round_trip(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', False)
+    snapshot = pv.global_config.to_dict()
+    restored = type(pv.global_config).from_dict(snapshot)
+    assert restored.validate_on_wrap is False
+    assert restored == pv.global_config
+
+
+def test_global_config_item_access(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', False)
+    assert pv.global_config['validate_on_wrap'] is False
+    pv.global_config['validate_on_wrap'] = True
+    assert pv.global_config.validate_on_wrap is True
+
+
+@pytest.mark.parametrize('value', [1, 'True', None, 0])
+def test_global_config_validate_on_wrap_rejects_non_bool(value, monkeypatch):
+    # Constrain the parameter space — silent ``bool(value)`` coercion would
+    # let typos like ``validate_on_wrap = 'false'`` (truthy) silently misbehave.
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', True)
+    with pytest.raises(TypeError, match='must be a bool'):
+        pv.global_config.validate_on_wrap = value
+
+
+@pytest.mark.parametrize('value', [1, 'True', None, 0])
+def test_global_config_show_vtk_api_rejects_non_bool(value, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'show_vtk_api', False)
+    with pytest.raises(TypeError, match='must be a bool'):
+        pv.global_config.show_vtk_api = value
+
+
+def test_reader_forwards_validate_kwarg(mocker: MockerFixture):
+    # BaseReader.read(validate=...) must forward the kwarg through to wrap().
+    spy = mocker.spy(reader_module, 'wrap')
+    reader = pv.get_reader(pv.examples.hexbeamfile)
+
+    reader.read(validate=False)
+    _, kwargs = spy.call_args
+    assert kwargs.get('validate') is False
+
+    spy.reset_mock()
+    reader.read(validate=True)
+    _, kwargs = spy.call_args
+    assert kwargs.get('validate') is True
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
+def test_wrap_fast_path_skips_validate_mesh(sphere, mocker: MockerFixture):
+    # When the cheap array-length check passes, ``wrap`` must not call
+    # ``validate_mesh`` — that's the whole point of the fast path. See #8473.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    spy = mocker.spy(pv.PolyData, 'validate_mesh')
+    pv.wrap(vtk_poly)
+    assert spy.call_count == 0
 
 
 def test_wrap_invalid_trimesh_raises(trimesh_mesh_with_invalid_arrays):
@@ -175,7 +301,7 @@ def test_to_trimesh_triangulate():
     out = pv.to_trimesh(uniform, triangulate=True)
     assert isinstance(out, trimesh.Trimesh)
 
-    quad_poly = cells.Quadrilateral().extract_geometry()
+    quad_poly = cells.Quadrilateral().extract_surface(algorithm=None)
     assert isinstance(quad_poly, pv.PolyData)
     with pytest.raises(pv.NotAllTrianglesError, match=match):
         pv.to_trimesh(quad_poly)
@@ -189,7 +315,7 @@ def test_to_trimesh_triangulate():
     out = pv.to_trimesh(grid_tetra, triangulate=True)
     assert isinstance(out, trimesh.Trimesh)
 
-    poly_tetra = grid_tetra.extract_geometry()
+    poly_tetra = grid_tetra.extract_surface(algorithm=None)
     assert isinstance(poly_tetra, pv.PolyData)
     out = pv.to_trimesh(poly_tetra)
     assert isinstance(out, trimesh.Trimesh)
@@ -199,7 +325,7 @@ def test_to_trimesh_triangulate():
     pv.to_trimesh(grid_tri)
     assert isinstance(out, trimesh.Trimesh)
 
-    poly_tri = grid_tri.extract_geometry()
+    poly_tri = grid_tri.extract_surface(algorithm=None)
     assert isinstance(poly_tri, pv.PolyData)
     pv.to_trimesh(poly_tri)
     assert isinstance(out, trimesh.Trimesh)
@@ -489,7 +615,7 @@ def test_wrappers():
         assert isinstance(tri_data, Foo)
 
         image = pv.ImageData()
-        surface = image.extract_surface()
+        surface = image.extract_surface(algorithm=None)
 
         assert isinstance(surface, Foo)
 

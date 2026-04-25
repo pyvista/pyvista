@@ -7,6 +7,7 @@ import weakref
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from pyvista import LookupTable
 
 
-class VolumeProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
+class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume

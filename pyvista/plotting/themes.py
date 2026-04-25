@@ -33,29 +33,30 @@ pyvista.
 from __future__ import annotations
 
 from enum import Enum
-from itertools import chain
 import json
 import os
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
+from typing import ClassVar
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
+from pyvista.core.config import _ConfigBase
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
+from .interactor_style_registry import _validate_interactor_style
 from .opts import InterpolationType
+from .opts import PointSpriteShape
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pyvista.core._typing_core import VectorLike
-    from pyvista.jupyter import JupyterBackendOptions
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -158,92 +159,7 @@ def set_plot_theme(theme):
         raise TypeError(msg)
 
 
-# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
-class _ForceSlots(type):
-    """Metaclass to force classes and subclasses to have __slots__."""
-
-    @classmethod
-    def __prepare__(cls, name, bases, **kwargs):  # type: ignore[override]
-        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
-        super_prepared['__slots__'] = ()
-        return super_prepared
-
-
-class _ThemeConfig(metaclass=_ForceSlots):
-    """Provide common methods for theme configuration classes."""
-
-    __slots__: list[str] = []
-
-    @classmethod
-    def from_dict(cls, dict_):
-        """Create from a dictionary."""
-        inst = cls()
-        for key, value in dict_.items():
-            attr = getattr(inst, key)
-            if hasattr(attr, 'from_dict'):
-                setattr(inst, key, attr.from_dict(value))
-            else:
-                setattr(inst, key, value)
-        return inst
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return theme config parameters as a dictionary.
-
-        Returns
-        -------
-        dict
-            This theme parameter represented as a dictionary.
-
-        """
-        # remove the first underscore in each entry
-        dict_ = {}
-        for key in self._all__slots__():
-            value = getattr(self, key)
-            key_ = key[1:]
-            if hasattr(value, 'to_dict'):
-                dict_[key_] = value.to_dict()
-            else:
-                dict_[key_] = value
-        return dict_
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, _ThemeConfig):
-            return False
-
-        for attr_name in other._all__slots__():
-            attr = getattr(self, attr_name)
-            other_attr = getattr(other, attr_name)
-            if (
-                isinstance(attr, (tuple, list)) and tuple(attr) != tuple(other_attr)
-            ) or not attr == other_attr:
-                return False
-
-        return True
-
-    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
-
-    def __getitem__(self, key):
-        """Get a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        """Set a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        setattr(self, key, value)
-
-    @classmethod
-    def _all__slots__(cls):
-        """Get all slots including parent classes."""
-        mro = cls.mro()
-        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
-
-
-class _LightingConfig(_ThemeConfig):
+class _LightingConfig(_ConfigBase):
     """PyVista lighting configuration.
 
     This will control the lighting interpolation type, parameters,
@@ -484,7 +400,7 @@ class _LightingConfig(_ThemeConfig):
         self._emissive = bool(emissive)
 
 
-class _DepthPeelingConfig(_ThemeConfig):
+class _DepthPeelingConfig(_ConfigBase):
     """PyVista depth peeling configuration.
 
     Examples
@@ -566,7 +482,7 @@ class _DepthPeelingConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _SilhouetteConfig(_ThemeConfig):
+class _SilhouetteConfig(_ConfigBase):
     """PyVista silhouette configuration.
 
     Examples
@@ -709,7 +625,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _ColorbarConfig(_ThemeConfig):
+class _ColorbarConfig(_ConfigBase):
     """PyVista colorbar configuration.
 
     Examples
@@ -808,7 +724,7 @@ class _ColorbarConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _AxesConfig(_ThemeConfig):
+class _AxesConfig(_ConfigBase):
     """PyVista axes configuration.
 
     Examples
@@ -820,7 +736,7 @@ class _AxesConfig(_ThemeConfig):
     Color(name='tomato', hex='#ff6347ff', opacity=255)
 
     >>> pv.global_theme.axes.y_color
-    Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+    Color(name='sea_green', hex='#2e8b57ff', opacity=255)
 
     >>> pv.global_theme.axes.z_color
     Color(name='blue', hex='#0000ffff', opacity=255)
@@ -903,7 +819,7 @@ class _AxesConfig(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.y_color
-        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+        Color(name='sea_green', hex='#2e8b57ff', opacity=255)
 
         Change the default color.
 
@@ -977,7 +893,7 @@ class _AxesConfig(_ThemeConfig):
         self._show = bool(show)
 
 
-class _Font(_ThemeConfig):
+class _Font(_ConfigBase):
     """PyVista plotter font configuration.
 
     Examples
@@ -1154,7 +1070,7 @@ class _Font(_ThemeConfig):
         self._fmt = fmt
 
 
-class _SliderStyleConfig(_ThemeConfig):
+class _SliderStyleConfig(_ConfigBase):
     """PyVista configuration for a single slider style."""
 
     __slots__ = [
@@ -1337,7 +1253,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _SliderConfig(_ThemeConfig):
+class _SliderConfig(_ConfigBase):
     """PyVista configuration encompassing all slider styles.
 
     Examples
@@ -1434,7 +1350,7 @@ class _SliderConfig(_ThemeConfig):
             yield style.name
 
 
-class _TrameConfig(_ThemeConfig):
+class _TrameConfig(_ConfigBase):
     """PyVista Trame configuration.
 
     Examples
@@ -1468,8 +1384,12 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/')).rstrip('/') + '/'
+        if service and not prefix.startswith('http'):
+            # JupyterHub service prefixes are URL paths, not filesystem paths,
+            # so use PurePosixPath to force forward-slash joining on Windows.
+            self._server_proxy_prefix = (
+                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+            )
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1616,7 +1536,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = mode
 
 
-class _CameraConfig(_ThemeConfig):
+class _CameraConfig(_ConfigBase):
     """PyVista camera configuration.
 
     Examples
@@ -1715,7 +1635,19 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = value
 
 
-class Theme(_ThemeConfig):
+class _PlotCellConfig(_ConfigBase):
+    """Internal config for plotting cells."""
+
+    __slots__ = ['_font_size', '_line_width', '_normals_scale', '_point_size']
+
+    def __init__(self):
+        self._line_width = 5
+        self._point_size = 30
+        self._font_size = 20
+        self._normals_scale = 0.1
+
+
+class Theme(_ConfigBase):
     """Base VTK theme.
 
     Examples
@@ -1738,6 +1670,10 @@ class Theme(_ThemeConfig):
     >>> pv.global_theme.load_theme(my_theme)
 
     """
+
+    # ``_plot_cell`` is an internal-only sub-config — exclude it from
+    # ``to_dict`` output so themes serialize/deserialize round-trip cleanly.
+    _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'plot_cell'})
 
     __slots__ = [
         '_above_range_color',
@@ -1766,6 +1702,7 @@ class Theme(_ThemeConfig):
         '_hidden_line_removal',
         '_image_scale',
         '_interactive',
+        '_interactor_style',
         '_interpolate_before_map',
         '_jupyter_backend',
         '_lighting',
@@ -1779,6 +1716,8 @@ class Theme(_ThemeConfig):
         '_notebook',
         '_opacity',
         '_outline_color',
+        '_plot_cell',
+        '_point_shape',
         '_point_size',
         '_render_lines_as_tubes',
         '_render_points_as_spheres',
@@ -1840,8 +1779,10 @@ class Theme(_ThemeConfig):
         self._show_vertices = False
         self._lighting = True
         self._interactive = False
+        self._interactor_style = 'trackball_style'
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
+        self._point_shape = None
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
@@ -1860,9 +1801,7 @@ class Theme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend: JupyterBackendOptions = (
-            os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')  # type: ignore[assignment]
-        )
+        self._jupyter_backend: str | None = os.environ.get('PYVISTA_JUPYTER_BACKEND')
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
@@ -1884,6 +1823,8 @@ class Theme(_ThemeConfig):
         self._logo_file = None
 
         self._resample_environment_texture: bool | float = False
+
+        self._plot_cell = _PlotCellConfig()
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2086,7 +2027,7 @@ class Theme(_ThemeConfig):
     @property
     def jupyter_backend(
         self,
-    ) -> JupyterBackendOptions:  # numpydoc ignore=RT01
+    ) -> str | None:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
         Jupyter backend to use when plotting.  Must be one of the
@@ -2130,13 +2071,17 @@ class Theme(_ThemeConfig):
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
 
+        >>> pv.set_jupyter_backend('none')  # doctest:+SKIP
+
+        Reset to auto-detect the best available backend.
+
         >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
         """
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: str):
+    def jupyter_backend(self, backend: str | None):
         from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
@@ -2711,6 +2656,47 @@ class Theme(_ThemeConfig):
         self._render_points_as_spheres = bool(render_points_as_spheres)
 
     @property
+    def point_shape(self) -> str | None:  # numpydoc ignore=RT01
+        """Return or set the default point sprite shape.
+
+        .. versionadded:: 0.48
+
+        When set, points are rendered as the specified shape instead of
+        squares. This automatically disables ``render_points_as_spheres``.
+
+        Accepts a :class:`~pyvista.plotting.opts.PointSpriteShape` enum
+        value or a string. Must be one of ``'circle'``, ``'triangle'``,
+        ``'hexagon'``, ``'diamond'``, ``'asterisk'``, ``'star'``, or
+        ``None``.
+
+        Examples
+        --------
+        Render all points as circles by default globally.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.point_shape = 'circle'
+
+        Or use the enum.
+
+        >>> from pyvista.plotting.opts import PointSpriteShape
+        >>> pv.global_theme.point_shape = PointSpriteShape.CIRCLE
+
+        """
+        return self._point_shape
+
+    @point_shape.setter
+    def point_shape(self, point_shape: PointSpriteShape | str | None):
+        if point_shape is not None:
+            try:
+                point_shape = PointSpriteShape(point_shape)
+            except ValueError:
+                valid = ', '.join(s.value for s in PointSpriteShape)
+                msg = f'Invalid point_shape {point_shape!r}. Must be one of: {valid}'
+                raise ValueError(msg) from None
+            point_shape = point_shape.value
+        self._point_shape = point_shape
+
+    @property
     def render_lines_as_tubes(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``render_lines_as_tubes`` parameter.
 
@@ -3066,6 +3052,7 @@ class Theme(_ThemeConfig):
             'Show edges': 'show_edges',
             'Lighting': 'lighting',
             'Interactive': 'interactive',
+            'Interactor style': 'interactor_style',
             'Render points as spheres': 'render_points_as_spheres',
             'Transparent Background': 'transparent_background',
             'Title': 'title',
@@ -3098,6 +3085,43 @@ class Theme(_ThemeConfig):
     @name.setter
     def name(self, name: str):
         self._name = name
+
+    @property
+    def interactor_style(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the default interactor style.
+
+        The value must be the name of a built-in or registered
+        interactor style. Built-in styles use names that mirror the
+        public ``enable_*_style`` methods, such as
+        ``'terrain_style'``.
+
+        Returns
+        -------
+        str
+            The default interactor style name.
+
+        Examples
+        --------
+        Set the default interactor style to terrain.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.interactor_style = 'terrain_style'
+
+        Register and use a custom interactor style.
+
+        >>> def custom_style(interactor): ...
+        >>> pv.register_interactor_style(
+        ...     'custom_style', custom_style
+        ... )  # doctest: +SKIP
+        >>> pv.global_theme.interactor_style = 'custom_style'  # doctest: +SKIP
+
+        """
+        return self._interactor_style
+
+    @interactor_style.setter
+    def interactor_style(self, interactor_style: str) -> None:
+        """Set the default interactor style."""
+        self._interactor_style = _validate_interactor_style(interactor_style)
 
     def load_theme(self, theme: str | Theme) -> None:
         """Overwrite the current theme with a theme.
@@ -3466,6 +3490,11 @@ class _DocumentBuildTheme(DocumentTheme):
         self.return_cpos = False
         self.resample_environment_texture = True
 
+        self._plot_cell._line_width = 10
+        self._plot_cell._point_size = 80
+        self._plot_cell._font_size = 50
+        self._plot_cell._normals_scale = 0.25
+
 
 class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
@@ -3490,6 +3519,11 @@ class _TestingTheme(Theme):
         self.axes.show = False
         self.return_cpos = False
         self.resample_environment_texture = True
+
+        self._plot_cell._line_width = 8
+        self._plot_cell._point_size = 50
+        self._plot_cell._font_size = 30
+        self._plot_cell._normals_scale = 0.2
 
 
 class _NATIVE_THEMES(Enum):  # noqa: N801

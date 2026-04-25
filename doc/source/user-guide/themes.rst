@@ -87,6 +87,23 @@ And then subsequently loaded in a new session of pyvista with:
     pv.global_theme.load_theme('my_theme.json')
 
 
+Default Interactor Styles
+-------------------------
+
+Themes can also control the default interactor style used by new
+plotters. Built-in styles use the same names as the corresponding
+``enable_*_style`` methods.
+
+.. code-block:: python
+
+    import pyvista as pv
+
+    pv.global_theme.interactor_style = 'terrain_style'
+
+Custom interactor styles can be registered by downstream packages and
+used the same way once they are installed or registered at runtime.
+
+
 Theme API
 ---------
 See :ref:`theme_api` for the full API definition.

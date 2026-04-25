@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -91,7 +92,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
     __getattr__ = _vtk.VTKArray.__getattr__
 
 
-class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
+class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -958,7 +959,11 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
             return {}  # type: ignore[unreachable]
-        n_items = vtk_values.GetSize()
+        n_items = (
+            vtk_values.GetSize()
+            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
+            else vtk_values.GetCapacity()  # type: ignore[attr-defined]
+        )
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
         vtk_str = self.GetAnnotations()

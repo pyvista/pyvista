@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import platform
 import re
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -815,15 +814,11 @@ def test_logo_widget():
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI produces a slightly different camera position. Needs investigation.',
-)
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_camera3d_widget():
     sphere = pv.Sphere()
-    pl = pv.Plotter(window_size=[600, 300], shape=(1, 2))
+    pl = pv.Plotter(window_size=[400, 200], shape=(1, 2))
     pl.add_mesh(sphere)
     pl.subplot(0, 1)
     pl.add_mesh(sphere)

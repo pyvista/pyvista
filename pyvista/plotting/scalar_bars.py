@@ -165,6 +165,71 @@ class ScalarBars(_NoNewAttrMixin):
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
+    def update_title(
+        self,
+        old_title: str,
+        new_title: str,
+        *,
+        render: bool = False,
+    ) -> None:
+        """Update the title of an existing scalar bar.
+
+        .. versionadded:: 0.48.0
+
+        Parameters
+        ----------
+        old_title : str
+            Current title of the scalar bar to update.
+
+        new_title : str
+            New title for the scalar bar.
+
+        render : bool, default: False
+            Force a render after updating the title.
+
+        Raises
+        ------
+        KeyError
+            If no scalar bar with ``old_title`` exists.
+
+        ValueError
+            If a scalar bar with ``new_title`` already exists.
+
+        Examples
+        --------
+        Update the title of a scalar bar.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['Data'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars='Data')
+        >>> pl.scalar_bars.update_title('Data', 'Elevation')
+        >>> pl.show()
+
+        """
+        if old_title not in self._scalar_bar_actors:
+            msg = f'Scalar bar with title "{old_title}" not found.'
+            raise KeyError(msg)
+        if old_title != new_title and new_title in self._scalar_bar_actors:
+            msg = f'Scalar bar with title "{new_title}" already exists.'
+            raise ValueError(msg)
+
+        if old_title != new_title:
+            self._scalar_bar_actors[new_title] = self._scalar_bar_actors.pop(old_title)
+            self._scalar_bar_ranges[new_title] = self._scalar_bar_ranges.pop(old_title)
+            self._scalar_bar_mappers[new_title] = self._scalar_bar_mappers.pop(old_title)
+            if old_title in self._scalar_bar_widgets:
+                self._scalar_bar_widgets[new_title] = self._scalar_bar_widgets.pop(old_title)
+            slot = self._plotter._scalar_bar_slot_lookup.pop(old_title, None)
+            if slot is not None:
+                self._plotter._scalar_bar_slot_lookup[new_title] = slot
+
+        self._scalar_bar_actors[new_title].SetTitle(new_title)
+
+        if render:
+            self._plotter.render()
+
     @_deprecate_positional_args(allowed=['title'])
     def add_scalar_bar(  # noqa: PLR0917
         self,
@@ -196,6 +261,7 @@ class ScalarBars(_NoNewAttrMixin):
         render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
         unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
+        unique_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -326,6 +392,25 @@ class ScalarBars(_NoNewAttrMixin):
 
             .. versionadded:: 0.44.0
 
+        unique_bar : bool, default: False
+            Whether to create a scalar bar which is unique to the subplot.
+            If ``True``, the scalar bar will be created with a unique key
+            which is not shared with other subplots, even if the input title is the same.
+
+            .. note::
+
+                Scalar bars are managed by a dictionary with the title
+                as the key. By default, if a scalar bar with the same title
+                already exists, the scalar bar will be shared.
+                If ``unique_bar`` is ``True``, the scalar bar will be created
+                with a unique key which is the title suffixed with
+                ``_UNIQUE_ID_{active_renderer_index}``, where ``active_renderer_index``
+                is the index of the active renderer in the plotter.
+                This allows for multiple scalar bars with the same title
+                to be created across different subplots.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkScalarBarActor`
@@ -390,6 +475,10 @@ class ScalarBars(_NoNewAttrMixin):
                 height = theme.colorbar_vertical.height
             else:
                 height = theme.colorbar_horizontal.height
+
+        display_title = title
+        if unique_bar:
+            title = f'{title}_UNIQUE_ID_{self._plotter.renderers.active_index}'
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
@@ -528,7 +617,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_ranges[title] = mapper.scalar_range
         self._scalar_bar_mappers[title] = [mapper]
 
-        scalar_bar.SetTitle(title)
+        scalar_bar.SetTitle(display_title)
         title_text = scalar_bar.GetTitleTextProperty()
 
         title_text.SetJustificationToCentered()

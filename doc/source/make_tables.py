@@ -55,7 +55,6 @@ from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
 from pyvista.plotting.colors import _VTK_COLORS
-from pyvista.plotting.colors import _format_color_dict
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -842,7 +841,7 @@ class ColorTable(DocTable):
             c.name: {'name': c.name, 'hex': c.hex_rgb, 'synonyms': []} for c in colors
         }
         assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
-        # Add synonyms defined in ``color_synonyms`` dictionary.
+        # Include synonyms
         for s, name in pv.colors.color_synonyms.items():
             if name in colors_dict:
                 colors_dict[name]['synonyms'].append(s)
@@ -862,13 +861,13 @@ class ColorTable(DocTable):
 
 
 def _get_color_source_badge(name: str) -> str:
-    if name in _format_color_dict(_CSS_COLORS):
+    if name in _CSS_COLORS:
         return ':bdg-primary:`CSS`'
-    elif name in _format_color_dict(_TABLEAU_COLORS):
+    elif name in _TABLEAU_COLORS:
         return ':bdg-success:`TAB`'
-    elif name in _format_color_dict(_PARAVIEW_COLORS):
+    elif name in _PARAVIEW_COLORS:
         return ':bdg-danger:`PV`'
-    elif name in _format_color_dict(_VTK_COLORS):
+    elif name in _VTK_COLORS:
         return ':bdg-secondary:`VTK`'
     else:
         msg = f'Invalid color name "{name}".'
@@ -879,7 +878,7 @@ def _sort_colors_by_hls(colors: Sequence[Color]):
     return sorted(colors, key=lambda c: c._float_hls)
 
 
-ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hexcolors.keys())
+ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hex_colors.keys())
 
 # Saturation constants
 GRAYS_SATURATION_THRESHOLD = 0.15
@@ -1479,6 +1478,8 @@ class ColormapTable(DocTable):
     @staticmethod
     def generate_img_swatch(cmap, img_path):
         """Generate and save an image of the given colormap."""
+        if os.path.isfile(img_path):
+            return
         width = 256
         height = 100
         N = 256
@@ -1509,7 +1510,8 @@ class ColormapTable(DocTable):
         lab = rgb_to_cam02ucs(rgb)
         y = lab[0, :, 0]
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
+        if not os.path.isfile(img_path):
+            ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
 
         # Compute linearity of the lightness.
         # r^2 is good for ramps, but not for iso-luminant colormaps
@@ -1537,7 +1539,8 @@ class ColormapTable(DocTable):
         delta_e = delta_e_cie2000(rgb)
         y = np.concatenate([[0], np.cumsum(delta_e)])
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        if not os.path.isfile(img_path):
+            ColormapTable.save_scatter_plot(x, y, cmap, img_path)
         return ColormapTable.linear_regression(x, y)
 
     @staticmethod
@@ -3296,8 +3299,8 @@ class PointCloudCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         pointset_names = DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
-        vertex_polydata_filter = (
-            lambda poly: isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
+        vertex_polydata_filter = lambda poly: (
+            isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
         )
         vertex_polydata_names = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
         return sorted(list(pointset_names) + list(vertex_polydata_names))
@@ -3312,9 +3315,8 @@ class SurfaceMeshCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        surface_polydata_filter = (
-            lambda poly: isinstance(poly, pv.PolyData)
-            and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
+        surface_polydata_filter = lambda poly: (
+            isinstance(poly, pv.PolyData) and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
         )
         surface_polydata_names = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
         return sorted(surface_polydata_names)
@@ -3353,8 +3355,11 @@ class ImageData3DCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        image_3d_filter = lambda img: isinstance(img, pv.ImageData) and not np.any(
-            np.array(img.dimensions) == 1,
+        image_3d_filter = lambda img: (
+            isinstance(img, pv.ImageData)
+            and not np.any(
+                np.array(img.dimensions) == 1,
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
 
@@ -3368,8 +3373,11 @@ class ImageData2DCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        image_2d_filter = lambda img: isinstance(img, pv.ImageData) and np.any(
-            np.array(img.dimensions) == 1,
+        image_2d_filter = lambda img: (
+            isinstance(img, pv.ImageData)
+            and np.any(
+                np.array(img.dimensions) == 1,
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
 
@@ -3456,9 +3464,11 @@ class MiscCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        misc_dataset_filter = lambda obj: not isinstance(
-            obj,
-            (pv.MultiBlock, pv.Texture, pv.DataSet),
+        misc_dataset_filter = lambda obj: (
+            not isinstance(
+                obj,
+                (pv.MultiBlock, pv.Texture, pv.DataSet),
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
 
@@ -3494,7 +3504,23 @@ class MedicalCarousel(DatasetGalleryCarousel):
         )
 
 
+def _resolve_path(cls):
+    """Resolve a DocTable class path, handling property descriptors."""
+    path = cls.path
+    if isinstance(path, property):
+        path = path.fget(cls)
+    return path
+
+
 def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
+    # Check if all carousel RST files already exist - if so, skip the
+    # expensive dataset download/load step on incremental builds
+    carousel_paths = [_resolve_path(carousel) for carousel in carousels]
+    all_exist = all(Path(p).exists() for p in carousel_paths)
+    if all_exist:
+        print('All carousel RST files already exist, skipping dataset loading', flush=True)
+        return carousel_paths
+
     # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
 
@@ -3558,7 +3584,6 @@ def make_all_tables() -> list[str]:  # noqa: D103
     ImageDataIOTable.generate()
     RectilinearGridIOTable.generate()
     StructuredGridIOTable.generate()
-    PolyDataIOTable.generate()
     PolyDataIOTable.generate()
     UnstructuredGridIOTable.generate()
     MultiBlockIOTable.generate()

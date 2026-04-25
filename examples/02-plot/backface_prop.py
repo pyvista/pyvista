@@ -17,13 +17,10 @@ depend on the orientation of the surface normals:
 
 # sphinx_gallery_start_ignore
 # backface properties do not work in interactive
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -63,7 +60,9 @@ pl.show()
 # where the face properties are discontinuous.
 
 henneberg = pv.ParametricHenneberg().scale(0.25, inplace=False)
-klein = pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
+klein = (
+    pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
+)
 meshes = henneberg + klein
 
 backface_params = dict(color='mediumseagreen', specular=1.0, specular_power=50.0)
@@ -81,7 +80,9 @@ meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
 mobius = pv.ParametricMobius().rotate_z(-90, inplace=False)
 backface_params = dict(opacity=0.5)
 pl = pv.Plotter()
-pl.add_mesh(mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True)
+pl.add_mesh(
+    mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True
+)
 pl.open_gif('mobius_semiopaque.gif')
 
 viewup = [0, 0, 1]
