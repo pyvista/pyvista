@@ -853,6 +853,98 @@ def test_registered_accessors_forces_discovery(monkeypatch):
         sys.modules.pop(plugin_name, None)
 
 
+def test_pending_accessor_appears_in_dir_without_loading(monkeypatch):
+    """``dir(mesh)`` includes pending entry-point accessor names so
+    IPython / Jupyter / REPL tab completion surfaces them, *without*
+    paying the plugin import cost."""
+    plugin_name = 'fake_ep_plugin_dir'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('dir_demo', pv.PolyData)\n"
+        'class DirDemoAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n',
+    )
+    ep = MagicMock()
+    ep.name = 'dir_demo'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    import_calls: list[str] = []
+
+    def _tracking_import(module_path: str):
+        import_calls.append(module_path)
+        return fake_import(module_path)
+
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        _tracking_import,
+    )
+
+    try:
+        listing = dir(pv.Sphere())
+        assert 'dir_demo' in listing
+        assert import_calls == []  # plugin not loaded by dir()
+    finally:
+        sys.modules.pop(plugin_name, None)
+
+
+def test_explicit_accessor_appears_in_dir():
+    """Explicitly-registered accessors appear in ``dir`` for instances
+    of their target class but not for unrelated classes."""
+
+    @pv.register_dataset_accessor('explicit_dir_demo', pv.PolyData)
+    class ExplicitDirDemo:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+    try:
+        assert 'explicit_dir_demo' in dir(pv.Sphere())
+        assert 'explicit_dir_demo' in dir(pv.Cube())  # also PolyData
+        assert 'explicit_dir_demo' not in dir(pv.ImageData())
+    finally:
+        pv.unregister_dataset_accessor('explicit_dir_demo', pv.PolyData)
+
+
+def test_dir_after_pending_accessor_resolved(monkeypatch):
+    """After a pending accessor has been resolved (plugin imported and
+    decorator attached the descriptor), ``dir`` still surfaces it via
+    the normal class-dictionary path — not via the pending fallback."""
+    plugin_name = 'fake_ep_plugin_dir_resolved'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('resolved_demo', pv.PolyData)\n"
+        'class ResolvedDemoAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n',
+    )
+    ep = MagicMock()
+    ep.name = 'resolved_demo'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
+
+    try:
+        sphere = pv.Sphere()
+        # Trigger plugin load
+        _ = sphere.resolved_demo
+        # Pending list is empty now; dir should still include the name
+        # via the class-attached descriptor.
+        assert _reg_mod._pending_accessors == {}
+        assert 'resolved_demo' in dir(sphere)
+    finally:
+        sys.modules.pop(plugin_name, None)
+        # Clean up the descriptor that fake_import attached
+        if 'resolved_demo' in pv.PolyData.__dict__:
+            delattr(pv.PolyData, 'resolved_demo')
+
+
 def test_no_entry_points_is_silent(monkeypatch):
     """No installed accessor plugins must be a no-op without warnings.
 

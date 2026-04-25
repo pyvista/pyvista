@@ -156,6 +156,8 @@ Miscellaneous
    Observer
    ProgressMonitor
    register_jupyter_backend
+   registered_jupyter_backends
+   JupyterBackendRegistration
    send_errors_to_logging
    set_jupyter_backend
    start_xvfb

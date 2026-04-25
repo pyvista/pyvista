@@ -16,7 +16,7 @@ from typing import cast
 
 from pyvista._warn_external import warn_external
 from pyvista.jupyter import _custom_backends
-from pyvista.jupyter import _discover_entry_points
+from pyvista.jupyter import _ensure_entry_points
 from pyvista.jupyter import _get_custom_backend_handler
 from pyvista.jupyter import _resolve_backend
 
@@ -75,7 +75,7 @@ def handle_plotter(
 
     except ImportError as e:
         # Trame was explicitly requested but not available
-        _discover_entry_points()
+        _ensure_entry_points()
         if _custom_backends:
             fallback_name, fallback_handler = next(iter(_custom_backends.items()))
             available = [f'"{b}"' for b in sorted(_custom_backends.keys())]

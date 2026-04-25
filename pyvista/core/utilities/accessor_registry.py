@@ -603,6 +603,19 @@ def _resolve_pending_accessor(name: str) -> bool:
     return True
 
 
+def _pending_accessor_names() -> tuple[str, ...]:
+    """Return every pending accessor name without importing any plugin.
+
+    Used by :meth:`pyvista.DataObject.__dir__` so that IPython /
+    Jupyter / REPL tab completion surfaces accessors contributed by
+    installed plugins even before those plugins have been imported. The
+    plugin module itself is **not** loaded — only the entry-point
+    metadata is consulted.
+    """
+    _ensure_entry_points()
+    return tuple(_pending_accessors)
+
+
 def registered_accessors() -> tuple[AccessorRegistration, ...]:
     """Return every accessor currently registered.
 

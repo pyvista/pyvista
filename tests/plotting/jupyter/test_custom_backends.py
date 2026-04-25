@@ -7,10 +7,13 @@ import importlib.util
 import sys
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import warnings
 
 import pytest
 
 import pyvista as pv
+from pyvista import jupyter as jupyter_mod
+from pyvista.jupyter import _custom_backend_sources
 from pyvista.jupyter import _custom_backends
 from pyvista.jupyter import _get_custom_backend_handler
 from pyvista.jupyter import _resolve_backend
@@ -39,13 +42,22 @@ def _block_trame_import():
 def _clean_custom_backends():
     """Remove any custom backends registered during tests."""
     original = _custom_backends.copy()
+    original_sources = _custom_backend_sources.copy()
+    original_loaded = jupyter_mod._entry_points_loaded
     yield
     _custom_backends.clear()
     _custom_backends.update(original)
+    _custom_backend_sources.clear()
+    _custom_backend_sources.update(original_sources)
+    jupyter_mod._entry_points_loaded = original_loaded
 
 
 def _mock_handler(plotter, **kwargs):
     return {'plotter': plotter, **kwargs}
+
+
+def _replacement_handler(_plotter, **_kwargs):
+    return {'replaced': True}
 
 
 @skip_no_ipython
@@ -66,6 +78,86 @@ def test_register_case_insensitive():
 def test_register_builtin_collision(name):
     with pytest.raises(ValueError, match='collides with built-in backend'):
         register_jupyter_backend(name, _mock_handler)
+
+
+@skip_no_ipython
+def test_register_builtin_override_allowed():
+    register_jupyter_backend('static', _mock_handler, override=True)
+    assert _get_custom_backend_handler('static') is _mock_handler
+
+
+@skip_no_ipython
+def test_register_custom_collision_warns_and_replaces():
+    register_jupyter_backend('mycollide', _mock_handler)
+    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+        register_jupyter_backend('mycollide', _replacement_handler)
+    assert _get_custom_backend_handler('mycollide') is _replacement_handler
+
+
+@skip_no_ipython
+def test_register_custom_collision_override_silent():
+    register_jupyter_backend('mycollide', _mock_handler)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        register_jupyter_backend('mycollide', _replacement_handler, override=True)
+    assert _get_custom_backend_handler('mycollide') is _replacement_handler
+
+
+def test_registered_jupyter_backends_returns_record_with_source():
+    register_jupyter_backend('demo_backend', _mock_handler)
+    records = pv.registered_jupyter_backends()
+    matches = [r for r in records if r.name == 'demo_backend']
+    assert len(matches) == 1
+    record = matches[0]
+    assert record.handler is _mock_handler
+    assert record.source.endswith('_mock_handler')
+
+
+def test_registered_jupyter_backends_includes_entry_point_source():
+    jupyter_mod._entry_points_loaded = False
+
+    mock_ep = MagicMock()
+    mock_ep.name = 'discovered_backend'
+    mock_ep.value = 'package.module:backend_func'
+    mock_ep.load.return_value = _mock_handler
+
+    with patch('pyvista.jupyter.entry_points', return_value=[mock_ep]):
+        records = pv.registered_jupyter_backends()
+
+    matches = [r for r in records if r.name == 'discovered_backend']
+    assert len(matches) == 1
+    assert matches[0].source == 'package.module:backend_func'
+
+
+def test_entry_point_load_failure_warns_and_continues():
+    jupyter_mod._entry_points_loaded = False
+
+    broken = MagicMock()
+    broken.name = 'broken_backend'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with (
+        patch('pyvista.jupyter.entry_points', return_value=[broken]),
+        pytest.warns(UserWarning, match='Failed to load pyvista.jupyter_backends entry point'),
+    ):
+        assert _get_custom_backend_handler('broken_backend') is None
+
+
+def test_entry_point_uses_renamed_group():
+    """Confirm the entry-point group name is ``pyvista.jupyter_backends``."""
+    jupyter_mod._entry_points_loaded = False
+
+    captured: dict[str, object] = {}
+
+    def fake_entry_points(*, group):
+        captured['group'] = group
+        return []
+
+    with patch('pyvista.jupyter.entry_points', side_effect=fake_entry_points):
+        jupyter_mod._ensure_entry_points()
+
+    assert captured['group'] == 'pyvista.jupyter_backends'
 
 
 @skip_no_ipython
@@ -113,7 +205,7 @@ def test_entry_point_discovery():
     mock_ep.load.return_value = _mock_handler
 
     with patch(
-        'importlib.metadata.entry_points',
+        'pyvista.jupyter.entry_points',
         return_value=[mock_ep],
     ):
         handler = _get_custom_backend_handler('discovered')

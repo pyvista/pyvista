@@ -92,6 +92,8 @@ Registration can be done programmatically or via Python entry points
 for zero-config discovery at install time.
 
 .. autofunction:: pyvista.register_reader
+.. autofunction:: pyvista.registered_readers
+.. autoclass:: pyvista.ReaderRegistration
 
 **Entry points**
 
@@ -129,6 +131,8 @@ and supports programmatic calls, decorators, and Python entry points
 for zero-config discovery at install time.
 
 .. autofunction:: pyvista.register_writer
+.. autofunction:: pyvista.registered_writers
+.. autoclass:: pyvista.WriterRegistration
 
 **Handler signature**
 
