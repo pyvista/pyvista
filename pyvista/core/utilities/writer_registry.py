@@ -6,12 +6,14 @@ from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import NamedTuple
 from typing import Protocol
 from typing import TypedDict
 from typing import overload
 
 import pyvista as pv
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._registry_helpers import handler_source
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,12 +27,40 @@ if TYPE_CHECKING:
             """Write *dataset* to *path*, consuming format-specific *kwargs*."""
 
 
+class WriterRegistration(NamedTuple):
+    """Describe one registered custom writer.
+
+    Returned by :func:`~pyvista.registered_writers`.
+
+    .. versionadded:: 0.48.0
+
+    Attributes
+    ----------
+    extension : str
+        File extension the writer is registered against, including the
+        leading dot (e.g. ``'.myformat'``).
+    handler : callable
+        The writer callable.
+    source : str
+        Human-readable origin in the form ``'module.qualname'`` for
+        explicit registrations or the entry-point ``value`` for
+        plugin-discovered registrations.
+
+    """
+
+    extension: str
+    handler: WriterHandler
+    source: str
+
+
 class _RegistryState(TypedDict):
     ext: dict[str, WriterHandler]
+    sources: dict[str, str]
     entry_points_loaded: bool
 
 
 _custom_ext_writers: dict[str, WriterHandler] = {}
+_custom_ext_writer_sources: dict[str, str] = {}
 _entry_points_loaded: bool = False
 _builtin_writer_exts: frozenset[str] | None = None
 
@@ -39,6 +69,7 @@ def _save_registry_state() -> _RegistryState:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_writers.copy(),
+        'sources': _custom_ext_writer_sources.copy(),
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -48,6 +79,8 @@ def _restore_registry_state(state: _RegistryState) -> None:
     global _entry_points_loaded  # noqa: PLW0603
     _custom_ext_writers.clear()
     _custom_ext_writers.update(state['ext'])
+    _custom_ext_writer_sources.clear()
+    _custom_ext_writer_sources.update(state['sources'])
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -125,9 +158,8 @@ def register_writer(
 
     override : bool, default: False
         If ``True``, allow overriding a built-in PyVista writer for this
-        extension.  When ``False`` (the default), registering a handler
-        for an extension that collides with a built-in writer raises
-        :class:`ValueError`.
+        extension and silence the warning that would otherwise fire when
+        replacing an existing custom registration.
 
     Returns
     -------
@@ -141,10 +173,19 @@ def register_writer(
         If ``key`` collides with a built-in PyVista writer and *override*
         is ``False``.
 
+    Warns
+    -----
+    UserWarning
+        If ``key`` already refers to a registered custom writer. The new
+        registration replaces the old one (last wins); pass
+        ``override=True`` to silence the warning.
+
     See Also
     --------
     pyvista.register_reader
         Sibling API for registering custom readers.
+    pyvista.registered_writers
+        Introspect every registered writer.
 
     Notes
     -----
@@ -194,6 +235,7 @@ def _register(
     handler: WriterHandler,
     *,
     override: bool = False,
+    source: str | None = None,
 ) -> None:
     """Register a handler in the extension registry."""
     key = key.lower()
@@ -206,7 +248,14 @@ def _register(
             f'Use override=True to replace it.'
         )
         raise ValueError(msg)
+    if not override and key in _custom_ext_writers:
+        existing_source = _custom_ext_writer_sources.get(key, '<unknown>')
+        warn_external(
+            f'Registering writer for "{key}" replaces an existing custom '
+            f'writer from {existing_source}.',
+        )
     _custom_ext_writers[key] = handler
+    _custom_ext_writer_sources[key] = source if source is not None else handler_source(handler)
 
 
 def _get_ext_handler(ext: str) -> WriterHandler | None:
@@ -242,12 +291,14 @@ def _ensure_entry_points() -> None:
             # ep.load() runs third-party import machinery — it can raise
             # literally anything. Convert to a warning so one broken plugin
             # cannot take down every pyvista.save call.
-            _custom_ext_writers[key] = winner.load()
+            handler = winner.load()
         except Exception as err:  # noqa: BLE001
             warn_external(
                 f'Failed to load pyvista.writers entry point "{winner.value}" for "{key}": {err}'
             )
             continue
+        _custom_ext_writers[key] = handler
+        _custom_ext_writer_sources[key] = winner.value
         if len(eps) > 1:
             providers = ', '.join(ep.value for ep in eps)
             warn_external(
@@ -265,3 +316,43 @@ def _list_custom_exts() -> list[str]:
     """
     _ensure_entry_points()
     return list(_custom_ext_writers.keys())
+
+
+def registered_writers() -> tuple[WriterRegistration, ...]:
+    """Return every custom writer currently registered.
+
+    Forces discovery of any pending entry-point plugins so the returned
+    list reflects every writer visible to PyVista. A plugin that fails to
+    import emits a ``UserWarning`` and is skipped; the rest still appear
+    in the result.
+
+    .. versionadded:: 0.48.0
+
+    Returns
+    -------
+    tuple[WriterRegistration, ...]
+        One record per registered extension. Each record exposes
+        ``extension``, ``handler``, and ``source``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> def my_writer(dataset, path, **kwargs): ...
+    >>> pv.register_writer('.demo_writer', my_writer)
+    >>> [
+    ...     r.extension
+    ...     for r in pv.registered_writers()
+    ...     if r.extension == '.demo_writer'
+    ... ]
+    ['.demo_writer']
+
+    """
+    _ensure_entry_points()
+    return tuple(
+        WriterRegistration(
+            extension=ext,
+            handler=handler,
+            source=_custom_ext_writer_sources.get(ext, '<unknown>'),
+        )
+        for ext, handler in _custom_ext_writers.items()
+    )

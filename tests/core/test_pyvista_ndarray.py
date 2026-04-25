@@ -126,12 +126,37 @@ def test_no_dataset_does_not_allocate_weak_reference():
     assert arr.dataset is None
 
 
+def _count_vtk_weak_references() -> int:
+    """Count live ``vtkWeakReference`` objects, tolerating dead weak refs.
+
+    ``isinstance`` on some weakref-like proxies whose targets have already
+    been collected raises ``ReferenceError``; skip those.
+    """
+    count = 0
+    for obj in gc.get_objects():
+        try:
+            if isinstance(obj, _vtk.vtkWeakReference):
+                count += 1
+        except ReferenceError:
+            continue
+    return count
+
+
 def test_point_data_assignment_does_not_leak_vtk_weak_reference():
     # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    # Compare counts before and after rather than asserting an absolute
+    # zero — other code in the interpreter (other tests, fixtures,
+    # imported plugins) may legitimately hold ``vtkWeakReference``
+    # instances that have nothing to do with this operation.
+    gc.collect()
+    before = _count_vtk_weak_references()
+
     mesh = pv.Sphere()
     mesh.point_data['data'] = mesh.points[:, 2].astype(float)
     del mesh
     gc.collect()
 
-    leaked = [o for o in gc.get_objects() if isinstance(o, _vtk.vtkWeakReference)]
-    assert leaked == []
+    after = _count_vtk_weak_references()
+    assert after <= before, (
+        f'point_data assignment leaked {after - before} vtkWeakReference instance(s)'
+    )

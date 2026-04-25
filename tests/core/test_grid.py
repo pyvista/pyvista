@@ -439,18 +439,25 @@ def test_init_bad_filename():
 
 
 def test_save_bad_extension():
-    valid_ext = ['.vtu', '.vtk', '.pkl', '.pickle', '.pv', '.zvtk']
+    # Don't assert on the full list of valid extensions because plugin
+    # packages registered via the ``pyvista.writers`` entry-point group
+    # can extend it (e.g. pyvista_zarr adding ``.zarr``). Verify the
+    # bad-extension framing and that all the built-in extensions are
+    # listed; that's the contract users rely on.
+    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle', '.pv', '.zvtk']
     if pv.vtk_version_info >= (9, 4):
-        valid_ext.insert(2, '.vtkhdf')
+        builtin_exts.append('.vtkhdf')
 
-    match = (
-        "Invalid file extension '.abc' for data type <class "
-        "'pyvista.core.pointset.UnstructuredGrid'>.\n"
-        f'Must be one of: {valid_ext}'
-    )
-
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
         pv.UnstructuredGrid().save('file.abc')
+
+    message = str(excinfo.value)
+    assert (
+        "Invalid file extension '.abc' for data type "
+        "<class 'pyvista.core.pointset.UnstructuredGrid'>" in message
+    )
+    for ext in builtin_exts:
+        assert f"'{ext}'" in message, f'Built-in extension {ext} missing from error message'
 
 
 @pytest.mark.parametrize(

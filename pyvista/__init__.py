@@ -36,12 +36,18 @@ from pyvista.core.utilities.accessor_registry import (
 )
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from pyvista.core.utilities.reader_registry import ReaderRegistration as ReaderRegistration
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
 from pyvista.core.utilities.reader_registry import register_reader as register_reader
+from pyvista.core.utilities.reader_registry import registered_readers as registered_readers
+from pyvista.core.utilities.writer_registry import WriterRegistration as WriterRegistration
 from pyvista.core.utilities.writer_registry import register_writer as register_writer
+from pyvista.core.utilities.writer_registry import registered_writers as registered_writers
 from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
+from pyvista.jupyter import JupyterBackendRegistration as JupyterBackendRegistration
 from pyvista.jupyter import register_jupyter_backend as register_jupyter_backend
+from pyvista.jupyter import registered_jupyter_backends as registered_jupyter_backends
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report

@@ -10,6 +10,7 @@ import shutil
 import tempfile
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import NamedTuple
 from typing import Protocol
 from typing import TypedDict
 from typing import overload
@@ -17,6 +18,7 @@ from typing import overload
 import pooch
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._registry_helpers import handler_source
 from pyvista.core.utilities.reader import CLASS_READERS
 
 if TYPE_CHECKING:
@@ -31,8 +33,35 @@ if TYPE_CHECKING:
             """Read *path* and return the resulting dataset."""
 
 
+class ReaderRegistration(NamedTuple):
+    """Describe one registered custom reader.
+
+    Returned by :func:`~pyvista.registered_readers`.
+
+    .. versionadded:: 0.48.0
+
+    Attributes
+    ----------
+    extension : str
+        File extension the reader is registered against, including the
+        leading dot (e.g. ``'.myformat'``).
+    handler : callable
+        The reader callable.
+    source : str
+        Human-readable origin in the form ``'module.qualname'`` for
+        explicit registrations or the entry-point ``value`` for
+        plugin-discovered registrations.
+
+    """
+
+    extension: str
+    handler: ReaderHandler
+    source: str
+
+
 class _RegistryState(TypedDict):
     ext: dict[str, ReaderHandler]
+    sources: dict[str, str]
     entry_points_loaded: bool
 
 
@@ -57,6 +86,7 @@ class LocalFileRequiredError(Exception):
 
 
 _custom_ext_readers: dict[str, ReaderHandler] = {}
+_custom_ext_reader_sources: dict[str, str] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 
@@ -75,6 +105,7 @@ def _save_registry_state() -> _RegistryState:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_readers.copy(),
+        'sources': _custom_ext_reader_sources.copy(),
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -84,6 +115,8 @@ def _restore_registry_state(state: _RegistryState) -> None:
     global _entry_points_loaded  # noqa: PLW0603
     _custom_ext_readers.clear()
     _custom_ext_readers.update(state['ext'])
+    _custom_ext_reader_sources.clear()
+    _custom_ext_reader_sources.update(state['sources'])
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -206,9 +239,8 @@ def register_reader(
 
     override : bool, default: False
         If ``True``, allow overriding a built-in VTK reader for this
-        extension.  When ``False`` (the default), registering a handler
-        for an extension that collides with a built-in reader raises
-        :class:`ValueError`.
+        extension and silence the warning that would otherwise fire when
+        replacing an existing custom registration.
 
     Returns
     -------
@@ -222,10 +254,19 @@ def register_reader(
         If ``key`` collides with a built-in VTK reader and *override*
         is ``False``.
 
+    Warns
+    -----
+    UserWarning
+        If ``key`` already refers to a registered custom reader. The new
+        registration replaces the old one (last wins); pass
+        ``override=True`` to silence the warning.
+
     See Also
     --------
     pyvista.register_writer
         Sibling API for registering custom writers.
+    pyvista.registered_readers
+        Introspect every registered reader.
 
     Examples
     --------
@@ -258,6 +299,7 @@ def _register(
     handler: ReaderHandler,
     *,
     override: bool = False,
+    source: str | None = None,
 ) -> None:
     """Register a handler in the extension registry."""
     key = key.lower()
@@ -270,7 +312,14 @@ def _register(
             f'Use override=True to replace it.'
         )
         raise ValueError(msg)
+    if not override and key in _custom_ext_readers:
+        existing_source = _custom_ext_reader_sources.get(key, '<unknown>')
+        warn_external(
+            f'Registering reader for "{key}" replaces an existing custom '
+            f'reader from {existing_source}.',
+        )
     _custom_ext_readers[key] = handler
+    _custom_ext_reader_sources[key] = source if source is not None else handler_source(handler)
 
 
 def _get_ext_handler(ext: str) -> ReaderHandler | None:
@@ -306,12 +355,14 @@ def _ensure_entry_points() -> None:
             # ep.load() runs third-party import machinery — it can raise
             # literally anything. Convert to a warning so one broken plugin
             # cannot take down every pyvista.read call.
-            _custom_ext_readers[key] = winner.load()
+            handler = winner.load()
         except Exception as err:  # noqa: BLE001
             warn_external(
                 f'Failed to load pyvista.readers entry point "{winner.value}" for "{key}": {err}'
             )
             continue
+        _custom_ext_readers[key] = handler
+        _custom_ext_reader_sources[key] = winner.value
         if len(eps) > 1:
             providers = ', '.join(ep.value for ep in eps)
             warn_external(
@@ -328,3 +379,43 @@ def _list_custom_exts() -> list[str]:
     """
     _ensure_entry_points()
     return list(_custom_ext_readers.keys())
+
+
+def registered_readers() -> tuple[ReaderRegistration, ...]:
+    """Return every custom reader currently registered.
+
+    Forces discovery of any pending entry-point plugins so the returned
+    list reflects every reader visible to PyVista. A plugin that fails to
+    import emits a ``UserWarning`` and is skipped; the rest still appear
+    in the result.
+
+    .. versionadded:: 0.48.0
+
+    Returns
+    -------
+    tuple[ReaderRegistration, ...]
+        One record per registered extension. Each record exposes
+        ``extension``, ``handler``, and ``source``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> def my_reader(path, **kwargs): ...
+    >>> pv.register_reader('.demo_reader', my_reader)
+    >>> [
+    ...     r.extension
+    ...     for r in pv.registered_readers()
+    ...     if r.extension == '.demo_reader'
+    ... ]
+    ['.demo_reader']
+
+    """
+    _ensure_entry_points()
+    return tuple(
+        ReaderRegistration(
+            extension=ext,
+            handler=handler,
+            source=_custom_ext_reader_sources.get(ext, '<unknown>'),
+        )
+        for ext, handler in _custom_ext_readers.items()
+    )

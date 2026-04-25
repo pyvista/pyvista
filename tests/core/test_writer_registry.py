@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 import subprocess
 import sys
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import warnings
 
 import pytest
 
@@ -31,8 +33,24 @@ def _noop_writer(_dataset, _path):
     """Writer stand-in that returns without touching disk."""
 
 
+def _load_module_copy(module_name: str, module_path: str | Path):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    assert spec is not None
+    assert spec.loader is not None
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_initial_module_state():
-    assert _reg_mod._custom_ext_writers == {}
+    # Load a fresh copy of the module so the assertion is immune to
+    # plugins (e.g. pyvista_zarr) that register at import time and
+    # pollute the live module's registry dicts.
+    module = _load_module_copy('writer_registry_test_copy', _reg_mod.__file__)
+    assert module._custom_ext_writers == {}
+    assert module._custom_ext_writer_sources == {}
+    assert module._entry_points_loaded is False
 
 
 def test_register_extension():
@@ -391,3 +409,52 @@ def test_top_level_exports_available_in_fresh_python_process():
         text=True,
         timeout=60,
     )
+
+
+def test_registered_writers_returns_record_with_source():
+    pv.register_writer('.mything', _noop_writer)
+    records = pv.registered_writers()
+    matches = [r for r in records if r.extension == '.mything']
+    assert len(matches) == 1
+    record = matches[0]
+    assert record.handler is _noop_writer
+    assert record.source.endswith('_noop_writer')
+
+
+def test_registered_writers_includes_entry_point_source():
+    _reg_mod._entry_points_loaded = False
+
+    mock_ep = MagicMock()
+    mock_ep.name = '.discovered_src'
+    mock_ep.value = 'package.module:writer_func'
+    mock_ep.load.return_value = _noop_writer
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+        records = pv.registered_writers()
+
+    matches = [r for r in records if r.extension == '.discovered_src']
+    assert len(matches) == 1
+    assert matches[0].source == 'package.module:writer_func'
+
+
+def test_register_custom_collision_warns_and_replaces():
+    pv.register_writer('.collide', _noop_writer)
+
+    def replacement(_ds, _path):
+        return None
+
+    with pytest.warns(UserWarning, match='replaces an existing custom writer'):
+        pv.register_writer('.collide', replacement)
+    assert _reg_mod._custom_ext_writers['.collide'] is replacement
+
+
+def test_register_custom_collision_override_silent():
+    pv.register_writer('.collide', _noop_writer)
+
+    def replacement(_ds, _path):
+        return None
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        pv.register_writer('.collide', replacement, override=True)
+    assert _reg_mod._custom_ext_writers['.collide'] is replacement
