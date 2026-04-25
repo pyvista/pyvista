@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib.util
+import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
@@ -16,7 +17,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationW
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
+JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'wasm', 'none']
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
 _custom_backends: dict[str, Callable[..., object]] = {}
@@ -95,10 +96,47 @@ def _discover_entry_points() -> None:
                 _custom_backends[name] = ep.load()
 
 
+def _is_pyodide() -> bool:
+    """Check if running in a Pyodide/WASM environment.
+
+    Pyodide is a port of CPython to WebAssembly that runs in browsers.
+    It uses the Emscripten compiler toolchain to compile Python and
+    scientific computing libraries (numpy, scipy, etc.) to WebAssembly.
+
+    In Pyodide environments:
+    - sys.platform returns 'emscripten'
+    - platform.machine() returns 'wasm32'
+    - The regular VTK Python package is not available
+    - VTK.wasm (WebAssembly port of VTK C++) is provided by pyvista-wasm
+
+    Returns
+    -------
+    bool
+        True if running in a Pyodide/WASM environment, False otherwise.
+
+    References
+    ----------
+    * Pyodide documentation: https://pyodide.org/
+    * Emscripten documentation: https://emscripten.org/
+
+    """
+    return sys.platform == 'emscripten'
+
+
 def _resolve_backend() -> str:
     """Auto-detect the best available Jupyter backend.
 
-    Priority: registered custom backends > trame > static.
+    Priority:
+    1. Registered custom backends (via register_jupyter_backend)
+    2. 'wasm' backend in Pyodide/WASM environments (if pyvista-wasm is available)
+    3. 'trame' backend (if trame dependencies are installed)
+    4. 'static' backend (fallback, always available)
+
+    The WASM backend ('wasm') is preferred in Pyodide environments because:
+    - Pyodide cannot install the regular VTK Python package
+    - VTK.wasm (via pyvista-wasm) provides the rendering capabilities
+    - It enables interactive 3D visualization in browser-based Python environments
+      like JupyterLite, Pyodide notebooks, and Stlite
 
     Returns
     -------
@@ -109,6 +147,19 @@ def _resolve_backend() -> str:
     _discover_entry_points()
     if _custom_backends:
         return next(iter(_custom_backends))
+
+    # In Pyodide/WASM environments, prefer the WASM backend if pyvista-wasm
+    # is available. This enables interactive 3D visualization in browsers
+    # using VTK.wasm instead of the regular VTK Python package.
+    if _is_pyodide():
+        try:
+            import pyvista_wasm  # noqa: PLC0415, F401
+        except (ImportError, ValueError):
+            has_wasm = False
+        else:
+            has_wasm = True
+        if has_wasm:
+            return 'wasm'
 
     try:
         from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
@@ -150,6 +201,10 @@ def _validate_jupyter_backend(
                 from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
             except ImportError:  # pragma: no cover
                 msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+                raise ImportError(msg)
+        if backend == 'wasm':
+            if not importlib.util.find_spec('pyvista_wasm'):  # pragma: no cover
+                msg = 'Please install pyvista-wasm for WASM support: pip install pyvista-wasm'
                 raise ImportError(msg)
         return backend
 
@@ -198,6 +253,22 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwarg
 
         * ``'html'`` : Export/serialize the scene graph to be rendered
           with the Trame client backend but in a static HTML file.
+
+        * ``'wasm'`` : Use VTK.wasm for rendering in browser-based Python
+          environments like JupyterLite and Pyodide. This backend enables
+          interactive 3D visualization in web browsers without requiring a
+          backend server.
+
+          Requirements:
+
+          - ``pip install pyvista-wasm`` (or ``pip install "pyvista[wasm]"``)
+          - For Pyodide: ``await micropip.install("pyvista-wasm")``
+
+          Technical details:
+
+          - In WASM environments, the regular VTK Python package is not available
+          - VTK.wasm (WebAssembly port of VTK C++) provides rendering instead
+          - This backend is auto-detected when running in Pyodide (emscripten)
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This

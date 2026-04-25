@@ -79,7 +79,7 @@ def handle_plotter(
         if _custom_backends:
             fallback_name, fallback_handler = next(iter(_custom_backends.items()))
             available = [f'"{b}"' for b in sorted(_custom_backends.keys())]
-            available += ['"static"', '"none"']
+            available += ['"static"', '"wasm"', '"none"']
             warn_external(
                 f'Failed to use notebook backend "{backend}": {e}\n\n'
                 f'Using registered backend "{fallback_name}" instead.\n'
@@ -90,12 +90,146 @@ def handle_plotter(
         warn_external(
             f'Failed to use notebook backend "{backend}": {e}\n\n'
             'Falling back to a static output.\n'
-            'Available backends: "static", "none"\n'
+            'Available backends: "static", "wasm", "none"\n'
             'Install trame for interactive backends:'
-            ' pip install "pyvista[jupyter]"'
+            ' pip install "pyvista[jupyter]"\n'
+            'Or use WASM for browser-based rendering:'
+            ' pip install pyvista-wasm'
         )
 
+    # WASM backend for Pyodide/JupyterLite environments
+    if backend == 'wasm':
+        return show_wasm(plotter)
+
     return show_static_image(plotter, screenshot)
+
+
+def show_wasm(
+    plotter: Plotter,
+) -> object:
+    """Show the plotter using WASM/VTK.wasm for browser-based rendering.
+
+    This function enables interactive 3D visualization in JupyterLite,
+    Pyodide, and other browser-based Python environments using VTK.wasm.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        The PyVista plotter to display.
+
+    Returns
+    -------
+    object
+        An IPython-displayable widget for the WASM visualization.
+
+    Raises
+    ------
+    ImportError
+        If ``pyvista-wasm`` is not installed.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()  # doctest: +SKIP
+    >>> _ = pl.add_mesh(pv.Sphere())  # doctest: +SKIP
+    >>> pv.set_jupyter_backend('wasm')  # doctest: +SKIP
+    >>> pl.show()  # doctest: +SKIP
+
+    """
+    try:
+        import pyvista_wasm  # noqa: PLC0415
+    except ImportError as e:
+        msg = (
+            'The WASM backend requires pyvista-wasm.\n'
+            'Install it with: pip install "pyvista[wasm]"\n\n'
+            'For Pyodide/JupyterLite, use:\n'
+            'import micropip\n'
+            'await micropip.install("pyvista-wasm")'
+        )
+        raise ImportError(msg) from e
+
+    from IPython.display import HTML  # noqa: PLC0415
+
+    # Create a WASM plotter from the current plotter
+    wasm_plotter = pyvista_wasm.Plotter()
+
+    # Transfer meshes and settings from the original plotter
+    for actor in plotter.actors.values():
+        if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset'):
+            mesh = actor.mapper.dataset
+            # Convert to WASM mesh format
+            wasm_mesh = _convert_to_wasm_mesh(mesh)
+            if wasm_mesh is not None:
+                # Transfer actor properties
+                prop = getattr(actor, 'prop', None)
+                color = getattr(prop, 'color', None) if prop is not None else None
+                opacity = getattr(prop, 'opacity', 1.0) if prop is not None else 1.0
+                show_edges = getattr(prop, 'show_edges', False) if prop is not None else False
+                wasm_plotter.add_mesh(
+                    wasm_mesh,
+                    color=color,
+                    opacity=opacity,
+                    show_edges=show_edges,
+                )
+
+    # Generate standalone HTML for embedding
+    html_content = wasm_plotter.generate_standalone_html()
+    return HTML(html_content)
+
+
+def _convert_to_wasm_mesh(mesh):
+    """Convert a pyvista mesh to a pyvista_wasm mesh.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        The pyvista mesh to convert.
+
+    Returns
+    -------
+    pyvista_wasm.PolyData or None
+        The converted WASM mesh, or None if conversion fails.
+
+    """
+    import numpy as np  # noqa: PLC0415
+    import pyvista_wasm  # noqa: PLC0415
+
+    try:
+        # Extract points and faces from the mesh
+        points = np.array(mesh.points)
+
+        # Handle face data conversion
+        if hasattr(mesh, 'faces') and mesh.faces is not None:
+            faces = np.array(mesh.faces)
+        elif hasattr(mesh, 'cells') and mesh.cells is not None:
+            faces = np.array(mesh.cells)
+        else:
+            # Try to extract from cell connectivity
+            try:
+                faces = mesh.cell_connectivity
+                if faces is None:
+                    faces = np.array([])
+            except (AttributeError, ValueError):
+                faces = np.array([])
+
+        # Create WASM PolyData
+        wasm_mesh = pyvista_wasm.PolyData(points, faces)
+
+        # Transfer point and cell data
+        for name in mesh.point_data.keys():
+            wasm_mesh.point_data[name] = np.array(mesh.point_data[name])
+
+        for name in mesh.cell_data.keys():
+            wasm_mesh.cell_data[name] = np.array(mesh.cell_data[name])
+
+        # Transfer field data
+        for name in mesh.field_data.keys():
+            wasm_mesh.field_data[name] = np.array(mesh.field_data[name])
+    except Exception:  # noqa: BLE001
+        # If conversion fails, return None
+        return None
+    else:
+        return wasm_mesh
 
 
 def show_static_image(
