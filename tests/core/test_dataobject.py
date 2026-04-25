@@ -5,6 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -13,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.fileio import save_pickle
+from pyvista.core.utilities.writer import BaseWriter
 
 
 def test_eq_wrong_type(sphere):
@@ -108,6 +110,43 @@ def test_unstructured_grid_eq(hexbeam):
     hexbeam.cell_connectivity[0] += 1
     assert hexbeam != copy
 
+    # test changing polyfaces is detected
+    poly = examples.cells.Polyhedron()
+    poly_copy = poly.copy()
+    assert poly == poly_copy
+
+    # we need to modify the face connectivity in-situ
+    if pv.vtk_version_info < (9, 4):
+        poly_faces = poly.GetFaces()
+    else:
+        poly_faces = poly_copy.GetPolyhedronFaces().GetConnectivityArray()
+    pv.convert_array(poly_faces)[2] += 1
+    assert poly != poly_copy
+
+    # sanity check: ensure that modifying polyfaces doesn't change the
+    # underlying cell connectivity
+    assert np.allclose(poly.cell_connectivity, poly_copy.cell_connectivity)
+
+
+def test_eq_nan_points():
+    poly = pv.PolyData([np.nan, np.nan, np.nan])
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_nan_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = [np.nan]
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_string_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = ['abc']
+    poly2 = poly.copy()
+    assert poly == poly2
+
 
 def test_metadata_save(hexbeam, tmpdir):
     """Test if complex and bool metadata is saved and restored."""
@@ -151,9 +190,11 @@ def test_save_nested_multiblock_field_data(tmp_path, file_ext):
 
     # Save the multiblock and expect a warning
     match = (
-        "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
+        "Nested MultiBlock at index [0] with name 'Block-00' has field data "
+        'which will not be saved.\n'
         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+        'Use `move_nested_field_data_to_root` to store the field data with the root '
+        'MultiBlock before saving.'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         root.save(tmp_path / filename)
@@ -226,31 +267,46 @@ def test_user_dict_removal(data_object, method):
     assert actual_dict == expected_dict
 
 
-@pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
+@pytest.mark.parametrize(
+    'value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None]
+)
 def test_user_dict_values(ant, value):
     ant.user_dict['key'] = value
     with pytest.raises(TypeError, match='not JSON serializable'):
         ant.user_dict['key'] = np.array(value)
 
-    retrieved_value = json.loads(repr(ant.user_dict))['key']
+    retrieved_value = json.loads(str(ant.user_dict))['key']
 
     # Round brackets '()' are saved as square brackets '[]' in JSON
     expected_value = list(value) if isinstance(value, tuple) else value
     assert retrieved_value == expected_value
 
 
+def test_user_dict_repr(ant):
+    ant.user_dict['foo'] = 'bar'
+    user_dict = ant.user_dict
+    assert repr(user_dict) == str(user_dict)
+
+
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
+    [
+        (pv.MultiBlock([examples.load_ant()]), '.vtm'),
+        (examples.load_ant(), '.vtp'),
+        (examples.load_ant(), '.vtkhdf'),
+    ],
 )
 def test_user_dict_write_read(tmp_path, data_object, ext):
+    if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
+        return  # can't use VTKHDF on VTK<9.4.0
+
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
     data_object.user_dict = dict_data
 
-    dict_field_repr = repr(data_object.user_dict)
+    dict_field_str = str(data_object.user_dict)
     field_data_repr = repr(data_object.field_data)
-    assert dict_field_repr in field_data_repr
+    assert dict_field_str in field_data_repr
 
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
@@ -259,9 +315,9 @@ def test_user_dict_write_read(tmp_path, data_object, ext):
 
     assert data_object_read.user_dict == dict_data
 
-    dict_field_repr = repr(data_object.user_dict)
+    dict_field_str = str(data_object.user_dict)
     field_data_repr = repr(data_object.field_data)
-    assert dict_field_repr in field_data_repr
+    assert dict_field_str in field_data_repr
 
 
 def test_user_dict_persists_with_merge_filter():
@@ -272,7 +328,7 @@ def test_user_dict_persists_with_merge_filter():
     sphere2.user_dict['name'] = 'sphere2'
 
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == 'sphere2'
+    assert merged.user_dict['name'] == 'sphere1'
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):
@@ -362,7 +418,7 @@ def test_pickle_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets):
+    for r, dataset in zip(res, datasets, strict=True):
         assert r == dataset.n_points
 
 
@@ -375,7 +431,10 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     multiblock = multiblock_all_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
-        match = "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\nUse `pyvista.PICKLE_FORMAT='vtk'`."
+        match = (
+            "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\n"
+            "Use `pyvista.PICKLE_FORMAT='vtk'`."
+        )
         with pytest.raises(TypeError, match=match):
             pickle.dumps(multiblock)
     else:
@@ -424,10 +483,20 @@ def test_pickle_invalid_format(sphere):
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
     match = re.escape(
-        'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+        'PolyData writers are not specified, this should be a '
+        'dict of (file extension: vtkWriter type)'
     )
     with pytest.raises(NotImplementedError, match=match):
         pv.Sphere().save('foo.vtp')
+
+
+def test_save_compression(sphere, tmp_path):
+    path = tmp_path / 'tmp.vtp'
+    sphere.save(path, compression='zlib')
+    compressed_size = path.stat().st_size
+    sphere.save(path, compression=None)
+    uncompressed_size = path.stat().st_size
+    assert compressed_size < (uncompressed_size / 4)
 
 
 def test_is_empty(ant):
@@ -440,7 +509,47 @@ def test_is_empty(ant):
     assert pv.Table().is_empty
     assert not pv.Table(dict(a=np.array([0]))).is_empty
 
-    class SubClass(pv.DataObject): ...
 
-    with pytest.raises(NotImplementedError):
-        _ = SubClass().is_empty
+def test_cast_to_multiblock(multiblock_all):
+    partitioned = pv.PartitionedDataSet()
+    multiblock = pv.MultiBlock()
+    pointset = pv.PointSet()
+
+    for block in [*multiblock_all, partitioned, multiblock, pointset]:
+        multi = block.cast_to_multiblock()
+        assert isinstance(multi, pv.MultiBlock)
+
+
+def test_set_center(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    for mesh in [multi, *multi.recursive_iterator(skip_none=True)]:
+        original_length = mesh.length
+        new_center = (1.0, 2.0, 3.0)
+        mesh.center = new_center
+        actual_center = mesh.center
+        assert np.allclose(actual_center, new_center), type(mesh)
+        actual_length = mesh.length
+        assert np.isclose(actual_length, original_length)
+
+
+def test_raise_error_when_output_directory_is_missing(tmp_path):
+    cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
+
+    non_existent_dir = tmp_path / 'not_existing_directory'
+    with pytest.raises(FileNotFoundError):
+        cylinder.save(non_existent_dir / 'cylinder.vtk')
+
+    with pytest.raises(FileNotFoundError):
+        cylinder.cast_to_unstructured_grid().save(non_existent_dir / 'cylinder.vtu')
+
+
+def test_raise_error_when_writing_is_failed(tmp_path):
+    cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
+
+    with mock.patch.object(
+        BaseWriter,
+        'write',
+        return_value=None,
+    ):
+        with pytest.raises(OSError, match='VTK writer failed to write file'):
+            cylinder.save(tmp_path / 'cylinder.vtk')

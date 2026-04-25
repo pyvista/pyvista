@@ -24,7 +24,7 @@ def test_render_passes_init():
 
 
 def test_blur_pass():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     assert not passes._blur_passes
     blur_pass = passes.add_blur_pass()
     assert isinstance(blur_pass, _vtk.vtkGaussianBlurPass)
@@ -40,7 +40,7 @@ def test_blur_pass():
 
 
 def test_ssaa_pass():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     assert not passes._passes
     ssaa_pass = passes.enable_ssaa_pass()
     assert isinstance(ssaa_pass, _vtk.vtkSSAAPass)
@@ -59,7 +59,7 @@ def test_ssaa_pass():
 
 
 def test_depth_of_field_pass():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     assert not passes._passes
     ren_pass = passes.enable_depth_of_field_pass()
     assert isinstance(ren_pass, _vtk.vtkDepthOfFieldPass)
@@ -78,21 +78,21 @@ def test_depth_of_field_pass():
 
 
 def test_depth_of_field_raise_no_ssao():
-    ren, passes = make_passes()
-    passes.enable_ssao_pass(0.5, 0.005, 16, False)
+    _ren, passes = make_passes()
+    passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
     with pytest.raises(RuntimeError, match='Depth of field pass is incompatible'):
         passes.enable_depth_of_field_pass()
 
 
 def test_ssao_raise_no_depth_of_field():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     passes.enable_depth_of_field_pass()
     with pytest.raises(RuntimeError, match='SSAO pass is incompatible'):
-        passes.enable_ssao_pass(0.5, 0.005, 16, False)
+        passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
 
 
 def test_shadow_pass():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     ren_pass = passes.enable_shadow_pass()
     assert isinstance(ren_pass, _vtk.vtkShadowMapPass)
 
@@ -103,7 +103,7 @@ def test_shadow_pass():
 
 
 def test_edl_pass():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     assert not passes._passes
     ren_pass = passes.enable_edl_pass()
     assert isinstance(ren_pass, _vtk.vtkEDLShading)
@@ -122,15 +122,15 @@ def test_edl_pass():
 
 
 def test_ssao_pass():
-    ren, passes = make_passes()
+    _ren, passes = make_passes()
     assert not passes._passes
 
-    ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
+    ren_pass = passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
     assert isinstance(ren_pass, _vtk.vtkSSAOPass)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     # enabling again should just not add the pass again
-    ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
+    ren_pass = passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     passes.disable_ssao_pass()

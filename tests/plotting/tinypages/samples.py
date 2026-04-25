@@ -11,7 +11,7 @@ def make_sphere():
 
     Examples
     --------
-    >>> import pyvista  # must import pyvista for the plotting directive to work
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
     >>> from samples import make_sphere
     >>> sphere = make_sphere()
     >>> sphere.plot()
@@ -30,7 +30,7 @@ def make_sphere_second():
     .. pyvista-plot::
       :include-source: False
 
-      >>> import pyvista  # must import pyvista for the plotting directive to work
+      >>> import pyvista as pv  # must import pyvista for the plotting directive to work
       >>> from samples import make_sphere
       >>> sphere = make_sphere()
       >>> sphere.plot()
@@ -47,8 +47,8 @@ def example_with_empty_plotter():
 
     Examples
     --------
-    >>> import pyvista
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
 
     """
     return
@@ -62,8 +62,8 @@ def example_with_closed_plotter():
 
     Examples
     --------
-    >>> import pyvista
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
     >>> pl.close()
 
     """

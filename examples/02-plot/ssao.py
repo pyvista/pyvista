@@ -20,8 +20,6 @@ See `Kitware: Screen-Space Ambient Occlusion
 
 # sphinx_gallery_start_ignore
 # the different options of ssao are more clear in static images
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -46,8 +44,8 @@ pl.show()
 # %%
 # Plot with SSAO
 # ~~~~~~~~~~~~~~
-# Now plot this with SSAO using :func:`~pyvista.Plotter.enable_ssao`. Note how adjacent cubes affect the lighting of each
-# other to make it look less artificial.
+# Now plot this with SSAO using :func:`~pyvista.Plotter.enable_ssao`. Note how adjacent
+# cubes affect the lighting of each other to make it look less artificial.
 #
 # With a low ``kernel_size``, the image will be rendered quickly at the expense
 # of quality.

@@ -61,7 +61,7 @@ actor = pl.add_mesh(contour, cmap='viridis', clim=data_range)
 
 
 @state.change('contour_value')
-def update_contour(contour_value, **kwargs):
+def update_contour(contour_value, **kwargs):  # noqa: ARG001
     contour.SetValue(0, contour_value)
     ctrl.view_update_image()
 

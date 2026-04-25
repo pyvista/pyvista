@@ -4,7 +4,6 @@ from collections import Counter
 from pathlib import Path
 import re
 from typing import NamedTuple
-from typing import Optional
 
 import pytest
 
@@ -19,7 +18,7 @@ class _TestCaseTuple(NamedTuple):
     file_path: str
     has_crossref_to_api: bool
     has_crossref_from_api: bool
-    anchor: Optional[str]
+    anchor: str | None
 
 
 def find_files_with_extension(root_dir: str, ext: str) -> list[str]:
@@ -93,10 +92,13 @@ TEST_CASE_IDS = [case.test_id for case in TEST_CASES]
 def test_example_has_cross_reference_to_api(test_case):
     if not test_case.has_crossref_to_api:
         msg = (
-            "Example must include at least one cross-reference to PyVista's core or plotting API.\n "
-            'E.g. if the example shows how to use `my_function`, then include a reference to `my_function`.\n'
+            "Example must include at least one cross-reference to PyVista's core or "
+            'plotting API.\n '
+            'E.g. if the example shows how to use `my_function`, then include a reference to '
+            '`my_function`.\n'
             'E.g. use :class:`~pyvista.Plotter` to reference the `Plotter` class.\n'
-            'E.g. use :meth:`~pyvista.DataSetFilters.transform` to reference the `transform` filter.\n'
+            'E.g. use :meth:`~pyvista.DataSetFilters.transform` to reference the '
+            '`transform` filter.\n'
         )
         pytest.fail(msg)
 
@@ -108,8 +110,10 @@ def test_example_has_cross_reference_from_api(test_case):
 
     if not test_case.has_crossref_from_api:
         msg = (
-            "Example must include at least one cross-reference from PyVista's core or plotting API.\n "
-            'E.g. if the example shows how to use `my_function` with dataset `download_some_dataset`\n'
+            "Example must include at least one cross-reference from PyVista's core or "
+            'plotting API.\n'
+            'E.g. if the example shows how to use `my_function` with dataset '
+            '`download_some_dataset`\n'
             f'then consider including a reference:\n'
             f'    :ref:`{test_case.anchor}`\n'
             f'in the docstring of `my_function` and/or `download_some_dataset`.'

@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -18,6 +18,11 @@ try:
     import pandas as pd
 except ImportError:
     pd = None
+
+try:
+    import pyarrow as pa
+except ImportError:
+    pa = None
 
 
 def test_table_init(tmpdir):
@@ -73,7 +78,7 @@ def test_table_init(tmpdir):
     h = '\t'.join([f'a{i}' for i in range(nc)])
     np.savetxt(filename, arrays, delimiter='\t', header=h, comments='')
 
-    reader = vtk.vtkDelimitedTextReader()
+    reader = _vtk.vtkDelimitedTextReader()
     reader.SetFileName(filename)
     reader.DetectNumericColumnsOn()
     reader.SetFieldDelimiterCharacters('\t')
@@ -82,16 +87,16 @@ def test_table_init(tmpdir):
 
     # Test init
     table = pv.Table(reader.GetOutput(), deep=True)
-    assert isinstance(table, vtk.vtkTable)
+    assert isinstance(table, _vtk.vtkTable)
     assert isinstance(table, pv.Table)
 
     table = pv.Table(reader.GetOutput(), deep=False)
-    assert isinstance(table, vtk.vtkTable)
+    assert isinstance(table, _vtk.vtkTable)
     assert isinstance(table, pv.Table)
 
     # Test wrap
     table = pv.wrap(reader.GetOutput())
-    assert isinstance(table, vtk.vtkTable)
+    assert isinstance(table, _vtk.vtkTable)
     assert isinstance(table, pv.Table)
 
     assert table.n_rows == nr
@@ -227,6 +232,60 @@ def test_from_dict_raises(mocker: MockerFixture):
     m = mocker.MagicMock()
     m.ndim = 1
     with pytest.raises(
-        ValueError, match='Dictionary must contain only NumPy arrays with maximum of 2D.'
+        ValueError, match=r'Dictionary must contain only NumPy arrays with maximum of 2D.'
     ):
         pv.Table(dict(a=m))
+
+
+@pytest.mark.skipif(pa is None, reason='Requires pyarrow')
+def test_table_to_arrow():
+    table = pv.Table({'a': np.arange(5, dtype=np.int64), 'b': np.linspace(0, 1, 5)})
+    arrow_table = table.to_arrow()
+    assert isinstance(arrow_table, pa.Table)
+    assert arrow_table.num_rows == 5
+    assert arrow_table.schema.names == ['a', 'b']
+    assert arrow_table.column('a').type == pa.int64()
+    assert np.array_equal(arrow_table.column('a').to_numpy(), np.arange(5))
+
+
+@pytest.mark.skipif(pa is None, reason='Requires pyarrow')
+def test_table_arrow_c_stream_round_trip():
+    table = pv.Table({'a': np.arange(5, dtype=np.int64), 'b': np.linspace(0, 1, 5)})
+    consumed = pa.table(table)
+    assert consumed.equals(table.to_arrow())
+
+
+@pytest.mark.skipif(pa is None, reason='Requires pyarrow')
+def test_table_arrow_c_stream_returns_pycapsule():
+    table = pv.Table({'a': np.arange(3, dtype=np.int32)})
+    capsule = table.__arrow_c_stream__()
+    assert type(capsule).__name__ == 'PyCapsule'
+
+
+@pytest.mark.skipif(pa is None, reason='Requires pyarrow')
+def test_table_to_arrow_empty():
+    table = pv.Table()
+    arrow_table = table.to_arrow()
+    assert arrow_table.num_rows == 0
+    assert arrow_table.num_columns == 0
+
+
+@pytest.mark.skipif(pa is None, reason='Requires pyarrow')
+@pytest.mark.parametrize(
+    'dtype',
+    [np.int32, np.int64, np.uint8, np.float32, np.float64],
+)
+def test_table_to_arrow_preserves_dtype(dtype):
+    expected = np.arange(5, dtype=dtype)
+    table = pv.Table({'col': expected})
+    arrow_table = table.to_arrow()
+    assert arrow_table.column('col').type == pa.from_numpy_dtype(dtype)
+    assert np.array_equal(arrow_table.column('col').to_numpy(), expected)
+
+
+@pytest.mark.skipif(pa is None, reason='Requires pyarrow')
+@pytest.mark.skipif(pd is None, reason='Requires pandas')
+def test_table_to_arrow_matches_to_pandas():
+    arrays = np.random.default_rng(seed=0).random((10, 3))
+    table = pv.Table(arrays)
+    pd.testing.assert_frame_equal(table.to_arrow().to_pandas(), table.to_pandas())

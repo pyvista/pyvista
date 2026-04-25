@@ -1,0 +1,100 @@
+# Validate that the developer convenience targets in the top-level Makefile
+# stay in sync with the underlying tools (uv, pre-commit, tox, pytest).
+# Each target is exercised in dry-run mode so this workflow is cheap and
+# catches drift without duplicating the full test / lint / type-check CI.
+name: Validate Makefile
+
+on:
+  pull_request:
+    paths:
+      - "Makefile"
+      - "pyproject.toml"
+      - "tox.ini"
+      - "toxfile.py"
+      - ".github/workflows/validate-makefile.yml"
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: none
+env:
+  TOX_COLORED: "yes"
+jobs:
+  validate:
+    name: Dry-run make targets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          enable-cache: true
+
+      # `make test ARGS="--collect-only"` below imports the plotting test
+      # modules, which instantiate a Plotter at import time to probe for
+      # OpenGL backends. Without a headless display those imports segfault,
+      # so set one up before the tox envs run.
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+
+      # `make sync-deps` is not a "dry-run" — we need the dev group installed
+      # so the subsequent `uv run` invocations resolve without re-bootstrapping.
+      # Running it here also exercises the target itself.
+      - name: make sync-deps
+        run: make sync-deps
+
+      # `make -n` prints the recipe without executing it, which is enough to
+      # catch typos or variable issues in the Makefile target. pre-commit
+      # itself has no dry-run flag and running it for real duplicates the
+      # pre-commit.ci check, so we settle for verifying the recipe parses
+      # and that the underlying tool is importable.
+      - name: make lint (dry-run)
+        run: |
+          make -n lint
+          uv run pre-commit --version
+
+      - name: make typecheck (tox --notest)
+        run: make typecheck ARGS="--notest"
+
+      # `tox -e test -- --collect-only` forwards `--collect-only` to pytest,
+      # validating the tox env, the Makefile target, and the pytest CLI in
+      # one go. `test-core`, `test-plotting`, `doctest`, `docs`, `docs-test`,
+      # and `integration` use the same `tox -e <env> -- $(ARGS)` pattern, so
+      # `make -n` is enough to catch recipe drift without rebuilding each
+      # tox env.
+      - name: make test (pytest --collect-only)
+        run: make test ARGS="--collect-only -q"
+
+      - name: Print recipes for remaining targets
+        run: |
+          make -n test-core
+          make -n test-plotting
+          make -n doctest
+          make -n docs
+          make -n docs-test
+          make -n integration PROJECT=trame
+
+      # Confirm every tox env referenced by the Makefile exists in tox.ini.
+      - name: Check tox env names
+        run: |
+          uv run tox list | tee tox-envs.txt
+          for env in test test-core test-plotting mypy docs-build docs-test \
+                     integration-trame integration-geovista integration-mne \
+                     integration-pyvistaqt doctest-modules doctest-local; do
+            grep -q "^${env}\b" tox-envs.txt || {
+              echo "ERROR: tox env '${env}' referenced by Makefile not found in tox.ini"
+              exit 1
+            }
+          done

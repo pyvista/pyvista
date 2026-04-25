@@ -8,6 +8,12 @@ from pyvista.examples.downloads import download_file
 def download_teapot():  # pragma: no cover
     """Download the a 2-manifold solid version of the famous teapot example.
 
+    The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
+    originally modeled by Martin Newell at the University of Utah in
+    1975. No formal license has ever been issued for the original Newell
+    dataset; the model has been freely distributed in computer graphics
+    software for 50 years and is conventionally treated as public domain.
+
     Returns
     -------
     str
@@ -64,11 +70,11 @@ def download_grasshopper():  # pragma: no cover
     >>> vrml_file = examples.vrml.download_grasshopper()
     >>> pl = pv.Plotter()
     >>> pl.import_vrml(vrml_file)
-    >>> pl.camera_position = [
-    ...     (25.0, 32.0, 44.0),
-    ...     (0.0, 0.931, -6.68),
-    ...     (-0.20, 0.90, -0.44),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(25.0, 32.0, 44.0),
+    ...     focal_point=(0.0, 0.931, -6.68),
+    ...     viewup=(-0.20, 0.90, -0.44),
+    ... )
     >>> pl.show()
 
     """

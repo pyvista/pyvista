@@ -85,4 +85,18 @@ Highlights of the API include:
       >>> mesh
 
 
+.. card:: Examples & Datasets
+   :link: examples_api
+   :link-type: ref
+   :class-title: pyvista-card-title
+
+   Browse PyVista's built-in and downloadable example datasets, including
+   the interactive dataset gallery with 200+ datasets.
+
+   .. jupyter-execute::
+
+      >>> from pyvista import examples
+      >>> examples.download_bunny()
+
+
 .. _matplotlib: https://matplotlib.org/

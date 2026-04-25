@@ -7,10 +7,10 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.geometric_objects import translate
 
 
@@ -54,14 +54,6 @@ def test_cone_source():
     assert algo.radius == 0.0
 
 
-def test_text_3d_raises():
-    match = re.escape(
-        f'Attribute "foo" does not exist and cannot be added to type {pv.Text3DSource.__name__}'
-    )
-    with pytest.raises(AttributeError, match=match):
-        pv.Text3DSource().foo = 1
-
-
 @given(bounds=lists(integers()).filter(lambda x: len(x) != 6))
 def test_box_source_bounds_raises(bounds):
     b = pv.BoxSource()
@@ -103,7 +95,7 @@ def test_multiple_lines_source():
     assert np.array_equal(algo.points, points)
     with pytest.raises(ValueError, match='Array of points must have three values per point'):
         algo.points = points[:, :1]
-    with pytest.raises(ValueError, match='>=2 points need to define multiple lines.'):
+    with pytest.raises(ValueError, match=r'>=2 points need to define multiple lines.'):
         algo.points = points[0, :]
 
 
@@ -169,7 +161,7 @@ def test_text3d_source_empty_string():
     if pv.vtk_version_info == (9, 0, 3):
         mx, mn = 1, -1
     else:
-        mx, mn = vtk.VTK_DOUBLE_MAX, vtk.VTK_DOUBLE_MIN
+        mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
 
     assert out.bounds == (mx, mn, mx, mn, mx, mn)
 
@@ -197,12 +189,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         normal=normal,
     )
     out = src.output
-    bnds = out.bounds
-    actual_width, actual_height, actual_depth = (
-        bnds.x_max - bnds.x_min,
-        bnds.y_max - bnds.y_min,
-        bnds.z_max - bnds.z_min,
-    )
+    actual_width, actual_height, actual_depth = out.bounds_size
 
     # Compute expected values
     empty_string = string.isspace()
@@ -218,8 +205,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         # For width and height, create an unscaled version for reference
         src_not_scaled = pv.Text3DSource(string=string, center=center)
         out_not_scaled = src_not_scaled.output
-        bnds = out_not_scaled.bounds
-        unscaled_width, unscaled_height = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min
+        unscaled_width, unscaled_height, _ = out_not_scaled.bounds_size
         if width is None and height is not None:
             expected_width = unscaled_width * actual_height / unscaled_height
         elif width is not None and height is None:
@@ -359,10 +345,9 @@ def test_disc_source():
     assert algo.outer == 0.5
     assert algo.r_res == 1
     assert algo.c_res == 6
-    if pv.vtk_version_info >= (9, 2):
-        center = (1.0, 2.0, 3.0)
-        algo = pv.DiscSource(center=center)
-        assert algo.center == center
+    center = (1.0, 2.0, 3.0)
+    algo = pv.DiscSource(center=center)
+    assert algo.center == center
 
 
 def test_cube_source():
@@ -390,9 +375,8 @@ def test_sphere_source():
     assert algo.start_phi == 0.0
     assert algo.end_phi == 180.0
     center = (1.0, 2.0, 3.0)
-    if pv.vtk_version_info >= (9, 2):
-        algo = pv.SphereSource(center=center)
-        assert algo.center == center
+    algo = pv.SphereSource(center=center)
+    assert algo.center == center
 
 
 def test_line_source():
@@ -614,14 +598,16 @@ def test_axes_geometry_source_tip_length_init():
 
 
 def test_axes_geometry_source_tip_radius_set_get(axes_geometry_source):
-    assert axes_geometry_source.tip_radius == 0.1
+    assert axes_geometry_source.tip_radius == (0.1, 0.1, 0.1)
     axes_geometry_source.tip_radius = 0.8
-    assert axes_geometry_source.tip_radius == 0.8
+    assert axes_geometry_source.tip_radius == (0.8, 0.8, 0.8)
+    axes_geometry_source.tip_radius = [0.1, 0.2, 0.3]
+    assert axes_geometry_source.tip_radius == (0.1, 0.2, 0.3)
 
 
 def test_axes_geometry_source_tip_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(tip_radius=9)
-    assert axes_geometry_source.tip_radius == 9
+    assert axes_geometry_source.tip_radius == (9, 9, 9)
 
 
 @pytest.mark.parametrize(
@@ -640,11 +626,22 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.tip_type = pv.ParametricKlein()
     assert axes_geometry_source.tip_type == 'custom'
 
-    match = 'Custom axes part must be 3D. Got bounds: BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=0.0, z_max=0.0).'
+    match = (
+        'Custom axes part must be 3D. Got bounds:\n'
+        'BoundsTuple(x_min = -0.5,\n'
+        '            x_max =  0.5,\n'
+        '            y_min = -0.5,\n'
+        '            y_max =  0.5,\n'
+        '            z_min =  0.0,\n'
+        '            z_max =  0.0).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 
-    match = "Geometry 'foo' is not valid. Geometry must be one of: \n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    match = (
+        "Geometry 'foo' is not valid. Geometry must be one of: "
+        "\n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = 'foo'
 
@@ -681,14 +678,16 @@ def test_axes_geometry_source_tip_type_init(tip_type):
 
 
 def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
-    assert axes_geometry_source.shaft_radius == 0.025
+    assert axes_geometry_source.shaft_radius == (0.025, 0.025, 0.025)
     axes_geometry_source.shaft_radius = 0.1
-    assert axes_geometry_source.shaft_radius == 0.1
+    assert axes_geometry_source.shaft_radius == (0.1, 0.1, 0.1)
+    axes_geometry_source.shaft_radius = [0.1, 0.2, 0.3]
+    assert axes_geometry_source.shaft_radius == (0.1, 0.2, 0.3)
 
 
 def test_axes_geometry_source_shaft_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(shaft_radius=3)
-    assert axes_geometry_source.shaft_radius == 3
+    assert axes_geometry_source.shaft_radius == (3, 3, 3)
 
 
 def test_axes_geometry_source_update_output(axes_geometry_source):
@@ -720,10 +719,10 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        '  Shaft radius:               0.025',
+        '  Shaft radius:               (0.025, 0.025, 0.025)',
         '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        '  Tip radius:                 0.1',
+        '  Tip radius:                 (0.1, 0.1, 0.1)',
         '  Tip length:                 (0.2, 0.2, 0.2)',
         '  Symmetric:                  False',
         '  Symmetric bounds:           False',
@@ -764,7 +763,10 @@ def test_orthogonal_planes_source_names():
     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
     assert planes_source.names == ('a', 'b', 'c')
 
-    match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
+    match = (
+        "names must be an instance of any type (<class 'tuple'>, <class 'list'>). "
+        "Got <class 'str'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.names = 'abc'
 

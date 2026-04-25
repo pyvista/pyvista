@@ -1,19 +1,23 @@
-"""Wrapper for vtkVolumeProperty."""
+"""Wrapper for :vtk:`vtkVolumeProperty`."""
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING
 import weakref
 
-import pyvista
-from pyvista.core.utilities.misc import no_new_attr
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
+if TYPE_CHECKING:
+    from pyvista import LookupTable
 
-@no_new_attr
-class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
-    """Wrap the VTK class vtkVolumeProperty.
+
+class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
+    """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume
     rendering. This includes properties for determining the type of
@@ -70,7 +74,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     >>> import pyvista as pv
     >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
     >>> grid = pv.sample_function(
-    ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+    ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
     ... )
     >>> pl = pv.Plotter()
     >>> actor = pl.add_volume(grid, show_scalar_bar=False)
@@ -81,9 +85,8 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_lookup_table_', '_lookup_table_observer_id']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         lookup_table=None,
         interpolation_type=None,
@@ -94,7 +97,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         shade=None,
         opacity_unit_distance=None,
     ):
-        """Initialize the vtkVolumeProperty class."""
+        """Initialize the :vtk:`vtkVolumeProperty` class."""
         super().__init__()
         self._lookup_table_ = None
         self._lookup_table_observer_id = None
@@ -116,14 +119,14 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
             self.opacity_unit_distance = opacity_unit_distance
 
     @property
-    def _lookup_table(self) -> pyvista.LookupTable | None:
+    def _lookup_table(self) -> LookupTable | None:
         """Get the lookup table if applied via apply_lookup_table."""
         if self._lookup_table_ is not None:
             return self._lookup_table_()
         return None
 
     @_lookup_table.setter
-    def _lookup_table(self, lookup_table: pyvista.LookupTable):
+    def _lookup_table(self, lookup_table: LookupTable):
         """Set the lookup table if applied via apply_lookup_table."""
         if self._lookup_table is not None and self._lookup_table_observer_id is not None:
             # Clean up the old lookup table observer
@@ -151,7 +154,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         if self._lookup_table is not None:
             self.apply_lookup_table(self._lookup_table)
 
-    def apply_lookup_table(self, lookup_table: pyvista.LookupTable):
+    def apply_lookup_table(self, lookup_table: LookupTable):
         """Apply a lookup table to the volume property.
 
         Applies both the color and opacity of the lookup table as transfer
@@ -169,7 +172,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
         >>> grid = pv.sample_function(
-        ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+        ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
         ... )
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(grid, show_scalar_bar=False)
@@ -179,8 +182,8 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         >>> pl.show()
 
         """
-        if not isinstance(lookup_table, pyvista.LookupTable):
-            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
+        if not isinstance(lookup_table, pv.LookupTable):
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'
             raise TypeError(msg)
         if self._lookup_table != lookup_table:
             self._lookup_table = lookup_table

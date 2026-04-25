@@ -16,7 +16,7 @@ Denotes the first release candidate.
 # major, minor, patch
 from __future__ import annotations
 
-version_info = 0, 46, 'dev0'
+version_info = 0, 48, 'dev0'
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))

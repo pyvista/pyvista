@@ -8,20 +8,24 @@ Display vertices on a mesh in the same fashion as edge visibility.
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
 mesh = examples.download_bunny_coarse()
 
-cpos = [(0.036, 0.367, 0.884), (0.024, 0.033, -0.022), (-0.303, 0.895, -0.325)]
+cpos = pv.CameraPosition(
+    position=(0.036, 0.367, 0.884),
+    focal_point=(0.024, 0.033, -0.022),
+    viewup=(-0.303, 0.895, -0.325),
+)
 
 # %%
 # We can easily display all vertices of a mesh with a ``points`` style
 # representation when plotting:
 pl = pv.Plotter()
-pl.add_mesh(mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10)
+pl.add_mesh(
+    mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10
+)
 pl.show(cpos=cpos)
 
 
@@ -59,7 +63,7 @@ pl.show(cpos=cpos)
 #
 # The first step is to extract the outer surface geometry of the mesh then
 # grab all the points of that extraction.
-surf_points = mesh.extract_surface().points
+surf_points = mesh.extract_surface(algorithm=None).points
 
 
 # %%

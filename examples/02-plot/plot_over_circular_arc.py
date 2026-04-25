@@ -10,8 +10,6 @@ using :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -38,18 +36,27 @@ angle = 90.0
 
 # Preview how this circular arc intersects this mesh
 # with :func:`~pyvista.CircularArcFromNormal`.
-arc = pv.CircularArcFromNormal(center, 100, normal, polar, angle)
+arc = pv.CircularArcFromNormal(
+    center=center, resolution=100, normal=normal, polar=polar, angle=angle
+)
 
-p = pv.Plotter()
-p.add_mesh(mesh, style='wireframe', color='w')
-p.add_mesh(arc, color='b')
+pl = pv.Plotter()
+pl.add_mesh(mesh, style='wireframe', color='w')
+pl.add_mesh(arc, color='b')
 a = arc.points[0]
 b = arc.points[-1]
-p.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
-p.show()
+pl.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
+pl.show()
 
 # %%
 # Run the filter and produce a line plot.
-mesh.plot_over_circular_arc_normal(center, 100, normal, polar, angle, 'height')
+mesh.plot_over_circular_arc_normal(
+    center=center,
+    resolution=100,
+    normal=normal,
+    polar=polar,
+    angle=angle,
+    scalars='height',
+)
 # %%
 # .. tags:: plot

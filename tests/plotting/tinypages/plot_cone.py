@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 
-pyvista.Cone().plot()
+pv.Cone().plot()

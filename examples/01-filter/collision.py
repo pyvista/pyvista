@@ -5,17 +5,15 @@ Collision
 ~~~~~~~~~
 Perform a collision detection between two meshes.
 
-This example use the :class:`collision <pyvista.PolyDataFilters.collision>`
+This example use the :meth:`~pyvista.PolyDataFilters.collision`
 filter to detect the faces from one sphere colliding with another
 sphere.
 
 .. note::
-   Due to the nature of the `vtk.vtkCollisionDetectionFilter
-   <https://vtk.org/doc/nightly/html/classvtkCollisionDetectionFilter.html>`_,
+   Due to the nature of the :vtk:`vtkCollisionDetectionFilter`,
    repeated uses of this method will be slower that using the
-   ``vtk.vtkCollisionDetectionFilter`` directly.  The first
-   update of the filter creates two instances of `vtkOBBTree
-   <https://vtk.org/doc/nightly/html/classvtkOBBTree.html>`_,
+   :vtk:`vtkCollisionDetectionFilter` directly.  The first
+   update of the filter creates two instances of :vtk:`vtkOBBTree`,
    which can be subsequently updated by modifying the transform or
    matrix of the input meshes.
 
@@ -28,10 +26,7 @@ sphere.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 pv.set_plot_theme('document')
@@ -64,7 +59,7 @@ pl.open_gif('collision_movie.gif')
 # alternatively, to disable movie generation:
 # pl.show(auto_close=False, interactive=False)
 
-delta_x = 0.05
+delta_x = 0.1
 for _ in range(int(2 / delta_x)):
     sphere1.translate([delta_x, 0, 0], inplace=True)
     col, n_contacts = sphere0.collision(sphere1)

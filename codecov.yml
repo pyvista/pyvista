@@ -1,6 +1,4 @@
-comment:
-  layout: "diff"
-  behavior: default
+comment: false
 
 coverage:
   status:

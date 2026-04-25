@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-import pyvista
+import pyvista as pv
 
 pytest_plugins = 'pytester'
 
@@ -51,7 +51,7 @@ def test_skip_plotting_mark(
     def test_no_plotting():
         ...
     """
-    mock: MagicMock = mocker.patch.object(pyvista.plotting, 'system_supports_plotting')
+    mock: MagicMock = mocker.patch.object(pv.plotting, 'system_supports_plotting')
     mock.return_value = support_plotting
 
     p = pytester.makepyfile(tests)

@@ -18,6 +18,7 @@ from collections.abc import Sequence
 from collections.abc import Sized
 from numbers import Number
 import reprlib
+import types
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
@@ -38,14 +39,14 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core._array_like import _NumberType
 
 
-_Shape = Union[tuple[()], tuple[int, ...]]
-_ShapeLike = Union[int, _Shape]
+_Shape = tuple[()] | tuple[int, ...]
+_ShapeLike = int | _Shape
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
+    input_obj: npt.DTypeLike | _ArrayLikeOrScalar[NumberType],
     /,
-    base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
+    base_dtype: npt.DTypeLike | tuple[npt.DTypeLike, ...] | list[npt.DTypeLike],
     *,
     name: str = 'Input',
 ) -> None:
@@ -102,7 +103,7 @@ def check_subdtype(
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
 
-    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):  # type: ignore[arg-type]
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
         if len(base_dtype) == 1:
@@ -253,13 +254,13 @@ def check_sorted(
     second_item = array[tuple(second_slice)]
 
     if ascending and not strict:
-        is_sorted = np.all(first_item <= second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item <= second_item)
     elif ascending and strict:
-        is_sorted = np.all(first_item < second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item < second_item)
     elif not ascending and not strict:
-        is_sorted = np.all(first_item >= second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item >= second_item)
     else:  # not ascending and strict
-        is_sorted = np.all(first_item > second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item > second_item)
 
     if not is_sorted:
         # Show the array's elements in error msg if array is small
@@ -631,10 +632,10 @@ def check_shape(
     if not isinstance(shape, list):
         shape = [shape]
 
-    array_shape = np.shape(array)
+    array_shape = np.shape(array)  # type: ignore[arg-type]
     for input_shape in shape:
-        input_shape = _validate_shape_value(input_shape)
-        if _shape_is_allowed(array_shape, input_shape):
+        valid_shape = _validate_shape_value(input_shape)
+        if _shape_is_allowed(array_shape, valid_shape):
             return
 
     msg = f'{name} has shape {array_shape} which is not allowed. '
@@ -707,7 +708,8 @@ def check_ndim(
             check_integer(ndim, strict=True, name='ndim')
             expected = f'one of {ndim}'
         msg = (
-            f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
+            f'{name} has the incorrect number of dimensions. '
+            f'Got {array_ndim}, expected {expected}.'
         )
         raise ValueError(msg)
 
@@ -909,7 +911,8 @@ def check_instance(
         raise TypeError(msg)
 
     # Get class info from generics
-    if get_origin(classinfo) is Union:
+    origin = get_origin(classinfo)
+    if origin is Union or origin is types.UnionType:
         classinfo = get_args(classinfo)
 
     # Count num classes
@@ -942,7 +945,9 @@ def check_instance(
         raise TypeError(msg)
 
 
-def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object') -> None:
+def check_type(
+    obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object'
+) -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -1045,7 +1050,9 @@ def check_iterable_items(
     )
 
 
-def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
+def check_contains(
+    container: Container[Any], /, must_contain: Any, *, name: str = 'Input'
+) -> None:
     """Check if an item is in a container.
 
     Parameters
@@ -1212,7 +1219,7 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     if _is_valid_dim(shape):
         return (cast('int', shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast('_Shape', shape)
+        return shape
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error

@@ -17,11 +17,12 @@ class QApplication:
     def __init__(self, *args):
         pass
 
-    def processEvents(self):
+    def processEvents(self):  # noqa: N802
         pass
 
 
-def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
+def test_scraper_with_app(tmpdir, monkeypatch):
+    n_win = 2
     pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
@@ -32,7 +33,7 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
 
     # add cone, change view to test that it takes effect
     plotters[0].iren.initialize()
-    plotters[0].app = QApplication([])  # fake QApplication
+    pv.set_new_attribute(plotters[0], 'app', QApplication([]))  # fake QApplication
     plotters[0].add_mesh(pv.Cone())
     plotters[0].camera_position = 'xy'
 
@@ -62,7 +63,8 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
     for img_fname in img_fnames:
         assert Path(img_fname).is_file()
 
-    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
+    # test that the plot has the camera position updated with a checksum
+    # when the Plotter has an app instance
     assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
 
     for plotter in plotters:
@@ -127,7 +129,7 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
 def test_scraper_raise(tmpdir):
     pytest.importorskip('sphinx_gallery')
     pv.close_all()
-    plotter = pv.Plotter(off_screen=True)
+    pl = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = str(Path(tmpdir) / '_build' / 'html')
@@ -144,10 +146,10 @@ def test_scraper_raise(tmpdir):
     assert not Path(img_fname).is_file()
     Path(out_dir).mkdir(parents=True)
 
-    with pytest.raises(RuntimeError, match='pyvista.BUILDING_GALLERY'):
+    with pytest.raises(RuntimeError, match=r'pyvista.BUILDING_GALLERY'):
         scraper(block, block_vars, gallery_conf)
 
-    plotter.close()
+    pl.close()
 
 
 def test_namespace_contract():

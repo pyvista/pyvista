@@ -26,6 +26,7 @@ _ALL_PLOTTERS, {}
 _vtk, <module 'pyvista._vtk' from 'pyvista/_vtk.py'>
 active_scalars_algorithm, <function active_scalars_algorithm at 0x7f72f5e0a820>
 algorithm_to_mesh_handler, <function algorithm_to_mesh_handler at 0x7f72f5de6160>
+callback_algorithm, <function callback_algorithm at 0x7f72f5e0a940>
 close_all, <function close_all at 0x7f72f5c5d5e0>
 decimation_algorithm, <function decimation_algorithm at 0x7f72f5e0ac10>
 # export_plotter_vtkjs, <function export_plotter_vtkjs at 0x7f72f5c30d30>
@@ -37,9 +38,10 @@ numpy_to_texture, <function numpy_to_texture at 0x7f72f5e07280>
 opacity_transfer_function, <function opacity_transfer_function at 0x7f72f5d1f0d0>
 parse_font_family, <function parse_font_family at 0x7f72f5d1f160>
 pointset_to_polydata_algorithm, <function pointset_to_polydata_algorithm at 0x7f72f5e0a8b0>
-# prepare_smooth_shading, <function prepare_smooth_shading at 0x7f72f5bfb670>
 # process_opacity, <function process_opacity at 0x7f72f5bfb700>
 run_image_filter, <function run_image_filter at 0x7f72f5cb4670>
 set_algorithm_input, <function set_algorithm_input at 0x7f72f5e07f70>
+smooth_shading_algorithm, <function smooth_shading_algorithm at 0x7f72f5e0a960>
+source_algorithm, <function source_algorithm at 0x7f72f5e0a970>
 triangulate_algorithm, <function triangulate_algorithm at 0x7f72f5e0ab80>
 uses_egl, <function uses_egl at 0x7f72f5e02790>

@@ -6,17 +6,21 @@ __all__: list[str] = ['promote_type']
 
 import importlib.util
 from typing import TYPE_CHECKING
+from typing import TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
 
     from mypy.plugin import ClassDefContext
     from mypy.types import Instance
     from typing_extensions import Self
 
 
-def promote_type(*types: type) -> Callable[[Any], Any]:
+T = TypeVar('T', bound=type)
+
+
+def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
     """Duck-type type-promotion decorator used by the mypy plugin.
 
     Apply this decorator to a class to promote its type statically.
@@ -78,6 +82,6 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
                 return _promote_type_callback
             return None
 
-    def plugin(version: str) -> type[_PyVistaPlugin]:  # numpydoc ignore: RT01
+    def plugin(version: str) -> type[_PyVistaPlugin]:  # numpydoc ignore: RT01  # noqa: ARG001
         """Entry-point for mypy."""
         return _PyVistaPlugin

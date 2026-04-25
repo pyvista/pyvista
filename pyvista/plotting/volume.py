@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ._property import Property
     from .mapper import _BaseMapper
+    from .volume_property import VolumeProperty
 
 
 class Volume(Prop3D, _vtk.vtkVolume):
@@ -41,7 +43,12 @@ class Volume(Prop3D, _vtk.vtkVolume):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(vol)
         >>> actor.mapper.bounds
-        BoundsTuple(x_min=0.0, x_max=9.0, y_min=0.0, y_max=9.0, z_min=0.0, z_max=9.0)
+        BoundsTuple(x_min = 0.0,
+                    x_max = 9.0,
+                    y_min = 0.0,
+                    y_max = 9.0,
+                    z_min = 0.0,
+                    z_max = 9.0)
 
         """
         return self.GetMapper()  # type: ignore[return-value]
@@ -70,10 +77,11 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):
-        self.SetProperty(obj)  # type: ignore[arg-type]
+    def prop(self, obj: VolumeProperty):
+        self.SetProperty(obj)
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Create a copy of this volume.
 
         Parameters

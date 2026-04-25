@@ -1,5 +1,7 @@
-Examples
-========
+.. _examples_api:
+
+Examples & Datasets
+===================
 
 .. currentmodule:: pyvista
 
@@ -163,7 +165,7 @@ If you want to override this local cache path, set the
 
 Data Sources
 ~~~~~~~~~~~~
-PyVista uses `PyVista/vtk-data <https://github.com/pyvista/vtk-data.git>`_ as
+PyVista uses `pyvista/data <https://github.com/pyvista/data.git>`_ as
 the main source for example data. If you do not have internet access or you
 prefer using a local or network directory instead, you can override this
 source with the ``VTK_DATA_PATH`` environment variable.
@@ -175,5 +177,5 @@ directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
 
 .. code-block:: bash
 
-   git clone https://github.com/pyvista/vtk-data.git
-   export VTK_DATA_PATH=/home/alex/python/vtk-data/Data
+   git clone https://github.com/pyvista/data.git
+   export VTK_DATA_PATH=/home/alex/python/pyvista/data/Data

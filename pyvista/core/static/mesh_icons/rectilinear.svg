@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="pv-rg-top" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd040"/>
+      <stop offset="100%" stop-color="#376fa0"/>
+    </linearGradient>
+    <linearGradient id="pv-rg-left" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#376fa0"/>
+      <stop offset="100%" stop-color="#1a4a70"/>
+    </linearGradient>
+    <linearGradient id="pv-rg-right" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd040"/>
+      <stop offset="100%" stop-color="#d4442a"/>
+    </linearGradient>
+  </defs>
+  <polygon points="16,2 28,8 16,14 4,8" fill="url(#pv-rg-top)"/>
+  <polygon points="4,8 16,14 16,28 4,22" fill="url(#pv-rg-left)"/>
+  <polygon points="28,8 16,14 16,28 28,22" fill="url(#pv-rg-right)"/>
+  <g stroke="rgba(255,255,255,0.45)" stroke-width="0.4" fill="none">
+    <polygon points="16,2 28,8 16,14 4,8"/>
+    <line x1="16" y1="14" x2="16" y2="28"/>
+    <line x1="4" y1="8" x2="4" y2="22"/>
+    <line x1="28" y1="8" x2="28" y2="22"/>
+    <line x1="4" y1="22" x2="16" y2="28"/>
+    <line x1="28" y1="22" x2="16" y2="28"/>
+    <line x1="13.6" y1="3.2" x2="25.6" y2="9.2"/>
+    <line x1="7.6" y1="6.2" x2="19.6" y2="12.2"/>
+    <line x1="18.4" y1="3.2" x2="6.4" y2="9.2"/>
+    <line x1="24.4" y1="6.2" x2="12.4" y2="12.2"/>
+    <line x1="4" y1="10.8" x2="16" y2="16.8"/>
+    <line x1="4" y1="17.8" x2="16" y2="23.8"/>
+    <line x1="6.4" y1="9.2" x2="6.4" y2="23.2"/>
+    <line x1="12.4" y1="12.2" x2="12.4" y2="26.2"/>
+    <line x1="28" y1="10.8" x2="16" y2="16.8"/>
+    <line x1="28" y1="17.8" x2="16" y2="23.8"/>
+    <line x1="25.6" y1="9.2" x2="25.6" y2="23.2"/>
+    <line x1="19.6" y1="12.2" x2="19.6" y2="26.2"/>
+  </g>
+</svg>
