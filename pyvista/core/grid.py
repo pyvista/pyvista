@@ -353,6 +353,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
+            if self.GetNumberOfPoints() == 0:
+                # VTK >= 9.7 vtkStructuredPointArray returns 3 elements from
+                # __array__ for an empty grid, so vtk_to_numpy fails to reshape
+                # them into (0, 3). Short-circuit to a real empty array.
+                return np.empty((0, 3), dtype=float)
             return convert_array(self.GetPoints().GetData())
 
         xx, yy, zz = self.meshgrid
