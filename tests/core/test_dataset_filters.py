@@ -3840,6 +3840,18 @@ def test_align_xyz_cell_centers():
     assert np.array_equal(np.abs(axes), np.abs(expected_axes))
 
 
+def test_align_xyz_cell_centers_and_merge_points():
+    # Build an ellipsoid surface and duplicate every point so the raw point
+    # cloud is biased, but the cell centers are not.
+    ellipse = pv.ParametricEllipsoid(1, 2, 3)
+    duplicated = ellipse + ellipse
+
+    _, matrix = duplicated.align_xyz(cell_centers=True, merge_points=True, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(duplicated.cell_centers().merge_points().points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+
 def test_align_xyz_return_matrix():
     mesh = examples.download_oblique_cone()
     initial_bounds = mesh.bounds

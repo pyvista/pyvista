@@ -232,22 +232,25 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         cell_centers : bool, default: True
-            Use the mesh's :meth:`cell_centers` when computing the mesh's
-            :func:`~pyvista.principal_axes` for the alignment. Any points not associated
-            with cells are treated as vertex cells for this purpose. Set this to
-            ``False`` to use the mes mesh's points for the alignment.
+            Use the mesh's :meth:`cell_centers` when computing the
+            :func:`~pyvista.principal_axes`. Points not associated with cells
+            are treated as vertex cells. Set to ``False`` to use the mesh's
+            points directly.
+
+            .. versionadded:: 0.48
 
         merge_points : bool, default: False
-            Use :meth:`merge_points` to merge coincident points before computing the
-            mesh's :func:`~pyvista.principal_axes` for the alignment. Enabling this
-            option can improve the alignment since duplicate points can bias the
-            principal axes computation. By default this is ``False`` and the mesh's
-            points are used as-is without merging.
+            Merge coincident points with :meth:`merge_points` before computing
+            the :func:`~pyvista.principal_axes`. Duplicate points can bias the
+            principal axes, so enabling this can improve the alignment. By
+            default the mesh's points are used as-is.
 
             .. note::
 
-                The points are only merged for the alignment. The points of the returned
-                mesh are *not* merged.
+                Points are only merged for the alignment. The points of the
+                returned mesh are *not* merged.
+
+            .. versionadded:: 0.48
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
@@ -350,7 +353,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     labels=["X'", "Y'", "Z'"],
         ... )
 
-        Plot the original mesh with its local axes, along with the algned mesh and its
+        Plot the original mesh with its local axes, along with the aligned mesh and its
         axes.
 
         >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
