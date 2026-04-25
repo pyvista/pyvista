@@ -5427,16 +5427,26 @@ class ImageDataFilters(DataSetFilters):
         fill_value,
         replacement_value,
     ):
-        # Fast path: a single range over single-component point data is equivalent to
-        # ``image_threshold``, which is implemented as a VTK image filter and is
-        # substantially faster than the generic numpy-based path below.
+        # Fast path: a single range over single-component point data with scalar
+        # replacement/fill values is equivalent to ``image_threshold``, which is
+        # implemented as a VTK image filter and is substantially faster than the
+        # generic numpy-based path below. ``image_threshold`` cannot represent
+        # multi-component replacement/fill values, and only sees the full input
+        # array (so we cannot use it when the threshold is on an extracted
+        # component of a multi-component array).
+        input_array = cast(
+            'pv.pyvista_ndarray',
+            get_array(self, name=array_name, preference=association),
+        )
         if (
-            array.ndim == 1
+            input_array.ndim == 1
             and association == FieldAssociation.POINT
             and not invert
             and values is None
             and ranges is not None
             and len(ranges) == 1
+            and not isinstance(replacement_value, (list, tuple, np.ndarray))
+            and not isinstance(fill_value, (list, tuple, np.ndarray))
         ):
             return self.image_threshold(
                 ranges[0],
@@ -5455,10 +5465,6 @@ class ImageDataFilters(DataSetFilters):
         )
 
         # Generate output array
-        input_array = cast(
-            'pv.pyvista_ndarray',
-            get_array(self, name=array_name, preference=association),
-        )
         array_out = (
             input_array.copy()
             if fill_value is None
