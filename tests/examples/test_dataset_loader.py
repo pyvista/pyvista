@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 import inspect
 from itertools import starmap
@@ -38,6 +39,12 @@ class DatasetLoaderTestCase:
     dataset_name: str
     dataset_function: tuple[str, FunctionType]
     dataset_loader: tuple[str, _DatasetLoader]
+
+
+@pytest.fixture(autouse=True)
+def ignore_local_vtk_data_cache(monkeypatch):
+    """Ignore local cache and force SOURCE to always be _DEFAULT_VTK_DATA_SOURCE for tests."""
+    monkeypatch.setattr(downloads, 'SOURCE', downloads._DEFAULT_VTK_DATA_SOURCE)
 
 
 def _generate_dataset_loader_test_cases_from_module(
@@ -125,11 +132,10 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
 
 
 @pytest.fixture
-def examples_local_repository_tmp_dir(tmp_path):
+def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Create a local repository with a bunch of datasets available for download."""
     # setup
-    repository_path = os.path.join(tmp_path, 'repo')
-    os.mkdir(repository_path)
+    (repository_path := tmp_path / 'repo').mkdir()
 
     downloadable_basenames = [
         'airplane.ply',
@@ -146,37 +152,28 @@ def examples_local_repository_tmp_dir(tmp_path):
     # copy datasets from the pyvista repo to the local repository
 
     [
-        shutil.copyfile(os.path.join(examples.dir_path, base), os.path.join(repository_path, base))
+        shutil.copyfile(Path(examples.dir_path) / base, repository_path / base)
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(
-        os.path.join(tmp_path, 'archive.zip'),
-        os.path.join(repository_path, 'archive.zip'),
-    )
+    shutil.make_archive(tmp_path / 'archive', 'zip', repository_path)
+    shutil.move(tmp_path / 'archive.zip', repository_path / 'archive.zip')
     downloadable_basenames.append('archive.zip')
 
-    # initialize downloads fetcher
+    # initialize downloads fetcher from the existing one
+    FETCHER = copy.deepcopy(downloads.FETCHER)
     for base in downloadable_basenames:
-        downloads.FETCHER.registry[base] = None
-    downloads.FETCHER.base_url = str(repository_path) + '/'
-    downloads._FILE_CACHE = True
+        FETCHER.registry[base] = None
+    FETCHER.base_url = str(repository_path) + '/'
+    (cache_path := tmp_path / 'cache').mkdir()
+    FETCHER.path = cache_path
 
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_paths = [os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames]
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    monkeypatch.setattr(downloads, 'FETCHER', FETCHER)
+    monkeypatch.setattr(downloads, '_FILE_CACHE', True)
+    monkeypatch.setattr(downloads, 'USER_DATA_PATH', cache_path)
 
-    yield repository_path
-
-    # teardown
-    downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
-    downloads._FILE_CACHE = False
-    [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
-
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    return repository_path
 
 
 @pytest.mark.usefixtures('examples_local_repository_tmp_dir')
@@ -211,10 +208,8 @@ def test_single_file_loader(file_loader, use_archive):
         assert os.path.isfile(path_download)
         assert os.path.isabs(path_download)
         assert file_loader.path == path_download
-        assert 'https://github.com/pyvista/vtk-data/raw/master/Data/' in file_loader.source_url_raw
-        assert (
-            'https://github.com/pyvista/vtk-data/blob/master/Data/' in file_loader.source_url_blob
-        )
+        assert 'https://github.com/pyvista/data/raw/master/Data/' in file_loader.source_url_raw
+        assert 'https://github.com/pyvista/data/blob/master/Data/' in file_loader.source_url_blob
     else:
         with pytest.raises(AttributeError):
             file_loader.download()
@@ -288,11 +283,11 @@ def test_multi_file_loader(load_func):
     assert path_download == path
     assert all(os.path.isfile(file) for file in path_download)
     assert all(
-        'https://github.com/pyvista/vtk-data/raw/master/Data/' in url
+        'https://github.com/pyvista/data/raw/master/Data/' in url
         for url in multi_file_loader.source_url_raw
     )
     assert all(
-        'https://github.com/pyvista/vtk-data/blob/master/Data/' in url
+        'https://github.com/pyvista/data/blob/master/Data/' in url
         for url in multi_file_loader.source_url_blob
     )
 
@@ -381,8 +376,8 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert isinstance(loader.dataset_iterable[0], pv.PolyData)
     assert loader.unique_dataset_type is pv.PolyData
     assert loader.source_name == 'cow.vtp'
-    assert loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp'
-    assert loader.source_url_blob == 'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp'
+    assert loader.source_url_raw == 'https://github.com/pyvista/data/raw/master/Data/cow.vtp'
+    assert loader.source_url_blob == 'https://github.com/pyvista/data/blob/master/Data/cow.vtp'
     assert loader.unique_cell_types == (
         pv.CellType.TRIANGLE,
         pv.CellType.POLYGON,
@@ -421,12 +416,12 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     assert loader.unique_dataset_type is pv.ImageData
     assert loader.source_name == ('HeadMRVolume.mhd', 'HeadMRVolume.raw')
     assert loader.source_url_raw == (
-        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.mhd',
-        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.raw',
+        'https://github.com/pyvista/data/raw/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/data/raw/master/Data/HeadMRVolume.raw',
     )
     assert loader.source_url_blob == (
-        'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.mhd',
-        'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.raw',
+        'https://github.com/pyvista/data/blob/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/data/blob/master/Data/HeadMRVolume.raw',
     )
     assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
@@ -467,12 +462,12 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert loader.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
     assert loader.source_name == ('bolt.slc', 'nut.slc')
     assert loader.source_url_raw == (
-        'https://github.com/pyvista/vtk-data/raw/master/Data/bolt.slc',
-        'https://github.com/pyvista/vtk-data/raw/master/Data/nut.slc',
+        'https://github.com/pyvista/data/raw/master/Data/bolt.slc',
+        'https://github.com/pyvista/data/raw/master/Data/nut.slc',
     )
     assert loader.source_url_blob == (
-        'https://github.com/pyvista/vtk-data/blob/master/Data/bolt.slc',
-        'https://github.com/pyvista/vtk-data/blob/master/Data/nut.slc',
+        'https://github.com/pyvista/data/blob/master/Data/bolt.slc',
+        'https://github.com/pyvista/data/blob/master/Data/nut.slc',
     )
     assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
@@ -501,11 +496,11 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
     assert loader.source_name == 'cubemap_park/cubemap_park.zip'
     assert (
         loader.source_url_raw
-        == 'https://github.com/pyvista/vtk-data/raw/master/Data/cubemap_park/cubemap_park.zip'
+        == 'https://github.com/pyvista/data/raw/master/Data/cubemap_park/cubemap_park.zip'
     )
     assert (
         loader.source_url_blob
-        == 'https://github.com/pyvista/vtk-data/blob/master/Data/cubemap_park/cubemap_park.zip'
+        == 'https://github.com/pyvista/data/blob/master/Data/cubemap_park/cubemap_park.zip'
     )
 
     assert loader.unique_cell_types == (pv.CellType.PIXEL,)
@@ -533,11 +528,11 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
     assert loader.source_name == 'DICOM_Stack/data.zip'
     assert (
         loader.source_url_raw
-        == 'https://github.com/pyvista/vtk-data/raw/master/Data/DICOM_Stack/data.zip'
+        == 'https://github.com/pyvista/data/raw/master/Data/DICOM_Stack/data.zip'
     )
     assert (
         loader.source_url_blob
-        == 'https://github.com/pyvista/vtk-data/blob/master/Data/DICOM_Stack/data.zip'
+        == 'https://github.com/pyvista/data/blob/master/Data/DICOM_Stack/data.zip'
     )
     assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
@@ -596,16 +591,16 @@ def test_dataset_loader_from_nested_files_and_directory(
         'DICOM_Stack/data.zip',
     )
     assert loader.source_url_raw == (
-        'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp',
-        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.mhd',
-        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.raw',
-        'https://github.com/pyvista/vtk-data/raw/master/Data/DICOM_Stack/data.zip',
+        'https://github.com/pyvista/data/raw/master/Data/cow.vtp',
+        'https://github.com/pyvista/data/raw/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/data/raw/master/Data/HeadMRVolume.raw',
+        'https://github.com/pyvista/data/raw/master/Data/DICOM_Stack/data.zip',
     )
     assert loader.source_url_blob == (
-        'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp',
-        'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.mhd',
-        'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.raw',
-        'https://github.com/pyvista/vtk-data/blob/master/Data/DICOM_Stack/data.zip',
+        'https://github.com/pyvista/data/blob/master/Data/cow.vtp',
+        'https://github.com/pyvista/data/blob/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/data/blob/master/Data/HeadMRVolume.raw',
+        'https://github.com/pyvista/data/blob/master/Data/DICOM_Stack/data.zip',
     )
     assert loader.unique_cell_types == (
         pv.CellType.TRIANGLE,
@@ -639,12 +634,9 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert len(loader.dataset_iterable) == 12
     assert loader.unique_dataset_type == (pv.MultiBlock, pv.UnstructuredGrid)
     assert loader.source_name == 'mesh_fs8.exo'
+    assert loader.source_url_raw == 'https://github.com/pyvista/data/raw/master/Data/mesh_fs8.exo'
     assert (
-        loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/mesh_fs8.exo'
-    )
-    assert (
-        loader.source_url_blob
-        == 'https://github.com/pyvista/vtk-data/blob/master/Data/mesh_fs8.exo'
+        loader.source_url_blob == 'https://github.com/pyvista/data/blob/master/Data/mesh_fs8.exo'
     )
     assert loader.unique_cell_types == (
         pv.CellType.TRIANGLE,

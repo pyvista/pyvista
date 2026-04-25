@@ -15,8 +15,6 @@ for various cell types:
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -91,7 +89,9 @@ qual.plot(
 # Use :meth:`~pyvista.DataSetFilters.extract_values` to extract the "poor" quality
 # cells outside the acceptable range.
 
-unacceptable = qual.extract_values(scalars='shape', ranges=info.acceptable_range, invert=True)
+unacceptable = qual.extract_values(
+    scalars='shape', ranges=info.acceptable_range, invert=True
+)
 
 # %%
 # Plot the unacceptable cells along with the original mesh as wireframe for context.

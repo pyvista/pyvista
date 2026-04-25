@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
@@ -185,7 +185,7 @@ def test_transforms():
 
     assert light.transform_matrix is None
     light.transform_matrix = trans_array
-    assert isinstance(light.transform_matrix, vtk.vtkMatrix4x4)
+    assert isinstance(light.transform_matrix, _vtk.vtkMatrix4x4)
     array = pv.array_from_vtkmatrix(light.transform_matrix)
     assert np.array_equal(array, trans_array)
     light.transform_matrix = trans_matrix
@@ -298,7 +298,7 @@ def test_type_invalid():
 
 
 def test_from_vtk():
-    vtk_light = vtk.vtkLight()
+    vtk_light = _vtk.vtkLight()
 
     # set the vtk light
     for _, value, vtkname in configuration:
@@ -323,7 +323,7 @@ def test_from_vtk():
 
 def test_add_vtk_light():
     pl = pv.Plotter(lighting=None)
-    pl.add_light(vtk.vtkLight())
+    pl.add_light(_vtk.vtkLight())
     assert len(pl.renderer.lights) == 1
 
 

@@ -57,7 +57,7 @@ wheel size.
     git clone https://gitlab.kitware.com/vtk/vtk.git
     mkdir vtk/build
     cd vtk/build
-    git checkout v9.1.0  # optional to select a version, but recommended
+    git checkout v9.6.0  # optional to select a version, but recommended
 
     export PYBIN=/usr/bin/python3.10  # select your version of choice
     cmake -GNinja \
@@ -105,7 +105,7 @@ modifying the above ``cmake`` command with:
    git clone https://github.com/Kitware/VTK
    mkdir VTK/build
    cd VTK/build \
-   git checkout v9.1.0
+   git checkout v9.6.0
    cd /VTK/build
    cmake -GNinja \
      -DCMAKE_BUILD_TYPE=Release \
@@ -151,7 +151,7 @@ instead of ``xvfb``:
 
    git clone https://github.com/Kitware/VTK.git
    cd VTK
-   git checkout v9.1.0
+   git checkout v9.6.0
    mkdir build
    cd build
 

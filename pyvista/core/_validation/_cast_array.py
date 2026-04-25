@@ -3,24 +3,22 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumberType
     from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
-    from pyvista.core._typing_core._array_like import NumberType
-    from pyvista.core._typing_core._array_like import _FiniteNestedList
-    from pyvista.core._typing_core._array_like import _FiniteNestedTuple
+    from pyvista.core._typing_core import _ArrayLikeOrScalar
+    from pyvista.core._typing_core import _FiniteNestedList
+    from pyvista.core._typing_core import _FiniteNestedTuple
 
 
 def _cast_to_list(
     arr: _ArrayLikeOrScalar[NumberType],
-) -> Union[NumberType, _FiniteNestedList[NumberType]]:
+) -> NumberType | _FiniteNestedList[NumberType]:
     """Cast an array to a nested list.
 
     Parameters
@@ -39,7 +37,7 @@ def _cast_to_list(
 
 def _cast_to_tuple(
     arr: ArrayLike[NumberType],
-) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
+) -> NumberType | _FiniteNestedTuple[NumberType]:
     """Cast an array to a nested tuple.
 
     Parameters
@@ -66,7 +64,7 @@ def _cast_to_numpy(
     /,
     *,
     as_any: bool = True,
-    dtype: Optional[npt.DTypeLike] = None,
+    dtype: npt.DTypeLike | None = None,
     copy: bool = False,
     must_be_real: bool = False,
 ) -> NumpyArray[NumberType]:
@@ -118,23 +116,13 @@ def _cast_to_numpy(
         NumPy ndarray.
 
     """
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
-    except AttributeError:
-        # we only type for newer numpy, and this branch only touched in older numpy
-        if not TYPE_CHECKING:
-            VisibleDeprecationWarning = np.VisibleDeprecationWarning
-
     try:
         out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
 
         if copy and out is arr:
             # we requested a copy but didn't end up with one
             out = out.copy()
-    except (ValueError, VisibleDeprecationWarning) as e:
+    except ValueError as e:
         msg = f'Input cannot be cast as {np.ndarray}.'
         raise ValueError(msg) from e
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):

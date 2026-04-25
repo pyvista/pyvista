@@ -5,15 +5,13 @@ from __future__ import annotations
 from enum import Enum
 import os
 import platform
-import subprocess
 from subprocess import PIPE
 from subprocess import Popen
 from subprocess import TimeoutExpired
-import sys
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
@@ -48,11 +46,14 @@ def supports_open_gl():
     global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
+        ren_win.SetOffScreenRendering(True)
+        if hasattr(ren_win, 'SetConnectContextToNSView'):
+            ren_win.SetConnectContextToNSView(False)
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():  # noqa: PLR0911
+def _system_supports_plotting() -> bool:  # noqa: PLR0911
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -84,16 +85,20 @@ def _system_supports_plotting():  # noqa: PLR0911
         return 'DISPLAY' in os.environ
 
     # Linux case
+    if os.environ.get('WAYLAND_DISPLAY'):  # pragma: no cover
+        return True
+
     try:
         proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
         proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):
-        return False
+    except (OSError, TimeoutExpired):  # pragma: no cover
+        # possible we have EGL support
+        return supports_open_gl()
     else:  # pragma: no cover
         return proc.returncode == 0
 
 
-def system_supports_plotting():
+def system_supports_plotting() -> bool:
     """Check if the environment supports plotting.
 
     Returns
@@ -112,7 +117,7 @@ def system_supports_plotting():
 
 def _update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internal helper)."""
-    color = Color(color, default_color=pyvista.global_theme.font.color)
+    color = Color(color, default_color=pv.global_theme.font.color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
@@ -222,9 +227,9 @@ def create_axes_marker(  # noqa: PLR0917
     >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
+    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
     axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXAxisTipProperty().SetColor(x_color.float_rgb)
@@ -373,10 +378,10 @@ def create_axes_orientation_box(  # noqa: PLR0917
     >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
-    edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
+    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
+    edge_color = Color(edge_color, default_color=pv.global_theme.edge_color)
     x_face_color = Color(x_face_color)
     y_face_color = Color(y_face_color)
     z_face_color = Color(z_face_color)
@@ -416,7 +421,7 @@ def create_axes_orientation_box(  # noqa: PLR0917
         axes_actor.GetCubeProperty().SetOpacity(0)
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
-        cube = pyvista.Cube()
+        cube = pv.Cube()
         cube.clear_data()  # remove normals
         face_colors = np.array(
             [
@@ -436,7 +441,7 @@ def create_axes_orientation_box(  # noqa: PLR0917
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = pyvista.Actor(mapper=cube_mapper)
+        cube_actor = pv.Actor(mapper=cube_mapper)
         cube_actor.prop.culling = 'back'
         cube_actor.prop.opacity = opacity
 
@@ -509,7 +514,7 @@ def create_north_arrow():
             5,
         ],
     )
-    return pyvista.PolyData(points, faces)
+    return pv.PolyData(points, faces)
 
 
 def normalize(x, minimum=None, maximum=None):
@@ -721,60 +726,36 @@ def parse_font_family(font_family: str) -> int:
     return FONTS[font_family].value
 
 
-def check_matplotlib_vtk_compatibility():
-    """Check if VTK and Matplotlib versions are compatible for MathText rendering.
-
-    This function is primarily geared towards checking if MathText rendering is
-    supported with the given versions of VTK and Matplotlib. It follows the
-    version constraints:
-
-    * VTK <= 9.2.2 requires Matplotlib < 3.6
-    * VTK > 9.2.2 requires Matplotlib >= 3.6
-
-    Other version combinations of VTK and Matplotlib will work without
-    errors, but some features (like MathText/LaTeX rendering) may
-    silently fail.
+def check_math_text_support() -> bool:  # pragma: no cover
+    """Raise a DeprecationError as this has been moved.
 
     Returns
     -------
     bool
-        True if the versions of VTK and Matplotlib are compatible for MathText
-        rendering, False otherwise.
-
-    Raises
-    ------
-    RuntimeError
-        If the versions of VTK and Matplotlib cannot be checked.
+        Returns False for compatibility.
 
     """
-    import matplotlib as mpl  # noqa: PLC0415
+    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
 
-    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
-    if pyvista.vtk_version_info <= (9, 2, 2):
-        return not mpl_vers >= (3, 6)
-    elif pyvista.vtk_version_info > (9, 2, 2):
-        return mpl_vers >= (3, 6)
-    msg = 'Uncheckable versions.'  # pragma: no cover
-    raise RuntimeError(msg)  # pragma: no cover
+    # Deprecated on v0.47.0, estimated removal on v0.50.0
+    msg = '`check_math_text_support` is now imported from `pyvista.report`'
+    DeprecationError(msg)
+
+    return False
 
 
-def check_math_text_support():
-    """Check if MathText and LaTeX symbols are supported.
+def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
+    """Raise a DeprecationError as this has been moved.
 
     Returns
     -------
     bool
-        ``True`` if both MathText and LaTeX symbols are supported, ``False``
-        otherwise.
+        Returns False for compatibility.
 
     """
-    # Something seriously sketchy is happening with this VTK code
-    # It seems to hijack stdout and stderr?
-    # See https://github.com/pyvista/pyvista/issues/4732
-    # This is a hack to get around that by executing the code in a subprocess
-    # and capturing the output:
-    # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-    _cmd = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
-    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
-    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
-    return math_text_support and check_matplotlib_vtk_compatibility()
+    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
+
+    # Deprecated on v0.47.0, estimated removal on v0.50.0
+    msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
+    DeprecationError(msg)
+    return False  # returning bool for compatibility

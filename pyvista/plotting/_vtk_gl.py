@@ -31,10 +31,12 @@ from vtkmodules.vtkRenderingOpenGL2 import vtkGaussianBlurPass as vtkGaussianBlu
 from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLFXAAPass as vtkOpenGLFXAAPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLHardwareSelector as vtkOpenGLHardwareSelector
 from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLRenderer as vtkOpenGLRenderer
+from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLSkybox as vtkOpenGLSkybox
 from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLTexture as vtkOpenGLTexture
 from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection as vtkRenderPassCollection
 from vtkmodules.vtkRenderingOpenGL2 import vtkRenderStepsPass as vtkRenderStepsPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass as vtkSequencePass
+from vtkmodules.vtkRenderingOpenGL2 import vtkShader as vtkShader
 from vtkmodules.vtkRenderingOpenGL2 import vtkShadowMapPass as vtkShadowMapPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkSSAAPass as vtkSSAAPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkSSAOPass as vtkSSAOPass

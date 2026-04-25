@@ -48,6 +48,7 @@ Geometric Objects
    CylinderStructured
    Disc
    Dodecahedron
+   Ellipse
    Icosahedron
    Icosphere
    KochanekSpline
@@ -58,6 +59,7 @@ Geometric Objects
    PlatonicSolid
    Polygon
    Pyramid
+   Quadrilateral
    Rectangle
    SolidSphere
    SolidSphereGeneric

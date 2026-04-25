@@ -4,18 +4,33 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
-import importlib.util
 import locale
 import os
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
+import warnings
 
 from atsphinx.mini18n import get_template_dir
+from docutils.parsers.rst.directives.images import Image
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
+
+# ignore joblib warnings from sphinx-gallery parallel build:
+# .../site-packages/joblib/externals/loky/process_executor.py:782: UserWarning:
+# A worker stopped while some jobs were given to the executor. This can be
+# caused by a too short worker timeout or by a memory leak.
+warnings.filterwarnings(
+    'ignore',
+    category=UserWarning,
+    message='A worker stopped while some jobs were given to the executor',
+)
 
 # This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
@@ -24,33 +39,29 @@ faulthandler.enable()
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
-import make_external_gallery
 import make_tables
 
-make_external_gallery.make_example_gallery()
-make_tables.make_all_tables()
-
 # -- pyvista configuration ---------------------------------------------------
-import pyvista
+import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors
-pyvista.set_error_output_file('errors.txt')
+pv.set_error_output_file('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
-pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
+pv.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
-pyvista.set_plot_theme('document_build')
-pyvista.set_jupyter_backend(None)
+pv.set_plot_theme('document_build')
+pv.set_jupyter_backend(None)
 # Save figures in specified directory
-pyvista.FIGURE_PATH = str(Path('./images/').resolve() / 'auto-generated/')
-if not Path(pyvista.FIGURE_PATH).exists():
-    Path(pyvista.FIGURE_PATH).mkdir()
+pv.FIGURE_PATH = str(Path('./images/').resolve() / 'auto-generated/')
+if not Path(pv.FIGURE_PATH).exists():
+    Path(pv.FIGURE_PATH).mkdir()
 
 # necessary when building the sphinx gallery
-pyvista.BUILDING_GALLERY = True
+pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
 # SG warnings
@@ -67,6 +78,11 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
+)
+warnings.filterwarnings(
+    'always',
+    category=PyVistaDeprecationWarning,
+    message='Assigning a theme for a plotter instance is deprecated',
 )
 
 # -- General configuration ------------------------------------------------
@@ -97,6 +113,7 @@ extensions = [
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
+    'sphinx_togglebutton',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
     'sphinx_toolbox.more_autodoc.typevars',
@@ -110,6 +127,9 @@ extensions = [
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
+    'CameraPositionOptions': 'pyvista.CameraPositionOptions',
+    'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
+    'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
@@ -148,19 +168,26 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
     (r'py:.*', '.*MatrixLike'),
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*InteractorStyleHandler'),
+    (r'py:.*', '.*WriterHandler'),
+    (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
     (r'py:.*', '.*ShapeLike'),
     (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*MeshValidationFields'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
+    (r'py:.*', '.*_PolyDataType'),
+    (r'py:.*', '.*_UnstructuredGridType'),
     (r'py:.*', '.*_GridType'),
     (r'py:.*', '.*_PointGridType'),
     (r'py:.*', '.*_PointSetType'),
@@ -168,11 +195,17 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_MeshType_co'),
+    (r'py:.*', '.*_T_Output_co'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
+    (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
+    (r'py:.*', '.*Options'),
+    # Python 3.14 typing internals leaked through get_type_hints() on
+    # forward-refs inside Union aliases (e.g., 'Color' inside ColorLike).
+    (r'py:.*', 'TypeAliasForwardRef'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -192,6 +225,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*FieldLiteral'),
     (r'py:.*', '.*RowLiteral'),
     (r'py:.*', '.*_SerializedDictArray'),
+    (r'py:.*', '.*_FiveArrays'),
     #
     # PyVista AxesAssembly-related types
     (r'py:.*', '.*GeometryTypes'),
@@ -203,6 +237,10 @@ nitpick_ignore_regex = [
     # PyVista Widget enums
     (r'py:.*', '.*PickerType'),
     (r'py:.*', '.*ElementType'),
+    #
+    # PyVista shader/plotting enums
+    (r'py:.*', '.*ShaderType'),
+    (r'py:.*', '.*PointSpriteShape'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
@@ -218,19 +256,25 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', '.*colors.Colormap'),
     (r'py:.*', 'colors.ListedColormap'),
+    (r'py:.*', '.*MeshValidationReport'),
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'pyvista.SeriesDataSet'),
     (r'py:.*', 'ScalarBarArgs'),
     (r'py:.*', 'SilhouetteArgs'),
     (r'py:.*', 'BackfaceArgs'),
     (r'py:.*', 'CullingOptions'),
     (r'py:.*', 'OpacityOptions'),
+    (r'py:.*', 'CameraPositionOptions'),
     (r'py:.*', 'StyleOptions'),
     (r'py:.*', 'FontFamilyOptions'),
     (r'py:.*', 'HorizontalOptions'),
     (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', 'JupyterBackendOptions'),
+    (r'py:.*', '.*JupyterBackendOptions'),
+    (r'py:.*', '_InterpolationOptions'),
+    (r'py:.*', 'PlottableType'),
+    (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -240,6 +284,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
     (r'py:.*', '.*PathStrSeq'),
+    (r'py:.*', 'ModuleType'),
+    (r'py:.*', 'typing.Union'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),
@@ -247,6 +293,12 @@ nitpick_ignore_regex = [
     (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
+    #
+    # pyarrow does not register a py:module entry in its intersphinx
+    # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
+    # inventory is loaded. ``pyarrow.Table`` is registered as a py:class
+    # and resolves normally.
+    (r'py:mod', 'pyarrow'),
     #
     # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
@@ -259,16 +311,36 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
     (r'py:.*', 'Rotation'),
+    (r'py:.*', '.*VtkEvent'),
     (r'py:.*', 'vtk.*'),
     (r'py:.*', '_vtk.*'),
     (r'py:.*', 'VTK'),
     #
     # Misc general ignores
     (r'py:.*', 'optional'),
+    #
+    # Private implementation types used in signatures
+    (r'py:.*', r'.*_SMPToolsContext'),
+    (r'py:.*', r'.*_ActiveArrayExistsInfoTuple'),
+    #
+    # Private algorithm classes returned by plotting utility functions
+    (r'py:.*', r'.*ActiveScalarsAlgorithm'),
+    (r'py:.*', r'.*AddIDsAlgorithm'),
+    (r'py:.*', r'.*CallbackFilterAlgorithm'),
+    (r'py:.*', r'.*CrinkleAlgorithm'),
+    (r'py:.*', r'.*PointSetToPolyDataAlgorithm'),
+    (r'py:.*', r'.*SmoothShadingAlgorithm'),
+    (r'py:.*', r'.*SourceAlgorithm'),
+    (r'py:.*', r'pyvista\.Common'),
+    #
+    # Long-form function paths used in some docstrings/examples
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.perlin_noise'),
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.sample_function'),
 ]
 
 
 add_module_names = False
+toc_object_entries_show_parents = 'hide'
 
 # Intersphinx mapping
 # NOTE: if these are changed, then doc/intersphinx/update.sh
@@ -276,33 +348,34 @@ add_module_names = False
 intersphinx_mapping = {
     'python': (
         'https://docs.python.org/3.11',
-        (None, '../intersphinx/python-objects.inv'),
+        ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
-        (None, '../intersphinx/scipy-objects.inv'),
+        ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
         'https://matplotlib.org/stable',
-        (None, '../intersphinx/matplotlib-objects.inv'),
+        ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
         'https://imageio.readthedocs.io/en/stable',
-        (None, '../intersphinx/imageio-objects.inv'),
+        ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
-        (None, '../intersphinx/pandas-objects.inv'),
+        ('../intersphinx/pandas-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'pyarrow': (
+        'https://arrow.apache.org/docs',
+        ('../intersphinx/pyarrow-objects.inv',),
+    ),
+    'pytest': ('https://docs.pytest.org/en/stable', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
-intersphinx_timeout = 10
-
-linkcheck_retries = 3
-linkcheck_timeout = 500
+intersphinx_timeout = 5
 
 # Select if we want to generate production or dev documentation
 #
@@ -338,10 +411,10 @@ author = 'Alex Kaszynski and Bane Sullivan'
 # built documents.
 #
 # The short X.Y version.
-version = pyvista.__version__
+version = pv.__version__
 
 # The full version, including alpha/beta/rc tags.
-release = pyvista.__version__
+release = pv.__version__
 
 
 # The language for content autogenerated by Sphinx. Refer to documentation
@@ -357,13 +430,6 @@ language = 'en'
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
 html_extra_path = ['_extra']
 
-# Pages are not detected correct by ``make linkcheck``
-linkcheck_ignore = [
-    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
-    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
-    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
-]
-
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
 
@@ -374,6 +440,20 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
+def _filter_sphinx_gallery_warnings():
+    import warnings
+
+    # Ignore specific warnings
+    warnings.filterwarnings(
+        'ignore',
+        message='Call to deprecated method GetData',  # emitted by trame-vtk
+        category=DeprecationWarning,
+    )
+
+    # Treat all remaining warnings as errors
+    warnings.simplefilter('error', append=True)
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
@@ -382,20 +462,26 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
-        import pyvista
+        _filter_sphinx_gallery_warnings()
+        import matplotlib as mpl  # must import before pyvista
 
-        pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-        pyvista.set_plot_theme('document_build')
+        # clear all mpl figures, force non-interactive backend, and reset defaults
+        mpl.use('Agg', force=True)
+        mpl.pyplot.close('all')
+        mpl.rcdefaults()
+        mpl.pyplot.figure().clear()
+        mpl.pyplot.close()
+
+        import pyvista as pv
+
+        pv._wrappers['vtkPolyData'] = pv.PolyData
+        pv.set_plot_theme('document_build')
 
     def __repr__(self):
         return 'ResetPyVista'
 
 
 reset_pyvista = ResetPyVista()
-
-
-# skip building the osmnx example if osmnx is not installed
-has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
 
 
 sphinx_gallery_conf = {
@@ -407,7 +493,7 @@ sphinx_gallery_conf = {
     # path where to save gallery generated examples
     'gallery_dirs': ['examples'],
     # Pattern to search for example files
-    'filename_pattern': r'\.py' if has_osmnx else r'(?!osmnx-example)\.py',
+    'filename_pattern': r'\.py',
     # Remove the "Download all examples" button from the top level gallery
     'download_all_examples': False,
     # Remove sphinx configuration comments from code blocks
@@ -424,9 +510,10 @@ sphinx_gallery_conf = {
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
     'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
+    'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache']
+suppress_warnings = ['config.cache', 'image.not_readable']
 
 import re
 
@@ -458,7 +545,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']
@@ -513,7 +600,9 @@ html_theme_options = {
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
-    'max_navbar_depth': 3,
+    # Capping at depth 4 keeps classes nested under their section pages while
+    # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
+    'max_navbar_depth': 4,
     'icon_links': [
         {
             'name': 'Slack Community',
@@ -535,8 +624,33 @@ html_theme_options = {
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
         },
+        {
+            'name': 'PyPI',
+            'url': 'https://pypi.org/project/pyvista',
+            'icon': 'fa-brands fa-python',
+        },
     ],
 }
+
+if 'dev' in pv.__version__:
+    stable_base = 'https://docs.pyvista.org'
+    announcement_html = f"""
+    <div class="pv-announcement">
+        This is documentation for an <strong>unstable development version</strong>
+        <a id="stable-link" class="pv-announcement-button">
+            Switch to stable version
+        </a>
+    </div>
+    <script>
+        const link = document.getElementById('stable-link');
+        const stableBase = "{stable_base}";
+        const path = window.location.pathname + window.location.hash + window.location.search;
+        link.href = stableBase + path;
+    </script>
+    """
+
+    html_theme_options['announcement'] = announcement_html
+
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
 # already loads it
@@ -549,6 +663,7 @@ html_static_path = ['_static']
 html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
+    'announcement.css',  # override banner color
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -669,7 +784,52 @@ mini18n_support_languages = ['en', 'ja']
 locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
-def setup(app):  # noqa: D103
+class PlaceHolderImage(Image):
+    """A custom Image directive that checks for placeholders in an image path."""
+
+    gen_image_path = Path(make_tables.DATASET_GALLERY_IMAGE_DIR).relative_to('..')
+
+    def run(self):  # noqa: D102
+        image_path_str = self.arguments[0]
+
+        if make_tables.PLACEHOLDER in image_path_str:
+            image_path = Path(image_path_str)
+            # Fill in the placeholder with the first matching image. This will
+            # not respect order of generation.
+            basename = image_path.name.replace('PLACEHOLDER', '*')
+            actual_image = next(self.gen_image_path.glob(basename), None)
+            if actual_image:
+                self.arguments[0] = str(actual_image)
+
+        return super().run()
+
+
+def report_parallel_safety(app: Sphinx, *_) -> None:
+    """Raise an error if an extension is blocking a parallel build."""
+    if app.parallel > 1:
+        for name, ext in sorted(app.extensions.items()):
+            read_safe = getattr(ext, 'parallel_read_safe', None)
+            write_safe = getattr(ext, 'parallel_write_safe', None)
+            if read_safe is not True or write_safe is not True:
+                msg = (
+                    f'Parallel build enabled but extension "{name}" is not fully parallel '
+                    f'safe (read_safe={read_safe}, write_safe={write_safe})'
+                )
+                raise RuntimeError(msg)
+
+
+def configure_backend(app: Sphinx) -> None:  # noqa: D103
+    app.add_directive('image', PlaceHolderImage)
+
+
+def setup(app: Sphinx) -> None:  # noqa: D103
+    app.connect('config-inited', report_parallel_safety)
+    app.connect('builder-inited', configure_backend)
     app.connect('html-page-context', pv_html_page_context)
+
+    # right before writing, patch the gallery placeholders
+    app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_js_file('redirect_fragments.js')

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+import inspect
+import itertools
 import json
+import operator
 import os
 from pathlib import Path
 import pickle
@@ -12,6 +15,7 @@ import platform
 import re
 import shutil
 import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -26,25 +30,29 @@ import pytest
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 from scipy.spatial.transform import Rotation
-import vtk
+from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
+from pyvista.core.utilities import misc
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -58,6 +66,7 @@ from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
+from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -70,6 +79,7 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
+from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
@@ -79,6 +89,24 @@ with contextlib.suppress(ImportError):
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+HAS_RUNTIME_SMP_BACKEND_SELECTION = hasattr(_vtk, 'vtkSMPTools') and hasattr(
+    _vtk.vtkSMPTools, 'SetBackend'
+)
+
+
+@pytest.fixture
+def reset_smp_tools():
+    """Restore VTK's SMP backend state after a test that mutates it."""
+    if not HAS_RUNTIME_SMP_BACKEND_SELECTION:
+        yield
+        return
+    original_backend = _vtk.vtkSMPTools.GetBackend()
+    original_threads = _vtk.vtkSMPTools.GetEstimatedNumberOfThreads()
+    yield
+    _vtk.vtkSMPTools.SetBackend(original_backend)
+    _vtk.vtkSMPTools.Initialize(original_threads)
 
 
 @pytest.fixture
@@ -93,19 +121,19 @@ def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
             ValueError,
             match='This function on Windows only supports int32 or smaller',
         ):
-            sample_function(vtk.vtkPlane(), output_type=np.int64)
+            sample_function(_vtk.vtkPlane(), output_type=np.int64)
 
         with pytest.raises(
             ValueError,
             match='This function on Windows only supports int32 or smaller',
         ):
-            sample_function(vtk.vtkPlane(), output_type=np.uint64)
+            sample_function(_vtk.vtkPlane(), output_type=np.uint64)
 
         with pytest.raises(
             ValueError,
             match='Invalid output_type 1',
         ):
-            sample_function(vtk.vtkPlane(), output_type=1)
+            sample_function(_vtk.vtkPlane(), output_type=1)
 
 
 def test_progress_monitor_raises(mocker: MockerFixture):
@@ -116,13 +144,13 @@ def test_progress_monitor_raises(mocker: MockerFixture):
 
     with pytest.raises(
         ImportError,
-        match='Please install `tqdm` to monitor algorithms.',
+        match=r'Please install `tqdm` to monitor algorithms.',
     ):
         ProgressMonitor('algo')
 
 
 def test_create_grid_raises():
-    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+    with pytest.raises(NotImplementedError, match=r'Please specify dimensions.'):
         create_grid(pv.Sphere(), dimensions=None)
 
 
@@ -143,12 +171,12 @@ def test_get_array_raises():
     with pytest.raises(
         KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
     ):
-        get_array(vtk.vtkTable(), 'foo', err=True)
+        get_array(_vtk.vtkTable(), 'foo', err=True)
 
     with pytest.raises(
         KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
     ):
-        get_array_association(vtk.vtkTable(), 'foo', err=True)
+        get_array_association(_vtk.vtkTable(), 'foo', err=True)
 
 
 def test_raise_not_matching_raises():
@@ -159,8 +187,8 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
-def test_version():
-    ver = vtk.vtkVersion()
+def test_vtk_version_info():
+    ver = _vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
     assert ver.GetVTKBuildVersion() == pv.vtk_version_info.micro
@@ -171,7 +199,52 @@ def test_version():
     )
     assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
-    assert pv.vtk_version_info >= (0, 0, 0)
+    assert pv.vtk_version_info >= pv._MIN_SUPPORTED_VTK_VERSION
+
+
+@pytest.mark.parametrize('operation', [operator.le, operator.lt, operator.gt, operator.ge])
+def test_vtk_version_info_raises(operation):
+    version_str = '.'.join(map(str, pv._MIN_SUPPORTED_VTK_VERSION))
+    match = f'Comparing against unsupported VTK version 1.2.3. Minimum supported is {version_str}'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        operation(pv.vtk_version_info, (1, 2, 3))
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
+)
+def test_min_supported_vtk_version_matches_pyproject():
+    def get_min_vtk_version_from_pyproject():
+        # locate pyproject.toml relative to package
+        root = Path(
+            os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
+        )  # to make the test work when pyvista is installed via tox
+        pyproject_path = root / 'pyproject.toml'
+
+        with pyproject_path.open('rb') as f:
+            pyproject_data = tomllib.load(f)
+
+        # dependencies live under [project]
+        dependencies = pyproject_data.get('project', {}).get('dependencies', [])
+
+        # find the first vtk>= spec and strip env markers after `;`
+        min_vtk = next(
+            dep.split(';', 1)[0].strip().split('>=', 1)[1]
+            for dep in dependencies
+            if 'vtk>=' in dep.split(';', 1)[0]
+        )
+        assert isinstance(min_vtk, str)
+        assert len(min_vtk) > 0
+        return tuple(map(int, min_vtk.split('.')))
+
+    from_pyproject = get_min_vtk_version_from_pyproject()
+    from_code = pv._MIN_SUPPORTED_VTK_VERSION
+    msg = (
+        f"Min VTK version specified in 'pyproject.toml' should match the "
+        f'min version specified in {_vtk.__name__!r}'
+    )
+    assert from_pyproject == from_code, msg
 
 
 def test_createvectorpolydata_error():
@@ -277,7 +350,7 @@ def test_read_force_ext(tmpdir):
     )
 
     dummy_extension = '.dummy'
-    for fname, type_ in zip(fnames, types):
+    for fname, type_ in zip(fnames, types, strict=True):
         path = Path(fname)
         root = str(path.parent / path.stem)
         original_ext = path.suffix
@@ -322,12 +395,22 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
+def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
+    # Simulate meshio being unavailable so the fallback import fails.
+    monkeypatch.setitem(sys.modules, 'meshio', None)
+    monkeypatch.setitem(sys.modules, 'meshio._exceptions', None)
+    fname = tmp_path / 'dummy.nonexistent_ext_xyz'
+    fname.write_bytes(b'not a real mesh file')
+    with pytest.raises(OSError, match='not able to be automatically read'):
+        fileio.read(fname)
+
+
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
     # use the globefile as a dummy because pv.read() checks for the existence of the file
     pv.read(ex.globefile, force_ext='.e')
-    args, kwargs = read_exodus_mock.call_args
+    args, _kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == Path(ex.globefile)
 
@@ -389,7 +472,7 @@ def test_get_array_none(hexbeam):
 
 def get_array_vtk(hexbeam):
     # test raw VTK input
-    grid_vtk = vtk.vtkUnstructuredGrid()
+    grid_vtk = _vtk.vtkUnstructuredGrid()
     grid_vtk.DeepCopy(hexbeam)
     get_array(grid_vtk, 'test_data')
     get_array(grid_vtk, 'foo')
@@ -514,10 +597,42 @@ def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
     assert 'GPU Details : None' not in report.__repr__()
+    assert re.search(r'Render Window : (vtk\w+RenderWindow|error)', report.__repr__())
+    assert 'vtkRenderWindow' not in report.__repr__()  # must not be abstract
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
-    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
+    assert 'Render Window : None' in report.__repr__()
+    assert 'User Data Path' not in report.__repr__()
+
+
+def test_report_warnings():
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        pv.Report('vtk', 4, 90, True)
+
+
+REPORT = str(pv.Report(gpu=False))
+
+
+@pytest.mark.parametrize('package', get_distribution_dependencies('pyvista'))
+def test_report_dependencies(package):
+    if package == 'pyvista[colormaps,io,jupyter]':
+        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
+    elif package == 'vtk!':
+        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
+    elif package == 'jupyter-server-proxy':
+        pytest.xfail('not installed with --test group')
+    elif package == 'pyvista-zstd':
+        pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
+    assert package in REPORT
+
+
+def test_report_downloads():
+    report = pv.Report(downloads=True)
+    repr_ = repr(report)
+    assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
+    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
 
 
 def test_line_segments_from_points():
@@ -583,7 +698,7 @@ def test_vtkmatrix_to_from_array():
     rng = np.random.default_rng()
     array3x3 = rng.integers(0, 10, size=(3, 3))
     matrix = pv.vtkmatrix_from_array(array3x3)
-    assert isinstance(matrix, vtk.vtkMatrix3x3)
+    assert isinstance(matrix, _vtk.vtkMatrix3x3)
     for i in range(3):
         for j in range(3):
             assert matrix.GetElement(i, j) == array3x3[i, j]
@@ -597,7 +712,7 @@ def test_vtkmatrix_to_from_array():
 
     array4x4 = rng.integers(0, 10, size=(4, 4))
     matrix = pv.vtkmatrix_from_array(array4x4)
-    assert isinstance(matrix, vtk.vtkMatrix4x4)
+    assert isinstance(matrix, _vtk.vtkMatrix4x4)
     for i in range(4):
         for j in range(4):
             assert matrix.GetElement(i, j) == array4x4[i, j]
@@ -612,7 +727,7 @@ def test_vtkmatrix_to_from_array():
     # invalid cases
     with pytest.raises(ValueError):  # noqa: PT011
         matrix = pv.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
-    invalid = vtk.vtkTransform()
+    invalid = _vtk.vtkTransform()
     with pytest.raises(TypeError):
         array = pv.array_from_vtkmatrix(invalid)
 
@@ -630,7 +745,7 @@ def test_assert_empty_kwargs():
 
 def test_convert_id_list():
     ids = np.array([4, 5, 8])
-    id_list = vtk.vtkIdList()
+    id_list = _vtk.vtkIdList()
     id_list.SetNumberOfIds(len(ids))
     for i, v in enumerate(ids):
         id_list.SetId(i, v)
@@ -640,35 +755,57 @@ def test_convert_id_list():
 
 def test_progress_monitor():
     mesh = pv.Sphere()
-    ugrid = mesh.delaunay_3d(progress_bar=True)
-    assert isinstance(ugrid, pv.UnstructuredGrid)
+    ugrid = mesh.warp_by_vector(progress_bar=True)
+    assert isinstance(ugrid, pv.PolyData)
 
 
 def test_observer():
-    msg = 'KIND: In PATH, line 0\nfoo (ADDRESS): ALERT'
+    msg = 'KIND: In PATH, line 0\nfoo (0x000000): ALERT'
     obs = Observer()
     ret = obs.parse_message('foo')
     assert ret[3] == 'foo'
     ret = obs.parse_message(msg)
-    assert ret[3] == 'ALERT'
+    assert ret[0] == 'KIND' == ret.kind
+    assert ret[1] == 'PATH' == ret.path
+    assert ret[2] == '0x000000' == ret.address
+    assert ret[4] == '0' == ret.line
+    assert ret[5] == 'foo' == ret.name
+    assert ret[3] == 'ALERT' == ret.alert
+    assert str(ret) == msg
+
     for kind in ['WARNING', 'ERROR']:
         obs.log_message(kind, 'foo')
+
     # Pass positionally as that's what VTK will do
     obs(None, None, msg)
     assert obs.has_event_occurred()
     assert obs.get_message() == 'ALERT'
     assert obs.get_message(etc=True) == msg
 
-    alg = vtk.vtkSphereSource()
+    alg = _vtk.vtkSphereSource()
     alg.GetExecutive()
     obs.observe(alg)
     with pytest.raises(RuntimeError, match='algorithm'):
         obs.observe(alg)
 
 
+def test_observer_default_event():
+    msg = 'This message does not match parsing regex!'
+    obs = Observer()
+    ret = obs.parse_message(msg)
+    assert ret.kind == ''
+    assert ret.path == ''
+    assert ret.address == ''
+    assert ret.line == ''
+    assert ret.name == ''
+    assert ret.alert == msg
+
+    assert str(ret) == msg
+
+
 @pytest.mark.parametrize('point', [1, object(), None])
 def test_valid_vector_raises(point):
-    with pytest.raises(TypeError, match='foo must be a length three iterable of floats.'):
+    with pytest.raises(TypeError, match=r'foo must be a length three iterable of floats.'):
         check_valid_vector(point=point, name='foo')
 
 
@@ -695,7 +832,7 @@ def test_annotated_int_enum_from_any_raises(value):
 def test_lines_segments_from_points(points):
     with pytest.raises(
         ValueError,
-        match='An even number of points must be given to define each segment.',
+        match=r'An even number of points must be given to define each segment.',
     ):
         line_segments_from_points(points=points)
 
@@ -709,6 +846,10 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
+@pytest.mark.skipif(
+    NUMPY_VERSION_INFO < (2, 3) and IS_ARM_MAC,
+    reason='Specific to Mac M4. See https://github.com/numpy/numpy/issues/28687',
+)
 def test_apply_transformation_to_points():
     mesh = ex.load_airplane()
     points = mesh.points
@@ -734,19 +875,21 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(
-        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
-    )
-    mesh = pv.StructuredGrid(x, y, z)
-    x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
-    mesh2 = pv.StructuredGrid(x2, y2, z2)
+    from vtkmodules.vtkIOLegacy import vtkDataWriter
 
-    alg = vtk.vtkStreamTracer()
-    obs = pv.Observer()
-    obs.observe(alg)
-    alg.SetInputDataObject(mesh)
-    alg.SetSourceData(mesh2)
-    alg.Update()
+    # vtkWriter.cxx:55     ERR| vtkDataWriter (0x141efbd10): No input provided!
+    writer = vtkDataWriter()
+    writer.Write()
+
+
+def _generate_vtk_warn():
+    """Simple operation which generates a VTK warning."""
+    from vtkmodules.vtkFiltersCore import vtkMergeFilter
+
+    # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
+    merge = vtkMergeFilter()
+    merge.AddInputData(_vtk.vtkPolyData())
+    merge.Update()
 
 
 def test_vtk_error_catcher():
@@ -755,7 +898,11 @@ def test_vtk_error_catcher():
     with error_catcher:
         _generate_vtk_err()
         _generate_vtk_err()
-    assert len(error_catcher.events) == 2
+        _generate_vtk_warn()
+        _generate_vtk_warn()
+    assert len(error_catcher.events) == 4
+    assert len(error_catcher.error_events) == 2
+    assert len(error_catcher.warning_events) == 2
 
     # raise_errors: False, no error
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
@@ -764,15 +911,59 @@ def test_vtk_error_catcher():
 
     # raise_errors: True
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
-    with pytest.raises(RuntimeError):
+    error_match = re.compile(
+        r'ERROR: In vtkWriter\.cxx, line \d+\n'
+        r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!\n*'
+    )
+    with pytest.raises(RuntimeError, match=re.compile(error_match)):  # noqa: PT012
         with error_catcher:
             _generate_vtk_err()
-    assert len(error_catcher.events) == 1
+            _generate_vtk_warn()
+    assert len(error_catcher.events) == 2
+    assert len(error_catcher.error_events) == 1
+    assert len(error_catcher.warning_events) == 1
 
-    # raise_errors: True, no error
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
+    # Raise two VTK errors as a single RuntimeError
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
+    error_match2 = re.compile(f'{error_match.pattern}\n{error_match.pattern}')
+    with pytest.raises(pv.VTKExecutionError, match=error_match2):  # noqa: PT012
+        with error_catcher:
+            _generate_vtk_err()
+            _generate_vtk_err()
+
+    # Warn and raise error. The order emitted by VTK is not guaranteed to be the same
+    # since warn and err events are logged independently.
+    # Here we generate VTK err then warn, but expect warning then error
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
+    warning_match = re.compile(
+        r'Warning: In vtkMergeFilter\.cxx, line \d+\n'
+        r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
+    )
+    with pytest.warns(pv.VTKExecutionWarning, match=warning_match):  # noqa: PT031
+        with pytest.raises(pv.VTKExecutionError, match=error_match):  # noqa: PT012
+            with error_catcher:
+                _generate_vtk_err()
+                _generate_vtk_warn()
+
+    # Test raise/emit with no errors/warnings generated
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
     with error_catcher:
         pass
+
+
+def test_update_alg_raises():
+    from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
+
+    reader = vtkXMLPolyDataReader()
+    reader.SetFileName('this_file_does_not_exist.vtp')
+    with pytest.raises(pv.VTKExecutionError):
+        _update_alg(reader)
 
 
 def test_axis_angle_rotation():
@@ -875,7 +1066,7 @@ def test_merge(sphere, cube, datasets):
     with pytest.raises(ValueError, match='Expected at least one'):
         pv.merge([])
 
-    with pytest.raises(TypeError, match='Expected pyvista.DataSet'):
+    with pytest.raises(TypeError, match=r'Expected pyvista.DataSet'):
         pv.merge([None, sphere])
 
     # check polydata
@@ -948,7 +1139,7 @@ def test_copy_vtk_array():
 
     value_0 = 10
     value_1 = 10
-    arr = vtk.vtkFloatArray()
+    arr = _vtk.vtkFloatArray()
     arr.SetNumberOfValues(2)
     arr.SetValue(0, value_0)
     arr.SetValue(1, value_1)
@@ -967,21 +1158,29 @@ def test_copy_implicit_vtk_array(plane):
     # Use the connectivity filter to generate an implicit vtkDataArray
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
-    if pv.vtk_version_info >= (9, 4):
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        from vtkmodules.numpy_interface.vtk_implicit_array import VTKImplicitArray
+
+        assert isinstance(vtk_object, VTKImplicitArray)
+    elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
-        assert type(vtk_object) is vtk.vtkDataArray
+        assert type(vtk_object) is _vtk.vtkDataArray
     else:
-        assert type(vtk_object) is vtk.vtkIdTypeArray
+        assert type(vtk_object) is _vtk.vtkIdTypeArray
 
     # `copy_vtk_array` is called with this assignment
     plane['test'] = conn['RegionId']
 
     new_vtk_object = plane['test'].VTKObject
-    if pv.vtk_version_info >= (9, 4):
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        from vtkmodules.numpy_interface.vtk_aos_array import VTKAOSArray
+
+        assert isinstance(new_vtk_object, VTKAOSArray)
+    elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
-        assert type(new_vtk_object) is vtk.vtkUnsignedIntArray
+        assert type(new_vtk_object) is _vtk.vtkTypeInt64Array
     else:
-        assert type(new_vtk_object) is vtk.vtkIdTypeArray
+        assert type(new_vtk_object) is _vtk.vtkIdTypeArray
 
 
 def test_cartesian_to_spherical():
@@ -1229,11 +1428,9 @@ CASE_3 = (  # non-coplanar points
     ],
 )
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    NUMPY_VERSION_INFO < (1, 26) or IS_ARM_MAC,
     reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(
@@ -1328,15 +1525,39 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
     eggs = 'eggs'
 
     match = (
-        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
-        'Use `pv.set_new_attribute` to set new attributes.'
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.\n'
+        'Setting new private variables (with `_` prefix) is allowed by default.'
     )
-    with pytest.raises(pv.PyVistaAttributeError, match=match):
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
         setattr(a, ham, eggs)
 
     match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         setattr(b, ham, eggs)
+
+
+def test_no_new_attr_mixin_side_effects():
+    class Parent(_NoNewAttrMixin):
+        getter_call_count = 0
+
+        @property
+        def foo(self):
+            self.getter_call_count += 1
+
+        @foo.setter
+        def foo(self, val): ...
+
+    class Child(Parent): ...
+
+    # Test that setting attributes on lasses does not trigger a call to the getter
+    obj = Parent()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
+
+    obj = Child()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
 
 
 def test_set_new_attribute(no_new_attributes_mixin_subclass):
@@ -1373,24 +1594,82 @@ def test_serial_dict_init():
     # empty init
     serial_dict = _SerializedDictArray()
     assert serial_dict == {}
-    assert repr(serial_dict) == '{}'
+    assert str(serial_dict) == '{}'
 
     # init from dict
     new_dict = dict(ham='eggs')
     serial_dict = _SerializedDictArray(new_dict)
     assert serial_dict['ham'] == 'eggs'
-    assert repr(serial_dict) == '{"ham": "eggs"}'
+    assert str(serial_dict) == '{"ham": "eggs"}'
 
     # init from UserDict
     serial_dict = _SerializedDictArray(serial_dict)
     assert serial_dict['ham'] == 'eggs'
-    assert repr(serial_dict) == '{"ham": "eggs"}'
+    assert str(serial_dict) == '{"ham": "eggs"}'
 
     # init from JSON string
     json_dict = json.dumps(new_dict)
     serial_dict = _SerializedDictArray(json_dict)
     assert serial_dict['ham'] == 'eggs'
-    assert repr(serial_dict) == '{"ham": "eggs"}'
+    assert str(serial_dict) == '{"ham": "eggs"}'
+
+
+def test_convert_string_array_roundtrip():
+    """numpy string array <-> vtkStringArray must round-trip without truncation."""
+    arr = np.array(['alpha', 'beta', 'gamma', 'delta-with-much-more-text'])
+    vtk_arr = convert_string_array(arr)
+    assert vtk_arr.GetNumberOfValues() == arr.size
+    assert vtk_arr.GetValue(0) == 'alpha'
+    assert vtk_arr.GetValue(3) == 'delta-with-much-more-text'
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == arr.shape
+    # Width must auto-size to longest value, not get truncated to 1 char.
+    assert out[3] == 'delta-with-much-more-text'
+    assert np.array_equal(out, arr)
+
+
+def test_convert_string_array_scalar_string():
+    """A bare Python str round-trips back to a 0-d numpy array of the original."""
+    vtk_arr = convert_string_array('hello')
+    assert vtk_arr.GetNumberOfValues() == 1
+    assert vtk_arr.GetValue(0) == 'hello'
+    out = convert_string_array(vtk_arr)
+    assert out.ndim == 0
+    assert str(out) == 'hello'
+
+
+def test_convert_string_array_rejects_non_ascii():
+    with pytest.raises(ValueError, match='non-ASCII'):
+        convert_string_array(np.array(['hello', 'wörld']))
+
+
+def test_convert_string_array_with_name():
+    vtk_arr = convert_string_array(np.array(['a', 'b']), name='my_array')
+    assert vtk_arr.GetName() == 'my_array'
+
+
+def test_serial_dict_uses_single_value_storage():
+    """The setter stores the JSON string as a single vtkStringArray value
+    instead of one value per character (the historical encoding).
+    """
+    serial = _SerializedDictArray({'foo': 'bar', 'n': 42})
+    # New format: 1 value, not len(json_string).
+    assert serial.GetNumberOfValues() == 1
+    assert serial.GetValue(0) == '{"foo": "bar", "n": 42}'
+
+
+def test_serial_dict_reads_legacy_char_per_value_format():
+    """Files written with the old char-per-value format must still
+    deserialize correctly. The getter joins all values.
+    """
+    legacy = _SerializedDictArray()
+    # Wipe and manually re-encode the JSON char-by-char (the old behavior).
+    legacy.SetNumberOfValues(0)
+    for ch in '{"hello": "world"}':
+        legacy.InsertNextValue(ch)
+    # The getter joins all values so the read still produces the right string.
+    assert legacy._string == '{"hello": "world"}'
 
 
 def test_serial_dict_as_dict(serial_dict_with_foobar):
@@ -1402,47 +1681,47 @@ def test_serial_dict_as_dict(serial_dict_with_foobar):
 
 def test_serial_dict_overrides__setitem__(serial_dict_empty):
     serial_dict_empty['foo'] = 'bar'
-    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+    assert str(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides__delitem__(serial_dict_with_foobar):
     del serial_dict_with_foobar['foo']
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert str(serial_dict_with_foobar) == '{}'
 
 
 def test_serial_dict_overrides__setattr__(serial_dict_empty):
     serial_dict_empty.data = dict(foo='bar')
-    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+    assert str(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides_popitem(serial_dict_with_foobar):
     serial_dict_with_foobar['ham'] = 'eggs'
     item = serial_dict_with_foobar.popitem()
     assert item == ('foo', 'bar')
-    assert repr(serial_dict_with_foobar) == '{"ham": "eggs"}'
+    assert str(serial_dict_with_foobar) == '{"ham": "eggs"}'
 
 
 def test_serial_dict_overrides_pop(serial_dict_with_foobar):
     item = serial_dict_with_foobar.pop('foo')
     assert item == 'bar'
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert str(serial_dict_with_foobar) == '{}'
 
 
 def test_serial_dict_overrides_update(serial_dict_empty):
     serial_dict_empty.update(dict(foo='bar'))
-    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+    assert str(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides_clear(serial_dict_with_foobar):
     serial_dict_with_foobar.clear()
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert str(serial_dict_with_foobar) == '{}'
 
 
 def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_foobar):
     serial_dict_empty.setdefault('foo', 42)
-    assert repr(serial_dict_empty) == '{"foo": 42}'
+    assert str(serial_dict_empty) == '{"foo": 42}'
     serial_dict_with_foobar.setdefault('foo', 42)
-    assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'
+    assert str(serial_dict_with_foobar) == '{"foo": "bar"}'
 
 
 SCALE = 2
@@ -1453,11 +1732,14 @@ ANGLE = 30
 
 @pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
 def test_transform_scale(transform, scale_args):
+    assert not transform.has_scale
     transform.scale(*scale_args)
     actual = transform.matrix
     expected = np.diag((SCALE, SCALE, SCALE, 1))
     assert np.array_equal(actual, expected)
     assert transform.n_transformations == 1
+    assert transform.has_scale
+    assert np.array_equal(transform.scale_factors, (SCALE, SCALE, SCALE))
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
@@ -1465,11 +1747,14 @@ def test_transform_scale(transform, scale_args):
 
 @pytest.mark.parametrize('translate_args', [np.array(VECTOR), np.array([VECTOR])])
 def test_transform_translate(transform, translate_args):
+    assert not transform.has_translation
     transform.translate(*translate_args)
     actual = transform.matrix
     expected = np.eye(4)
     expected[:3, 3] = VECTOR
     assert np.array_equal(actual, expected)
+    assert transform.has_translation
+    assert np.array_equal(transform.translation, VECTOR)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
@@ -1477,10 +1762,14 @@ def test_transform_translate(transform, translate_args):
 
 @pytest.mark.parametrize('reflect_args', [VECTOR, [VECTOR]])
 def test_transform_reflect(transform, reflect_args):
+    assert transform.reflection == 1
+    assert not transform.has_reflection
     transform.reflect(*reflect_args)
     actual = transform.matrix
     expected = transformations.reflection(VECTOR)
     assert np.array_equal(actual, expected)
+    assert transform.has_reflection
+    assert transform.reflection == -1
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1501,11 +1790,14 @@ def test_transform_flip_xyz(transform, method, vector):
 
 
 def test_transform_rotate(transform):
+    assert not transform.has_rotation
     transform.rotate(ROTATION)
     actual = transform.matrix
     expected = np.eye(4)
     expected[:3, :3] = ROTATION
     assert np.array_equal(actual, expected)
+    assert transform.has_rotation
+    assert np.array_equal(transform.rotation_matrix, ROTATION)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
@@ -1515,6 +1807,7 @@ def test_transform_rotate(transform):
 @pytest.mark.parametrize(
     ('method', 'args'),
     [
+        ('compose', (pv.Transform(ROTATION).translate(VECTOR),)),
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
         ('flip_x', ()),
@@ -1560,6 +1853,9 @@ def test_transform_rotate_x(transform):
     actual = transform.matrix
     expected = transformations.axis_angle_rotation((1, 0, 0), ANGLE)
     assert np.array_equal(actual, expected)
+    axis, angle = transform.rotation_axis_angle
+    assert np.allclose(axis, (1, 0, 0))
+    assert np.allclose(angle, ANGLE)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1570,6 +1866,9 @@ def test_transform_rotate_y(transform):
     actual = transform.matrix
     expected = transformations.axis_angle_rotation((0, 1, 0), ANGLE)
     assert np.array_equal(actual, expected)
+    axis, angle = transform.rotation_axis_angle
+    assert np.allclose(axis, (0, 1, 0))
+    assert np.allclose(angle, ANGLE)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1580,6 +1879,9 @@ def test_transform_rotate_z(transform):
     actual = transform.matrix
     expected = transformations.axis_angle_rotation((0, 0, 1), ANGLE)
     assert np.array_equal(actual, expected)
+    axis, angle = transform.rotation_axis_angle
+    assert np.allclose(axis, (0, 0, 1))
+    assert np.allclose(angle, ANGLE)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1837,6 +2139,16 @@ def test_transform_matrix_list(transform, attr):
     assert np.array_equal(identity, np.eye(4))
 
 
+@pytest.mark.parametrize('point', [None, VECTOR])
+def test_transform_set_matrix(point):
+    # Create transform using point
+    trans = pv.Transform(point=point).scale(SCALE)
+    new_matrix = pv.Transform(ROTATION).matrix
+    assert not np.allclose(trans.matrix, new_matrix)
+    trans.matrix = new_matrix
+    assert np.allclose(trans.matrix, new_matrix)
+
+
 @pytest.fixture
 def transformed_actor():
     actor = pv.Actor()
@@ -1910,6 +2222,25 @@ def test_transform_init():
 
     transform = Transform(matrix.tolist())
     assert np.array_equal(transform.matrix, matrix)
+
+
+def test_transform_equivalent_methods():
+    def assert_transform_equivalence(tr_a: pv.Transform, tr_b: pv.Transform):
+        A = (tr_a * tr_b.inverse_matrix).matrix
+        B = np.eye(4)
+        assert np.allclose(A, B)
+        assert tr_a.n_transformations == tr_b.n_transformations
+
+    # All these transformations should be the same
+    tr1 = pv.Transform(ROTATION, point=VECTOR)
+    tr2 = pv.Transform(point=VECTOR).rotate(ROTATION)
+    tr3 = pv.Transform().rotate(ROTATION, point=VECTOR)
+    tr4 = pv.Transform().translate(-np.array(VECTOR)).rotate(ROTATION).translate(VECTOR)
+
+    trans = [tr1, tr2, tr3, tr4]
+
+    for _tr1, _tr2 in itertools.combinations(trans, 2):
+        assert_transform_equivalence(_tr1, _tr2)
 
 
 def test_transform_chain_methods():
@@ -2123,6 +2454,13 @@ SHEAR[1, 2] = values[2]
 SHEAR[2, 1] = values[2]
 
 
+def test_transform_shear_matrix(transform):
+    assert not transform.has_shear
+    transform.compose(SHEAR)
+    assert transform.has_shear
+    assert np.allclose(transform.shear_matrix, SHEAR)
+
+
 @pytest.mark.parametrize('do_shear', [True, False])
 @pytest.mark.parametrize('do_scale', [True, False])
 @pytest.mark.parametrize('do_reflection', [True, False])
@@ -2206,17 +2544,17 @@ def test_transform_as_rotation(representation, args, expected_type, expected_sha
 @pytest.mark.parametrize(
     ('event', 'expected'),
     [
-        ('end', vtk.vtkCommand.EndInteractionEvent),
-        ('start', vtk.vtkCommand.StartInteractionEvent),
-        ('always', vtk.vtkCommand.InteractionEvent),
-        (vtk.vtkCommand.InteractionEvent,) * 2,
-        (vtk.vtkCommand.EndInteractionEvent,) * 2,
-        (vtk.vtkCommand.StartInteractionEvent,) * 2,
+        ('end', _vtk.vtkCommand.EndInteractionEvent),
+        ('start', _vtk.vtkCommand.StartInteractionEvent),
+        ('always', _vtk.vtkCommand.InteractionEvent),
+        (_vtk.vtkCommand.InteractionEvent,) * 2,
+        (_vtk.vtkCommand.EndInteractionEvent,) * 2,
+        (_vtk.vtkCommand.StartInteractionEvent,) * 2,
     ],
 )
 def test_parse_interaction_event(
-    event: str | vtk.vtkCommand.EventIds,
-    expected: vtk.vtkCommand.EventIds,
+    event: str | _vtk.vtkCommand.EventIds,
+    expected: _vtk.vtkCommand.EventIds,
 ):
     assert _parse_interaction_event(event) == expected
 
@@ -2224,7 +2562,7 @@ def test_parse_interaction_event(
 def test_parse_interaction_event_raises_str():
     with pytest.raises(
         ValueError,
-        match='Expected.*start.*end.*always.*foo was given',
+        match=r'Expected.*start.*end.*always.*foo was given',
     ):
         _parse_interaction_event('foo')
 
@@ -2232,7 +2570,7 @@ def test_parse_interaction_event_raises_str():
 def test_parse_interaction_event_raises_wrong_type():
     with pytest.raises(
         TypeError,
-        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+        match=r'.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
     ):
         _parse_interaction_event(1)
 
@@ -2256,9 +2594,9 @@ def test_classproperty():
 
 @pytest.fixture
 def modifies_verbosity():
-    initial_verbosity = vtk.vtkLogger.GetCurrentVerbosityCutoff()
+    initial_verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
     yield
-    vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
+    _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
@@ -2273,7 +2611,7 @@ def modifies_verbosity():
     ],
 )
 def test_vtk_verbosity_context(verbosity):
-    initial_verbosity = vtk.vtkLogger.VERBOSITY_OFF
+    initial_verbosity = _vtk.vtkLogger.VERBOSITY_OFF
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
     with pv.vtk_verbosity(verbosity):
         ...
@@ -2346,6 +2684,172 @@ def test_vtk_snake_case():
     with pv.vtk_snake_case('warning'):
         with pytest.warns(RuntimeWarning, match=match):
             _ = pv.PolyData().information
+
+
+def test_allow_new_attributes():
+    match = (
+        "Attribute '_?foo' does not exist and cannot be added to class 'PolyData'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.'
+    )
+
+    def set_private():
+        _ = pv.PolyData()._foo = 42
+
+    def set_public():
+        _ = pv.PolyData().foo = 42
+
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
+
+    pv.allow_new_attributes('private')
+    assert pv.allow_new_attributes() == 'private'
+    set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
+
+    pv.allow_new_attributes(True)
+    assert pv.allow_new_attributes() is True
+    set_private()
+    set_public()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_default_backend(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    pv.enable_smp_tools()
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() >= 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_sets_threads(reset_smp_tools):  # noqa: ARG001
+    pv.enable_smp_tools(n_threads=2)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'error_type', 'match'),
+    [
+        ({'backend': 'invalid'}, ValueError, 'Invalid SMP backend'),
+        ({'backend': 1}, TypeError, '`backend` must be a string.'),
+        ({'n_threads': 0}, ValueError, '`n_threads` must be greater than or equal to 1.'),
+        ({'n_threads': 1.5}, TypeError, '`n_threads` must be an integer.'),
+        ({'n_threads': True}, TypeError, '`n_threads` must be an integer.'),
+    ],
+)
+def test_enable_smp_tools_invalid_input(kwargs, error_type, match):
+    with pytest.raises(error_type, match=re.escape(match)):
+        pv.enable_smp_tools(**kwargs)
+
+
+def test_enable_smp_tools_unsupported_vtk_build(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace())
+
+    match = 'This VTK build does not support runtime SMP backend selection.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_state(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    msg = 'boom'
+    with pytest.raises(RuntimeError, match=msg), pv.enable_smp_tools(n_threads=2):
+        raise RuntimeError(msg)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+        with pv.enable_smp_tools(n_threads=4):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+def test_enable_smp_tools_restores_state_on_unavailable_backend(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    state = {'backend': 'Sequential', 'threads': 3}
+
+    def get_backend() -> str:
+        return state['backend']
+
+    def get_estimated_number_of_threads() -> int:
+        return state['threads']
+
+    def initialize(n_threads: int = 0) -> None:
+        state['threads'] = n_threads or 8
+
+    def set_backend(backend: str) -> bool:
+        if backend == 'TBB':
+            state['backend'] = 'STDThread'
+            return False
+        state['backend'] = backend
+        return True
+
+    fake_smp_tools = SimpleNamespace(
+        GetBackend=get_backend,
+        GetEstimatedNumberOfThreads=get_estimated_number_of_threads,
+        Initialize=initialize,
+        SetBackend=set_backend,
+    )
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace(vtkSMPTools=fake_smp_tools))
+
+    match = 'The requested SMP backend `tbb` is not available in this VTK build.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools('tbb')
+
+    assert get_backend() == 'Sequential'
+    assert get_estimated_number_of_threads() == 3
 
 
 T = TypeVar('T')
@@ -2431,7 +2935,6 @@ def _compute_unit_cell_quality(
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
@@ -2460,7 +2963,6 @@ def xfail_distortion_returns_one(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
     """Test that the actual computed measure for a unit cell matches the reported value."""
     xfail_wedge_negative_volume(info)
@@ -2471,7 +2973,6 @@ def test_cell_quality_info_unit_cell_value(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
     """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
@@ -2495,7 +2996,6 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_normal_range(info):
     """Test that the normal range is broader than the acceptable range."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
@@ -2506,7 +3006,6 @@ def test_cell_quality_info_normal_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_full_range(info):
     """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
@@ -2517,7 +3016,6 @@ def test_cell_quality_info_full_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_degenerate_cell(info):
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_distortion_returns_one(info)
@@ -2533,7 +3031,6 @@ def test_cell_quality_info_degenerate_cell(info):
     )
 
 
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_raises():
     match = re.escape(
         "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
@@ -2555,19 +3052,19 @@ def test_cell_quality_info_raises():
 
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute():
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
-    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+    assert is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
 
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
-    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+    assert is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
 
-    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+    assert not is_vtk_attribute(pv.ImageData, 'foo')
 
 
 @pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
-    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
+    assert is_vtk_attribute(obj, 'GetDimensions')
 
 
 warnings.simplefilter('always')
@@ -2760,9 +3257,99 @@ def test_deprecate_positional_args_decorator_not_needed():
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_max_positional_args_matches_pyproject():
-    pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+    root = Path(
+        os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
+    )  # to make the test work when pyvista is installed via tox
+    pyproject_path = root / 'pyproject.toml'
     with pyproject_path.open('rb') as f:
         pyproject_data = tomllib.load(f)
     expected_value = pyproject_data['tool']['ruff']['lint']['pylint']['max-positional-args']
 
     assert expected_value == _MAX_POSITIONAL_ARGS
+
+
+@pytest.mark.parametrize('compression', get_args(_CompressionOptions))
+def test_writer_compression(compression):
+    writer = pv.XMLUnstructuredGridWriter('', pv.UnstructuredGrid())
+    writer.compression = compression
+    if compression is None:
+        assert writer.writer.GetCompressor() is None
+    else:
+        compressor = writer.writer.GetCompressor()
+        assert compression in str(type(compressor)).lower()
+
+
+def get_concrete_classes(module, abc):
+    """Collect all concrete BaseWriter subclasses"""
+    concrete_classes = []
+    for obj in vars(module).values():
+        if not (inspect.isclass(obj) and issubclass(obj, abc)):
+            continue
+        # Skip abstract
+        try:
+            obj()
+        except TypeError as e:
+            if 'abstract' in repr(e):
+                continue
+        concrete_classes.append(obj)
+    return concrete_classes
+
+
+WRITER_CLASSES = get_concrete_classes(pv.core.utilities.writer, pv.BaseWriter)
+READER_CLASSES = get_concrete_classes(pv.core.utilities.reader, pv.BaseReader)
+
+
+@pytest.mark.parametrize('writer_cls', WRITER_CLASSES)
+def test_writer_data_mode_mixin(writer_cls):
+    """Test that classes with an ascii setter have a data_mode property."""
+    if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
+    if not any('ascii' in attr.lower() for attr in dir(writer_cls._vtk_class)):
+        pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
+
+    assert _DataFormatMixin in writer_cls.__mro__, f'{writer_cls.__name__} missing DataModeMixin'
+    mesh = (
+        pv.PartitionedDataSet() if writer_cls is pv.XMLPartitionedDataSetWriter else pv.PolyData()
+    )
+
+    obj = writer_cls('', mesh)
+    assert obj.data_format == 'binary'
+    obj.data_format = 'ascii'
+    assert obj.data_format == 'ascii'
+    obj.data_format = 'binary'
+    assert obj.data_format == 'binary'
+
+
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_extensions(cls):
+    if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
+    if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
+        # These classes are not associated with any extensions
+        pytest.xfail()
+    assert len(cls.extensions) > 0
+
+
+def test_ply_writer(sphere, tmp_path):
+    writer_cls = pv.PLYWriter
+    assert writer_cls.extensions == ('.ply',)
+
+    path = tmp_path / 'sphere.ply'
+    writer = writer_cls(path, sphere)
+    assert writer.path == str(path)
+
+    if not sys.platform.startswith('win'):
+        # Skip repr check on Windows due to escaped backslashes
+        assert repr(writer) == f'PLYWriter({str(path)!r})'
+
+    array = np.arange(sphere.n_points)
+    with pytest.raises(TypeError, match='incorrect dtype'):
+        writer.texture = array
+    array = array.astype('uint8')
+
+    # Test array is implicitly added to mesh
+    texture_name = '_color_array'
+    writer.texture = array
+    assert writer.texture == texture_name
+    writer.texture = texture_name
+    assert writer.texture == texture_name

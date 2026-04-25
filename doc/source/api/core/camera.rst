@@ -93,7 +93,6 @@ at the ``'yz'``.
 
 .. pyvista-plot::
 
-   import pyvista
    from pyvista import demos
    pl = demos.orientation_plotter()
    pl.camera_position = 'yz'
@@ -104,7 +103,6 @@ Here we modify the roll in-place.
 
 .. pyvista-plot::
 
-   import pyvista
    from pyvista import demos
    pl = demos.orientation_plotter()
    pl.camera_position = 'yz'
@@ -116,7 +114,6 @@ the ``X+`` and ``Y+`` faces.
 
 .. pyvista-plot::
 
-   import pyvista
    from pyvista import demos
    pl = demos.orientation_plotter()
    pl.camera_position = 'yz'
@@ -128,7 +125,6 @@ degrees to see the ``X+`` and ``Z+`` faces.
 
 .. pyvista-plot::
 
-   import pyvista
    from pyvista import demos
    pl = demos.orientation_plotter()
    pl.camera_position = 'yz'

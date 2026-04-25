@@ -26,8 +26,8 @@ state.trame__title = 'PyVista UI Template'
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap='viridis')
+pl = pv.Plotter()
+actor = pl.add_mesh(mesh, cmap='viridis')
 
 
 @state.change('cmap')
@@ -59,7 +59,7 @@ with SinglePageLayout(server) as layout:
 
     with layout.content:
         # Use PyVista UI template for Plotters
-        view = plotter_ui(plotter)
+        view = plotter_ui(pl)
         ctrl.view_update = view.update
 
     # hide footer

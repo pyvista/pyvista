@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+import gc
 import re
 from unittest import mock
 
 import numpy as np
 import pandas as pd
 import pytest
-import vtk as _vtk
 
+import pyvista as pv
 from pyvista import examples
 from pyvista import pyvista_ndarray
 from pyvista import vtk_points
+from pyvista.core import _vtk_core as _vtk
 
 
 @pytest.fixture
@@ -116,3 +118,45 @@ def test_wrap_pandas(obj_in):
     array = pyvista_ndarray(obj_in)
     df = pd.DataFrame(array)
     assert np.shares_memory(df.values, array)
+
+
+def test_no_dataset_does_not_allocate_weak_reference():
+    # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    arr = pyvista_ndarray([1.0, 2.0, 3.0])
+    assert arr.dataset is None
+
+
+def _count_vtk_weak_references() -> int:
+    """Count live ``vtkWeakReference`` objects, tolerating dead weak refs.
+
+    ``isinstance`` on some weakref-like proxies whose targets have already
+    been collected raises ``ReferenceError``; skip those.
+    """
+    count = 0
+    for obj in gc.get_objects():
+        try:
+            if isinstance(obj, _vtk.vtkWeakReference):
+                count += 1
+        except ReferenceError:
+            continue
+    return count
+
+
+def test_point_data_assignment_does_not_leak_vtk_weak_reference():
+    # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    # Compare counts before and after rather than asserting an absolute
+    # zero — other code in the interpreter (other tests, fixtures,
+    # imported plugins) may legitimately hold ``vtkWeakReference``
+    # instances that have nothing to do with this operation.
+    gc.collect()
+    before = _count_vtk_weak_references()
+
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    del mesh
+    gc.collect()
+
+    after = _count_vtk_weak_references()
+    assert after <= before, (
+        f'point_data assignment leaked {after - before} vtkWeakReference instance(s)'
+    )

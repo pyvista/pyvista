@@ -762,7 +762,7 @@ def validate_number(num: float, /, *, reshape: bool = True, **kwargs):
 
     Returns
     -------
-    int | float
+    output : int | float
         Validated number.
 
     See Also

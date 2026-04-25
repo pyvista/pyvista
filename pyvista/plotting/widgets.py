@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
-from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -30,6 +30,7 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
+    from pyvista import ImageData
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
 
@@ -183,7 +184,7 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def simulate(widget):
         ...     bounds = widget.bounds
         ...     new_center = np.array(
@@ -202,16 +203,16 @@ class WidgetHelper:
         ...         - 0.3
         ...     )
         ...     sphere = pv.Sphere(radius=new_radius, center=new_center)
-        ...     _ = plotter.add_mesh(sphere, name='Sphere')
-        >>> _ = plotter.add_box_widget(callback=simulate)
-        >>> plotter.show()
+        ...     _ = pl.add_mesh(sphere, name='Sphere')
+        >>> _ = pl.add_box_widget(callback=simulate)
+        >>> pl.show()
 
         """
         if bounds is None:
             bounds = self.bounds  # type: ignore[attr-defined]
 
         def _the_callback(box_widget, _event):
-            the_box = pyvista.PolyData()
+            the_box = pv.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
@@ -223,7 +224,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).float_rgb,
+            Color(color, default_color=pv.global_theme.font.color).float_rgb,
         )
         box_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         box_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
@@ -258,6 +259,7 @@ class WidgetHelper:
         merge_points: bool = True,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
         interaction_event: InteractionEventType = 'end',
+        factor=1.25,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -276,6 +278,9 @@ class WidgetHelper:
 
         invert : bool, optional
             Flag on whether to flip/invert the clip.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is strictly
@@ -373,7 +378,7 @@ class WidgetHelper:
             clipper.SetBoxClip(*bounds)
             clipper.Update()
             if crinkle:
-                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+                clipped = pv.wrap(crinkler.GetOutputDataObject(0))
             else:
                 clipped = _get_output(clipper, oport=port)
             box_clipped_mesh.shallow_copy(clipped)
@@ -381,7 +386,7 @@ class WidgetHelper:
         self.add_box_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             rotation_enabled=rotation_enabled,
             use_planes=True,
             color=widget_color,
@@ -436,11 +441,11 @@ class WidgetHelper:
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
 
-        factor : float, optional
-            An inflation factor to expand on the bounds when placing.
-
         color : ColorLike, optional
             Either a string, rgb list, or hex color string.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -495,7 +500,7 @@ class WidgetHelper:
 
         Returns
         -------
-        :vtk:`vtkImplicitPlaneWidget` | :vtk:`vtkPlaneWidget`
+        output : :vtk:`vtkImplicitPlaneWidget` | :vtk:`vtkPlaneWidget`
             Plane widget.
 
         Examples
@@ -529,9 +534,9 @@ class WidgetHelper:
             bounds = self.bounds  # type: ignore[attr-defined]
 
         if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
+            normal = _NORMALS[normal.lower()]
 
-        color = Color(color, default_color=pyvista.global_theme.font.color)
+        color = Color(color, default_color=pv.global_theme.font.color)
 
         if assign_to_axis:
             normal_rotation = False
@@ -611,13 +616,13 @@ class WidgetHelper:
             # Note that normal_rotation was forced to False
             if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS['x'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['x'])  # type: ignore[arg-type]
             elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS['y'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['y'])  # type: ignore[arg-type]
             elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS['z'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['z'])  # type: ignore[arg-type]
             else:
                 msg = 'assign_to_axis not understood'
                 raise RuntimeError(msg)
@@ -651,6 +656,7 @@ class WidgetHelper:
         invert: bool = False,  # noqa: FBT001, FBT002
         widget_color=None,
         value=0.0,
+        factor=1.25,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
         origin_translation: bool = True,  # noqa: FBT001, FBT002
@@ -689,6 +695,9 @@ class WidgetHelper:
         value : float, optional
             Set the clipping value along the normal direction.
             The default value is 0.0.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -801,15 +810,15 @@ class WidgetHelper:
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
             if crinkle:
-                clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
+                clipped = pv.wrap(crinkler.GetOutputDataObject(0))
             else:
-                clipped = pyvista.wrap(clipper.GetOutput())
+                clipped = pv.wrap(clipper.GetOutput())
             plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
@@ -835,6 +844,7 @@ class WidgetHelper:
         invert: bool = False,  # noqa: ARG002, FBT001, FBT002
         widget_color=None,
         value=0.0,  # noqa: ARG002
+        factor=1.25,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
         origin_translation: bool = True,  # noqa: FBT001, FBT002
@@ -867,6 +877,9 @@ class WidgetHelper:
         value : float, optional
             Set the clipping value along the normal direction.
             The default value is 0.0.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -916,7 +929,7 @@ class WidgetHelper:
 
         Returns
         -------
-        :vtk:`vtkPlaneWidget` | :vtk:`vtkImplicitPlaneWidget`
+        output : :vtk:`vtkPlaneWidget` | :vtk:`vtkImplicitPlaneWidget`
             The VTK plane widget depending on the value of ``implicit``.
 
         See Also
@@ -924,9 +937,9 @@ class WidgetHelper:
         :ref:`clip_volume_widget_example`
 
         """
-        if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
+        if isinstance(volume, (pv.ImageData, pv.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)  # type: ignore[attr-defined]
-        elif not isinstance(volume, pyvista.plotting.volume.Volume):
+        elif not isinstance(volume, pv.plotting.volume.Volume):
             msg = (
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
@@ -946,7 +959,7 @@ class WidgetHelper:
         widget = self.add_plane_widget(
             callback=callback,
             bounds=volume.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
@@ -974,6 +987,7 @@ class WidgetHelper:
         widget_color=None,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
+        factor: float = 1.25,
         origin_translation: bool = True,  # noqa: FBT001, FBT002
         outline_translation: bool = False,  # noqa: FBT001, FBT002
         implicit: bool = True,  # noqa: FBT001, FBT002
@@ -1011,6 +1025,10 @@ class WidgetHelper:
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given axis:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        factor : float, optional
+            Expands the plane bounds. 1.0 means the plane bounds are exactly
+            the bounds of the mesh.
 
         tubing : bool, optional
             When using an implicit plane widget, this controls whether or not
@@ -1089,7 +1107,7 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        plane_sliced_mesh = pv.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
         def callback(normal, origin):
@@ -1102,7 +1120,7 @@ class WidgetHelper:
         self.add_plane_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
@@ -1286,7 +1304,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds  # type: ignore[attr-defined]
 
-        color = Color(color, default_color=pyvista.global_theme.font.color)
+        color = Color(color, default_color=pv.global_theme.font.color)
 
         def _the_callback(widget, _event):
             pointa = widget.GetPoint1()
@@ -1295,7 +1313,7 @@ class WidgetHelper:
                 if use_vertices:
                     args = [pointa, pointb]
                 else:
-                    the_line = pyvista.Line(pointa, pointb, resolution=resolution)
+                    the_line = pv.Line(pointa, pointb, resolution=resolution)
                     args = [the_line]
                 if pass_widget:
                     args.append(widget)
@@ -1567,11 +1585,11 @@ class WidgetHelper:
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
-        color = Color(color, default_color=pyvista.global_theme.font.color)
+        color = Color(color, default_color=pv.global_theme.font.color)
         title_color = Color(title_color, default_color=color)
 
         if fmt is None:
-            fmt = pyvista.global_theme.font.fmt
+            fmt = pv.global_theme.font.fmt
 
         def normalize(point, viewport):
             return (
@@ -1605,7 +1623,7 @@ class WidgetHelper:
             if not isinstance(style, str):
                 msg = f'Expected type for ``style`` is str but {type(style).__name__} was given.'
                 raise TypeError(msg)
-            slider_style = getattr(pyvista.global_theme.slider_styles, style)
+            slider_style = getattr(pv.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
             slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.float_rgb)
@@ -1751,12 +1769,12 @@ class WidgetHelper:
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
-        if isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pv.PointSet):
             # vtkThreshold is CELL-wise and PointSets have no cells
             algo = pointset_to_polydata_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
-        if isinstance(mesh, pyvista.MultiBlock):
+        if isinstance(mesh, pv.MultiBlock):
             msg = 'MultiBlock datasets are not supported for threshold widget.'
             raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
@@ -1788,7 +1806,7 @@ class WidgetHelper:
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
 
-        threshold_mesh = pyvista.wrap(alg.GetOutput())
+        threshold_mesh = pv.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
@@ -1914,10 +1932,10 @@ class WidgetHelper:
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
-        if isinstance(mesh, pyvista.PointSet):
+        if isinstance(mesh, pv.PointSet):
             msg = 'PointSets are 0-dimensional and thus cannot produce contours.'
             raise TypeError(msg)
-        if isinstance(mesh, pyvista.MultiBlock):
+        if isinstance(mesh, pv.MultiBlock):
             msg = 'MultiBlock datasets are not supported for this widget.'
             raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
@@ -1930,7 +1948,7 @@ class WidgetHelper:
         else:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != pyvista.FieldAssociation.POINT:
+        if field != pv.FieldAssociation.POINT:
             msg = (
                 f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
             )
@@ -1952,7 +1970,7 @@ class WidgetHelper:
 
         self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
-        isovalue_mesh = pyvista.wrap(alg.GetOutput())
+        isovalue_mesh = pv.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
         def callback(value):
@@ -2066,18 +2084,18 @@ class WidgetHelper:
             msg = '`initial_points` must be length `n_handles`.'
             raise ValueError(msg)
 
-        color = Color(color, default_color=pyvista.global_theme.color)
+        color = Color(color, default_color=pv.global_theme.color)
 
         if bounds is None:
             bounds = self.bounds  # type: ignore[attr-defined]
 
-        ribbon = pyvista.PolyData()
+        ribbon = pv.PolyData()
 
         def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
-            polyline = pyvista.wrap(para_source.GetOutput())
+            polyline = pv.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
                 if pass_widget:
@@ -2094,7 +2112,7 @@ class WidgetHelper:
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
-            spline_widget.InitializeHandles(pyvista.vtk_points(initial_points))
+            spline_widget.InitializeHandles(pv.vtk_points(initial_points))
         else:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
@@ -2122,6 +2140,7 @@ class WidgetHelper:
         self,
         mesh,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        factor=1.25,
         n_handles=5,
         resolution=25,
         widget_color=None,
@@ -2150,6 +2169,9 @@ class WidgetHelper:
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         n_handles : int, optional
             The number of interactive spheres to control the spline's
@@ -2218,7 +2240,7 @@ class WidgetHelper:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        spline_sliced_mesh = pv.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
         def callback(spline):
@@ -2233,7 +2255,7 @@ class WidgetHelper:
         self.add_spline_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             color=widget_color,
             n_handles=n_handles,
             resolution=resolution,
@@ -2286,7 +2308,7 @@ class WidgetHelper:
         iren = self._get_iren_not_none(msg)  # type: ignore[attr-defined]
 
         if color is None:
-            color = pyvista.global_theme.font.color.float_rgb
+            color = pv.global_theme.font.color.float_rgb
         color = Color(color)
 
         compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
@@ -2423,7 +2445,7 @@ class WidgetHelper:
 
         """
         if color is None:
-            color = pyvista.global_theme.color.float_rgb
+            color = pv.global_theme.color.float_rgb
         selected_color = Color(selected_color)
 
         center = np.array(center)
@@ -2639,12 +2661,12 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> p = pv.Plotter()
-        >>> actor = p.add_mesh(mesh)
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
-        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
-        >>> p.show()
+        >>> _ = pl.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> pl.show()
 
         Download the interactive example at :ref:`checkbox_widget_example`.
 
@@ -2658,7 +2680,7 @@ class WidgetHelper:
             color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
-            button = pyvista.ImageData(dimensions=dims)
+            button = pv.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[border_size : dims[0] - border_size, border_size : dims[1] - border_size] = (
@@ -2770,32 +2792,32 @@ class WidgetHelper:
         The following example creates a background color switcher.
 
         >>> import pyvista as pv
-        >>> p = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def set_bg(color):
         ...     def wrapped_callback():
-        ...         p.background_color = color
+        ...         pl.background_color = color
         ...
         ...     return wrapped_callback
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('white'),
         ...     'bgcolor',
         ...     position=(10.0, 200.0),
         ...     title='White',
         ...     value=True,
         ... )
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('lightblue'),
         ...     'bgcolor',
         ...     position=(10.0, 140.0),
         ...     title='Light Blue',
         ... )
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('pink'),
         ...     'bgcolor',
         ...     position=(10.0, 80.0),
         ...     title='Pink',
         ... )
-        >>> p.show()
+        >>> pl.show()
 
         """
         msg = 'Cannot add a widget to a closed plotter.'
@@ -2822,7 +2844,7 @@ class WidgetHelper:
             bg_color = np.array(bg_color.int_rgb)
 
             n_points = size**2
-            button = pyvista.ImageData(dimensions=(size, size, 1))
+            button = pv.ImageData(dimensions=(size, size, 1))
             arr = np.array([bg_color] * n_points).reshape(size, size, 3)  # fill background
 
             centre = size / 2
@@ -2910,9 +2932,6 @@ class WidgetHelper:
     def add_camera_orientation_widget(self, animate: bool = True, n_frames=20):  # noqa: FBT001, FBT002
         """Add a camera orientation widget to the active renderer.
 
-        .. note::
-           This widget requires ``vtk>=9.1.0``.
-
         Parameters
         ----------
         animate : bool, default: True
@@ -2943,21 +2962,13 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
-        >>> _ = plotter.add_camera_orientation_widget()
-        >>> plotter.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> _ = pl.add_camera_orientation_widget()
+        >>> pl.show()
 
         """
-        try:
-            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
-        except ImportError:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = 'vtkCameraOrientationWidget requires vtk>=9.1.0'
-            raise VTKVersionError(msg)
-
-        widget = vtkCameraOrientationWidget()
+        widget = _vtk.vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)  # type: ignore[attr-defined]
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
@@ -2980,7 +2991,7 @@ class WidgetHelper:
     @_deprecate_positional_args(allowed=['logo'])
     def add_logo_widget(  # noqa: PLR0917
         self,
-        logo: pyvista.ImageData | str | pathlib.Path | None = None,
+        logo: ImageData | str | pathlib.Path | None = None,
         position: VectorLike[float] = (0.75, 0.8),
         size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,
@@ -3025,21 +3036,20 @@ class WidgetHelper:
 
         """
         if logo is None:
-            logo = pyvista.global_theme.logo_file
+            logo = pv.global_theme.logo_file
         if logo is None:
             # Fallback to PyVista logo
             from pyvista import examples
 
             logo = examples.logofile
 
-        # Read dataset and narrow the logo type to ImageData
-        logo_maybe: pyvista.DataObject | str | pathlib.Path | None
-        logo_maybe = pyvista.read(logo) if isinstance(logo, (str, pathlib.Path)) else logo
-        if not isinstance(logo_maybe, pyvista.ImageData):
-            msg = 'Logo must be a pyvista.ImageData or a file path to an image.'
+        if isinstance(logo, (str, pathlib.Path)):
+            logo = pv.read(logo, cls=pv.ImageData)
+        elif not isinstance(logo, pv.ImageData):
+            # Defensive runtime check: Python does not enforce type hints,
+            # so a caller may still pass something unexpected.
+            msg = 'Logo must be a pyvista.ImageData or a file path to an image.'  # type: ignore[unreachable]
             raise TypeError(msg)
-        else:
-            logo = logo_maybe
 
         representation = _vtk.vtkLogoRepresentation()
         representation.SetImage(logo)
@@ -3076,12 +3086,12 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> plotter = pv.Plotter(shape=(1, 2))
-        >>> _ = plotter.add_mesh(sphere, show_edges=True)
-        >>> plotter.subplot(0, 1)
-        >>> _ = plotter.add_mesh(sphere, show_edges=True)
-        >>> _ = plotter.add_camera3d_widget()
-        >>> plotter.show(cpos=plotter.camera_position)
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(sphere, show_edges=True)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(sphere, show_edges=True)
+        >>> _ = pl.add_camera3d_widget()
+        >>> pl.show(cpos=pl.camera_position)
 
         """
         try:

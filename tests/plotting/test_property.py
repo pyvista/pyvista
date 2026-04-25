@@ -173,11 +173,6 @@ def test_property_specular_color(prop):
 
 def test_property_anisotropy(prop):
     value = 0.1
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.anisotropy = value
-        return
-
     assert isinstance(prop.anisotropy, float)
     prop.anisotropy = value
     assert prop.anisotropy == value

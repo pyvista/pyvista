@@ -7,10 +7,10 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.geometric_objects import translate
 
 
@@ -95,7 +95,7 @@ def test_multiple_lines_source():
     assert np.array_equal(algo.points, points)
     with pytest.raises(ValueError, match='Array of points must have three values per point'):
         algo.points = points[:, :1]
-    with pytest.raises(ValueError, match='>=2 points need to define multiple lines.'):
+    with pytest.raises(ValueError, match=r'>=2 points need to define multiple lines.'):
         algo.points = points[0, :]
 
 
@@ -161,7 +161,7 @@ def test_text3d_source_empty_string():
     if pv.vtk_version_info == (9, 0, 3):
         mx, mn = 1, -1
     else:
-        mx, mn = vtk.VTK_DOUBLE_MAX, vtk.VTK_DOUBLE_MIN
+        mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
 
     assert out.bounds == (mx, mn, mx, mn, mx, mn)
 
@@ -345,10 +345,9 @@ def test_disc_source():
     assert algo.outer == 0.5
     assert algo.r_res == 1
     assert algo.c_res == 6
-    if pv.vtk_version_info >= (9, 2):
-        center = (1.0, 2.0, 3.0)
-        algo = pv.DiscSource(center=center)
-        assert algo.center == center
+    center = (1.0, 2.0, 3.0)
+    algo = pv.DiscSource(center=center)
+    assert algo.center == center
 
 
 def test_cube_source():
@@ -376,9 +375,8 @@ def test_sphere_source():
     assert algo.start_phi == 0.0
     assert algo.end_phi == 180.0
     center = (1.0, 2.0, 3.0)
-    if pv.vtk_version_info >= (9, 2):
-        algo = pv.SphereSource(center=center)
-        assert algo.center == center
+    algo = pv.SphereSource(center=center)
+    assert algo.center == center
 
 
 def test_line_source():
@@ -600,14 +598,16 @@ def test_axes_geometry_source_tip_length_init():
 
 
 def test_axes_geometry_source_tip_radius_set_get(axes_geometry_source):
-    assert axes_geometry_source.tip_radius == 0.1
+    assert axes_geometry_source.tip_radius == (0.1, 0.1, 0.1)
     axes_geometry_source.tip_radius = 0.8
-    assert axes_geometry_source.tip_radius == 0.8
+    assert axes_geometry_source.tip_radius == (0.8, 0.8, 0.8)
+    axes_geometry_source.tip_radius = [0.1, 0.2, 0.3]
+    assert axes_geometry_source.tip_radius == (0.1, 0.2, 0.3)
 
 
 def test_axes_geometry_source_tip_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(tip_radius=9)
-    assert axes_geometry_source.tip_radius == 9
+    assert axes_geometry_source.tip_radius == (9, 9, 9)
 
 
 @pytest.mark.parametrize(
@@ -678,14 +678,16 @@ def test_axes_geometry_source_tip_type_init(tip_type):
 
 
 def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
-    assert axes_geometry_source.shaft_radius == 0.025
+    assert axes_geometry_source.shaft_radius == (0.025, 0.025, 0.025)
     axes_geometry_source.shaft_radius = 0.1
-    assert axes_geometry_source.shaft_radius == 0.1
+    assert axes_geometry_source.shaft_radius == (0.1, 0.1, 0.1)
+    axes_geometry_source.shaft_radius = [0.1, 0.2, 0.3]
+    assert axes_geometry_source.shaft_radius == (0.1, 0.2, 0.3)
 
 
 def test_axes_geometry_source_shaft_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(shaft_radius=3)
-    assert axes_geometry_source.shaft_radius == 3
+    assert axes_geometry_source.shaft_radius == (3, 3, 3)
 
 
 def test_axes_geometry_source_update_output(axes_geometry_source):
@@ -717,10 +719,10 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        '  Shaft radius:               0.025',
+        '  Shaft radius:               (0.025, 0.025, 0.025)',
         '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        '  Tip radius:                 0.1',
+        '  Tip radius:                 (0.1, 0.1, 0.1)',
         '  Tip length:                 (0.2, 0.2, 0.2)',
         '  Symmetric:                  False',
         '  Symmetric bounds:           False',

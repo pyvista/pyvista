@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import VTKVersionError
+from pyvista.plotting import _vtk
 from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_texture():
-    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
+    with pytest.raises(TypeError, match=r'Cannot create a pyvista.Texture from'):
         texture = pv.Texture(range(10))
 
     texture = pv.Texture(examples.mapfile)
@@ -91,7 +90,7 @@ def test_texture_rotate_ccw(texture):
 def test_texture_from_images(image):
     texture = pv.Texture([image] * 6)
     assert texture.cube_map
-    with pytest.raises(TypeError, match='pyvista.ImageData'):
+    with pytest.raises(TypeError, match=r'pyvista.ImageData'):
         pv.Texture(['foo'] * 6)
 
 
@@ -104,7 +103,7 @@ def test_skybox_example():
     assert texture.cube_map is True
 
     skybox = texture.to_skybox()
-    assert isinstance(skybox, vtk.vtkOpenGLSkybox)
+    assert isinstance(skybox, _vtk.vtkOpenGLSkybox)
 
 
 def test_flip_x(texture):
@@ -151,15 +150,9 @@ def test_repeat(texture):
 
 
 def test_wrap(texture):
-    if pv.vtk_version_info < (9, 1):
-        with pytest.raises(VTKVersionError):
-            assert isinstance(texture.wrap, texture.WrapType)
-        with pytest.raises(VTKVersionError):
-            texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-    else:
-        assert isinstance(texture.wrap, texture.WrapType)
-        texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-        assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
+    assert isinstance(texture.wrap, texture.WrapType)
+    texture.wrap = texture.WrapType.CLAMP_TO_EDGE
+    assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
 
 
 def test_grayscale(texture):
@@ -208,10 +201,10 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     texture = np.ones((sphere.n_points, 3), np.float32)
     if as_str:
         sphere.point_data['texture'] = texture
-        with pytest.raises(ValueError, match='Invalid datatype'):
+        with pytest.raises(TypeError, match='incorrect dtype'):
             sphere.save(filename, texture='texture')
     else:
-        with pytest.raises(ValueError, match='Invalid datatype'):
+        with pytest.raises(TypeError, match='incorrect dtype'):
             sphere.save(filename, texture=texture)
 
     with pytest.raises(TypeError):

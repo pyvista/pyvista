@@ -18,6 +18,15 @@ with namespace_data.open() as f:
 def test_utilities_namespace(name):
     import pyvista.utilities as utilities  # noqa: PLR0402
 
+    # Force ``pyvista.utilities.__getattr__`` to fire by removing any
+    # attribute Python's import machinery may have cached on the parent
+    # module. Without this, a previous test that did
+    # ``from pyvista.utilities.<submodule> import ...`` leaves
+    # ``utilities.<name>`` populated, so ``hasattr`` resolves directly
+    # without triggering the deprecation warning. That made the test
+    # order-dependent.
+    utilities.__dict__.pop(name, None)
+
     with pytest.warns(PyVistaDeprecationWarning):
         assert hasattr(utilities, name)
 
@@ -56,7 +65,6 @@ def _import_all_utilities():
     import pyvista.utilities  # noqa: F401
 
     # Import specific items to ensure they exist
-    from pyvista.utilities import NORMALS  # noqa: F401
     from pyvista.utilities import abstract_class  # noqa: F401
     from pyvista.utilities import assert_empty_kwargs  # noqa: F401
     from pyvista.utilities import conditional_decorator  # noqa: F401

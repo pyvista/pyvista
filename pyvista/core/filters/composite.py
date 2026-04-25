@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
@@ -18,7 +20,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from pyvista import MultiBlock
     from pyvista.core.composite import _TypeMultiBlockLeaf
@@ -211,7 +213,7 @@ class CompositeFilters(DataObjectFilters):
             return self
 
         # Create a copy and replace all the blocks
-        output = pyvista.MultiBlock()
+        output = pv.MultiBlock()
         output.shallow_copy(self, recursive=True)
         for ids, name, block in get_iterator(output, skip_none, skip_empty):
             filtered = apply_filter(function, ids, name, block)
@@ -233,6 +235,17 @@ class CompositeFilters(DataObjectFilters):
             Surface of the composite dataset.
 
         """
+        msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
+        warn_external(msg, PyVistaDeprecationWarning)
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 51):  # pragma: no cover
+            msg = 'Remove this deprecated filter.'
+            raise RuntimeError(msg)
+        return self._composite_geometry_filter()
+
+    def _composite_geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
         gf.Update()
@@ -327,7 +340,7 @@ class CompositeFilters(DataObjectFilters):
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)
+        box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
     @_deprecate_positional_args
@@ -359,7 +372,7 @@ class CompositeFilters(DataObjectFilters):
         """
         if nested:
             return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
-        box = pyvista.Box(bounds=self.bounds)
+        box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     @_deprecate_positional_args
@@ -387,7 +400,7 @@ class CompositeFilters(DataObjectFilters):
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:  # type: ignore[attr-defined]
-                ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
+                ids = np.arange(block.n_points, dtype=pv.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
         alg = _vtk.vtkPolyDataNormals()

@@ -203,6 +203,42 @@ class PyVistaAttributeError(AttributeError):
         super().__init__(message)
 
 
+class InvalidMeshError(ValueError):
+    """Error for invalid mesh properties.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(self, message='Invalid mesh.') -> None:
+        super().__init__(message)
+
+
+class VTKExecutionError(RuntimeError):
+    """Exception when a VTK output message is detected.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self,
+        message='VTK output message was detected by PyVista.',
+    ) -> None:  # numpydoc ignore=PR01,RT01
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
 class PyVistaDeprecationWarning(Warning):
     """Non-supressed Deprecation Warning."""
 
@@ -213,3 +249,19 @@ class PyVistaFutureWarning(Warning):
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
+
+
+class VTKExecutionWarning(RuntimeWarning):
+    """Warning when a VTK output message is detected.
+
+    .. versionadded:: 0.47
+
+    """
+
+
+class InvalidMeshWarning(Warning):
+    """Warning for invalid mesh properties.
+
+    .. versionadded:: 0.47
+
+    """

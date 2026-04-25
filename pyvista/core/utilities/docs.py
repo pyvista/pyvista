@@ -37,7 +37,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
 
     """
-    import pyvista  # noqa: PLC0415
+    import pyvista as pv  # noqa: PLC0415
 
     if domain != 'py':
         return None
@@ -57,7 +57,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
 
     # deal with our decorators properly
@@ -69,30 +69,30 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001  # pragma: no cover
         fn = None
 
     if not fn:  # pragma: no cover
         try:
             fn = inspect.getsourcefile(sys.modules[obj.__module__])
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
         return None
 
-    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))  # noqa: PTH120
+    fn = op.relpath(fn, start=op.dirname(pv.__file__))  # noqa: PTH120
     fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001 # pragma: no cover
         lineno = None
 
     linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
 
-    if 'dev' in pyvista.__version__:
+    if 'dev' in pv.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = f'release/{".".join(pyvista.__version__.split(".")[:2])}'
+        kind = f'release/{".".join(pv.__version__.split(".")[:2])}'
 
     blob_or_edit = 'edit' if edit else 'blob'
 

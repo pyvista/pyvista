@@ -7,7 +7,7 @@ import re
 import sys
 import warnings
 
-import pyvista
+import pyvista as pv
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -15,7 +15,7 @@ sys.path.append(str(Path(__file__).parent))
 # https://github.com/pyvista/pyvista/pull/7747
 warnings.filterwarnings(
     'ignore',
-    message=r'Ignoring invalid PYVISTA_USERDATA_PATH.*',
+    message=r'(?s).*PYVISTA_VTK_DATA is not a valid directory.*',
     category=UserWarning,
 )
 
@@ -42,7 +42,7 @@ extensions = [
 ]
 
 # -- Plot directive specific configuration --------------------------------
-plot_setup = plot_cleanup = 'import pyvista'
+plot_setup = plot_cleanup = 'import pyvista as pv'
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -51,7 +51,7 @@ html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
 
 # -- pyvista configuration ------------------------------------------------
-pyvista.BUILDING_GALLERY = True
+pv.BUILDING_GALLERY = True
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString
@@ -87,7 +87,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']
@@ -99,3 +99,6 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+# required for testing
+pyvista_plot_use_counter = os.environ.get('PYVISTA_PLOT_USE_COUNTER', 'true').lower() == 'true'

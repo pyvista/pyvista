@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from trame.app import get_server
 
-import pyvista
+import pyvista as pv
 
 if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
@@ -176,7 +176,7 @@ class BaseViewer:
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
             for actor in renderer.actors.values():
-                if isinstance(actor, pyvista.Actor):
+                if isinstance(actor, pv.Actor):
                     actor.prop.show_edges = value
         self.update()
 
@@ -230,16 +230,22 @@ class BaseViewer:
             else:
                 renderer.hide_axes()
         for view in self._html_views:
-            if view.set_widgets:
+            # Check if 'set_widgets' is defined directly in the class, not just as a
+            # dynamic attribute. The Trame-Client getattr prints an error message which
+            # is undesirable in this case.
+            # https://github.com/Kitware/trame-client/blob/8e3e2042214fd238b628216bff48d1762adf50a3/trame_client/widgets/core.py#L467
+            if 'set_widgets' in type(view).__dict__:
+                method = getattr(view, 'set_widgets', None)
                 # VtkRemoteView does not have set_widgets function, but
                 # VtkRemoteLocalView and VtkLocalView do.
-                view.set_widgets(
-                    [
-                        ren.axes_widget
-                        for ren in self.plotter.renderers
-                        if ren.axes_widget is not None
-                    ],
-                )
+                if callable(method):
+                    method(
+                        [
+                            ren.axes_widget
+                            for ren in self.plotter.renderers
+                            if ren.axes_widget is not None
+                        ],
+                    )
         self.update()
 
     def on_rendering_mode_change(self, **kwargs):
@@ -257,7 +263,7 @@ class BaseViewer:
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
-        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
+        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pv.Actor)}
 
     def screenshot(self):
         """Take screenshot and add attachament.

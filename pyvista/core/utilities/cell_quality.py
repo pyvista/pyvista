@@ -132,10 +132,10 @@ _CELL_QUALITY_INFO = [
     Info(QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(QUAD, 'skew', (0.0, 0.7), (0.0, 1.0), (0.0, 1.0), 0.0),
+    Info(QUAD, 'skew', (0.0, 0.5), (0.0, 1.0), (0.0, 1.0), 0.0),
     Info(QUAD, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
     Info(QUAD, 'taper', (0.0, 0.7), (0.0, INF), (0.0, INF), 0.0),
-    Info(QUAD, 'warpage', (0.5, 1.0), (0.0, 2.0), (0.0, INF), 1.0),
+    Info(QUAD, 'warpage', (0.3, 1.0), (-1.0, 1.0), (-INF, INF), 1.0),
     Info(TETRA, 'aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
     Info(TETRA, 'aspect_gamma', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
     Info(TETRA, 'aspect_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
@@ -219,9 +219,7 @@ def cell_quality_info(
     .. note::
 
         The information returned by this function is based on the
-        `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_.
-        Since this reference has `known errors <https://gitlab.kitware.com/vtk/vtk/-/issues/19644>`_,
-        some values have been adjusted so that the returned values are correct.
+        `Verdict Library Reference Manual <https://github.com/sandialabs/verdict/raw/master/SAND2007-2853p.pdf>`_.
 
     .. note::
 

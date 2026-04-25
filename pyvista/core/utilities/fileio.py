@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Sequence
+import importlib
 import itertools
+import json
 from pathlib import Path
 import pickle
 from typing import TYPE_CHECKING
@@ -11,17 +15,19 @@ from typing import Any
 from typing import Literal
 from typing import TextIO
 from typing import TypeVar
-from typing import Union
 from typing import cast
 from typing import overload
-import warnings
+from urllib.parse import urlparse
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .observers import Observer
 
@@ -30,28 +36,96 @@ if TYPE_CHECKING:
 
     import imageio
     import meshio
+    import trimesh
+    from vtkmodules.vtkIOCore import vtkWriter
 
-    from pyvista.core._typing_core import VectorLike
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataobject import DataObject
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.pointset import ExplicitStructuredGrid
-    from pyvista.core.pointset import UnstructuredGrid
-    from pyvista.core.utilities.reader import BaseReader
-    from pyvista.plotting.texture import Texture
+    from pyvista import BaseReader
+    from pyvista import DataObject
+    from pyvista import DataSet
+    from pyvista import ExplicitStructuredGrid
+    from pyvista import MultiBlock
+    from pyvista import NumpyArray
+    from pyvista import PolyData
+    from pyvista import Texture
+    from pyvista import UnstructuredGrid
+    from pyvista import VectorLike
 
-PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
-
-if TYPE_CHECKING:
-    _VTKWriterAlias = Union[
-        _vtk.vtkXMLPartitionedDataSetWriter,
-        _vtk.vtkXMLWriter,
-        _vtk.vtkDataWriter,
-        _vtk.vtkHDFWriter,
-    ]
-    _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
-
+_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
+PathStrSeq = str | Path | Sequence['PathStrSeq']
 PICKLE_EXT = ('.pkl', '.pickle')
+_PointCellField = Literal['point', 'cell', 'field']
+_PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
+_ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
+
+
+def _lazy_vtk_import(module_name: str, class_name: str) -> type:
+    """Lazy import of a class from vtkmodules."""
+    module = importlib.import_module(f'vtkmodules.{module_name}')
+    return getattr(module, class_name)
+
+
+class _FileIOBase(ABC, _NoNewAttrMixin):
+    _vtk_module_name: str = ''
+    _vtk_class_name: str = ''
+
+    def __repr__(self) -> str:
+        """Representation of a FileIO object."""
+        return f'{self.__class__.__name__}({self.path!r})'
+
+    @property
+    @abstractmethod
+    def path(self) -> str:
+        """Get the path."""
+
+    @path.setter
+    @abstractmethod
+    def path(self, path: str | Path) -> None:
+        """Set the path."""
+
+    @_classproperty
+    def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
+        if cls._vtk_module_name and cls._vtk_class_name:
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
+        return None
+
+    @classmethod
+    @abstractmethod
+    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+
+    @_classproperty
+    def extensions(cls) -> tuple[str, ...]:  # noqa: N805
+        """Return the file extension(s) associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
+        extensions = set()
+        for mapping in cls._get_extension_mappings():
+            for ext, typ in mapping.items():
+                if typ is cls:  # type: ignore[comparison-overlap]
+                    extensions.add(ext)
+        return tuple(sorted(extensions))
+
+
+def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+    if not isinstance(mesh, pv.MultiBlock):
+        return
+    iterator = mesh.recursive_iterator('all', node_type='parent')
+    for index, name, nested_multiblock in iterator:
+        if len(nested_multiblock.field_data.keys()) > 0:
+            # Avoid circular import
+            from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
+
+            index_fmt = _format_nested_index(index)
+            msg = (
+                f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                f'has field data which will not be saved.\n'
+                'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                'Use `move_nested_field_data_to_root` to store the field data '
+                'with the root MultiBlock before saving.'
+            )
+            warn_external(msg)
 
 
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
@@ -90,11 +164,11 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
         raise ValueError(msg)
-    if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
+    if format_ == 'vtk' and pv.vtk_version_info < (9, 3):
         msg = "'vtk' pickle format requires VTK >= 9.3"
         raise ValueError(msg)
 
-    pyvista.PICKLE_FORMAT = format_
+    pv.PICKLE_FORMAT = format_
 
 
 def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
@@ -133,48 +207,35 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
-@_deprecate_positional_args(allowed=['vtk_writer'])
-def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001, FBT002
-    """Set any vtk writer to write as binary or ascii.
-
-    Parameters
-    ----------
-    vtk_writer
-        The vtk writer instance to be configured. Must be one of :vtk:`vtkDataWriter`,
-        :vtk:`vtkPLYWriter`, :vtk:`vtkSTLWriter`, :vtk:`vtkXMLWriter`.
-    use_binary : bool, default: True
-        If ``True``, the writer is set to write files in binary format. If
-        ``False``, the writer is set to write files in ASCII format.
-
-    Returns
-    -------
-    :vtk:`vtkDataWriter` | :vtk:`vtkPLYWriter` | :vtk:`vtkSTLWriter` | :vtk:`vtkXMLWriter`
-        The configured vtk writer instance.
-
-    """
-    from vtkmodules.vtkIOGeometry import vtkSTLWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOLegacy import vtkDataWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOPLY import vtkPLYWriter  # noqa: PLC0415
-
-    if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
-        if use_binary:
-            vtk_writer.SetFileTypeToBinary()
-        else:
-            vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
-        if use_binary:
-            vtk_writer.SetDataModeToBinary()
-        else:
-            vtk_writer.SetDataModeToAscii()
-    return vtk_writer
-
-
+@overload
+def read(
+    filename: PathStrSeq,
+    force_ext: str | None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,  # noqa: FBT001
+    *,
+    cls: type[_ReadReturnT],
+    validate: bool | None = ...,
+) -> _ReadReturnT: ...
+@overload
+def read(
+    filename: PathStrSeq,
+    force_ext: str | None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,  # noqa: FBT001
+    *,
+    cls: None = ...,
+    validate: bool | None = ...,
+) -> DataSet | MultiBlock: ...
 @_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0911, PLR0917
+def read(  # noqa: PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,  # noqa: FBT001, FBT002
+    *,
+    cls: type[DataObject] | None = None,
+    validate: bool | None = None,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -183,7 +244,15 @@ def read(  # noqa: PLR0911, PLR0917
     readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
     meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
+    Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
+    temporary file automatically.  Install ``fsspec`` for full protocol
+    support (``pip install pyvista[io]``); ``pooch`` is used as a
+    fallback for HTTP(S).  Third-party reader plugins registered via
+    :func:`pyvista.register_reader` are also checked.
+
     See :func:`pyvista.get_reader` for list of vtk formats supported.
+
+    .. include:: /api/utilities/mesh_io.rst
 
     .. note::
        See https://github.com/nschloe/meshio for formats supported by
@@ -223,10 +292,29 @@ def read(  # noqa: PLR0911, PLR0917
     progress_bar : bool, default: False
         Optionally show a progress bar. Ignored when using ``meshio``.
 
+    cls : type, optional
+        Expected concrete type of the returned mesh. When given, the
+        result is checked with :func:`isinstance` and a
+        :class:`TypeError` is raised on mismatch. Static type checkers
+        (``mypy``, ``pyright``) use this to narrow the return type to
+        ``cls`` directly, so callers do not need ``typing.cast`` or a
+        manual ``assert isinstance`` to access subclass-specific
+        attributes, e.g. ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
+
+    validate : bool, optional
+        Forwarded to :func:`pyvista.wrap` as the ``validate`` keyword when
+        using a ``vtk`` reader. When ``None`` (the default), honors
+        :attr:`pyvista.core.config.Config.validate_on_wrap`. Pass ``False`` to
+        skip the cheap array-length sanity check on very large trusted
+        files. Has no effect for ``meshio`` or pickle code paths.
+
+        .. versionadded:: 0.48
+
     Returns
     -------
-    pyvista.DataSet
-        Wrapped PyVista dataset.
+    pyvista.DataSet | pyvista.MultiBlock
+        Wrapped PyVista dataset. When ``cls`` is given, an instance of
+        ``cls`` is returned instead.
 
     Examples
     --------
@@ -236,6 +324,12 @@ def read(  # noqa: PLR0911, PLR0917
     >>> from pyvista import examples
     >>> mesh = pv.read(examples.antfile)
     >>> mesh.plot(cpos='xz')
+
+    Narrow the return type to a specific class. This avoids the need for
+    a manual ``cast`` when working with type checkers such as ``mypy``
+    or ``pyright``.
+
+    >>> mesh = pv.read('mesh.vtu', cls=pv.UnstructuredGrid)  # doctest:+SKIP
 
     Load a vtk file.
 
@@ -250,16 +344,72 @@ def read(  # noqa: PLR0911, PLR0917
     >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
+    result = _read_dispatch(
+        filename,
+        force_ext=force_ext,
+        file_format=file_format,
+        progress_bar=progress_bar,
+        validate=validate,
+    )
+    if cls is not None and not isinstance(result, cls):
+        msg = (
+            f'Expected an instance of {cls.__name__} when reading {filename!r}, '
+            f'but got {type(result).__name__}.'
+        )
+        raise TypeError(msg)
+    return result
+
+
+def _read_dispatch(  # noqa: PLR0911
+    filename: PathStrSeq,
+    *,
+    force_ext: str | None,
+    file_format: str | None,
+    progress_bar: bool,
+    validate: bool | None,
+) -> DataObject:
+    """Dispatch a filename to the right reader and return the wrapped mesh."""
     if file_format is not None and force_ext is not None:
         msg = 'Only one of `file_format` and `force_ext` may be specified.'
         raise ValueError(msg)
 
     if isinstance(filename, Sequence) and not isinstance(filename, str):
-        multi = pyvista.MultiBlock()
+        multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
+            multi.append(
+                _read_dispatch(  # type: ignore[arg-type]
+                    each,
+                    force_ext=None,
+                    file_format=file_format,
+                    progress_bar=progress_bar,
+                    validate=validate,
+                ),
+                name,
+            )
         return multi
+
+    # Circular import: reader_registry -> reader -> fileio
+    from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
+
+    # Handle remote URIs before Path coercion
+    if isinstance(filename, str) and has_scheme(filename):
+        uri_ext = get_ext(urlparse(filename).path)
+        # If a custom reader is registered for this extension, try it
+        # with the raw URI first — the reader may handle cloud paths
+        # natively (e.g. zarr stores on S3). If it fails, fall back to
+        # downloading the file and retrying with a local path.
+        ext_handler = _get_ext_handler(uri_ext)
+        if ext_handler is not None:
+            try:
+                return ext_handler(filename)
+            except LocalFileRequiredError:
+                filename = _download_uri(filename, uri_ext)
+                return ext_handler(filename)
+        filename = _download_uri(filename, uri_ext)
 
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
@@ -284,28 +434,39 @@ def read(  # noqa: PLR0911, PLR0917
     if ext in PICKLE_EXT:
         return read_pickle(filename)
 
+    # Check for registered custom extension readers
+    ext_handler = _get_ext_handler(ext)
+    if ext_handler is not None:
+        return ext_handler(str(filename))
+
     try:
-        reader = pyvista.get_reader(filename, force_ext)
+        reader = pv.get_reader(filename, force_ext)
     except ValueError:
+        msg = f'This file was not able to be automatically read by pyvista.\n  {str(filename)!r}'
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
-        from meshio._exceptions import ReadError  # noqa: PLC0415
-
+        try:
+            from meshio._exceptions import ReadError  # noqa: PLC0415
+        except ImportError:
+            raise OSError(msg)
         try:
             return read_meshio(filename)
         except ReadError:
-            msg = 'This file was not able to be automatically read by pyvista.'
+            if ext == '.pv':  # pragma: no cover
+                msg += (
+                    "\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
+                    'It can be installed with `pyvista[io]`.'
+                )
             raise OSError(msg)
     else:
         observer = Observer()
         observer.observe(reader.reader)
         if progress_bar:
             reader.show_progress()
-        mesh = reader.read()
+        mesh = reader.read(validate=validate)
         if observer.has_event_occurred():
-            warnings.warn(
+            warn_external(
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'
                 f'\t"{observer.get_message()}"',
@@ -314,7 +475,7 @@ def read(  # noqa: PLR0911, PLR0917
 
 
 def _apply_attrs_to_reader(
-    reader: BaseReader, attrs: dict[str, object | Sequence[object]]
+    reader: BaseReader[Any], attrs: dict[str, object | Sequence[object]]
 ) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
@@ -327,7 +488,7 @@ def _apply_attrs_to_reader(
         Mapping of methods to call on reader.
 
     """
-    warnings.warn(
+    warn_external(
         'attrs use is deprecated.  Use a Reader class for more flexible control',
         PyVistaDeprecationWarning,
     )
@@ -383,12 +544,12 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         if image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pyvista.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -444,13 +605,10 @@ def read_exodus(  # noqa: PLR0917
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
-    from .helpers import wrap  # noqa: PLC0415
-
     # lazy import here to avoid loading module on import pyvista
-    try:
-        from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
-    except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]  # noqa: PLC0415
+    from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
+
+    from .helpers import wrap  # noqa: PLC0415
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -480,7 +638,7 @@ def read_exodus(  # noqa: PLR0917
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast('pyvista.DataSet', wrap(reader.GetOutput()))
+    return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -565,7 +723,7 @@ def read_grdecl(
 
         Returns
         -------
-        list | str
+        output : list | str
             A list or a string.
 
         """
@@ -735,15 +893,15 @@ def read_grdecl(
                 cond1 = grid_unit.startswith(keywords['MAPUNITS'].lower())
 
                 if not cond1:
-                    warnings.warn(
+                    warn_external(
                         'Unable to convert relative coordinates with different '
-                        'grid and map units. Skipping conversion.'
+                        'grid and map units. Skipping conversion.',
                     )
 
             except KeyError:
-                warnings.warn(
+                warn_external(
                     "Unable to convert relative coordinates without keyword 'MAPUNITS'. "
-                    'Skipping conversion.'
+                    'Skipping conversion.',
                 )
                 cond1 = False
 
@@ -751,9 +909,9 @@ def read_grdecl(
                 origin = keywords['MAPAXES'][2:4]
 
             except KeyError:
-                warnings.warn(
+                warn_external(
                     "Unable to convert relative coordinates without keyword 'MAPAXES'. "
-                    'Skipping conversion.'
+                    'Skipping conversion.',
                 )
                 origin = None
 
@@ -793,7 +951,7 @@ def read_grdecl(
             zcorners.ravel(order='F'),
         )
     )
-    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+    grid = pv.ExplicitStructuredGrid(dims, corners)
 
     # Add property data
     for key in property_keywords:
@@ -866,9 +1024,9 @@ def read_pickle(filename: str | Path) -> DataObject:
         with open(filename_str, 'rb') as f:  # noqa: PTH123
             mesh = pickle.load(f)
 
-        if not isinstance(mesh, pyvista.DataObject):
+        if not isinstance(mesh, pv.DataObject):
             msg = (
-                f'Pickled object must be an instance of {pyvista.DataObject}. '
+                f'Pickled object must be an instance of {pv.DataObject}. '
                 f'Got {mesh.__class__} instead.'
             )
             raise TypeError(msg)
@@ -920,18 +1078,18 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     filename_str = str(filename)
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
-    if not isinstance(mesh, pyvista.DataObject):
+    if not isinstance(mesh, pv.DataObject):
         msg = (  # type: ignore[unreachable]
-            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+            f'Only {pv.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
         raise TypeError(msg)
-
+    _warn_multiblock_nested_field_data(mesh)
     with open(filename_str, 'wb') as f:  # noqa: PTH123
         pickle.dump(mesh, f)
 
 
 def is_meshio_mesh(obj: object) -> bool:
-    """Test if passed object is instance of ``meshio.Mesh``.
+    """Test if passed object is an instance of :class:`meshio.Mesh`.
 
     Parameters
     ----------
@@ -941,13 +1099,37 @@ def is_meshio_mesh(obj: object) -> bool:
     Returns
     -------
     bool
-        ``True`` if ``obj`` is a ``meshio.Mesh``.
+        ``True`` if ``obj`` is a :class:`meshio.Mesh`.
 
     """
     try:
         import meshio  # noqa: PLC0415
 
         return isinstance(obj, meshio.Mesh)
+    except ImportError:
+        return False
+
+
+def is_trimesh_mesh(obj: object) -> bool:
+    """Test if passed object is an instance of :class:`trimesh.Trimesh`.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    obj : object
+        Any object.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``obj`` is a :class:`trimesh.Trimesh`.
+
+    """
+    try:
+        import trimesh  # noqa: PLC0415
+
+        return isinstance(obj, trimesh.Trimesh)
     except ImportError:
         return False
 
@@ -980,7 +1162,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
     if len(mesh.cells) == 0:
         # Empty mesh
-        grid = pyvista.UnstructuredGrid()
+        grid = pv.UnstructuredGrid()
         if mesh.points.size > 0:
             grid.points = mesh.points
         return grid
@@ -1005,9 +1187,9 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
             numnodes = vtk_type_to_numnodes[vtk_type]
             if numnodes == -1:
                 # Count nodes in each cell
-                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
+                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)  # type: ignore[union-attr]
             else:
-                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)  # type: ignore[union-attr]
             cells.append(np.hstack((fill_values, c.data)).ravel())  # type: ignore[arg-type]
 
         cell_type += [vtk_type] * len(c.data)
@@ -1027,7 +1209,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
-    grid = pyvista.UnstructuredGrid(
+    grid = pv.UnstructuredGrid(
         np.concatenate(cells).astype(np.int64, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
@@ -1088,11 +1270,11 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type  # noqa: PLC0415
 
-    except:  # pragma: no cover
+    except (ImportError, AttributeError):  # pragma: no cover
         from meshio._vtk_common import vtk_to_meshio_type  # noqa: PLC0415
 
     # Cast to unstructured grid
-    mesh = mesh.cast_to_unstructured_grid()
+    mesh = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
     mesh = (
         mesh.extract_cells(mesh.cell_data['vtkGhostType'] == 0)
         if 'vtkGhostType' in mesh.cell_data
@@ -1115,7 +1297,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         offsets_ = np.cumsum(offsets)
 
-        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:])]
+        return [arr[i1 + 1 : i2] for i1, i2 in itertools.pairwise(offsets_)]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
@@ -1127,17 +1309,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
-        pyvista.CellType.POLYGON,
-        pyvista.CellType.POLYHEDRON,
+        pv.CellType.POLYGON,
+        pv.CellType.POLYHEDRON,
     }:
         vtk_celltype = vtk_celltypes[0]
         cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
-        if vtk_celltype == pyvista.CellType.PIXEL:
+        if vtk_celltype == pv.CellType.PIXEL:
             cells = cells[:, [0, 1, 3, 2]]
             celltype = 'quad'
 
-        elif vtk_celltype == pyvista.CellType.VOXEL:
+        elif vtk_celltype == pv.CellType.VOXEL:
             cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
@@ -1151,27 +1333,29 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         cells = []
         offset = mesh.offset
 
-        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
+        for i, (i1, i2, vtk_celltype) in enumerate(
+            zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
+        ):
             cell = connectivity[i1:i2]
 
-            if vtk_celltype == pyvista.CellType.POLYHEDRON:
+            if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
                 cell = polyhedral_cell_faces[i]
 
             # Handle the missing voxel key (11) in vtk_to_meshio_type
-            elif vtk_celltype == pyvista.CellType.VOXEL:
+            elif vtk_celltype == pv.CellType.VOXEL:
                 celltype = 'hexahedron'
                 cell = cell[[0, 1, 3, 2, 4, 5, 7, 6]]
 
             # Handle the missing "pixel" key in meshio._mesh.topological_dimension
-            elif vtk_celltype == pyvista.CellType.PIXEL:
+            elif vtk_celltype == pv.CellType.PIXEL:
                 celltype = 'quad'
                 cell = cell[[0, 1, 3, 2]]
 
             else:
                 celltype = (
                     f'polygon{len(cell)}'
-                    if vtk_celltype == pyvista.CellType.POLYGON
+                    if vtk_celltype == pv.CellType.POLYGON
                     else vtk_to_meshio_type[vtk_celltype]
                 )
 
@@ -1193,14 +1377,14 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = {
-        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in itertools.pairwise(indices)]
         for k, v in vtk_cell_data.items()
     }
 
     return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
 
 
-def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.Mesh:
+def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
     """Read any mesh file using meshio.
 
     Parameters
@@ -1213,7 +1397,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     Returns
     -------
-    pyvista.DataSet
+    UnstructuredGrid
         The mesh read from the file.
 
     Raises
@@ -1308,3 +1492,242 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
         raise ModuleNotFoundError(msg) from None
 
     return imread(filename)
+
+
+def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
+    pass_point_data = pass_cell_data = pass_field_data = False
+    if pass_data is True:
+        pass_point_data = pass_cell_data = pass_field_data = True
+    elif pass_data:
+        if isinstance(pass_data, str):
+            if pass_data == 'point':
+                pass_point_data = True
+            elif pass_data == 'cell':
+                pass_cell_data = True
+            elif pass_data == 'field':
+                pass_field_data = True
+        elif isinstance(pass_data, Sequence):
+            if 'point' in pass_data:
+                pass_point_data = True
+            if 'cell' in pass_data:
+                pass_cell_data = True
+            if 'field' in pass_data:
+                pass_field_data = True
+
+    if not (pass_point_data or pass_cell_data or pass_field_data) and pass_data is not False:
+        # Input is not valid
+        allowed = [True, False, 'point', 'cell', 'field']
+        _validation.check_contains(allowed, must_contain=pass_data, name='pass_data')
+
+    return pass_point_data, pass_cell_data, pass_field_data
+
+
+def from_trimesh(
+    mesh: trimesh.Trimesh, *, pass_data: _PassDataOptions = True
+) -> PolyData:  # numpydoc ignore=RT01
+    """Convert a Trimesh mesh to a PyVista mesh.
+
+    - ``vertex_attributes`` are stored as point data.
+    - ``face_attributes`` are stored as cell data.
+    - ``metadata`` is stored as field data: NumPy arrays are stored directly as field data
+      arrays, and any other metadata (e.g. strings or lists) is stored in the
+      :attr:`~pyvista.DataObject.user_dict`.
+
+    .. note::
+
+        No copies of point, cell, or data arrays are made. Use :meth:`~pyvista.DataObject.copy`
+        after converting to avoid any side effects.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    mesh : trimesh.Trimesh
+        Trimesh object to convert.
+
+    pass_data : bool | str | sequence[str], default: True
+        Pass point, cell, and/or field data from the Trimesh object. All data is passed by default.
+        Set this to ``'point'``, ``'cell'``, ``'field'`` or any combination thereof to only pass
+        specific fields.
+
+    See Also
+    --------
+    to_trimesh, from_meshio, :func:`~pyvista.wrap`
+
+    Examples
+    --------
+    See :ref:`wrap_trimesh_example` for examples.
+
+    """
+    try:
+        import trimesh  # noqa: PLC0415
+    except ImportError:  # pragma: no cover
+        msg = 'To use this feature install trimesh with:\n\npip install trimesh'
+        raise ImportError(msg)
+    else:
+        _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
+
+    # Handle case with no faces
+    faces: NumpyArray[int] = mesh.faces
+    if faces.size == 0:
+        faces = faces.reshape((0, 3))
+    # Trimesh doesn't pad faces
+    polydata = pv.PolyData.from_regular_faces(mesh.vertices, faces=faces, deep=False)
+
+    pass_point_data, pass_cell_data, pass_field_data = _validate_pass_data(pass_data)
+
+    if pass_point_data:
+        # Set texture coordinates
+        if (
+            hasattr(visual := mesh.visual, 'uv')
+            and visual is not None
+            and (uv := visual.uv) is not None
+        ):
+            polydata.active_texture_coordinates = uv
+        polydata.point_data.update(mesh.vertex_attributes, copy=False)
+
+    if pass_cell_data:
+        polydata.cell_data.update(mesh.face_attributes, copy=False)
+
+    if pass_field_data:
+        for key, val in mesh.metadata.items():
+            if isinstance(val, np.ndarray):
+                polydata.field_data[key] = val
+            else:
+                try:
+                    json.dumps(val)
+                except TypeError:
+                    msg = (
+                        f'Unable to store metadata key {key!r} with value type {type(val)}.\n'
+                        f'Only NumPy arrays or JSON-serializable values are supported.'
+                    )
+                    warn_external(msg)
+                else:
+                    polydata.user_dict[key] = val
+
+    return polydata
+
+
+def to_trimesh(  # numpydoc ignore=RT01
+    mesh: DataSet,
+    *,
+    triangulate: bool = False,
+    pass_data: _PassDataOptions = True,
+) -> trimesh.Trimesh:
+    """Convert a PyVista mesh to a Trimesh mesh.
+
+    - Point data is stored as ``vertex_attributes``.
+    - Cell data is stored as ``face_attributes``.
+    - Field data is stored as ``metadata``. Any :attr:`~pyvista.DataObject.user_dict` keys
+      are stored directly as metadata.
+
+    .. note::
+
+        No copies of point, cell, or data arrays are made. Use :meth:`~pyvista.DataObject.copy`
+        before converting to avoid any side effects.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    mesh : DataSet
+        Dataset to convert.
+
+    triangulate : bool, default: False
+        Triangulate the mesh before conversion. If the mesh has 3D cells, the mesh's surface
+        is extracted. All 2D polygonal cells are triangulated as required, and all 0D and 1D
+        cells or any unused points are ignored.
+
+    pass_data : bool | str | sequence[str], default: True
+        Pass point, cell, and/or field data to the Trimesh object. All data is passed by default.
+        Set this to ``'point'``, ``'cell'``, ``'field'`` or any combination thereof to only pass
+        specific fields.
+
+    See Also
+    --------
+    from_trimesh, to_meshio, :func:`~pyvista.wrap`
+
+    Examples
+    --------
+    See :ref:`wrap_trimesh_example` for examples.
+
+    """
+    try:
+        import trimesh  # noqa: PLC0415
+        from trimesh.visual import TextureVisuals  # noqa: PLC0415
+    except ImportError:  # pragma: no cover
+        msg = 'To use this feature install trimesh with:\n\npip install trimesh'
+        raise ImportError(msg)
+
+    # Avoid circular import
+    from pyvista.core.dataobject import USER_DICT_KEY  # noqa: PLC0415
+
+    _validation.check_instance(mesh, pv.DataSet, name='mesh')
+
+    if isinstance(mesh, pv.PolyData):
+        is_all_triangles = mesh.is_all_triangles
+    elif isinstance(mesh, pv.UnstructuredGrid):
+        is_all_triangles = mesh.distinct_cell_types == {pv.CellType.TRIANGLE}
+    elif mesh.is_empty:
+        is_all_triangles = True
+    else:
+        is_all_triangles = False
+
+    if not is_all_triangles and not triangulate:
+        msg = (
+            'Mesh must be all triangles to convert to Trimesh object.\n'
+            'Use `triangulate=True` to automatically convert to a triangle surface mesh.'
+        )
+        raise pv.NotAllTrianglesError(msg)
+
+    surf = (
+        mesh
+        if isinstance(mesh, pv.PolyData)
+        else mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+    )
+    surf = surf if is_all_triangles else surf.triangulate()
+
+    pass_point_data, pass_cell_data, pass_field_data = _validate_pass_data(pass_data)
+
+    if pass_point_data:
+        vertex_attributes = dict((point_data := mesh.point_data).items())
+        vertex_normals = vertex_attributes.pop(point_data.active_normals_name, None)  # type: ignore[arg-type]
+        # Store texture coordinates
+        texture_coordinates = vertex_attributes.pop(
+            point_data.active_texture_coordinates_name,  # type: ignore[arg-type]
+            None,
+        )
+        visual = (
+            TextureVisuals(uv=texture_coordinates) if texture_coordinates is not None else None
+        )
+    else:
+        vertex_attributes = None
+        vertex_normals = None
+        visual = None
+
+    if pass_cell_data:
+        face_attributes = dict((cell_data := mesh.cell_data).items())
+        face_normals = face_attributes.pop(cell_data.active_normals_name, None)  # type: ignore[arg-type]
+    else:
+        face_attributes = None
+        face_normals = None
+
+    if pass_field_data:
+        metadata = dict(mesh.field_data.items())
+        if USER_DICT_KEY in metadata.keys():
+            metadata.pop(USER_DICT_KEY)
+            metadata.update(mesh.user_dict)
+    else:
+        metadata = None
+
+    return trimesh.Trimesh(
+        vertices=surf.points,
+        faces=surf.regular_faces,
+        vertex_normals=vertex_normals,
+        face_normals=face_normals,
+        face_attributes=face_attributes,  # type: ignore[arg-type]
+        vertex_attributes=vertex_attributes,  # type: ignore[arg-type]
+        metadata=metadata,
+        visual=visual,
+        process=False,
+    )
