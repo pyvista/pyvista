@@ -378,7 +378,7 @@ def download_masonry_texture(load=True):  # noqa: FBT002
 
 _dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
     'masonry.bmp',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -417,7 +417,7 @@ def download_usa_texture(load=True):  # noqa: FBT002
 
 _dataset_usa_texture = _SingleFileDownloadableDatasetLoader(
     'usa_image.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -456,7 +456,7 @@ def download_puppy_texture(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_puppy_texture, load=load)
 
 
-_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -1862,7 +1862,7 @@ def download_bird_texture(load=True):  # noqa: FBT002
 
 _dataset_bird_texture = _SingleFileDownloadableDatasetLoader(
     'Pileated.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -2044,7 +2044,7 @@ def download_cake_easy_texture(load=True):  # noqa: FBT002
 
 _dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
     'cake_easy.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -2174,9 +2174,9 @@ def download_gourds_texture(zoom=False, load=True):  # noqa: FBT002
 # Use '__' on the zoomed version to label it as private
 _dataset_gourds_texture = _SingleFileDownloadableDatasetLoader(
     'Gourds.png',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
-__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)  # type: ignore[arg-type]
+__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -2790,7 +2790,7 @@ def download_emoji_texture(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_emoji_texture, load=load)
 
 
-_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -3140,7 +3140,7 @@ def download_sky_box_nz_texture(load=True):  # noqa: FBT002
 
 _dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
     'skybox-nz.jpg',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -4225,7 +4225,7 @@ def download_crater_imagery(load=True):  # noqa: FBT002
 
 _dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
     'BJ34_GeoTifv1-04_crater_clip.tif',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -4263,7 +4263,7 @@ def download_dolfin(load=True):  # noqa: FBT002
 
 _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
     'dolfin_fine.xml',
-    read_func=functools.partial(read, file_format='dolfin-xml'),  # type: ignore[arg-type]
+    read_func=functools.partial(read, file_format='dolfin-xml'),
 )
 
 
@@ -4555,7 +4555,7 @@ def download_rgba_texture(load=True):  # noqa: FBT002
 
 _dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
     'alphachannel.png',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -4591,7 +4591,7 @@ def download_vtk_logo(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_vtk_logo, load=load)
 
 
-_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)
 
 
 @_deprecate_positional_args
@@ -4709,7 +4709,7 @@ def download_cubemap_park(load=True):  # noqa: FBT002
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
     'cubemap_park/cubemap_park.zip',
     target_file='',
-    read_func=_load_as_cubemap,  # type: ignore[arg-type]
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4768,7 +4768,7 @@ def download_cubemap_space_4k(load=True):  # noqa: FBT002
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/4k.zip',
     target_file='',
-    read_func=_load_as_cubemap,  # type: ignore[arg-type]
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4833,7 +4833,7 @@ def download_cubemap_space_16k(load=True):  # noqa: FBT002
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/16k.zip',
     target_file='',
-    read_func=_load_as_cubemap,  # type: ignore[arg-type]
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4958,7 +4958,7 @@ def download_gpr_path(load=True):  # noqa: FBT002
 
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
-    read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
+    read_func=functools.partial(np.loadtxt, skiprows=1),
     load_func=pv.PolyData,  # type: ignore[arg-type]
 )
 
@@ -6402,7 +6402,7 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
 _dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
     'parched_canal_4k.hdr',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -6725,7 +6725,7 @@ def download_cloud_dark_matter(load=True):  # noqa: FBT002
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pv.PointSet,  # type: ignore[arg-type]
+    load_func=pv.PointSet,
 )
 
 
@@ -6791,7 +6791,7 @@ def download_cloud_dark_matter_dense(load=True):  # noqa: FBT002
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pv.PointSet,  # type: ignore[arg-type]
+    load_func=pv.PointSet,
 )
 
 
@@ -7520,7 +7520,7 @@ def _dikhololo_night_load_func(texture):
 
 _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
     'dikhololo_night_4k.hdr',
-    read_func=read_texture,  # type: ignore[arg-type]
+    read_func=read_texture,
 )
 
 
@@ -7927,7 +7927,7 @@ def _reservoir_load_func(grid):
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
-    read_func=pv.ExplicitStructuredGrid,  # type: ignore[arg-type]
+    read_func=pv.ExplicitStructuredGrid,
     load_func=_reservoir_load_func,
 )
 

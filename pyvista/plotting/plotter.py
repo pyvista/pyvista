@@ -3854,7 +3854,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             show_edges = False
 
         if isinstance(mesh, (str, Path)):
-            mesh = pv.read(mesh)  # type: ignore[assignment]
+            mesh = pv.read(mesh)
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 

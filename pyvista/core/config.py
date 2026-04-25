@@ -38,10 +38,15 @@ Access a setting via dict-style lookup:
 >>> pv.global_config['validate_on_wrap']
 True
 
+Show the VTK-inherited API in :func:`dir` (and IDE tab-completion):
+
+>>> pv.global_config.show_vtk_api = True
+>>> pv.global_config.show_vtk_api = False  # restore default
+
 Dump the current config to a plain dict (useful for logging or round-tripping):
 
 >>> pv.global_config.to_dict()
-{'validate_on_wrap': True}
+{'show_vtk_api': False, 'validate_on_wrap': True}
 
 """
 
@@ -189,10 +194,11 @@ class Config(_ConfigBase):
 
     """
 
-    __slots__ = ['_validate_on_wrap']
+    __slots__ = ['_show_vtk_api', '_validate_on_wrap']
 
     def __init__(self) -> None:
         self._validate_on_wrap: bool = True
+        self._show_vtk_api: bool = False
 
     def __repr__(self) -> str:
         header = 'PyVista Config'
@@ -242,6 +248,61 @@ class Config(_ConfigBase):
             msg = f'`validate_on_wrap` must be a bool, got {type(value).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._validate_on_wrap = value
+
+    @property
+    def show_vtk_api(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether VTK-inherited attributes appear in :func:`dir`.
+
+        When ``False`` (the default), attributes inherited from VTK base
+        classes are hidden from :func:`dir` and tab-completion on PyVista
+        objects that wrap VTK types (data objects, :class:`~pyvista.Renderer`,
+        :class:`~pyvista.Actor`, :class:`~pyvista.Property`, etc.). This keeps
+        the public surface curated for data-science IDEs such as Positron's
+        Variables pane and VS Code's Jupyter extension, and for IPython /
+        Jupyter tab-completion. VTK methods remain fully callable regardless
+        of this setting.
+
+        When ``True``, the full VTK API is enumerated alongside the PyVista
+        API, which is useful for VTK developers who want to discover the raw
+        VTK method surface via introspection.
+
+        .. warning::
+
+            This option requires runtime inspection and does not work with all developer
+            tools, e.g. it has no effect when using PyCharm. This is because it relies on
+            calling the object's ``__dir__`` method for generating auto-completion
+            suggestions. Tools like PyCharm that only use static analysis for
+            auto-completion are therefore unaffected.
+
+        Notes
+        -----
+        The snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+        controlled separately by :func:`pyvista.vtk_snake_case`. When
+        snake_case is not ``'allow'`` (the default), those names are hidden
+        from :func:`dir` regardless of this setting, because accessing them
+        would already raise ``PyVistaAttributeError``.
+        Enabling snake_case surfaces the snake_case names in :func:`dir`;
+        ``show_vtk_api`` only controls the CamelCase VTK API.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_config.show_vtk_api
+        False
+        >>> pv.global_config.show_vtk_api = True
+        >>> pv.global_config.show_vtk_api = False  # restore default
+
+        """
+        return self._show_vtk_api
+
+    @show_vtk_api.setter
+    def show_vtk_api(self, value: bool) -> None:
+        if not isinstance(value, bool):
+            msg = f'`show_vtk_api` must be a bool, got {type(value).__name__}.'  # type: ignore[unreachable]
+            raise TypeError(msg)
+        self._show_vtk_api = value
 
 
 global_config = Config()
