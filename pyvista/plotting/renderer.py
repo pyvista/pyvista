@@ -3859,6 +3859,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             .. versionadded:: 0.45
 
+            .. versionchanged:: 0.48
+
+                Resampling now uses linear interpolation with anti-aliasing
+                instead of nearest-neighbor, which gives smoother results for
+                continuous environment textures.
+
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
