@@ -93,6 +93,92 @@ class Grid(DataSet):
         self.SetDimensions(*dims)
         self.Modified()
 
+    def to_hexahedra(self: Self) -> UnstructuredGrid:
+        """Convert voxels to hexahedra.
+
+        Convert this mesh to :class:`~pyvista.UnstructuredGrid` with
+        :attr:`~pyvista.CellType.HEXAHEDRON` cells. Equivalent to
+        :meth:`~pyvista.DataSet.cast_to_unstructured_grid` except the output has
+        hexahedra instead of :attr:`~pyvista.CellType.VOXEL` cells.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Mesh with :attr:`~pyvista.CellType.HEXAHEDRON` cells.
+
+        Raises
+        ------
+        ValueError
+            If the input is not 3-dimensional.
+
+        See Also
+        --------
+        to_quads, to_tetrahedra
+        pyvista.DataSet.cast_to_unstructured_grid
+
+        Examples
+        --------
+        Convert a 3D :class:`~pyvista.ImageData` to hexahedra.
+
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(2, 2, 2))
+        >>> hexes = image.to_hexahedra()
+        >>> hexes.distinct_cell_types == {pv.CellType.HEXAHEDRON}
+        True
+
+        """
+        if (dim := self.dimensionality) != 3:
+            msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
+            if dim == 2:
+                msg += '\nUse `to_quads` for 2D inputs.'
+            raise ValueError(msg)
+        return self.cast_to_structured_grid().cast_to_unstructured_grid()
+
+    def to_quads(self: Self) -> UnstructuredGrid:
+        """Convert pixels to quads.
+
+        Convert this mesh to :class:`~pyvista.UnstructuredGrid` with
+        :attr:`~pyvista.CellType.QUAD` cells. Equivalent to
+        :meth:`~pyvista.DataSet.cast_to_unstructured_grid` except the output has
+        quads instead of :attr:`~pyvista.CellType.PIXEL` cells.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Mesh with :attr:`~pyvista.CellType.QUAD` cells.
+
+        Raises
+        ------
+        ValueError
+            If the input is not 2-dimensional.
+
+        See Also
+        --------
+        to_hexahedra, to_tetrahedra
+        pyvista.DataSet.cast_to_unstructured_grid
+
+        Examples
+        --------
+        Convert a 2D :class:`~pyvista.ImageData` to quads.
+
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(3, 2, 1))
+        >>> quads = image.to_quads()
+        >>> quads.distinct_cell_types == {pv.CellType.QUAD}
+        True
+
+        """
+        if (dim := self.dimensionality) != 2:
+            msg = f'Input must be 2-dimensional. Got {dim}-dimensional input instead.'
+            if dim == 3:
+                msg += '\nUse `to_hexahedra` for 3D inputs.'
+            raise ValueError(msg)
+        return self.cast_to_structured_grid().cast_to_unstructured_grid()
+
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = DataSet._get_attrs(self)
@@ -502,7 +588,15 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         raise AttributeError(msg)
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
-        """Cast this rectilinear grid to a structured grid.
+        """Cast this rectilinear grid to a :class:`~pyvista.StructuredGrid`.
+
+        .. note::
+
+            Casting converts :class:`~pyvista.CellType.PIXEL` cells to
+            :class:`~pyvista.CellType.QUAD` cells for 2D inputs, and
+            :class:`~pyvista.CellType.VOXEL` cells to :class:`~pyvista.CellType.HEXAHEDRON` cells
+            for 3D inputs. To preserve cell type, use
+            :meth:`~pyvista.DataSet.cast_to_unstructured_grid` instead.
 
         Returns
         -------
@@ -980,7 +1074,15 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return attrs
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
-        """Cast this uniform grid to a structured grid.
+        """Cast this image data to a :class:`~pyvista.StructuredGrid`.
+
+        .. note::
+
+            Casting converts :class:`~pyvista.CellType.PIXEL` cells to
+            :class:`~pyvista.CellType.QUAD` cells for 2D inputs, and
+            :class:`~pyvista.CellType.VOXEL` cells to :class:`~pyvista.CellType.HEXAHEDRON` cells
+            for 3D inputs. To preserve cell type, use
+            :meth:`~pyvista.DataSet.cast_to_unstructured_grid` instead.
 
         Returns
         -------
@@ -991,7 +1093,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         alg = _vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
-        return _get_output(alg)
+        out = _get_output(alg)
+        out.set_active_scalars(self.active_scalars_name)
+        return out
 
     def cast_to_rectilinear_grid(self: Self) -> RectilinearGrid:
         """Cast this uniform grid to a rectilinear grid.
