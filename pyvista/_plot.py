@@ -53,8 +53,8 @@ def plot(  # noqa: ANN202, PLR0917
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,
     border: bool = False,  # noqa: FBT001, FBT002
-    border_color: ColorLike = 'k',
-    border_width: float = 2.0,
+    border_color: ColorLike | None = None,
+    border_width: float | None = None,
     ssao: bool = False,  # noqa: FBT001, FBT002
     **kwargs,
 ):
@@ -177,18 +177,23 @@ def plot(  # noqa: ANN202, PLR0917
         than 0.
 
     border : bool, default: False
-        Draw a border around each render window.
+        Draw a border around the render window.
 
-    border_color : ColorLike, default: "k"
-        Either a string, rgb list, or hex color string.  For example:
+    border_color : ColorLike, optional
+        Color of the border. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
-    border_width : float, default: 2.0
-        Width of the border in pixels when enabled.
+    border_width : float, optional
+        Width of the border in pixels when enabled. Defaults to
+        :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
 
     ssao : bool, optional
         Enable surface space ambient occlusion (SSAO). See
