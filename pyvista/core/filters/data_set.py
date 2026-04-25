@@ -187,7 +187,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
         axis_2_direction: VectorLike[float] | str | None = None,
-        cell_centers: bool = True,
+        cell_centers: bool = False,
         merge_points: bool = False,
         return_matrix: bool = False,
     ):
@@ -231,11 +231,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             the specified vector. Can be a vector or string specifying the axis by
             name (e.g. ``'x'`` or ``'-x'``, etc.).
 
-        cell_centers : bool, default: True
+        cell_centers : bool, default: False
             Use the mesh's :meth:`cell_centers` when computing the
             :func:`~pyvista.principal_axes`. Points not associated with cells
-            are treated as vertex cells. Set to ``False`` to use the mesh's
-            points directly.
+            are treated as vertex cells. By default, the mesh's points are
+            used directly.
 
             .. versionadded:: 0.48
 
