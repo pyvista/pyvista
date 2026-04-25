@@ -26,11 +26,12 @@ if TYPE_CHECKING:
 
     from pyvista.core.dataset import DataSet
 
-    class ReaderHandler(Protocol):
-        """Callable that reads *path* and returns a :class:`pyvista.DataSet`."""
 
-        def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
-            """Read *path* and return the resulting dataset."""
+class ReaderHandler(Protocol):
+    """Callable that reads *path* and returns a :class:`pyvista.DataSet`."""
+
+    def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
+        """Read *path* and return the resulting dataset."""
 
 
 class ReaderRegistration(NamedTuple):
