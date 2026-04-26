@@ -75,7 +75,7 @@ pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos
 pl.enable_depth_of_field()
-pl.enable_anti_aliasing('ssaa')
+pl.enable_anti_aliasing('fxaa')
 pl.set_environment_texture(cubemap)
 pl.show()
 # %%

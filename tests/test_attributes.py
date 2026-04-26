@@ -89,7 +89,9 @@ def pytest_generate_tests(metafunc):
         class_map = {
             name: cls
             for name, cls in zip(class_names, class_types, strict=True)
-            if not name.startswith('_') and not issubclass(cls, tuple(SKIP_SUBCLASS))
+            if not name.startswith('_')
+            and not issubclass(cls, tuple(SKIP_SUBCLASS))
+            and not getattr(cls, '_is_protocol', False)
         }
         metafunc.parametrize('pyvista_class', list(class_map.values()), ids=list(class_map.keys()))
 
@@ -256,6 +258,90 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         assert not hasattr(instance, vtk_attr_snake_case)
 
 
+def test_dir_hides_vtk_inherited_attributes(vtk_subclass):
+    """``__dir__`` omits VTK-inherited attributes but they remain callable."""
+    if vtk_subclass is VTKObjectWrapperCheckSnakeCase:
+        pytest.skip('Class is effectively abstract.')
+    if DisableVtkSnakeCase not in vtk_subclass.__mro__:
+        pytest.skip(f'{vtk_subclass.__name__!r} does not use {DisableVtkSnakeCase.__name__!r}.')
+
+    assert pv.global_config.show_vtk_api is False  # default
+
+    instance = try_init_pyvista_object(vtk_subclass)
+    listing = dir(instance)
+
+    # VTK attributes inherited from ``vtkObjectBase`` / ``vtkObject`` exist on
+    # every VTK subclass; they should be hidden from ``dir`` but remain
+    # accessible on the instance.
+    for vtk_name in ('AddObserver', 'GetClassName', 'GetMTime'):
+        assert vtk_name not in listing
+        assert callable(getattr(instance, vtk_name))
+
+    # The listing should be sorted and unique.
+    assert listing == sorted(set(listing))
+
+
+def test_dir_exposes_pyvista_api(sphere):
+    """Curated PyVista API members show up in ``dir``."""
+    listing = dir(sphere)
+    for expected in (
+        'points',
+        'bounds',
+        'point_data',
+        'cell_data',
+        'field_data',
+        'n_points',
+        'n_cells',
+        'save',
+        'copy',
+        'deep_copy',
+        'shallow_copy',
+    ):
+        assert expected in listing
+
+
+def test_dir_show_vtk_api_opt_in(sphere):
+    """Setting ``pv.global_config.show_vtk_api`` re-enables the full VTK surface."""
+    assert 'GetBounds' not in dir(sphere)
+    try:
+        pv.global_config.show_vtk_api = True
+        listing = dir(sphere)
+        for vtk_name in ('GetBounds', 'DeepCopy', 'AddObserver', 'GetClassName'):
+            assert vtk_name in listing
+        # PyVista API still visible.
+        for expected in ('points', 'bounds', 'point_data', 'n_points'):
+            assert expected in listing
+    finally:
+        pv.global_config.show_vtk_api = False
+    assert 'GetBounds' not in dir(sphere)
+
+
+def test_dir_snake_case_hidden_when_disallowed(sphere):
+    """Snake_case VTK aliases stay hidden while ``vtk_snake_case`` is not ``'allow'``.
+
+    They would raise ``PyVistaAttributeError`` on access, so surfacing them in
+    ``dir`` would only be misleading.
+    """
+    # Even with the CamelCase API toggled on, snake_case VTK aliases stay
+    # hidden unless snake_case is allowed.
+    try:
+        pv.global_config.show_vtk_api = True
+        listing = dir(sphere)
+        # ``information`` is a VTK-defined snake_case alias on vtkDataObject
+        # (see pv.vtk_snake_case docstring).
+        assert 'information' not in listing
+    finally:
+        pv.global_config.show_vtk_api = False
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 4), reason='Requires VTK >= 9.4')
+def test_dir_snake_case_visible_when_allowed(sphere):
+    """Snake_case VTK aliases appear in ``dir`` when snake_case is allowed."""
+    with pv.vtk_snake_case('allow'):
+        listing = dir(sphere)
+        assert 'information' in listing
+
+
 def test_pyvista_class_no_new_attributes(pyvista_class):
     def skip_test_for_some_classes():
         if pyvista_class in (
@@ -283,6 +369,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             vtkPyVistaOverride,
             VTKObjectWrapperCheckSnakeCase,
             pv.VtkErrorCatcher,
+            pv.DataSetAccessor,
         ):
             assert not issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Specialized class with no real risk of new attributes being added.')

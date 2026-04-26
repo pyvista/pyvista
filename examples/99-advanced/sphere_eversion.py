@@ -27,7 +27,7 @@ import numpy as np
 import pyvista as pv
 
 # define some parameters
-n_steps = 30  # number of steps for a given stage of the animation
+n_steps = 15  # number of steps for a given stage of the animation
 Q = 2 / 3  # arbitrary < 1
 w = 2  # arbitrary > 0
 n = 2  # arbitrary integer > 1, the number of "lobes"

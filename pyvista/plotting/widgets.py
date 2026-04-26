@@ -30,7 +30,6 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
-    from pyvista import DataObject
     from pyvista import ImageData
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
@@ -3044,14 +3043,13 @@ class WidgetHelper:
 
             logo = examples.logofile
 
-        # Read dataset and narrow the logo type to ImageData
-        logo_maybe: DataObject | str | pathlib.Path | None
-        logo_maybe = pv.read(logo) if isinstance(logo, (str, pathlib.Path)) else logo
-        if not isinstance(logo_maybe, pv.ImageData):
-            msg = 'Logo must be a pyvista.ImageData or a file path to an image.'
+        if isinstance(logo, (str, pathlib.Path)):
+            logo = pv.read(logo, cls=pv.ImageData)
+        elif not isinstance(logo, pv.ImageData):
+            # Defensive runtime check: Python does not enforce type hints,
+            # so a caller may still pass something unexpected.
+            msg = 'Logo must be a pyvista.ImageData or a file path to an image.'  # type: ignore[unreachable]
             raise TypeError(msg)
-        else:
-            logo = logo_maybe
 
         representation = _vtk.vtkLogoRepresentation()
         representation.SetImage(logo)

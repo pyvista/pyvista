@@ -70,11 +70,19 @@ jobs:
     name: Preview Development Documentation
     runs-on: ubuntu-22.04
     needs: setup
+    # PRs: deploy whenever a docs-build artifact exists, even if Test
+    # Documentation failed — reviewers still need a preview of the broken
+    # build. Pushes to main: require the whole workflow to succeed so dev
+    # docs never publish a failed build.
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.name == 'Build Documentation' &&
-      (github.event.workflow_run.event == 'pull_request' ||
-       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
+      (
+        (github.event.workflow_run.event == 'pull_request' &&
+         (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure')) ||
+        (github.event.workflow_run.event == 'push' &&
+         github.event.workflow_run.head_branch == 'main' &&
+         github.event.workflow_run.conclusion == 'success')
+      )
     environment:
       name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
     steps:
@@ -92,6 +100,7 @@ jobs:
           permission-statuses: write
 
       - name: Download docs-build artifact
+        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: docs-build
@@ -99,7 +108,17 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
+      - name: Check for docs build
+        id: check
+        run: |
+          if [ -f index.html ]; then
+            echo "has_build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_build=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Preview HTML documentation
+        if: steps.check.outputs.has_build == 'true'
         id: netlify
         uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
@@ -118,7 +137,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Create commit status with preview link
-        if: github.event.workflow_run.event == 'pull_request'
+        if: steps.check.outputs.has_build == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
@@ -132,6 +151,7 @@ jobs:
             -f target_url="$DEPLOY_URL"
 
       - name: Add preview link to job summary
+        if: steps.check.outputs.has_build == 'true'
         env:
           DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
         run: |
@@ -145,13 +165,14 @@ jobs:
     # Run on both success and failure — the whole point of the image report is
     # to show what failed. Build-stage failures that produced no test artifact
     # are handled gracefully below via continue-on-error and the has_report
-    # check.
+    # check. Also runs on pushes to main so the report site tracks main.
     if: >-
       (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.name == 'Build Documentation' &&
-      github.event.workflow_run.event == 'pull_request'
+      (github.event.workflow_run.event == 'pull_request' ||
+       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
     environment:
-      name: ${{ needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys' }}
+      name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
     steps:
       - name: Get app installation token
         id: app-token
@@ -203,9 +224,9 @@ jobs:
         uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: _doc_image_report
-          production-deploy: false
+          production-deploy: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
           github-token: ${{ steps.app-token.outputs.token }}
-          deploy-message: "Doc image report for PR #${{ needs.setup.outputs.pr_number }}"
+          deploy-message: "${{ needs.setup.outputs.pr_number != '' && format('Doc image report for PR #{0}', needs.setup.outputs.pr_number) || format('Doc image report for {0}', github.event.workflow_run.head_branch) }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
           enable-commit-status: false
@@ -243,13 +264,15 @@ jobs:
     runs-on: ubuntu-22.04
     needs: setup
     # Run on both success and failure — the whole point of the image report is
-    # to show what failed.
+    # to show what failed. Also runs on pushes to main so the report site
+    # tracks main.
     if: >-
       (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.name == 'Unit Testing and Deployment' &&
-      github.event.workflow_run.event == 'pull_request'
+      (github.event.workflow_run.event == 'pull_request' ||
+       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
     environment:
-      name: ${{ needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys' }}
+      name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
     steps:
       - name: Get app installation token
         id: app-token
@@ -300,9 +323,9 @@ jobs:
         uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: _image_report
-          production-deploy: false
+          production-deploy: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
           github-token: ${{ steps.app-token.outputs.token }}
-          deploy-message: "Test image report for PR #${{ needs.setup.outputs.pr_number }}"
+          deploy-message: "${{ needs.setup.outputs.pr_number != '' && format('Test image report for PR #{0}', needs.setup.outputs.pr_number) || format('Test image report for {0}', github.event.workflow_run.head_branch) }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
           enable-commit-status: false

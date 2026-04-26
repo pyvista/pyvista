@@ -130,7 +130,10 @@ def test_wrap_auto_names_unnamed_arrays():
 
 
 def test_global_config_to_dict():
-    assert pv.global_config.to_dict() == {'validate_on_wrap': True}
+    assert pv.global_config.to_dict() == {
+        'show_vtk_api': False,
+        'validate_on_wrap': True,
+    }
 
 
 def test_global_config_repr():
@@ -162,6 +165,13 @@ def test_global_config_validate_on_wrap_rejects_non_bool(value, monkeypatch):
     monkeypatch.setattr(pv.global_config, 'validate_on_wrap', True)
     with pytest.raises(TypeError, match='must be a bool'):
         pv.global_config.validate_on_wrap = value
+
+
+@pytest.mark.parametrize('value', [1, 'True', None, 0])
+def test_global_config_show_vtk_api_rejects_non_bool(value, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'show_vtk_api', False)
+    with pytest.raises(TypeError, match='must be a bool'):
+        pv.global_config.show_vtk_api = value
 
 
 def test_reader_forwards_validate_kwarg(mocker: MockerFixture):
