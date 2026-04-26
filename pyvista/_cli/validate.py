@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
+    from .utils import _MeshAndPath
+
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
 
@@ -128,7 +130,7 @@ def _validate(
             help=(
                 'Mesh to validate. Must be readable with ``pyvista.read``. '
                 'Glob patterns (``*``, ``?``, ``[...]``) are expanded; '
-                'when several files match only the first is validated.'
+                'every match is validated in turn.'
             ),
             converter=_converter_files,
         ),
@@ -188,9 +190,44 @@ def _validate(
         ),
     ] = None,
 ) -> None:
-    mesh = mesh_path[0].mesh  # type: ignore[attr-defined]
-    path = mesh_path[0].path  # type: ignore[attr-defined]
+    # Cyclopts declares ``mesh_path`` as ``str`` for CLI parsing but ``_converter_files``
+    # replaces the string token with the list of read meshes — narrow the type here.
+    items: list[_MeshAndPath] = mesh_path  # type: ignore[assignment]
     report_body = report[0] if report else 'message'
+    for item in items:
+        mesh = item.mesh
+        if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
+            msg = (
+                f'Cannot validate {type(mesh).__name__} read from path {str(item.path)!r}: '
+                f'only DataSet and MultiBlock meshes are supported.'
+            )
+            _console_error(app=app, message=msg)
+        _validate_one(
+            mesh,
+            item.path,
+            fields=fields,
+            exclude=exclude,
+            tolerance=tolerance,
+            planarity_tolerance=planarity_tolerance,
+            size_tolerance=size_tolerance,
+            report=report,
+            report_body=report_body,
+        )
+
+
+def _validate_one(
+    mesh: pv.DataSet | pv.MultiBlock,
+    path: Path,
+    *,
+    fields: list[_LiteralMeshValidationFields] | None,
+    exclude: list[_LiteralMeshValidationFields] | None,
+    tolerance: float | None,
+    planarity_tolerance: float | None,
+    size_tolerance: float | None,
+    report: list[_ReportBodyOptions] | None,
+    report_body: _ReportBodyOptions,
+) -> None:
+    """Validate a single mesh and print its result to the console."""
     class_name = mesh.__class__.__name__
     try:
         out = pv.DataObjectFilters.validate_mesh(

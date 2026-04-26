@@ -1313,11 +1313,16 @@ def test_plot_glob_expands_files(mock_add_mesh: MagicMock, tmp_example_dir: Path
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_validate_glob_expands_files(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
-    """Validate's mesh-path argument should accept glob patterns and pick the first match."""
+def test_validate_glob_expands_files(
+    tmp_example_dir: Path, tmp_ant_file: Path, capsys: pytest.CaptureFixture
+):
+    """Validate's mesh-path argument expands globs and validates every match."""
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
     main(shlex.split("validate '*.ply'"))
     out = capsys.readouterr().out
     assert f"PolyData mesh '{tmp_ant_file.name}' is valid!" in out, out
+    assert f"PolyData mesh '{second.name}' is valid!" in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
