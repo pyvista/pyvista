@@ -232,16 +232,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         cell_centers : bool, default: False
-            Use the mesh's :meth:`cell_centers` when computing the
-            :func:`~pyvista.principal_axes`. Points not associated with cells
-            are treated as vertex cells. By default, the mesh's points are
-            used directly.
+            Use the mesh's :meth:`~pyvista.DataObjectFilters.cell_centers` when
+            computing the :func:`~pyvista.principal_axes`. Points not associated
+            with cells are treated as vertex cells. By default, the mesh's
+            points are used directly.
 
             .. versionadded:: 0.48
 
         merge_points : bool, default: False
-            Merge coincident points with :meth:`merge_points` before computing
-            the :func:`~pyvista.principal_axes`. Duplicate points can bias the
+            Merge coincident points with
+            :meth:`~pyvista.DataSetFilters.merge_points` before computing the
+            :func:`~pyvista.principal_axes`. Duplicate points can bias the
             principal axes, so enabling this can improve the alignment. By
             default the mesh's points are used as-is.
 
