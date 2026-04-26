@@ -20,6 +20,7 @@ from .app import app
 from .utils import HELP_FORMATTER
 from .utils import _check_paths_exist
 from .utils import _console_error
+from .utils import _filter_multiblock_children
 
 
 def _is_extension_only(file_out: str) -> bool:
@@ -29,6 +30,7 @@ def _is_extension_only(file_out: str) -> bool:
 
 
 def _validate_out_has_extension(file_out: str) -> None:
+    """Raise ``ValueError`` when ``file_out`` is missing a file extension."""
     if not Path(file_out).suffix and not _is_extension_only(file_out):
         msg = 'Output file must have a file extension.'
         raise ValueError(msg)
@@ -62,6 +64,13 @@ def _convert(
     inputs are given, the output must be an extension-only spec (``.xyz`` or
     ``dir/.xyz``) so each input's stem is reused. A bare ``.xyz`` writes the output
     adjacent to each input; ``dir/.xyz`` writes into the given ``dir``.
+
+    MultiBlock files (``.vtm``/``.vtmb``) are paired on disk with a sibling sidecar
+    directory (e.g. ``parent.vtm`` -> ``parent/parent_0.vtp``). Pass the parent
+    ``.vtm`` directly to convert a MultiBlock as a single output; a recursive glob
+    like ``**/*`` may also pick up the sidecar children. When both a parent and its
+    sidecar children appear in the input list the children are dropped automatically
+    to preserve the 1:1 input/output mapping.
 
     Sample usage:
     ```bash
@@ -97,6 +106,17 @@ def _convert(
     except ValueError as e:
         _console_error(app=app, message=str(e))
 
+    input_paths, dropped = _filter_multiblock_children(input_paths)
+    if dropped:
+        n = len(dropped)
+        listed = ', '.join(str(p) for p in dropped[:5])
+        if n > 5:
+            listed += f', ... ({n - 5} more)'
+        app.console.print(
+            f'[yellow]Skipping {n} file(s) inside MultiBlock sidecar directories:[/yellow] '
+            f'{listed}'
+        )
+
     path_out = Path(file_out)
     ext_only = _is_extension_only(file_out)
     if not ext_only and len(input_paths) > 1:
@@ -116,6 +136,7 @@ def _convert(
 
 
 def _read_mesh(path_in: Path) -> pv.DataObject:
+    """Read ``path_in`` while suppressing :class:`pv.InvalidMeshWarning`."""
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
         return pv.read(path_in)
@@ -140,6 +161,7 @@ def _convert_one(
     ext_only: bool,
     announce: bool,
 ) -> None:
+    """Read a single input, save it under the resolved output path, and optionally announce."""
     out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -158,6 +180,7 @@ def _convert_one(
 
 
 def _convert_many(input_paths: list[Path], path_out: Path) -> None:
+    """Convert each input under a progress bar and report the destination directory(s)."""
     columns = (
         TextColumn('[progress.description]{task.description}'),
         BarColumn(),

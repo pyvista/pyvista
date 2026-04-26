@@ -139,6 +139,43 @@ def _check_paths_exist(paths: list[str]) -> list[Path]:
     return [Path(v) for v in values]
 
 
+_MULTIBLOCK_EXTS = frozenset({'.vtm', '.vtmb'})
+
+
+def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Path]]:
+    """Drop paths that live inside a sibling sidecar directory of a MultiBlock parent.
+
+    A ``.vtm`` / ``.vtmb`` file ``parent.vtm`` is paired on disk with a sidecar directory
+    ``parent/`` that holds the child blocks (e.g. ``parent/parent_0.vtp``). When both the
+    parent and its sidecar children appear in the same input list, converting the children
+    individually would duplicate work and break the 1:1 input/output mapping the user
+    expects from a parent ``.vtm``.
+
+    Children are filtered only when their parent is also in ``paths``. Standalone files
+    inside an unrelated directory are left untouched.
+
+    Returns a ``(kept, filtered)`` tuple; both lists preserve the input order.
+    """
+    sidecar_dirs = [
+        (p.parent / p.stem).resolve() for p in paths if p.suffix.lower() in _MULTIBLOCK_EXTS
+    ]
+    if not sidecar_dirs:
+        return paths, []
+
+    kept: list[Path] = []
+    filtered: list[Path] = []
+    for p in paths:
+        if p.suffix.lower() in _MULTIBLOCK_EXTS:
+            kept.append(p)
+            continue
+        resolved_parents = set(p.resolve().parents)
+        if any(sd in resolved_parents for sd in sidecar_dirs):
+            filtered.append(p)
+        else:
+            kept.append(p)
+    return kept, filtered
+
+
 def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
     """Expand globs, verify each path exists, and read it with ``pv.read``.
 

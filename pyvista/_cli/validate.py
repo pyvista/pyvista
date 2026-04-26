@@ -125,7 +125,11 @@ def _validate(
     mesh_path: Annotated[
         str,
         Parameter(
-            help='Mesh to validate. Must be readable with ``pyvista.read``.',
+            help=(
+                'Mesh to validate. Must be readable with ``pyvista.read``. '
+                'Glob patterns (``*``, ``?``, ``[...]``) are expanded; '
+                'when several files match only the first is validated.'
+            ),
             converter=_converter_files,
         ),
     ],

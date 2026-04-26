@@ -357,6 +357,50 @@ def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+def test_convert_multiblock_drops_sidecar_children(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture
+):
+    """A parent ``.vtm`` paired with its sidecar children must be converted 1:1.
+
+    Saving a ``MultiBlock`` writes ``parent.vtm`` plus a ``parent/`` sidecar directory
+    holding each child block. A recursive glob would pick up the children and convert
+    them individually; the converter should drop them and convert only the parent.
+    """
+    inner = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    inner.save(tmp_example_dir / 'm.vtm')
+    sidecar = tmp_example_dir / 'm'
+    assert sidecar.is_dir()
+    children = sorted(sidecar.glob('*.vtp'))
+    assert len(children) == 2
+
+    main(
+        shlex.split(
+            f'convert m.vtm {children[0].relative_to(tmp_example_dir).as_posix()!r} '
+            f'{children[1].relative_to(tmp_example_dir).as_posix()!r} .pv'
+        )
+    )
+
+    out = capsys.readouterr().out
+    assert 'Skipping 2 file(s) inside MultiBlock sidecar directories' in out, out
+    # Only the parent is converted — children stay untouched
+    assert (tmp_example_dir / 'm.pv').is_file()
+    assert not (sidecar / 'm_0.pv').exists()
+    assert not (sidecar / 'm_1.pv').exists()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_multiblock_keeps_orphan_children(tmp_example_dir: Path):
+    """Children inside an unrelated directory are not filtered when no parent is present."""
+    sub = tmp_example_dir / 'm'
+    sub.mkdir()
+    pv.Sphere().save(sub / 'm_0.vtp')
+    pv.Cube().save(sub / 'm_1.vtp')
+    main(shlex.split("convert 'm/*.vtp' .pv"))
+    assert (sub / 'm_0.pv').is_file()
+    assert (sub / 'm_1.pv').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_convert_multiple_inputs_named_output_error(
     tmp_example_dir,
     tmp_ant_file: Path,
@@ -409,6 +453,8 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     assert 'pyvista convert foo.abc .xyz' in out, out
     assert 'pyvista convert sub/*.vtu .pv' in out, out
     assert 'next to each input' in out, out
+    assert 'MultiBlock files' in out, out
+    assert 'sidecar' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1255,6 +1301,23 @@ def test_add_mesh_volume_called(
     mock = mock_add_volume if add_volume else mock_add_mesh
     assert mock.call_count == ncalls
     assert mock.mock_calls == [mocker.call(pv.read(a)) for a in args]
+
+
+@pytest.mark.usefixtures('mock_pv_read')
+def test_plot_glob_expands_files(mock_add_mesh: MagicMock, tmp_example_dir: Path):
+    """Plot's --files argument should accept glob patterns (same path as convert)."""
+    for name in ('a.ply', 'b.ply'):
+        shutil.copy(pv.examples.antfile, tmp_example_dir / name)
+    main(shlex.split("plot '*.ply'"))
+    assert mock_add_mesh.call_count == 2
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_glob_expands_files(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    """Validate's mesh-path argument should accept glob patterns and pick the first match."""
+    main(shlex.split("validate '*.ply'"))
+    out = capsys.readouterr().out
+    assert f"PolyData mesh '{tmp_ant_file.name}' is valid!" in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
