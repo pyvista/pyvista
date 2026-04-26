@@ -74,6 +74,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _BaseMapper
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
+from .opts import StereoType
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
@@ -2143,6 +2144,22 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = 'Render window is not available.'
             raise RenderWindowUnavailable(msg)
         self.render_window.MakeCurrent()  # pragma: no cover
+
+    def _enable_stereo_rendering(self, stereo_type: StereoType = StereoType.ANAGLYPH) -> None:
+        """Enable stereo rendering.
+
+        This method must be called before the window is realized.
+        """
+        if self.render_window is None:
+            msg = 'The render window has been closed.'
+            raise AttributeError(msg)
+        if not self.render_window.GetNeverRendered():
+            msg = 'Stereo rendering must be enabled before the window is realized.'
+            raise RuntimeError(msg)
+        self.render_window.SetStereoCapableWindow(1)
+        self.render_window.SetStereoType(stereo_type.value)
+        self.render_window.SetStereoRender(1)
+        self.render_window.StereoUpdate()
 
     @property
     def image(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
@@ -7147,6 +7164,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
 
+    stereo : StereoType | bool, optional
+        Enable stereo rendering. If True, defaults to Anaglyph.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -7182,6 +7202,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         lighting: LightingOptions | None = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
+        stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -7298,6 +7319,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             self.enable_parallel_projection()  # type: ignore[call-arg]
 
         self.parallel_scale = self.theme.camera.parallel_scale
+
+        if isinstance(stereo, StereoType):
+            self._enable_stereo_rendering(stereo)
+        elif stereo:
+            self._enable_stereo_rendering()
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True

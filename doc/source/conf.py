@@ -241,6 +241,7 @@ nitpick_ignore_regex = [
     # PyVista shader/plotting enums
     (r'py:.*', '.*ShaderType'),
     (r'py:.*', '.*PointSpriteShape'),
+    (r'py:.*', '.*StereoType'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
