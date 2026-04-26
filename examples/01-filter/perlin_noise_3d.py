@@ -11,8 +11,6 @@ we create a voxelized mesh similar to a Minecraft "cave".
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

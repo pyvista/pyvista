@@ -20,8 +20,6 @@ when generating plots and/or when using either point- or cell-based filters such
 # -----------------------------
 # Create image data of a 3D volume with eight points and a discrete scalar data
 # array.
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

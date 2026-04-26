@@ -24,8 +24,6 @@ and :ref:`resampling_example`.
 """
 
 # sphinx_gallery_thumbnail_number = 7
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

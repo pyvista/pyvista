@@ -10,8 +10,6 @@ among plotted arrays or use a unique scalar bar for each plotted array.
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore

@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from enum import EnumMeta
 from enum import IntEnum
 import textwrap
+from types import MappingProxyType
+from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
+from typing import get_args
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -608,7 +612,145 @@ _CELL_TYPE_INFO = dict(
 )
 
 
-class CellType(IntEnum):
+class _CellTypeMeta(EnumMeta):
+    """Metaclass to enable class property definitions for CellType."""
+
+    _dimension_map: ClassVar[dict[_Dimension, frozenset[CellType]]] = {}
+    _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
+        MappingProxyType(_dimension_map)
+    )
+
+    @property
+    def dimension_map(cls) -> MappingProxyType[_Dimension, frozenset[CellType]]:
+        """Return a mapping with sets for all cell types grouped by topological dimension.
+
+        The groupings are derived from each member's :attr:`dimension`.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        dict
+            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            values with the respective :class:`CellType` members.
+
+        See Also
+        --------
+        dimension
+        pyvista.DataSet.max_cell_dimensionality
+        pyvista.DataSet.min_cell_dimensionality
+        pyvista.DataSet.distinct_cell_types
+
+        Examples
+        --------
+        Common 2D cell types such as :attr:`TRIANGLE` and :attr:`TRIANGLE_STRIP`
+        are in the 2D grouping.
+
+        >>> import pyvista as pv
+        >>> two_d = pv.CellType.dimension_map[2]
+        >>> pv.CellType.TRIANGLE in two_d
+        True
+        >>> pv.CellType.TRIANGLE_STRIP in two_d
+        True
+
+        Check whether a mesh contains only 2D cells by combining this with
+        :attr:`~pyvista.DataSet.distinct_cell_types`.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.distinct_cell_types <= pv.CellType.dimension_map[2]
+        True
+
+        Show all 0D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[0])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.EMPTY_CELL: 0>,
+         <CellType.VERTEX: 1>,
+         <CellType.POLY_VERTEX: 2>]
+
+        Show all 1D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[1])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.LINE: 3>,
+         <CellType.POLY_LINE: 4>,
+         <CellType.QUADRATIC_EDGE: 21>,
+         <CellType.CUBIC_LINE: 35>,
+         <CellType.PARAMETRIC_CURVE: 51>,
+         <CellType.HIGHER_ORDER_EDGE: 60>,
+         <CellType.LAGRANGE_CURVE: 68>,
+         <CellType.BEZIER_CURVE: 75>]
+
+        Show all 2D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[2])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TRIANGLE: 5>,
+         <CellType.TRIANGLE_STRIP: 6>,
+         <CellType.POLYGON: 7>,
+         <CellType.PIXEL: 8>,
+         <CellType.QUAD: 9>,
+         <CellType.QUADRATIC_TRIANGLE: 22>,
+         <CellType.QUADRATIC_QUAD: 23>,
+         <CellType.BIQUADRATIC_QUAD: 28>,
+         <CellType.QUADRATIC_LINEAR_QUAD: 30>,
+         <CellType.BIQUADRATIC_TRIANGLE: 34>,
+         <CellType.QUADRATIC_POLYGON: 36>,
+         <CellType.PARAMETRIC_SURFACE: 52>,
+         <CellType.PARAMETRIC_TRI_SURFACE: 53>,
+         <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
+         <CellType.HIGHER_ORDER_TRIANGLE: 61>,
+         <CellType.HIGHER_ORDER_QUAD: 62>,
+         <CellType.HIGHER_ORDER_POLYGON: 63>,
+         <CellType.LAGRANGE_TRIANGLE: 69>,
+         <CellType.LAGRANGE_QUADRILATERAL: 70>,
+         <CellType.BEZIER_TRIANGLE: 76>,
+         <CellType.BEZIER_QUADRILATERAL: 77>]
+
+        Show all 3D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[3])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TETRA: 10>,
+         <CellType.VOXEL: 11>,
+         <CellType.HEXAHEDRON: 12>,
+         <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>,
+         <CellType.PENTAGONAL_PRISM: 15>,
+         <CellType.HEXAGONAL_PRISM: 16>,
+         <CellType.QUADRATIC_TETRA: 24>,
+         <CellType.QUADRATIC_HEXAHEDRON: 25>,
+         <CellType.QUADRATIC_WEDGE: 26>,
+         <CellType.QUADRATIC_PYRAMID: 27>,
+         <CellType.TRIQUADRATIC_HEXAHEDRON: 29>,
+         <CellType.QUADRATIC_LINEAR_WEDGE: 31>,
+         <CellType.BIQUADRATIC_QUADRATIC_WEDGE: 32>,
+         <CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON: 33>,
+         <CellType.TRIQUADRATIC_PYRAMID: 37>,
+         <CellType.CONVEX_POINT_SET: 41>,
+         <CellType.POLYHEDRON: 42>,
+         <CellType.PARAMETRIC_TETRA_REGION: 55>,
+         <CellType.PARAMETRIC_HEX_REGION: 56>,
+         <CellType.HIGHER_ORDER_TETRAHEDRON: 64>,
+         <CellType.HIGHER_ORDER_WEDGE: 65>,
+         <CellType.HIGHER_ORDER_PYRAMID: 66>,
+         <CellType.HIGHER_ORDER_HEXAHEDRON: 67>,
+         <CellType.LAGRANGE_TETRAHEDRON: 71>,
+         <CellType.LAGRANGE_HEXAHEDRON: 72>,
+         <CellType.LAGRANGE_WEDGE: 73>,
+         <CellType.LAGRANGE_PYRAMID: 74>,
+         <CellType.BEZIER_TETRAHEDRON: 78>,
+         <CellType.BEZIER_HEXAHEDRON: 79>,
+         <CellType.BEZIER_WEDGE: 80>,
+         <CellType.BEZIER_PYRAMID: 81>]
+
+        """
+        if not (mapping := cls._dimension_map):
+            # Populate dict on first access
+            for dimension in get_args(_Dimension):
+                mapping[dimension] = frozenset(
+                    celltype for celltype in CellType if celltype.dimension == dimension
+                )
+        return cls._dimension_map_proxy
+
+
+class CellType(IntEnum, metaclass=_CellTypeMeta):
     """Define types of cells.
 
     Cells are defined by specifying a type in combination with an ordered list of points.
@@ -891,6 +1033,7 @@ class CellType(IntEnum):
         See Also
         --------
         pyvista.Cell.dimension
+        dimension_map
 
         Examples
         --------

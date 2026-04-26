@@ -113,7 +113,11 @@ def numpy_to_idarr(
         ind = np.ascontiguousarray(ind, dtype=pv.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
-    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
+    # but skip the ``ravel()`` allocation when the array is already
+    # 1D and contiguous (the common case), since ndarray.ravel() of
+    # a non-1D shape returns a copy.
+    ravelled = ind if ind.ndim == 1 else ind.ravel()
+    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ravelled, deep=deep)
     if return_ind:
         return vtk_idarr, ind
     return vtk_idarr

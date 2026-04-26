@@ -8,8 +8,6 @@ This example demonstrates how to pick meshes using
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

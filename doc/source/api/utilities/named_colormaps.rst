@@ -74,9 +74,12 @@ to choose a colormap.
 .. note::
 
     Some colormap names such as ``gray`` and ``rainbow`` are duplicated across
-    packages, but have slight variations in the mapped colors. Colormaps from
-    ``colorcet`` have priority and are used first if available, followed
-    by ``cmocean``, followed by the stock colormaps from ``matplotlib``.
+    packages, but have slight variations in the mapped colors. When a name
+    exists in ``matplotlib``, ``matplotlib``'s colormap is used so that plots
+    remain reproducible regardless of which optional colormap packages are
+    installed. Use a package-specific alias (for example an ``_r`` variant or
+    a distinct name from ``colorcet``, ``cmocean``, or ``cmcrameri``) to
+    explicitly request a third-party colormap.
 
 .. note::
 

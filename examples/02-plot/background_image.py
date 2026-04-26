@@ -8,8 +8,6 @@ Add a background image with :func:`pyvista.Plotter.add_background_image`.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

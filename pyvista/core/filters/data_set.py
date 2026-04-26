@@ -187,6 +187,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
         axis_2_direction: VectorLike[float] | str | None = None,
+        cell_centers: bool = False,
+        merge_points: bool = False,
         return_matrix: bool = False,
     ):
         """Align a dataset to the x-y-z axes.
@@ -228,6 +230,28 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
             name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        cell_centers : bool, default: False
+            Use the mesh's :meth:`~pyvista.DataObjectFilters.cell_centers` when
+            computing the :func:`~pyvista.principal_axes`. Points not associated
+            with cells are treated as vertex cells. By default, the mesh's
+            points are used directly.
+
+            .. versionadded:: 0.48
+
+        merge_points : bool, default: False
+            Merge coincident points with
+            :meth:`~pyvista.DataSetFilters.merge_points` before computing the
+            :func:`~pyvista.principal_axes`. Duplicate points can bias the
+            principal axes, so enabling this can improve the alignment. By
+            default the mesh's points are used as-is.
+
+            .. note::
+
+                Points are only merged for the alignment. The points of the
+                returned mesh are *not* merged.
+
+            .. versionadded:: 0.48
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
@@ -330,7 +354,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     labels=["X'", "Y'", "Z'"],
         ... )
 
-        Plot the original mesh with its local axes, along with the algned mesh and its
+        Plot the original mesh with its local axes, along with the aligned mesh and its
         axes.
 
         >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
@@ -359,7 +383,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector_
 
-        axes, std = pv.principal_axes(self.points, return_std=True)
+        # Get points and compute principal axes
+        input_mesh = self.cell_centers() if cell_centers else self
+        points = input_mesh.merge_points().points if merge_points else input_mesh.points
+        axes, std = pv.principal_axes(points, return_std=True)
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
             # Set directions of first two axes to +X,+Y by default
@@ -5178,7 +5205,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> extracted = mesh.extract_values(0, include_cells=False)
         >>> extracted.get_data_range()
         (np.float64(0.0), np.float64(0.0))
-        >>> extracted.plot(render_points_as_spheres=True, point_size=100)
+        >>> extracted.plot(render_points_as_spheres=True, point_size=100, color=True)
 
         Use ``ranges`` to extract values from a grid's point data in range.
 
@@ -8230,7 +8257,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[type-var]
+        binary_mask['mask'] = scalars  # type: ignore[type-var, unused-ignore]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()

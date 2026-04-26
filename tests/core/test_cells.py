@@ -188,6 +188,48 @@ def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
+def test_celltype_dimension_map():
+    dimension_map = CellType.dimension_map
+    dimensions = list(dimension_map.keys())
+    assert dimensions == [0, 1, 2, 3]
+
+    for grouping in dimension_map.values():
+        assert isinstance(grouping, frozenset)
+        assert all(isinstance(m, CellType) for m in grouping)
+
+    assert CellType.VERTEX in dimension_map[0]
+    assert CellType.POLY_VERTEX in dimension_map[0]
+    assert CellType.LINE in dimension_map[1]
+    assert CellType.POLY_LINE in dimension_map[1]
+    assert CellType.TRIANGLE in dimension_map[2]
+    assert CellType.QUAD in dimension_map[2]
+    assert CellType.POLYGON in dimension_map[2]
+    assert CellType.PIXEL in dimension_map[2]
+    assert CellType.TRIANGLE_STRIP in dimension_map[2]
+    assert CellType.TETRA in dimension_map[3]
+    assert CellType.HEXAHEDRON in dimension_map[3]
+    assert CellType.VOXEL in dimension_map[3]
+    assert CellType.POLYHEDRON in dimension_map[3]
+
+    for i in (0, 1, 2, 3):
+        for j in (0, 1, 2, 3):
+            if i != j:
+                assert dimension_map[i].isdisjoint(dimension_map[j])
+
+    union = dimension_map[0] | dimension_map[1] | dimension_map[2] | dimension_map[3]
+    assert union == set(CellType)
+
+    for member in CellType:
+        assert member in dimension_map[member.dimension]
+
+
+def test_celltype_dimension_map_not_mutable():
+    mapping = CellType.dimension_map
+    match = "'mappingproxy' object does not support item assignment"
+    with pytest.raises(TypeError, match=match):
+        mapping[42] = 'foo'
+
+
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np

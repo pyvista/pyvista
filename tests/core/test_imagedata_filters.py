@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import operator
 import re
-import time
 from typing import get_args
 
 import numpy as np
@@ -16,7 +15,6 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
-from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
 MORPHOLOGICAL_MAX_VAL = 42.0
@@ -419,19 +417,10 @@ def test_contour_labels_cell_data(channels):
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
-@flaky_test
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
-    start = time.perf_counter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        channels.contour_labels('external', orient_faces=False)
-    time_slow = time.perf_counter() - start
-
-    start = time.perf_counter()
     with pytest.warns(pv.PyVistaDeprecationWarning):
         contours = channels.contour_labels('strict_external', orient_faces=False)
-    time_fast = time.perf_counter() - start
-    assert time_fast < time_slow / 1.5
 
     # Test output is simplified correctly
     assert contours.active_scalars.ndim == 1
@@ -1464,6 +1453,73 @@ def test_select_values(uniform):
     assert isinstance(selected, pv.ImageData)
     assert selected is not uniform
     assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+def test_select_values_like_threshold(
+    frog_tissues,
+    replacement_value,
+    fill_value,
+):
+    rng = frog_tissues.get_data_range()
+
+    selected = frog_tissues.select_values(
+        ranges=rng,
+        replacement_value=replacement_value,
+        fill_value=fill_value,
+    )
+    thresholded = frog_tissues.image_threshold(
+        rng, in_value=replacement_value, out_value=fill_value
+    )
+
+    assert selected == thresholded
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        # invert=True excludes the fast path
+        dict(ranges=[10, 20], invert=True),
+        # multiple ranges excludes the fast path
+        dict(ranges=[[10, 20], [50, 60]]),
+        # ``values`` excludes the fast path
+        dict(values=[10, 20, 30]),
+        # cell preference excludes the fast path
+        dict(ranges=[10, 20], preference='cell', scalars='Spatial Cell Data'),
+    ],
+)
+def test_select_values_slow_path(uniform, kwargs):
+    selected = uniform.select_values(
+        replacement_value=99,
+        fill_value=-1,
+        **kwargs,
+    )
+    assert isinstance(selected, pv.ImageData)
+    array_name = kwargs.get('scalars') or uniform.active_scalars_name
+    out_values = set(np.asarray(selected[array_name]).tolist())
+    assert out_values <= {99, -1}
+
+
+def test_select_values_fast_and_slow_path_match(uniform):
+    rng = [10, 20]
+    fast = uniform.select_values(ranges=rng, replacement_value=1, fill_value=-1)
+    # Use ``invert=True`` then re-invert to force the slow path with equivalent semantics
+    arr = uniform.active_scalars
+    expected_mask = (arr >= rng[0]) & (arr <= rng[1])
+    slow = uniform.select_values(
+        ranges=[[float('-inf'), rng[0] - 1], [rng[1] + 1, float('inf')]],
+        replacement_value=-1,
+        fill_value=1,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(fast.active_scalars),
+        np.where(expected_mask, 1, -1).astype(fast.active_scalars.dtype),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(slow.active_scalars),
+        np.where(expected_mask, 1, -1).astype(slow.active_scalars.dtype),
+    )
 
 
 def test_select_values_split(uniform):

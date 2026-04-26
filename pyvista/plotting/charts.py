@@ -1580,6 +1580,27 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
+    def legend(self):  # numpydoc ignore=RT01
+        """Return the chart's legend.
+
+        Examples
+        --------
+        Create a {chart_name} with custom labels and access its legend.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> {chart_set_labels}
+           >>> legend = chart.legend
+           >>> chart.show()
+
+        """
+        return self.GetLegend()  # type: ignore[attr-defined]
+
+    @property
+    @doc_subs
     def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
@@ -4702,6 +4723,23 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         # See #1999 and #2031.
         if pv.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
+
+    @property
+    def legend(self):  # numpydoc ignore=RT01
+        """Access the legend of the underlying matplotlib axes.
+
+        Notes
+        -----
+        Unlike :class:`Chart2D`, :class:`ChartBox`, and :class:`ChartPie`,
+        the legend of a matplotlib-backed chart must be configured through
+        the matplotlib API on :attr:`figure`.
+
+        """
+        msg = (
+            'ChartMPL does not expose a VTK legend; configure the legend '
+            'through the underlying matplotlib figure instead (see `figure`).'
+        )
+        raise NotImplementedError(msg)
 
     @property
     def figure(self):  # numpydoc ignore=RT01

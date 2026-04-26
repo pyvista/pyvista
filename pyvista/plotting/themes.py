@@ -33,16 +33,17 @@ pyvista.
 from __future__ import annotations
 
 from enum import Enum
-from itertools import chain
 import json
 import os
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
+from pyvista.core.config import _ConfigBase
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -51,6 +52,11 @@ from .colors import get_cycler
 from .interactor_style_registry import _validate_interactor_style
 from .opts import InterpolationType
 from .opts import PointSpriteShape
+from .theme_registry import _available_theme_names
+from .theme_registry import _register_alias
+from .theme_registry import _register_theme_class
+from .theme_registry import _resolve_dotted_path
+from .theme_registry import _resolve_theme
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -65,14 +71,15 @@ if TYPE_CHECKING:
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
+        theme = os.environ['PYVISTA_PLOT_THEME']
         try:
-            theme = os.environ['PYVISTA_PLOT_THEME']
-            set_plot_theme(theme.lower())
+            # Dotted paths are case-sensitive; registered names are lowercased.
+            set_plot_theme(theme if ':' in theme else theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ', '.join(_available_theme_names())
             warn_external(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}',
+                f'Should be one of {{ {allowed} }} or "package.module:ClassName".',
             )
 
 
@@ -104,21 +111,32 @@ def load_theme(filename):
 
 
 def set_plot_theme(theme):
-    """Set the plotting parameters to a predefined theme using a string.
+    """Set plotting parameters to a predefined theme using a string or ``Theme``.
 
     Parameters
     ----------
-    theme : str
-        The theme name.  Available predefined theme names include:
+    theme : str | Theme
+        Theme to apply. Accepts any of:
 
-        - ``'dark'``,
-        - ``'default'``,
-        - ``'document'``,
-        - ``'document_build'``,
-        - ``'document_pro'``,
-        - ``'paraview'``,
-        - ``'testing'`` and
-        - ``'vtk'``.
+        * A registered theme name. Built-in names include ``'dark'``,
+          ``'default'``, ``'document'``, ``'document_build'``,
+          ``'document_pro'``, ``'paraview'``, ``'testing'``, and
+          ``'vtk'``. Third-party plugins can add more via the
+          ``pyvista.themes`` entry-point group. Use
+          :func:`~pyvista.registered_themes` to list everything that is
+          currently available.
+        * A ``"package.module:ClassName"`` dotted path to any importable
+          :class:`~pyvista.plotting.themes.Theme` subclass.
+        * A :class:`~pyvista.plotting.themes.Theme` instance.
+
+    See Also
+    --------
+    pyvista.registered_themes
+        List all registered theme names.
+    pyvista.plotting.themes.Theme
+        Base class. Subclasses with a class-level ``_default_name`` are
+        discoverable by name; see the class docstring for details aimed
+        at theme authors and plugin packages.
 
     Examples
     --------
@@ -139,17 +157,27 @@ def set_plot_theme(theme):
 
     >>> pv.set_plot_theme('paraview')
 
+    Load a theme from any importable module using a dotted path.
+
+    >>> pv.set_plot_theme('pyvista.plotting.themes:DarkTheme')
+
     """
     import pyvista  # noqa: PLC0415
 
     if isinstance(theme, str):
-        theme = theme.lower()
-        try:
-            new_theme_type = _NATIVE_THEMES[theme].value
-        except KeyError:
-            msg = f"Theme {theme} not found in PyVista's native themes."
+        if ':' in theme:
+            cls = _resolve_dotted_path(theme)
+            pyvista.global_theme.load_theme(cls())
+            return
+        resolved = _resolve_theme(theme)
+        if resolved is None:
+            allowed = ', '.join(_available_theme_names())
+            msg = (
+                f'Theme "{theme}" not found. Available themes: {allowed}. '
+                'To load from an arbitrary module use "package.module:ClassName".'
+            )
             raise ValueError(msg)
-        pyvista.global_theme.load_theme(new_theme_type())
+        pyvista.global_theme.load_theme(resolved)
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -159,94 +187,7 @@ def set_plot_theme(theme):
         raise TypeError(msg)
 
 
-# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
-class _ForceSlots(type):
-    """Metaclass to force classes and subclasses to have __slots__."""
-
-    @classmethod
-    def __prepare__(cls, name, bases, **kwargs):  # type: ignore[override]
-        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
-        super_prepared['__slots__'] = ()
-        return super_prepared
-
-
-class _ThemeConfig(metaclass=_ForceSlots):
-    """Provide common methods for theme configuration classes."""
-
-    __slots__: list[str] = []
-
-    @classmethod
-    def from_dict(cls, dict_):
-        """Create from a dictionary."""
-        inst = cls()
-        for key, value in dict_.items():
-            attr = getattr(inst, key)
-            if hasattr(attr, 'from_dict'):
-                setattr(inst, key, attr.from_dict(value))
-            else:
-                setattr(inst, key, value)
-        return inst
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return theme config parameters as a dictionary.
-
-        Returns
-        -------
-        dict
-            This theme parameter represented as a dictionary.
-
-        """
-        # remove the first underscore in each entry
-        dict_ = {}
-        for key in self._all__slots__():
-            value = getattr(self, key)
-            key_ = key[1:]
-            if key_ == 'plot_cell':  # private config values
-                continue
-            if hasattr(value, 'to_dict'):
-                dict_[key_] = value.to_dict()
-            else:
-                dict_[key_] = value
-        return dict_
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, _ThemeConfig):
-            return False
-
-        for attr_name in other._all__slots__():
-            attr = getattr(self, attr_name)
-            other_attr = getattr(other, attr_name)
-            if (
-                isinstance(attr, (tuple, list)) and tuple(attr) != tuple(other_attr)
-            ) or not attr == other_attr:
-                return False
-
-        return True
-
-    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
-
-    def __getitem__(self, key):
-        """Get a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        """Set a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        setattr(self, key, value)
-
-    @classmethod
-    def _all__slots__(cls):
-        """Get all slots including parent classes."""
-        mro = cls.mro()
-        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
-
-
-class _LightingConfig(_ThemeConfig):
+class _LightingConfig(_ConfigBase):
     """PyVista lighting configuration.
 
     This will control the lighting interpolation type, parameters,
@@ -487,7 +428,7 @@ class _LightingConfig(_ThemeConfig):
         self._emissive = bool(emissive)
 
 
-class _DepthPeelingConfig(_ThemeConfig):
+class _DepthPeelingConfig(_ConfigBase):
     """PyVista depth peeling configuration.
 
     Examples
@@ -569,7 +510,7 @@ class _DepthPeelingConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _SilhouetteConfig(_ThemeConfig):
+class _SilhouetteConfig(_ConfigBase):
     """PyVista silhouette configuration.
 
     Examples
@@ -712,7 +653,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _ColorbarConfig(_ThemeConfig):
+class _ColorbarConfig(_ConfigBase):
     """PyVista colorbar configuration.
 
     Examples
@@ -811,7 +752,7 @@ class _ColorbarConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _AxesConfig(_ThemeConfig):
+class _AxesConfig(_ConfigBase):
     """PyVista axes configuration.
 
     Examples
@@ -980,7 +921,7 @@ class _AxesConfig(_ThemeConfig):
         self._show = bool(show)
 
 
-class _Font(_ThemeConfig):
+class _Font(_ConfigBase):
     """PyVista plotter font configuration.
 
     Examples
@@ -1157,7 +1098,7 @@ class _Font(_ThemeConfig):
         self._fmt = fmt
 
 
-class _SliderStyleConfig(_ThemeConfig):
+class _SliderStyleConfig(_ConfigBase):
     """PyVista configuration for a single slider style."""
 
     __slots__ = [
@@ -1340,7 +1281,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _SliderConfig(_ThemeConfig):
+class _SliderConfig(_ConfigBase):
     """PyVista configuration encompassing all slider styles.
 
     Examples
@@ -1437,7 +1378,7 @@ class _SliderConfig(_ThemeConfig):
             yield style.name
 
 
-class _TrameConfig(_ThemeConfig):
+class _TrameConfig(_ConfigBase):
     """PyVista Trame configuration.
 
     Examples
@@ -1471,8 +1412,12 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/')).rstrip('/') + '/'
+        if service and not prefix.startswith('http'):
+            # JupyterHub service prefixes are URL paths, not filesystem paths,
+            # so use PurePosixPath to force forward-slash joining on Windows.
+            self._server_proxy_prefix = (
+                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+            )
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1619,7 +1564,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = mode
 
 
-class _CameraConfig(_ThemeConfig):
+class _CameraConfig(_ConfigBase):
     """PyVista camera configuration.
 
     Examples
@@ -1718,7 +1663,7 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = value
 
 
-class _PlotCellConfig(_ThemeConfig):
+class _PlotCellConfig(_ConfigBase):
     """Internal config for plotting cells."""
 
     __slots__ = ['_font_size', '_line_width', '_normals_scale', '_point_size']
@@ -1730,8 +1675,36 @@ class _PlotCellConfig(_ThemeConfig):
         self._normals_scale = 0.1
 
 
-class Theme(_ThemeConfig):
+class Theme(_ConfigBase):
     """Base VTK theme.
+
+    Notes
+    -----
+    This section is aimed at theme authors and plugin package
+    maintainers; end users calling :func:`~pyvista.set_plot_theme` do
+    not need any of it.
+
+    Subclasses that declare a class-level ``_default_name`` are
+    automatically registered by that name via ``__init_subclass__``
+    and become available through :func:`~pyvista.set_plot_theme`, the
+    ``PYVISTA_PLOT_THEME`` environment variable, and
+    :func:`~pyvista.registered_themes`. Subclasses without
+    ``_default_name`` are not registered, so ad-hoc subclasses remain
+    a valid pattern.
+
+    For plugin packages distributing themes, the recommended path is to
+    declare a ``pyvista.themes`` entry point so the theme is discovered
+    without requiring users to import the package first:
+
+    .. code-block:: toml
+
+        [project.entry-points.'pyvista.themes']
+        my_theme = 'my_package.theme:MyTheme'
+
+    Subclass-based auto-registration requires the defining module to be
+    imported before the name resolves, so it is primarily useful for
+    scripts, notebooks, testing, and local development. Plugin packages
+    should prefer the entry-point path.
 
     Examples
     --------
@@ -1752,7 +1725,43 @@ class Theme(_ThemeConfig):
     >>> my_theme.background = 'white'
     >>> pv.global_theme.load_theme(my_theme)
 
+    Define a custom theme that auto-registers under a name.
+
+    >>> from typing import ClassVar
+    >>> class MyTheme(DocumentTheme):
+    ...     _default_name: ClassVar[str] = 'my_theme'
+    >>> pv.set_plot_theme('my_theme')  # doctest: +SKIP
+
     """
+
+    # ``_plot_cell`` is an internal-only sub-config — exclude it from
+    # ``to_dict`` output so themes serialize/deserialize round-trip cleanly.
+    _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'plot_cell'})
+
+    _default_name: ClassVar[str | None] = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Auto-register ``Theme`` subclasses by ``_default_name``."""
+        super().__init_subclass__(**kwargs)
+        # Read from __dict__ directly so inherited _default_name does not
+        # accidentally re-register a parent theme's name.
+        if '_default_name' not in cls.__dict__:
+            # Subclass does not opt into name-based discovery. Silent skip —
+            # ad-hoc subclasses are a valid pattern.
+            return
+        name = cls.__dict__['_default_name']
+        if not isinstance(name, str) or not name:
+            warn_external(
+                f'Theme subclass {cls.__module__}.{cls.__qualname__} declared '
+                f"an invalid '_default_name' ({name!r}); expected a non-empty "
+                'string. The subclass will not be discoverable by name.',
+            )
+            return
+        _register_theme_class(
+            name,
+            cls,
+            source=f'{cls.__module__}.{cls.__qualname__}',
+        )
 
     __slots__ = [
         '_above_range_color',
@@ -1819,7 +1828,7 @@ class Theme(_ThemeConfig):
 
     def __init__(self):
         """Initialize the theme."""
-        self._name = 'default'
+        self._name = type(self)._default_name or 'default'
         self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = _CameraConfig()
@@ -3433,10 +3442,11 @@ class DarkTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'dark'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'dark'
         self.background = 'black'
         self.cmap = 'viridis'
         self.font.color = 'white'
@@ -3466,10 +3476,11 @@ class ParaViewTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'paraview'
+
     def __init__(self):
         """Initialize theme."""
         super().__init__()
-        self.name = 'paraview'
         self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
@@ -3511,10 +3522,11 @@ class DocumentTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'document'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document'
         self.background = 'white'
         self.cmap = 'viridis'
         self.font.size = 18
@@ -3542,10 +3554,11 @@ class DocumentProTheme(DocumentTheme):
 
     """
 
+    _default_name: ClassVar[str] = 'document_pro'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document_pro'
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
@@ -3558,10 +3571,11 @@ class DocumentProTheme(DocumentTheme):
 class _DocumentBuildTheme(DocumentTheme):
     """Theme used for building the documentation."""
 
+    _default_name: ClassVar[str] = 'document_build'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document_build'
         self.window_size = [1024, 768]
         self.font.size = 22
         self.font.label_size = 22
@@ -3590,9 +3604,10 @@ class _TestingTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'testing'
+
     def __init__(self):
         super().__init__()
-        self.name = 'testing'
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.axes.show = False
@@ -3616,3 +3631,11 @@ class _NATIVE_THEMES(Enum):  # noqa: N801
     default = document
     testing = _TestingTheme
     vtk = Theme
+
+
+# Register legacy name aliases. ``DocumentTheme`` already self-registers as
+# ``'document'`` via ``__init_subclass__``; these aliases preserve the
+# historical ``'default' -> DocumentTheme`` and ``'vtk' -> Theme`` mappings
+# that ``_NATIVE_THEMES`` provided.
+_register_alias('default', DocumentTheme)
+_register_alias('vtk', Theme)

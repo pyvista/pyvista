@@ -89,7 +89,10 @@ def _plot(
         Parameter(
             name='files',
             consume_multiple=True,
-            help='File(s) to plot. Must be readable with ``pyvista.read``.',
+            help=(
+                'File(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
+                'Each match must be readable with ``pyvista.read``.'
+            ),
             converter=_converter_files,
             group=Groups.IN,
             negative='',

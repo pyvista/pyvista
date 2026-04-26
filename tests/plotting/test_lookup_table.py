@@ -72,7 +72,7 @@ def test_apply_cmap(lut):
 
 def test_init_cmap():
     new_lut = LookupTable('gray', n_values=2, flip=True)
-    assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
+    assert np.allclose([[255, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
 
 
 def test_init_values():

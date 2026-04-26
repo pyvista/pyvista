@@ -3416,11 +3416,23 @@ class DataObjectFilters:
             Specify the implicit function to perform the cutting.
 
         generate_triangles : bool, default: False
-            If this is enabled (``False`` by default), the output will
-            be triangles. Otherwise the output will be the intersection
-            polygons. If the cutting function is not a plane, the
-            output will be 3D polygons, which might be nice to look at
-            but hard to compute with downstream.
+            If ``True``, the output will be triangles. Otherwise the
+            output will be the intersection polygons. If the cutting
+            function is not a plane, the output will be 3D polygons,
+            which might be nice to look at but hard to compute with
+            downstream.
+
+            .. note::
+
+               PyVista's default is ``False``, which differs from
+               :vtk:`vtkCutter`'s default of ``True``. The polygon
+               codepath in :vtk:`vtkCutter` is significantly slower than
+               the triangulation path: on a 1.3M-cell UnstructuredGrid
+               the polygon path measures ~89 ms/op vs ~20 ms/op with
+               ``generate_triangles=True`` (~5x slowdown). Pass
+               ``generate_triangles=True`` for the fast path when the
+               output cell shape is not load-bearing for your downstream
+               code.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
@@ -3505,6 +3517,18 @@ class DataObjectFilters:
             be triangles. Otherwise the output will be the intersection
             polygons.
 
+            .. note::
+
+               PyVista's default is ``False``, which differs from
+               :vtk:`vtkCutter`'s default of ``True``. The polygon
+               codepath in :vtk:`vtkCutter` is significantly slower than
+               the triangulation path: on a 1.3M-cell UnstructuredGrid
+               the polygon path measures ~89 ms/op vs ~20 ms/op with
+               ``generate_triangles=True`` (~5x slowdown). Pass
+               ``generate_triangles=True`` for the fast path when the
+               output cell shape is not load-bearing for your downstream
+               code.
+
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
@@ -3588,6 +3612,13 @@ class DataObjectFilters:
         generate_triangles : bool, default: False
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
+
+            .. note::
+
+               PyVista's default differs from :vtk:`vtkCutter` (which
+               defaults to ``True``). The polygon path is ~5x slower on
+               UnstructuredGrids. Pass ``generate_triangles=True`` for
+               the fast path. See :meth:`slice_implicit` for details.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
@@ -3706,6 +3737,13 @@ class DataObjectFilters:
         generate_triangles : bool, default: False
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
+
+            .. note::
+
+               PyVista's default differs from :vtk:`vtkCutter` (which
+               defaults to ``True``). The polygon path is ~5x slower on
+               UnstructuredGrids. Pass ``generate_triangles=True`` for
+               the fast path. See :meth:`slice_implicit` for details.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
@@ -3836,6 +3874,13 @@ class DataObjectFilters:
         generate_triangles : bool, default: False
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
+
+            .. note::
+
+               PyVista's default differs from :vtk:`vtkCutter` (which
+               defaults to ``True``). The polygon path is ~5x slower on
+               UnstructuredGrids. Pass ``generate_triangles=True`` for
+               the fast path. See :meth:`slice_implicit` for details.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.

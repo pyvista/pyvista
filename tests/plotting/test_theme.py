@@ -759,6 +759,39 @@ def test_trame_config():
     assert not trame_config.server_proxy_enabled
 
 
+@pytest.mark.parametrize(
+    ('service', 'prefix', 'expected'),
+    [
+        ('/user/afie/', '/proxy/', '/user/afie/proxy/'),
+        ('/user/afie/', 'proxy/', '/user/afie/proxy/'),
+        ('/user/afie', '/proxy', '/user/afie/proxy/'),
+        ('/user/afie/', '/proxy/port/', '/user/afie/proxy/port/'),
+    ],
+)
+def test_trame_config_server_proxy_prefix_jupyterhub(monkeypatch, service, prefix, expected):
+    # Regression test for #7595: when running under JupyterHub, the trame
+    # server proxy prefix must be joined with JUPYTERHUB_SERVICE_PREFIX and
+    # end with a trailing slash. See PR #7390 for the regression that #7595
+    # hotfixed.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', service)
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', prefix)
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == expected
+
+
+def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
+    # When PYVISTA_TRAME_SERVER_PROXY_PREFIX is an absolute http(s) URL,
+    # JUPYTERHUB_SERVICE_PREFIX must not be prepended.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', '/user/afie/')
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', 'https://example.com/proxy/')
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == 'https://example.com/proxy/'
+
+
 def test_box_axes(default_theme):
     default_theme.axes.box = True
     _ = pv.Sphere().plot(theme=default_theme)

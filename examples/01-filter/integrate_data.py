@@ -9,8 +9,6 @@ Integrate data over a surface using the
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

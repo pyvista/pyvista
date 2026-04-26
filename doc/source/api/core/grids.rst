@@ -1,7 +1,6 @@
 .. jupyter-execute::
    :hide-code:
 
-   # jupyterlab boiler plate setup
    import pyvista as pv
    pv.set_plot_theme('document')
    pv.set_jupyter_backend('static')
@@ -11,49 +10,57 @@
    pv.global_theme.show_scalar_bar = False
 
 
+.. _grids_api:
+
 Gridded Data
 ============
 
-Gridded datasets in PyVista are datasets with topologically regular
-point spacing. These are less flexible than :ref:`point_sets_api`,
-but are much more memory efficient as they can be described with a
-handful of parameters rather than having to explicitly describe the
-points and geometry of the dataset.
-
-PyVista gridded data is composed of the
-:class:`pyvista.RectilinearGrid` and :class:`pyvista.ImageData`
-classes. These classes inherit from the :vtk:`vtkRectilinearGrid` and
-:vtk:`vtkImageData` classes and are commonly used to model images or
-volumetric data.
-
-A :class:`pyvista.RectilinearGrid` is used for modeling datasets with
-variable spacing in the three coordinate directions.
-
-.. jupyter-execute::
-   :hide-code:
-
-   from pyvista import demos
-   demos.plot_datasets('RectilinearGrid')
+Gridded datasets have topologically regular point spacing. They are more
+memory efficient than :ref:`point sets <point_sets_api>` because their
+geometry can be described with a few parameters rather than explicit point
+arrays.
 
 
-A :class:`pyvista.ImageData` is used for modeling datasets with
-uniform spacing in the three coordinate directions.
+.. grid:: 1 2 2 2
+   :gutter: 2
 
-.. jupyter-execute::
-   :hide-code:
+   .. grid-item-card:: RectilinearGrid
+      :link: _autosummary/pyvista.RectilinearGrid
+      :link-type: doc
+      :class-title: pyvista-card-title
 
-   from pyvista import demos
-   demos.plot_datasets('ImageData')
+      Variable spacing along the three coordinate directions.
+      Extension of :vtk:`vtkRectilinearGrid`.
+
+      .. jupyter-execute::
+         :hide-code:
+
+         from pyvista import demos
+         demos.plot_datasets('RectilinearGrid')
+
+   .. grid-item-card:: ImageData
+      :link: _autosummary/pyvista.ImageData
+      :link-type: doc
+      :class-title: pyvista-card-title
+
+      Uniform spacing along the three coordinate directions.
+      Commonly used for images and volumetric data.
+      Extension of :vtk:`vtkImageData`.
+
+      .. jupyter-execute::
+         :hide-code:
+
+         from pyvista import demos
+         demos.plot_datasets('ImageData')
 
 
-**Class Descriptions**
+Class Reference
+---------------
 
-The following table describes PyVista's grid set classes. These
-classes inherit all methods from their corresponding VTK
-:vtk:`vtkRectilinearGrid` and :vtk:`vtkImageData` superclasses.
+.. currentmodule:: pyvista
 
 .. autosummary::
    :toctree: _autosummary
 
-   pyvista.RectilinearGrid
-   pyvista.ImageData
+   RectilinearGrid
+   ImageData
