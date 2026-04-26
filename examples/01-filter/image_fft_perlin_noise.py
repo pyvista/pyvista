@@ -188,7 +188,7 @@ init_mesh = warp_low_pass_noise(1e-2)
 pl.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
 pl.camera.zoom(1.3)
 
-for freq in np.geomspace(1e-2, 10, 25):
+for freq in np.geomspace(1e-2, 10, 15):
     pl.clear()
     mesh = warp_low_pass_noise(freq)
     pl.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
@@ -196,7 +196,7 @@ for freq in np.geomspace(1e-2, 10, 25):
     pl.write_frame()
 
 # write the last frame a few times to "pause" the gif
-for _ in range(10):
+for _ in range(5):
     pl.write_frame()
 
 pl.close()

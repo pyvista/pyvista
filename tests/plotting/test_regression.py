@@ -83,7 +83,7 @@ def test_compare_images_raises(mocker: MockerFixture):
     with pytest.raises(RuntimeError, match=r'Input images are not the same size.'):
         pv.compare_images(pv.ImageData(), pv.ImageData())
 
-    with pytest.raises(TypeError, match='may not be an image'):
+    with pytest.raises(TypeError, match=r'Expected an instance of ImageData'):
         pv.compare_images(pv.ImageData(), examples.antfile)
 
 

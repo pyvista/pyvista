@@ -155,10 +155,30 @@ def test_download_fea_hertzian_contact_cylinder():
 
 
 def test_download_nefertiti():
-    filename = examples.download_nefertiti(load=False)
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        filename = examples.download_nefertiti(load=False)
     assert Path(filename).is_file()
 
-    data = examples.download_nefertiti()
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        data = examples.download_nefertiti()
+    assert data.n_cells
+
+
+def test_download_washington_bust():
+    filename = examples.download_washington_bust(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_washington_bust()
+    assert isinstance(data, pv.PolyData)
+    assert data.n_cells
+
+
+def test_download_lincoln_life_mask():
+    filename = examples.download_lincoln_life_mask(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_lincoln_life_mask()
+    assert isinstance(data, pv.PolyData)
     assert data.n_cells
 
 

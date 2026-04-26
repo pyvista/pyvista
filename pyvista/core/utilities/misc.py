@@ -270,7 +270,7 @@ def enable_smp_tools(
 
     Returns
     -------
-    _SMPToolsContext
+    contextlib.AbstractContextManager
         A context manager that restores the previous SMP backend and thread
         count when exited. The return value may be discarded when the change
         should apply for the remainder of the process.

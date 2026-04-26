@@ -8,7 +8,7 @@ geometric objects, interfacing with VTK objects, and reading or
 writing files.
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
 
    geometric
    image
