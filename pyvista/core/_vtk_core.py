@@ -351,7 +351,6 @@ from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter as vtkRuledSurfa
 from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints as vtkSelectEnclosedPoints
 from vtkmodules.vtkFiltersModeling import vtkSubdivideTetra as vtkSubdivideTetra
 from vtkmodules.vtkFiltersModeling import vtkTrimmedExtrusionFilter as vtkTrimmedExtrusionFilter
-from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes as vtkIntegrateAttributes
 from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud as vtkConvertToPointCloud
 from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
@@ -374,8 +373,6 @@ from vtkmodules.vtkFiltersSources import vtkRegularPolygonSource as vtkRegularPo
 from vtkmodules.vtkFiltersSources import vtkSphereSource as vtkSphereSource
 from vtkmodules.vtkFiltersSources import vtkSuperquadricSource as vtkSuperquadricSource
 from vtkmodules.vtkFiltersSources import vtkTessellatedBoxSource as vtkTessellatedBoxSource
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane as vtkTextureMapToPlane
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere as vtkTextureMapToSphere
 from vtkmodules.vtkImagingCore import vtkAbstractImageInterpolator as vtkAbstractImageInterpolator
 from vtkmodules.vtkImagingCore import vtkExtractVOI as vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageBSplineCoefficients as vtkImageBSplineCoefficients
@@ -419,12 +416,6 @@ try:  # Module changed in VTK 9.3.0
 except ImportError:
     from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
         vtkExtractCells as vtkExtractCells,
-    )
-
-with contextlib.suppress(ImportError):
-    # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
-    from vtkmodules.vtkFiltersParallelDIY2 import (
-        vtkRedistributeDataSetFilter as vtkRedistributeDataSetFilter,
     )
 
 with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0

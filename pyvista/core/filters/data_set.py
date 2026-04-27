@@ -1730,7 +1730,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             origin = [bounds.x_min, bounds.y_min, bounds.z_min]  # BOTTOM LEFT CORNER
             point_u = [bounds.x_max, bounds.y_min, bounds.z_min]  # BOTTOM RIGHT CORNER
             point_v = [bounds.x_min, bounds.y_max, bounds.z_min]  # TOP LEFT CORNER
-        alg = _vtk.vtkTextureMapToPlane()
+        alg = _lazy_vtk_import('vtkFiltersTexture', 'vtkTextureMapToPlane')()
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
         else:
@@ -1811,7 +1811,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See :ref:`texture_example`.
 
         """
-        alg = _vtk.vtkTextureMapToSphere()
+        alg = _lazy_vtk_import('vtkFiltersTexture', 'vtkTextureMapToSphere')()
         if center is None:
             alg.SetAutomaticSphereGeneration(True)
         else:
@@ -6489,7 +6489,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`integrate_data_example` for more examples using this filter.
 
         """
-        alg = _vtk.vtkIntegrateAttributes()
+        alg = _lazy_vtk_import('vtkFiltersParallel', 'vtkIntegrateAttributes')()
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
         _update_alg(alg, progress_bar=progress_bar, message='Integrating Variables')
@@ -6566,7 +6566,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             )
             raise VTKVersionError(msg)
 
-        alg = _vtk.vtkRedistributeDataSetFilter()
+        alg = _lazy_vtk_import('vtkFiltersParallelDIY2', 'vtkRedistributeDataSetFilter')()
         alg.SetInputData(self)
         alg.SetNumberOfPartitions(n_partitions)
         alg.SetPreservePartitionsInOutput(True)
