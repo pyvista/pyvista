@@ -392,22 +392,6 @@ from vtkmodules.vtkImagingSources import vtkImageMandelbrotSource as vtkImageMan
 from vtkmodules.vtkImagingSources import vtkImageNoiseSource as vtkImageNoiseSource
 from vtkmodules.vtkImagingSources import vtkImageSinusoidSource as vtkImageSinusoidSource
 
-try:
-    from vtkmodules.vtkPythonContext2D import vtkPythonItem as vtkPythonItem
-except ImportError:  # pragma: no cover
-    # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
-
-    class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
-        """Empty placeholder."""
-
-        def __init__(self) -> None:  # pragma: no cover
-            """Raise version error on init."""
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Chart backgrounds require the vtkPythonContext2D module'
-            raise VTKVersionError(msg)
-
-
 try:  # Module changed in VTK 9.3.0
     from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
 except ImportError:

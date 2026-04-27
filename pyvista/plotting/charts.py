@@ -1111,8 +1111,24 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
+try:
+    from vtkmodules.vtkPythonContext2D import vtkPythonItem
+except ImportError:  # pragma: no cover
+    # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
+
+    class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
+        """Empty placeholder."""
+
+        def __init__(self) -> None:  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+
+            msg = 'Chart backgrounds require the vtkPythonContext2D module'
+            raise VTKVersionError(msg)
+
+
 @abstract_class
-class _CustomContextItem(_vtk.vtkPythonItem):
+class _CustomContextItem(vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance

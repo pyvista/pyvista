@@ -58,8 +58,6 @@ def test_minimal_vtkmodules_imported():
         'vtkmodules.vtkImagingCore',
         'vtkmodules.vtkImagingSources',
         'vtkmodules.vtkParallelCore',
-        'vtkmodules.vtkPythonContext2D',
-        'vtkmodules.vtkRenderingContext2D',
         'vtkmodules.vtkRenderingCore',
         'vtkmodules.vtkRenderingFreeType',
     }
