@@ -23,6 +23,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
@@ -1383,7 +1384,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
-        alg = _vtk.vtkGaussianSplatter()
+        alg = _lazy_vtk_import('vtkImagingHybrid', 'vtkGaussianSplatter')()
         alg.SetInputDataObject(self)
         alg.SetRadius(radius)
         alg.SetSampleDimensions(list(dimensions_))
@@ -3633,6 +3634,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`streamlines_example` example.
 
         """
+        vtkStreamTracer = _lazy_vtk_import('vtkFiltersFlowPaths', 'vtkStreamTracer')
         integration_direction_lower = str(integration_direction).strip().lower()
         if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
             msg = (
@@ -3654,8 +3656,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             msg = "Step unit must be either 'l' or 'cl'"
             raise ValueError(msg)
         step_unit_val = {
-            'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
-            'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
+            'cl': vtkStreamTracer.CELL_LENGTH_UNIT,
+            'l': vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
@@ -3686,7 +3688,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             source = source.cast_to_unstructured_grid()
 
         # Build the algorithm
-        alg = _vtk.vtkStreamTracer()
+        alg = vtkStreamTracer()
         # Inputs
         alg.SetInputDataObject(self)
         alg.SetSourceData(source)
@@ -3844,6 +3846,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See :ref:`streamlines_2D_example` for more examples using this filter.
 
         """
+        vtkStreamTracer = _lazy_vtk_import('vtkFiltersFlowPaths', 'vtkStreamTracer')
+
         if integrator_type not in [2, 4]:
             msg = 'Integrator type must be one of `2` or `4`.'
             raise ValueError(msg)
@@ -3854,8 +3858,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             msg = "Step unit must be either 'l' or 'cl'"
             raise ValueError(msg)
         step_unit_ = {
-            'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
-            'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
+            'cl': vtkStreamTracer.CELL_LENGTH_UNIT,
+            'l': vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
         if isinstance(vectors, str):
             self.set_active_scalars(vectors)
@@ -3866,7 +3870,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         loop_angle = loop_angle * np.pi / 180
 
         # Build the algorithm
-        alg = _vtk.vtkEvenlySpacedStreamlines2D()
+        alg = _lazy_vtk_import('vtkFiltersFlowPaths', 'vtkEvenlySpacedStreamlines2D')()
         # Inputs
         alg.SetInputDataObject(self)
 
@@ -6196,7 +6200,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
             msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
             raise VTKVersionError(msg)
-        alg = _vtk.vtkBoundaryMeshQuality()
+        alg = _lazy_vtk_import('vtkFiltersVerdict', 'vtkBoundaryMeshQuality')()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
         return _get_output(alg)
@@ -8263,7 +8267,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         poly_ijk = poly_ijk.strip()
 
         # Convert polydata to stencil
-        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil = _lazy_vtk_import('vtkImagingStencil', 'vtkPolyDataToImageStencil')()
         poly_to_stencil.SetInputData(poly_ijk)
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
         poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
@@ -8271,7 +8275,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
 
         # Convert stencil to image
-        stencil = _vtk.vtkImageStencil()
+        stencil = _lazy_vtk_import('vtkImagingStencil', 'vtkImageStencil')()
         stencil.SetInputData(binary_mask)
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
@@ -8660,7 +8664,7 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *
     percentile = _validation.validate_number(
         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
     )
-    distribution = _vtk.vtkLengthDistribution()
+    distribution = _lazy_vtk_import('vtkFiltersStatistics', 'vtkLengthDistribution')()
     distribution.SetInputData(poly)
     distribution.SetSampleSize(cell_length_sample_size)
     _update_alg(

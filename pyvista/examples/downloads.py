@@ -39,6 +39,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
@@ -1662,7 +1663,7 @@ def download_sparse_points(load=True):  # noqa: FBT002
 
 
 def _sparse_points_reader(saved_file):
-    points_reader = _vtk.vtkDelimitedTextReader()
+    points_reader = _lazy_vtk_import('vtkIOInfovis', 'vtkDelimitedTextReader')()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
     points_reader.SetFieldDelimiterCharacters('\t')

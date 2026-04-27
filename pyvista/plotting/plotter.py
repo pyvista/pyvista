@@ -36,6 +36,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -5032,7 +5033,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             algo = decimation_algorithm(algo, decimate)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
-        alg = _vtk.vtkPolyDataSilhouette()
+        alg = _lazy_vtk_import('vtkFiltersHybrid', 'vtkPolyDataSilhouette')()
         set_algorithm_input(alg, algo or mesh)
         alg.SetCamera(self.renderer.camera)
         if feature_angle is not None:

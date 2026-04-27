@@ -18,6 +18,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
@@ -4067,7 +4068,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         self._table = pv.Table(
             {f'data_{i}': np.asarray(d) for i, d in enumerate(data)},
         )
-        self._quartiles = _vtk.vtkComputeQuartiles()
+        self._quartiles = _lazy_vtk_import('vtkFiltersStatistics', 'vtkComputeQuartiles')()
         self._quartiles.SetInputData(self._table)
         self.SetInputData(self._quartiles.GetOutput())
         self.update(data)

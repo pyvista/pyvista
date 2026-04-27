@@ -13,6 +13,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -4395,7 +4396,7 @@ class PolyDataFilters(DataSetFilters):
         using this filter.
 
         """
-        alg = _vtk.vtkSurfaceReconstructionFilter()
+        alg = _lazy_vtk_import('vtkImagingHybrid', 'vtkSurfaceReconstructionFilter')()
         alg.SetInputDataObject(self)
         if nbr_sz is not None:
             alg.SetNeighborhoodSize(nbr_sz)

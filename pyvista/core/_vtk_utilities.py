@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import cache
+import importlib
 import sys
 from typing import Literal
 from typing import NamedTuple
@@ -10,6 +11,12 @@ from typing import NamedTuple
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.config import global_config
+
+
+def _lazy_vtk_import(module_name: str, class_name: str) -> type:
+    """Lazy import of a class from vtkmodules."""
+    module = importlib.import_module(f'vtkmodules.{module_name}')
+    return getattr(module, class_name)
 
 
 class VersionInfo(NamedTuple):

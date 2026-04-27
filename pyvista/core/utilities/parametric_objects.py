@@ -14,11 +14,14 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 
 from .geometric_sources import translate
 from .helpers import wrap
 
 if TYPE_CHECKING:
+    from vtkmodules.vtkCommonComputationalGeometry import vtkParametricFunction
+
     from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
@@ -149,7 +152,7 @@ def Spline(
         else:
             values_pair = (boundary_values, boundary_values)
 
-    spline_function = _vtk.vtkParametricSpline()
+    spline_function = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkParametricSpline')()
     spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     if closed:
@@ -256,13 +259,14 @@ def KochanekSpline(  # noqa: PLR0917
     )
 
     points_ = _validation.validate_arrayNx3(points, name='points')
-    spline_function = _vtk.vtkParametricSpline()
+    spline_function = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkParametricSpline')()
     spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     # set Kochanek spline for each direction
-    xspline = _vtk.vtkKochanekSpline()
-    yspline = _vtk.vtkKochanekSpline()
-    zspline = _vtk.vtkKochanekSpline()
+    vtkKochanekSpline = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkKochanekSpline')
+    xspline = vtkKochanekSpline()
+    yspline = vtkKochanekSpline()
+    zspline = vtkKochanekSpline()
     xspline.SetDefaultBias(bias_[0])
     yspline.SetDefaultBias(bias_[1])
     zspline.SetDefaultBias(bias_[2])
@@ -322,7 +326,9 @@ def ParametricBohemianDome(
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricBohemianDome()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricBohemianDome'
+    )()
     if a is not None:
         parametric_function.SetA(a)
     if b is not None:
@@ -360,7 +366,7 @@ def ParametricBour(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricBour()
+    parametric_function = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkParametricBour')()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -403,7 +409,7 @@ def ParametricBoy(zscale: float | None = None, **kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricBoy()
+    parametric_function = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkParametricBoy')()
     if zscale is not None:
         parametric_function.SetZScale(zscale)
 
@@ -441,7 +447,9 @@ def ParametricCatalanMinimal(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricCatalanMinimal()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricCatalanMinimal'
+    )()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -499,7 +507,9 @@ def ParametricConicSpiral(  # noqa: PLR0917
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricConicSpiral()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricConicSpiral'
+    )()
     if a is not None:
         parametric_function.SetA(a)
 
@@ -547,7 +557,9 @@ def ParametricCrossCap(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricCrossCap()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricCrossCap'
+    )()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -591,7 +603,7 @@ def ParametricDini(a: float | None = None, b: float | None = None, **kwargs) -> 
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricDini()
+    parametric_function = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkParametricDini')()
     if a is not None:
         parametric_function.SetA(a)
 
@@ -650,7 +662,9 @@ def ParametricEllipsoid(
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricEllipsoid()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricEllipsoid'
+    )()
     parametric_keywords(
         parametric_function,
         min_u=kwargs.pop('min_u', 0),
@@ -707,7 +721,9 @@ def ParametricEnneper(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricEnneper()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricEnneper'
+    )()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -747,7 +763,9 @@ def ParametricFigure8Klein(radius: float | None = None, **kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricFigure8Klein()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricFigure8Klein'
+    )()
     if radius is not None:
         parametric_function.SetRadius(radius)
 
@@ -781,7 +799,9 @@ def ParametricHenneberg(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricHenneberg()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricHenneberg'
+    )()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -819,7 +839,9 @@ def ParametricKlein(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricKlein()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricKlein'
+    )()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -861,7 +883,7 @@ def ParametricKuen(deltav0: float | None = None, **kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricKuen()
+    parametric_function = _lazy_vtk_import('vtkCommonComputationalGeometry', 'vtkParametricKuen')()
     if deltav0 is not None:
         parametric_function.SetDeltaV0(deltav0)
 
@@ -898,7 +920,9 @@ def ParametricMobius(radius: float | None = None, **kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricMobius()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricMobius'
+    )()
     if radius is not None:
         parametric_function.SetRadius(radius)
 
@@ -939,7 +963,9 @@ def ParametricPluckerConoid(n: int | None = None, **kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricPluckerConoid()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricPluckerConoid'
+    )()
     if n is not None:
         parametric_function.SetN(n)
 
@@ -979,7 +1005,9 @@ def ParametricPseudosphere(**kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricPseudosphere()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricPseudosphere'
+    )()
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -1055,7 +1083,9 @@ def ParametricRandomHills(  # noqa: PLR0917
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricRandomHills()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricRandomHills'
+    )()
     if number_of_hills is not None:
         parametric_function.SetNumberOfHills(number_of_hills)
 
@@ -1114,7 +1144,9 @@ def ParametricRoman(radius: float | None = None, **kwargs) -> PolyData:
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricRoman()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricRoman'
+    )()
     if radius is not None:
         parametric_function.SetRadius(radius)
 
@@ -1190,7 +1222,9 @@ def ParametricSuperEllipsoid(  # noqa: PLR0917
     >>> mesh.plot(color='w', smooth_shading=True, cpos='xz')
 
     """
-    parametric_function = _vtk.vtkParametricSuperEllipsoid()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricSuperEllipsoid'
+    )()
     if xradius is not None:
         parametric_function.SetXRadius(xradius)
 
@@ -1285,7 +1319,9 @@ def ParametricSuperToroid(  # noqa: PLR0917
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricSuperToroid()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricSuperToroid'
+    )()
     if ringradius is not None:
         parametric_function.SetRingRadius(ringradius)
 
@@ -1346,7 +1382,9 @@ def ParametricTorus(
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
-    parametric_function = _vtk.vtkParametricTorus()
+    parametric_function = _lazy_vtk_import(
+        'vtkCommonComputationalGeometry', 'vtkParametricTorus'
+    )()
     if ringradius is not None:
         parametric_function.SetRingRadius(ringradius)
 
@@ -1363,7 +1401,7 @@ def ParametricTorus(
 
 @_deprecate_positional_args(allowed=['parametric_function'])
 def parametric_keywords(  # noqa: PLR0917
-    parametric_function: _vtk.vtkParametricFunction,
+    parametric_function: vtkParametricFunction,
     min_u: float = 0.0,
     max_u: float = 2 * pi,
     min_v: float = 0.0,
@@ -1427,7 +1465,7 @@ def parametric_keywords(  # noqa: PLR0917
 
 @_deprecate_positional_args(allowed=['parametric_function'])
 def surface_from_para(  # noqa: PLR0917
-    parametric_function: _vtk.vtkParametricFunction,
+    parametric_function: vtkParametricFunction,
     u_res: int = 100,
     v_res: int = 100,
     w_res: int = 100,

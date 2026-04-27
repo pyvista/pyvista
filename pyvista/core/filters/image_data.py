@@ -19,6 +19,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
@@ -37,6 +38,9 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
+    from vtkmodules.vtkImagingMorphological import vtkImageContinuousDilate3D
+    from vtkmodules.vtkImagingMorphological import vtkImageContinuousErode3D
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
 
     from pyvista import ImageData
     from pyvista import PolyData
@@ -141,7 +145,7 @@ class ImageDataFilters(DataSetFilters):
         See :ref:`gaussian_smoothing_example` for a full example using this filter.
 
         """
-        alg = _vtk.vtkImageGaussianSmooth()
+        alg = _lazy_vtk_import('vtkImagingGeneral', 'vtkImageGaussianSmooth')()
         alg.SetInputDataObject(self)
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
@@ -239,7 +243,7 @@ class ImageDataFilters(DataSetFilters):
         >>> smoothed.plot(show_scalar_bar=False)
 
         """
-        alg = _vtk.vtkImageMedian3D()
+        alg = _lazy_vtk_import('vtkImagingGeneral', 'vtkImageMedian3D')()
         alg.SetInputDataObject(self)
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
@@ -1106,7 +1110,7 @@ class ImageDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
 
-        alg = _vtk.vtkImageDilateErode3D()
+        alg = _lazy_vtk_import('vtkImagingMorphological', 'vtkImageDilateErode3D')()
         alg.SetInputDataObject(self)
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
@@ -1173,16 +1177,8 @@ class ImageDataFilters(DataSetFilters):
         association: Literal[FieldAssociation.POINT],
         binary_values: tuple[float, float] | None,
         operation: Literal['dilation', 'erosion'],
-    ) -> (
-        _vtk.vtkImageContinuousErode3D
-        | _vtk.vtkImageContinuousDilate3D
-        | _vtk.vtkImageDilateErode3D
-    ):
-        alg: (
-            _vtk.vtkImageContinuousErode3D
-            | _vtk.vtkImageContinuousDilate3D
-            | _vtk.vtkImageDilateErode3D
-        )
+    ) -> vtkImageContinuousErode3D | vtkImageContinuousDilate3D | vtkImageDilateErode3D:
+        alg: vtkImageContinuousErode3D | vtkImageContinuousDilate3D | vtkImageDilateErode3D
 
         if binary_values is not None:
             background_val, foreground_val = binary_values
@@ -1193,14 +1189,14 @@ class ImageDataFilters(DataSetFilters):
                 dilate_value = background_val
                 erode_value = foreground_val
 
-            alg = _vtk.vtkImageDilateErode3D()
+            alg = _lazy_vtk_import('vtkImagingMorphological', 'vtkImageDilateErode3D')()
             alg.SetDilateValue(dilate_value)
             alg.SetErodeValue(erode_value)
         else:
             alg = (
-                _vtk.vtkImageContinuousDilate3D()
+                _lazy_vtk_import('vtkImagingMorphological', 'vtkImageContinuousDilate3D')()
                 if operation == 'dilation'
-                else _vtk.vtkImageContinuousErode3D()
+                else _lazy_vtk_import('vtkImagingMorphological', 'vtkImageContinuousErode3D')()
             )
 
         alg.SetInputArrayToProcess(
@@ -2024,7 +2020,7 @@ class ImageDataFilters(DataSetFilters):
                 msg = 'FFT filter requires point scalars.'
                 raise MissingDataError(msg)
 
-        alg = _vtk.vtkImageFFT()
+        alg = _lazy_vtk_import('vtkImagingFourier', 'vtkImageFFT')()
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Fast Fourier Transform')
         output = _get_output(alg)
@@ -2097,7 +2093,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         self._check_fft_scalars()
-        alg = _vtk.vtkImageRFFT()
+        alg = _lazy_vtk_import('vtkImagingFourier', 'vtkImageRFFT')()
         alg.SetInputDataObject(self)
         _update_alg(
             alg, progress_bar=progress_bar, message='Performing Reverse Fast Fourier Transform.'
@@ -2178,7 +2174,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         self._check_fft_scalars()
-        alg = _vtk.vtkImageButterworthLowPass()
+        alg = _lazy_vtk_import('vtkImagingFourier', 'vtkImageButterworthLowPass')()
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
@@ -2259,7 +2255,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         self._check_fft_scalars()
-        alg = _vtk.vtkImageButterworthHighPass()
+        alg = _lazy_vtk_import('vtkImagingFourier', 'vtkImageButterworthHighPass')()
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
@@ -4226,7 +4222,7 @@ class ImageDataFilters(DataSetFilters):
             )
 
         # Set vtk algorithm
-        alg = _vtk.vtkImageConnectivityFilter()
+        alg = _lazy_vtk_import('vtkImagingMorphological', 'vtkImageConnectivityFilter')()
         alg.SetInputDataObject(input_mesh)
 
         # Set the scalar range considered for connectivity

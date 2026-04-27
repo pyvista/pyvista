@@ -481,6 +481,8 @@ def test_linear_copy(nonlinear_input, linear_output):
 
 
 def test_linear_copy_surf_elem():
+    from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
+
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 6, 8, 9, 10, 11, 12, 13], np.int32)
     celltypes = np.array([CellType.QUADRATIC_QUAD, CellType.QUADRATIC_TRIANGLE], np.uint8)
 
@@ -508,7 +510,7 @@ def test_linear_copy_surf_elem():
     grid = pv.UnstructuredGrid(cells, celltypes, points, deep=False)
     lgrid = grid.linear_copy()
 
-    qfilter = _vtk.vtkMeshQuality()
+    qfilter = vtkMeshQuality()
     qfilter.SetInputData(lgrid)
     qfilter.Update()
     qual = pv.wrap(qfilter.GetOutput())['Quality']
