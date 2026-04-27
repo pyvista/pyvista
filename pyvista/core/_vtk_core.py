@@ -351,9 +351,6 @@ from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter as vtkRuledSurfa
 from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints as vtkSelectEnclosedPoints
 from vtkmodules.vtkFiltersModeling import vtkSubdivideTetra as vtkSubdivideTetra
 from vtkmodules.vtkFiltersModeling import vtkTrimmedExtrusionFilter as vtkTrimmedExtrusionFilter
-from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud as vtkConvertToPointCloud
-from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
-from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
 from vtkmodules.vtkFiltersSources import vtkCellTypeSource as vtkCellTypeSource

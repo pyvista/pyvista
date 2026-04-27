@@ -53,7 +53,6 @@ def test_minimal_vtkmodules_imported():
         'vtkmodules.vtkFiltersHybrid',
         'vtkmodules.vtkFiltersHyperTree',
         'vtkmodules.vtkFiltersModeling',
-        'vtkmodules.vtkFiltersPoints',
         'vtkmodules.vtkFiltersPython',
         'vtkmodules.vtkFiltersSources',
         'vtkmodules.vtkImagingCore',

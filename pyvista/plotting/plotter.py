@@ -6121,7 +6121,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
             # Extract points filter
-            pc_algo = _vtk.vtkConvertToPointCloud()
+            pc_algo = _lazy_vtk_import('vtkFiltersPoints', 'vtkConvertToPointCloud')()
             set_algorithm_input(pc_algo, algo)
             algo = pc_algo
 

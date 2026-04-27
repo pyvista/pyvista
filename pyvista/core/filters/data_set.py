@@ -3355,7 +3355,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             else target_
         )
 
-        gaussian_kernel = _vtk.vtkGaussianKernel()
+        gaussian_kernel = _lazy_vtk_import('vtkFiltersPoints', 'vtkGaussianKernel')()
         gaussian_kernel.SetSharpness(sharpness)
         gaussian_kernel.SetRadius(radius)
         gaussian_kernel.SetKernelFootprintToRadius()
@@ -3367,7 +3367,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         locator.SetDataSet(target_)
         locator.BuildLocator()
 
-        interpolator = _vtk.vtkPointInterpolator()
+        interpolator = _lazy_vtk_import('vtkFiltersPoints', 'vtkPointInterpolator')()
         interpolator.SetInputData(self)
         interpolator.SetSourceData(target)
         interpolator.SetKernel(gaussian_kernel)
