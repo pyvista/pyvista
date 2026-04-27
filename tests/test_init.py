@@ -28,6 +28,79 @@ def test_vtk_not_loaded():
     assert not _module_is_loaded('vtk'), error_msg
 
 
+def test_minimal_vtkmodules_imported():
+    ALLOWED_VTKMODULES = {
+        'vtkmodules.numpy_interface',
+        'vtkmodules.numpy_interface.dataset_adapter',
+        'vtkmodules.util',
+        'vtkmodules.util.data_model',
+        'vtkmodules.util.execution_model',
+        'vtkmodules.util.numpy_support',
+        'vtkmodules.util.pickle_support',
+        'vtkmodules.util.vtkAlgorithm',
+        'vtkmodules.util.vtkConstants',
+        'vtkmodules.vtkCommonComputationalGeometry',
+        'vtkmodules.vtkCommonCore',
+        'vtkmodules.vtkCommonDataModel',
+        'vtkmodules.vtkCommonExecutionModel',
+        'vtkmodules.vtkCommonMath',
+        'vtkmodules.vtkCommonMisc',
+        'vtkmodules.vtkCommonSystem',
+        'vtkmodules.vtkCommonTransforms',
+        'vtkmodules.vtkDomainsChemistry',
+        'vtkmodules.vtkFiltersCellGrid',
+        'vtkmodules.vtkFiltersCore',
+        'vtkmodules.vtkFiltersExtraction',
+        'vtkmodules.vtkFiltersFlowPaths',
+        'vtkmodules.vtkFiltersGeneral',
+        'vtkmodules.vtkFiltersGeometry',
+        'vtkmodules.vtkFiltersHybrid',
+        'vtkmodules.vtkFiltersHyperTree',
+        'vtkmodules.vtkFiltersModeling',
+        'vtkmodules.vtkFiltersParallel',
+        'vtkmodules.vtkFiltersParallelDIY2',
+        'vtkmodules.vtkFiltersPoints',
+        'vtkmodules.vtkFiltersPython',
+        'vtkmodules.vtkFiltersSources',
+        'vtkmodules.vtkFiltersStatistics',
+        'vtkmodules.vtkFiltersTexture',
+        'vtkmodules.vtkFiltersVerdict',
+        'vtkmodules.vtkIOCellGrid',
+        'vtkmodules.vtkIOCore',
+        'vtkmodules.vtkIOHDF',
+        'vtkmodules.vtkIOInfovis',
+        'vtkmodules.vtkIOLegacy',
+        'vtkmodules.vtkIOXML',
+        'vtkmodules.vtkIOXMLParser',
+        'vtkmodules.vtkImagingCore',
+        'vtkmodules.vtkImagingFourier',
+        'vtkmodules.vtkImagingGeneral',
+        'vtkmodules.vtkImagingHybrid',
+        'vtkmodules.vtkImagingMorphological',
+        'vtkmodules.vtkImagingSources',
+        'vtkmodules.vtkImagingStencil',
+        'vtkmodules.vtkParallelCore',
+        'vtkmodules.vtkPythonContext2D',
+        'vtkmodules.vtkRenderingContext2D',
+        'vtkmodules.vtkRenderingCore',
+        'vtkmodules.vtkRenderingFreeType',
+    }
+    vtkmodules_not_allowed = sorted(
+        {
+            module
+            for module in sys.modules
+            if module.startswith('vtkmodules.') and module not in ALLOWED_VTKMODULES
+        }
+    )
+    vtkmodules_loaded = [module for module in vtkmodules_not_allowed if _module_is_loaded(module)]
+
+    error_msg = """
+    Disallowed VTK module(s) were loaded at root `import pyvista`.
+    This can drastically slow down initial import times.
+    """
+    assert vtkmodules_loaded == [], error_msg
+
+
 @pytest.mark.parametrize('module', ['matplotlib', 'scipy'])
 def test_large_dependencies_not_imported(module: str):
     error_msg = f"""
