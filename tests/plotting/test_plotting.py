@@ -347,6 +347,7 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.close()
 
 
+@pytest.mark.needs_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""
     verify_image_cache.windows_skip_image_cache = True

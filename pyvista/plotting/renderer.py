@@ -3872,8 +3872,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
             lighting and the background texture. Accepts any 3x3
-            :class:`numpy.ndarray`, :vtk:`vtkMatrix3x3`, or SciPy ``Rotation``
-            supported by :func:`pyvista.core._validation.validate_rotation`.
+            :class:`numpy.ndarray`, :vtk:`vtkMatrix3x3`, or SciPy ``Rotation``.
+            Requires VTK >= 9.6.
 
             .. versionadded:: 0.48
 
@@ -3932,6 +3932,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetEnvironmentTexture(texture, is_srgb)
 
         if rotation is not None:
+            if vtk_version_info < (9, 6):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
+                raise VTKVersionError(msg)
             rotation_matrix = _validation.validate_rotation(
                 rotation,
                 must_have_handedness='right',
