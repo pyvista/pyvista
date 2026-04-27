@@ -20,6 +20,7 @@ from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import DeprecationError
@@ -52,6 +53,7 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
 
     from .cube_axes_actor import CubeAxesActor
@@ -3817,11 +3819,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
 
     @_deprecate_positional_args(allowed=['texture'])
-    def set_environment_texture(
+    def set_environment_texture(  # noqa: PLR0917
         self,
         texture,
         is_srgb=False,  # noqa: FBT002
         resample: bool | float | None = None,  # noqa: FBT001
+        rotation: RotationLike | None = None,
+        show_background=True,  # noqa: FBT002
     ) -> None:
         """Set the environment texture used for image based lighting.
 
@@ -3864,6 +3868,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 Resampling now uses linear interpolation with anti-aliasing
                 instead of nearest-neighbor, which gives smoother results for
                 continuous environment textures.
+
+        rotation : RotationLike, optional
+            Rotation to apply to the environment texture for image-based
+            lighting and the background texture. Accepts any 3x3
+            :class:`numpy.ndarray`, :vtk:`vtkMatrix3x3`, or SciPy ``Rotation``.
+            Requires VTK >= 9.6.
+
+            .. versionadded:: 0.48
+
+        show_background : bool, default: True
+            Whether to also show the environment texture as the renderer
+            background. Set this to ``False`` to keep image-based lighting
+            enabled while using a solid or gradient background instead.
+
+            .. versionadded:: 0.48
 
         Examples
         --------
@@ -3912,7 +3931,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         else:
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        self.SetBackgroundTexture(texture)
+        if rotation is not None:
+            if vtk_version_info < (9, 6):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
+                raise VTKVersionError(msg)
+            rotation_matrix = _validation.validate_rotation(
+                rotation,
+                must_have_handedness='right',
+                name='rotation',
+            )
+            self.SetEnvironmentRotationMatrix(pv.vtkmatrix_from_array(rotation_matrix))
+
+        self.SetBackgroundTexture(texture if show_background else None)  # type: ignore[arg-type]
         self.Modified()
 
     def remove_environment_texture(self) -> None:
