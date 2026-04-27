@@ -502,6 +502,8 @@ except ImportError:  # pragma: no cover
             raise VTKVersionError(msg)
 
 
+from vtkmodules.vtkFiltersModeling import vtkFitToHeightMapFilter as vtkFitToHeightMapFilter
+
 try:  # Module changed in VTK 9.3.0
     from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
 except ImportError:
