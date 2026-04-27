@@ -906,7 +906,7 @@ def sample_function(  # noqa: PLR0917
 
     samp = _lazy_vtk_import('vtkImagingHybrid', 'vtkSampleFunction')()
     samp.SetImplicitFunction(function)
-    samp.SetSampleDimensions(dim)  # type: ignore[call-overload]
+    samp.SetSampleDimensions(dim)
     samp.SetModelBounds(bounds)
     samp.SetComputeNormals(compute_normals)
     samp.SetCapping(capping)

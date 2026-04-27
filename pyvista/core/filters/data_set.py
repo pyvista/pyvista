@@ -3635,6 +3635,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         vtkStreamTracer = _lazy_vtk_import('vtkFiltersFlowPaths', 'vtkStreamTracer')
+
         integration_direction_lower = str(integration_direction).strip().lower()
         if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
             msg = (
@@ -8270,7 +8271,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         poly_to_stencil = _lazy_vtk_import('vtkImagingStencil', 'vtkPolyDataToImageStencil')()
         poly_to_stencil.SetInputData(poly_ijk)
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
         _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
 

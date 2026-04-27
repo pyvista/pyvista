@@ -13,7 +13,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.config import global_config
 
 
-def _lazy_vtk_import(module_name: str, class_name: str) -> type:
+def _lazy_vtk_import(module_name: str, class_name: str):
     """Lazy import of a class from vtkmodules."""
     module = importlib.import_module(f'vtkmodules.{module_name}')
     return getattr(module, class_name)

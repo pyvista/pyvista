@@ -38,9 +38,6 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from vtkmodules.vtkImagingMorphological import vtkImageContinuousDilate3D
-    from vtkmodules.vtkImagingMorphological import vtkImageContinuousErode3D
-    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
 
     from pyvista import ImageData
     from pyvista import PolyData
@@ -166,11 +163,11 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, Iterable):
-            alg.SetRadiusFactors(radius_factor)  # type: ignore[call-overload]
+            alg.SetRadiusFactors(radius_factor)
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
         if isinstance(std_dev, Iterable):
-            alg.SetStandardDeviations(std_dev)  # type: ignore[call-overload]
+            alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
@@ -1177,9 +1174,7 @@ class ImageDataFilters(DataSetFilters):
         association: Literal[FieldAssociation.POINT],
         binary_values: tuple[float, float] | None,
         operation: Literal['dilation', 'erosion'],
-    ) -> vtkImageContinuousErode3D | vtkImageContinuousDilate3D | vtkImageDilateErode3D:
-        alg: vtkImageContinuousErode3D | vtkImageContinuousDilate3D | vtkImageDilateErode3D
-
+    ):
         if binary_values is not None:
             background_val, foreground_val = binary_values
             if operation == 'dilation':

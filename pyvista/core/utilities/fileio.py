@@ -79,7 +79,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @_classproperty
     def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
         if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
         return None
 
     @classmethod
