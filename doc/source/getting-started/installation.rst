@@ -107,14 +107,15 @@ in-place without having to reinstall it for each change.
 
 .. _dev_wheels:
 
-Pre-built Development Wheels
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Development Wheels
+~~~~~~~~~~~~~~~~~~
 
 The PyVista documentation site also hosts a `PEP 503
-<https://peps.python.org/pep-0503/>`_ "simple repository" of pre-built wheels
-from the latest commit on ``main``. These are rebuilt and republished by the
-documentation pipeline on every push to ``main``, so the index always points
-at the most recent ``main`` build — no GitHub clone or checkout required.
+<https://peps.python.org/pep-0503/>`_ "simple repository" of wheels built
+from the latest commit on ``main``. These wheels are rebuilt and
+republished by the documentation pipeline on every push to ``main``, so the
+index always points at the most recent ``main`` build, with no GitHub clone
+or checkout required.
 
 To install the latest development wheel:
 
