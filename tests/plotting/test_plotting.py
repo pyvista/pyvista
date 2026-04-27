@@ -347,6 +347,49 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.close()
 
 
+def test_set_environment_texture_rotation(verify_image_cache):
+    """Environment texture rotation rotates both background and reflections."""
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.high_variance_test = True
+
+    texture = examples.download_cubemap_park()
+    rotation = pv.Transform().rotate_z(90).rotation_matrix
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(texture, is_srgb=True, rotation=rotation)
+    pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+
+    np.testing.assert_allclose(
+        pv.array_from_vtkmatrix(pl.renderer.GetEnvironmentRotationMatrix()),
+        rotation,
+    )
+    pl.show()
+
+
+def test_set_environment_texture_hides_background(verify_image_cache):
+    """Hiding the background keeps image-based lighting on the sphere."""
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.high_variance_test = True
+
+    texture = examples.download_cubemap_park()
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(texture, is_srgb=True, show_background=False)
+    pl.background_color = 'black'
+    pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+
+    assert pl.renderer.GetUseImageBasedLighting()
+    assert pl.renderer.GetEnvironmentTexture() is not None
+    assert pl.renderer.GetBackgroundTexture() is None
+    pl.show()
+
+
 @pytest.mark.skip_windows
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_remove_environment_texture_cubemap(sphere):
