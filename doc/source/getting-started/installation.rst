@@ -105,6 +105,49 @@ Note the development flag ``-e``. This allows you to change pyvista
 in-place without having to reinstall it for each change.
 
 
+.. _dev_wheels:
+
+Pre-built Development Wheels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The PyVista documentation site also hosts a `PEP 503
+<https://peps.python.org/pep-0503/>`_ "simple repository" of pre-built wheels
+from the latest commit on ``main``. These are rebuilt and republished by the
+documentation pipeline on every push to ``main``, so the index always points
+at the most recent ``main`` build — no GitHub clone or checkout required.
+
+To install the latest development wheel:
+
+.. code-block:: bash
+
+   pip install --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+
+To keep PyPI as the source for dependencies and only pull ``pyvista`` itself
+from the development index, use ``--extra-index-url`` instead:
+
+.. code-block:: bash
+
+   pip install --pre --extra-index-url https://dev.pyvista.org/wheels/simple/ pyvista
+
+Each build is published with a `PEP 440
+<https://peps.python.org/pep-0440/>`_ local version segment of the form
+``<base>+g<short-sha>`` (for example ``0.48.dev0+g11c36e50``), so the
+specific commit a wheel was built from is always recoverable from its
+version string. Running ``pip install --pre -U pyvista`` against the
+development index will always pick up the newest commit's wheel.
+
+A human-readable landing page listing the current build is available at
+`dev.pyvista.org/wheels/ <https://dev.pyvista.org/wheels/>`_.
+
+.. warning::
+
+   These wheels are **unsupported development builds**. They may contain
+   in-progress changes, regressions, or breaking API changes that have not
+   yet been released. Use them for testing upcoming features or reproducing
+   reports against ``main``, not for production. For stable releases,
+   install from PyPI as usual.
+
+
 Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 

@@ -92,6 +92,18 @@ jobs:
       - name: Build Documentation
         run: timeout 3600 tox run -e docs-build
 
+      # Build a development wheel and bundle a PEP 503 simple index into the
+      # docs output. Once the docs deploy to dev.pyvista.org, users can
+      # install with:
+      #   pip install --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+      # The wheel version is <base>+g<shortsha>, so every commit produces a
+      # uniquely-named wheel that pip's resolver picks up via --pre -U.
+      - name: Build development wheel and simple index
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          python -m pip install --upgrade build
+          python doc/make_dev_wheel.py --html-dir doc/_build/html
+
       - name: Dump Sphinx Build Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
