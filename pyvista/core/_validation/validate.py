@@ -44,8 +44,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy.typing as npt
-    from vtkmodules.vtkCommonMath import vtkMatrix3x3
-    from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import MatrixLike
@@ -729,7 +727,7 @@ def validate_transform3x3(
 
 
 def _array_from_vtkmatrix(
-    matrix: vtkMatrix3x3 | vtkMatrix4x4,
+    matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4,
     shape: tuple[Literal[3], Literal[3]] | tuple[Literal[4], Literal[4]],
 ) -> NumpyArray[float]:
     """Convert a vtk matrix to an array."""

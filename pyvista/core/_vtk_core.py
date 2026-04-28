@@ -9,17 +9,16 @@ the entire library.
 
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING
+from typing import Any
 
 if TYPE_CHECKING:
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
-    # when type-checking
+    # here as needed to ensure they can "see" the imported classes
     from vtk import *  # noqa: TID251
     from vtkmodules.numpy_interface.dataset_adapter import *
     from vtkmodules.util.vtkAlgorithm import *
-
-import importlib
-from typing import Any
 
 # Canonical mapping: vtkmodule -> classes
 _VTK_MODULES: dict[str, tuple[str, ...]] = {
