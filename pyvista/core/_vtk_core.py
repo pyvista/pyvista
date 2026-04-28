@@ -9,6 +9,15 @@ the entire library.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
+    # when type-checking
+    from vtk import *  # noqa: TID251
+    from vtkmodules.numpy_interface.dataset_adapter import *
+    from vtkmodules.util.vtkAlgorithm import *
+
 import importlib
 from typing import Any
 
@@ -467,7 +476,7 @@ _VTK_CLASS_TO_MODULE: dict[str, str] = {
 _VTK_CLASS_CACHE: dict[str, Any] = {}
 
 
-def __getattr__(name: str) -> type:
+def __getattr__(name: str):
     """Lazy attribute access.
 
     VTK modules are only imported when first accessed.
@@ -527,15 +536,15 @@ def _import_vtkExtractCells():  # noqa: N802
     try:  # Module changed in VTK 9.3.0
         from vtkmodules.vtkFiltersCore import vtkExtractCells
     except ImportError:
-        from vtkmodules.vtkFiltersExtraction import (
-            vtkExtractCells,  # type: ignore[attr-defined, no-redef]
+        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+            vtkExtractCells,
         )
     return vtkExtractCells
 
 
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
-        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities as vtkCellTypeUtilities
+        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities
     except ImportError:
         from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
             vtkCellTypes as vtkCellTypeUtilities,

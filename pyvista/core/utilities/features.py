@@ -905,7 +905,7 @@ def sample_function(  # noqa: PLR0917
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
-    samp.SetSampleDimensions(dim)
+    samp.SetSampleDimensions(dim)  # type: ignore[call-overload]
     samp.SetModelBounds(bounds)
     samp.SetComputeNormals(compute_normals)
     samp.SetCapping(capping)

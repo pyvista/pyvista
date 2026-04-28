@@ -1173,7 +1173,17 @@ class ImageDataFilters(DataSetFilters):
         association: Literal[FieldAssociation.POINT],
         binary_values: tuple[float, float] | None,
         operation: Literal['dilation', 'erosion'],
+    ) -> (
+        _vtk.vtkImageContinuousErode3D
+        | _vtk.vtkImageContinuousDilate3D
+        | _vtk.vtkImageDilateErode3D
     ):
+        alg: (
+            _vtk.vtkImageContinuousErode3D
+            | _vtk.vtkImageContinuousDilate3D
+            | _vtk.vtkImageDilateErode3D
+        )
+
         if binary_values is not None:
             background_val, foreground_val = binary_values
             if operation == 'dilation':
