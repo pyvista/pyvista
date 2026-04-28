@@ -23,6 +23,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 import uuid
@@ -62,6 +63,7 @@ from .actor import Actor
 from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
+from .component_registry import register_plotter_component as _register_plotter_component
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
 from .mapper import DataSetMapper
@@ -378,6 +380,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self._initialized = False
 
+        # Tracks plotter components (see
+        # ``pyvista.plotting.component_registry``) that have been
+        # constructed on this instance. ``close()`` walks this list in
+        # reverse to invoke each component's optional lifecycle hooks.
+        self._components: list[Any] = []
+
         self.mapper: _BaseMapper | None = None
         self.volume: Volume | None = None
         self.text: CornerAnnotation | Text | None = None
@@ -421,9 +429,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             border_color=border_color,
             border_width=border_width,
         )
-
-        # This keeps track of scalars names already plotted and their ranges
-        self._scalar_bars = ScalarBars(self)
 
         # track if the camera has been set up
         self._first_time = True
@@ -473,6 +478,38 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+
+    def __getattr__(self, item: str) -> Any:
+        """Resolve plotter component plugin lookups on attribute miss.
+
+        Before falling through, check whether ``item`` matches a
+        pending ``pyvista.plotter_components`` entry point. A match
+        triggers a one-shot plugin import, after which normal attribute
+        resolution finds the newly-attached component descriptor.
+
+        Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
+        and dataset extension points present the same lookup contract.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.plotting.component_registry import _resolve_pending_component  # noqa: PLC0415
+
+        if _resolve_pending_component(item):
+            return object.__getattribute__(self, item)
+        return super().__getattribute__(item)
+
+    def __dir__(self) -> list[str]:
+        """Include pending plotter-component names so tab completion surfaces them.
+
+        Plugin-contributed components registered via the
+        ``pyvista.plotter_components`` entry-point group are imported
+        lazily on first attribute access. Listing their names alongside
+        the normal attribute set lets IPython / Jupyter / REPL tab
+        completion surface them without paying the plugin import cost
+        ahead of time.
+        """
+        from pyvista.plotting.component_registry import _pending_component_names  # noqa: PLC0415
+
+        return sorted({*super().__dir__(), *_pending_component_names()})
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
         if (iren := self.iren) is None:
@@ -1099,34 +1136,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         """
         return next(iter(self.scalar_bars.values()))
-
-    @property
-    def scalar_bars(self) -> ScalarBars:  # numpydoc ignore=RT01
-        """Scalar bars.
-
-        Returns
-        -------
-        pyvista.ScalarBars
-            Scalar bar object.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> sphere['Data'] = sphere.points[:, 2]
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere)
-        >>> pl.scalar_bars
-        Scalar Bar Title     Interactive
-        "Data"               False
-
-        Select a scalar bar actor based on the title of the bar.
-
-        >>> pl.scalar_bars['Data']
-        <vtkmodules.vtkRenderingAnnotation.vtkScalarBarActor(...) at ...>
-
-        """
-        return self._scalar_bars
 
     @property
     def _before_close_callback(self) -> Callable[[Plotter], None] | None:
@@ -5364,8 +5373,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # self.last_image = self.screenshot(None, return_img=True)
         # self.last_image_depth = self.get_image_depth()
 
-        # reset scalar bars
-        self.scalar_bars.clear()
+        # Tear down plotter components in reverse construction order.
+        for component in reversed(getattr(self, '_components', ())):
+            hook = getattr(component, '__plotter_close__', None)
+            if hook is not None:
+                hook()
         self.mesh = None
         self.mapper = None
         self.text = None
@@ -5394,6 +5406,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.disable_picking()  # type: ignore[call-arg]
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
+        # Run deep-clean hooks on constructed components in reverse order.
+        for component in reversed(getattr(self, '_components', ())):
+            hook = getattr(component, '__plotter_deep_clean__', None)
+            if hook is not None:
+                hook()
         self.mesh = None
         self.mapper = None
         self.volume = None
@@ -7100,6 +7117,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             for index in range(len(self.renderers))
             if name in self.renderers[index]._actors.keys()
         ]
+
+
+# Register built-in plotter components. Imperative (not decorator on
+# ``ScalarBars``) to avoid circular imports between ``plotter.py`` and
+# the component modules it imports.
+_register_plotter_component('scalar_bars', target_cls=BasePlotter)(ScalarBars)
 
 
 class Plotter(_NoNewAttrMixin, BasePlotter):

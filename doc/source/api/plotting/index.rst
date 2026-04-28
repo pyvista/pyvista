@@ -13,6 +13,7 @@ Plotting
    qt_plotting
    theme
    trame
+   components
 
 .. _matplotlib: https://matplotlib.org/
 

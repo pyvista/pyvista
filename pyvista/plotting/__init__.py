@@ -29,6 +29,11 @@ from .colors import __getattr__  # noqa: F401
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
 from .colors import hex_colors as hex_colors
+from .component_registry import ComponentRegistration as ComponentRegistration
+from .component_registry import PlotterComponent as PlotterComponent
+from .component_registry import register_plotter_component as register_plotter_component
+from .component_registry import registered_plotter_components as registered_plotter_components
+from .component_registry import unregister_plotter_component as unregister_plotter_component
 from .composite_mapper import BlockAttributes as BlockAttributes
 from .composite_mapper import CompositeAttributes as CompositeAttributes
 from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
