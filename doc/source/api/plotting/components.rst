@@ -14,8 +14,8 @@ Components are constructed lazily on first attribute access and cached
 on the plotter instance. They participate in the plotter lifecycle: a
 component class can define optional ``__plotter_close__`` and
 ``__plotter_deep_clean__`` dunder methods that PyVista invokes from
-:meth:`pyvista.BasePlotter.close` and
-:meth:`pyvista.BasePlotter.deep_clean`. Both hooks fire only on
+``BasePlotter.close`` and
+``BasePlotter.deep_clean``. Both hooks fire only on
 components that were actually constructed (touched at least once), in
 reverse construction order.
 

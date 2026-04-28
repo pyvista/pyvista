@@ -73,7 +73,7 @@ class PlotterComponent(Protocol):
       close websockets, stop background threads, or otherwise undo any
       side effects the component is responsible for.
     - ``__plotter_deep_clean__(self) -> None`` — called from
-      :meth:`pyvista.BasePlotter.deep_clean`. Optional; if absent, deep
+      ``BasePlotter.deep_clean``. Optional; if absent, deep
       clean falls through to the normal close path on the next plotter
       shutdown.
 
@@ -336,7 +336,7 @@ def register_plotter_component(
     Components participate in the plotter lifecycle: if the class
     defines ``__plotter_close__`` it is invoked when the plotter
     closes; if it defines ``__plotter_deep_clean__`` it is invoked from
-    :meth:`pyvista.BasePlotter.deep_clean`. Both hooks fire only on
+    ``BasePlotter.deep_clean``. Both hooks fire only on
     components that were actually constructed (touched at least once).
 
     Mirrors :func:`~pyvista.register_dataset_accessor` on the

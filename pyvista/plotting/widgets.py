@@ -85,7 +85,7 @@ class WidgetComponent(_NoNewAttrMixin):
     that has been attached to the owning plotter, along with the
     derived meshes some widgets generate. Constructed lazily on first
     access of ``plotter.widgets`` and registered for close-time
-    teardown via :meth:`__plotter_close__`.
+    teardown via ``__plotter_close__``.
 
     The plotter exposes the public widget surface (``add_*_widget``,
     ``clear_*_widgets``, ``add_mesh_clip_box``, etc.) as forwarding

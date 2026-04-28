@@ -7269,7 +7269,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     @property
     def picked_cell(self) -> Any:  # numpydoc ignore=RT01
-        """Picked cell (deprecated; see :attr:`picked_cells`).
+        """Picked cell (deprecated; see ``picked_cells``).
 
         Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_cell`.
 
@@ -7298,7 +7298,7 @@ class BasePlotter(_BoundsSizeMixin):
     def picked_path(self) -> Any:  # numpydoc ignore=RT01
         """Picked path polyline.
 
-        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_path`.
+        Forwarded from ``PickingComponent.picked_path``.
 
         """
         return self.picking.picked_path
@@ -7307,7 +7307,7 @@ class BasePlotter(_BoundsSizeMixin):
     def picked_geodesic(self) -> Any:  # numpydoc ignore=RT01
         """Picked geodesic polyline.
 
-        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_geodesic`.
+        Forwarded from ``PickingComponent.picked_geodesic``.
 
         """
         return self.picking.picked_geodesic
@@ -7316,7 +7316,7 @@ class BasePlotter(_BoundsSizeMixin):
     def picked_horizon(self) -> Any:  # numpydoc ignore=RT01
         """Picked horizon ribbon surface.
 
-        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_horizon`.
+        Forwarded from ``PickingComponent.picked_horizon``.
 
         """
         return self.picking.picked_horizon
@@ -7524,7 +7524,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.camera_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.camera_widgets` instead.
+           Use ``Plotter.widgets.camera_widgets`` instead.
 
         """
         warn_external(
@@ -7539,7 +7539,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.box_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.box_widgets` instead.
+           Use ``Plotter.widgets.box_widgets`` instead.
 
         """
         warn_external(
@@ -7553,7 +7553,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.box_clipped_meshes``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.box_clipped_meshes` instead.
+           Use ``Plotter.widgets.box_clipped_meshes`` instead.
 
         """
         warn_external(
@@ -7568,7 +7568,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.plane_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.plane_widgets` instead.
+           Use ``Plotter.widgets.plane_widgets`` instead.
 
         """
         warn_external(
@@ -7583,7 +7583,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.plane_clipped_meshes``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.plane_clipped_meshes` instead.
+           Use ``Plotter.widgets.plane_clipped_meshes`` instead.
 
         """
         warn_external(
@@ -7598,7 +7598,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.plane_sliced_meshes``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.plane_sliced_meshes` instead.
+           Use ``Plotter.widgets.plane_sliced_meshes`` instead.
 
         """
         warn_external(
@@ -7613,7 +7613,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.line_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.line_widgets` instead.
+           Use ``Plotter.widgets.line_widgets`` instead.
 
         """
         warn_external(
@@ -7628,7 +7628,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.slider_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.slider_widgets` instead.
+           Use ``Plotter.widgets.slider_widgets`` instead.
 
         """
         warn_external(
@@ -7643,7 +7643,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.threshold_meshes``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.threshold_meshes` instead.
+           Use ``Plotter.widgets.threshold_meshes`` instead.
 
         """
         warn_external(
@@ -7658,7 +7658,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.isovalue_meshes``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.isovalue_meshes` instead.
+           Use ``Plotter.widgets.isovalue_meshes`` instead.
 
         """
         warn_external(
@@ -7673,7 +7673,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.spline_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.spline_widgets` instead.
+           Use ``Plotter.widgets.spline_widgets`` instead.
 
         """
         warn_external(
@@ -7688,7 +7688,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.spline_sliced_meshes``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.spline_sliced_meshes` instead.
+           Use ``Plotter.widgets.spline_sliced_meshes`` instead.
 
         """
         warn_external(
@@ -7703,7 +7703,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.sphere_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.sphere_widgets` instead.
+           Use ``Plotter.widgets.sphere_widgets`` instead.
 
         """
         warn_external(
@@ -7718,7 +7718,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.button_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.button_widgets` instead.
+           Use ``Plotter.widgets.button_widgets`` instead.
 
         """
         warn_external(
@@ -7733,7 +7733,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.radio_button_widget_dict``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.radio_button_widget_dict` instead.
+           Use ``Plotter.widgets.radio_button_widget_dict`` instead.
 
         """
         warn_external(
@@ -7748,7 +7748,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.radio_button_title_dict``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.radio_button_title_dict` instead.
+           Use ``Plotter.widgets.radio_button_title_dict`` instead.
 
         """
         warn_external(
@@ -7763,7 +7763,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.distance_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.distance_widgets` instead.
+           Use ``Plotter.widgets.distance_widgets`` instead.
 
         """
         warn_external(
@@ -7778,7 +7778,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.logo_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.logo_widgets` instead.
+           Use ``Plotter.widgets.logo_widgets`` instead.
 
         """
         warn_external(
@@ -7793,7 +7793,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Forward to ``WidgetComponent.camera3d_widgets``.
 
         .. deprecated:: 0.48
-           Use :attr:`pyvista.Plotter.widgets.camera3d_widgets` instead.
+           Use ``Plotter.widgets.camera3d_widgets`` instead.
 
         """
         warn_external(

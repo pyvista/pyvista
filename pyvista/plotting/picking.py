@@ -279,7 +279,7 @@ class PickingComponent(_NoNewAttrMixin):
     Owns every picking observer, picked-result attribute, and per-pick
     representation actor for a single :class:`pyvista.BasePlotter`.
     Constructed lazily on first access of ``plotter.picking`` and
-    registered for close-time teardown via :meth:`__plotter_close__`.
+    registered for close-time teardown via ``__plotter_close__``.
 
     The plotter exposes the public picking surface (``enable_*_picking``,
     ``disable_picking``, ``picked_point`` and friends) as forwarding
@@ -1433,8 +1433,8 @@ class PickingComponent(_NoNewAttrMixin):
         ``"r"`` again to turn it off. Selection will be saved to
         :attr:`picked_cells <pyvista.Plotter.picked_cells>` as:
 
-        * a :class:`MultiBlock` when multiple meshes have been picked,
-        * an :class:`UnstructuredGrid` if a single mesh have been picked.
+        * a :class:`pyvista.MultiBlock` when multiple meshes have been picked,
+        * an :class:`pyvista.UnstructuredGrid` if a single mesh have been picked.
 
         All meshes in the scene are available for picking by default.
         If you would like to only pick a single mesh in the scene,
