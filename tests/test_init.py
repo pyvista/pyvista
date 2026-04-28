@@ -49,8 +49,6 @@ def test_minimal_vtkmodules_imported():
         'vtkmodules.vtkFiltersSources',
         'vtkmodules.vtkImagingSources',
         'vtkmodules.vtkParallelCore',
-        'vtkmodules.vtkRenderingCore',
-        'vtkmodules.vtkRenderingFreeType',
     }
 
     vtkmodules_not_allowed = sorted(
