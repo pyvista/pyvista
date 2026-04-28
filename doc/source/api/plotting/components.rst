@@ -19,8 +19,8 @@ component class can define optional ``__plotter_close__`` and
 components that were actually constructed (touched at least once), in
 reverse construction order.
 
-The registration surface mirrors the dataset-accessor API line for line
-— plugin authors learn one decorator pattern and apply it to both
+The registration surface mirrors the dataset-accessor API line for
+line. Plugin authors learn one decorator pattern and apply it to both
 datasets and the plotter.
 
 .. currentmodule:: pyvista

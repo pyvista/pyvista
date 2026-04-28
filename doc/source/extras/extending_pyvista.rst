@@ -321,7 +321,7 @@ Plotter components
 Datasets get accessors; the plotter gets *components*. The mechanism
 mirrors the dataset accessor pattern line for line on the registration
 API and adds explicit lifecycle hooks so plugin code that wires up
-VTK observers, websockets, or background threads has somewhere to clean
+VTK observers, sockets, or background threads has somewhere to clean
 up when the plotter shuts down.
 
 A component class accepts the plotter as its single ``__init__``
@@ -329,17 +329,16 @@ argument and exposes any methods that should be callable under the
 namespace ``plotter.<name>.<method>(...)``. Two optional dunder hooks
 participate in the plotter lifecycle:
 
-- ``__plotter_close__(self) -> None`` — called when the plotter closes.
-  Use this to release VTK observers, close websockets, stop background
+- ``__plotter_close__(self) -> None``: called when the plotter closes.
+  Use this to release VTK observers, close sockets, stop background
   threads, or undo any side effects the component is responsible for.
-- ``__plotter_deep_clean__(self) -> None`` — called from
+- ``__plotter_deep_clean__(self) -> None``: called from
   :meth:`pyvista.BasePlotter.deep_clean`. Optional; if absent, deep
   clean falls through to the close path on the next plotter shutdown.
 
 Both hooks fire only on components that were *actually constructed*
-(touched at least once). Untouched components contribute nothing — the
-right behavior, since they hold no observers or references that need
-releasing.
+(touched at least once). Untouched components contribute nothing,
+since they hold no observers or references that need releasing.
 
 .. code-block:: python
 
@@ -366,7 +365,7 @@ Registration uses :func:`~pyvista.register_plotter_component`,
 introspection uses :func:`~pyvista.registered_plotter_components`,
 and removal uses :func:`~pyvista.unregister_plotter_component`. Plugin
 authors can declare a ``pyvista.plotter_components`` entry point in
-their ``pyproject.toml`` for zero-config discovery — the plugin module
+their ``pyproject.toml`` for zero-config discovery. The plugin module
 itself is imported only when a user first accesses
 ``plotter.<plugin_name>``, so installing the plugin costs nothing for
 plotters that never use it.
