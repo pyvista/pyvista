@@ -121,14 +121,14 @@ To install the latest development wheel:
 
 .. code-block:: bash
 
-   pip install --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+   pip install --upgrade --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
 
 To keep PyPI as the source for dependencies and only pull ``pyvista`` itself
 from the development index, use ``--extra-index-url`` instead:
 
 .. code-block:: bash
 
-   pip install --pre --extra-index-url https://dev.pyvista.org/wheels/simple/ pyvista
+   pip install --upgrade --pre --extra-index-url https://dev.pyvista.org/wheels/simple/ pyvista
 
 Each build is published with a `PEP 440
 <https://peps.python.org/pep-0440/>`_ local version segment of the form
