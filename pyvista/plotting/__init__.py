@@ -55,7 +55,7 @@ from .mapper import SmartVolumeMapper as SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolumeRayCastMapper
 from .opts import PointSpriteShape as PointSpriteShape
 from .opts import ShaderType as ShaderType
-from .picking import PickingHelper as PickingHelper
+from .picking import PickingComponent as PickingComponent
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter
@@ -92,7 +92,7 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scraper
 from .volume import Volume as Volume
 from .volume_property import VolumeProperty as VolumeProperty
-from .widgets import WidgetHelper as WidgetHelper
+from .widgets import WidgetComponent as WidgetComponent
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01

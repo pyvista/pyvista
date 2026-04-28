@@ -252,7 +252,7 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()
     pl.show(auto_close=False)
 
-    assert pl._picking_text not in pl.renderer.actors
+    assert pl.picking._picking_text not in pl.renderer.actors
 
     width, height = pl.window_size
 
