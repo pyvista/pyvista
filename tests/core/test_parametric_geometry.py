@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.core import _vtk_core as _vtk
 
 
 @pytest.fixture
@@ -293,9 +294,7 @@ def test_direction():
 
 
 def test_surface_from_para():
-    from vtkmodules.vtkCommonComputationalGeometry import vtkParametricBour
-
-    parametric_function = vtkParametricBour()
+    parametric_function = _vtk.vtkParametricBour()
     geom = pv.surface_from_para(parametric_function, texture_coordinates=False)
     assert geom.active_texture_coordinates is None
     geom = pv.surface_from_para(parametric_function, texture_coordinates=True)

@@ -31,7 +31,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
-from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -4409,7 +4408,7 @@ class DataObjectFilters:
         # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
         vert_count = vertex_count and getattr(self, 'n_cells', True)
 
-        alg = _lazy_vtk_import('vtkFiltersVerdict', 'vtkCellSizeFilter')()
+        alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
@@ -5066,7 +5065,7 @@ class DataObjectFilters:
         """Compute cell quality of a DataSet (internal method)."""
         CELL_QUALITY = 'CellQuality'
 
-        alg = _lazy_vtk_import('vtkFiltersVerdict', 'vtkCellQuality')()
+        alg = _vtk.vtkCellQuality()
         alg.SetUndefinedQuality(null_value)
 
         if 'size' in ''.join(measures_requested):
@@ -5074,7 +5073,7 @@ class DataObjectFilters:
             # We only need to do this once. This will create field data arrays:
             # 'TriArea', 'QuadArea', 'TetVolume', 'PyrVolume', 'WedgeVolume', 'HexVolume'
             # which are used later by vtkCellQuality
-            mesh_quality = _lazy_vtk_import('vtkFiltersVerdict', 'vtkMeshQuality')()
+            mesh_quality = _vtk.vtkMeshQuality()
             mesh_quality.SaveCellQualityOff()
             mesh_quality.SetInputData(self)
             # Setting any 'Size' measure for any cell (tri, quad, etc.) is sufficient to
@@ -5112,7 +5111,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
     # Get possible quality measures dynamically
     str_start = 'SetQualityMeasureTo'
     measures = {}
-    for attr in dir(_lazy_vtk_import('vtkFiltersVerdict', 'vtkCellQuality')):
+    for attr in dir(_vtk.vtkCellQuality):
         if attr.startswith(str_start):
             # Get the part after 'SetQualityMeasureTo'
             measure_name = attr[len(str_start) :]

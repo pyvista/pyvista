@@ -24,6 +24,7 @@ from typing import Literal
 
 import numpy as np
 
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
 from pyvista.core._validation import check_integer
@@ -38,14 +39,13 @@ from pyvista.core._validation import check_string
 from pyvista.core._validation import check_subdtype
 from pyvista.core._validation._cast_array import _cast_to_numpy
 from pyvista.core._validation._cast_array import _cast_to_tuple
-from pyvista.core._vtk_core import vtkMatrix3x3
-from pyvista.core._vtk_core import vtkMatrix4x4
-from pyvista.core._vtk_core import vtkTransform
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy.typing as npt
+    from vtkmodules.vtkCommonMath import vtkMatrix3x3
+    from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import MatrixLike
@@ -625,9 +625,9 @@ def validate_transform4x4(
         arr = np.eye(4)  # initialize
         arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
     except (ValueError, TypeError):
-        if isinstance(transform, vtkMatrix4x4):
+        if isinstance(transform, _vtk.vtkMatrix4x4):
             arr = _array_from_vtkmatrix(transform, shape=(4, 4))  # type: ignore[assignment]
-        elif isinstance(transform, vtkTransform):
+        elif isinstance(transform, _vtk.vtkTransform):
             arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))  # type: ignore[assignment]
         else:
             try:
@@ -694,7 +694,7 @@ def validate_transform3x3(
 
     """
     check_string(name, name='Name')
-    if isinstance(transform, vtkMatrix3x3):
+    if isinstance(transform, _vtk.vtkMatrix3x3):
         return _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:

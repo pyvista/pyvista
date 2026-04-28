@@ -27,12 +27,12 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import VersionInfo
-from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.errors import InvalidMeshWarning
 
 from ._frd import _FRDParser
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
+from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
 from .helpers import wrap
 from .misc import _NoNewAttrMixin

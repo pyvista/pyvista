@@ -37,7 +37,6 @@ def test_minimal_vtkmodules_imported():
         'vtkmodules.util.execution_model',
         'vtkmodules.util.numpy_support',
         'vtkmodules.util.pickle_support',
-        'vtkmodules.util.vtkAlgorithm',
         'vtkmodules.util.vtkConstants',
         'vtkmodules.vtkCommonCore',
         'vtkmodules.vtkCommonDataModel',
@@ -47,20 +46,13 @@ def test_minimal_vtkmodules_imported():
         'vtkmodules.vtkCommonSystem',
         'vtkmodules.vtkCommonTransforms',
         'vtkmodules.vtkFiltersCore',
-        'vtkmodules.vtkFiltersExtraction',
-        'vtkmodules.vtkFiltersGeneral',
-        'vtkmodules.vtkFiltersGeometry',
-        'vtkmodules.vtkFiltersHybrid',
-        'vtkmodules.vtkFiltersHyperTree',
-        'vtkmodules.vtkFiltersModeling',
-        'vtkmodules.vtkFiltersPython',
         'vtkmodules.vtkFiltersSources',
-        'vtkmodules.vtkImagingCore',
         'vtkmodules.vtkImagingSources',
         'vtkmodules.vtkParallelCore',
         'vtkmodules.vtkRenderingCore',
         'vtkmodules.vtkRenderingFreeType',
     }
+
     vtkmodules_not_allowed = sorted(
         {
             module

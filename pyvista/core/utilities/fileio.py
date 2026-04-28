@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
+import importlib
 import itertools
 import json
 from pathlib import Path
@@ -24,7 +25,6 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -58,6 +58,12 @@ _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
+def _lazy_vtk_import(module_name: str, class_name: str) -> type:
+    """Lazy import of a class from vtkmodules."""
+    module = importlib.import_module(f'vtkmodules.{module_name}')
+    return getattr(module, class_name)
+
+
 class _FileIOBase(ABC, _NoNewAttrMixin):
     _vtk_module_name: str = ''
     _vtk_class_name: str = ''
@@ -79,7 +85,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @_classproperty
     def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
         if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
         return None
 
     @classmethod

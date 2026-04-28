@@ -24,6 +24,9 @@ from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
 if TYPE_CHECKING:
+    from vtkmodules.vtkCommonMath import vtkMatrix3x3
+    from vtkmodules.vtkCommonMath import vtkMatrix4x4
+
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
@@ -753,7 +756,7 @@ def convert_string_array(
     return arr_out
 
 
-def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> NumpyArray[float]:
+def array_from_vtkmatrix(matrix: vtkMatrix3x3 | vtkMatrix4x4) -> NumpyArray[float]:
     """Convert a vtk matrix to an array.
 
     Parameters

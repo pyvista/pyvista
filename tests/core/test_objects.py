@@ -27,8 +27,6 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
-
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
@@ -80,7 +78,7 @@ def test_table_init(tmpdir):
     h = '\t'.join([f'a{i}' for i in range(nc)])
     np.savetxt(filename, arrays, delimiter='\t', header=h, comments='')
 
-    reader = vtkDelimitedTextReader()
+    reader = _vtk.vtkDelimitedTextReader()
     reader.SetFileName(filename)
     reader.DetectNumericColumnsOn()
     reader.SetFieldDelimiterCharacters('\t')

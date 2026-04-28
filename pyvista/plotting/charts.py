@@ -18,7 +18,6 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
@@ -1111,24 +1110,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-try:
-    from vtkmodules.vtkPythonContext2D import vtkPythonItem
-except ImportError:  # pragma: no cover
-    # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
-
-    class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
-        """Empty placeholder."""
-
-        def __init__(self) -> None:  # pragma: no cover
-            """Raise version error on init."""
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Chart backgrounds require the vtkPythonContext2D module'
-            raise VTKVersionError(msg)
-
-
 @abstract_class
-class _CustomContextItem(vtkPythonItem):
+class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
@@ -4084,7 +4067,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         self._table = pv.Table(
             {f'data_{i}': np.asarray(d) for i, d in enumerate(data)},
         )
-        self._quartiles = _lazy_vtk_import('vtkFiltersStatistics', 'vtkComputeQuartiles')()
+        self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
         self.SetInputData(self._quartiles.GetOutput())
         self.update(data)

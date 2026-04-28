@@ -9,6 +9,8 @@ the entire library.
 
 from __future__ import annotations
 
+from typing import Any
+
 # Magic imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
 # isort: off
 import vtkmodules.vtkRenderingFreeType  # noqa: F401
@@ -170,6 +172,15 @@ from vtkmodules.vtkRenderingVolume import vtkVolumeMapper as vtkVolumeMapper
 from vtkmodules.vtkRenderingVolume import vtkVolumePicker as vtkVolumePicker
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle as vtkContextInteractorStyle
 
-from pyvista.core._vtk_core import *
+from pyvista.core import _vtk_core
 
 from ._vtk_gl import *
+
+
+def __getattr__(name: str) -> Any:
+    """Fallback to import from vtk core."""
+    try:
+        return getattr(_vtk_core, name)
+    except AttributeError:
+        msg = f'module {__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg) from None

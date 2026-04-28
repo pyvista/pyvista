@@ -13,7 +13,6 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._vtk_utilities import _lazy_vtk_import
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 
@@ -904,7 +903,7 @@ def sample_function(  # noqa: PLR0917
     # internal import to avoid circular dependency
     from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
-    samp = _lazy_vtk_import('vtkImagingHybrid', 'vtkSampleFunction')()
+    samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
     samp.SetSampleDimensions(dim)
     samp.SetModelBounds(bounds)
