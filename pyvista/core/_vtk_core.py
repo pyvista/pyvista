@@ -10,8 +10,8 @@ the entire library.
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import TYPE_CHECKING
-from typing import Any
 
 if TYPE_CHECKING:
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from vtk import *  # noqa: TID251
     from vtkmodules.numpy_interface.dataset_adapter import *
     from vtkmodules.util.vtkAlgorithm import *
+
+_THIS_MODULE = sys.modules[__name__]
 
 # Canonical mapping: vtkmodule -> classes
 _VTK_MODULES: dict[str, tuple[str, ...]] = {
@@ -471,20 +473,12 @@ _VTK_CLASS_TO_MODULE: dict[str, str] = {
     cls: module for module, classes in _VTK_MODULES.items() for cls in classes
 }
 
-# Cache: class -> resolved object
-_VTK_CLASS_CACHE: dict[str, Any] = {}
-
 
 def __getattr__(name: str):
     """Lazy attribute access.
 
     VTK modules are only imported when first accessed.
     """
-    # Fast path from cache
-    obj = _VTK_CLASS_CACHE.get(name)
-    if obj is not None:
-        return obj
-
     # Handle special cases
     if name == 'vtkPythonItem':
         obj = _import_vtkPythonItem()
@@ -508,7 +502,7 @@ def __getattr__(name: str):
             raise AttributeError(msg) from e
 
     # Cache object for next access
-    _VTK_CLASS_CACHE[name] = obj
+    _THIS_MODULE.__dict__[name] = obj
     return obj
 
 
