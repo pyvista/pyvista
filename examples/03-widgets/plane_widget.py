@@ -31,7 +31,7 @@ pl.show()
 
 # %%
 # After interacting with the scene, the clipped mesh is available as:
-pl.plane_clipped_meshes
+pl.widgets.plane_clipped_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -46,7 +46,7 @@ pl.add_mesh_slice(vol)
 pl.show()
 # %%
 # After interacting with the scene, the slice is available as:
-pl.plane_sliced_meshes
+pl.widgets.plane_sliced_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
