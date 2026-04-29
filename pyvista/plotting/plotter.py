@@ -617,10 +617,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
-
-        importer = vtkGLTFImporter()
+        importer = _vtk.vtkGLTFImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -649,15 +646,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
-        from vtkmodules.vtkIOImport import vtkVRMLImporter  # noqa: PLC0415
-
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        importer = vtkVRMLImporter()
+        importer = _vtk.vtkVRMLImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -682,15 +676,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        from vtkmodules.vtkIOImport import vtk3DSImporter  # noqa: PLC0415
-
         filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        importer = vtk3DSImporter()
+        importer = _vtk.vtk3DSImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -726,15 +717,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.show(cpos='xy')
 
         """
-        from vtkmodules.vtkIOImport import vtkOBJImporter  # noqa: PLC0415
-
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        importer = vtkOBJImporter()
+        importer = _vtk.vtkOBJImporter()
         importer.SetFileName(filename)  # type:ignore[arg-type]
         if filename_mtl is None:
             filename_mtl_path = filename.with_suffix('.mtl')
@@ -922,8 +910,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = 'This plotter has been closed and is unable to export the scene.'
             raise RuntimeError(msg)
 
-        from vtkmodules.vtkIOExport import vtkGLTFExporter  # noqa: PLC0415
-
         # rotate scene to gltf compatible view
         renamed_arrays = []  # any renamed normal arrays
         if rotate_scene:
@@ -969,7 +955,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                         except Exception as e:  # noqa: BLE001  # pragma: no cover
                             log.debug('Failed to rename array during gLTF export: %s', e)
 
-        exporter = vtkGLTFExporter()
+        exporter = _vtk.vtkGLTFExporter()
         exporter.SetRenderWindow(self.render_window)
         exporter.SetFileName(filename)
         exporter.SetInlineData(inline_data)
@@ -1007,13 +993,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.export_vrml('sample')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkVRMLExporter  # noqa: PLC0415
-
         if self.render_window is None:
             msg = 'This plotter has been closed and cannot be shown.'
             raise RuntimeError(msg)
 
-        exporter = vtkVRMLExporter()
+        exporter = _vtk.vtkVRMLExporter()
         exporter.SetFileName(filename)  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
@@ -6498,8 +6482,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.save_graphic('img.svg')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter  # noqa: PLC0415
-
         if self.render_window is None:
             msg = 'This plotter is closed and unable to save a screenshot.'
             raise AttributeError(msg)
@@ -6512,7 +6494,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         filepath = filepath.expanduser().resolve()
         extension = pv.core.utilities.fileio.get_ext(filepath)
 
-        writer = vtkGL2PSExporter()
+        writer = _vtk.tkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -6867,8 +6849,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkOBJExporter  # noqa: PLC0415
-
         if self.render_window is None:
             msg = 'This plotter must still have a render window open.'
             raise RuntimeError(msg)
@@ -6883,7 +6863,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = '`filename` must end with ".obj"'
             raise ValueError(msg)
 
-        exporter = vtkOBJExporter()
+        exporter = _vtk.vtkOBJExporter()
         # remove the extension as VTK always adds it in
         exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
