@@ -14,7 +14,7 @@ import pytest
 import pyvista as pv
 from pyvista import CellType
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError

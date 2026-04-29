@@ -5,9 +5,8 @@ from __future__ import annotations
 import weakref
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _vtk
 from pyvista.core.utilities.misc import _NoNewAttrMixin
-
-from . import _vtk
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [

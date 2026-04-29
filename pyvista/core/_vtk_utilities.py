@@ -8,7 +8,7 @@ from typing import Literal
 from typing import NamedTuple
 
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 from pyvista.core.config import global_config
 
 

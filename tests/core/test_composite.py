@@ -16,7 +16,7 @@ from pyvista import PolyData
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.errors import DeprecationError
 

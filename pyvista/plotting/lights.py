@@ -9,7 +9,7 @@ import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core._vtk_core import vtkMatrix4x4
+from pyvista.core import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -797,7 +797,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
     @transform_matrix.setter
     def transform_matrix(self, matrix: TransformLike):
-        if matrix is None or isinstance(matrix, vtkMatrix4x4):
+        if matrix is None or isinstance(matrix, _vtk.vtkMatrix4x4):
             self.SetTransformMatrix(matrix)
         else:
             trans = _validation.validate_transform4x4(matrix)
@@ -1050,7 +1050,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
             setattr(new_light, attr, value)
 
         if deep and self.transform_matrix is not None:
-            new_light.transform_matrix = vtkMatrix4x4()
+            new_light.transform_matrix = _vtk.vtkMatrix4x4()
             new_light.transform_matrix.DeepCopy(self.transform_matrix)
         else:
             new_light.transform_matrix = self.transform_matrix

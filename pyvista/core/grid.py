@@ -28,7 +28,7 @@ from pyvista.core.utilities.writer import TIFFWriter
 from pyvista.core.utilities.writer import XMLImageDataWriter
 from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
-from . import _vtk_core as _vtk
+from . import _vtk
 from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters

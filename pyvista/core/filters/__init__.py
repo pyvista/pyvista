@@ -34,7 +34,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
-    from pyvista.core import _vtk_core as _vtk
+    from pyvista.core import _vtk
 
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:

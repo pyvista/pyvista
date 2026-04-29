@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from . import _vtk_core as _vtk_core
+from . import _vtk as _vtk
 from ._typing_core import *
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray

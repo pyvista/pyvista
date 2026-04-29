@@ -12,7 +12,7 @@ from typing import NamedTuple
 from typing import cast
 from typing import get_args
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
 
 _Dimension = Literal[0, 1, 2, 3]

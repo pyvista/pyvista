@@ -18,11 +18,11 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
-from . import _vtk
 from .colors import COLOR_SCHEMES
 from .colors import SCHEME_NAMES
 from .colors import Color

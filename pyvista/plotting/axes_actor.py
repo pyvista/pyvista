@@ -6,13 +6,13 @@ from collections.abc import Iterable
 from enum import Enum
 
 import pyvista as pv
+from pyvista.core import _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .actor_properties import ActorProperties
 
 

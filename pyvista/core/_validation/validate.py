@@ -24,7 +24,7 @@ from typing import Literal
 
 import numpy as np
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
 from pyvista.core._validation import check_integer

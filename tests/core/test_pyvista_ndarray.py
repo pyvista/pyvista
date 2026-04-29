@@ -12,7 +12,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista import pyvista_ndarray
 from pyvista import vtk_points
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 
 
 @pytest.fixture

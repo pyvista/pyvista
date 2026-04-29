@@ -12,7 +12,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
-from . import _vtk_core as _vtk
+from . import _vtk
 from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataobject import DataObject

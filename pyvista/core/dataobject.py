@@ -18,7 +18,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _vtk_core as _vtk
+from . import _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation

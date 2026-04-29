@@ -16,7 +16,7 @@ from typing_extensions import TypeIs
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 
 from . import transformations
 from .fileio import from_meshio

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from . import _vtk_core as _vtk
+from . import _vtk
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .formatting_html import _data_array_section

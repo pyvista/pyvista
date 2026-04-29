@@ -38,7 +38,7 @@ import pooch
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read

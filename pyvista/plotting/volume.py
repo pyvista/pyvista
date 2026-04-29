@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _vtk
 
-from . import _vtk
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:

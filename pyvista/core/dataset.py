@@ -21,7 +21,7 @@ from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _validation
-from . import _vtk_core as _vtk
+from . import _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes

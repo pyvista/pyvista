@@ -36,6 +36,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core import _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -51,7 +52,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
-from . import _vtk
 from ._plotting import _common_arg_parser
 from ._plotting import _reduce_multicomponent_scalars_on_mesh
 from ._plotting import _remap_scalars_through_topology_change

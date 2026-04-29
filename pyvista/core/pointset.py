@@ -22,7 +22,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-from . import _vtk_core as _vtk
+from . import _vtk
 from .cell import CellArray
 from .cell import _get_connectivity_array
 from .cell import _get_irregular_cells

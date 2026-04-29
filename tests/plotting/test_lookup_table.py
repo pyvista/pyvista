@@ -9,7 +9,7 @@ import pytest
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
-from pyvista.plotting import _vtk
+from pyvista.core import _vtk
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture

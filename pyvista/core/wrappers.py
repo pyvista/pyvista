@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from . import _vtk_core as _vtk
+from . import _vtk
 from .composite import MultiBlock
 from .grid import ImageData
 from .grid import RectilinearGrid

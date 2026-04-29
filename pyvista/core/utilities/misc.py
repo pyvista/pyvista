@@ -19,7 +19,7 @@ import numpy as np
 from typing_extensions import Self
 
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk
 
 if TYPE_CHECKING:
     from typing import Any
