@@ -333,7 +333,7 @@ participate in the plotter lifecycle:
   Use this to release VTK observers, close sockets, stop background
   threads, or undo any side effects the component is responsible for.
 - ``__plotter_deep_clean__(self) -> None``: called from
-  :meth:`pyvista.BasePlotter.deep_clean`. Optional; if absent, deep
+  :meth:`pyvista.Plotter.deep_clean`. Optional; if absent, deep
   clean falls through to the close path on the next plotter shutdown.
 
 Both hooks fire only on components that were *actually constructed*
