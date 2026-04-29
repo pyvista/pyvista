@@ -4,11 +4,13 @@ from dataclasses import is_dataclass
 from enum import Enum
 import importlib.util
 from pathlib import Path
+import re
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
@@ -16,6 +18,38 @@ from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.charts import _vtkWrapper
+
+
+def test_pyvista_vtk_namespace(monkeypatch):
+    # Test vtk class not defined in namespace
+    match = (
+        "'does_not_exist' is not defined in PyVista's vtk namespace.\n"
+        'Developers should add a new `module:does_not_exist` mapping to the `_vtk` module.'
+    )
+    with pytest.raises(AttributeError, match=re.escape(match)):
+        _ = _vtk.does_not_exist
+
+    # Test module does not exist
+    cls, module = 'foo', 'bar'
+    monkeypatch.setitem(_vtk._VTK_CLASS_TO_MODULE, cls, module)
+    assert 'foo' in _vtk._VTK_CLASS_TO_MODULE
+    match = (
+        "Cannot import name 'foo' from 'vtkmodules.bar'.\n"
+        'The cause is likely attributable to VTK version or a custom VTK build.'
+    )
+    with pytest.raises(ImportError, match=match):
+        _ = _vtk.foo
+
+    # Test module exists, but class does not
+    cls, module = 'foo', 'vtkCommonCore'
+    monkeypatch.setitem(_vtk._VTK_CLASS_TO_MODULE, cls, module)
+    assert 'foo' in _vtk._VTK_CLASS_TO_MODULE
+    match = (
+        "Cannot import name 'foo' from 'vtkmodules.vtkCommonCore'.\n"
+        'The cause is likely attributable to VTK version or a custom VTK build.'
+    )
+    with pytest.raises(ImportError, match=match):
+        _ = _vtk.foo
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
