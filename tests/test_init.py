@@ -41,6 +41,7 @@ PLOTTING_VTKMODULES = CORE_VTKMODULES | {
     'vtkmodules.vtkPythonContext2D',
     'vtkmodules.vtkRenderingAnnotation',
     'vtkmodules.vtkRenderingContext2D',
+    'vtkmodules.vtkRenderingCore',
     'vtkmodules.vtkRenderingFreeType',
     'vtkmodules.vtkRenderingHyperTreeGrid',
     'vtkmodules.vtkRenderingMatplotlib',
@@ -93,8 +94,8 @@ def test_minimal_vtkmodules_imported(allowed_modules, module_to_import):
         if _module_is_loaded(module_to_import=module_to_import, module_to_check=module)
     }
 
-    error_msg = """
-    Disallowed VTK module(s) were loaded at root `import pyvista`.
+    error_msg = f"""
+    Disallowed VTK module(s) were loaded when executing `import {module_to_import}`.
     This can drastically slow down initial import times.
     """
     assert sorted(vtkmodules_loaded) == [], error_msg
