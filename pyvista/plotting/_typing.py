@@ -12,7 +12,7 @@ from typing import Union
 
 import matplotlib as mpl
 
-from pyvista.core import _vtk
+from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number

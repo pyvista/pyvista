@@ -7,14 +7,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
-from pyvista.plotting._vtk import vtkLight
-from pyvista.plotting._vtk import vtkLightActor
 
 from .colors import Color
 
@@ -36,7 +34,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
+class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     """Light class.
 
     Parameters
@@ -212,7 +210,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
             self.attenuation_values = attenuation_values
 
         # Add the light actor
-        self.actor = vtkLightActor()
+        self.actor = _vtk.vtkLightActor()
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
@@ -1133,7 +1131,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
             Wrapped light.
 
         """
-        if not isinstance(vtk_light, vtkLight):
+        if not isinstance(vtk_light, _vtk.vtkLight):
             msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
             raise TypeError(msg)
 

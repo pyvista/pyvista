@@ -10,7 +10,7 @@ from .opts import InterpolationType
 from .opts import RepresentationType
 
 if TYPE_CHECKING:
-    from pyvista.core import _vtk
+    from pyvista import _vtk
 
 
 class ActorProperties(_NoNewAttrMixin):

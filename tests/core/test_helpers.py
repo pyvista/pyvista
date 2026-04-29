@@ -9,7 +9,7 @@ import pytest
 import trimesh
 
 import pyvista as pv
-from pyvista.core import _vtk
+from pyvista import _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities import reader as reader_module

@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import scipy
 
-from pyvista.core import _vtk
+from pyvista import _vtk
 from pyvista.core import pyvista_ndarray
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite

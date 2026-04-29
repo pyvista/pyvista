@@ -14,6 +14,7 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core.utilities.writer import BaseWriter
@@ -28,7 +29,6 @@ from pyvista.core.utilities.writer import TIFFWriter
 from pyvista.core.utilities.writer import XMLImageDataWriter
 from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
-from . import _vtk
 from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters

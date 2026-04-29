@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 from pyvista.plotting import colors as _colors_module
 from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS

@@ -12,8 +12,8 @@ from typing import overload
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk
 
 if TYPE_CHECKING:
     from pyvista import CellType

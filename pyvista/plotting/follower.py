@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pyvista.core import _vtk
+from pyvista import _vtk
 
 from .actor import Actor
 

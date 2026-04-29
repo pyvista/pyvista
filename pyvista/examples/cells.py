@@ -20,9 +20,9 @@ import numpy as np
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk
 
 if TYPE_CHECKING:
     from pyvista import DataSet

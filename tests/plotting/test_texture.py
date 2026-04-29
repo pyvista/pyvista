@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
 from pyvista.plotting.texture import numpy_to_texture
 
 

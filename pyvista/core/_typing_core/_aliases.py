@@ -8,7 +8,7 @@ from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
-from pyvista.core import _vtk
+from pyvista import _vtk
 
 from ._array_like import NumberType
 from ._array_like import _ArrayLike

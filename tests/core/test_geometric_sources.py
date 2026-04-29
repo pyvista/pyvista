@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk
 from pyvista.core.utilities.geometric_objects import translate
 
 

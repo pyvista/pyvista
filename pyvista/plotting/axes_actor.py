@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from enum import Enum
 
 import pyvista as pv
-from pyvista.core import _vtk
+from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _BoundsSizeMixin

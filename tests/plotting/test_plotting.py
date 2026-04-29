@@ -27,9 +27,9 @@ from pytest_cases import parametrize
 from pytest_pyvista.pytest_pyvista import RegressionError
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import demos
 from pyvista import examples
-from pyvista.core import _vtk
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter

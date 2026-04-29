@@ -8,7 +8,7 @@ import weakref
 import numpy as np
 
 import pyvista as pv
-from pyvista.core import _vtk
+from pyvista import _vtk
 
 
 def test_pyvistandarray_assign(sphere):

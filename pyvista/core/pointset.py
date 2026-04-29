@@ -17,12 +17,12 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-from . import _vtk
 from .cell import CellArray
 from .cell import _get_connectivity_array
 from .cell import _get_irregular_cells

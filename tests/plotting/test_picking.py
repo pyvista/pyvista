@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting import _vtk
 from pyvista.plotting.errors import PyVistaPickingError
 
 if TYPE_CHECKING:

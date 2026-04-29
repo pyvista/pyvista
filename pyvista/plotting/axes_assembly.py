@@ -17,6 +17,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import BoundsTuple
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._validation.validate import _validate_color_sequence
@@ -30,7 +31,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.transformations import decomposition
-from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
 from pyvista.plotting.prop3d import Prop3D

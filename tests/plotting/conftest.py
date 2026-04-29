@@ -11,7 +11,7 @@ import platform
 import pytest
 
 import pyvista as pv
-from pyvista.core import _vtk
+from pyvista import _vtk
 from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests

@@ -26,7 +26,8 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from . import _vtk
+from pyvista import _vtk
+
 from .composite import MultiBlock
 from .grid import ImageData
 from .grid import RectilinearGrid

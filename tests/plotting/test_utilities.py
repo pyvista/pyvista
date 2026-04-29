@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting import _vtk
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities import xvfb
 

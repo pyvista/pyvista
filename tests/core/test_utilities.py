@@ -33,10 +33,10 @@ from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 
 
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):

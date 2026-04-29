@@ -18,8 +18,8 @@ from typing import TypeVar
 import numpy as np
 from typing_extensions import Self
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk
 
 if TYPE_CHECKING:
     from typing import Any

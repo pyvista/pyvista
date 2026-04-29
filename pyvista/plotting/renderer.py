@@ -17,11 +17,11 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista import _vtk
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import DeprecationError
