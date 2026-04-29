@@ -1169,7 +1169,7 @@ class _Chart(DocSubs):
         try:
             # Necessary for displaying charts, otherwise crashes on rendering
             # Import lazily on init to delay import until it's needed
-            from vtkmodules import vtkRenderingContextOpenGL2  # noqa: F401, PLC0415
+            from vtkmodules import vtkRenderingContextOpenGL2  # noqa: F401, PLC0415, TID251
         except ImportError:
             msg = 'Unable to import `vtkRenderingContextOpenGL2`. Charts may not render.'
             warn_external(msg)
