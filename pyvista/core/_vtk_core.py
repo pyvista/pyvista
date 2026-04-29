@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 _THIS_MODULE = sys.modules[__name__]
 
 # Canonical mapping: vtkmodule -> classes
-_VTK_MODULES: dict[str, tuple[str, ...]] = {
+_CORE_MODULES: dict[str, tuple[str, ...]] = {
     'numpy_interface.dataset_adapter': (
         'VTKArray',
         'VTKObjectWrapper',
@@ -468,9 +468,197 @@ _VTK_MODULES: dict[str, tuple[str, ...]] = {
     'vtkIOInfovis': ('vtkDelimitedTextReader',),
 }
 
+
+# These are the modules within VTK that must be loaded across pyvista's
+# plotting API. Here, we attempt to import modules using the ``vtkmodules``
+# package, which lets us only have to import from select modules and not
+# the entire library.
+
+_PLOTTING_MODULES = {
+    'vtkChartsCore': [
+        'vtkAxis',
+        'vtkChart',
+        'vtkChartBox',
+        'vtkChartPie',
+        'vtkChartXY',
+        'vtkChartXYZ',
+        'vtkPlotArea',
+        'vtkPlotBar',
+        'vtkPlotBox',
+        'vtkPlotLine',
+        'vtkPlotLine3D',
+        'vtkPlotPie',
+        'vtkPlotPoints',
+        'vtkPlotPoints3D',
+        'vtkPlotStacked',
+        'vtkPlotSurface',
+    ],
+    'vtkCommonColor': [
+        'vtkColorSeries',
+        'vtkNamedColors',
+    ],
+    'vtkInteractionStyle': [
+        'vtkInteractorStyleImage',
+        'vtkInteractorStyleJoystickActor',
+        'vtkInteractorStyleJoystickCamera',
+        'vtkInteractorStyleRubberBand2D',
+        'vtkInteractorStyleRubberBandPick',
+        'vtkInteractorStyleRubberBandZoom',
+        'vtkInteractorStyleTerrain',
+        'vtkInteractorStyleTrackballActor',
+        'vtkInteractorStyleTrackballCamera',
+    ],
+    'vtkInteractionWidgets': [
+        'vtkBoxWidget',
+        'vtkButtonWidget',
+        'vtkCameraOrientationWidget',
+        'vtkDistanceRepresentation3D',
+        'vtkDistanceWidget',
+        'vtkImplicitPlaneWidget',
+        'vtkLineWidget',
+        'vtkLogoRepresentation',
+        'vtkLogoWidget',
+        'vtkOrientationMarkerWidget',
+        'vtkPlaneWidget',
+        'vtkPointHandleRepresentation3D',
+        'vtkResliceCursorPicker',
+        'vtkScalarBarWidget',
+        'vtkSliderRepresentation2D',
+        'vtkSliderWidget',
+        'vtkSphereWidget',
+        'vtkSplineWidget',
+        'vtkTexturedButtonRepresentation2D',
+    ],
+    'vtkRenderingAnnotation': [
+        'vtkAnnotatedCubeActor',
+        'vtkAxesActor',
+        'vtkAxisActor',
+        'vtkAxisActor2D',
+        'vtkCornerAnnotation',
+        'vtkCubeAxesActor',
+        'vtkLegendBoxActor',
+        'vtkLegendScaleActor',
+        'vtkScalarBarActor',
+    ],
+    'vtkRenderingContext2D': [
+        'vtkBlockItem',
+        'vtkBrush',
+        'vtkContext2D',
+        'vtkContextActor',
+        'vtkContextScene',
+        'vtkImageItem',
+        'vtkPen',
+    ],
+    'vtkRenderingCore': [
+        'VTK_RESOLVE_OFF',
+        'VTK_RESOLVE_POLYGON_OFFSET',
+        'VTK_RESOLVE_SHIFT_ZBUFFER',
+        'vtkAbstractMapper',
+        'vtkActor',
+        'vtkActor2D',
+        'vtkAreaPicker',
+        'vtkCamera',
+        'vtkCellPicker',
+        'vtkColorTransferFunction',
+        'vtkCompositeDataDisplayAttributes',
+        'vtkCompositePolyDataMapper',
+        'vtkCoordinate',
+        'vtkDataSetMapper',
+        'vtkFollower',
+        'vtkHardwarePicker',
+        'vtkImageActor',
+        'vtkInteractorStyle',
+        'vtkLight',
+        'vtkLightActor',
+        'vtkLightKit',
+        'vtkMapper',
+        'vtkPointGaussianMapper',
+        'vtkPointPicker',
+        'vtkPolyDataMapper',
+        'vtkPolyDataMapper2D',
+        'vtkProp',
+        'vtkProp3D',
+        'vtkPropAssembly',
+        'vtkPropCollection',
+        'vtkProperty',
+        'vtkPropPicker',
+        'vtkRenderedAreaPicker',
+        'vtkRenderer',
+        'vtkRenderWindow',
+        'vtkRenderWindowInteractor',
+        'vtkScenePicker',
+        'vtkSelectVisiblePoints',
+        'vtkSkybox',
+        'vtkTextActor',
+        'vtkTextProperty',
+        'vtkTexture',
+        'vtkViewport',
+        'vtkVolume',
+        'vtkVolumeProperty',
+        'vtkWindowToImageFilter',
+        'vtkWorldPointPicker',
+    ],
+    'vtkRenderingFreeType': [
+        'vtkMathTextFreeTypeTextRenderer',
+        'vtkVectorText',
+    ],
+    'vtkRenderingLabel': [
+        'vtkLabelPlacementMapper',
+        'vtkPointSetToLabelHierarchy',
+    ],
+    'vtkRenderingUI': [
+        'vtkGenericRenderWindowInteractor',
+    ],
+    'vtkRenderingVolume': [
+        'vtkFixedPointVolumeRayCastMapper',
+        'vtkGPUVolumeRayCastMapper',
+        'vtkUnstructuredGridVolumeRayCastMapper',
+        'vtkVolumeMapper',
+        'vtkVolumePicker',
+    ],
+    'vtkViewsContext2D': [
+        'vtkContextInteractorStyle',
+    ],
+}
+
+# GL-dependent imports from VTK.
+# These are the modules within VTK requiring libGL that must be loaded
+# across pyvista's plotting API. These imports have the potential to
+# raise an ImportError if the user does not have libGL installed.
+#
+#     ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+
+_OPENGL_MODULES = {
+    'vtkRenderingOpenGL2': [
+        'vtkCameraPass',
+        'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
+        'vtkDepthOfFieldPass',
+        'vtkEDLShading',
+        'vtkGaussianBlurPass',
+        'vtkOpenGLFXAAPass',
+        'vtkOpenGLHardwareSelector',
+        'vtkOpenGLRenderer',
+        'vtkOpenGLSkybox',
+        'vtkOpenGLTexture',
+        'vtkRenderPassCollection',
+        'vtkRenderStepsPass',
+        'vtkSequencePass',
+        'vtkShader',
+        'vtkShadowMapPass',
+        'vtkSSAAPass',
+        'vtkSSAOPass',
+    ],
+    'vtkRenderingVolumeOpenGL2': [
+        'vtkOpenGLGPUVolumeRayCastMapper',
+        'vtkSmartVolumeMapper',
+    ],
+}
+
 # Derived mapping: class -> module
 _VTK_CLASS_TO_MODULE: dict[str, str] = {
-    cls: module for module, classes in _VTK_MODULES.items() for cls in classes
+    cls: module
+    for module, classes in (_CORE_MODULES | _PLOTTING_MODULES | _OPENGL_MODULES).items()
+    for cls in classes
 }
 
 
