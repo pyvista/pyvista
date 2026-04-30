@@ -139,14 +139,15 @@ def __getattr__(name):
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
 
-    def _cache_attr(obj):
+    def _cache_attr_and_return(obj):
         # Cache the attr on this module to avoid calls to __getattr__ on next access
         _MODULE_DICT[name] = obj
+        return obj
 
     if name == 'hexcolors':
         from pyvista.plotting.colors import _get_deprecated_hexcolors  # noqa: PLC0415
 
-        return _cache_attr(_get_deprecated_hexcolors())
+        return _cache_attr_and_return(_get_deprecated_hexcolors())
 
     allow = {
         'demos',
@@ -156,7 +157,7 @@ def __getattr__(name):
         'utilities',
     }
     if name in allow:
-        return _cache_attr(importlib.import_module(f'pyvista.{name}'))
+        return _cache_attr_and_return(importlib.import_module(f'pyvista.{name}'))
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
@@ -181,4 +182,4 @@ def __getattr__(name):
         _env_theme_applied = True
         sys.modules['pyvista.plotting']._set_plot_theme_from_env()
 
-    return _cache_attr(feature)
+    return _cache_attr_and_return(feature)
