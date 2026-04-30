@@ -712,24 +712,16 @@ def __getattr__(name: str):
         # Default case: lazily import based on module mapping
         module_name = _VTK_CLASS_TO_MODULE.get(name)
         if module_name is None:
-            msg = (
-                f"{name!r} is not defined in PyVista's vtk namespace.\n"
-                f'Developers should add a new `module:{name}` mapping to the `_vtk` module.'
-            )
+            msg = f'module {__name__!r} has no attribute {name!r}'
             raise AttributeError(msg)
 
-        module_full_name = f'vtkmodules.{module_name}'
+        module = importlib.import_module(f'vtkmodules.{module_name}')
+
         try:
-            module = importlib.import_module(module_full_name)
             obj = getattr(module, name)
-        except (AttributeError, ModuleNotFoundError) as e:
-            # Convert module or attribute errors into a similar message that would otherwise be
-            # seen when doing `from vtkmodules.vtkModule import vtkClass`
-            msg = (
-                f'Cannot import name {name!r} from {module_full_name!r}.\n'
-                f'The cause is likely attributable to VTK version or a custom VTK build.'
-            )
-            raise ImportError(msg) from e
+        except AttributeError as e:
+            msg = f"module 'vtkmodules.{module_name}' has no attribute {name!r}"
+            raise AttributeError(msg) from e
 
     # Cache object for next access
     _THIS_MODULE.__dict__[name] = obj

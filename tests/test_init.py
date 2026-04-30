@@ -66,6 +66,15 @@ def _module_is_loaded(module_to_check: str, module_to_import: str = 'pyvista') -
     return os.system(f'{sys.executable} -c "{exe_str}"') != 0
 
 
+def test_vtk_not_loaded():
+    error_msg = """
+    vtk has been directly imported in vtk>=9
+    Please see:
+    https://github.com/pyvista/pyvista/pull/1163
+    """
+    assert not _module_is_loaded('vtk'), error_msg
+
+
 @pytest.mark.parametrize(
     ('allowed_modules', 'module_to_import'),
     [(CORE_VTKMODULES, 'pyvista'), (PLOTTING_VTKMODULES, 'pyvista.plotting')],
