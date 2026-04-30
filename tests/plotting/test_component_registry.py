@@ -13,6 +13,7 @@ import pytest
 
 import pyvista as pv
 from pyvista.plotting import component_registry as _reg_mod
+from pyvista.plotting.component_registry import _CachedComponent
 
 
 def _load_module_copy(module_name, module_path):
@@ -835,3 +836,64 @@ def test_scalar_bars_class_level_access_returns_class():
     from pyvista.plotting.scalar_bars import ScalarBars
 
     assert pv.BasePlotter.scalar_bars is ScalarBars
+
+
+def test_inherited_component_replacement_warns():
+    """Re-registering a component on a subclass when parent owns it warns about inheritance."""
+
+    class ParentTarget:
+        pass
+
+    class ChildTarget(ParentTarget):
+        pass
+
+    @pv.register_plotter_component('inherited_demo', target_cls=ParentTarget)
+    class FirstComponent:
+        def __init__(self, obj):
+            self._obj = obj
+
+    with pytest.warns(UserWarning, match='inherited by'):
+
+        @pv.register_plotter_component('inherited_demo', target_cls=ChildTarget)
+        class SecondComponent:
+            def __init__(self, obj):
+                self._obj = obj
+
+
+def test_inherited_shadow_raises_with_inherited_location():
+    """Registering on a subclass when parent shadows the name reports parent location."""
+
+    class ParentTarget:
+        def existing_method(self):
+            return 'parent'
+
+    class ChildTarget(ParentTarget):
+        pass
+
+    with pytest.raises(ValueError, match='inherited by'):
+
+        @pv.register_plotter_component('existing_method', target_cls=ChildTarget)
+        class ShadowComponent:
+            def __init__(self, obj):
+                self._obj = obj
+
+
+def test_component_descriptor_handles_slots_target():
+    """``__slots__`` targets without ``__dict__`` get a fresh component each access."""
+
+    class Component:
+        def __init__(self, obj):
+            self._obj = obj
+
+    class SlotsTarget:
+        __slots__ = ()
+
+    SlotsTarget.demo_slots = _CachedComponent('demo_slots', Component)
+    obj = SlotsTarget()
+    first = obj.demo_slots
+    second = obj.demo_slots
+    # ``__dict__`` is unavailable: each access yields a new instance and
+    # nothing is tracked.
+    assert isinstance(first, Component)
+    assert isinstance(second, Component)
+    assert first is not second

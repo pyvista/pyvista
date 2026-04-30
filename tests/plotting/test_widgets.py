@@ -10,6 +10,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _vtk
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
@@ -999,3 +1000,47 @@ class TestEventParser:
         # Assert
         mock.assert_called_with(e)
         getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)
+
+
+@pytest.mark.parametrize(
+    'attr',
+    [
+        'camera_widgets',
+        'box_widgets',
+        'box_clipped_meshes',
+        'plane_widgets',
+        'plane_clipped_meshes',
+        'plane_sliced_meshes',
+        'line_widgets',
+        'slider_widgets',
+        'threshold_meshes',
+        'isovalue_meshes',
+        'spline_widgets',
+        'spline_sliced_meshes',
+        'sphere_widgets',
+        'button_widgets',
+        'radio_button_widget_dict',
+        'radio_button_title_dict',
+        'distance_widgets',
+        'logo_widgets',
+        'camera3d_widgets',
+    ],
+)
+def test_deprecated_widget_state_forward(attr):
+    """Each deprecated state collection forwards to ``Plotter.widgets`` with a warning."""
+    pl = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match=attr):
+        value = getattr(pl, attr)
+    assert value is getattr(pl.widgets, attr)
+    pl.close()
+
+
+def test_clear_radio_button_widgets_forward(uniform):
+    """``Plotter.clear_radio_button_widgets`` forwards to the widgets component."""
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    pl.add_radio_button_widget(callback=lambda: None, radio_button_group='group')
+    assert pl.widgets.radio_button_widget_dict['group']
+    pl.clear_radio_button_widgets()
+    assert pl.widgets.radio_button_widget_dict == {}
+    pl.close()
