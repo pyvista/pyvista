@@ -114,6 +114,8 @@ repos:
     rev: v3.13.1-1
     hooks:
       - id: shfmt
+        # Needs 3.12 else we get a wheel build error on macOS
+        language_version: python3.12
 
   - repo: https://github.com/mrtazz/checkmake.git
     rev: 0.2.2
