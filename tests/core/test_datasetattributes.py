@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
@@ -375,7 +376,7 @@ def test_contains_empty_string_preserves_keys_rename_side_effect(hexbeam):
     """
     pd = hexbeam.point_data
     # Inject an anonymous array directly via VTK so it has an empty name.
-    arr = pv.core._vtk.vtkFloatArray()
+    arr = _vtk.vtkFloatArray()
     arr.SetNumberOfValues(hexbeam.n_points)
     pd.VTKObject.AddArray(arr)
     # Name is empty before the lookup.

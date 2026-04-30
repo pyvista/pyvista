@@ -41,6 +41,7 @@ PLOTTING_VTKMODULES = CORE_VTKMODULES | {
     'vtkmodules.vtkPythonContext2D',
     'vtkmodules.vtkRenderingAnnotation',
     'vtkmodules.vtkRenderingContext2D',
+    'vtkmodules.vtkRenderingCore',
     'vtkmodules.vtkRenderingFreeType',
     'vtkmodules.vtkRenderingHyperTreeGrid',
     'vtkmodules.vtkRenderingMatplotlib',
