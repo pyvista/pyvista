@@ -1,9 +1,9 @@
-"""Lazy-loaded imports from VTK.
+"""Limited imports from VTK (excludes any GL-dependent).
 
 These are the modules within VTK that must be loaded across pyvista's
-core and plotting API. The modules are lazily-loaded, and are only
-imported on first access. We import from ``vtkmodules`` instead of
-``vtk`` to selectively import modules and not the entire library.
+core API. Here, we attempt to import modules using the ``vtkmodules``
+package, which lets us only have to import from select modules and not
+the entire library.
 
 """
 
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 _THIS_MODULE = sys.modules[__name__]
 
 # Canonical mapping: vtkmodule -> classes
-# Modules imported for pyvista's core API
 _CORE_MODULES: dict[str, tuple[str, ...]] = {
     'numpy_interface.dataset_adapter': (
         'VTKArray',
@@ -506,7 +505,11 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     ),
 }
 
-# Rendering modules for pyvista's plotting API
+# These are the modules within VTK that must be loaded across pyvista's
+# plotting API. Here, we attempt to import modules using the ``vtkmodules``
+# package, which lets us only have to import from select modules and not
+# the entire library.
+
 _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
     'vtkChartsCore': (
         'vtkAxis',
@@ -658,6 +661,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
 # raise an ImportError if the user does not have libGL installed.
 #
 #     ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+
 _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
     'vtkRenderingOpenGL2': (
         'vtkCameraPass',
