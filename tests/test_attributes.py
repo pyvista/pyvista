@@ -164,6 +164,8 @@ def get_default_class_init_kwargs(pyvista_class):
     elif pyvista_class is pv.AffineWidget3D:
         kwargs['plotter'] = pv.Plotter()
         kwargs['actor'] = pv.Actor()
+    elif pyvista_class in (pv.PickingComponent, pv.WidgetComponent):
+        kwargs['plotter'] = pv.Plotter()
     elif pyvista_class is pv.BlockAttributes:
         dataset = pv.ImageData()
         kwargs['block'] = dataset

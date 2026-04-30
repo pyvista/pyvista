@@ -32,6 +32,12 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
+from pyvista.plotting.component_registry import (
+    _restore_registry_state as _restore_component_registry_state,
+)
+from pyvista.plotting.component_registry import (
+    _save_registry_state as _save_component_registry_state,
+)
 from pyvista.plotting.interactor_style_registry import (
     _restore_registry_state as _restore_style_registry_state,
 )
@@ -145,6 +151,7 @@ def reset_global_state():
     reader_registry_state = _save_registry_state()
     writer_registry_state = _save_writer_registry_state()
     accessor_registry_state = _save_accessor_registry_state()
+    component_registry_state = _save_component_registry_state()
     theme_registry_state = _save_theme_registry_state()
 
     yield
@@ -153,6 +160,7 @@ def reset_global_state():
     _restore_registry_state(reader_registry_state)
     _restore_writer_registry_state(writer_registry_state)
     _restore_accessor_registry_state(accessor_registry_state)
+    _restore_component_registry_state(component_registry_state)
     _restore_theme_registry_state(theme_registry_state)
 
     pv.vtk_snake_case('error')
