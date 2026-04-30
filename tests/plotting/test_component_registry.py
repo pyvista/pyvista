@@ -897,3 +897,94 @@ def test_component_descriptor_handles_slots_target():
     assert isinstance(first, Component)
     assert isinstance(second, Component)
     assert first is not second
+
+
+def test_component_descriptor_rejects_lifecycle_hooks_on_slots_target():
+    """Lifecycle hooks on a slots target raise rather than silently no-op.
+
+    A component that declares ``__plotter_close__`` or
+    ``__plotter_deep_clean__`` cannot be attached to a target without
+    a ``__dict__`` because each access constructs a fresh instance —
+    there is no stable receiver for close-time teardown, so any
+    cleanup the hook is responsible for would silently leak.
+    """
+
+    class CloseHookComponent:
+        def __init__(self, obj):
+            self._obj = obj
+
+        def __plotter_close__(self):  # pragma: no cover — never invoked
+            pass
+
+    class DeepCleanHookComponent:
+        def __init__(self, obj):
+            self._obj = obj
+
+        def __plotter_deep_clean__(self):  # pragma: no cover — never invoked
+            pass
+
+    class SlotsTarget:
+        __slots__ = ()
+
+    SlotsTarget.with_close = _CachedComponent('with_close', CloseHookComponent)
+    SlotsTarget.with_deep = _CachedComponent('with_deep', DeepCleanHookComponent)
+    obj = SlotsTarget()
+
+    with pytest.raises(TypeError, match=r'__plotter_close__'):
+        _ = obj.with_close
+    with pytest.raises(TypeError, match=r'__plotter_deep_clean__'):
+        _ = obj.with_deep
+
+
+def test_component_descriptor_slots_error_names_target_and_hooks():
+    """The slots-rejection error identifies the offending names for debugging."""
+
+    class HookyComponent:
+        def __init__(self, obj):
+            self._obj = obj
+
+        def __plotter_close__(self):  # pragma: no cover — never invoked
+            pass
+
+        def __plotter_deep_clean__(self):  # pragma: no cover — never invoked
+            pass
+
+    class FrozenPlotterTarget:
+        __slots__ = ()
+
+    FrozenPlotterTarget.hooky = _CachedComponent('hooky', HookyComponent)
+    obj = FrozenPlotterTarget()
+
+    with pytest.raises(TypeError) as excinfo:
+        _ = obj.hooky
+    message = str(excinfo.value)
+    assert "'hooky'" in message
+    assert 'HookyComponent' in message
+    assert 'FrozenPlotterTarget' in message
+    assert '__plotter_close__' in message
+    assert '__plotter_deep_clean__' in message
+    assert '__slots__' in message
+
+
+def test_component_descriptor_slots_target_no_lifecycle_still_works():
+    """A hookless component on a slots target still falls through cleanly.
+
+    The lifecycle-hook rejection is targeted: components without hooks
+    keep the previous "fresh instance per access" behavior so existing
+    slots-based extension points are unaffected.
+    """
+
+    class HooklessComponent:
+        def __init__(self, obj):
+            self._obj = obj
+
+    class SlotsTarget:
+        __slots__ = ()
+
+    SlotsTarget.hookless = _CachedComponent('hookless', HooklessComponent)
+    obj = SlotsTarget()
+
+    first = obj.hookless
+    second = obj.hookless
+    assert isinstance(first, HooklessComponent)
+    assert first is not second

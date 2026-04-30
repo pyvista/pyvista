@@ -39,6 +39,7 @@ from importlib import import_module
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import NamedTuple
 from typing import Protocol
 from typing import TypedDict
@@ -157,10 +158,20 @@ class _CachedComponent:
     ``__setattr__`` freeze without weakening the freeze for any other
     attribute. When the target class uses ``__slots__`` and no
     ``__dict__`` is available, the component is constructed fresh on
-    each access — slower but still correct, and lifecycle tracking is
-    skipped in that path because re-construction makes close-time
-    teardown ill-defined.
+    each access — slower but still correct *as long as* the component
+    has no lifecycle hooks. A component that declares
+    ``__plotter_close__`` or ``__plotter_deep_clean__`` cannot be
+    attached to a slots target because there is no stable instance to
+    track for close-time iteration; that combination raises
+    :class:`TypeError` on first access rather than silently leaking
+    whatever the hook was meant to release (VTK observers, websockets,
+    background threads, etc.).
     """
+
+    _LIFECYCLE_HOOKS: ClassVar[tuple[str, ...]] = (
+        '__plotter_close__',
+        '__plotter_deep_clean__',
+    )
 
     def __init__(self, name: str, component_cls: type) -> None:
         self._name = name
@@ -177,8 +188,29 @@ class _CachedComponent:
             obj.__dict__[self._name] = component_instance
         except AttributeError:
             # ``__slots__`` target: no ``__dict__`` to cache into and no
-            # stable identity across accesses. Skip lifecycle tracking
-            # and just return the freshly-constructed instance.
+            # stable identity across accesses. Safe to fall through
+            # *only* if the component has no lifecycle hooks — otherwise
+            # the hooks would never fire and any cleanup the component
+            # is responsible for would silently leak.
+            declared = [
+                hook
+                for hook in self._LIFECYCLE_HOOKS
+                if getattr(self._component_cls, hook, None) is not None
+            ]
+            if declared:
+                msg = (
+                    f'Plotter component {self._name!r} '
+                    f'({self._component_cls.__qualname__}) declares '
+                    f'lifecycle hook(s) {declared} but is attached to '
+                    f'{type(obj).__qualname__}, which uses ``__slots__`` '
+                    'and has no ``__dict__`` to cache the component '
+                    "instance in. Lifecycle hooks can't fire on a slots "
+                    'target because each attribute access constructs a '
+                    'fresh component, so close-time teardown would have '
+                    'no stable receiver. Either drop the lifecycle '
+                    'hooks or give the target class a ``__dict__`` slot.'
+                )
+                raise TypeError(msg)
             return component_instance
         # Track for close / deep-clean iteration. ``_components`` is
         # initialized on the plotter in ``BasePlotter.__init__``; if a
