@@ -950,9 +950,12 @@ class Text3DSource(_NoNewAttrMixin):
         process_empty_string: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
+        # Lazily import to defer importing from rendering module
+        from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
+
         super().__init__()
 
-        self._source = _vtk.vtkVectorText()
+        self._source = vtkVectorText()
         self._output = pv.PolyData()
 
         # Set params

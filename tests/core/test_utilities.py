@@ -875,15 +875,19 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
+    from vtkmodules.vtkIOLegacy import vtkDataWriter
+
     # vtkWriter.cxx:55     ERR| vtkDataWriter (0x141efbd10): No input provided!
-    writer = _vtk.vtkDataWriter()
+    writer = vtkDataWriter()
     writer.Write()
 
 
 def _generate_vtk_warn():
     """Simple operation which generates a VTK warning."""
+    from vtkmodules.vtkFiltersCore import vtkMergeFilter
+
     # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
-    merge = _vtk.vtkMergeFilter()
+    merge = vtkMergeFilter()
     merge.AddInputData(_vtk.vtkPolyData())
     merge.Update()
 
@@ -954,7 +958,9 @@ def test_vtk_error_catcher():
 
 
 def test_update_alg_raises():
-    reader = _vtk.vtkXMLPolyDataReader()
+    from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
+
+    reader = vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
     with pytest.raises(pv.VTKExecutionError):
         _update_alg(reader)
@@ -1153,7 +1159,9 @@ def test_copy_implicit_vtk_array(plane):
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
     if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-        assert isinstance(vtk_object, _vtk.VTKImplicitArray)
+        from vtkmodules.numpy_interface.vtk_implicit_array import VTKImplicitArray
+
+        assert isinstance(vtk_object, VTKImplicitArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
         assert type(vtk_object) is _vtk.vtkDataArray
@@ -1165,7 +1173,9 @@ def test_copy_implicit_vtk_array(plane):
 
     new_vtk_object = plane['test'].VTKObject
     if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-        assert isinstance(new_vtk_object, _vtk.VTKAOSArray)
+        from vtkmodules.numpy_interface.vtk_aos_array import VTKAOSArray
+
+        assert isinstance(new_vtk_object, VTKAOSArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
         assert type(new_vtk_object) is _vtk.vtkTypeInt64Array

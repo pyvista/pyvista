@@ -480,8 +480,7 @@ allow-dict-calls-with-keyword-arguments = true
 pyvista = "pv"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"vtk".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules, and avoid pulling in the entire VTK package"
-"vtkmodules".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules"
+"vtk".msg = "Use targeted vtkmodules imports (e.g., from vtkmodules.vtkCommonDataModel import ...) to avoid pulling in the entire VTK package."
 
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
@@ -497,7 +496,7 @@ pyvista = "pv"
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019

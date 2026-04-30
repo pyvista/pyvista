@@ -83,7 +83,9 @@ def text_3d(string, depth=0.5):
     :ref:`create_pixel_art_example`
 
     """
-    vec_text = _vtk.vtkVectorText()
+    from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
+
+    vec_text = vtkVectorText()
     vec_text.SetText(string)
 
     extrude = _vtk.vtkLinearExtrusionFilter()

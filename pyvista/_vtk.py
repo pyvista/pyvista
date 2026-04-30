@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
     # here as needed to ensure they can "see" the imported classes
     from vtk import *  # noqa: TID251
-    from vtkmodules.numpy_interface.dataset_adapter import *  # noqa: TID251
-    from vtkmodules.util.vtkAlgorithm import *  # noqa: TID251
+    from vtkmodules.numpy_interface.dataset_adapter import *
+    from vtkmodules.util.vtkAlgorithm import *
 
 _THIS_MODULE = sys.modules[__name__]
 
@@ -29,8 +29,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTKObjectWrapper',
         'numpyTovtkDataArray',
     ),
-    'numpy_interface.vtk_aos_array': ('VTKAOSArray',),
-    'numpy_interface.vtk_implicit_array': ('VTKImplicitArray',),
     'util.numpy_support': (
         'get_vtk_array_type',
         'numpy_to_vtk',
@@ -183,7 +181,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCell',
         'vtkCellArray',
         'vtkCellLocator',
-        'vtkCellStatus',
         'vtkCellTreeLocator',
         'vtkCellTypes',
         'vtkColor3ub',
@@ -299,7 +296,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImplicitPolyDataDistance',
         'vtkMarchingCubes',
         'vtkMassProperties',
-        'vtkMergeFilter',
         'vtkOrientPolyData',
         'vtkPackLabels',
         'vtkPointDataToCellData',
@@ -308,7 +304,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkResampleWithDataSet',
         'vtkReverseSense',
         'vtkSmoothPolyDataFilter',
-        'vtkStaticCleanUnstructuredGrid',
         'vtkStripper',
         'vtkSurfaceNets3D',
         'vtkThreshold',
@@ -470,47 +465,17 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageStencil',
         'vtkPolyDataToImageStencil',
     ),
-    'vtkIOExodus': ('vtkExodusIIReader',),
-    'vtkIOExport': (
-        'vtkGLTFExporter',
-        'vtkOBJExporter',
-        'vtkVRMLExporter',
-    ),
-    'vtkIOExportGL2PS': ('vtkGL2PSExporter',),
-    'vtkIOImport': (
-        'vtk3DSImporter',
-        'vtkGLTFImporter',
-        'vtkOBJImporter',
-        'vtkVRMLImporter',
-    ),
     'vtkIOInfovis': ('vtkDelimitedTextReader',),
-    'vtkIOLegacy': (
-        'vtkDataSetReader',
-        'vtkDataSetWriter',
-    ),
-    'vtkIOXML': (
-        'vtkXMLImageDataReader',
-        'vtkXMLImageDataWriter',
-        'vtkXMLPolyDataReader',
-        'vtkXMLPolyDataWriter',
-        'vtkXMLRectilinearGridReader',
-        'vtkXMLRectilinearGridWriter',
-        'vtkXMLStructuredGridReader',
-        'vtkXMLStructuredGridWriter',
-        'vtkXMLTableReader',
-        'vtkXMLTableWriter',
-        'vtkXMLUnstructuredGridReader',
-        'vtkXMLUnstructuredGridWriter',
-    ),
 }
+
 
 # These are the modules within VTK that must be loaded across pyvista's
 # plotting API. Here, we attempt to import modules using the ``vtkmodules``
 # package, which lets us only have to import from select modules and not
 # the entire library.
 
-_PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
-    'vtkChartsCore': (
+_PLOTTING_MODULES = {
+    'vtkChartsCore': [
         'vtkAxis',
         'vtkChart',
         'vtkChartBox',
@@ -527,12 +492,12 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPlotPoints3D',
         'vtkPlotStacked',
         'vtkPlotSurface',
-    ),
-    'vtkCommonColor': (
+    ],
+    'vtkCommonColor': [
         'vtkColorSeries',
         'vtkNamedColors',
-    ),
-    'vtkInteractionStyle': (
+    ],
+    'vtkInteractionStyle': [
         'vtkInteractorStyleImage',
         'vtkInteractorStyleJoystickActor',
         'vtkInteractorStyleJoystickCamera',
@@ -542,12 +507,10 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkInteractorStyleTerrain',
         'vtkInteractorStyleTrackballActor',
         'vtkInteractorStyleTrackballCamera',
-    ),
-    'vtkInteractionWidgets': (
+    ],
+    'vtkInteractionWidgets': [
         'vtkBoxWidget',
         'vtkButtonWidget',
-        'vtkCamera3DRepresentation',
-        'vtkCamera3DWidget',
         'vtkCameraOrientationWidget',
         'vtkDistanceRepresentation3D',
         'vtkDistanceWidget',
@@ -565,8 +528,8 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSphereWidget',
         'vtkSplineWidget',
         'vtkTexturedButtonRepresentation2D',
-    ),
-    'vtkRenderingAnnotation': (
+    ],
+    'vtkRenderingAnnotation': [
         'vtkAnnotatedCubeActor',
         'vtkAxesActor',
         'vtkAxisActor',
@@ -576,8 +539,8 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLegendBoxActor',
         'vtkLegendScaleActor',
         'vtkScalarBarActor',
-    ),
-    'vtkRenderingContext2D': (
+    ],
+    'vtkRenderingContext2D': [
         'vtkBlockItem',
         'vtkBrush',
         'vtkContext2D',
@@ -585,8 +548,8 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkContextScene',
         'vtkImageItem',
         'vtkPen',
-    ),
-    'vtkRenderingCore': (
+    ],
+    'vtkRenderingCore': [
         'VTK_RESOLVE_OFF',
         'VTK_RESOLVE_POLYGON_OFFSET',
         'VTK_RESOLVE_SHIFT_ZBUFFER',
@@ -634,24 +597,28 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkVolumeProperty',
         'vtkWindowToImageFilter',
         'vtkWorldPointPicker',
-    ),
-    'vtkRenderingFreeType': (
+    ],
+    'vtkRenderingFreeType': [
         'vtkMathTextFreeTypeTextRenderer',
         'vtkVectorText',
-    ),
-    'vtkRenderingLabel': (
+    ],
+    'vtkRenderingLabel': [
         'vtkLabelPlacementMapper',
         'vtkPointSetToLabelHierarchy',
-    ),
-    'vtkRenderingUI': ('vtkGenericRenderWindowInteractor',),
-    'vtkRenderingVolume': (
+    ],
+    'vtkRenderingUI': [
+        'vtkGenericRenderWindowInteractor',
+    ],
+    'vtkRenderingVolume': [
         'vtkFixedPointVolumeRayCastMapper',
         'vtkGPUVolumeRayCastMapper',
         'vtkUnstructuredGridVolumeRayCastMapper',
         'vtkVolumeMapper',
         'vtkVolumePicker',
-    ),
-    'vtkViewsContext2D': ('vtkContextInteractorStyle',),
+    ],
+    'vtkViewsContext2D': [
+        'vtkContextInteractorStyle',
+    ],
 }
 
 # GL-dependent imports from VTK.
@@ -661,8 +628,8 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
 #
 #     ImportError: libGL.so.1: cannot open shared object file: No such file or directory
 
-_OPENGL_MODULES: dict[str, tuple[str, ...]] = {
-    'vtkRenderingOpenGL2': (
+_OPENGL_MODULES = {
+    'vtkRenderingOpenGL2': [
         'vtkCameraPass',
         'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
         'vtkDepthOfFieldPass',
@@ -680,11 +647,11 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkShadowMapPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
-    ),
-    'vtkRenderingVolumeOpenGL2': (
+    ],
+    'vtkRenderingVolumeOpenGL2': [
         'vtkOpenGLGPUVolumeRayCastMapper',
         'vtkSmartVolumeMapper',
-    ),
+    ],
 }
 
 # Derived mapping: class -> module
@@ -729,7 +696,7 @@ def __getattr__(name: str):
 
 def _import_vtkPythonItem():  # noqa: N802
     try:
-        from vtkmodules.vtkPythonContext2D import vtkPythonItem  # noqa: TID251
+        from vtkmodules.vtkPythonContext2D import vtkPythonItem
     except ImportError:  # pragma: no cover
         # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
 
@@ -748,9 +715,9 @@ def _import_vtkPythonItem():  # noqa: N802
 
 def _import_vtkExtractCells():  # noqa: N802
     try:  # Module changed in VTK 9.3.0
-        from vtkmodules.vtkFiltersCore import vtkExtractCells  # noqa: TID251
+        from vtkmodules.vtkFiltersCore import vtkExtractCells
     except ImportError:
-        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef] # noqa: TID251
+        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
             vtkExtractCells,
         )
     return vtkExtractCells
@@ -758,9 +725,9 @@ def _import_vtkExtractCells():  # noqa: N802
 
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
-        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities  # noqa: TID251
+        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities
     except ImportError:
-        from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment] # noqa: TID251
+        from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
             vtkCellTypes as vtkCellTypeUtilities,
         )
     return vtkCellTypeUtilities
