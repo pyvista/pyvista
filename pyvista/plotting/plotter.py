@@ -6494,7 +6494,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         filepath = filepath.expanduser().resolve()
         extension = pv.core.utilities.fileio.get_ext(filepath)
 
-        writer = _vtk.vtkGL2PSExporter()
+        writer = _vtk.tkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -6509,7 +6509,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             )
             raise ValueError(msg)
         writer.CompressOff()
-        writer.SetFilePrefix(filepath.with_suffix(''))
+        writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
         writer.SetRenderWindow(self.render_window)
         modes[extension]()
         writer.SetTitle(title)

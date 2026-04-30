@@ -487,7 +487,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     'vtkIOLegacy': (
         'vtkDataSetReader',
         'vtkDataSetWriter',
-        'vtkDataWriter',
     ),
     'vtkIOXML': (
         'vtkXMLImageDataReader',
