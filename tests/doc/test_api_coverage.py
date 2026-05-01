@@ -161,7 +161,6 @@ def test_public_api_is_documented(public_symbols, documented_names):
     )
 
 
-@pytest.mark.skip_windows('public_symbols is not populated correctly (dependent on test order)')
 def test_allowlist_stays_accurate(public_symbols, documented_names):
     """Flag stale entries so ``_ALLOWED_UNDOCUMENTED`` does not rot silently."""
     stale_removed = _ALLOWED_UNDOCUMENTED - public_symbols
