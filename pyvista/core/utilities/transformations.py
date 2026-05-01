@@ -340,7 +340,7 @@ def apply_transformation_to_points(
         msg = '`points` must be of shape (N, 3).'
         raise ValueError(msg)
 
-    if transformation_shape[0] == 4:
+    if transformation_shape[0] == 4:  # type: ignore[comparison-overlap]
         # Divide by scale factor when homogeneous
         transformation /= transformation[3, 3]
 
