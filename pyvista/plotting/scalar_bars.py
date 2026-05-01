@@ -42,6 +42,10 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
+    def __plotter_close__(self) -> None:
+        """Release scalar-bar state when the owning plotter closes."""
+        self.clear()
+
     def __repr__(self):
         """Nice representation of this class."""
         lines = []

@@ -164,7 +164,7 @@ VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
 VTKPDataSetReader, <class 'pyvista.utilities.reader.VTKPDataSetReader'>
 VtkErrorCatcher, <class 'pyvista.utilities.errors.VtkErrorCatcher'>
 Wavelet, <function Wavelet at 0x1641c08b0>
-WidgetHelper, <class 'pyvista.plotting.widgets.WidgetHelper'>
+WidgetComponent, <class 'pyvista.plotting.widgets.WidgetComponent'>
 XMLImageDataReader, <class 'pyvista.utilities.reader.XMLImageDataReader'>
 XMLMultiBlockDataReader, <class 'pyvista.utilities.reader.XMLMultiBlockDataReader'>
 XMLPImageDataReader, <class 'pyvista.utilities.reader.XMLPImageDataReader'>

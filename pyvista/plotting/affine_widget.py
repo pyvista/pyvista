@@ -499,7 +499,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def enable(self):
         """Enable the widget."""
-        if not self._pl._picker_in_use:
+        if not self._pl.picking._picker_in_use:
             self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
             'MouseMoveEvent',

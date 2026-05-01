@@ -34,6 +34,11 @@ from .colors import __getattr__  # noqa: F401
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
 from .colors import hex_colors as hex_colors
+from .component_registry import ComponentRegistration as ComponentRegistration
+from .component_registry import PlotterComponent as PlotterComponent
+from .component_registry import register_plotter_component as register_plotter_component
+from .component_registry import registered_plotter_components as registered_plotter_components
+from .component_registry import unregister_plotter_component as unregister_plotter_component
 from .composite_mapper import BlockAttributes as BlockAttributes
 from .composite_mapper import CompositeAttributes as CompositeAttributes
 from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
@@ -55,7 +60,7 @@ from .mapper import SmartVolumeMapper as SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolumeRayCastMapper
 from .opts import PointSpriteShape as PointSpriteShape
 from .opts import ShaderType as ShaderType
-from .picking import PickingHelper as PickingHelper
+from .picking import PickingComponent as PickingComponent
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter
@@ -92,7 +97,7 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scraper
 from .volume import Volume as Volume
 from .volume_property import VolumeProperty as VolumeProperty
-from .widgets import WidgetHelper as WidgetHelper
+from .widgets import WidgetComponent as WidgetComponent
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01

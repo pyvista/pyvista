@@ -252,7 +252,7 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()
     pl.show(auto_close=False)
 
-    assert pl._picking_text not in pl.renderer.actors
+    assert pl.picking._picking_text not in pl.renderer.actors
 
     width, height = pl.window_size
 
@@ -826,3 +826,45 @@ def test_block_picking_across_four_subplots():
 
     expected = [2, 1] * 4
     assert picked == expected, f'Picked indices {picked}, but expected {expected}'
+
+
+def test_pick_click_position_forward(sphere):
+    """``Plotter.pick_click_position`` triggers a click-position store and pick."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    pos = pl.pick_click_position()
+    assert isinstance(pos, tuple)
+    assert len(pos) == 3
+    pl.close()
+
+
+def test_pick_mouse_position_forward(sphere):
+    """``Plotter.pick_mouse_position`` triggers a mouse-position store and pick."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    pos = pl.pick_mouse_position()
+    assert isinstance(pos, tuple)
+    assert len(pos) == 3
+    pl.close()
+
+
+def test_picked_path_geodesic_horizon_forward():
+    """The deprecated picked-path/geodesic/horizon getters forward from the component."""
+    pl = pv.Plotter()
+    assert pl.picked_path is pl.picking.picked_path
+    assert pl.picked_geodesic is pl.picking.picked_geodesic
+    assert pl.picked_horizon is pl.picking.picked_horizon
+    pl.close()
+
+
+def test_left_click_picking_observer_branch(sphere):
+    """``enable_point_picking(left_clicking=True)`` exercises the left-click branch."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_point_picking(left_clicking=True, callback=lambda p: None)  # noqa: ARG005
+    assert pl.picking._picking_left_clicking_observer is not None
+    pl.disable_picking()
+    assert pl.picking._picking_left_clicking_observer is None
+    pl.close()

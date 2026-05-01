@@ -34,7 +34,7 @@ pl.show()
 
 # %%
 # After interacting with the scene, the threshold mesh is available as:
-pl.threshold_meshes
+pl.widgets.threshold_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
