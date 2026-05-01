@@ -119,10 +119,6 @@ if TYPE_CHECKING:
 # original request; the flag keeps the apply single-shot.
 _env_theme_applied: bool = False
 
-
-_MODULE_DICT = sys.modules[__name__].__dict__  # Module attributes used for caching
-
-
 # Lazily import/access the plotting module
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
@@ -141,7 +137,7 @@ def __getattr__(name):
 
     def _cache_attr_and_return(obj):
         # Cache the attr on this module to avoid calls to __getattr__ on next access
-        _MODULE_DICT[name] = obj
+        globals()[name] = obj
         return obj
 
     if name == 'hexcolors':
