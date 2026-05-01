@@ -10,7 +10,6 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import importlib
-import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -22,8 +21,6 @@ if TYPE_CHECKING:
     from vtk import *  # noqa: TID251
     from vtkmodules.numpy_interface.dataset_adapter import *  # noqa: TID251
     from vtkmodules.util.vtkAlgorithm import *  # noqa: TID251
-
-_THIS_MODULE = sys.modules[__name__]
 
 # Canonical mapping: vtkmodule -> classes
 # Modules imported for pyvista's core API
@@ -730,7 +727,7 @@ def __getattr__(name: str):
             raise ImportError(error_msg) from e
 
     # Cache object for next access
-    _THIS_MODULE.__dict__[name] = obj
+    globals()[name] = obj
     return obj
 
 
