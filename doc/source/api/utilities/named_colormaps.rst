@@ -88,9 +88,6 @@ to choose a colormap.
 
 .. seealso::
 
-    :func:`~pyvista.get_cmap_safe`
-        Get a colormap by name.
-
     :ref:`colormap_example`
         Example using colormaps from different sources.
 

@@ -125,7 +125,6 @@ Colors
 
    Color
    ColorLike
-   get_cmap_safe
 
 Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
 and other plotting-related methods:

@@ -68,7 +68,6 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'raise_has_duplicates',  # internal assertion
         'raise_not_matching',  # internal assertion
         'row_array',  # low-level array-by-row accessor
-        'system_supports_plotting',  # internal tool
         'threaded',  # internal threading decorator
         'try_callback',  # internal callback guard
         'vtk_bit_array_to_char',  # low-level VTK bit-array conversion
