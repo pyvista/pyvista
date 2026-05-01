@@ -67,7 +67,7 @@ pinned = [ # Pinned versions of core dependencies
 
 typing = [
   'meshio<5.4.0',
-  'mypy<1.20.0',
+  'mypy<1.21.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
   'trimesh<4.12.0',
@@ -135,7 +135,7 @@ docs = [
   'lxml==6.0.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==1.19.1',
+  'mypy==1.20.2',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
   'pandas==2.3.3',

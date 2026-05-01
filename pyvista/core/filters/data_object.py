@@ -3807,7 +3807,7 @@ class DataObjectFilters:
         elif isinstance(axis, str):
             ax_str = axis.lower()
             if ax_str in labels:
-                ax_label = cast('XYZLiteral', ax_str)
+                ax_label = ax_str
                 ax_index = label_to_index[ax_label]
             else:
                 msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
