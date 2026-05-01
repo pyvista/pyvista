@@ -926,7 +926,7 @@ def test_plot_no_active_scalars(sphere):
             raise RuntimeError(msg)
 
     def _test_update_scalars_with_valid_array():
-        pl.update_scalars(np.arange(sphere.n_faces_strict))
+        pl.update_scalars(np.arange(sphere.n_faces))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
             raise RuntimeError(msg)
@@ -1126,7 +1126,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
-    movie_sphere['scalars'] = np.random.default_rng().random(movie_sphere.n_faces_strict)
+    movie_sphere['scalars'] = np.random.default_rng().random(movie_sphere.n_faces)
 
     pl = pv.Plotter()
     pl.open_movie(filename)
@@ -1140,7 +1140,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
         random_points = np.random.default_rng().random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
-        scalars = np.random.default_rng().random(movie_sphere.n_faces_strict)
+        scalars = np.random.default_rng().random(movie_sphere.n_faces)
         movie_sphere['scalars'] = scalars
 
     # remove file
@@ -1382,13 +1382,13 @@ def test_show_axes():
 def test_plot_cell_data(sphere, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
-    scalars = np.arange(sphere.n_faces_strict)
+    scalars = np.arange(sphere.n_faces)
     pl.add_mesh(
         sphere,
         interpolate_before_map=True,
         scalars=scalars,
         n_colors=10,
-        rng=sphere.n_faces_strict,
+        rng=sphere.n_faces,
         show_scalar_bar=False,
     )
     pl.show()
@@ -1396,7 +1396,7 @@ def test_plot_cell_data(sphere, verify_image_cache):
 
 def test_plot_clim(sphere):
     pl = pv.Plotter()
-    scalars = np.arange(sphere.n_faces_strict)
+    scalars = np.arange(sphere.n_faces)
     pl.add_mesh(
         sphere,
         interpolate_before_map=True,

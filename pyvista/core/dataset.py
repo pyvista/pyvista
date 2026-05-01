@@ -1659,8 +1659,8 @@ class DataSet(DataSetFilters, DataObject):
         # PolyData cell-type breakdown
         if isinstance(self, pv.PolyData):
             poly_items: list[tuple[str, str]] = []
-            if self.n_faces_strict:
-                poly_items.append(('faces', f'{self.n_faces_strict:,}'))
+            if self.n_faces:
+                poly_items.append(('faces', f'{self.n_faces:,}'))
             if self.n_lines:
                 poly_items.append(('lines', f'{self.n_lines:,}'))
             if self.n_strips:
@@ -3357,7 +3357,7 @@ class DataSet(DataSetFilters, DataObject):
             return {int(3 - (dims == 1).sum())}  # type: ignore[arg-type]
         elif isinstance(self, pv.PolyData):
             distinct_dimensions = set()
-            if self.n_faces_strict > 0 or self.n_strips > 0:
+            if self.n_faces > 0 or self.n_strips > 0:
                 distinct_dimensions.add(2)
             if self.n_lines > 0:
                 distinct_dimensions.add(1)

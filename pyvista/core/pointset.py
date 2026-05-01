@@ -791,8 +791,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     """
 
-    _USE_STRICT_N_FACES = False
-
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
         '.ply': PLYWriter,
         '.vtp': XMLPolyDataWriter,
@@ -1090,7 +1088,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
-        n_faces_strict
+        n_faces
         verts, lines, strips
             Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
         pyvista.PolyData.regular_faces, pyvista.PolyData.irregular_faces
@@ -1397,7 +1395,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         """
         # Need to make sure there are only face cells and no lines/verts
-        if not self.n_faces_strict or self.n_lines or self.n_verts:
+        if not self.n_faces or self.n_lines or self.n_verts:
             return False
 
         # early return if not all triangular
@@ -1443,7 +1441,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         See Also
         --------
         lines
-        n_verts, n_faces_strict, n_strips
+        n_verts, n_faces, n_strips
             Number of cells in other connectivity arrays.
         pyvista.DataSet.n_cells, pyvista.DataSet.n_points
             Number of total cells and points in this mesh.
@@ -1474,7 +1472,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         See Also
         --------
         verts
-        n_lines, n_faces_strict, n_strips
+        n_lines, n_faces, n_strips
             Number of cells in other connectivity arrays.
         pyvista.DataSet.n_cells, pyvista.DataSet.n_points
             Number of total cells and points in this mesh.
@@ -1510,7 +1508,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         See Also
         --------
         strips
-        n_verts, n_lines, n_faces_strict
+        n_verts, n_lines, n_faces
             Number of cells in other connectivity arrays.
         pyvista.DataSet.n_cells, pyvista.DataSet.n_points
             Number of total cells and points in this mesh.
@@ -1531,50 +1529,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.GetNumberOfStrips()
 
-    @staticmethod
-    def use_strict_n_faces(mode: bool) -> None:  # noqa: FBT001
-        """Global opt-in to strict n_faces.
-
-        Parameters
-        ----------
-        mode : bool
-            If true, all future calls to :attr:`n_faces <pyvista.PolyData.n_faces>`
-            will return the same thing as :attr:`n_faces_strict <pyvista.PolyData.n_faces_strict>`.
-
-        """
-        PolyData._USE_STRICT_N_FACES = mode
-
     @property
     def n_faces(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of cells.
-
-        .. deprecated:: 0.43.0
-            The current (deprecated) behavior of this property is to
-            return the total number of cells, i.e. the sum of the number of
-            vertices, lines, triangle strips, and polygonal faces.
-            In the future, this will change to return only the number of
-            polygonal faces, i.e. those cells represented in the
-            `pv.PolyData.faces` array. If you want the total number of cells,
-            use `pv.PolyData.n_cells`. If you want only the number of polygonal faces,
-            use `pv.PolyData.n_faces_strict`. Alternatively, you can opt into the
-            future behavior globally by calling `pv.PolyData.use_strict_n_faces(True)`,
-            in which case `pv.PolyData.n_faces` will return the same thing as
-            `pv.PolyData.n_faces_strict`.
-
-        """
-        if PolyData._USE_STRICT_N_FACES:
-            return self.n_faces_strict
-
-        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
-        msg = (
-            'The non-strict behavior of `pv.PolyData.n_faces` has been removed. '
-            'Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead. '
-            'See the documentation in `pv.PolyData.n_faces` for more information.'
-        )
-        raise AttributeError(msg)
-
-    @property
-    def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
         """Return the number of polygonal faces.
 
         This is the total number of :attr:`~pyvista.CellType.TRIANGLE`,
@@ -1599,10 +1555,27 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ...     faces=[3, 0, 1, 2],
         ...     lines=[2, 0, 1],
         ... )
-        >>> mesh.n_cells, mesh.n_faces_strict, mesh.n_lines
+        >>> mesh.n_cells, mesh.n_faces, mesh.n_lines
         (2, 1, 1)
 
         """
+        return self.GetNumberOfPolys()
+
+    @property
+    def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of polygonal faces.
+
+        .. deprecated:: 0.49
+            Use :attr:`n_faces` instead. As of v0.49, :attr:`n_faces` returns the
+            number of polygonal faces, identical to ``n_faces_strict``.
+
+        """
+        # Deprecated on 0.49.0, estimated removal on 0.51.0
+        warn_external(
+            '`n_faces_strict` is deprecated. Use `n_faces` instead, '
+            'which now returns the number of polygonal faces.',
+            PyVistaDeprecationWarning,
+        )
         return self.GetNumberOfPolys()
 
     @_deprecate_positional_args(allowed=['filename'])
