@@ -119,6 +119,7 @@ if TYPE_CHECKING:
 # original request; the flag keeps the apply single-shot.
 _env_theme_applied: bool = False
 
+
 # Lazily import/access the plotting module
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
