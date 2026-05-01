@@ -6511,7 +6511,7 @@ class BasePlotter(_BoundsSizeMixin):
         filepath = filepath.expanduser().resolve()
         extension = pv.core.utilities.fileio.get_ext(filepath)
 
-        writer = _vtk.tkGL2PSExporter()
+        writer = _vtk.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
