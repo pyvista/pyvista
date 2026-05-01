@@ -9,12 +9,6 @@ rendering, additional features, etc). As ``pyvista`` does not provide
 ``vtk``, you will have to either build it manually or install the default
 wheel from PyPI.
 
-.. note::
-   Should you need a prebuilt wheel, a variety of prebuilt wheels can be found at
-   `pyvista-wheels <https://github.com/pyvista/pyvista-wheels>`_, but you may be
-   better off building your own. These are not "official" wheels and will soon
-   be removed in favor of more "official" wheel variants from VTK directly.
-
 Reference the official directions for `Building VTK
 <https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/dev/build.md>`_.
 The following directions assume you want to build a Python wheel non-standard
