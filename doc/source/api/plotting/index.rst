@@ -56,10 +56,11 @@ all plotting functionality in PyVista.
    plotting.mapper.PointGaussianMapper
    plotting.mapper.SmartVolumeMapper
    plotting.mapper.UnstructuredGridVolumeRayCastMapper
+   plotting.opts.ElementType
    plotting.opts.InterpolationType
+   plotting.opts.PointSpriteShape
    plotting.opts.RepresentationType
    plotting.opts.ShaderType
-   plotting.opts.ElementType
    plotting.volume.Volume
    plotting.volume_property.VolumeProperty
 

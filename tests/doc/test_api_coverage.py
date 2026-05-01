@@ -55,7 +55,6 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
         'PointGrid',  # abstract base; concrete subclasses are documented
-        'PointSpriteShape',  # internal helper
         'QtDeprecationError',  # deprecated and moved to pyvistaqt
         'QtInteractor',  # deprecated and moved to pyvistaqt
         'Scraper',  # internal sphinx gallery tool
