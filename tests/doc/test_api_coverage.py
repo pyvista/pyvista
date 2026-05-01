@@ -51,7 +51,6 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'ActorProperties',  # similar to Property but uses composition - should be deprecated
         'AnnotatedIntEnum',  # base class for internal int-enum types
         'BackgroundPlotter',  # deprecated and moved to pyvistaqt
-        'BasePlotter',  # abstract base; concrete Plotter subclass is documented
         'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
         'PointGrid',  # abstract base; concrete subclasses are documented
@@ -65,7 +64,6 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'check_math_text_support',  # internal matplotlib/vtk compatibility check
         'check_matplotlib_vtk_compatibility',  # internal compatibility check
         'check_valid_vector',  # internal assertion
-        'close_all',  # internal helper
         'conditional_decorator',  # internal decorator factory
         'convert_string_array',  # low-level VTK string conversion
         'create_mixed_cells',  # low-level cell-array builder
