@@ -20,7 +20,7 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.charts import _vtkWrapper
 
 
-def test_pyvista_vtk_namespace(monkeypatch):
+def test_vtk_namespace():
     # Test vtk class not defined in namespace
     match = (
         "'does_not_exist' is not defined in PyVista's vtk namespace.\n"
@@ -29,27 +29,32 @@ def test_pyvista_vtk_namespace(monkeypatch):
     with pytest.raises(AttributeError, match=re.escape(match)):
         _ = _vtk.does_not_exist
 
+
+def test_vtk_module_does_not_exist(monkeypatch):
     # Test module does not exist
     cls, module = 'foo', 'bar'
     monkeypatch.setitem(_vtk._VTK_CLASS_TO_MODULE, cls, module)
-    assert 'foo' in _vtk._VTK_CLASS_TO_MODULE
+    assert cls in _vtk._VTK_CLASS_TO_MODULE
     match = (
-        "Cannot import name 'foo' from 'vtkmodules.bar'.\n"
+        f"Cannot import name {cls!r} from 'vtkmodules.{module}'.\n"
         'The cause is likely attributable to VTK version or a custom VTK build.'
     )
     with pytest.raises(ImportError, match=match):
-        _ = _vtk.foo
+        _ = getattr(_vtk, cls)
 
+
+@pytest.mark.skipif(pv.vtk_version_info == (9, 4, 2), reason='Test hangs in CI on Linux')
+def test_vtk_class_does_not_exist(monkeypatch):
     # Test module exists, but class does not
     cls, module = 'foo', 'vtkCommonCore'
     monkeypatch.setitem(_vtk._VTK_CLASS_TO_MODULE, cls, module)
     assert 'foo' in _vtk._VTK_CLASS_TO_MODULE
     match = (
-        "Cannot import name 'foo' from 'vtkmodules.vtkCommonCore'.\n"
+        f"Cannot import name {cls!r} from 'vtkmodules.{module}'.\n"
         'The cause is likely attributable to VTK version or a custom VTK build.'
     )
     with pytest.raises(ImportError, match=match):
-        _ = _vtk.foo
+        _ = getattr(_vtk, cls)
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
