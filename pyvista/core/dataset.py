@@ -90,7 +90,7 @@ class ActiveArrayInfoTuple(NamedTuple):
 
         Returns
         -------
-        ActiveArrayInfo
+        ActiveArrayInfoTuple
             A copy of this object.
 
         """
@@ -163,7 +163,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        ActiveArrayInfo
+        ActiveArrayInfoTuple
             The scalars info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
 
@@ -222,7 +222,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        ActiveArrayInfo
+        ActiveArrayInfoTuple
             The vectors info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
 
@@ -274,7 +274,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        ActiveArrayInfo
+        ActiveArrayInfoTuple
             Active tensor's field and name: [field, name].
 
         """
