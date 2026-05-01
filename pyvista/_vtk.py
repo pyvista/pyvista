@@ -700,8 +700,7 @@ def __getattr__(name: str):
     VTK modules are only imported when first accessed.
     """
     # Handle special cases
-    importer = _SPECIAL_LOADERS.get(name)
-    if importer:
+    if importer := _SPECIAL_LOADERS.get(name):
         obj = importer()
     else:  # Default case: lazily import based on module mapping
         module_name = _VTK_CLASS_TO_MODULE.get(name)
