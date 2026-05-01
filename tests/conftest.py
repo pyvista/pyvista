@@ -67,7 +67,10 @@ faulthandler.enable()
 
 
 def flaky_test(
-    test_function=None, *, times: int = 3, exceptions: tuple[Exception, ...] = (AssertionError,)
+    test_function=None,
+    *,
+    times: int = 3,
+    exceptions: tuple[type[Exception], ...] = (AssertionError,),
 ):
     """Decorator for re-trying flaky tests.
 
@@ -81,10 +84,11 @@ def flaky_test(
     times : int, default: 3
         Number of times to try to test.
 
-    exceptions : tuple[Exception, ...], default: (AssertionError,)
-        Exceptions which will cause the test to be re-tried. By default, tests are only
-        retried for assertion errors. Customize this to retry for other exceptions
-        depending on the cause(s) of the flaky test, e.g. `(ValueError, TypeError)`.
+    exceptions : tuple[type[Exception], ...], default: (AssertionError,)
+        Exception types which will cause the test to be re-tried. By default, tests
+        are only retried for assertion errors. Customize this to retry for other
+        exceptions depending on the cause(s) of the flaky test, e.g.
+        ``(ValueError, TypeError)``.
 
     """
     if test_function is None:
