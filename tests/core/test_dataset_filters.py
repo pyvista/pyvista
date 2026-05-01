@@ -23,6 +23,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import CellType
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -1700,38 +1701,23 @@ def test_streamlines_max_length():
         )
         assert np.isclose(stream.length, 1)
 
-    def check_deprecation():
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 49):
-            msg = 'Remove ``max_time`` parameter in ``streamlines_from_source``'
-            raise RuntimeError(msg)
-
-    with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
-        stream = mesh.streamlines(
+    with pytest.raises(DeprecationError, match='``max_time`` parameter is deprecated'):
+        mesh.streamlines(
             vectors='vel',
             start_position=(0, 0, 0),
             integration_direction='forward',
             max_time=1,
             max_step_length=0.1,
         )
-    check_deprecation()
-    assert np.isclose(stream.length, 1)
 
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
-    ):
-        stream = mesh.streamlines(
+    with pytest.raises(DeprecationError, match='``max_time`` parameter is deprecated'):
+        mesh.streamlines(
             vectors='vel',
             start_position=(0, 0, 0),
             integration_direction='forward',
             max_time=5,
             max_length=1,
         )
-    check_deprecation()
-    assert np.isclose(stream.length, 1)
 
 
 def test_streamlines_errors(uniform_vec):
@@ -3684,7 +3670,7 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces_strict
+    orig_n_faces = sphere.n_faces
     sub = sphere.subdivide_adaptive(
         max_edge_len=0.01,
         max_tri_area=0.001,
@@ -3693,9 +3679,9 @@ def test_subdivide_adaptive(sphere, inplace):
         inplace=inplace,
         progress_bar=True,
     )
-    assert sub.n_faces_strict > orig_n_faces
+    assert sub.n_faces > orig_n_faces
     if inplace:
-        assert sphere.n_faces_strict == sub.n_faces_strict
+        assert sphere.n_faces == sub.n_faces
 
 
 def test_invalid_subdivide_adaptive(cube):

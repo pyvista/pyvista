@@ -37,6 +37,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -600,24 +601,14 @@ class BasePlotter(_BoundsSizeMixin):
         return self._theme
 
     @theme.setter
-    def theme(self, theme: Theme) -> None:
-        # Deprecated on 0.47.0, convert to error in v0.49, estimated removal on v0.50
+    def theme(self, theme: Theme) -> None:  # noqa: ARG002
+        # Deprecated on 0.47.0, error in v0.49, estimated removal on v0.50
         msg = (
             'Assigning a theme for a plotter instance is deprecated '
             'and will removed in a future version of PyVista. '
             'Set the theme when initializing the plotter instance instead.'
         )
-        warn_external(msg, PyVistaDeprecationWarning)
-
-        if not isinstance(theme, pv.plotting.themes.Theme):
-            msg = (  # type: ignore[unreachable]
-                'Expected a pyvista theme like '
-                '``pyvista.plotting.themes.Theme``, '
-                f'not {type(theme).__name__}.'
-            )
-            raise TypeError(msg)
-
-        self._theme.load_theme(theme)
+        raise DeprecationError(msg)
 
     @_deprecate_positional_args(allowed=['filename'])
     def import_gltf(self, filename: str | Path, set_camera: bool = True) -> None:  # noqa: FBT001, FBT002

@@ -17,7 +17,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _validation
@@ -25,7 +24,6 @@ from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
 from .formatting_html import _data_array_section
@@ -43,7 +41,6 @@ from .utilities.arrays import parse_field_choice
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
-from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -109,83 +106,6 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
 
     association: FieldAssociation
     name: str
-
-
-class ActiveArrayInfo(_NoNewAttrMixin):
-    """Active array info class with support for pickling.
-
-    .. deprecated:: 0.45
-
-        Use :class:`pyvista.core.dataset.ActiveArrayInfoTuple` instead.
-
-    Parameters
-    ----------
-    association : pyvista.core.utilities.arrays.FieldAssociation
-        Array association.
-        Association of the array.
-
-    name : str
-        The name of the array.
-
-    """
-
-    def __init__(self: ActiveArrayInfo, association: FieldAssociation, name: str | None) -> None:
-        """Initialize."""
-        self.association = association
-        self.name = name
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warn_external(
-            'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
-            PyVistaDeprecationWarning,
-        )
-
-    def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
-        """Return a copy of this object.
-
-        Returns
-        -------
-        ActiveArrayInfo
-            A copy of this object.
-
-        """
-        return ActiveArrayInfo(self.association, self.name)
-
-    def __getstate__(self: ActiveArrayInfo) -> dict[str, Any]:
-        """Support pickling."""
-        state = self.__dict__.copy()
-        state['association'] = int(self.association.value)
-        return state
-
-    def __setstate__(self: ActiveArrayInfo, state: dict[str, Any]) -> None:
-        """Support unpickling."""
-        self.__dict__ = state.copy()
-        self.association = FieldAssociation(state['association'])
-
-    @property
-    def _namedtuple(self: ActiveArrayInfo) -> ActiveArrayInfoTuple:
-        """Build a namedtuple on the fly to provide legacy support."""
-        return ActiveArrayInfoTuple(self.association, self.name)
-
-    def __iter__(self: ActiveArrayInfo) -> Iterator[FieldAssociation | str | None]:
-        """Provide namedtuple-like __iter__."""
-        return self._namedtuple.__iter__()
-
-    def __repr__(self: ActiveArrayInfo) -> str:
-        """Provide namedtuple-like __repr__."""
-        return self._namedtuple.__repr__()
-
-    def __getitem__(self: ActiveArrayInfo, item: int) -> FieldAssociation | str | None:
-        """Provide namedtuple-like __getitem__."""
-        return self._namedtuple.__getitem__(item)
-
-    def __eq__(self: ActiveArrayInfo, other: object) -> bool:
-        """Check equivalence (useful for serialize/deserialize tests)."""
-        if isinstance(other, ActiveArrayInfo):
-            same_association = int(self.association.value) == int(other.association.value)
-            return self.name == other.name and same_association
-        return False
-
-    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
 
 @promote_type(_vtk.vtkDataSet)
@@ -1739,8 +1659,8 @@ class DataSet(DataSetFilters, DataObject):
         # PolyData cell-type breakdown
         if isinstance(self, pv.PolyData):
             poly_items: list[tuple[str, str]] = []
-            if self.n_faces_strict:
-                poly_items.append(('faces', f'{self.n_faces_strict:,}'))
+            if self.n_faces:
+                poly_items.append(('faces', f'{self.n_faces:,}'))
             if self.n_lines:
                 poly_items.append(('lines', f'{self.n_lines:,}'))
             if self.n_strips:
@@ -3437,7 +3357,7 @@ class DataSet(DataSetFilters, DataObject):
             return {int(3 - (dims == 1).sum())}  # type: ignore[arg-type]
         elif isinstance(self, pv.PolyData):
             distinct_dimensions = set()
-            if self.n_faces_strict > 0 or self.n_strips > 0:
+            if self.n_faces > 0 or self.n_strips > 0:
                 distinct_dimensions.add(2)
             if self.n_lines > 0:
                 distinct_dimensions.add(1)

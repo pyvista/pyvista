@@ -358,8 +358,6 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
         ):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Test fails without proper dataset files.')
-        elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
-            pytest.skip('Deprecated.')
         elif is_dataclass(pyvista_class):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Dataclass, no test required.')

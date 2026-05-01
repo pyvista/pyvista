@@ -356,26 +356,6 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_mesh
 
     @property
-    def picked_cell(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
-        r"""Return the cell-picked object.
-
-        .. deprecated:: 0.47
-            Use the :attr:`picked_cells <pyvista.Plotter.picked_cells>` attribute instead.
-
-        Returns
-        -------
-        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
-            Picked object if available.
-
-        """
-        # deprecated in 0.47, error in 0.48, remove in 0.49
-        warn_external(
-            category=PyVistaDeprecationWarning,
-            message='Use the `picked_cells` attribute instead.',
-        )
-        return self._picked_cell
-
-    @property
     def picked_cells(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
         r"""Return the cell-picked object.
 
@@ -1224,18 +1204,7 @@ class PickingComponent(_NoNewAttrMixin):
                     and actor.GetPickable()
                 ):
                     input_mesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
-                    old_name, new_name = 'orig_extract_id', 'original_cell_ids'
-
-                    #  deprecated in 0.47, rename in v0.49
-                    warn_external(
-                        category=PyVistaDeprecationWarning,
-                        message=(
-                            f'The `{old_name}` cell data has been deprecated and will be renamed'
-                            f' to `{new_name} in a future version of PyVista.'
-                        ),
-                    )
-                    input_mesh.cell_data[old_name] = (ids := np.arange(input_mesh.n_cells))
-                    input_mesh.cell_data[new_name] = ids
+                    input_mesh.cell_data['original_cell_ids'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)

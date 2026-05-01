@@ -20,7 +20,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
-from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
@@ -3701,7 +3700,6 @@ class ImageDataFilters(DataSetFilters):
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar: bool = False,
-        pad_singleton_dims: bool | None = None,
     ) -> ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
@@ -3773,16 +3771,6 @@ class ImageDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
-
-        pad_singleton_dims : bool, optional
-            Control whether to pad singleton dimensions.
-
-            .. deprecated:: 0.45.0
-                Deprecated, use ``dimensionality='preserve'`` instead of
-                ``pad_singleton_dims=True`` and ``dimensionality='3D'`` instead of
-                ``pad_singleton_dims=False``.
-
-                Estimated removal on v0.48.0.
 
         Returns
         -------
@@ -3869,19 +3857,6 @@ class ImageDataFilters(DataSetFilters):
         >>> padded.plot(**plot_kwargs)
 
         """
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        if pad_singleton_dims is not None:
-            if pad_singleton_dims:
-                msg = (
-                    'Use of `pad_singleton_dims=True` is deprecated. '
-                    'Use `dimensionality="3D"` instead'
-                )
-            else:
-                msg = (
-                    'Use of `pad_singleton_dims=False` is deprecated. '
-                    'Use `dimensionality="preserve"` instead'
-                )
-            raise DeprecationError(msg)
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]

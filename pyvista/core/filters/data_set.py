@@ -3664,17 +3664,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             set_default_active_vectors(self)
 
         if max_time is not None:
-            if max_length is not None:
-                warn_external(
-                    '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
-                    PyVistaDeprecationWarning,
-                )
-            else:
-                warn_external(
-                    '``max_time`` parameter is deprecated.  It will be removed in v0.48',
-                    PyVistaDeprecationWarning,
-                )
-                max_length = max_time
+            msg = (
+                '``max_time`` parameter is deprecated and no longer supported. '
+                'Use ``max_length`` instead.'
+            )
+            raise DeprecationError(msg)
 
         if max_length is None:
             max_length = 4.0 * self.GetLength()
@@ -6047,109 +6041,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             )
             raise TypeError(msg) from None
         return merged
-
-    @_deprecate_positional_args(allowed=['quality_measure'])
-    def compute_cell_quality(  # type: ignore[misc]
-        self: _DataSetType,
-        quality_measure: str = 'scaled_jacobian',  # noqa: ARG002
-        null_value: float = -1.0,  # noqa: ARG002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002, ARG002
-    ):
-        """Compute a function of (geometric) quality for each cell of a mesh.
-
-        The per-cell quality is added to the mesh's cell data, in an
-        array named ``"CellQuality"``. Cell types not supported by this
-        filter or undefined quality of supported cell types will have an
-        entry of -1.
-
-        Defaults to computing the scaled Jacobian.
-
-        Options for cell quality measure:
-
-        - ``'area'``
-        - ``'aspect_beta'``
-        - ``'aspect_frobenius'``
-        - ``'aspect_gamma'``
-        - ``'aspect_ratio'``
-        - ``'collapse_ratio'``
-        - ``'condition'``
-        - ``'diagonal'``
-        - ``'dimension'``
-        - ``'distortion'``
-        - ``'jacobian'``
-        - ``'max_angle'``
-        - ``'max_aspect_frobenius'``
-        - ``'max_edge_ratio'``
-        - ``'med_aspect_frobenius'``
-        - ``'min_angle'``
-        - ``'oddy'``
-        - ``'radius_ratio'``
-        - ``'relative_size_squared'``
-        - ``'scaled_jacobian'``
-        - ``'shape'``
-        - ``'shape_and_size'``
-        - ``'shear'``
-        - ``'shear_and_size'``
-        - ``'skew'``
-        - ``'stretch'``
-        - ``'taper'``
-        - ``'volume'``
-        - ``'warpage'``
-
-        .. note::
-
-            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
-            for low-level technical information about how each metric is computed,
-            which :class:`~pyvista.CellType` it applies to as well as the metric's
-            full, normal, and acceptable range of values.
-
-        .. deprecated:: 0.45
-
-            Use :meth:`~pyvista.DataObjectFilters.cell_quality` instead. Note that
-            this new filter does not include an array named ``'CellQuality'``.
-
-        Parameters
-        ----------
-        quality_measure : str, default: 'scaled_jacobian'
-            The cell quality measure to use.
-
-        null_value : float, default: -1.0
-            Float value for undefined quality. Undefined quality are qualities
-            that could be addressed by this filter but is not well defined for
-            the particular geometry of cell in question, e.g. a volume query
-            for a triangle. Undefined quality will always be undefined.
-            The default value is -1.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Dataset with the computed mesh quality in the
-            ``cell_data`` as the ``"CellQuality"`` array.
-
-        Examples
-        --------
-        Compute and plot the minimum angle of a sample sphere mesh.
-
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
-        >>> cqual = sphere.compute_cell_quality('min_angle')  # doctest:+SKIP
-        >>> cqual.plot(show_edges=True)  # doctest:+SKIP
-
-        See the :ref:`mesh_quality_example` for more examples using this filter.
-
-        """
-        if pv.version_info >= (0, 49):  # pragma: no cover
-            msg = 'Remove this filter.'
-            raise RuntimeError(msg)
-
-        msg = (
-            'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
-            "new filter does not include an array named ``'CellQuality'`"
-        )
-        raise DeprecationError(msg)
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
