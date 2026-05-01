@@ -562,24 +562,9 @@ class BasePlotter(_BoundsSizeMixin):
 
     @property
     def theme(self) -> Theme:  # numpydoc ignore=RT01
-        """Return or set the theme used for this plotter.
+        """Return the theme used for this plotter.
 
-        .. deprecated:: 0.47
-            Assigning the ``theme`` attribute to a plotter object does not affect global appearance
-            settings such as ``background``, which are set at instantiation.
-            To this respect, you need to set the theme such that:
-
-            .. code-block:: python
-
-                import pyvista as pv
-
-                pl = pv.Plotter()
-                pl.theme = theme
-                # change above lines to
-                pl = pv.Plotter(theme=theme)
-
-            However, actor appearance settings such as ``edge_color`` for example are correctly
-            taken into account.
+        Set the theme when initializing the plotter instance.
 
         Returns
         -------
@@ -592,8 +577,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         >>> import pyvista as pv
         >>> from pyvista import themes
-        >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()  # doctest: +SKIP
+        >>> pl = pv.Plotter(theme=themes.DarkTheme())
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
@@ -7257,15 +7241,6 @@ class BasePlotter(_BoundsSizeMixin):
 
         """
         return self.picking.picked_mesh
-
-    @property
-    def picked_cell(self) -> Any:  # numpydoc ignore=RT01
-        """Picked cell (deprecated; see ``picked_cells``).
-
-        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_cell`.
-
-        """
-        return self.picking.picked_cell
 
     @property
     def picked_cells(self) -> Any:  # numpydoc ignore=RT01

@@ -5186,20 +5186,12 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
-@pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing fatal exception: access violation')
-def test_voxelize_volume():
-    mesh = examples.download_cow()
-    cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
-
-    # Create an equal density voxel volume and plot the result.
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize_volume(mesh, density=0.15)
-    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
-
-    # Create a voxel volume from unequal density dimensions and plot result.
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
-    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_voxelize_volume_removed():
+    with pytest.raises(
+        pv.core.errors.DeprecationError, match=r'`pyvista.voxelize_volume` is deprecated'
+    ):
+        pv.voxelize_volume(pv.Sphere(), density=0.15)
 
 
 def test_enable_custom_trackball_style():
