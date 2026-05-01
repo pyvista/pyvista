@@ -1266,8 +1266,9 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
            >>> import numpy as np
            >>> import pyvista as pv
            >>> n_spheres = 1_000
-           >>> pos = np.random.random((n_spheres, 3))
-           >>> rad = np.random.random(n_spheres) * 0.01
+           >>> rng = np.random.default_rng(seed=0)
+           >>> pos = rng.random((n_spheres, 3))
+           >>> rad = rng.random(n_spheres) * 0.01
            >>> pdata = pv.PolyData(pos)
            >>> pdata['radius'] = rad
            >>> pl = pv.Plotter()
