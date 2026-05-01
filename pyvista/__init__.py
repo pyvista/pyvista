@@ -143,7 +143,8 @@ def __getattr__(name):
     if name == 'hexcolors':
         from pyvista.plotting.colors import _get_deprecated_hexcolors  # noqa: PLC0415
 
-        return _cache_attr_and_return(_get_deprecated_hexcolors())
+        # Do not cache since we want to re-issue the deprecation warning
+        return _get_deprecated_hexcolors()
 
     allow = {
         'demos',
