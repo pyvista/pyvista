@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Any
 
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
     # here as needed to ensure they can "see" the imported classes
@@ -775,7 +776,7 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
     return vtkCellTypeUtilities
 
 
-_SPECIAL_LOADERS: dict[str, Callable] = {
+_SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
     'vtkExtractCells': _import_vtkExtractCells,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
