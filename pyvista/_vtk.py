@@ -14,6 +14,8 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
     # here as needed to ensure they can "see" the imported classes
     from vtk import *  # noqa: TID251
@@ -698,14 +700,10 @@ def __getattr__(name: str):
     VTK modules are only imported when first accessed.
     """
     # Handle special cases
-    if name == 'vtkPythonItem':
-        obj = _import_vtkPythonItem()
-    elif name == 'vtkExtractCells':
-        obj = _import_vtkExtractCells()
-    elif name == 'vtkCellTypeUtilities':
-        obj = _import_vtkCellTypeUtilities()
-    else:
-        # Default case: lazily import based on module mapping
+    importer = _SPECIAL_LOADERS.get(name)
+    if importer:
+        obj = importer()
+    else:  # Default case: lazily import based on module mapping
         module_name = _VTK_CLASS_TO_MODULE.get(name)
         if module_name is None:
             msg = (
@@ -734,6 +732,9 @@ def __getattr__(name: str):
     # Cache object for next access
     _THIS_MODULE.__dict__[name] = obj
     return obj
+
+
+# Specialized loading functions for irregular imports
 
 
 def _import_vtkPythonItem():  # noqa: N802
@@ -773,3 +774,10 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
             vtkCellTypes as vtkCellTypeUtilities,
         )
     return vtkCellTypeUtilities
+
+
+_SPECIAL_LOADERS: dict[str, Callable] = {
+    'vtkPythonItem': _import_vtkPythonItem,
+    'vtkExtractCells': _import_vtkExtractCells,
+    'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
+}
