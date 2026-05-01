@@ -10,6 +10,8 @@ routines in PyVista.
 
    plot
    plot_arrows
+   plot_compare_four
+   load_theme
    set_plot_theme
    registered_themes
    ThemeRegistration

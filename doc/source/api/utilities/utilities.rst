@@ -125,6 +125,7 @@ Colors
 
    Color
    ColorLike
+   get_cmap_safe
 
 Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
 and other plotting-related methods:
@@ -191,6 +192,8 @@ Errors and Warnings
    core.errors.VTKExecutionError
    core.errors.VTKExecutionWarning
    core.errors.VTKVersionError
+   plotting.errors.InvalidCameraError
+   plotting.errors.RenderWindowUnavailable
 
 
 PyVista Version Information
