@@ -3670,7 +3670,7 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces
+    orig_n_faces = sphere.n_faces_strict
     sub = sphere.subdivide_adaptive(
         max_edge_len=0.01,
         max_tri_area=0.001,
@@ -3679,9 +3679,9 @@ def test_subdivide_adaptive(sphere, inplace):
         inplace=inplace,
         progress_bar=True,
     )
-    assert sub.n_faces > orig_n_faces
+    assert sub.n_faces_strict > orig_n_faces
     if inplace:
-        assert sphere.n_faces == sub.n_faces
+        assert sphere.n_faces_strict == sub.n_faces_strict
 
 
 def test_invalid_subdivide_adaptive(cube):

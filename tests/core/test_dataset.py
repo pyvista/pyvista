@@ -927,7 +927,7 @@ def test_find_closest_cells():
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
-    assert np.allclose(indices, np.arange(mesh.n_faces))
+    assert np.allclose(indices, np.arange(mesh.n_faces_strict))
 
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)
