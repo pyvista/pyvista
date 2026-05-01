@@ -437,7 +437,7 @@ jobs:
           path: coverage*.xml
 
       - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
           fail_ci_if_error: true
           use_oidc: true
