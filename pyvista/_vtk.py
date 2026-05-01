@@ -684,18 +684,22 @@ def __getattr__(name: str):
             )
             raise AttributeError(msg)
 
+        # Attempt to import the vtkmodule and the desired attribute
+        # Convert module or attribute errors into a similar message that would otherwise be
+        # seen when doing `from vtkmodules.vtkModule import vtkClass`
         module_full_name = f'vtkmodules.{module_name}'
+        error_msg = (
+            f'Cannot import name {name!r} from {module_full_name!r}.\n'
+            'The cause is likely attributable to VTK version or a custom VTK build.'
+        )
         try:
             module = importlib.import_module(module_full_name)
+        except ModuleNotFoundError as e:
+            raise ImportError(error_msg) from e
+        try:
             obj = getattr(module, name)
-        except (AttributeError, ModuleNotFoundError) as e:
-            # Convert module or attribute errors into a similar message that would otherwise be
-            # seen when doing `from vtkmodules.vtkModule import vtkClass`
-            msg = (
-                f'Cannot import name {name!r} from {module_full_name!r}.\n'
-                f'The cause is likely attributable to VTK version or a custom VTK build.'
-            )
-            raise ImportError(msg) from e
+        except AttributeError as e:
+            raise ImportError(error_msg) from e
 
     # Cache object for next access
     _THIS_MODULE.__dict__[name] = obj
