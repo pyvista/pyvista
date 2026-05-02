@@ -140,6 +140,8 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     >>> lines = pv.line_segments_from_points(points)
     >>> lines.plot()
 
+    See :ref:`graph_network_example` for more examples using this function.
+
     """
     if len(points) % 2 != 0:
         msg = 'An even number of points must be given to define each segment.'
@@ -187,6 +189,8 @@ def lines_from_points(
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> poly = pv.lines_from_points(points)
     >>> poly.plot(line_width=5)
+
+    See :ref:`lorenz_attractor_example` for more examples using this function.
 
     """
     poly = pv.PolyData()
@@ -741,6 +745,9 @@ def principal_axes(
 
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
+
+    :ref:`point_cloud_orientation_example`
+        Example using this function with point clouds.
 
     Parameters
     ----------
