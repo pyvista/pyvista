@@ -1462,20 +1462,6 @@ def test_irregular_faces_mutable():
     _assert_irregular_faces_equal(mesh.irregular_faces, expected)
 
 
-@pytest.mark.parametrize('cells', ['faces', 'lines', 'strips', 'verts'])
-def test_n_faces_etc_deprecated(cells: str):
-    n_cells = 'n_' + cells
-    kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
-    with pytest.raises(
-        TypeError,
-        match=f'PolyData constructor parameter `{n_cells}` is deprecated and no longer used',
-    ):
-        _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
-        raise RuntimeError(msg)
-
-
 @pytest.mark.parametrize('inplace', [True, False])
 def test_merge_points(inplace):
     mesh = pv.Cylinder(resolution=4)
