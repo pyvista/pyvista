@@ -583,12 +583,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     :attr:`~pyvista.CellType.VERTEX` to create a point cloud where :attr:`n_verts` equals
     :attr:`~pyvista.DataSet.n_points`.
 
-    .. deprecated:: 0.44.0
-       The parameters ``n_faces``, ``n_lines``, ``n_strips``, and
-       ``n_verts`` are deprecated and no longer used. They were
-       previously used to speed up the construction of the corresponding
-       cell arrays but no longer provide any benefit.
-
     Parameters
     ----------
     var_inp : :vtk:`vtkPolyData`, str, sequence, optional
@@ -616,9 +610,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
         lets you have an arbitrary number of points per face.
 
-    n_faces : int, optional
-        Deprecated. Not used.
-
     lines : CellArrayLike, optional
         Connectivity of :attr:`lines`. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
@@ -626,9 +617,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         a line segment.  For example, the two line segments ``[0, 1]``
         and ``[1, 2, 3, 4]`` will be represented as
         ``[2, 0, 1, 4, 1, 2, 3, 4]``.
-
-    n_lines : int, optional
-        Deprecated. Not used.
 
     strips : CellArrayLike optional
         Connectivity of triangle :attr:`strips`. Triangle strips require an
@@ -643,9 +631,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         point indices ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires
         padding of ``10`` and should be input as
         ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
-
-    n_strips : int, optional
-        Deprecated. Not used.
 
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
@@ -672,9 +657,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
         each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
         polyvertex cells each with two points.
-
-    n_verts : int, optional
-        Deprecated. Not used.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
@@ -808,16 +790,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         self,
         var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
         faces: CellArrayLike | None = None,
-        n_faces: int | None = None,
         lines: CellArrayLike | None = None,
-        n_lines: int | None = None,
         strips: CellArrayLike | None = None,
-        n_strips: int | None = None,
         deep: bool = False,  # noqa: FBT001, FBT002
         force_ext: str | None = None,
         force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
-        n_verts: int | None = None,
         *,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
@@ -830,7 +808,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return
 
         # filename
-        opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
+        opt_kwarg = ['faces', 'lines']
         if isinstance(var_inp, (str, Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
@@ -895,17 +873,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         if validate:
             self._validate_mesh(validate)
-
-        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (  # type: ignore[assignment]
-            ('n_verts', n_verts),
-            ('n_strips', n_strips),
-            ('n_faces', n_faces),
-            ('n_lines', n_lines),
-        ):
-            if v is not None:
-                msg = f'PolyData constructor parameter `{k}` is deprecated and no longer used.'
-                raise TypeError(msg)
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
