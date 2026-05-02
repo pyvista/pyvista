@@ -659,7 +659,7 @@ def vector_poly_data(
 
     npts = orig.shape[0]
     vcells = pv.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),
+        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),  # type: ignore[arg-type]
     )
 
     # Create vtkPolyData object

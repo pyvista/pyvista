@@ -52,7 +52,6 @@ def test_utilities_namespace(name):
         'sphinx_gallery',
         'transformations',
         'wrappers',
-        'xvfb',
     ],
 )
 def test_utilities_modules(name):
@@ -88,7 +87,6 @@ def _import_all_utilities():
     from pyvista.utilities.geometric_objects import PlatonicSolid  # noqa: F401
     from pyvista.utilities.helpers import vtk_id_list_to_array  # noqa: F401
     from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper  # noqa: F401
-    from pyvista.utilities.xvfb import start_xvfb  # noqa: F401
 
 
 def test_common_utilities_import_paths():

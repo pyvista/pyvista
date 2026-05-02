@@ -320,7 +320,7 @@ set_jupyter_backend, <function set_jupyter_backend at 0x1645b2f70>
 set_pickle_format, <function set_pickle_format at 0x163f3e3a0>
 set_plot_theme, <function set_plot_theme at 0x1647a4670>
 # sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/pyvista/utilities/sphinx_gallery.py'>
-start_xvfb, <function start_xvfb at 0x1641c8ca0>
+# start_xvfb, <function start_xvfb at 0x1641c8ca0>
 surface_from_para, <function surface_from_para at 0x1641c8670>
 system_supports_plotting, <function system_supports_plotting at 0x1641af550>
 # texture, <module 'pyvista.core.texture' from 'pyvista/pyvista/core/texture.py'>

@@ -37,6 +37,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -561,24 +562,9 @@ class BasePlotter(_BoundsSizeMixin):
 
     @property
     def theme(self) -> Theme:  # numpydoc ignore=RT01
-        """Return or set the theme used for this plotter.
+        """Return the theme used for this plotter.
 
-        .. deprecated:: 0.47
-            Assigning the ``theme`` attribute to a plotter object does not affect global appearance
-            settings such as ``background``, which are set at instantiation.
-            To this respect, you need to set the theme such that:
-
-            .. code-block:: python
-
-                import pyvista as pv
-
-                pl = pv.Plotter()
-                pl.theme = theme
-                # change above lines to
-                pl = pv.Plotter(theme=theme)
-
-            However, actor appearance settings such as ``edge_color`` for example are correctly
-            taken into account.
+        Set the theme when initializing the plotter instance.
 
         Returns
         -------
@@ -591,8 +577,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         >>> import pyvista as pv
         >>> from pyvista import themes
-        >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()  # doctest: +SKIP
+        >>> pl = pv.Plotter(theme=themes.DarkTheme())
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
@@ -600,24 +585,14 @@ class BasePlotter(_BoundsSizeMixin):
         return self._theme
 
     @theme.setter
-    def theme(self, theme: Theme) -> None:
-        # Deprecated on 0.47.0, convert to error in v0.49, estimated removal on v0.50
+    def theme(self, theme: Theme) -> None:  # noqa: ARG002
+        # Deprecated on 0.47.0, error in v0.49, estimated removal on v0.50
         msg = (
             'Assigning a theme for a plotter instance is deprecated '
             'and will removed in a future version of PyVista. '
             'Set the theme when initializing the plotter instance instead.'
         )
-        warn_external(msg, PyVistaDeprecationWarning)
-
-        if not isinstance(theme, pv.plotting.themes.Theme):
-            msg = (  # type: ignore[unreachable]
-                'Expected a pyvista theme like '
-                '``pyvista.plotting.themes.Theme``, '
-                f'not {type(theme).__name__}.'
-            )
-            raise TypeError(msg)
-
-        self._theme.load_theme(theme)
+        raise DeprecationError(msg)
 
     @_deprecate_positional_args(allowed=['filename'])
     def import_gltf(self, filename: str | Path, set_camera: bool = True) -> None:  # noqa: FBT001, FBT002
@@ -7266,15 +7241,6 @@ class BasePlotter(_BoundsSizeMixin):
 
         """
         return self.picking.picked_mesh
-
-    @property
-    def picked_cell(self) -> Any:  # numpydoc ignore=RT01
-        """Picked cell (deprecated; see ``picked_cells``).
-
-        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_cell`.
-
-        """
-        return self.picking.picked_cell
 
     @property
     def picked_cells(self) -> Any:  # numpydoc ignore=RT01

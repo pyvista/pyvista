@@ -13,6 +13,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -2976,21 +2977,12 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warn_external(
+        # Deprecated on v0.45.0, error on v0.49.0
+        msg = (
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
-            'Note that `inplace` is now `False` by default for the new filter.',
-            PyVistaDeprecationWarning,
+            'Note that `inplace` is now `False` by default for the new filter.'
         )
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
-            msg = 'Can only flip normals on an all triangle mesh.'
-            raise NotAllTrianglesError(msg)
-
-        f = self._connectivity_array  # type: ignore[attr-defined]
-
-        # swap first and last point index in-place
-        # See: https://stackoverflow.com/a/33362288/
-        f[::3], f[2::3] = f[2::3], f[::3].copy()
+        raise DeprecationError(msg)
 
     def _reverse_sense(  # type: ignore[misc]
         self: PolyData,

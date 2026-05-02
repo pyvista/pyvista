@@ -161,7 +161,6 @@ Miscellaneous
    JupyterBackendRegistration
    send_errors_to_logging
    set_jupyter_backend
-   start_xvfb
    Report
    enable_smp_tools
    set_default_active_scalars
