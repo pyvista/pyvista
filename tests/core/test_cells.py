@@ -545,24 +545,12 @@ def test_cell_types():
             assert getattr(pv.CellType, cell_type) == getattr(_vtk, 'VTK_' + cell_type)
 
 
-def test_n_cells_deprecated():
-    with pytest.raises(
-        TypeError,
-        match=r'CellArray parameter `n_cells` is deprecated and no longer used\.',
-    ):
+def test_n_cells_removed():
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], n_cells=1)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `n_cells` constructor kwarg'
-        raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('deep', [True, False])
-def test_deep_deprecated(deep: bool):
-    with pytest.raises(
-        TypeError,
-        match=r'CellArray parameter `deep` is deprecated and no longer used\.',
-    ):
+def test_deep_removed(deep: bool):
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `deep` constructor kwarg'
-        raise RuntimeError(msg)

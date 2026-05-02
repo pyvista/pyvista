@@ -57,9 +57,6 @@ def test_screenshot_fail_suppressed_rendering():
         pl.show(screenshot='tmp.png')
 
 
-@pytest.mark.filterwarnings(
-    'ignore:Assigning a theme for a plotter instance is deprecated:pyvista.PyVistaDeprecationWarning'  # noqa: E501
-)
 def test_plotter_theme_raises():
     with pytest.raises(
         TypeError,
@@ -68,10 +65,11 @@ def test_plotter_theme_raises():
         pv.Plotter(theme=1)
 
     pl = pv.Plotter()
-    match = re.escape('Expected a pyvista theme like ``pyvista.plotting.themes.Theme``, not int.')
-
-    with pytest.raises(TypeError, match=match):
-        pl.theme = 1
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'Assigning a theme for a plotter instance is deprecated',
+    ):
+        pl.theme = pv.themes.DarkTheme()
 
 
 def test_plotter_anti_aliasing_raises():

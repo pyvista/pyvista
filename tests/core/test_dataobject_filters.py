@@ -798,10 +798,9 @@ def test_slice_generate_triangles_false_default_preserves_polygons():
     assert pv.CellType.QUAD in types or pv.CellType.POLYGON in types
 
 
-def test_compute_cell_quality():
+def test_compute_cell_quality_removed():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    match_str = re.escape('This filter is deprecated. Use `cell_quality` instead')
-    with pytest.raises(DeprecationError, match=match_str):
+    with pytest.raises(AttributeError):
         _ = mesh.compute_cell_quality(progress_bar=True)
 
 
@@ -2793,15 +2792,15 @@ def test_extract_surface_nonlinear(as_multiblock):
 
     # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface(algorithm=None, progress_bar=True)
-    assert surf.n_faces_strict == 36
+    assert surf.n_faces == 36
     surf = grid.extract_surface(algorithm='dataset_surface', progress_bar=True)
-    assert surf.n_faces_strict == 36
+    assert surf.n_faces == 36
 
     # expect each face to be divided several more times than the linear extraction
     surf_subdivided = grid.extract_surface(
         algorithm=None, nonlinear_subdivision=5, progress_bar=True
     )
-    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
+    assert surf_subdivided.n_faces > surf.n_faces
     match = (
         'geometry algorithm cannot process non-linear cells and therefore '
         'cannot be used to control non-linear subdivision.'
@@ -2824,4 +2823,4 @@ def test_extract_surface_nonlinear(as_multiblock):
     surf_no_subdivide = grid.extract_surface(
         algorithm=None, nonlinear_subdivision=0, progress_bar=True
     )
-    assert surf_no_subdivide.n_faces_strict == 6
+    assert surf_no_subdivide.n_faces == 6

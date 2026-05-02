@@ -50,9 +50,17 @@ all plotting functionality in PyVista.
    TextProperty
    Timer
    plotting.mapper._BaseMapper
-   plotting.opts.InterpolationType
-   plotting.opts.RepresentationType
+   plotting.mapper.FixedPointVolumeRayCastMapper
+   plotting.mapper.GPUVolumeRayCastMapper
+   plotting.mapper.OpenGLGPUVolumeRayCastMapper
+   plotting.mapper.PointGaussianMapper
+   plotting.mapper.SmartVolumeMapper
+   plotting.mapper.UnstructuredGridVolumeRayCastMapper
    plotting.opts.ElementType
+   plotting.opts.InterpolationType
+   plotting.opts.PointSpriteShape
+   plotting.opts.RepresentationType
+   plotting.opts.ShaderType
    plotting.volume.Volume
    plotting.volume_property.VolumeProperty
 

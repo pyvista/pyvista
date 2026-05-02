@@ -924,7 +924,7 @@ def test_plot_no_active_scalars(sphere):
             raise RuntimeError(msg)
 
     def _test_update_scalars_with_valid_array():
-        pl.update_scalars(np.arange(sphere.n_faces_strict))
+        pl.update_scalars(np.arange(sphere.n_faces))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
             raise RuntimeError(msg)
@@ -1124,7 +1124,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
     filename = str(tmpdir.join('tmp.mp4'))
 
     movie_sphere = sphere.copy()
-    movie_sphere['scalars'] = np.random.default_rng().random(movie_sphere.n_faces_strict)
+    movie_sphere['scalars'] = np.random.default_rng().random(movie_sphere.n_faces)
 
     pl = pv.Plotter()
     pl.open_movie(filename)
@@ -1138,7 +1138,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
         random_points = np.random.default_rng().random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99
         movie_sphere.points[:] -= movie_sphere.points.mean(0)
-        scalars = np.random.default_rng().random(movie_sphere.n_faces_strict)
+        scalars = np.random.default_rng().random(movie_sphere.n_faces)
         movie_sphere['scalars'] = scalars
 
     # remove file
@@ -1376,13 +1376,13 @@ def test_show_axes():
 def test_plot_cell_data(sphere, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
-    scalars = np.arange(sphere.n_faces_strict)
+    scalars = np.arange(sphere.n_faces)
     pl.add_mesh(
         sphere,
         interpolate_before_map=True,
         scalars=scalars,
         n_colors=10,
-        rng=sphere.n_faces_strict,
+        rng=sphere.n_faces,
         show_scalar_bar=False,
     )
     pl.show()
@@ -1390,7 +1390,7 @@ def test_plot_cell_data(sphere, verify_image_cache):
 
 def test_plot_clim(sphere):
     pl = pv.Plotter()
-    scalars = np.arange(sphere.n_faces_strict)
+    scalars = np.arange(sphere.n_faces)
     pl.add_mesh(
         sphere,
         interpolate_before_map=True,
@@ -1438,21 +1438,12 @@ def test_axes():
 
 
 @pytest.mark.skip_check_gc
-def test_box_axes_deprecated(verify_image_cache):
-    """Test deprecated function and make sure we remove it by v0.48."""
+def test_box_axes_removed(verify_image_cache):
     verify_image_cache.skip = True
 
     pl = pv.Plotter()
-
-    def _test_add_axes_box():
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         pl.add_axes(box=True)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this function'
-            raise RuntimeError(msg)
-
-    match_str = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
-    with pytest.raises(DeprecationError, match=re.escape(match_str)):
-        _test_add_axes_box()
     pl.close()
 
 
@@ -5186,20 +5177,12 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
-@pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing fatal exception: access violation')
-def test_voxelize_volume():
-    mesh = examples.download_cow()
-    cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
-
-    # Create an equal density voxel volume and plot the result.
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize_volume(mesh, density=0.15)
-    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
-
-    # Create a voxel volume from unequal density dimensions and plot result.
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
-    vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_voxelize_volume_removed():
+    with pytest.raises(
+        pv.core.errors.DeprecationError, match=r'`pyvista.voxelize_volume` is deprecated'
+    ):
+        pv.voxelize_volume(pv.Sphere(), density=0.15)
 
 
 def test_enable_custom_trackball_style():

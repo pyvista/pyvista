@@ -654,9 +654,6 @@ class CellArray(
     Provides convenience functions to simplify creating a CellArray from
     a numpy array or list.
 
-    .. deprecated:: 0.44.0
-       The parameters ``n_cells`` and ``deep`` are deprecated and no longer used.
-
     Parameters
     ----------
     cells : np.ndarray or list, optional
@@ -664,12 +661,6 @@ class CellArray(
         ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
         Where n0 is the number of points in cell 0, and pX_Y is the Y'th
         point in cell X.
-
-    n_cells : int, optional
-        The number of cells.
-
-    deep : bool, default: False
-        Perform a deep copy of the original cell.
 
     Examples
     --------
@@ -687,12 +678,9 @@ class CellArray(
 
     """
 
-    @_deprecate_positional_args(allowed=['cells'])
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
-        n_cells: int | None = None,
-        deep: bool | None = None,  # noqa: FBT001
     ) -> None:
         """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
@@ -700,12 +688,6 @@ class CellArray(
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
             self.cells = cells
-
-        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (('n_cells', n_cells), ('deep', deep)):
-            if v is not None:
-                msg = f'CellArray parameter `{k}` is deprecated and no longer used.'
-                raise TypeError(msg)
 
     @property
     def cells(self: Self) -> NumpyArray[int]:

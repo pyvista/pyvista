@@ -28,4 +28,3 @@ from .regression import run_image_filter as run_image_filter
 from .regression import wrap_image_array as wrap_image_array
 from .sphinx_gallery import Scraper as Scraper
 from .sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scraper
-from .xvfb import start_xvfb as start_xvfb

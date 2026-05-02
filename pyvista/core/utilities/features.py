@@ -12,8 +12,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
-from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
 from pyvista.core.utilities.helpers import wrap
 
 
@@ -50,11 +49,11 @@ def _padded_bins(mesh, density):
 
 @_deprecate_positional_args(allowed=['mesh'])
 def voxelize(  # noqa: PLR0917
-    mesh,
-    density=None,
-    check_surface: bool = True,  # noqa: FBT001, FBT002
-    enclosed: bool = False,  # noqa: FBT001, FBT002
-    fit_bounds: bool = False,  # noqa: FBT001, FBT002
+    mesh,  # noqa: ARG001
+    density=None,  # noqa: ARG001
+    check_surface: bool = True,  # noqa: ARG001, FBT001, FBT002
+    enclosed: bool = False,  # noqa: ARG001, FBT001, FBT002
+    fit_bounds: bool = False,  # noqa: ARG001, FBT001, FBT002
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -157,18 +156,9 @@ def voxelize(  # noqa: PLR0917
     >>> pl.show()  # doctest:+SKIP
 
     """
-    # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warn_external(
-        '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
-        PyVistaDeprecationWarning,
-    )
-    return _voxelize_legacy(
-        mesh=mesh,
-        density=density,
-        check_surface=check_surface,
-        enclosed=enclosed,
-        fit_bounds=fit_bounds,
-    )
+    # Deprecated on v0.46.0, error in v0.49.0
+    msg = '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.'
+    raise DeprecationError(msg)
 
 
 def _voxelize_legacy(
@@ -264,11 +254,11 @@ def _voxelize_legacy(
 
 @_deprecate_positional_args(allowed=['mesh'])
 def voxelize_volume(  # noqa: PLR0917
-    mesh,
-    density=None,
-    check_surface: bool = True,  # noqa: FBT001, FBT002
-    enclosed: bool = False,  # noqa: FBT001, FBT002
-    fit_bounds: bool = False,  # noqa: FBT001, FBT002
+    mesh,  # noqa: ARG001
+    density=None,  # noqa: ARG001
+    check_surface: bool = True,  # noqa: ARG001, FBT001, FBT002
+    enclosed: bool = False,  # noqa: ARG001, FBT001, FBT002
+    fit_bounds: bool = False,  # noqa: ARG001, FBT001, FBT002
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
@@ -395,72 +385,12 @@ def voxelize_volume(  # noqa: PLR0917
     >>> pl.show()  # doctest:+SKIP
 
     """
-    # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warn_external(
+    # Deprecated on v0.46.0, error in v0.49.0
+    msg = (
         '`pyvista.voxelize_volume` is deprecated. Use '
-        '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
-        PyVistaDeprecationWarning,
+        '`pyvista.DataSetFilters.voxelize_rectilinear` instead.'
     )
-    mesh = wrap(mesh)
-    if density is None:
-        density = mesh.length / 100
-    if isinstance(density, (int, float, np.number)):
-        density_x, density_y, density_z = [density] * 3
-    elif isinstance(density, (Sequence, np.ndarray)):
-        density_x, density_y, density_z = density
-    else:
-        msg = f'Invalid density {density!r}, expected number or array-like.'
-        raise TypeError(msg)
-
-    # check and pre-process input mesh
-    surface = mesh.extract_surface(
-        algorithm=None, pass_cellid=False, pass_pointid=False
-    )  # filter preserves topology
-    if not surface.faces.size:
-        # we have a point cloud or an empty mesh
-        msg = 'Input mesh must have faces for voxelization.'
-        raise ValueError(msg)
-    if not surface.is_all_triangles:
-        # reduce chance for artifacts, see gh-1743
-        surface.triangulate(inplace=True)
-
-    if enclosed:
-        # Get x, y, z bin edges
-        x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
-    else:
-        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-        if fit_bounds:
-            # Calculate an integer number of voxels, floor to ensure that the voxels
-            # don't exceed the input mesh
-            nof_voxels_x = int(np.round((x_max - x_min) / density_x))
-            nof_voxels_y = int(np.round((y_max - y_min) / density_y))
-            nof_voxels_z = int(np.round((z_max - z_min) / density_z))
-
-            # One additional point is required to ensure the proper number of voxels
-            x = np.linspace(x_min, x_max, nof_voxels_x + 1)
-            y = np.linspace(y_min, y_max, nof_voxels_y + 1)
-            z = np.linspace(z_min, z_max, nof_voxels_z + 1)
-        else:
-            x = np.arange(x_min, x_max, density_x)
-            y = np.arange(y_min, y_max, density_y)
-            z = np.arange(z_min, z_max, density_z)
-
-    # Create a RectilinearGrid
-    voi = pv.RectilinearGrid(x, y, z)
-
-    # get part of the mesh within the mesh's bounding surface.
-    selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
-
-    # Get voxels that fall within input mesh boundaries
-    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))['vtkOriginalCellIds'])
-
-    # Create new element of grid where all cells _within_ mesh boundary are
-    # given new name 'MeshCells' and a discrete value of 1
-    voi['InsideMesh'] = np.zeros(voi.n_cells)
-    voi['InsideMesh'][cell_ids] = 1
-
-    return voi
+    raise DeprecationError(msg)
 
 
 def create_grid(dataset, dimensions=(101, 101, 101)):

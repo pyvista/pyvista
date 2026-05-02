@@ -13,7 +13,6 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import colors
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
@@ -528,19 +527,11 @@ def test_plotter_theme_attribute_setter():
         'Set the theme when initializing the plotter instance instead.'
     )
 
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
+    with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
-
-    if pyvista.version_info >= (0, 49):
-        pytest.fail('Turn the warning to error')
 
     if pyvista.version_info >= (0, 50):
         pytest.fail('Remove the `theme` setter')
-
-    assert pl.theme.color == my_theme.color
-
-    assert pl.theme != pv.global_theme
-    assert pl.theme == my_theme
 
 
 @pytest.mark.filterwarnings(

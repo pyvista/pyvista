@@ -501,96 +501,18 @@ def test_is_inside_bounds_raises():
         is_inside_bounds(point=None, bounds=(0,))
 
 
-def test_voxelize(uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize(uniform, density=0.5)
-    assert vox.n_cells
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Remove this deprecated function.'
-        raise RuntimeError(msg)
+def test_voxelize_removed(uniform):
+    with pytest.raises(
+        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize` is deprecated'
+    ):
+        pv.voxelize(uniform, density=0.5)
 
 
-def test_voxelize_non_uniform_density(uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
-    assert vox.n_cells
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
-    assert vox.n_cells
-
-
-def test_voxelize_invalid_density(rectilinear):
-    # test error when density is not length-3
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(ValueError, match='not enough values to unpack'):
-            pv.voxelize(rectilinear, density=[0.5, 0.3])
-    # test error when density is not an array-like
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(TypeError, match='expected number or array-like'):
-            pv.voxelize(rectilinear, density={0.5, 0.3})
-
-
-def test_voxelize_throws_point_cloud(hexbeam):
-    mesh = pv.PolyData(hexbeam.points)
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(ValueError, match='must have faces'):
-            pv.voxelize(mesh)
-
-
-def test_voxelize_volume_default_density(uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        actual = pv.voxelize_volume(uniform).n_cells
-    assert actual == expected
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Remove this deprecated function.'
-        raise RuntimeError(msg)
-
-
-def test_voxelize_volume_invalid_density(rectilinear):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(TypeError, match='expected number or array-like'):
-            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
-
-
-def test_voxelize_volume_no_face_mesh(rectilinear):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(ValueError, match='must have faces'):
-            pv.voxelize_volume(pv.PolyData())
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(TypeError, match='expected number or array-like'):
-            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
-
-
-@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
-def test_voxelize_enclosed_bounds(function, ant):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = function(ant, density=0.9, enclosed=True)
-
-    assert vox.bounds.x_min <= ant.bounds.x_min
-    assert vox.bounds.y_min <= ant.bounds.y_min
-    assert vox.bounds.z_min <= ant.bounds.z_min
-
-    assert vox.bounds.x_max >= ant.bounds.x_max
-    assert vox.bounds.y_max >= ant.bounds.y_max
-    assert vox.bounds.z_max >= ant.bounds.z_max
-
-
-@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
-def test_voxelize_fit_bounds(function, uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = function(uniform, density=0.9, fit_bounds=True)
-
-    assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
-    assert np.isclose(vox.bounds.y_min, uniform.bounds.y_min)
-    assert np.isclose(vox.bounds.z_min, uniform.bounds.z_min)
-
-    assert np.isclose(vox.bounds.x_max, uniform.bounds.x_max)
-    assert np.isclose(vox.bounds.y_max, uniform.bounds.y_max)
-    assert np.isclose(vox.bounds.z_max, uniform.bounds.z_max)
+def test_voxelize_volume_removed(uniform):
+    with pytest.raises(
+        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize_volume` is deprecated'
+    ):
+        pv.voxelize_volume(uniform, density=0.5)
 
 
 def test_report():
