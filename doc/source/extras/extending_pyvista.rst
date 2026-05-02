@@ -313,3 +313,61 @@ subclassing pattern.
 For everything else, prefer accessors. They compose more cleanly,
 cost nothing when unused, and give plugins a clear boundary the
 PyVista core can rely on.
+
+
+Plotter components
+------------------
+
+Datasets get accessors; the plotter gets *components*. The mechanism
+mirrors the dataset accessor pattern line for line on the registration
+API and adds explicit lifecycle hooks so plugin code that wires up
+VTK observers, sockets, or background threads has somewhere to clean
+up when the plotter shuts down.
+
+A component class accepts the plotter as its single ``__init__``
+argument and exposes any methods that should be callable under the
+namespace ``plotter.<name>.<method>(...)``. Two optional dunder hooks
+participate in the plotter lifecycle:
+
+- ``__plotter_close__(self) -> None``: called when the plotter closes.
+  Use this to release VTK observers, close sockets, stop background
+  threads, or undo any side effects the component is responsible for.
+- ``__plotter_deep_clean__(self) -> None``: called from
+  :meth:`pyvista.Plotter.deep_clean`. Optional; if absent, deep
+  clean falls through to the close path on the next plotter shutdown.
+
+Both hooks fire only on components that were *actually constructed*
+(touched at least once). Untouched components contribute nothing,
+since they hold no observers or references that need releasing.
+
+.. code-block:: python
+
+    # pyvista_tui/_pyvista_plugin.py
+    import pyvista as pv
+
+
+    @pv.register_plotter_component("tui")
+    class TuiComponent:
+        def __init__(self, plotter):
+            self._plotter = plotter
+            self._socket = None
+
+        def serve(self, port=8765):
+            self._socket = _open_socket(port)
+            ...
+
+        def __plotter_close__(self):
+            if self._socket is not None:
+                self._socket.close()
+
+The same decorator works for first-party and third-party components.
+Registration uses :func:`~pyvista.register_plotter_component`,
+introspection uses :func:`~pyvista.registered_plotter_components`,
+and removal uses :func:`~pyvista.unregister_plotter_component`. Plugin
+authors can declare a ``pyvista.plotter_components`` entry point in
+their ``pyproject.toml`` for zero-config discovery. The plugin module
+itself is imported only when a user first accesses
+``plotter.<plugin_name>``, so installing the plugin costs nothing for
+plotters that never use it.
+
+See :ref:`plotter-component-api` for the full registration API.

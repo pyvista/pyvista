@@ -13,6 +13,7 @@ Plotting
    qt_plotting
    theme
    trame
+   components
 
 .. _matplotlib: https://matplotlib.org/
 
@@ -49,9 +50,17 @@ all plotting functionality in PyVista.
    TextProperty
    Timer
    plotting.mapper._BaseMapper
-   plotting.opts.InterpolationType
-   plotting.opts.RepresentationType
+   plotting.mapper.FixedPointVolumeRayCastMapper
+   plotting.mapper.GPUVolumeRayCastMapper
+   plotting.mapper.OpenGLGPUVolumeRayCastMapper
+   plotting.mapper.PointGaussianMapper
+   plotting.mapper.SmartVolumeMapper
+   plotting.mapper.UnstructuredGridVolumeRayCastMapper
    plotting.opts.ElementType
+   plotting.opts.InterpolationType
+   plotting.opts.PointSpriteShape
+   plotting.opts.RepresentationType
+   plotting.opts.ShaderType
    plotting.volume.Volume
    plotting.volume_property.VolumeProperty
 
@@ -83,28 +92,32 @@ in older versions though.
 
 Widget API
 ----------
-The :class:`pyvista.Plotter` class inherits all of the widget
-methods described by the :class:`pyvista.plotting.widgets.WidgetHelper`
-class. For additional details, see the
-:ref:`widgets` examples.
+Every interactive widget on the plotter (box, plane, line, slider,
+sphere, spline, button, radio button, measurement, logo, camera,
+camera3d) lives on the :class:`~pyvista.plotting.widgets.WidgetComponent`
+plotter component, accessible as ``plotter.widgets``. The top-level
+plotter exposes ``add_*_widget`` and ``clear_*_widgets`` methods as
+forwarding shims; both surfaces produce identical results. For additional
+details, see the :ref:`widgets` examples.
 
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.widgets.WidgetHelper
+   plotting.widgets.WidgetComponent
    plotting.widgets.AffineWidget3D
 
 
 Picking API
 -----------
-The :class:`pyvista.Plotter` class inherits all of the picking
-methods described by the :class:`pyvista.plotting.picking.PickingHelper`
-class.
+Picking lives on the :class:`~pyvista.plotting.picking.PickingComponent`
+plotter component, accessible as ``plotter.picking``. The top-level
+plotter exposes ``enable_*_picking``, ``disable_picking``, and
+``picked_*`` properties as forwarding shims.
 
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.picking.PickingHelper
+   plotting.picking.PickingComponent
 
 
 Interactor Style API

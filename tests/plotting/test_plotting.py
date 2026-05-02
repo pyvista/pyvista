@@ -39,6 +39,7 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.opts import PointSpriteShape
+from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -316,6 +317,7 @@ def test_set_environment_texture_cubemap(resample, verify_image_cache):
     # Skip due to large variance
     verify_image_cache.windows_skip_image_cache = True
     verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.high_variance_test = True
 
     pl = pv.Plotter(lighting=None)
     texture = examples.download_cubemap_park()
@@ -323,6 +325,67 @@ def test_set_environment_texture_cubemap(resample, verify_image_cache):
     pl.camera_position = 'xy'
     pl.camera.zoom(0.7)
     _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    pl.show()
+
+
+def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_images_to_verify):  # noqa: ARG001
+    """Resampling an environment texture should use linear interpolation and anti-aliasing."""
+    spy = mocker.spy(pv.ImageData, 'resample')
+
+    pl = pv.Plotter(lighting=None)
+    texture = examples.load_globe_texture()
+    pl.set_environment_texture(texture, resample=0.5)
+
+    spy.assert_called_once()
+    args, kwargs = spy.call_args
+    # The call signature is resample(self, sample_rate, interpolation, *, anti_aliasing=...)
+    assert args[1] == 0.5
+    assert args[2] == 'linear'
+    assert kwargs.get('anti_aliasing') is True
+    pl.close()
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 6))
+def test_set_environment_texture_rotation(verify_image_cache):
+    """Environment texture rotation rotates both background and reflections."""
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.high_variance_test = True
+
+    texture = examples.download_cubemap_park()
+    rotation = pv.Transform().rotate_z(90).rotation_matrix
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(texture, is_srgb=True, rotation=rotation)
+    pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+
+    np.testing.assert_allclose(
+        pv.array_from_vtkmatrix(pl.renderer.GetEnvironmentRotationMatrix()),
+        rotation,
+    )
+    pl.show()
+
+
+def test_set_environment_texture_hides_background(verify_image_cache):
+    """Hiding the background keeps image-based lighting on the sphere."""
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.high_variance_test = True
+
+    texture = examples.download_cubemap_park()
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(texture, is_srgb=True, show_background=False)
+    pl.background_color = 'black'
+    pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+
+    assert pl.renderer.GetUseImageBasedLighting()
+    assert pl.renderer.GetEnvironmentTexture() is not None
+    assert pl.renderer.GetBackgroundTexture() is None
     pl.show()
 
 
@@ -3122,6 +3185,63 @@ def test_disable_stereo_render():
     pl.enable_stereo_render()
     pl.disable_stereo_render()
     pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_stereo_type_enum_values():
+    expected = {
+        'CRYSTAL_EYES': 1,
+        'RED_BLUE': 2,
+        'INTERLACED': 3,
+        'LEFT': 4,
+        'RIGHT': 5,
+        'DRESDEN': 6,
+        'ANAGLYPH': 7,
+        'CHECKERBOARD': 8,
+        'SPLITVIEWPORT_HORIZONTAL': 9,
+        'FAKE': 10,
+        'EMULATE': 11,
+        'ZSPACE_INSPIRE': 12,
+    }
+    assert {member.name: member.value for member in StereoType} == expected
+
+
+@pytest.mark.parametrize(
+    'stereo',
+    [
+        True,
+        StereoType.ANAGLYPH,
+        StereoType.RED_BLUE,
+        StereoType.INTERLACED,
+        StereoType.CHECKERBOARD,
+    ],
+    ids=['true', 'anaglyph', 'red_blue', 'interlaced', 'checkerboard'],
+)
+def test_init_stereo(stereo, verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+    pl = pv.Plotter(stereo=stereo)
+    pl.add_mesh(pv.Cube())
+    pl.camera.distance = 0.1
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_enable_stereo_rendering_raises_when_window_closed():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Cube())
+    pl.close()
+    with pytest.raises(AttributeError, match='render window has been closed'):
+        pl._enable_stereo_rendering()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_enable_stereo_rendering_raises_when_window_realized():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Cube())
+    pl.render_window.Render()
+    with pytest.raises(RuntimeError, match='before the window is realized'):
+        pl._enable_stereo_rendering()
+    pl.close()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')

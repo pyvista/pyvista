@@ -4239,7 +4239,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = (unique_scalars[1], unique_scalars[-1])
             else:
-                scalar_range = _validation.validate_data_range(scalar_range)  # type: ignore[arg-type]
+                scalar_range = _validation.validate_data_range(scalar_range)
             alg.SetScalarRange(*scalar_range)
 
         scalars_casted_to_float = False
@@ -4416,7 +4416,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)
             except ValueError:
                 msg = (
                     f'`{operation_mask}` is not a valid `operation_mask`.'
@@ -5223,9 +5223,10 @@ class ImageDataFilters(DataSetFilters):
                 - ``[0, float('inf')]`` to select values greater than or equal to zero.
                 - ``[float('-inf'), 0]`` to select values less than or equal to zero.
 
-        fill_value : float | VectorLike[float], default: 0
+        fill_value : float | VectorLike[float] | None, default: 0
             Value used to fill the image. Can be a single value or a multi-component
-            vector. Non-selected parts of the image will have this value.
+            vector. Non-selected parts of the image will have this value. Set this to
+            ``None`` to keep the input array's original values for non-selected regions.
 
         replacement_value : float | VectorLike[float], optional
             Replacement value for the output array. Can be a single value or a
@@ -5426,6 +5427,35 @@ class ImageDataFilters(DataSetFilters):
         fill_value,
         replacement_value,
     ):
+        # Fast path: a single range over single-component point data with scalar
+        # replacement/fill values is equivalent to ``image_threshold``, which is
+        # implemented as a VTK image filter and is substantially faster than the
+        # generic numpy-based path below. ``image_threshold`` cannot represent
+        # multi-component replacement/fill values, and only sees the full input
+        # array (so we cannot use it when the threshold is on an extracted
+        # component of a multi-component array).
+        input_array = cast(
+            'pv.pyvista_ndarray',
+            get_array(self, name=array_name, preference=association),
+        )
+        if (
+            input_array.ndim == 1
+            and association == FieldAssociation.POINT
+            and not invert
+            and values is None
+            and ranges is not None
+            and len(ranges) == 1
+            and not isinstance(replacement_value, (list, tuple, np.ndarray))
+            and not isinstance(fill_value, (list, tuple, np.ndarray))
+        ):
+            return self.image_threshold(
+                ranges[0],
+                in_value=replacement_value,
+                out_value=fill_value,
+                scalars=array_name,
+                preference=association,
+            )
+
         id_mask = self._apply_component_logic_to_array(
             values=values,
             ranges=ranges,
@@ -5435,11 +5465,11 @@ class ImageDataFilters(DataSetFilters):
         )
 
         # Generate output array
-        input_array = cast(
-            'pv.pyvista_ndarray',
-            get_array(self, name=array_name, preference=association),
+        array_out = (
+            input_array.copy()
+            if fill_value is None
+            else np.full_like(input_array, fill_value=fill_value)
         )
-        array_out = np.full_like(input_array, fill_value=fill_value)
         replacement_values = (
             input_array[id_mask] if replacement_value is None else replacement_value
         )

@@ -10,6 +10,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _vtk
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
@@ -406,9 +407,9 @@ def test_widget_radio_button(uniform):
     func = lambda: None  # Does nothing
     pl.add_mesh(uniform)
     b = pl.add_radio_button_widget(callback=func, radio_button_group='group')
-    assert pl.radio_button_widget_dict['group'][0] == b
+    assert pl.widgets.radio_button_widget_dict['group'][0] == b
     pl.close()
-    assert 'group' not in pl.radio_button_widget_dict
+    assert 'group' not in pl.widgets.radio_button_widget_dict
 
 
 def test_widget_radio_button_click(uniform):
@@ -440,9 +441,9 @@ def test_widget_radio_button_with_title(uniform):
     func = lambda: None  # Does nothing
     pl.add_mesh(uniform)
     pl.add_radio_button_widget(callback=func, radio_button_group='group', title='my_button')
-    assert len(pl.radio_button_title_dict['group']) == 1
+    assert len(pl.widgets.radio_button_title_dict['group']) == 1
     pl.close()
-    assert 'group' not in pl.radio_button_title_dict
+    assert 'group' not in pl.widgets.radio_button_title_dict
 
 
 def test_widget_radio_button_multiple_on(uniform):
@@ -451,7 +452,7 @@ def test_widget_radio_button_multiple_on(uniform):
     pl.add_mesh(uniform)
     b1 = pl.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
     b2 = pl.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
-    assert len(pl.radio_button_widget_dict['group']) == 2
+    assert len(pl.widgets.radio_button_widget_dict['group']) == 2
     assert b1.GetRepresentation().GetState() == 0
     assert b2.GetRepresentation().GetState() == 1
     pl.close()
@@ -495,9 +496,9 @@ def test_widget_radio_button_plotter_closed(uniform):
 def test_add_camera_orientation_widget():
     pl = pv.Plotter()
     pl.add_camera_orientation_widget()
-    assert pl.camera_widgets
+    assert pl.widgets.camera_widgets
     pl.close()
-    assert not pl.camera_widgets
+    assert not pl.widgets.camera_widgets
 
 
 def test_plot_algorithm_widgets():
@@ -775,9 +776,9 @@ def test_affine_widget(sphere):
     assert np.allclose(widget.origin, origin)
 
     # test disable
-    assert pl._picker_in_use
+    assert pl.picking._picker_in_use
     widget.disable()
-    assert not pl._picker_in_use
+    assert not pl.picking._picker_in_use
 
     widget.remove()
     assert not widget._circles
@@ -999,3 +1000,47 @@ class TestEventParser:
         # Assert
         mock.assert_called_with(e)
         getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)
+
+
+@pytest.mark.parametrize(
+    'attr',
+    [
+        'camera_widgets',
+        'box_widgets',
+        'box_clipped_meshes',
+        'plane_widgets',
+        'plane_clipped_meshes',
+        'plane_sliced_meshes',
+        'line_widgets',
+        'slider_widgets',
+        'threshold_meshes',
+        'isovalue_meshes',
+        'spline_widgets',
+        'spline_sliced_meshes',
+        'sphere_widgets',
+        'button_widgets',
+        'radio_button_widget_dict',
+        'radio_button_title_dict',
+        'distance_widgets',
+        'logo_widgets',
+        'camera3d_widgets',
+    ],
+)
+def test_deprecated_widget_state_forward(attr):
+    """Each deprecated state collection forwards to ``Plotter.widgets`` with a warning."""
+    pl = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match=attr):
+        value = getattr(pl, attr)
+    assert value is getattr(pl.widgets, attr)
+    pl.close()
+
+
+def test_clear_radio_button_widgets_forward(uniform):
+    """``Plotter.clear_radio_button_widgets`` forwards to the widgets component."""
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    pl.add_radio_button_widget(callback=lambda: None, radio_button_group='group')
+    assert pl.widgets.radio_button_widget_dict['group']
+    pl.clear_radio_button_widgets()
+    assert pl.widgets.radio_button_widget_dict == {}
+    pl.close()

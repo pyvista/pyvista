@@ -1260,22 +1260,26 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         Plot spheres using `style='points_gaussian'` style and scale them by
         radius.
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> n_spheres = 1_000
-        >>> pos = np.random.random((n_spheres, 3))
-        >>> rad = np.random.random(n_spheres) * 0.01
-        >>> pdata = pv.PolyData(pos)
-        >>> pdata['radius'] = rad
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(
-        ...     pdata,
-        ...     style='points_gaussian',
-        ...     emissive=False,
-        ...     render_points_as_spheres=True,
-        ... )
-        >>> actor.mapper.scale_array = 'radius'
-        >>> pl.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import numpy as np
+           >>> import pyvista as pv
+           >>> n_spheres = 1_000
+           >>> rng = np.random.default_rng(seed=0)
+           >>> pos = rng.random((n_spheres, 3))
+           >>> rad = rng.random(n_spheres) * 0.01
+           >>> pdata = pv.PolyData(pos)
+           >>> pdata['radius'] = rad
+           >>> pl = pv.Plotter()
+           >>> actor = pl.add_mesh(
+           ...     pdata,
+           ...     style='points_gaussian',
+           ...     emissive=False,
+           ...     render_points_as_spheres=True,
+           ... )
+           >>> actor.mapper.scale_array = 'radius'
+           >>> pl.show()
 
         """
         return self.GetScaleArray()

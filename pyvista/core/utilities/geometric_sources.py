@@ -16,7 +16,6 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -894,12 +893,16 @@ class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSour
         return wrap(self.GetOutput())
 
 
-class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
+class Text3DSource(_NoNewAttrMixin):
     """3D text from a string.
 
     Generate 3D text from a string with a specified width, height or depth.
 
     .. versionadded:: 0.43
+
+    .. versionchanged:: 0.48
+
+        This class no longer inherits from :vtk:`vtkVectorText`, and uses composition instead.
 
     Parameters
     ----------
@@ -947,8 +950,12 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
         process_empty_string: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
+        # Lazily import to defer importing from rendering module
+        from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
+
         super().__init__()
 
+        self._source = vtkVectorText()
         self._output = pv.PolyData()
 
         # Set params
@@ -975,11 +982,11 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
         """Return or set the text string."""
-        return self.GetText()
+        return self._source.GetText()
 
     @string.setter
     def string(self: Text3DSource, string: str | None) -> None:
-        self.SetText('' if string is None else string)
+        self._source.SetText('' if string is None else string)
 
     @property
     def process_empty_string(self: Text3DSource) -> bool:  # numpydoc ignore=RT01
@@ -1075,13 +1082,13 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
-                self.Update()
-                out = self.GetOutput()
+                self._source.Update()
+                out = self._source.GetOutput()
             else:
                 # 3D case, apply filters
                 # Create output filters to make text 3D
                 extrude = _vtk.vtkLinearExtrusionFilter()
-                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetInputConnection(self._source.GetOutputPort())
                 extrude.SetExtrusionTypeToNormalExtrusion()
                 extrude.SetVector(0, 0, 1)
 
