@@ -30,7 +30,7 @@ seed_indices = [
 hole_sizes = [60, 25, 10]  # cells removed per hole, controls each hole's radius
 
 drop_cells = set()
-for seed, size in zip(seed_indices, hole_sizes):
+for seed, size in zip(seed_indices, hole_sizes, strict=True):
     candidates = np.argsort(np.linalg.norm(centers - centers[seed], axis=1))[:size]
     drop_cells.update(int(c) for c in candidates)
 
