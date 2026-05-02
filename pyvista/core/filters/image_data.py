@@ -4239,7 +4239,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = (unique_scalars[1], unique_scalars[-1])
             else:
-                scalar_range = _validation.validate_data_range(scalar_range)  # type: ignore[arg-type]
+                scalar_range = _validation.validate_data_range(scalar_range)
             alg.SetScalarRange(*scalar_range)
 
         scalars_casted_to_float = False
@@ -4416,7 +4416,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)
             except ValueError:
                 msg = (
                     f'`{operation_mask}` is not a valid `operation_mask`.'

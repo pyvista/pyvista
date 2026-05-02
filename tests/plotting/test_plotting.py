@@ -24,7 +24,6 @@ import numpy as np
 from PIL import Image
 import pytest
 from pytest_cases import parametrize
-from pytest_pyvista.pytest_pyvista import RegressionError
 
 import pyvista as pv
 from pyvista import _vtk
@@ -44,7 +43,6 @@ from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
-from tests.conftest import flaky_test
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 from tests.plotting.conftest import AlgorithmExecutionTracker
@@ -1243,7 +1241,6 @@ def test_isometric_view_interactive(sphere):
     assert plotter_iso.camera_position != cpos_old
 
 
-@flaky_test(exceptions=(RegressionError,))
 def test_add_point_labels():
     pl = pv.Plotter()
 
@@ -1265,7 +1262,6 @@ def test_add_point_labels():
     pl.show()
 
 
-@flaky_test(exceptions=(RegressionError,))
 @pytest.mark.parametrize('always_visible', [False, True])
 def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
@@ -1278,7 +1274,6 @@ def test_add_point_labels_always_visible(always_visible):
     pl.show()
 
 
-@flaky_test(exceptions=(RegressionError,))
 @pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
 @pytest.mark.usefixtures('verify_image_cache')
 def test_add_point_labels_shape(shape):
@@ -1287,7 +1282,6 @@ def test_add_point_labels_shape(shape):
     pl.show()
 
 
-@flaky_test(exceptions=(RegressionError,))
 @pytest.mark.parametrize('justification_horizontal', ['left', 'center', 'right'])
 @pytest.mark.parametrize('justification_vertical', ['bottom', 'center', 'top'])
 def test_add_point_labels_justification(justification_horizontal, justification_vertical):
@@ -4271,7 +4265,6 @@ def test_remove_vertices_actor(sphere):
     pl.show()
 
 
-@flaky_test(exceptions=(RegressionError,))
 @pytest.mark.skip_windows
 def test_add_point_scalar_labels_fmt(verify_image_cache):
     # parallel on GitHub hosted sometimes has high image error
@@ -4293,7 +4286,6 @@ def test_plot_individual_cell(hexbeam):
     hexbeam.get_cell(0).plot(color='b')
 
 
-@flaky_test(exceptions=(RegressionError,))
 def test_add_point_scalar_labels_list():
     pl = pv.Plotter()
 
@@ -4356,7 +4348,6 @@ def test_algorithm_add_points():
     pl.show()
 
 
-@flaky_test(exceptions=(RegressionError,))
 def test_algorithm_add_point_labels():
     algo = pv.ConeSource()
     elev = _vtk.vtkElevationFilter()
@@ -5978,7 +5969,6 @@ def test_clip_box_crinkle(as_multiblock):
     pl.show()
 
 
-@flaky_test(exceptions=(RegressionError,))
 def test_box():
     box = pv.Box(level=0)
     box['cell_data'] = np.arange(box.n_cells)

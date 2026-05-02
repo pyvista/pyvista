@@ -281,7 +281,7 @@ class WidgetComponent(_NoNewAttrMixin):
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                args = [planes] if use_planes else [the_box]  # type: ignore[list-item]
+                args = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)

@@ -104,7 +104,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         for mapping in cls._get_extension_mappings():
             for ext, typ in mapping.items():
                 if typ is cls:  # type: ignore[comparison-overlap]
-                    extensions.add(ext)
+                    extensions.add(ext)  # type: ignore[unreachable]
         return tuple(sorted(extensions))
 
 
