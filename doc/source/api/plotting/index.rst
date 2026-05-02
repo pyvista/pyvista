@@ -33,7 +33,6 @@ all plotting functionality in PyVista.
    AxesActor
    AxesAssembly
    AxesAssemblySymmetric
-   BasePlotter
    CameraPosition
    CornerAnnotation
    CubeAxesActor
