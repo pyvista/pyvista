@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 import pytest
+import trimesh
 
 import pyvista as pv
 from pyvista import examples
