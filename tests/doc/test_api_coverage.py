@@ -48,12 +48,20 @@ _IDENTIFIER_RE = re.compile(r'([A-Za-z_][\w\.]*)')
 # not meant to appear in the end-user Sphinx reference.
 _ALLOWED_UNDOCUMENTED = frozenset(
     {
+        'ActorProperties',  # similar to Property but uses composition - should be deprecated
         'AnnotatedIntEnum',  # base class for internal int-enum types
+        'BackgroundPlotter',  # deprecated and moved to pyvistaqt
+        'BasePlotter',  # abstract base; Plotter subclass is documented
+        'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
         'PointGrid',  # abstract base; concrete subclasses are documented
+        'QtDeprecationError',  # deprecated and moved to pyvistaqt
+        'QtInteractor',  # deprecated and moved to pyvistaqt
+        'Scraper',  # internal sphinx gallery tool
         'VersionInfo',  # internal version namedtuple
         'abstract_class',  # decorator, internal
         'assert_empty_kwargs',  # internal kwargs guard
+        'check_depth_peeling',  # internal helper
         'check_math_text_support',  # internal matplotlib/vtk compatibility check
         'check_matplotlib_vtk_compatibility',  # internal compatibility check
         'check_valid_vector',  # internal assertion
@@ -62,16 +70,25 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'create_mixed_cells',  # low-level cell-array builder
         'get_mixed_cells',  # low-level cell-array reader
         'get_vtk_type',  # low-level VTK dtype helper
+        'image_from_window',  # internal helper
         'ncells_from_cells',  # low-level cell-array helper
+        'normalize',  # internal helper
         'numpy_to_idarr',  # low-level VTK id-array helper
         'parse_field_choice',  # internal association parser
+        'parse_font_family',  # internal helper
         'raise_has_duplicates',  # internal assertion
         'raise_not_matching',  # internal assertion
+        'remove_alpha',  # internal helper
         'row_array',  # low-level array-by-row accessor
+        'run_image_filter',  # internal helper
+        'scale_point',  # internal helper
+        'system_supports_plotting',  # internal helper
         'threaded',  # internal threading decorator
         'try_callback',  # internal callback guard
+        'uses_egl',  # internal helper
         'vtk_bit_array_to_char',  # low-level VTK bit-array conversion
         'vtk_id_list_to_array',  # low-level VTK id-list conversion
+        'wrap_image_array',  # internal helper
     }
 )
 
@@ -84,7 +101,7 @@ def _is_pyvista_owned(obj: object) -> bool:
 def _collect_public_symbols() -> set[str]:
     """Every class/function on ``pyvista`` that is defined inside ``pyvista``."""
     symbols: set[str] = set()
-    for name in dir(pv):
+    for name in {*dir(pv), *dir(pv.plotting)}:
         if name.startswith('_'):
             continue
         obj = getattr(pv, name, None)
@@ -151,13 +168,12 @@ def documented_names() -> set[str]:
 
 def test_public_api_is_documented(public_symbols, documented_names):
     """Every public ``pyvista`` class/function must appear in the Sphinx reference."""
-    missing = public_symbols - documented_names - _ALLOWED_UNDOCUMENTED
+    missing = sorted(public_symbols - documented_names - _ALLOWED_UNDOCUMENTED)
     assert not missing, (
         f'{len(missing)} public pyvista symbol(s) are not referenced under '
         f'doc/source/api/. Add each to an autosummary block, or - if the '
         f'symbol is an internal helper that should stay out of the reference '
-        f'- add it to _ALLOWED_UNDOCUMENTED with a one-line rationale:\n  '
-        + '\n  '.join(sorted(missing))
+        f'- add it to _ALLOWED_UNDOCUMENTED with a one-line rationale:\n  ' + '\n  '.join(missing)
     )
 
 
