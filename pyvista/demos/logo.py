@@ -22,9 +22,9 @@ from pathlib import Path
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.features import _voxelize_legacy
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
@@ -83,9 +83,7 @@ def text_3d(string, depth=0.5):
     :ref:`create_pixel_art_example`
 
     """
-    from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
-
-    vec_text = vtkVectorText()
+    vec_text = _vtk.vtkVectorText()
     vec_text.SetText(string)
 
     extrude = _vtk.vtkLinearExtrusionFilter()

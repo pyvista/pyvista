@@ -22,8 +22,8 @@ import pytest
 import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
@@ -2310,23 +2310,21 @@ def test_cell_validator():
 
 @pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_status():
-    from vtkmodules.vtkCommonDataModel import vtkCellStatus
-
     expected_pyvista_values = list(pv.CellStatus)
-    expected_vtk_values = list(vars(vtkCellStatus).values())
+    expected_vtk_values = list(vars(_vtk.vtkCellStatus).values())
 
     # Map VTK enum members PyVista enum members
     VTK_TO_CELL_STATUS = {
-        vtkCellStatus.Valid: pv.CellStatus.VALID,
-        vtkCellStatus.WrongNumberOfPoints: pv.CellStatus.WRONG_NUMBER_OF_POINTS,
-        vtkCellStatus.IntersectingEdges: pv.CellStatus.INTERSECTING_EDGES,
-        vtkCellStatus.IntersectingFaces: pv.CellStatus.INTERSECTING_FACES,
-        vtkCellStatus.NoncontiguousEdges: pv.CellStatus.NON_CONTIGUOUS_EDGES,
-        vtkCellStatus.Nonconvex: pv.CellStatus.NON_CONVEX,
-        vtkCellStatus.FacesAreOrientedIncorrectly: pv.CellStatus.INVERTED_FACES,
-        vtkCellStatus.NonPlanarFaces: pv.CellStatus.NON_PLANAR_FACES,
-        vtkCellStatus.DegenerateFaces: pv.CellStatus.DEGENERATE_FACES,
-        vtkCellStatus.CoincidentPoints: pv.CellStatus.COINCIDENT_POINTS,
+        _vtk.vtkCellStatus.Valid: pv.CellStatus.VALID,
+        _vtk.vtkCellStatus.WrongNumberOfPoints: pv.CellStatus.WRONG_NUMBER_OF_POINTS,
+        _vtk.vtkCellStatus.IntersectingEdges: pv.CellStatus.INTERSECTING_EDGES,
+        _vtk.vtkCellStatus.IntersectingFaces: pv.CellStatus.INTERSECTING_FACES,
+        _vtk.vtkCellStatus.NoncontiguousEdges: pv.CellStatus.NON_CONTIGUOUS_EDGES,
+        _vtk.vtkCellStatus.Nonconvex: pv.CellStatus.NON_CONVEX,
+        _vtk.vtkCellStatus.FacesAreOrientedIncorrectly: pv.CellStatus.INVERTED_FACES,
+        _vtk.vtkCellStatus.NonPlanarFaces: pv.CellStatus.NON_PLANAR_FACES,
+        _vtk.vtkCellStatus.DegenerateFaces: pv.CellStatus.DEGENERATE_FACES,
+        _vtk.vtkCellStatus.CoincidentPoints: pv.CellStatus.COINCIDENT_POINTS,
     }
 
     for vtk_val, pyvista_val in VTK_TO_CELL_STATUS.items():

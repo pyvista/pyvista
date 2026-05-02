@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+# Magic vtk imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
+# isort: off
+import vtkmodules.vtkRenderingFreeType  # noqa: F401, TID251
+import vtkmodules.vtkRenderingMatplotlib  # noqa: F401, TID251
+# isort: on
+
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
 
-from . import _vtk as _vtk
 from ._property import Property as Property
 from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart

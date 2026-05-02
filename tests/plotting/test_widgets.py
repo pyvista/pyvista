@@ -9,9 +9,9 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting import _vtk
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle

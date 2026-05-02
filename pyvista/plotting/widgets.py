@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -18,7 +20,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
 from .affine_widget import AffineWidget3D
 from .colors import Color
 from .opts import PickerType
@@ -3165,17 +3166,14 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show(cpos=pl.camera_position)
 
         """
-        try:
-            from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation
-            from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
-        except ImportError:  # pragma: no cover
+        if vtk_version_info < (9, 3, 0):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
             raise VTKVersionError(msg)
-        representation = vtkCamera3DRepresentation()
+        representation = _vtk.vtkCamera3DRepresentation()
         representation.SetCamera(self._plotter.renderer.GetActiveCamera())
-        widget = vtkCamera3DWidget()
+        widget = _vtk.vtkCamera3DWidget()
         widget.SetInteractor(self._plotter.iren.interactor)
         widget.SetRepresentation(representation)
         widget.On()

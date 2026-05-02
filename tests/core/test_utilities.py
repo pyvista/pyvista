@@ -33,10 +33,10 @@ from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
@@ -797,19 +797,15 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    from vtkmodules.vtkIOLegacy import vtkDataWriter
-
     # vtkWriter.cxx:55     ERR| vtkDataWriter (0x141efbd10): No input provided!
-    writer = vtkDataWriter()
+    writer = _vtk.vtkDataWriter()
     writer.Write()
 
 
 def _generate_vtk_warn():
     """Simple operation which generates a VTK warning."""
-    from vtkmodules.vtkFiltersCore import vtkMergeFilter
-
     # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
-    merge = vtkMergeFilter()
+    merge = _vtk.vtkMergeFilter()
     merge.AddInputData(_vtk.vtkPolyData())
     merge.Update()
 
@@ -880,9 +876,7 @@ def test_vtk_error_catcher():
 
 
 def test_update_alg_raises():
-    from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
-
-    reader = vtkXMLPolyDataReader()
+    reader = _vtk.vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
     with pytest.raises(pv.VTKExecutionError):
         _update_alg(reader)
@@ -1081,9 +1075,7 @@ def test_copy_implicit_vtk_array(plane):
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
     if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-        from vtkmodules.numpy_interface.vtk_implicit_array import VTKImplicitArray
-
-        assert isinstance(vtk_object, VTKImplicitArray)
+        assert isinstance(vtk_object, _vtk.VTKImplicitArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
         assert type(vtk_object) is _vtk.vtkDataArray
@@ -1095,9 +1087,7 @@ def test_copy_implicit_vtk_array(plane):
 
     new_vtk_object = plane['test'].VTKObject
     if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-        from vtkmodules.numpy_interface.vtk_aos_array import VTKAOSArray
-
-        assert isinstance(new_vtk_object, VTKAOSArray)
+        assert isinstance(new_vtk_object, _vtk.VTKAOSArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
         assert type(new_vtk_object) is _vtk.vtkTypeInt64Array

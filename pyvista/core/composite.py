@@ -26,11 +26,11 @@ from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_utilities import vtk_version_info
 
-from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject

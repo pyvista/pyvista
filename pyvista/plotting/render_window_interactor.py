@@ -15,6 +15,7 @@ import weakref
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -23,7 +24,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
 from .errors import MismatchedInteractorError
 from .interactor_style_registry import _get_interactor_style_handler
 from .interactor_style_registry import _validate_interactor_style

@@ -16,12 +16,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
-from . import _vtk
 from .colors import COLOR_SCHEMES
 from .colors import SCHEME_NAMES
 from .colors import Color
@@ -1165,6 +1166,14 @@ class _Chart(DocSubs):
     _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
+        try:
+            # Necessary for displaying charts, otherwise crashes on rendering
+            # Import lazily on init to delay import until it's needed
+            from vtkmodules import vtkRenderingContextOpenGL2  # noqa: F401, PLC0415, TID251
+        except ImportError:
+            msg = 'Unable to import `vtkRenderingContextOpenGL2`. Charts may not render.'
+            warn_external(msg)
+
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()

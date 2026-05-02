@@ -22,6 +22,7 @@ from urllib.parse import urlparse
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
@@ -37,7 +38,6 @@ if TYPE_CHECKING:
     import imageio
     import meshio
     import trimesh
-    from vtkmodules.vtkIOCore import vtkWriter
 
     from pyvista import BaseReader
     from pyvista import DataObject
@@ -83,7 +83,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         """Set the path."""
 
     @_classproperty
-    def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
+    def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
         if cls._vtk_module_name and cls._vtk_class_name:
             return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
         return None
@@ -605,12 +605,9 @@ def read_exodus(  # noqa: PLR0917
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
-    # lazy import here to avoid loading module on import pyvista
-    from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
-
     from .helpers import wrap  # noqa: PLC0415
 
-    reader = vtkExodusIIReader()
+    reader = _vtk.vtkExodusIIReader()
     reader.SetFileName(str(filename))
     reader.UpdateInformation()
     reader.SetAnimateModeShapes(animate_mode_shapes)
@@ -618,10 +615,10 @@ def read_exodus(  # noqa: PLR0917
     reader.SetDisplacementMagnitude(displacement_magnitude)
 
     if read_point_data:  # read in all point data variables
-        reader.SetAllArrayStatus(vtkExodusIIReader.NODAL, 1)
+        reader.SetAllArrayStatus(_vtk.vtkExodusIIReader.NODAL, 1)
 
     if read_cell_data:  # read in all cell data variables
-        reader.SetAllArrayStatus(vtkExodusIIReader.ELEM_BLOCK, 1)
+        reader.SetAllArrayStatus(_vtk.vtkExodusIIReader.ELEM_BLOCK, 1)
 
     if enabled_sidesets is None:
         enabled_sidesets = list(range(reader.GetNumberOfSideSetArrays()))

@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 import pyvista as pv
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 
 
 @pytest.mark.expect_check_gc_fail

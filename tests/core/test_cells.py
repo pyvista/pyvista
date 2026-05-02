@@ -8,7 +8,7 @@ import pytest
 import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane

@@ -18,9 +18,9 @@ from typing import get_args
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -950,12 +950,9 @@ class Text3DSource(_NoNewAttrMixin):
         process_empty_string: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
-        # Lazily import to defer importing from rendering module
-        from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
-
         super().__init__()
 
-        self._source = vtkVectorText()
+        self._source = _vtk.vtkVectorText()
         self._output = pv.PolyData()
 
         # Set params

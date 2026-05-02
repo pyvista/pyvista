@@ -26,6 +26,7 @@ import pytest
 from pytest_cases import parametrize
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
@@ -33,7 +34,6 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
-from pyvista.plotting import _vtk
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError

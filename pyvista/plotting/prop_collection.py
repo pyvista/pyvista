@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista import _validation
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 
 if TYPE_CHECKING:
     from typing import Any

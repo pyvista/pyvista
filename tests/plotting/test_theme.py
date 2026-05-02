@@ -11,10 +11,10 @@ import matplotlib as mpl
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import colors
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
-from pyvista.plotting import _vtk
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env

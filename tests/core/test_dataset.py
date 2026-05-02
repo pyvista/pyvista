@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset as dataset_module
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured

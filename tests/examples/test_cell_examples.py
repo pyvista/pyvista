@@ -9,7 +9,7 @@ from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import CellType
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.examples import cells
 from pyvista.examples.cells import _NOT_SUPPORTED_CELL_SOURCE
 from pyvista.examples.cells import _NOT_SUPPORTED_PARAMETRIC

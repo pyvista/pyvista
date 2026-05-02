@@ -6,8 +6,8 @@ from pytest_cases import parametrize
 import scipy
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
 from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix

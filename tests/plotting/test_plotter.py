@@ -17,8 +17,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import MissingDataError
-from pyvista.plotting import _vtk
 from pyvista.plotting.errors import RenderWindowUnavailable
 
 if TYPE_CHECKING:

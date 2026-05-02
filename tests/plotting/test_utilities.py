@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 from pyvista.plotting.utilities import algorithms
 
 if TYPE_CHECKING:

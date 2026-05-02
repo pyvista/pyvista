@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
@@ -908,14 +908,6 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
-        from vtkmodules.vtkIOLegacy import vtkDataSetWriter
-        from vtkmodules.vtkIOXML import vtkXMLImageDataWriter
-        from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
-        from vtkmodules.vtkIOXML import vtkXMLRectilinearGridWriter
-        from vtkmodules.vtkIOXML import vtkXMLStructuredGridWriter
-        from vtkmodules.vtkIOXML import vtkXMLTableWriter
-        from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
-
         if isinstance(self, pv.MultiBlock):
             msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
@@ -930,12 +922,12 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             # dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             writers = {
-                _vtk.vtkImageData: vtkXMLImageDataWriter,
-                _vtk.vtkStructuredGrid: vtkXMLStructuredGridWriter,
-                _vtk.vtkRectilinearGrid: vtkXMLRectilinearGridWriter,
-                _vtk.vtkUnstructuredGrid: vtkXMLUnstructuredGridWriter,
-                _vtk.vtkPolyData: vtkXMLPolyDataWriter,
-                _vtk.vtkTable: vtkXMLTableWriter,
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+                _vtk.vtkTable: _vtk.vtkXMLTableWriter,
             }
 
             for parent_type, writer_type in writers.items():
@@ -954,7 +946,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             to_serialize = writer.GetOutputString()
 
         elif pv.PICKLE_FORMAT.lower() == 'legacy':
-            writer = vtkDataSetWriter()
+            writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
             writer.SetFileTypeToBinary()
@@ -1012,14 +1004,6 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
-        from vtkmodules.vtkIOLegacy import vtkDataSetReader
-        from vtkmodules.vtkIOXML import vtkXMLImageDataReader
-        from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
-        from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader
-        from vtkmodules.vtkIOXML import vtkXMLStructuredGridReader
-        from vtkmodules.vtkIOXML import vtkXMLTableReader
-        from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
-
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
             'PICKLE_FORMAT',
@@ -1033,12 +1017,12 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             # Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             readers = {
-                _vtk.vtkImageData: vtkXMLImageDataReader,
-                _vtk.vtkStructuredGrid: vtkXMLStructuredGridReader,
-                _vtk.vtkRectilinearGrid: vtkXMLRectilinearGridReader,
-                _vtk.vtkUnstructuredGrid: vtkXMLUnstructuredGridReader,
-                _vtk.vtkPolyData: vtkXMLPolyDataReader,
-                _vtk.vtkTable: vtkXMLTableReader,
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+                _vtk.vtkTable: _vtk.vtkXMLTableReader,
             }
 
             for parent_type, reader_type in readers.items():
@@ -1054,7 +1038,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = vtkDataSetReader()
+            reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
                 reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]
