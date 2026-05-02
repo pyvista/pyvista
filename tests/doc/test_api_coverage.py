@@ -51,6 +51,7 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'ActorProperties',  # similar to Property but uses composition - should be deprecated
         'AnnotatedIntEnum',  # base class for internal int-enum types
         'BackgroundPlotter',  # deprecated and moved to pyvistaqt
+        'BasePlotter',  # abstract base; Plotter subclass is documented
         'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
         'PointGrid',  # abstract base; concrete subclasses are documented
