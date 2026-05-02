@@ -38,6 +38,6 @@ pl.show()
 
 # %%
 # After interacting with the scene, the clipped mesh is available as:
-pl.box_clipped_meshes
+pl.widgets.box_clipped_meshes
 # %%
 # .. tags:: widgets

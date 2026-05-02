@@ -9,7 +9,7 @@ FixedPointVolumeRayCastMapper, <class 'pyvista.plotting.mapper.FixedPointVolumeR
 GPUVolumeRayCastMapper, <class 'pyvista.plotting.mapper.GPUVolumeRayCastMapper'>
 # MissingDataError, <class 'pyvista.errors.MissingDataError'>
 OpenGLGPUVolumeRayCastMapper, <class 'pyvista.plotting.mapper.OpenGLGPUVolumeRayCastMapper'>
-PickingHelper, <class 'pyvista.plotting.picking.PickingHelper'>
+PickingComponent, <class 'pyvista.plotting.picking.PickingComponent'>
 Plotter, <class 'pyvista.plotting.plotting.Plotter'>
 PointGaussianMapper, <class 'pyvista.plotting.mapper.PointGaussianMapper'>
 Property, <class 'pyvista.plotting._property.Property'>
@@ -21,7 +21,7 @@ SmartVolumeMapper, <class 'pyvista.plotting.mapper.SmartVolumeMapper'>
 UnstructuredGridVolumeRayCastMapper, <class 'pyvista.plotting.mapper.UnstructuredGridVolumeRayCastMapper'>
 Volume, <class 'pyvista.plotting.volume.Volume'>
 VolumeProperty, <class 'pyvista.plotting.volume_property.VolumeProperty'>
-WidgetHelper, <class 'pyvista.plotting.widgets.WidgetHelper'>
+WidgetComponent, <class 'pyvista.plotting.widgets.WidgetComponent'>
 _ALL_PLOTTERS, {}
 _vtk, <module 'pyvista._vtk' from 'pyvista/_vtk.py'>
 active_scalars_algorithm, <function active_scalars_algorithm at 0x7f72f5e0a820>
