@@ -443,6 +443,21 @@ class _AutoFreezeMeta(type):
         obj._no_new_attributes(cls)
         return obj
 
+    def __getattr__(cls, name: str) -> Any:
+        # Resolve ``pyvista.accessors`` entry-point plugins on class-level
+        # attribute access (e.g. ``pv.PolyData.manifold``). Instance access
+        # is handled by ``DataObject.__getattr__``; without this hook, class
+        # access bypasses lazy loading and raises AttributeError until the
+        # plugin happens to be imported some other way.
+        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
+            _resolve_pending_accessor,
+        )
+
+        if _resolve_pending_accessor(name):
+            return getattr(cls, name)
+        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)
+
 
 class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
     """Metaclass to combine automatic attribute freezing with ABC support."""
