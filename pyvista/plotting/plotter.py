@@ -8232,7 +8232,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             with suppress(ImportError):
-                self.last_vtksz = self.export_vtksz(filename=None)
+                self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:  # pragma: no cover
