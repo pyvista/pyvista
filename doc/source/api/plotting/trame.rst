@@ -2,16 +2,18 @@
 
 Trame
 -----
-The PyVista ``pyvista.trame`` module allows users to access the `Trame
-<https://kitware.github.io/trame/index.html>`_ widget from PyVista to create
-web-based 3D visualizations. This allows you to access the VTK pipeline using
-the PyVista API so you can pair PyVista and Trame so that PyVista plotters can
-be used in a web context with both server and client-side rendering.
+The Trame integration for PyVista has moved to the standalone
+`trame-pyvista <https://github.com/pyvista/trame-pyvista>`_ package.
+Install it directly::
 
-For the full user guide, see :ref:`trame_jupyter`.
+    pip install trame-pyvista
 
+This pulls in `Trame <https://kitware.github.io/trame/index.html>`_ and
+registers the Jupyter ``trame``/``server``/``client``/``html`` backends
+plus the ``plotter.trame`` plotter component
+(e.g. ``plotter.trame.export_html(...)``,
+``plotter.trame.export_vtksz(...)``).
 
-.. warning::
-   We are having an issue with Sphinx and numpydoc documenting this module
-   because it is not in the top level namespace of the PyVista package.
-   We will fix this later
+For documentation of the views, viewers, and exporters, see the
+``trame-pyvista`` project. For the user guide on using Trame with
+PyVista in Jupyter, see :ref:`trame_jupyter`.
