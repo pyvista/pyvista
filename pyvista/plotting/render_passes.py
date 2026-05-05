@@ -145,7 +145,30 @@ class RenderPasses(_NoNewAttrMixin):
             return None
         self._edl_pass = _vtk.vtkEDLShading()
         self._add_pass(self._edl_pass)
+        self._move_renderer_to_front()
         return self._edl_pass
+
+    def _move_renderer_to_front(self):
+        # vtkEDLShading whites out other viewports rendered before it in the
+        # same window (see issue #256). Reorder so the EDL renderer renders
+        # first; non-EDL renderers then draw on top of an unaffected buffer.
+        renderer = self._renderer
+        if renderer is None:
+            return
+        render_window = renderer.GetRenderWindow()
+        if render_window is None:
+            return
+        collection = render_window.GetRenderers()
+        others = []
+        collection.InitTraversal()
+        for _ in range(collection.GetNumberOfItems()):
+            ren = collection.GetNextItem()
+            if ren is not renderer:
+                others.append(ren)
+        for ren in others:
+            render_window.RemoveRenderer(ren)
+        for ren in others:
+            render_window.AddRenderer(ren)
 
     def disable_edl_pass(self):
         """Disable the EDL pass."""
