@@ -647,6 +647,55 @@ def test_attribute_access_triggers_plugin_load(monkeypatch):
         sys.modules.pop(plugin_name, None)
 
 
+def test_class_level_access_triggers_plugin_load(monkeypatch):
+    """Class-level access (e.g. ``pv.PolyData.<name>``) before any
+    instance access must also trigger the pending plugin import. Without
+    a metaclass ``__getattr__`` hook, class access bypasses the
+    instance-level resolution path and raises ``AttributeError``.
+    """
+    plugin_name = 'fake_ep_plugin_class_access'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('class_demo', pv.PolyData)\n"
+        'class ClassDemoAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n',
+    )
+    ep = MagicMock()
+    ep.name = 'class_demo'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
+
+    try:
+        # Class-level access first — the bug this protects against was
+        # that this raised AttributeError because the metaclass did not
+        # consult the entry-point registry.
+        accessor_cls = pv.PolyData.class_demo
+        assert accessor_cls.__name__ == 'ClassDemoAccessor'
+        # Instance access then returns an instance of that accessor.
+        assert isinstance(pv.Sphere().class_demo, accessor_cls)
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('class_demo', pv.PolyData)
+        sys.modules.pop(plugin_name, None)
+
+
+def test_class_level_access_unknown_attribute_raises(monkeypatch):
+    """Class-level access to a name that is not a pending accessor must
+    still raise ``AttributeError`` rather than silently returning ``None``
+    or hanging on plugin resolution."""
+    _reset_entry_point_state(monkeypatch, [])
+
+    with pytest.raises(AttributeError, match='no attribute'):
+        _ = pv.PolyData.definitely_not_a_real_attribute
+
+
 def test_pending_plugin_only_imported_once(monkeypatch):
     """After a plugin loads, the pending entry is popped. Subsequent
     attribute accesses on the same name go through normal lookup and
