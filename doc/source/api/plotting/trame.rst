@@ -11,7 +11,7 @@ Install it directly::
 This pulls in `Trame <https://kitware.github.io/trame/index.html>`_ and
 registers the Jupyter ``trame``/``server``/``client``/``html`` backends
 plus the ``plotter.trame`` plotter component
-(e.g. ``plotter.trame.export_html(...)``,
+(for example, ``plotter.trame.export_html(...)``,
 ``plotter.trame.export_vtksz(...)``).
 
 For documentation of the views, viewers, and exporters, see the
