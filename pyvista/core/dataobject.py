@@ -30,6 +30,7 @@ from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.helpers import wrap
+from .utilities.misc import _DataObjectMeta
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
@@ -71,7 +72,12 @@ def _raise_unexpected_writer_kwargs(
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
+class DataObject(
+    _NoNewAttrMixin,
+    DisableVtkSnakeCase,
+    vtkPyVistaOverride,
+    metaclass=_DataObjectMeta,
+):
     """Methods common to all wrapped data objects.
 
     Parameters
