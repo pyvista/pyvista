@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import inspect
 from itertools import chain
 import os
@@ -15,6 +16,11 @@ from typing import get_args
 
 import numpy as np
 import pytest
+
+needs_pyvista_zstd = pytest.mark.skipif(
+    importlib.util.find_spec('pyvista_zstd') is None,
+    reason='pyvista-zstd is not installed (registers the .pv extension)',
+)
 from pytest_cases import case
 from pytest_cases import filters
 from pytest_cases import fixture
@@ -356,6 +362,7 @@ def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
     assert e.value.code == 1
 
 
+@needs_pyvista_zstd
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_multiblock_drops_sidecar_children(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture
@@ -388,6 +395,7 @@ def test_convert_multiblock_drops_sidecar_children(
     assert not (sidecar / 'm_1.pv').exists()
 
 
+@needs_pyvista_zstd
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_multiblock_keeps_orphan_children(tmp_example_dir: Path):
     """Children inside an unrelated directory are not filtered when no parent is present."""

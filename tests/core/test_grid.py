@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import pathlib
 from pathlib import Path
 import re
@@ -444,7 +445,11 @@ def test_save_bad_extension():
     # can extend it (e.g. pyvista_zarr adding ``.zarr``). Verify the
     # bad-extension framing and that all the built-in extensions are
     # listed; that's the contract users rely on.
-    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle', '.pv', '.zvtk']
+    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle']
+    # ``.pv`` / ``.zvtk`` come from the optional ``pyvista-zstd`` plugin which
+    # is only installed in envs that pin VTK >= 9.4 (see tox.ini).
+    if importlib.util.find_spec('pyvista_zstd') is not None:
+        builtin_exts.extend(['.pv', '.zvtk'])
     if pv.vtk_version_info >= (9, 4):
         builtin_exts.append('.vtkhdf')
 
