@@ -709,9 +709,12 @@ def __getattr__(name: str):
             )
             raise AttributeError(msg)
 
-        # Attempt to import the vtkmodule and the desired attribute
-        # Convert module or attribute errors into a similar message that would otherwise be
-        # seen when doing `from vtkmodules.vtkModule import vtkClass`
+        # Attempt to import the vtkmodule and the desired attribute. A missing
+        # vtkmodule (older VTK build, custom build) is reported as ImportError;
+        # a missing attribute is left as AttributeError so that ``hasattr`` /
+        # ``from pyvista._vtk import X`` behave as expected. (Python converts
+        # AttributeError raised from ``__getattr__`` to ImportError for the
+        # ``from ... import`` form, so callers see the same error there.)
         module_full_name = f'vtkmodules.{module_name}'
         error_msg = (
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
@@ -724,7 +727,7 @@ def __getattr__(name: str):
         try:
             obj = getattr(module, name)
         except AttributeError as e:
-            raise ImportError(error_msg) from e
+            raise AttributeError(error_msg) from e
 
     # Cache object for next access
     globals()[name] = obj
