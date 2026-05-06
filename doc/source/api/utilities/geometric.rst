@@ -93,7 +93,6 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    ArrowSource
    AxesGeometrySource
    BoxSource
-   CapsuleSource
    ConeSource
    CubeSource
    CubeFacesSource

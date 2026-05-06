@@ -52,6 +52,7 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'AnnotatedIntEnum',  # base class for internal int-enum types
         'BackgroundPlotter',  # deprecated and moved to pyvistaqt
         'BasePlotter',  # abstract base; Plotter subclass is documented
+        'CapsuleSource',  # back-compat shim only defined when vtk_version_info < (9, 3); the recommended path is the wrapped Capsule() helper
         'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
         'PointGrid',  # abstract base; concrete subclasses are documented
