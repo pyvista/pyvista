@@ -14,6 +14,7 @@ from typing import get_args
 
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.errors import VTKVersionError
 
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
@@ -932,7 +933,10 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         )
 
         # Set cell type properties using vtkCellTypeUtilities
-        self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
+        if self._vtk_class is None and vtk_version_info < (9, 4, 0):
+            self._dimension = -1  # Dimension is not supported for abstract classes for older VTK
+        else:
+            self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
         if value == _vtk.VTK_HEXAGONAL_PRISM:
             # Need to fix https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
@@ -1059,6 +1063,9 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         3
 
         """
+        if self._dimension == -1 and vtk_version_info < (9, 4, 0):
+            msg = f'dimension for cell type {self.name} requires VTK 9.4 or later'
+            raise VTKVersionError(msg)
         return self._dimension
 
     @property
