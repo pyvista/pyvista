@@ -43,7 +43,7 @@ def test_vtk_module_does_not_exist(monkeypatch):
         _ = getattr(_vtk, cls)
 
 
-@pytest.mark.skipif(pv.vtk_version_info == (9, 4, 2), reason='Test hangs in CI on Linux')
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Test hangs in CI on Linux')
 def test_vtk_class_does_not_exist(monkeypatch):
     # Test module exists, but class does not
     cls, module = 'foo', 'vtkCommonCore'
