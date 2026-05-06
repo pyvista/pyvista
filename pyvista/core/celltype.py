@@ -934,7 +934,8 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
         # Set cell type properties using vtkCellTypeUtilities
         if self._vtk_class is None and vtk_version_info < (9, 4, 0):
-            self._dimension = -1  # Dimension is not supported for abstract classes for older VTK
+            # Dimension is not supported for abstract classes for older VTK
+            self._dimension = -1  # type: ignore[assignment]
         else:
             self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
@@ -1063,8 +1064,8 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         3
 
         """
-        if self._dimension == -1 and vtk_version_info < (9, 4, 0):
-            msg = f'dimension for cell type {self.name} requires VTK 9.4 or later'
+        if self._dimension == -1 and vtk_version_info < (9, 4, 0):  # type: ignore[comparison-overlap,unreachable]
+            msg = f'dimension for cell type {self.name} requires VTK 9.4 or later'  # type: ignore[unreachable]
             raise VTKVersionError(msg)
         return self._dimension
 
