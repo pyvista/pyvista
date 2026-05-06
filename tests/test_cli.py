@@ -444,7 +444,11 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out, out
     assert 'Failed to save output file: ' in out, out
-    assert output_path.name in out, out
+    # Rich's 70-col box may wrap a long pytest-xdist tmp path mid-name,
+    # inserting whitespace and ``│`` column separators inside the name. Flatten
+    # both before the substring check so the assertion is wrap-agnostic.
+    flat = ''.join(out.split()).replace('│', '')
+    assert output_path.name in flat, out
     assert 'Invalid file extension' in out, out
     assert e.value.code == 1
 

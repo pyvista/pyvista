@@ -1023,7 +1023,13 @@ def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
 
 
 @pytest.mark.parametrize('as_rectilinear', [True, False])
-def test_to_quads(image, as_rectilinear):
+def test_to_quads(as_rectilinear):
+    # Build a 2D ImageData directly. The shared ``image`` fixture goes
+    # through the ``texture`` fixture (``Plotter.screenshot``) which can
+    # abort the xdist worker on older VTK + headless rendering, and that
+    # crash is unrelated to the ``to_quads`` filter under test.
+    image = pv.ImageData(dimensions=(4, 3, 1))
+    image['scalars'] = np.arange(image.n_points)
     grid = image.cast_to_rectilinear_grid() if as_rectilinear else image
     quads = grid.to_quads()
     assert isinstance(quads, pv.UnstructuredGrid)
