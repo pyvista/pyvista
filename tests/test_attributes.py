@@ -421,6 +421,11 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             )
         elif pyvista_class is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
             pytest.skip('Requires vtk 9.4')
+        elif pyvista_class is pv.FluentReader and pv.vtk_version_info < (9, 4, 0):
+            # vtkFLUENTReader hangs indefinitely on older VTK when given a
+            # non-Fluent file. The other readers in `try_init_pyvista_object`
+            # tolerate the dummy `__file__` path without trying to parse it.
+            pytest.skip('vtkFLUENTReader hangs on bad input on vtk<9.4')
 
     skip_test_for_some_classes()
     instance = try_init_pyvista_object(pyvista_class)
