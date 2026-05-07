@@ -14,10 +14,34 @@ from typing import get_args
 
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
-from pyvista.core.errors import VTKVersionError
 
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
+
+# Canonical dimensions for abstract / placeholder cell types.
+# ``vtkCellTypeUtilities.GetDimension(value)`` returns ``0`` for these on
+# vtk<9.4 AND emits ``vtkGenericCell ERR| Unsupported cell type: N Setting to
+# vtkEmptyCell`` warnings via the ``vtkEmptyCell`` fallback. Using a hardcoded
+# table avoids the warnings and gives the correct dimension on every VTK
+# build. See https://github.com/pyvista/pyvista/issues/8634
+_ABSTRACT_DIMENSIONS: dict[int, _Dimension] = {
+    _vtk.VTK_PARAMETRIC_CURVE: 1,
+    _vtk.VTK_PARAMETRIC_SURFACE: 2,
+    _vtk.VTK_PARAMETRIC_TRI_SURFACE: 2,
+    _vtk.VTK_PARAMETRIC_QUAD_SURFACE: 2,
+    _vtk.VTK_PARAMETRIC_TETRA_REGION: 3,
+    _vtk.VTK_PARAMETRIC_HEX_REGION: 3,
+    _vtk.VTK_HIGHER_ORDER_EDGE: 1,
+    _vtk.VTK_HIGHER_ORDER_TRIANGLE: 2,
+    _vtk.VTK_HIGHER_ORDER_QUAD: 2,
+    _vtk.VTK_HIGHER_ORDER_POLYGON: 2,
+    _vtk.VTK_HIGHER_ORDER_TETRAHEDRON: 3,
+    _vtk.VTK_HIGHER_ORDER_WEDGE: 3,
+    _vtk.VTK_HIGHER_ORDER_PYRAMID: 3,
+    _vtk.VTK_HIGHER_ORDER_HEXAHEDRON: 3,
+    _vtk.VTK_LAGRANGE_PYRAMID: 3,
+    _vtk.VTK_BEZIER_PYRAMID: 3,
+}
 
 _GRID_TEMPLATE_NO_IMAGE = """
 .. grid:: 1
@@ -932,10 +956,14 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             else getattr(_vtk, _vtk_class_name)
         )
 
-        # Set cell type properties using vtkCellTypeUtilities
-        if self._vtk_class is None and vtk_version_info < (9, 4, 0):
-            # Dimension is not supported for abstract classes for older VTK
-            self._dimension = -1  # type: ignore[assignment]
+        # Set cell type properties using vtkCellTypeUtilities. For abstract
+        # types whose value is in ``_ABSTRACT_DIMENSIONS`` we skip the call
+        # entirely (it returns 0 and emits warnings on vtk<9.4 because there
+        # is no concrete cell class). Unknown abstract types (e.g. anything
+        # vtk 9.7+ adds that we have not catalogued) still go through the
+        # utility.
+        if self._vtk_class is None and value in _ABSTRACT_DIMENSIONS:
+            self._dimension = _ABSTRACT_DIMENSIONS[value]
         else:
             self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
@@ -1064,9 +1092,6 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         3
 
         """
-        if self._dimension == -1 and vtk_version_info < (9, 4, 0):  # type: ignore[comparison-overlap,unreachable]
-            msg = f'dimension for cell type {self.name} requires VTK 9.4 or later'  # type: ignore[unreachable]
-            raise VTKVersionError(msg)
         return self._dimension
 
     @property
