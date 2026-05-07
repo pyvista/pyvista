@@ -230,6 +230,41 @@ def test_celltype_dimension_map_not_mutable():
         mapping[42] = 'foo'
 
 
+def test_abstract_celltype_attributes():
+    # ``HIGHER_ORDER_HEXAHEDRON`` has no concrete vtk class, but its dimension
+    # is well-defined and the same on every supported VTK build. See
+    # https://github.com/pyvista/pyvista/issues/8634
+    celltype = pv.CellType.HIGHER_ORDER_HEXAHEDRON
+    assert celltype.dimension == 3
+    assert not celltype.is_linear
+
+    match = "'HIGHER_ORDER_HEXAHEDRON' without a concrete cell instance."
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_points
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_edges
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_faces
+
+
+@pytest.mark.parametrize(
+    ('celltype', 'expected_dim'),
+    [
+        (pv.CellType.PARAMETRIC_CURVE, 1),
+        (pv.CellType.PARAMETRIC_SURFACE, 2),
+        (pv.CellType.PARAMETRIC_TETRA_REGION, 3),
+        (pv.CellType.HIGHER_ORDER_EDGE, 1),
+        (pv.CellType.HIGHER_ORDER_TRIANGLE, 2),
+        (pv.CellType.HIGHER_ORDER_HEXAHEDRON, 3),
+        (pv.CellType.LAGRANGE_PYRAMID, 3),
+        (pv.CellType.BEZIER_PYRAMID, 3),
+    ],
+)
+def test_abstract_celltype_dimension_is_correct(celltype, expected_dim):
+    """Abstract / placeholder cell types report their canonical dimension."""
+    assert celltype.dimension == expected_dim
+
+
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
