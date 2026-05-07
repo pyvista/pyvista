@@ -6449,7 +6449,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
-        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
+        if not _vtk.has_attr('vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
                 f'was not found in VTK {pv.vtk_version_info}'
@@ -7243,7 +7243,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             raise TypeError(msg)
 
         # Do packing
-        if hasattr(_vtk, 'vtkPackLabels'):  # pragma: no cover
+        if _vtk.has_attr('vtkPackLabels'):  # pragma: no cover
             alg = _vtk.vtkPackLabels()
             alg.SetInputDataObject(self)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
