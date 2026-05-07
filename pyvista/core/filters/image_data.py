@@ -2435,7 +2435,7 @@ class ImageDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
 
-        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+        if not _vtk.has_attr('vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
@@ -3048,7 +3048,7 @@ class ImageDataFilters(DataSetFilters):
             else:
                 alg_.SmoothingOff()
 
-        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+        if not _vtk.has_attr('vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'

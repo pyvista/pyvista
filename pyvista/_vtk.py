@@ -731,6 +731,37 @@ def __getattr__(name: str):
     return obj
 
 
+def has_attr(name: str) -> bool:
+    """Return ``True`` if *name* resolves to a VTK class on this build.
+
+    ``hasattr(_vtk, 'X')`` does not work as expected because the lazy
+    ``__getattr__`` raises ``ImportError`` (not ``AttributeError``) when a
+    class is mapped but missing from the underlying ``vtkmodules`` module on
+    the installed VTK build. ``hasattr`` only catches ``AttributeError``, so
+    the raised ``ImportError`` propagates and breaks version-probe call sites.
+    Use this helper instead.
+
+    Parameters
+    ----------
+    name : str
+        Attribute name to probe on the ``_vtk`` namespace.
+
+    Returns
+    -------
+    bool
+        ``True`` if the attribute resolves on this VTK build, ``False`` if it
+        is missing or its underlying ``vtkmodules`` module is missing.
+
+    """
+    if name in globals():
+        return True
+    try:
+        __getattr__(name)
+    except (AttributeError, ImportError):
+        return False
+    return True
+
+
 # Specialized loading functions for irregular imports
 
 
