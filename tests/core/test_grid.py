@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import pathlib
 from pathlib import Path
 import re
@@ -444,7 +445,11 @@ def test_save_bad_extension():
     # can extend it (e.g. pyvista_zarr adding ``.zarr``). Verify the
     # bad-extension framing and that all the built-in extensions are
     # listed; that's the contract users rely on.
-    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle', '.pv', '.zvtk']
+    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle']
+    # ``.pv`` / ``.zvtk`` come from the optional ``pyvista-zstd`` plugin which
+    # is only installed in envs that pin VTK >= 9.4 (see tox.ini).
+    if importlib.util.find_spec('pyvista_zstd') is not None:
+        builtin_exts.extend(['.pv', '.zvtk'])
     if pv.vtk_version_info >= (9, 4):
         builtin_exts.append('.vtkhdf')
 
@@ -1018,7 +1023,13 @@ def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
 
 
 @pytest.mark.parametrize('as_rectilinear', [True, False])
-def test_to_quads(image, as_rectilinear):
+def test_to_quads(as_rectilinear):
+    # Build a 2D ImageData directly. The shared ``image`` fixture goes
+    # through the ``texture`` fixture (``Plotter.screenshot``) which can
+    # abort the xdist worker on older VTK + headless rendering, and that
+    # crash is unrelated to the ``to_quads`` filter under test.
+    image = pv.ImageData(dimensions=(4, 3, 1))
+    image['scalars'] = np.arange(image.n_points)
     grid = image.cast_to_rectilinear_grid() if as_rectilinear else image
     quads = grid.to_quads()
     assert isinstance(quads, pv.UnstructuredGrid)
