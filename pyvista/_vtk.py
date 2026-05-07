@@ -709,12 +709,9 @@ def __getattr__(name: str):
             )
             raise AttributeError(msg)
 
-        # Attempt to import the vtkmodule and the desired attribute. A missing
-        # vtkmodule (older VTK build, custom build) is reported as ImportError;
-        # a missing attribute is left as AttributeError so that ``hasattr`` /
-        # ``from pyvista._vtk import X`` behave as expected. (Python converts
-        # AttributeError raised from ``__getattr__`` to ImportError for the
-        # ``from ... import`` form, so callers see the same error there.)
+        # Attempt to import the vtkmodule and the desired attribute
+        # Convert module or attribute errors into a similar message that would otherwise be
+        # seen when doing `from vtkmodules.vtkModule import vtkClass`
         module_full_name = f'vtkmodules.{module_name}'
         error_msg = (
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
@@ -727,11 +724,42 @@ def __getattr__(name: str):
         try:
             obj = getattr(module, name)
         except AttributeError as e:
-            raise AttributeError(error_msg) from e
+            raise ImportError(error_msg) from e
 
     # Cache object for next access
     globals()[name] = obj
     return obj
+
+
+def has_attr(name: str) -> bool:
+    """Return ``True`` if *name* resolves to a VTK class on this build.
+
+    ``hasattr(_vtk, 'X')`` does not work as expected because the lazy
+    ``__getattr__`` raises ``ImportError`` (not ``AttributeError``) when a
+    class is mapped but missing from the underlying ``vtkmodules`` module on
+    the installed VTK build. ``hasattr`` only catches ``AttributeError``, so
+    the raised ``ImportError`` propagates and breaks version-probe call sites.
+    Use this helper instead.
+
+    Parameters
+    ----------
+    name : str
+        Attribute name to probe on the ``_vtk`` namespace.
+
+    Returns
+    -------
+    bool
+        ``True`` if the attribute resolves on this VTK build, ``False`` if it
+        is missing or its underlying ``vtkmodules`` module is missing.
+
+    """
+    if name in globals():
+        return True
+    try:
+        __getattr__(name)
+    except (AttributeError, ImportError):
+        return False
+    return True
 
 
 # Specialized loading functions for irregular imports
