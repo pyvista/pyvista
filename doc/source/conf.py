@@ -617,7 +617,7 @@ html_theme_options = {
         },
         {
             'name': 'Contributing',
-            'url': 'https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst',
+            'url': 'https://docs.pyvista.org/developer_notes',
             'icon': 'fa fa-gavel fa-fw',
         },
         {

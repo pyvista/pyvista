@@ -15,7 +15,6 @@ and how you can help develop PyVista.
    building_vtk
    docker
    pyinstaller
-   developer_notes
    plot_directive
    vtk_role
    pytest_plugin
