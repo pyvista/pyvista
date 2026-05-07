@@ -1,20 +1,22 @@
 comment: false
 
+# Strict coverage rules. `target: auto` enforces non-decreasing coverage so
+# that silent regressions (e.g., an entire VTK matrix cell not uploading
+# coverage, as happened in https://github.com/pyvista/pyvista/issues/8635)
+# fail the check instead of being absorbed by a fixed threshold.
 coverage:
   status:
     project:
       default:
-        # basic
-        target: 90%
+        target: auto
         threshold: 0%
-        # advanced
-        if_not_found: success
+        if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
     patch:
       default:
-        # basic
-        target: 90%
-        if_not_found: success
+        target: auto
+        threshold: 0%
+        if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error

@@ -30,6 +30,7 @@ def test_vtk_namespace():
         _ = _vtk.does_not_exist
 
 
+@pytest.mark.needs_vtk_version((9, 3, 0), reason='Test hangs in CI on Linux')
 def test_vtk_module_does_not_exist(monkeypatch):
     # Test module does not exist
     cls, module = 'foo', 'bar'
@@ -43,7 +44,7 @@ def test_vtk_module_does_not_exist(monkeypatch):
         _ = getattr(_vtk, cls)
 
 
-@pytest.mark.skipif(pv.vtk_version_info == (9, 4, 2), reason='Test hangs in CI on Linux')
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Test hangs in CI on Linux')
 def test_vtk_class_does_not_exist(monkeypatch):
     # Test module exists, but class does not
     cls, module = 'foo', 'vtkCommonCore'
@@ -420,6 +421,11 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             )
         elif pyvista_class is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
             pytest.skip('Requires vtk 9.4')
+        elif pyvista_class is pv.FluentReader and pv.vtk_version_info < (9, 4, 0):
+            # vtkFLUENTReader hangs indefinitely on older VTK when given a
+            # non-Fluent file. The other readers in `try_init_pyvista_object`
+            # tolerate the dummy `__file__` path without trying to parse it.
+            pytest.skip('vtkFLUENTReader hangs on bad input on vtk<9.4')
 
     skip_test_for_some_classes()
     instance = try_init_pyvista_object(pyvista_class)

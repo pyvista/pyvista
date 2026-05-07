@@ -755,7 +755,20 @@ def test_delaunay_2d_unstructured():
     assert len(mesh.point_data.keys()) > 0
 
 
-@pytest.mark.parametrize('method', ['contour', 'marching_cubes', 'flying_edges'])
+@pytest.mark.parametrize(
+    'method',
+    [
+        'contour',
+        pytest.param(
+            'marching_cubes',
+            marks=pytest.mark.skipif(
+                pv.vtk_version_info < (9, 4),
+                reason='vtkMarchingCubes does not preserve the input scalar name on vtk<9.4',
+            ),
+        ),
+        'flying_edges',
+    ],
+)
 def test_contour(uniform, method):
     iso = uniform.contour(method=method, progress_bar=True)
     assert iso is not None

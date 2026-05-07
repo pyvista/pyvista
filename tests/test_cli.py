@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import inspect
 from itertools import chain
 import os
@@ -15,6 +16,11 @@ from typing import get_args
 
 import numpy as np
 import pytest
+
+needs_pyvista_zstd = pytest.mark.skipif(
+    importlib.util.find_spec('pyvista_zstd') is None,
+    reason='pyvista-zstd is not installed (registers the .pv extension)',
+)
 from pytest_cases import case
 from pytest_cases import filters
 from pytest_cases import fixture
@@ -356,6 +362,7 @@ def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
     assert e.value.code == 1
 
 
+@needs_pyvista_zstd
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_multiblock_drops_sidecar_children(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture
@@ -388,6 +395,7 @@ def test_convert_multiblock_drops_sidecar_children(
     assert not (sidecar / 'm_1.pv').exists()
 
 
+@needs_pyvista_zstd
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_multiblock_keeps_orphan_children(tmp_example_dir: Path):
     """Children inside an unrelated directory are not filtered when no parent is present."""
@@ -436,7 +444,11 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out, out
     assert 'Failed to save output file: ' in out, out
-    assert output_path.name in out, out
+    # Rich's 70-col box may wrap a long pytest-xdist tmp path mid-name,
+    # inserting whitespace and ``│`` column separators inside the name. Flatten
+    # both before the substring check so the assertion is wrap-agnostic.
+    flat = ''.join(out.split()).replace('│', '')
+    assert output_path.name in flat, out
     assert 'Invalid file extension' in out, out
     assert e.value.code == 1
 
