@@ -20,9 +20,9 @@ for 3D data that pandas plays for tabular data and xarray plays for labeled
 n-dimensional arrays.
 
 * a NumPy-native API for 3D visualization and mesh analysis
-* dataset structures and filters for point clouds, surfaces, and volumetric meshes
-* a unified plotting framework for Jupyter notebooks, scripts, headless CI, and embedded application views
-* 3D analysis and visualization for scientists, engineers, and practitioners who are not graphics experts
+* dataset structures and filters for points, surfaces, and volumes
+* one plotting framework for notebooks, scripts, CI, and apps
+* streamlined 3D for newcomers and graphics experts alike
 
 Use PyVista for figures in papers and presentations, interactive analysis in
 notebooks, and as the visualization layer of larger Python tools.

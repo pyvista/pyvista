@@ -35,7 +35,7 @@ dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
-readme = 'README.rst'
+readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
