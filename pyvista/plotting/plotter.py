@@ -2153,12 +2153,11 @@ class BasePlotter(_BoundsSizeMixin):
         self._check_rendered()
         self._check_has_ren_win()
 
-        data = image_from_window(
+        return image_from_window(
             self.render_window,
             scale=self.image_scale,
             ignore_alpha=not self.image_transparent_background,
         )
-        return data
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
