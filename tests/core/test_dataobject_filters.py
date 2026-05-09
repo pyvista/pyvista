@@ -2063,6 +2063,7 @@ def invalid_nested_multiblock(invalid_random_polydata):
             none=None,
             poly_root=invalid_random_polydata,
             nested=pv.MultiBlock(dict(poly_nested=invalid_random_polydata.copy())),
+            nested_valid=pv.MultiBlock(dict(valid=pv.PolyData())),
         )
     )
 
@@ -2077,7 +2078,7 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '----------------------\n'
         'Mesh info:\n'
         '    Type                         : MultiBlock\n'
-        '    N Blocks                     : 3\n'
+        '    N Blocks                     : 4\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
         "    Invalid fields (3)           : ('non_finite_points', 'unused_points', "
