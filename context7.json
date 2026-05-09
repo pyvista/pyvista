@@ -3,7 +3,7 @@
   "url": "https://github.com/pyvista/pyvista",
   "public_key": "pk_b8sROyPqdHV3DyKjrZ8Cv",
   "projectTitle": "PyVista",
-  "description": "NumPy-native 3D visualization and mesh analysis for Python. Wraps VTK with Pythonic datasets, filters, and a unified plotting API. Image-regression tested across supported Python and VTK matrices.",
+  "description": "3D visualization and mesh analysis for science and engineering. NumPy-native datasets for points, surfaces, volumes; filters for clip/slice/threshold/smooth; plotting for notebooks, CI, and apps.",
   "folders": [
     "doc/source/getting-started",
     "doc/source/user-guide",
