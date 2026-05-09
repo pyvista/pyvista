@@ -11,7 +11,6 @@ import sys
 from typing import TYPE_CHECKING
 import warnings
 
-from atsphinx.mini18n import get_template_dir
 from docutils.parsers.rst.directives.images import Image
 
 if TYPE_CHECKING:
@@ -96,7 +95,6 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -384,7 +382,7 @@ intersphinx_timeout = 5
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates', get_template_dir()]
+templates_path = ['_templates']
 
 # Autosummary configuration
 autosummary_context = {
@@ -770,19 +768,14 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
-# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
         'icon-links.html',
-        'mini18n/snippets/select-lang.html',
         'search-button-field.html',
         'sbt-sidebar-nav.html',
     ],
 }
-mini18n_default_language = language
-mini18n_support_languages = ['en', 'ja']
-locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
 class PlaceHolderImage(Image):

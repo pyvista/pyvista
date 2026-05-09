@@ -208,14 +208,13 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 #. Click ``Request language`` and fill form.
 #. Wait acceptance by transifex pyvista translation maintainers.
 #. (After acceptance) Translate on transifex.
-#. We can host the translated document using `atsphinx-mini18n`_.
-#. Translation is backed up in `pyvista-doc-translations`_.
+#. Translations are stored in `pyvista-doc-translations`_, which also owns the
+   dedicated pipeline that builds and publishes the localized documentation.
 
 Details can be found here: https://help.transifex.com/en/
 
 .. _`pyvista translation page`: https://app.transifex.com/signin/?next=/tkoyama010/pyvista-doc/
 .. _Transifex: https://app.transifex.com/signin/?next=/home/
-.. _atsphinx-mini18n: https://atsphinx.github.io/mini18n/en/
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
