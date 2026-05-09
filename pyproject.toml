@@ -30,12 +30,12 @@ dependencies = [
   'vtk<9.7.0',
   'vtk>=9.2.2',
 ]
-description = 'Easier Pythonic interface to VTK'
+description = '3D visualization and mesh analysis for science and engineering.'
 dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
-readme = 'README.rst'
+readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
