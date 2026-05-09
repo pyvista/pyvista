@@ -68,6 +68,10 @@ repos:
     rev: 0.37.1
     hooks:
       - id: check-github-workflows
+      - id: check-jsonschema
+        name: "Validate context7.json"
+        files: ^context7\.json$
+        args: ["--schemafile", ".github/schemas/context7.json"]
 
   - repo: local
     hooks:
