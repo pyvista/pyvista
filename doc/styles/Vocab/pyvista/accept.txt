@@ -43,8 +43,6 @@ HTML
 Helens
 Hotfixes
 Interactor
-Interoperate
-Interoperates
 Isoluminant
 Isort
 Jupyter
@@ -141,6 +139,8 @@ imageio
 img
 initializer
 interactor
+interoperate
+interoperates
 itkwidgets
 jupyter
 kubernetes
