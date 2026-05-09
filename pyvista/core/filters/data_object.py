@@ -443,9 +443,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     message_body.extend(message)
                 else:
                     message_body.append(message)
-
-        header = _MeshValidator._create_message_header(validated_mesh)
-        message_structure = [header, message_body]
+        if message_body:
+            header = _MeshValidator._create_message_header(validated_mesh)
+            message_structure = [header, message_body]
+        else:
+            message_structure = []
         dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
         return _MeshValidationReport(
             _mesh=validated_mesh,
@@ -483,7 +485,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
 
-                if (msg := report._message) is not None:  # type: ignore[attr-defined]
+                if msg := report._message:  # type: ignore[attr-defined]
                     msg = copylib.copy(msg)
                     msg[0] = f'Block id {i} {validated_mesh.get_block_name(i)!r} ' + msg[0]
                     message_body.append(msg)
@@ -501,8 +503,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     invalid_block_ids.append(i)
             dataclass_fields[field] = invalid_block_ids
 
-        header = _MeshValidator._create_message_header(validated_mesh)
-        message = [header, message_body]
+        if message_body:
+            header = _MeshValidator._create_message_header(validated_mesh)
+            message = [header, message_body]
+        else:
+            message = []
         return _MeshValidationReport(
             _mesh=validated_mesh,
             _message=message,
