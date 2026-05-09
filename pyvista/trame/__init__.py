@@ -1,21 +1,30 @@
-"""Trame interface for PyVista."""
+"""Deprecated shim — use :mod:`trame_pyvista` instead.
+
+The Trame integration moved to the standalone ``trame-pyvista`` package
+in PyVista 0.49. Importing from ``pyvista.trame`` is deprecated and
+will be removed in a future release.
+"""
 
 from __future__ import annotations
 
-import logging
+from trame_pyvista import PyVistaLocalView
+from trame_pyvista import PyVistaRemoteLocalView
+from trame_pyvista import PyVistaRemoteView
+from trame_pyvista import elegantly_launch
+from trame_pyvista import launch_server
+from trame_pyvista import show_trame
+from trame_pyvista.ui import get_viewer
+from trame_pyvista.ui import plotter_ui
 
-logging.getLogger('trame.app').disabled = True
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
-from pyvista.trame.jupyter import elegantly_launch
-from pyvista.trame.jupyter import launch_server
-from pyvista.trame.jupyter import show_trame
-from pyvista.trame.ui import get_viewer
-from pyvista.trame.ui import plotter_ui
-from pyvista.trame.views import PyVistaLocalView
-from pyvista.trame.views import PyVistaRemoteLocalView
-from pyvista.trame.views import PyVistaRemoteView
+warn_external(
+    'pyvista.trame is deprecated; import from trame_pyvista instead. '
+    'Install via `pip install trame-pyvista`.',
+    PyVistaDeprecationWarning,
+)
 
-# __all__ only left for mypy --strict to work when pyvista is a dependency
 __all__ = [
     'PyVistaLocalView',
     'PyVistaRemoteLocalView',
