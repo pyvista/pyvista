@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import json
 import locale
 import os
 from pathlib import Path
@@ -427,6 +428,12 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+_repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
+_docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
+_context7_data = json.loads(_repo_context7.read_text())
+_context7_data['url'] = 'https://context7.com/websites/pyvista'
+_docs_context7.write_text(json.dumps(_context7_data, indent=2) + '\n')
+
 html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
