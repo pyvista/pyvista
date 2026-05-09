@@ -1,8 +1,9 @@
-#######
-PyVista
-#######
+.. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_logo.svg
+   :alt: PyVista
+   :align: center
+   :width: 400px
 
-    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
+.. centered:: **3D visualization and mesh analysis for science and engineering**
 
 .. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
@@ -10,25 +11,43 @@ PyVista
 
 PyVista is:
 
-* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets
-* 3D plotting made simple and built for large/complex data geometries
-
-.. _Visualization Toolkit: https://vtk.org
+* a NumPy-native API for 3D visualization and mesh analysis
+* dataset structures and filters for point clouds, surfaces, and volumetric meshes
+* a unified plotting framework for Jupyter notebooks, scripts, headless CI, and embedded application views
+* 3D analysis and visualization for scientists, engineers, and practitioners who are not graphics experts
 
 .. image:: https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif
    :alt: pyvista ipython demo
 
-PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
-through NumPy and direct array access through a variety of methods and classes.
-This package provides a Pythonic, well-documented interface exposing
-VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
-and visual integration of spatially referenced datasets.
+PyVista is the foundational Python library for 3D visualization and mesh
+analysis in scientific computing and engineering.
 
-This module can be used for scientific plotting for presentations and research
-papers as well as a supporting module for other mesh 3D rendering dependent
-Python modules; see Connections for a list of projects that leverage
-PyVista.
+PyVista plays the same role for 3D data that pandas plays for tabular
+data and xarray plays for labeled n-dimensional arrays. It provides
+NumPy-native data structures for point clouds, surfaces, and volumetric
+meshes, a filter API covering clipping, slicing, thresholding, smoothing,
+and dozens of other operations, and a unified plotting framework that
+runs interactively in Jupyter notebooks, headlessly in CI, and as embedded
+views inside larger web and desktop applications.
+
+PyVista is the reliable layer between user code and the underlying graphics
+stack. The library is image-regression tested on every commit across all
+Python versions still in their lifecycle and `VTK <https://vtk.org>`_ releases,
+holds its public API stable through a deliberate deprecation lifecycle, and locks
+rendering behavior under visual regression baselines. The C++ toolkit
+underneath provides few of these assurances and doesn't share our enthusiasm for
+testing and reliability, which is why downstream science and engineering teams
+build on PyVista.
+
+Your downstream code can build on PyVista through a small, lazily evaluated
+extension API. Third-party packages attach domain-specific filters and
+plotter components via registered accessors, with no subclassing, no
+monkey-patching, and no vendoring of upstream algorithms. See
+`Extending PyVista <https://docs.pyvista.org/extras/extending_pyvista>`_ for
+the contract and Connections below for projects already using it.
+
+Use PyVista for figures in publications and presentations, interactive analysis in
+notebooks, and as the visualization layer of larger Python tools.
 
 PyVista is a NumFOCUS affiliated project
 
@@ -157,15 +176,13 @@ Overview of Features
 --------------------
 
 * Extensive gallery of examples (see `Quick Examples`_)
-* Interactive plotting in Jupyter Notebooks with server-side and client-side
-  rendering with `trame`_.
+* Interactive plotting in Jupyter Notebooks with server-side and client-side rendering
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 * Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in.
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
-.. _trame: https://github.com/Kitware/trame
 .. _Widgets: https://docs.pyvista.org/api/plotting/index.html#widget-api
 .. _Filters: https://docs.pyvista.org/api/core/filters.html
 .. _Plotting: https://docs.pyvista.org/api/plotting/index.html
@@ -206,12 +223,16 @@ for more details regarding optional dependencies or if the installation through 
 Connections
 ===========
 
-PyVista is a powerful tool that researchers can harness to create compelling,
-integrated visualizations of large datasets in an intuitive, Pythonic manner.
+PyVista is used across science and engineering disciplines to visualize 3D
+data and models, generate publication-quality figures, automate analysis
+workflows, and build custom applications on top of PyVista's 3D capabilities.
 
-Learn more about how PyVista is used across science and engineering disciplines
-by a diverse community of users on our `Connections page`_.
+For a curated, continuously updated list of domain-specific tooling that
+interoperates with or is built on PyVista, see `awesome-pyvista`_. For
+selected highlights and context on how PyVista is used across the community,
+see the `Connections page`_.
 
+.. _awesome-pyvista: https://github.com/pyvista/awesome-pyvista
 .. _Connections page: https://docs.pyvista.org/getting-started/connections.html
 
 

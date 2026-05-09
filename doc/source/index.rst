@@ -3,8 +3,8 @@
 .. raw:: html
 
     <div class="banner">
-        <a href="./examples/index.html"><center><img src="_static/pyvista_logo.png" alt="pyvista" width="75%"/></a>
-        <h3>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
+        <a href="./examples/index.html"><center><img src="_static/pyvista_logo.svg" alt="pyvista" width="75%"/></a>
+        <h3>3D visualization and mesh analysis for science and engineering</h3>
         <a href="./examples/index.html"><img src="_static/pyvista_banner_small.png" alt="pyvista" width="100%"/></a>
     </div>
 
@@ -13,24 +13,57 @@
 
 Overview
 ********
-PyVista is:
 
-* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets
-* 3D plotting made simple and built for large/complex data geometries
+PyVista is the foundational Python library for 3D visualization and mesh
+analysis in scientific computing and engineering. PyVista plays the same role
+for 3D data that pandas plays for tabular data and xarray plays for labeled
+n-dimensional arrays.
 
-.. _Visualization Toolkit: https://vtk.org
+* a NumPy-native API for 3D visualization and mesh analysis
+* dataset structures and filters for point clouds, surfaces, and volumetric meshes
+* a unified plotting framework for Jupyter notebooks, scripts, headless CI, and embedded application views
+* 3D analysis and visualization for scientists, engineers, and practitioners who are not graphics experts
 
-PyVista is a helper library for the Visualization Toolkit (VTK) that
-takes a different approach on interfacing with VTK through NumPy and
-direct array access. This package provides a Pythonic,
-well-documented interface exposing VTK's powerful visualization
-backend to facilitate rapid prototyping, analysis, and visual
-integration of spatially referenced datasets.
+Use PyVista for figures in papers and presentations, interactive analysis in
+notebooks, and as the visualization layer of larger Python tools.
 
-This module can be used for scientific plotting for presentations and
-research papers as well as a supporting module for other mesh
-dependent Python modules.
+
+Built for production
+====================
+
+3D code has to keep working when the underlying graphics stack changes.
+PyVista is image-regression tested on every commit across the supported
+matrix of Python and `VTK`_ releases. Public APIs follow a deliberate
+deprecation lifecycle (warn, then error, then remove) across at least three
+minor versions, and every release ships wheels for every supported Python
+version.
+
+The C++ toolkit underneath does not provide the same guarantees. Its Python
+bindings shift between releases, large parts of the surface ship without test
+coverage, and rendering changes are not gated on visual diffs. PyVista is
+what science and engineering teams reach for when code written today has to
+still produce the same picture two years from now.
+
+
+Built to extend
+===============
+
+Downstream libraries build on PyVista through a small, lazily evaluated
+extension API. Third-party packages attach domain-specific filters and
+plotter components via registered accessors, with no subclassing, no
+monkey-patching, and no vendoring of upstream algorithms. This is the same
+contract pandas exposes for tabular accessors and xarray exposes for labeled
+arrays. See :ref:`extending-pyvista` for the full contract.
+
+For a curated, continuously updated list of domain-specific tooling that
+interoperates with or is built on PyVista, see
+`awesome-pyvista <https://github.com/pyvista/awesome-pyvista>`_.
+
+Reach for the underlying `VTK`_ toolkit directly only when there is genuinely
+no PyVista equivalent. When that happens, please file an issue. There should
+be one.
+
+.. _VTK: https://vtk.org
 
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
