@@ -29,7 +29,7 @@ notebooks, and as the visualization layer of larger Python tools.
 
 
 Built for production
-====================
+~~~~~~~~~~~~~~~~~~~~
 
 3D code has to keep working when the underlying graphics stack changes.
 PyVista is image-regression tested on every commit across the supported
@@ -46,7 +46,7 @@ still produce the same picture two years from now.
 
 
 Built to extend
-===============
+~~~~~~~~~~~~~~~
 
 Downstream libraries build on PyVista through a small, lazily evaluated
 extension API. Third-party packages attach domain-specific filters and
