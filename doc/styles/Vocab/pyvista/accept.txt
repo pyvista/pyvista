@@ -43,6 +43,8 @@ HTML
 Helens
 Hotfixes
 Interactor
+Interoperate
+Interoperates
 Isoluminant
 Isort
 Jupyter
