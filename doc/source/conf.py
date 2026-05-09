@@ -427,7 +427,7 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
-html_extra_path = ['_extra', '../../context7.json']
+html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
