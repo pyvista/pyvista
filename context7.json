@@ -1,6 +1,6 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
-  "url": "https://github.com/pyvista/pyvista",
+  "url": "https://context7.com/pyvista/pyvista",
   "public_key": "pk_b8sROyPqdHV3DyKjrZ8Cv",
   "projectTitle": "PyVista",
   "description": "3D visualization and mesh analysis for science and engineering. NumPy-native datasets for points, surfaces, volumes; filters for clip/slice/threshold/smooth; plotting for notebooks, CI, and apps.",
