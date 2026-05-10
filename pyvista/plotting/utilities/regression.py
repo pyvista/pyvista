@@ -112,9 +112,13 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
         return np.empty((0, 0, 0))
     img_size = image.dimensions
     img_array = cast('NumpyArray[float]', point_array(image, 'ImageScalars'))
-    # Reshape and write
+    # Reshape and flip vertically (VTK stores rows bottom-up). The flip via
+    # ``[::-1]`` produces a negative row stride, so wrap in
+    # ``ascontiguousarray`` to materialize a packed C-contiguous buffer that
+    # downstream consumers (image libs, encoders) can use without an implicit
+    # per-pixel copy.
     tgt_size = (img_size[1], img_size[0], -1)
-    return img_array.reshape(tgt_size)[::-1]
+    return np.ascontiguousarray(img_array.reshape(tgt_size)[::-1])
 
 
 @_deprecate_positional_args(allowed=['render_window'])
