@@ -8133,7 +8133,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # Init output structure. The image stencil filters do not support
         # orientation, so we do not set the direction matrix
         binary_mask = pv.ImageData()
-        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.extent = reference_volume.extent
         binary_mask.spacing = reference_volume.spacing
         binary_mask.origin = reference_volume.origin
 
