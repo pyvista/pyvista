@@ -7818,7 +7818,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated mask image. Set this value to control the
@@ -8069,7 +8069,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = surface.rotate(
+                reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
+            )
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
@@ -8131,7 +8133,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # Init output structure. The image stencil filters do not support
         # orientation, so we do not set the direction matrix
         binary_mask = pv.ImageData()
-        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.extent = reference_volume.extent
         binary_mask.spacing = reference_volume.spacing
         binary_mask.origin = reference_volume.origin
 
@@ -8266,7 +8268,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, and ``spacing`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated rectilinear grid. Set this value to control the
@@ -8432,7 +8434,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ----------
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            and ``spacing`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the voxelized mesh. Set this value to control the
