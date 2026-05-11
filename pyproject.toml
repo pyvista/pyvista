@@ -41,7 +41,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.2']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
@@ -89,6 +89,7 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
+  'pyvista-zstd>=0.2.3,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -101,15 +102,6 @@ test = [
   'trimesh<4.13.0',
   'typing-extensions<4.16.0',
   { include-group = 'pinned' },
-]
-
-test-zstd = [
-  # `pyvista-zstd` requires `vtk>=9.4`, so it is gated behind a separate
-  # group. tox installs this group only for `vtk>=9.4` factors so that
-  # older-VTK CI envs do not silently upgrade VTK during resolution.
-  # See https://github.com/pyvista/pyvista/issues/8635
-  'pyvista-zstd>=0.2.2,<0.3.0',
-  { include-group = 'test' },
 ]
 
 test-playwright = ['playwright<1.59.0', { include-group = 'test' }]
@@ -138,7 +130,7 @@ docs = [
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-zstd==0.2.2',
+  'pyvista-zstd==0.2.3',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
@@ -173,7 +165,7 @@ dev = [
   'pre-commit',
   'tox',
   'tox-uv',
-  { include-group = 'test-zstd' },
+  { include-group = 'test' },
   { include-group = 'typing' },
 ]
 

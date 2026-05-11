@@ -761,8 +761,8 @@ def test_delaunay_2d_unstructured():
         'contour',
         pytest.param(
             'marching_cubes',
-            marks=pytest.mark.skipif(
-                pv.vtk_version_info < (9, 4),
+            marks=pytest.mark.needs_vtk_version(
+                (9, 4),
                 reason='vtkMarchingCubes does not preserve the input scalar name on vtk<9.4',
             ),
         ),

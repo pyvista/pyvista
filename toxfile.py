@@ -1,15 +1,26 @@
 from __future__ import annotations  # noqa: D100
 
+import logging
 import os
 import re
 from typing import TYPE_CHECKING
 
+from packaging.requirements import Requirement
 from packaging.version import Version
+from tox.execute.api import StdinSource
 from tox.plugin import impl
+from tox.tox_env.errors import Fail
+from tox_uv._run import UvVenvRunner
 
 if TYPE_CHECKING:
     from tox.config.sets import EnvConfigSet
     from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
+    from tox.tox_env.python.package import WheelPackage
+    from tox.tox_env.python.pip.req_file import PythonDeps
+    from tox_uv._installer import UvInstaller
+
+CONSTRAINTS_FILE = 'constraints.txt'
 
 
 @impl
@@ -39,3 +50,86 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: A
 
         updated = {'PARALLEL': val}
         env_conf['set_env'].update(updated)
+
+
+@impl
+def tox_on_install(  # noqa: PLR0917
+    tox_env: ToxEnv,
+    arguments: list[WheelPackage] | PythonDeps,
+    section: str,  # noqa: ARG001
+    of_type: str,
+) -> None:
+    """Before installing:
+    * save environment `deps` to a constraints file
+    * apply constraints file during `install_package_deps` step.
+
+    This is needed since dependencies installed in subsequent steps (eg. `dependency-groups`) may
+    override the `deps` ones.
+    See https://github.com/pyvista/pyvista/issues/8635.
+
+    Mostly inspired by https://github.com/tox-dev/tox/issues/2386#issuecomment-1396105380
+    """  # noqa: D205
+    global CONSTRAINTS_FILE  # noqa: PLW0603
+    CONSTRAINTS_FILE = tox_env.env_dir / CONSTRAINTS_FILE
+
+    if of_type == 'deps' and isinstance(tox_env, UvVenvRunner):
+        CONSTRAINTS_FILE.write_text('\n'.join(arguments.lines()))
+
+    if of_type in 'package':
+        _arguments: list[WheelPackage] = arguments
+        constraints_file_dep = f'-c {CONSTRAINTS_FILE}'
+        for package in _arguments:
+            getattr(package, 'deps', []).append(constraints_file_dep)
+
+
+@impl
+def tox_before_run_commands(tox_env: ToxEnv) -> None:
+    """Check that deps declared in the constraints_file (ie. during the `deps` step above)
+    are indeed installed in the environment before running the tests using a freeze command.
+    """  # noqa: D205
+    # Load requirements from the constraints file
+    with CONSTRAINTS_FILE.open() as f:
+        requirements = [Requirement(l) for l in f.read().splitlines()]
+
+    # Load installed deps using freeze
+    installer: UvInstaller = tox_env.installer
+    out = tox_env.execute(
+        installer.freeze_cmd(),
+        stdin=StdinSource.OFF,
+        show=False,
+        run_id='check_deps',
+    )
+
+    # Parse installed deps from the freeze output.
+    # Relies on the fact the the freeze command outputs lines in the
+    # form of `package==version` (eg. `vtk==9.2.2`)
+    installed = out.out.splitlines()
+
+    installed = [(Requirement(r).name, Requirement(r).specifier) for r in installed]
+    installed = [
+        (r[0], Version(m.group(2)))
+        for r in installed
+        if (m := re.match(r'(.*)==(\S+)', str(r[1]))) is not None
+    ]
+
+    # Check that the installed requirements match the constraints file ones
+    for req in requirements:
+        # Get the installed requirement matching the current one
+        installed_req = next((r for r in installed if r[0] == req.name), None)
+        if not installed_req:
+            msg = f'The required package {req.name} is not installed in the environment.'
+            raise Fail(msg)
+
+        # Check that the installed requirement version matches the specifier in
+        # the constraints file
+        if (version_installed := installed_req[1]) not in req.specifier:
+            msg = (
+                f'The installed version of {req.name} ({version_installed}) does not match',
+                f' the required version ({req.specifier}).',
+            )
+            raise Fail(msg)
+
+        logging.warning(  # noqa: LOG015
+            f'Installed {req.name} version ({version_installed}) matches the required version'
+            f' ({req.specifier}).'
+        )
