@@ -8069,7 +8069,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = surface.rotate(
+                reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
+            )
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
