@@ -4547,6 +4547,8 @@ def oriented_image():
     image = pv.ImageData()
     image.spacing = (1.1, 1.2, 1.3)
     image.dimensions = (10, 11, 12)
+    image.offset = (4, 5, 6)
+    image.origin = (3.1, 2.1, 1.1)
     image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
     image['scalars'] = np.ones((image.n_points,))
     return image
