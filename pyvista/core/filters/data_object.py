@@ -739,7 +739,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             string = re.sub(pattern, rf'\1{new}', string)
 
         # Highlight cell types in yellow
-        cell_names = {celltype.name for celltype in CellType}
+        # Reverse sort to ensure we replace things like 'QUADRATIC_HEXAHEDRON' before 'QUAD'
+        cell_names = sorted(celltype.name for celltype in CellType)[::-1]
         string = _format_style(string, cell_names, 'yellow')
 
         # Highlight mesh types in purple
