@@ -7818,7 +7818,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated mask image. Set this value to control the
@@ -8268,7 +8268,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, and ``spacing`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated rectilinear grid. Set this value to control the
@@ -8434,7 +8434,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ----------
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            and ``spacing`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the voxelized mesh. Set this value to control the
