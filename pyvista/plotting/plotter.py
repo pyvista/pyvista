@@ -111,6 +111,8 @@ if TYPE_CHECKING:
     import imageio
     from IPython.lib.display import IFrame
     from PIL.Image import Image
+    from trame_pyvista.jupyter import EmbeddableWidget
+    from trame_pyvista.jupyter import Widget
 
     from pyvista import DataSet
     from pyvista import LookupTable
@@ -142,8 +144,6 @@ if TYPE_CHECKING:
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
-    from pyvista.trame.jupyter import EmbeddableWidget
-    from pyvista.trame.jupyter import Widget
 
     from .opts import PointSpriteShape
 
@@ -774,29 +774,18 @@ class BasePlotter(_BoundsSizeMixin):
         >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pv.html')  # doctest:+SKIP
 
+        .. deprecated:: 0.49.0
+            Use ``plotter.trame.export_html(...)`` instead. This method
+            now proxies to that registered plotter component (provided by
+            the ``trame-pyvista`` package).
+
         """
-        try:
-            from trame_vtk.tools.vtksz2html import write_html  # noqa: PLC0415
-        except ImportError:  # pragma: no cover
-            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
-            raise ImportError(msg)
-
-        data = self.export_vtksz(filename=None)
-        buffer = io.StringIO()
-        write_html(data, buffer)
-        buffer.seek(0)
-
-        if filename is None:
-            return buffer
-
-        filename = Path(filename)
-        if filename.suffix != '.html':
-            filename / '.html'
-
-        # Move to final destination
-        with filename.open('w', encoding='utf-8') as f:
-            f.write(buffer.read())
-            return None
+        warn_external(
+            'Plotter.export_html is deprecated. Use plotter.trame.export_html(...) instead. '
+            'Install via `pip install trame-pyvista`.',
+            PyVistaDeprecationWarning,
+        )
+        return self._trame_component().export_html(filename)
 
     def export_vtksz(
         self,
@@ -822,35 +811,29 @@ class BasePlotter(_BoundsSizeMixin):
         output : str | Path
             The exported filename.
 
+        .. deprecated:: 0.49.0
+            Use ``plotter.trame.export_vtksz(...)`` instead. This method
+            now proxies to that registered plotter component (provided by
+            the ``trame-pyvista`` package).
+
         """
-        try:
-            from pyvista.trame import PyVistaLocalView  # noqa: PLC0415
-            from pyvista.trame.jupyter import elegantly_launch  # noqa: PLC0415
-            from pyvista.trame.views import get_server  # noqa: PLC0415
-        except ImportError:  # pragma: no cover
-            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+        warn_external(
+            'Plotter.export_vtksz is deprecated. Use plotter.trame.export_vtksz(...) instead. '
+            'Install via `pip install trame-pyvista`.',
+            PyVistaDeprecationWarning,
+        )
+        return self._trame_component().export_vtksz(filename=filename, format=format)
+
+    def _trame_component(self) -> Any:
+        """Return the registered ``trame`` plotter component or raise."""
+        component = getattr(self, 'trame', None)
+        if component is None:
+            msg = (
+                'The "trame" plotter component is not registered. '
+                'Install trame-pyvista: pip install trame-pyvista'
+            )
             raise ImportError(msg)
-
-        # Ensure trame server is launched
-        server = get_server(pv.global_theme.trame.jupyter_server_name)
-        if not server.running:
-            elegantly_launch(pv.global_theme.trame.jupyter_server_name)
-
-        view = PyVistaLocalView(self, trame_server=server)
-
-        content = view.export(format=format)
-
-        view.release_resources()
-        # Make sure callbacks are unregistered
-        self._on_render_callbacks.remove(view._plotter_render_callback)
-
-        if filename is None:
-            return content
-
-        with Path(filename).open('wb') as f:
-            f.write(content)
-
-        return filename
+        return component
 
     @_deprecate_positional_args(allowed=['filename'])
     def export_gltf(  # noqa: PLR0917
@@ -2153,12 +2136,11 @@ class BasePlotter(_BoundsSizeMixin):
         self._check_rendered()
         self._check_has_ren_win()
 
-        data = image_from_window(self.render_window, scale=self.image_scale)
-        if self.image_transparent_background:
-            return data
-
-        # ignore alpha channel
-        return data[:, :, :-1]
+        return image_from_window(
+            self.render_window,
+            scale=self.image_scale,
+            ignore_alpha=not self.image_transparent_background,
+        )
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
@@ -8249,7 +8231,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             with suppress(ImportError):
-                self.last_vtksz = self.export_vtksz(filename=None)
+                self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:  # pragma: no cover

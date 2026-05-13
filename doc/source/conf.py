@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import json
 import locale
 import os
 from pathlib import Path
@@ -11,7 +12,6 @@ import sys
 from typing import TYPE_CHECKING
 import warnings
 
-from atsphinx.mini18n import get_template_dir
 from docutils.parsers.rst.directives.images import Image
 
 if TYPE_CHECKING:
@@ -96,7 +96,6 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -384,7 +383,7 @@ intersphinx_timeout = 5
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates', get_template_dir()]
+templates_path = ['_templates']
 
 # Autosummary configuration
 autosummary_context = {
@@ -429,6 +428,12 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+_repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
+_docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
+_context7_data = json.loads(_repo_context7.read_text())
+_context7_data['url'] = 'https://context7.com/websites/pyvista'
+_docs_context7.write_text(json.dumps(_context7_data, indent=2) + '\n')
+
 html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -770,19 +775,14 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
-# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
         'icon-links.html',
-        'mini18n/snippets/select-lang.html',
         'search-button-field.html',
         'sbt-sidebar-nav.html',
     ],
 }
-mini18n_default_language = language
-mini18n_support_languages = ['en', 'ja']
-locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
 class PlaceHolderImage(Image):

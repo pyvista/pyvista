@@ -761,8 +761,8 @@ def test_delaunay_2d_unstructured():
         'contour',
         pytest.param(
             'marching_cubes',
-            marks=pytest.mark.skipif(
-                pv.vtk_version_info < (9, 4),
+            marks=pytest.mark.needs_vtk_version(
+                (9, 4),
                 reason='vtkMarchingCubes does not preserve the input scalar name on vtk<9.4',
             ),
         ),
@@ -3112,9 +3112,11 @@ def test_extract_subset(uniform, rebase_coordinates):
     offset = (1, 2, 3)
     dict_ = {'foo': 'bar'}
     origin = (1.1, 2.2, 3.3)
+    direction_matrix = pv.Transform().rotate_x(30.0, point=(3.0, 4.0, 5.0)).matrix[:3, :3]
     uniform.user_dict = dict_
     uniform.offset = offset
     uniform.origin = origin
+    uniform.direction_matrix = direction_matrix
 
     new_offset = (2, 4, 6)
     new_dims = 4, 3, 2
@@ -3131,7 +3133,11 @@ def test_extract_subset(uniform, rebase_coordinates):
         # Test that we fix the confusing issue from extents in
         #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
         assert voi.origin != origin
-        assert voi.origin == voi.bounds[::2]
+        assert np.allclose(voi.origin, voi.points[0])
+        relative_offset = tuple(new_offset[i] - offset[i] for i in range(3))
+        dims = uniform.dimensions
+        start_idx = np.arange(np.prod(dims)).reshape(dims, order='F')[relative_offset]
+        assert np.allclose(voi.points[0], uniform.points[start_idx])
         assert voi.offset != new_offset
         assert voi.offset == (0, 0, 0)
     else:
@@ -4541,6 +4547,8 @@ def oriented_image():
     image = pv.ImageData()
     image.spacing = (1.1, 1.2, 1.3)
     image.dimensions = (10, 11, 12)
+    image.offset = (4, 5, 6)
+    image.origin = (3.1, 2.1, 1.1)
     image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
     image['scalars'] = np.ones((image.n_points,))
     return image

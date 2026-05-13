@@ -2141,7 +2141,23 @@ def test_image_properties() -> None:
     pl.add_mesh(mesh)
     pl.show(auto_close=False)  # DO NOT close plotter
     # Get RGB image
-    _ = pl.image
+    img = pl.image
+    assert img.shape[2] == 3
+    # RGB buffer should be packed (bytes-per-pixel == 3), not a stride-sliced
+    # view of an RGBA buffer (which would have bytes-per-pixel == 4).
+    assert img.strides[1] == 3
+    # The array must be C-contiguous so that downstream consumers (image
+    # encoders, ML pipelines) do not pay an implicit per-pixel copy. VTK
+    # returns rows bottom-up; the vertical flip must be materialized rather
+    # than left as a negative-stride view.
+    assert img.flags['C_CONTIGUOUS']
+    # Get RGBA image
+    pl.image_transparent_background = True
+    img = pl.image
+    assert img.shape[2] == 4
+    assert img.strides[1] == 4
+    assert img.flags['C_CONTIGUOUS']
+    pl.image_transparent_background = False
     # Get the depth image
     _ = pl.get_image_depth()
     pl.close()
