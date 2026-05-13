@@ -9,6 +9,7 @@ imported on first access. We import from ``vtkmodules`` instead of
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 from typing import TYPE_CHECKING
 
@@ -21,6 +22,23 @@ if TYPE_CHECKING:
     from vtk import *  # noqa: TID251
     from vtkmodules.numpy_interface.dataset_adapter import *  # noqa: TID251
     from vtkmodules.util.vtkAlgorithm import *  # noqa: TID251
+
+
+# Disable array overrides for VTK 9.7 since these can cause invalid array references which
+# can cause unexpected errors that are challenging to debug.
+# See https://gitlab.kitware.com/vtk/vtk/-/work_items/20043
+#
+# There are hundreds of array classes to override, so we remove the array overrides from
+# vtk's MODULE_MAPPER directly (instead of manually overriding each class individually).
+# This must be done before importing classes from vtkmodules.
+with contextlib.suppress(ImportError):
+    from vtkmodules import MODULE_MAPPER  # noqa: TID251
+
+    vtk_overrides: list[str] | None = MODULE_MAPPER.pop('vtkCommonCore', None)
+    array_overrides_module = 'vtkmodules.numpy_interface.array_overrides'
+    if vtk_overrides is not None and array_overrides_module in vtk_overrides:
+        vtk_overrides.remove(array_overrides_module)
+
 
 # Canonical mapping: vtkmodule -> classes
 # Modules imported for pyvista's core API
