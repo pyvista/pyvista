@@ -10,6 +10,7 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import contextlib
+from functools import wraps
 import importlib
 from typing import TYPE_CHECKING
 
@@ -822,8 +823,24 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
     return vtkCellTypeUtilities
 
 
+def _import_vtk_to_numpy():
+    from vtkmodules.util.numpy_support import vtk_to_numpy as _vtk_to_numpy  # noqa: TID251
+
+    # Patch needed for VTK 9.7 https://gitlab.kitware.com/vtk/vtk/-/work_items/19980#note_1814984
+    @wraps(_vtk_to_numpy)
+    def vtk_to_numpy(vtk_array, *args, **kwargs):  # noqa: ANN001
+        try:
+            return _vtk_to_numpy(vtk_array, *args, **kwargs)
+        except ValueError:
+            array = vtk_array.ToAOSDataArray()
+            return _vtk_to_numpy(array, *args, **kwargs)
+
+    return vtk_to_numpy
+
+
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
     'vtkExtractCells': _import_vtkExtractCells,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
+    'vtk_to_numpy': _import_vtk_to_numpy,
 }
