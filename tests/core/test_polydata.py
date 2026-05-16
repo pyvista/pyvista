@@ -1033,9 +1033,13 @@ def test_clean(sphere, static):
     mesh.clean(merge_tol=1e-5, inplace=True, static=static)
     assert mesh.n_points == sphere.n_points
 
-    # point_merging=False forces the serial filter even when static=True
-    cleaned = mesh.clean(point_merging=False, static=static)
-    assert cleaned.n_points == mesh.n_points
+    if static:
+        # static=True is incompatible with point_merging=False
+        with pytest.raises(ValueError, match='requires `point_merging=True`'):
+            mesh.clean(point_merging=False, static=static)
+    else:
+        cleaned = mesh.clean(point_merging=False, static=static)
+        assert cleaned.n_points == mesh.n_points
 
     # test with points but no cells
     mesh = pv.PolyData()
