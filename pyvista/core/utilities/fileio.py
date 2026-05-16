@@ -151,7 +151,7 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
     .. note::
 
         This controls the **in-memory** pickle protocol used by
-        :meth:`~pyvista.DataObject.__getstate__` / ``__setstate__`` for
+        ``DataObject.__getstate__`` / ``__setstate__`` for
         cross-process serialization (``multiprocessing``, ``dask``,
         ``joblib``). It does **not** enable a ``.pkl`` mesh file format.
         PyVista refuses ``.pkl`` / ``.pickle`` extensions in
@@ -1006,9 +1006,8 @@ def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
     This shim is kept only for backwards-compatible import paths. See
     the module-level refusal message for migration guidance. PyVista
     still supports Python's pickle protocol for cross-process
-    serialization via :meth:`~pyvista.DataObject.__getstate__` /
-    :meth:`~pyvista.DataObject.__setstate__`; only the file-format API
-    is removed.
+    serialization via ``DataObject.__getstate__`` /
+    ``DataObject.__setstate__``; only the file-format API is removed.
     """
     _raise_pickle_removed()
 
