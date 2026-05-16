@@ -24,11 +24,11 @@ from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
-from .utilities.fileio import PICKLE_EXT
+from .utilities.fileio import _PICKLE_FILE_EXT
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import _raise_pickle_removed
 from .utilities.fileio import get_ext
 from .utilities.fileio import read
-from .utilities.fileio import save_pickle
 from .utilities.helpers import wrap
 from .utilities.misc import _DataObjectMeta
 from .utilities.misc import _NoNewAttrMixin
@@ -186,9 +186,12 @@ class DataObject(
 
         .. include:: /api/utilities/mesh_io.rst
 
-        .. versionadded:: 0.45
+        .. warning::
 
-            Support saving pickled meshes
+            ``.pkl`` / ``.pickle`` extensions are **not** supported and
+            will be refused. Pickle is a Python serialization protocol,
+            not a mesh file format (CWE-502). Use a real mesh format or
+            install ``pyvista-zstd`` for the ``.pv`` single-blob format.
 
         See Also
         --------
@@ -231,9 +234,9 @@ class DataObject(
             writer registered via :func:`pyvista.register_writer`.  Use
             these to expose format-specific options such as compression
             level or thread count.  When the target extension dispatches
-            to a built-in VTK writer or to the pickle path, passing any
-            extra keyword arguments raises :class:`TypeError` — PyVista
-            never silently drops writer options.
+            to a built-in VTK writer, passing any extra keyword arguments
+            raises :class:`TypeError` — PyVista never silently drops
+            writer options.
 
             .. versionadded:: 0.48
 
@@ -310,19 +313,13 @@ class DataObject(
                 msg = f'VTK writer failed to write file: {file_path}'
                 raise OSError(msg)
 
-        elif file_ext in PICKLE_EXT:
-            if writer_kwargs:
-                _raise_unexpected_writer_kwargs(
-                    writer_kwargs,
-                    file_ext,
-                    target='pickle format',
-                )
-            save_pickle(filename, self)
+        elif file_ext in _PICKLE_FILE_EXT:
+            _raise_pickle_removed()
         else:
             msg = (
                 f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
                 f'Must be one of: '
-                f'{list(writer_exts) + list(PICKLE_EXT) + _list_custom_writer_exts()}'
+                f'{list(writer_exts) + _list_custom_writer_exts()}'
             )
             if file_ext == '.pv' and not importlib.util.find_spec(
                 'pyvista-zstd'

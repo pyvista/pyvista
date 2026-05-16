@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pickle
 import re
 import textwrap
 from typing import TYPE_CHECKING
@@ -1588,38 +1587,47 @@ def test_nek5000_reader():
     assert 'spectral element id' in nek_data.cell_data
 
 
-@pytest.mark.parametrize(
-    ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
-)
-@pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext):
-    filepath = tmp_path / ('data_object' + ext)
-    data_object.save(filepath)
-    new_data_object = pv.read(filepath)
-    assert data_object == new_data_object
+_PICKLE_REFUSAL_MATCH = 'pickle is a Python serialization protocol, not a mesh'
 
-    # Test raises
-    with open(str(filepath), 'wb') as f:  # noqa: PTH123
-        # Create non-mesh pickle file
-        pickle.dump([1, 2, 3], f)
-    match = (
-        "Pickled object must be an instance of <class 'pyvista.core.dataobject.DataObject'>. "
-        "Got <class 'list'> instead."
-    )
-    with pytest.raises(TypeError, match=match):
-        pv.read(filepath)
 
-    match = "Filename must be a file path with extension ('.pkl', '.pickle'). Got {} instead."
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.read_pickle({})
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_pv_read_refuses_pickle_extension(tmp_path, ext):
+    """``pv.read`` must refuse ``.pkl`` / ``.pickle`` — not a mesh format (CWE-502)."""
+    p = tmp_path / f'x{ext}'
+    p.write_bytes(b'\x80\x04N.')  # valid pickle of ``None``
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(p)
 
-    match = (
-        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
-        "Got <class 'dict'> instead."
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.save_pickle('filename', {})
+
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_dataobject_save_refuses_pickle_extension(sphere, tmp_path, ext):
+    """``DataObject.save`` must refuse ``.pkl`` / ``.pickle``."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        sphere.save(tmp_path / f'x{ext}')
+
+
+def test_top_level_read_pickle_stub_raises(sphere):
+    """``pv.read_pickle`` / ``pv.save_pickle`` remain importable but refuse."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read_pickle('anything.pkl')
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.save_pickle('anything.pkl', sphere)
+
+
+def test_force_ext_pickle_refused(tmp_path):
+    """``force_ext='.pkl'`` must not bypass the refusal."""
+    p = tmp_path / 'x.vtp'
+    p.write_bytes(b'\x80\x04N.')
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(p, force_ext='.pkl')
+
+
+@pytest.mark.parametrize('scheme', ['https', 's3'])
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_remote_pickle_uri_refused(scheme, ext):
+    """Remote ``.pkl`` URIs must refuse before any download attempt (P-1a)."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(f'{scheme}://attacker.example/x{ext}')
 
 
 def test_exodus_reader_ext():

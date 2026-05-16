@@ -290,7 +290,9 @@ def test_remote_pickle_uri_refused(uri):
         return '/tmp/should-not-be-used'
 
     with patch('pooch.retrieve', side_effect=fake_retrieve):
-        with pytest.raises(ValueError, match='Refusing to load pickle from remote URI'):
+        with pytest.raises(
+            ValueError, match='pickle is a Python serialization protocol, not a mesh'
+        ):
             pv.read(uri)
 
     assert downloaded is False, 'remote pickle must be refused before any download'
