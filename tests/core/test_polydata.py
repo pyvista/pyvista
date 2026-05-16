@@ -1023,23 +1023,33 @@ def test_extract_largest(sphere):
     assert mesh.n_faces == sphere.n_faces
 
 
-def test_clean(sphere):
+@pytest.mark.parametrize('static', [True, False])
+def test_clean(sphere, static):
     mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
-    cleaned = mesh.clean(merge_tol=1e-5)
+    cleaned = mesh.clean(merge_tol=1e-5, static=static)
     assert cleaned.n_points == sphere.n_points
 
-    mesh.clean(merge_tol=1e-5, inplace=True)
+    mesh.clean(merge_tol=1e-5, inplace=True, static=static)
     assert mesh.n_points == sphere.n_points
 
-    cleaned = mesh.clean(point_merging=False)
+    # point_merging=False forces the serial filter even when static=True
+    cleaned = mesh.clean(point_merging=False, static=static)
     assert cleaned.n_points == mesh.n_points
 
     # test with points but no cells
     mesh = pv.PolyData()
     mesh.points = (0, 0, 0)
-    cleaned = mesh.clean()
+    cleaned = mesh.clean(static=static)
     assert cleaned.n_points == 0
+
+
+def test_clean_static_matches_serial(sphere):
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
+    static_cleaned = mesh.clean(merge_tol=1e-5, static=True)
+    serial_cleaned = mesh.clean(merge_tol=1e-5, static=False)
+    assert static_cleaned.n_points == serial_cleaned.n_points
+    assert static_cleaned.n_cells == serial_cleaned.n_cells
 
 
 def test_area(sphere_dense, cube_dense):
