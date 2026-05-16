@@ -2226,8 +2226,11 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        point_merging : bool, optional
-            Enables point merging.  ``True`` by default.
+        point_merging : bool, default: True
+            Enable point merging. Setting this to ``False`` forces the
+            serial :vtk:`vtkCleanPolyData` backend regardless of the
+            ``static`` argument, since :vtk:`vtkStaticCleanPolyData` always
+            merges points.
 
         tolerance : float, optional
             Set merging tolerance.  When enabled merging is set to
@@ -2267,6 +2270,11 @@ class PolyDataFilters(DataSetFilters):
             merges points.
 
             .. versionadded:: 0.49
+
+            .. versionchanged:: 0.49
+               The default backend changed from :vtk:`vtkCleanPolyData` to
+               the threaded :vtk:`vtkStaticCleanPolyData`. Pass
+               ``static=False`` to restore the prior behavior.
 
         **kwargs : dict, optional
             Accepts for ``merge_tol`` to replace the ``tolerance``
