@@ -398,8 +398,16 @@ def _read_dispatch(  # noqa: PLR0911
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and has_scheme(filename):
         uri_ext = get_ext(urlparse(filename).path)
+        if uri_ext.lower() in PICKLE_EXT:
+            msg = (
+                f'Refusing to load pickle from remote URI {filename!r}. '
+                f'Loading a pickle from an untrusted source allows arbitrary '
+                f'code execution. Download the file manually after verifying '
+                f'its origin, then pass the local path to `pyvista.read_pickle`.'
+            )
+            raise ValueError(msg)
         # If a custom reader is registered for this extension, try it
-        # with the raw URI first — the reader may handle cloud paths
+        # with the raw URI first, the reader may handle cloud paths
         # natively (e.g. zarr stores on S3). If it fails, fall back to
         # downloading the file and retrying with a local path.
         ext_handler = _get_ext_handler(uri_ext)
