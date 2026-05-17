@@ -2314,10 +2314,11 @@ class PolyDataFilters(DataSetFilters):
                 '`static=False` to disable point merging.'
             )
             raise ValueError(msg)
-        # vtkStaticCleanPolyData segfaults on VTK <= 9.5 when the input has
-        # points but no cells, so fall back to the serial filter in that case.
-        # Both filters return an empty mesh here, so the result is unchanged.
-        if static and self.n_cells == 0:  # type: ignore[attr-defined]
+        # vtkStaticCleanPolyData is unreliable on VTK < 9.6 (segfaults, e.g.
+        # on cell-less input and under threaded load), so transparently fall
+        # back to the serial filter there. It produces the same set of points
+        # and cells, so results are unchanged; only the speedup is lost.
+        if static and pv.vtk_version_info < (9, 6):
             static = False
         alg: _vtk.vtkStaticCleanPolyData | _vtk.vtkCleanPolyData
         if static:
