@@ -223,6 +223,33 @@ def test_accessor_vs_accessor_collision_warns_and_replaces():
     assert pv.Sphere().clashing.who() == 'second'
 
 
+def test_re_register_same_class_is_silent_noop(recwarn):
+    """Re-registering the identical accessor class on the same target is a
+    true no-op and must not warn.
+
+    Module re-import (e.g. ``pytest --cov`` re-executing a plugin module)
+    re-runs the registration call with the same class object. Downstream
+    packages run under ``filterwarnings=error``, so a warning here would
+    be fatal and force them into a manual de-dup workaround instead of
+    just decorating their class.
+    """
+
+    class SameAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+        def who(self):
+            return 'same'
+
+    pv.register_dataset_accessor('reimport_noop', pv.PolyData)(SameAccessor)
+    pv.register_dataset_accessor('reimport_noop', pv.PolyData)(SameAccessor)
+
+    assert [w for w in recwarn.list if issubclass(w.category, UserWarning)] == []
+    assert pv.Sphere().reimport_noop.who() == 'same'
+    records = [r for r in pv.registered_accessors() if r.name == 'reimport_noop']
+    assert len(records) == 1
+
+
 def test_inherited_accessor_collision_warns():
     """Registering on a subclass when an ancestor already owns the name warns."""
 
