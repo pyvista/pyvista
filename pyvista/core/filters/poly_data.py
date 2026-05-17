@@ -2266,7 +2266,8 @@ class PolyDataFilters(DataSetFilters):
             multithreaded and typically 1.4x to 2.2x faster on meshes above
             a few thousand triangles, returning the same set of points and
             cells but in a different order. Requires ``point_merging=True``
-            since the static filter always merges points.
+            since the static filter always merges points, and requires
+            VTK >= 9.6.
 
             .. versionadded:: 0.49
 
@@ -2315,11 +2316,15 @@ class PolyDataFilters(DataSetFilters):
             )
             raise ValueError(msg)
         # vtkStaticCleanPolyData is unreliable on VTK < 9.6 (segfaults, e.g.
-        # on cell-less input and under threaded load), so transparently fall
-        # back to the serial filter there. It produces the same set of points
-        # and cells, so results are unchanged; only the speedup is lost.
+        # on cell-less input and under threaded load). Raise rather than
+        # silently falling back to the serial filter, since the two filters
+        # emit points and cells in a different order and a silent downgrade
+        # would produce different meshes depending on the installed VTK.
         if static and pv.vtk_version_info < (9, 6):
-            static = False
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+
+            msg = '`static=True` requires VTK >= 9.6.'
+            raise VTKVersionError(msg)
         alg: _vtk.vtkStaticCleanPolyData | _vtk.vtkCleanPolyData
         if static:
             alg = _vtk.vtkStaticCleanPolyData()

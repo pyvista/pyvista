@@ -1055,6 +1055,32 @@ def test_clean_static_matches_serial(sphere):
     assert static_cleaned.n_points == serial_cleaned.n_points
     assert static_cleaned.n_cells == serial_cleaned.n_cells
 
+    # vtkStaticCleanPolyData emits points/cells in a different order than the
+    # serial filter, so compare order-independently: the two outputs must have
+    # the same set of point coordinates and the same set of cells.
+    def _sorted_points(poly):
+        return poly.points[np.lexsort(poly.points.T)]
+
+    assert np.allclose(_sorted_points(static_cleaned), _sorted_points(serial_cleaned))
+
+    def _cell_coord_set(poly):
+        # Each cell as a frozenset of its (rounded) point coordinates, so the
+        # comparison is invariant to both point ordering and connectivity
+        # reindexing between the two filters.
+        cells = []
+        for cid in range(poly.n_cells):
+            pts = poly.get_cell(cid).points
+            cells.append(frozenset(map(tuple, np.round(pts, 8))))
+        return sorted(map(sorted, cells))
+
+    assert _cell_coord_set(static_cleaned) == _cell_coord_set(serial_cleaned)
+
+
+def test_clean_static_requires_vtk_96(sphere, monkeypatch):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 5, 0))
+    with pytest.raises(pv.VTKVersionError, match=r'requires VTK >= 9\.6'):
+        sphere.clean(static=True)
+
 
 def test_area(sphere_dense, cube_dense):
     radius = 0.5
