@@ -24,7 +24,11 @@ jobs:
     runs-on: "ubuntu-22.04"
 
     permissions:
-      issues: write # required for peter-evans/create-issue-from-file
+      issues: write # required to open/comment the linkcheck failure issue
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
 
     steps:
       - uses: actions/checkout@v6
@@ -32,11 +36,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: "Compute weekly cache key"
+        id: cachekey
+        # Rotate the cache weekly so a stale entry cannot pin the job to a
+        # permanent failure even if a transient error is somehow cached.
+        run: echo "key=cache-lychee-$(date -u +%Y-%U)" >> "$GITHUB_OUTPUT"
+
       - name: "Cache Lychee"
         uses: actions/cache@v5
         with:
           path: .lycheecache
-          key: cache-lychee
+          key: ${{ steps.cachekey.outputs.key }}
 
       - name: "Run Lychee"
         id: lychee
@@ -47,13 +57,33 @@ jobs:
 
       - name: "Report Failure"
         if: steps.lychee.outputs.exit_code != 0
-        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710
-        with:
-          title: "chore: linkcheck failure"
-          content-filepath: ./lychee/out.md
-          labels: |
-            documentation
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Ensure the dedup label exists (idempotent).
+          gh label create linkcheck-failure \
+            --color cbb230 \
+            --description "Tracks the recurring linkcheck failure" \
+            --force || true
+
+          body=$(cat <<EOF
+          See [the linkcheck run](${RUN_URL}) for the full output.
+
+          $(cat ./lychee/out.md)
+          EOF
+          )
+
+          # Post to the single open issue, like the integration tests do.
+          existing=$(gh issue list --label "linkcheck-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "chore: linkcheck failure" --label "linkcheck-failure" --body "$body"
+          fi
 
       - name: "Exit Action"
         if: steps.lychee.outputs.exit_code != 0
-        run: exit {{ steps.lychee.outputs.exit_code }}
+        env:
+          LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
+        run: exit "$LYCHEE_EXIT_CODE"
