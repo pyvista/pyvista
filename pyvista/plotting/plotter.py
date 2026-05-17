@@ -6582,7 +6582,9 @@ class BasePlotter(_BoundsSizeMixin):
             # before extracting an image
             if self._first_time:
                 self._on_first_render_request()
-                self.render()
+
+            # Always render so scene changes made since the last screenshot
+            self.render()
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()

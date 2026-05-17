@@ -1501,6 +1501,23 @@ def test_screenshot(tmpdir):
         pl.screenshot()
 
 
+def test_screenshot_reflects_scene_changes():
+    # Regression for discussion #8670: ``screenshot`` must render pending
+    # scene changes on every call, not only the first one. Previously a
+    # second ``screenshot`` returned the stale framebuffer unless
+    # ``render`` was called or ``window_size`` was passed (which rendered
+    # as a side effect).
+    pl = pv.Plotter()
+    mesh = pv.Sphere(radius=3) + pv.Sphere(radius=1, center=(0, 0, 5))
+    pl.add_mesh(mesh, color='lightgray', smooth_shading=False)
+    pl.camera_position = ((0, 0, 10), (0, 0, 0), (0, 1, 0))
+    before = pl.show(auto_close=False, screenshot=True)
+    pl.add_light(pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='red'))
+    after = pl.screenshot()
+    assert not np.array_equal(before, after)
+    pl.close()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_scaled():
     # FYI: no regression tests because show() is not called
