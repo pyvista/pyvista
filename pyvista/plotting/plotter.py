@@ -6583,8 +6583,19 @@ class BasePlotter(_BoundsSizeMixin):
             if self._first_time:
                 self._on_first_render_request()
 
-            # Always render so scene changes made since the last screenshot
-            self.render()
+            # Flush pending scene changes to the framebuffer so every
+            # screenshot reflects the current scene, not only the first
+            # one (discussion #8670). Drawn directly instead of via
+            # ``render`` so user ``on_render`` callbacks do not fire on an
+            # implicit screenshot (e.g. the image-cache close hook).
+            if (
+                self.render_window is not None
+                and not self._first_time
+                and not self._suppress_rendering
+            ):
+                self.renderers.on_plotter_render()
+                self.render_window.Render()
+                self._rendered = True
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()
