@@ -1023,7 +1023,19 @@ def test_extract_largest(sphere):
     assert mesh.n_faces == sphere.n_faces
 
 
-@pytest.mark.parametrize('static', [True, False])
+@pytest.mark.parametrize(
+    'static',
+    [
+        pytest.param(
+            True,
+            marks=pytest.mark.skipif(
+                pv.vtk_version_info < (9, 6),
+                reason='`static=True` requires VTK >= 9.6.',
+            ),
+        ),
+        False,
+    ],
+)
 def test_clean(sphere, static):
     mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
@@ -1048,6 +1060,10 @@ def test_clean(sphere, static):
     assert cleaned.n_points == 0
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 6),
+    reason='`static=True` requires VTK >= 9.6.',
+)
 def test_clean_static_matches_serial(sphere):
     mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     static_cleaned = mesh.clean(merge_tol=1e-5, static=True)
