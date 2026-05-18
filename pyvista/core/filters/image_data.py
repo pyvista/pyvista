@@ -503,7 +503,7 @@ class ImageDataFilters(DataSetFilters):
         if rebase_coordinates:
             # Adjust for the confusing issue with the extents
             #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-            result.origin = result.bounds[::2]
+            result.origin = result.points[0]
             result.offset = (0, 0, 0)
         return result
 

@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
+import trimesh
 
 import pyvista as pv
 from pyvista import examples
@@ -385,9 +386,6 @@ def test_polydata_subclass_del():
 
 
 def test_multi_ray_trace(sphere):
-    trimesh = pytest.importorskip('trimesh')
-    if not trimesh.ray.has_embree:
-        pytest.skip('Requires Embree')
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)

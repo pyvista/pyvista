@@ -1,22 +1,24 @@
 comment: false
 
-# Strict coverage rules. `target: auto` enforces non-decreasing coverage so
-# that silent regressions (e.g., an entire VTK matrix cell not uploading
-# coverage, as happened in https://github.com/pyvista/pyvista/issues/8635)
-# fail the check instead of being absorbed by a fixed threshold.
+# `target: auto` keeps coverage from drifting downward over time. The small
+# threshold absorbs session-aggregation jitter on Codecov's side: matrix
+# uploads occasionally land as 1, 2, or 3 sessions on otherwise identical
+# runs, which moves the reported total by ~0.1% without any real change.
+# An entire matrix cell going missing (the failure mode from #8635) drops
+# coverage by far more than this and is also caught by `if_no_uploads`.
 coverage:
   status:
     project:
       default:
         target: auto
-        threshold: 0%
+        threshold: 0.5%
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
     patch:
       default:
         target: auto
-        threshold: 0%
+        threshold: 0.5%
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
