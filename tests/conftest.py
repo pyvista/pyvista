@@ -3,7 +3,6 @@ from __future__ import annotations
 import faulthandler
 import functools
 from importlib import metadata
-from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
@@ -109,25 +108,16 @@ def needs_vtk_version(
     if (_min is not None and _min <= pv._MIN_SUPPORTED_VTK_VERSION) or (
         _max is not None and _max <= pv._MIN_SUPPORTED_VTK_VERSION
     ):
-        msg = (
-            "The 'needs_vtk_version' constraint is no longer necessary "
-            'and can be removed.'
-        )
+        msg = "The 'needs_vtk_version' constraint is no longer necessary and can be removed."
         raise pv.VTKVersionError(msg)
 
     curr_version = pv.vtk_version_info
 
     if _max is None and curr_version < _min:
-        pytest.skip(
-            reason
-            or f'Test needs VTK version >= {_min}, current is {curr_version}.'
-        )
+        pytest.skip(reason or f'Test needs VTK version >= {_min}, current is {curr_version}.')
 
     if _min is None and curr_version >= _max:
-        pytest.skip(
-            reason
-            or f'Test needs VTK version < {_max}, current is {curr_version}.'
-        )
+        pytest.skip(reason or f'Test needs VTK version < {_max}, current is {curr_version}.')
 
     if _min is not None and _max is not None:
         if _min > _max:
@@ -137,10 +127,7 @@ def needs_vtk_version(
         if curr_version < _min or curr_version >= _max:
             pytest.skip(
                 reason
-                or (
-                    f'Test needs {_min} <= VTK version < {_max}, '
-                    f'current is {curr_version}.'
-                )
+                or (f'Test needs {_min} <= VTK version < {_max}, current is {curr_version}.')
             )
 
 
