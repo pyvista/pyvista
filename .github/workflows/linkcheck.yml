@@ -2,7 +2,6 @@
 #   - https://github.com/actions/cache
 #   - https://github.com/actions/checkout
 #   - https://github.com/lycheeverse/lychee-action
-#   - https://github.com/peter-evans/create-issue-from-file
 
 name: LinkCheck - All files 🔗
 
