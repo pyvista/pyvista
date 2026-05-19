@@ -18,6 +18,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -2317,12 +2318,11 @@ class PolyDataFilters(DataSetFilters):
             raise ValueError(msg)
         # vtkStaticCleanPolyData is unreliable on VTK < 9.6 (segfaults, e.g.
         # on cell-less input and under threaded load). Raise rather than
-        # silently falling back to the serial filter, since the two filters
-        # emit points and cells in a different order and a silent downgrade
-        # would produce different meshes depending on the installed VTK.
+        # silently falling back to the serial filter: the two filters emit
+        # the same set of points and cells but in a different order, so a
+        # silent downgrade would change the point and cell ordering of the
+        # output depending on the installed VTK version.
         if static and pv.vtk_version_info < (9, 6):
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = '`static=True` requires VTK >= 9.6.'
             raise VTKVersionError(msg)
         alg: _vtk.vtkStaticCleanPolyData | _vtk.vtkCleanPolyData

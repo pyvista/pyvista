@@ -1028,8 +1028,8 @@ def test_extract_largest(sphere):
     [
         pytest.param(
             True,
-            marks=pytest.mark.skipif(
-                pv.vtk_version_info < (9, 6),
+            marks=pytest.mark.needs_vtk_version(
+                (9, 6),
                 reason='`static=True` requires VTK >= 9.6.',
             ),
         ),
@@ -1060,20 +1060,19 @@ def test_clean(sphere, static):
     assert cleaned.n_points == 0
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 6),
-    reason='`static=True` requires VTK >= 9.6.',
-)
-def test_clean_static_matches_serial(sphere):
+@pytest.mark.needs_vtk_version((9, 6), reason='`static=True` requires VTK >= 9.6.')
+def test_clean_static_equivalent_to_serial(sphere):
+    # The static and serial filters are NOT expected to produce equal meshes:
+    # they emit the same set of points and cells but in a different order, so
+    # `static_cleaned == serial_cleaned` is intentionally false. This test
+    # asserts the weaker (and correct) guarantee: the two outputs contain the
+    # same set of point coordinates and the same set of cells.
     mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     static_cleaned = mesh.clean(merge_tol=1e-5, static=True)
     serial_cleaned = mesh.clean(merge_tol=1e-5, static=False)
     assert static_cleaned.n_points == serial_cleaned.n_points
     assert static_cleaned.n_cells == serial_cleaned.n_cells
 
-    # vtkStaticCleanPolyData emits points/cells in a different order than the
-    # serial filter, so compare order-independently: the two outputs must have
-    # the same set of point coordinates and the same set of cells.
     def _sorted_points(poly):
         return poly.points[np.lexsort(poly.points.T)]
 
