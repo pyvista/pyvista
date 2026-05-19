@@ -10,10 +10,6 @@ The in-memory pickle protocol via ``__getstate__`` / ``__setstate__``
 (used by ``multiprocessing``, ``dask``, ``joblib``) is unaffected and
 covered by ``tests/core/test_dataobject.py``.
 
-Tracks:
-- ``security-audit/INVENTORY.md`` P-1a (remote-URI pickle RCE)
-- ``security-audit/INVENTORY.md`` P-1b (local-pickle footgun)
-- ``security-audit/INVENTORY.md`` T-1 (security regression suite)
 """
 
 from __future__ import annotations
@@ -93,13 +89,12 @@ def test_top_level_read_pickle_stub_refuses(sphere):
         pv.save_pickle('anything.pkl', sphere)
 
 
+@pytest.mark.needs_vtk_version((9, 3), reason='VTK < 9.3 has limited pickle support.')
 def test_in_memory_pickle_protocol_still_works(sphere):
     """The in-memory pickle protocol (multiprocessing/dask) must NOT break.
 
     This is the legitimate use of pickle — only the file-format API was
     removed. If this ever fails, the removal went too far.
     """
-    if pv.vtk_version_info < (9, 3):
-        pytest.skip('VTK < 9.3 has limited pickle support.')
     unpickled = pickle.loads(pickle.dumps(sphere))
     assert unpickled == sphere
