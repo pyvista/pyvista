@@ -9,10 +9,10 @@ import importlib
 import itertools
 import json
 from pathlib import Path
-import pickle
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import NoReturn
 from typing import TextIO
 from typing import TypeVar
 from typing import cast
@@ -52,7 +52,24 @@ if TYPE_CHECKING:
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
-PICKLE_EXT = ('.pkl', '.pickle')
+_PICKLE_FILE_EXT = ('.pkl', '.pickle')
+_PICKLE_REMOVED_MSG = (
+    'Reading or writing pickle files (.pkl, .pickle) via PyVista is not '
+    'supported: pickle is a Python serialization protocol, not a mesh '
+    'file format. Loading an attacker-controlled .pkl is arbitrary code '
+    'execution (CWE-502). Use a real mesh format (.vtu, .vtp, .vtm, .vtk, '
+    '.ply, .stl, ...) or, for fast single-blob round-trips, install '
+    '`pyvista-zstd` (`pip install pyvista[io]`) and use the `.pv` format. '
+    "PyVista still supports Python's pickle protocol for cross-process "
+    'serialization (multiprocessing, dask, joblib) via '
+    '`__getstate__`/`__setstate__`; that path is unchanged.'
+)
+
+
+def _raise_pickle_removed() -> NoReturn:
+    raise ValueError(_PICKLE_REMOVED_MSG)
+
+
 _PointCellField = Literal['point', 'cell', 'field']
 _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
@@ -130,6 +147,16 @@ def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
 
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
+
+    .. note::
+
+        This controls the **in-memory** pickle protocol used by
+        ``DataObject.__getstate__`` / ``__setstate__`` for
+        cross-process serialization (``multiprocessing``, ``dask``,
+        ``joblib``). It does **not** enable a ``.pkl`` mesh file format.
+        PyVista refuses ``.pkl`` / ``.pickle`` extensions in
+        :func:`pyvista.read` and :meth:`~pyvista.DataObject.save` because
+        unpickling untrusted files is arbitrary code execution.
 
     Parameters
     ----------
@@ -241,8 +268,7 @@ def read(  # noqa: PLR0917
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
-    readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
-    meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
+    readers first then tries to use ``meshio``.
 
     Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
     temporary file automatically.  Install ``fsspec`` for full protocol
@@ -259,15 +285,14 @@ def read(  # noqa: PLR0917
        ``meshio``. Be sure to install ``meshio`` with ``pip install
        meshio`` if you wish to use it.
 
-    .. versionadded:: 0.45
-
-        Support reading pickled meshes.
-
     .. warning::
 
-        The pickle module is not secure. Only read pickled mesh files
-        (``'.pkl'`` or ``'.pickle'``) you trust. See :py:mod:`pickle`
-        for details.
+        ``.pkl`` / ``.pickle`` files are **not** supported and will be
+        refused. Pickle is a Python serialization protocol, not a mesh
+        file format, and loading an untrusted pickle is arbitrary code
+        execution (CWE-502). Use a real mesh format (``.vtu``, ``.vtp``,
+        ``.vtm``, ``.vtk``, ``.ply``, ``.stl``, ...) or install
+        ``pyvista-zstd`` for the ``.pv`` single-blob format.
 
     See Also
     --------
@@ -306,7 +331,7 @@ def read(  # noqa: PLR0917
         using a ``vtk`` reader. When ``None`` (the default), honors
         :attr:`pyvista.core.config.Config.validate_on_wrap`. Pass ``False`` to
         skip the cheap array-length sanity check on very large trusted
-        files. Has no effect for ``meshio`` or pickle code paths.
+        files. Has no effect for ``meshio`` code paths.
 
         .. versionadded:: 0.48
 
@@ -338,10 +363,6 @@ def read(  # noqa: PLR0917
     Load a meshio file.
 
     >>> mesh = pv.read('mesh.obj')  # doctest:+SKIP
-
-    Load a pickled mesh file.
-
-    >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
     result = _read_dispatch(
@@ -398,14 +419,8 @@ def _read_dispatch(  # noqa: PLR0911
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and has_scheme(filename):
         uri_ext = get_ext(urlparse(filename).path)
-        if uri_ext.lower() in PICKLE_EXT:
-            msg = (
-                f'Refusing to load pickle from remote URI {filename!r}. '
-                f'Loading a pickle from an untrusted source allows arbitrary '
-                f'code execution. Download the file manually after verifying '
-                f'its origin, then pass the local path to `pyvista.read_pickle`.'
-            )
-            raise ValueError(msg)
+        if uri_ext.lower() in _PICKLE_FILE_EXT:
+            _raise_pickle_removed()
         # If a custom reader is registered for this extension, try it
         # with the raw URI first, the reader may handle cloud paths
         # natively (e.g. zarr stores on S3). If it fails, fall back to
@@ -439,8 +454,8 @@ def _read_dispatch(  # noqa: PLR0911
             'See `pyvista.Plotter.import_vrml` for details.'
         )
         raise ValueError(msg)
-    if ext in PICKLE_EXT:
-        return read_pickle(filename)
+    if ext in _PICKLE_FILE_EXT:
+        _raise_pickle_removed()
 
     # Check for registered custom extension readers
     ext_handler = _get_ext_handler(ext)
@@ -983,114 +998,26 @@ def read_grdecl(
     return grid
 
 
-def read_pickle(filename: str | Path) -> DataObject:
-    """Load a pickled mesh from file.
+# unused; the shims exist solely to keep the import path callable while always
+# raising. They must accept any historical call signature unchanged.
+def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+    """Raise :class:`ValueError` — pickle is not a supported mesh file format.
 
-    Parameters
-    ----------
-    filename : str
-        The path of the pickled mesh to read.
-
-    Returns
-    -------
-    pyvista.DataObject
-        Unpickled mesh.
-
-    Examples
-    --------
-    Save a pickled mesh and read it.
-
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> mesh = examples.load_ant()
-    >>> pv.save_pickle('ant.pkl', mesh)
-    >>> new_mesh = pv.read_pickle('ant.pkl')
-    >>> new_mesh
-    PolyData (...)
-      N Cells:    912
-      N Points:   486
-      N Strips:   0
-      X Bounds:   -1.601e+01, 1.601e+01
-      Y Bounds:   -9.385e+00, 9.385e+00
-      Z Bounds:   -1.678e+01, 1.678e+01
-      N Arrays:   0
-
-    Unlike other file formats, custom attributes are saved with pickled meshes.
-
-    >>> pv.set_new_attribute(mesh, 'custom_attribute', 42)
-    >>> pv.save_pickle('ant.pkl', mesh)
-    >>> new_mesh = pv.read_pickle('ant.pkl')
-    >>> new_mesh.custom_attribute
-    42
-
+    This shim is kept only for backwards-compatible import paths. See
+    the module-level refusal message for migration guidance. PyVista
+    still supports Python's pickle protocol for cross-process
+    serialization via ``DataObject.__getstate__`` /
+    ``DataObject.__setstate__``; only the file-format API is removed.
     """
-    filename_str = str(filename)
-    if filename_str.endswith(PICKLE_EXT):
-        with open(filename_str, 'rb') as f:  # noqa: PTH123
-            mesh = pickle.load(f)
-
-        if not isinstance(mesh, pv.DataObject):
-            msg = (
-                f'Pickled object must be an instance of {pv.DataObject}. '
-                f'Got {mesh.__class__} instead.'
-            )
-            raise TypeError(msg)
-        return mesh
-    msg = f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
-    raise ValueError(msg)
+    _raise_pickle_removed()
 
 
-def save_pickle(filename: str | Path, mesh: DataObject) -> None:
-    """Pickle a mesh and save it to file.
+def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+    """Raise :class:`ValueError` — pickle is not a supported mesh file format.
 
-    Parameters
-    ----------
-    filename : str
-        The path of the pickled mesh to save, including the extension ``'.pkl'``
-        or ``'.pickle'``.
-
-    mesh : pyvista.DataObject
-        Any PyVista mesh.
-
-    Examples
-    --------
-    Save a pickled mesh and read it.
-
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> mesh = examples.load_ant()
-    >>> pv.save_pickle('ant.pkl', mesh)
-    >>> new_mesh = pv.read_pickle('ant.pkl')
-    >>> new_mesh
-    PolyData (...)
-      N Cells:    912
-      N Points:   486
-      N Strips:   0
-      X Bounds:   -1.601e+01, 1.601e+01
-      Y Bounds:   -9.385e+00, 9.385e+00
-      Z Bounds:   -1.678e+01, 1.678e+01
-      N Arrays:   0
-
-    Unlike other file formats, custom attributes are saved with pickled meshes.
-
-    >>> pv.set_new_attribute(mesh, 'custom_attribute', 42)
-    >>> pv.save_pickle('ant.pkl', mesh)
-    >>> new_mesh = pv.read_pickle('ant.pkl')
-    >>> new_mesh.custom_attribute
-    42
-
+    See :func:`read_pickle`.
     """
-    filename_str = str(filename)
-    if not filename_str.endswith(PICKLE_EXT):
-        filename_str += '.pkl'
-    if not isinstance(mesh, pv.DataObject):
-        msg = (  # type: ignore[unreachable]
-            f'Only {pv.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
-        )
-        raise TypeError(msg)
-    _warn_multiblock_nested_field_data(mesh)
-    with open(filename_str, 'wb') as f:  # noqa: PTH123
-        pickle.dump(mesh, f)
+    _raise_pickle_removed()
 
 
 def is_meshio_mesh(obj: object) -> bool:

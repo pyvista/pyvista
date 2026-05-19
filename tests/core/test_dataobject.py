@@ -13,7 +13,6 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataobject import USER_DICT_KEY
-from pyvista.core.utilities.fileio import save_pickle
 from pyvista.core.utilities.writer import BaseWriter
 
 
@@ -181,7 +180,7 @@ def test_metadata_save(hexbeam, tmpdir):
 
 
 @pytest.mark.needs_vtk_version(9, 3)
-@pytest.mark.parametrize('file_ext', ['.pkl', '.vtm'])
+@pytest.mark.parametrize('file_ext', ['.vtm'])
 def test_save_nested_multiblock_field_data(tmp_path, file_ext):
     filename = 'mesh' + file_ext
     nested = pv.MultiBlock()
@@ -362,24 +361,19 @@ def test_default_pickle_format():
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-@pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
-def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_path):
+def test_pickle_serialize_deserialize(datasets, pickle_format):
+    """Test in-memory pickle protocol (multiprocessing/dask use case).
+
+    Pickle is NOT a supported mesh file format — only the in-memory
+    pickle protocol via ``__getstate__``/``__setstate__`` is tested
+    here. File-format refusal is covered in ``test_reader.py``.
+    """
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
         pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
     for dataset in datasets:
-        if file_ext is not None:
-            filepath_save = tmp_path / ('data_object' + file_ext)
-            if file_ext == '':
-                save_pickle(filepath_save, dataset)
-                filepath_read = tmp_path / ('data_object' + '.pkl')
-            else:
-                dataset.save(filepath_save)
-                filepath_read = filepath_save
-            dataset_2 = pv.read(filepath_read)
-        else:
-            dataset_2 = pickle.loads(pickle.dumps(dataset))
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
         for attr in dataset.__dict__:
