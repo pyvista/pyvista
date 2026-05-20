@@ -73,6 +73,11 @@ warnings.filterwarnings(
     message='Matplotlib is currently using agg, which is a non-GUI backend, '
     'so cannot show the figure.',
 )
+warnings.filterwarnings(
+    'ignore',
+    category=UserWarning,
+    message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+)
 
 # Prevent deprecated features from being used in examples
 warnings.filterwarnings(
@@ -454,6 +459,13 @@ def _filter_sphinx_gallery_warnings():
         'ignore',
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
+    )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend (the GitHub-hosted runner picks Agg even with xvfb).
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
     )
 
     # Treat all remaining warnings as errors
