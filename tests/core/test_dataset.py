@@ -1055,7 +1055,9 @@ def test_intersect_with_line(points_dtype):
     ]
     # Use a set since the exact order depends on the OS and the points precision
     # The exact order doesn't matter here, and the cell-id matching the point is tested separately
-    expected_cell_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 16, 18, 10, 12, 14, 15, 17, 19}
+    lower_ids = set(range(10))
+    upper_ids = set(range(10, 20))
+    expected_cell_ids = lower_ids | upper_ids
 
     assert np.allclose(points, expected_points)
     assert set(cell_ids.tolist()) == expected_cell_ids
@@ -1065,12 +1067,12 @@ def test_intersect_with_line(points_dtype):
     points, cell_ids = mesh.intersect_with_line(pointa, pointb, deduplicate_points=True)
 
     expected_points = [[0.0, 0.0, 0.5], [0.0, 0.0, -0.5]]
-    # Points precision can impact the exact cell id that is located
-    expected_cell_ids = [0, 11] if points_dtype == np.single else [0, 10]
 
     assert_intersection_results(mesh, points, cell_ids)
     assert np.allclose(points, expected_points)
-    assert np.allclose(cell_ids, expected_cell_ids)
+    # Only check cell id membership because the exact id returned depends on dtype and OS
+    assert cell_ids[0] in lower_ids
+    assert cell_ids[1] in upper_ids
 
     # Test again with a tolerance of zero to show that zero tolerance can fail to properly
     # locate both intersections (and therefore tolerance should not be zero by default)
@@ -1078,7 +1080,7 @@ def test_intersect_with_line(points_dtype):
         pointa, pointb, deduplicate_points=True, tolerance=0.0
     )
     assert points.ndim == 2
-    if sys.platform == 'windows':
+    if sys.platform.startswith('win'):
         assert len(points) == 2
     else:
         assert len(points) < 2
