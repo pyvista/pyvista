@@ -109,7 +109,6 @@ test-playwright = ['playwright<1.59.0', { include-group = 'test' }]
 docs = [
   # vtk 9.6.2 wheels on PyPI ship a broken vtkOutlineFilter (SetGenerateFaces
   # missing); see #8700. Drop this pin once the upstream regression is fixed.
-  'vtk<9.6.2',
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
@@ -154,6 +153,7 @@ docs = [
   'trame-pyvista==0.1.0',
   'trimesh==4.12.0',
   'vtk-xref==0.1.2',
+  'vtk<9.6.2',
   { include-group = 'pinned' },
 ]
 
