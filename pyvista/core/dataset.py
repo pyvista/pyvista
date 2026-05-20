@@ -2422,6 +2422,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
+        Intersection a line with a sphere.
+
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> points, cell_ids = mesh.intersect_with_line([0.0, 0, 0], [1.0, 0, 0])
@@ -2431,6 +2433,18 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> cell_ids
         array([  86, 1653])
+
+        Observe that `two` identical points are returned since two adjacent cells were intersected.
+        Use ``deduplicate_points`` to return unique intersection points only.
+
+        >>> points, cell_ids = mesh.intersect_with_line(
+        ...     [0.0, 0, 0], [1.0, 0, 0], deduplicate_points=True
+        ... )
+        >>> points
+        array([[0.4992667, 0.       , 0.       ]], dtype=float32)
+
+        >>> cell_ids
+        array([86])
 
         """
         if (pointa := np.asarray(pointa)).size != 3:

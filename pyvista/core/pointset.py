@@ -1802,6 +1802,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             This property is expensive to compute and is therefore cached. If the mesh's
             geometry is modified, the obb tree will no longer be valid.
 
+        .. deprecated:: 0.49
+            This property is primarily for internal use only, and the vtkOBBTree locator does
+            not reliably find intersections in some cases.
+
         """
         return self._obb_tree
 
