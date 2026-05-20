@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: cache-pyvista-data
     env:
-      PARALLEL: "-j2" # Public GitHub runners have 2 real cores
+      PARALLEL: "-j4" # GitHub-hosted Linux runners have 4 vCPUs
       TOX_COLORED: "yes"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
@@ -84,7 +84,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Build Documentation
-        run: timeout 3600 xvfb-run -a tox run -e docs-build
+        run: timeout 7200 xvfb-run -a tox run -e docs-build
 
       # Build a development wheel and bundle a PEP 503 simple index into the
       # docs output. Once the docs deploy to dev.pyvista.org, users can
