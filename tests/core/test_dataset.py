@@ -1081,6 +1081,13 @@ def test_intersect_with_line(points_dtype):
     assert len(points) < 2
 
 
+def test_build_locator_raises():
+    poly = pv.PolyData()
+    match = 'Building vtkCellLocator requires a dataset with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
+
+
 def test_find_cells_within_bounds():
     mesh = pv.Cube()
 

@@ -20,12 +20,14 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
 from .formatting_html import _data_array_section
@@ -3642,6 +3644,15 @@ class DataSet(DataSetFilters, DataObject):
     @cached_property
     def _obb_tree(self) -> _vtk.vtkOBBTree:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
+        msg = (
+            'The obbTree property is deprecated. This property is primarily for internal use only,'
+            '\nand the vtkOBBTree locator does not reliably find intersections in some cases.'
+        )
+        warn_external(msg, PyVistaDeprecationWarning)
+        # Deprecated in 0.49, remove in 0.52
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Remove PolyData.obbTree and DataSet._obb_tree properties.'
+            raise RuntimeError(msg)
         return _build_locator(self, _vtk.vtkOBBTree)
 
 
