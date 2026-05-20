@@ -1080,10 +1080,10 @@ def test_intersect_with_line(points_dtype):
         pointa, pointb, deduplicate_points=True, tolerance=0.0
     )
     assert points.ndim == 2
-    if sys.platform.startswith('win'):
-        assert len(points) == 2
-    else:
+    if sys.platform == 'darwin':
         assert len(points) < 2
+    else:
+        assert len(points) == 2
 
 
 def test_build_locator_raises():
