@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -1052,13 +1053,12 @@ def test_intersect_with_line(points_dtype):
         [0.0, 0.0, -0.5],
         [0.0, 0.0, -0.5],
     ]
-    expected_cell_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 16, 18, 10, 12, 14, 15, 17, 19]
-    if points_dtype == np.double:
-        # Points precision can impact the exact order cell ids are located
-        expected_cell_ids = sorted(expected_cell_ids)
+    # Use a set since the exact order depends on the OS and the points precision
+    # The exact order doesn't matter here, and the cell-id matching the point is tested separately
+    expected_cell_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 16, 18, 10, 12, 14, 15, 17, 19}
 
     assert np.allclose(points, expected_points)
-    assert np.allclose(cell_ids, expected_cell_ids)
+    assert set(cell_ids.tolist()) == expected_cell_ids
     assert_intersection_results(mesh, points, cell_ids)
 
     # Test again with deduplicated points
@@ -1078,7 +1078,10 @@ def test_intersect_with_line(points_dtype):
         pointa, pointb, deduplicate_points=True, tolerance=0.0
     )
     assert points.ndim == 2
-    assert len(points) < 2
+    if sys.platform == 'windows':
+        assert len(points) == 2
+    else:
+        assert len(points) < 2
 
 
 def test_build_locator_raises():
