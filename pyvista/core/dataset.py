@@ -3687,14 +3687,12 @@ class DataSet(DataSetFilters, DataObject):
         self._cached_locators.add('_obb_tree')
         return _build_locator(self, _vtk.vtkOBBTree)
 
-    def _delete_cached_locators(self: DataSet) -> None:
+    def __del__(self) -> None:
+        """Delete the object."""
+        # Delete cached locators
         for attr in self._cached_locators:
             with contextlib.suppress(KeyError):
                 del self.__dict__[attr]
-
-    def __del__(self) -> None:
-        """Delete the object."""
-        self._delete_cached_locators()
 
 
 _LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)
