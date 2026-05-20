@@ -5,11 +5,13 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
+from functools import cached_property
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -1969,6 +1971,11 @@ class DataSet(DataSetFilters, DataObject):
 
         See: https://github.com/pyvista/pyvista-support/issues/107
 
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkPointLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
         Parameters
         ----------
         point : sequence[float]
@@ -2018,9 +2025,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = '`n` must be a positive integer.'
             raise ValueError(msg)
 
-        locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
+        locator = self._point_locator
         if n > 1:
             id_list = _vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)  # type: ignore[arg-type]
@@ -2034,6 +2039,11 @@ class DataSet(DataSetFilters, DataObject):
         return_closest_point: bool = False,  # noqa: FBT001, FBT002
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
         """Find index of closest cell in this mesh to the given point.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2133,11 +2143,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
-
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
-
+        locator = self._cell_locator
         cell = _vtk.vtkGenericCell()
 
         closest_cells: list[int] = []
@@ -2167,6 +2173,11 @@ class DataSet(DataSetFilters, DataObject):
         point: VectorLike[float] | MatrixLike[float],
     ) -> int | NumpyArray[int]:
         """Find index of a cell that contains the given point.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2219,10 +2230,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
-
+        locator = self._cell_locator
         containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if singular else np.array(containing_cells)
 
@@ -2235,6 +2243,11 @@ class DataSet(DataSetFilters, DataObject):
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2282,11 +2295,8 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
         id_list = _vtk.vtkIdList()
-        locator.FindCellsAlongLine(
+        self._cell_locator.FindCellsAlongLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
@@ -2304,6 +2314,11 @@ class DataSet(DataSetFilters, DataObject):
 
         Line is defined from ``pointa`` to ``pointb``.  This
         method requires vtk version >=9.2.0.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2344,13 +2359,10 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
-        locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         cell = _vtk.vtkGenericCell()
-        locator.IntersectWithLine(
+        self._cell_locator.IntersectWithLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
@@ -2362,6 +2374,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkCellTreeLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2391,11 +2408,8 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(bounds).size != 6:
             msg = 'Bounds must be a length six tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellTreeLocator()
-        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
-        locator.BuildLocator()
         id_list = _vtk.vtkIdList()
-        locator.FindCellsWithinBounds(list(bounds), id_list)
+        self._cell_tree_locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
     def get_cell(self: Self, index: int) -> Cell:
@@ -3530,3 +3544,31 @@ class DataSet(DataSetFilters, DataObject):
         center = [0.0, 0.0, 0.0]
         r2 = grid.GetCell(0).ComputeBoundingSphere(center)
         return float(r2**0.5), (center[0], center[1], center[2])
+
+    @cached_property
+    def _cell_locator(self) -> _vtk.vtkCellLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkCellLocator)
+
+    @cached_property
+    def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkCellTreeLocator)
+
+    @cached_property
+    def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkPointLocator)
+
+
+_LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)
+
+
+def _build_locator(mesh: DataSet, locator: type[_LocatorType]) -> _LocatorType:
+    if mesh.n_points < 1 or mesh.n_cells < 1:
+        msg = f'Building the locator {locator} requires a dataset with points and cells.'
+        raise ValueError(msg)
+    instance = locator()
+    instance.SetDataSet(mesh)
+    instance.BuildLocator()
+    return instance

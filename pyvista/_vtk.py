@@ -211,6 +211,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLagrangeTriangle',
         'vtkLagrangeWedge',
         'vtkLine',
+        'vtkLocator',
         'vtkMultiBlockDataSet',
         'vtkNonMergingPointLocator',
         'vtkPartitionedDataSet',

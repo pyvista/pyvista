@@ -30,6 +30,7 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
+from .dataset import _build_locator
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
@@ -1804,13 +1805,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             geometry is modified, the obb tree will no longer be valid.
 
         """
-        if self.n_points < 1 or self.n_cells < 1:
-            msg = 'Building the OBB tree requires PolyData with points and cells.'
-            raise ValueError(msg)
-        obb_tree = _vtk.vtkOBBTree()
-        obb_tree.SetDataSet(self)
-        obb_tree.BuildLocator()
-        return obb_tree
+        return _build_locator(self, _vtk.vtkOBBTree)
 
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01
