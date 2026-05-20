@@ -48,11 +48,11 @@ jobs:
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
-      runs-on: "ubuntu-24.04-self-hosted-gpu"
+      runs-on: "ubuntu-22.04"
 
   doc:
     name: Build Documentation
-    runs-on: ubuntu-24.04-self-hosted-gpu
+    runs-on: ubuntu-22.04
     needs: cache-pyvista-data
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
@@ -68,15 +68,9 @@ jobs:
           python-version: 3.14
           cache: "pip"
 
-      - name: Set environment for self-hosted
-        if: runner.environment == 'self-hosted'
-        run: |
-          echo "PARALLEL=-j8" >> $GITHUB_ENV
-
       - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
-        if: runner.environment != 'self-hosted'
         with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime xvfb
           version: 3.0
 
       - name: Restore pyvista/data cache
@@ -90,7 +84,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Build Documentation
-        run: timeout 3600 tox run -e docs-build
+        run: timeout 3600 xvfb-run -a tox run -e docs-build
 
       # Build a development wheel and bundle a PEP 503 simple index into the
       # docs output. Once the docs deploy to dev.pyvista.org, users can
