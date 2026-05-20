@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import UserDict
+import copy as copylib
 import json
 import multiprocessing
 import pickle
@@ -472,6 +473,21 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
+
+
+def test_pickle_deletes_cached_locators():
+    poly = pv.Cone()
+
+    # Verify none of the locators are initially cached
+    assert poly._cached_locators == set()
+
+    for attr in ['_cell_locator', '_cell_tree_locator', '_point_locator']:
+        # Access each locator to trigger the caching
+        _ = getattr(poly, attr)
+        assert attr in poly._cached_locators
+
+    # Indirectly pickle the mesh using Python's deepcopy
+    copylib.deepcopy(poly)
 
 
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):

@@ -171,6 +171,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_VOXEL',
         'VTK_WEDGE',
         'vtkAbstractCellLocator',
+        'vtkAbstractPointLocator',
         'vtkBezierCurve',
         'vtkBezierHexahedron',
         'vtkBezierQuadrilateral',

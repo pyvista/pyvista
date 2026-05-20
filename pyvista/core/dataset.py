@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
+import contextlib
 from copy import deepcopy
 from functools import cached_property
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
 from typing import TypeVar
@@ -128,6 +130,7 @@ class DataSet(DataSetFilters, DataObject):
     """
 
     plot = pv._plot.plot
+    _cached_locators: ClassVar[set[str]] = set()
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -2243,7 +2246,7 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
     ) -> NumpyArray[int]:
         """Find the index of cells whose bounds intersect a line.
 
@@ -2262,8 +2265,10 @@ class DataSet(DataSetFilters, DataObject):
         pointb : VectorLike
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            :attr:`numpy.finfo`.
 
         Returns
         -------
@@ -2301,6 +2306,9 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
+        if tolerance is None:
+            tolerance = np.finfo(np.float32).eps
+
         id_list = _vtk.vtkIdList()
         self._cell_locator.FindCellsAlongLine(
             cast('Sequence[float]', pointa),
@@ -2318,8 +2326,7 @@ class DataSet(DataSetFilters, DataObject):
     ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
 
-        Line is defined from ``pointa`` to ``pointb``.  This
-        method requires vtk version >=9.2.0.
+        Line is defined from ``pointa`` to ``pointb``.
 
         .. warning::
 
@@ -2334,8 +2341,10 @@ class DataSet(DataSetFilters, DataObject):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            :attr:`numpy.finfo`.
 
         Returns
         -------
@@ -2387,8 +2396,10 @@ class DataSet(DataSetFilters, DataObject):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            :attr:`numpy.finfo`.
 
         deduplicate_points : bool, default: False
             By default, duplicate intersection points may be returned if an intersection point
@@ -2413,10 +2424,13 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh.intersect_with_line([0.0, 0, 0], [1.0, 0, 0])
-        (array([[0.4992667, 0.       , 0.       ],
-                [0.4992667, 0.       , 0.       ]], dtype=float32),
-         array([  86, 1653]))
+        >>> points, cell_ids = mesh.intersect_with_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> points
+        array([[0.4992667, 0.       , 0.       ],
+               [0.4992667, 0.       , 0.       ]], dtype=float32)
+
+        >>> cell_ids
+        array([  86, 1653])
 
         """
         if (pointa := np.asarray(pointa)).size != 3:
@@ -3629,16 +3643,19 @@ class DataSet(DataSetFilters, DataObject):
     @cached_property
     def _cell_locator(self) -> _vtk.vtkCellLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
+        self._cached_locators.add('_cell_locator')
         return _build_locator(self, _vtk.vtkCellLocator)
 
     @cached_property
     def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
+        self._cached_locators.add('_cell_tree_locator')
         return _build_locator(self, _vtk.vtkCellTreeLocator)
 
     @cached_property
     def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
+        self._cached_locators.add('_point_locator')
         return _build_locator(self, _vtk.vtkPointLocator)
 
     @cached_property
@@ -3653,14 +3670,28 @@ class DataSet(DataSetFilters, DataObject):
         if pv.version_info >= (0, 52):  # pragma: no cover
             msg = 'Remove PolyData.obbTree and DataSet._obb_tree properties.'
             raise RuntimeError(msg)
+        self._cached_locators.add('_obb_tree')
         return _build_locator(self, _vtk.vtkOBBTree)
+
+    def _delete_cached_locators(self: DataSet) -> None:
+        for attr in self._cached_locators:
+            with contextlib.suppress(KeyError):
+                del self.__dict__[attr]
+
+    def __del__(self) -> None:
+        """Delete the object."""
+        self._delete_cached_locators()
 
 
 _LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)
 
 
 def _build_locator(mesh: DataSet, locator: type[_LocatorType]) -> _LocatorType:
-    if mesh.n_points < 1 or mesh.n_cells < 1:
+    if issubclass(locator, _vtk.vtkAbstractPointLocator):
+        if mesh.n_points < 1:
+            msg = f'Building {locator.__name__} requires a dataset with points.'
+            raise ValueError(msg)
+    elif mesh.n_points < 1 or mesh.n_cells < 1:
         msg = f'Building {locator.__name__} requires a dataset with points and cells.'
         raise ValueError(msg)
     instance = locator()

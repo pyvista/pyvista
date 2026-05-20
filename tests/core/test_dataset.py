@@ -1087,6 +1087,11 @@ def test_build_locator_raises():
     with pytest.raises(ValueError, match=match):
         _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
 
+    poly = pv.PolyData()
+    match = 'Building vtkPointLocator requires a dataset with points.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.find_closest_point([0, 0, 0])
+
 
 def test_find_cells_within_bounds():
     mesh = pv.Cube()

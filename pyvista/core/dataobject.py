@@ -891,7 +891,12 @@ class DataObject(
 
         # Add this object's data to the state dictionary
         state_dict = serialized[1][0]
-        state_dict['_PYVISTA_STATE_DICT'] = self.__dict__.copy()
+        data_dict = self.__dict__.copy()
+        # Any cached vtkLocator objects must be removed since these cannot be serialized
+        if hasattr(self, '_cached_locators'):
+            for attr in self._cached_locators:
+                del data_dict[attr]
+        state_dict['_PYVISTA_STATE_DICT'] = data_dict
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
