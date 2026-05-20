@@ -2136,11 +2136,24 @@ class BasePlotter(_BoundsSizeMixin):
         self._check_rendered()
         self._check_has_ren_win()
 
-        return image_from_window(
+        # Always capture RGBA from the window. Selecting the RGB input buffer
+        # type on `vtkWindowToImageFilter` is *not* pixel-equivalent to an RGBA
+        # capture with the alpha channel dropped: the two hit different read
+        # paths in VTK and diverge when render passes (e.g. SSAA on a
+        # multi-renderer window) are active. See pyvista/pyvista#8690 -- a
+        # buffer-type switch in #8652 silently regressed AA captures.
+        data = image_from_window(
             self.render_window,
             scale=self.image_scale,
-            ignore_alpha=not self.image_transparent_background,
+            ignore_alpha=False,
         )
+        if self.image_transparent_background:
+            return data
+        # Drop the alpha channel. `ascontiguousarray` keeps the packed,
+        # C-contiguous buffer guarantee so downstream consumers avoid an
+        # implicit per-pixel copy (the perf goal of #8652); the view restores
+        # the `pyvista_ndarray` subclass without copying.
+        return np.ascontiguousarray(data[:, :, :-1]).view(pv.pyvista_ndarray)
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
