@@ -2542,7 +2542,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`ray_trace_example` for more examples using this filter.
 
         """
-        intersection_points, intersection_cells = self.intersect_with_line(origin, end_point)
+        intersection_points, intersection_cells = self.intersect_with_line(
+            origin, end_point, deduplicate_points=True
+        )
 
         has_intersection = intersection_points.shape[0] >= 1
         if first_point and has_intersection:
@@ -2691,10 +2693,10 @@ class PolyDataFilters(DataSetFilters):
             for id_r, origin, second_point in zip(
                 retry_ray_indices, origins_retry, second_points, strict=True
             ):
-                locs, indices = self.intersect_with_line(
-                    origin, second_point, deduplicate_points=True
-                )
+                locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
                 if locs.any():
+                    if first_point:
+                        locs = locs.reshape([1, 3])
                     ray_lst.extend([id_r] * indices.size)
                     tri_lst.extend(indices)
                     loc_lst.extend(locs)

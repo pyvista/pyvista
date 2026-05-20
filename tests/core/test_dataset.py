@@ -997,6 +997,90 @@ def test_find_cells_intersecting_line():
         mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
 
 
+@pytest.mark.parametrize('points_dtype', [np.single, np.double])
+def test_intersect_with_line(points_dtype):
+    def assert_intersection_results(mesh_, points_, cell_ids_):
+        assert isinstance(points_, np.ndarray)
+        assert isinstance(cell_ids_, np.ndarray)
+        assert len(points_) == len(cell_ids_)
+        assert points_.dtype == mesh_.points.dtype
+        assert cell_ids_.dtype == np.int64
+        for idx in range(len(points_)):
+            cell = mesh_.get_cell(cell_ids_[idx])
+            point = points_[idx]
+            assert point in cell.points
+
+    # Manually create source to properly configure double precision points
+    source = _vtk.vtkSphereSource()
+    source.SetPhiResolution(10)
+    source.SetThetaResolution(10)
+    output_precision = (
+        _vtk.vtkAlgorithm.DOUBLE_PRECISION
+        if points_dtype == np.double
+        else _vtk.vtkAlgorithm.SINGLE_PRECISION
+    )
+    source.SetOutputPointsPrecision(output_precision)
+    source.Update()
+    mesh = pv.wrap(source.GetOutput())
+
+    assert mesh.points.dtype == points_dtype
+
+    # The exact value of pointb matters, see example from https://github.com/pyvista/pyvista/issues/8698
+    pointa = [0.0, 0, 5]
+    pointb = [0.0, 0, -1.687329400596207]
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb)
+
+    expected_points = [
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+    ]
+    expected_cell_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 16, 18, 10, 12, 14, 15, 17, 19]
+    if points_dtype == np.double:
+        # Points precision can impact the exact order cell ids are located
+        expected_cell_ids = sorted(expected_cell_ids)
+
+    assert np.allclose(points, expected_points)
+    assert np.allclose(cell_ids, expected_cell_ids)
+    assert_intersection_results(mesh, points, cell_ids)
+
+    # Test again with deduplicated points
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb, deduplicate_points=True)
+
+    expected_points = [[0.0, 0.0, 0.5], [0.0, 0.0, -0.5]]
+    # Points precision can impact the exact cell id that is located
+    expected_cell_ids = [0, 11] if points_dtype == np.single else [0, 10]
+
+    assert_intersection_results(mesh, points, cell_ids)
+    assert np.allclose(points, expected_points)
+    assert np.allclose(cell_ids, expected_cell_ids)
+
+    # Test again with a tolerance of zero to show that zero tolerance can fail to properly
+    # locate both intersections (and therefore tolerance should not be zero by default)
+    points, cell_ids = mesh.intersect_with_line(
+        pointa, pointb, deduplicate_points=True, tolerance=0.0
+    )
+    assert points.ndim == 2
+    assert len(points) < 2
+
+
 def test_find_cells_within_bounds():
     mesh = pv.Cube()
 

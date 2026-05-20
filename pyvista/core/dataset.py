@@ -2424,9 +2424,17 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
         if tolerance is None:
-            tolerance = np.finfo(self.points.dtype).eps
+            tolerance = np.finfo(np.float32).eps
+
+        # Init output
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
+        dtype = self.points.dtype
+        if dtype == np.float64:
+            points.SetDataTypeToDouble()
+        else:
+            points.SetDataTypeToFloat()
+
         self._cell_locator.IntersectWithLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
@@ -2438,11 +2446,9 @@ class DataSet(DataSetFilters, DataObject):
         intersection_cells = vtk_id_list_to_array(id_list)
         if intersection_points.size and deduplicate_points:
             _, idx = np.unique(intersection_points, return_index=True, axis=0)
-            intersection_points = intersection_points[idx]
-            intersection_cells = intersection_cells[idx]
-        # vtkCellLocator sorts from farthest to closest. Reverse sort to
-        # return closest points first
-        return intersection_points[::-1], intersection_cells[::-1]
+            intersection_points = intersection_points[idx][::-1]
+            intersection_cells = intersection_cells[idx][::-1]
+        return intersection_points, intersection_cells
 
     def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
