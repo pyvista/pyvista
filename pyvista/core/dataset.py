@@ -2312,7 +2312,7 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
     ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
 
@@ -2365,7 +2365,8 @@ class DataSet(DataSetFilters, DataObject):
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         *,
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
+        deduplicate_points: bool = False,
     ) -> tuple[NumpyArray[float], NumpyArray[int]]:
         """Locate points and cell ids that intersect a line.
 
@@ -2386,6 +2387,11 @@ class DataSet(DataSetFilters, DataObject):
 
         tolerance : float, default: 0.0
             The absolute tolerance to use to find cells along line.
+
+        deduplicate_points : bool, default: False
+            By default, duplicate intersection points may be returned if an intersection point
+            is shared by multiple cells; in this case, the same point is returned for each cell.
+            Set this to ``True`` to only return a set of unique intersection points.
 
         Returns
         -------
@@ -2411,12 +2417,14 @@ class DataSet(DataSetFilters, DataObject):
          array([  86, 1653]))
 
         """
-        if np.array(pointa).size != 3:
+        if (pointa := np.asarray(pointa)).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)
-        if np.array(pointb).size != 3:
+        if (pointb := np.asarray(pointb)).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
+        if tolerance is None:
+            tolerance = np.finfo(self.points.dtype).eps
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         self._cell_locator.IntersectWithLine(
@@ -2428,7 +2436,13 @@ class DataSet(DataSetFilters, DataObject):
         )
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         intersection_cells = vtk_id_list_to_array(id_list)
-        return intersection_points, intersection_cells
+        if intersection_points.size and deduplicate_points:
+            _, idx = np.unique(intersection_points, return_index=True, axis=0)
+            intersection_points = intersection_points[idx]
+            intersection_cells = intersection_cells[idx]
+        # vtkCellLocator sorts from farthest to closest. Reverse sort to
+        # return closest points first
+        return intersection_points[::-1], intersection_cells[::-1]
 
     def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
@@ -3619,13 +3633,18 @@ class DataSet(DataSetFilters, DataObject):
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkPointLocator)
 
+    @cached_property
+    def _obb_tree(self) -> _vtk.vtkOBBTree:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkOBBTree)
+
 
 _LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)
 
 
 def _build_locator(mesh: DataSet, locator: type[_LocatorType]) -> _LocatorType:
     if mesh.n_points < 1 or mesh.n_cells < 1:
-        msg = f'Building the locator {locator} requires a dataset with points and cells.'
+        msg = f'Building {locator.__name__} requires a dataset with points and cells.'
         raise ValueError(msg)
     instance = locator()
     instance.SetDataSet(mesh)

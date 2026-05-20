@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import cached_property
 from functools import wraps
 import numbers
 from pathlib import Path
@@ -30,7 +29,6 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
-from .dataset import _build_locator
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
@@ -1789,7 +1787,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @cached_property
+    @property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
@@ -1805,7 +1803,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             geometry is modified, the obb tree will no longer be valid.
 
         """
-        return _build_locator(self, _vtk.vtkOBBTree)
+        return self._obb_tree
 
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01

@@ -359,7 +359,7 @@ def test_ray_trace_origin():
 
 def test_vtk_obb_tree_raises():
     poly = pv.PolyData()
-    match = 'Building the OBB tree requires PolyData with points and cells.'
+    match = 'Building vtkOBBTree requires a dataset with points and cells.'
     with pytest.raises(ValueError, match=match):
         _ = poly.obbTree
 

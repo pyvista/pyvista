@@ -2691,10 +2691,10 @@ class PolyDataFilters(DataSetFilters):
             for id_r, origin, second_point in zip(
                 retry_ray_indices, origins_retry, second_points, strict=True
             ):
-                locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
+                locs, indices = self.intersect_with_line(
+                    origin, second_point, deduplicate_points=True
+                )
                 if locs.any():
-                    if first_point:
-                        locs = locs.reshape([1, 3])
                     ray_lst.extend([id_r] * indices.size)
                     tri_lst.extend(indices)
                     loc_lst.extend(locs)
