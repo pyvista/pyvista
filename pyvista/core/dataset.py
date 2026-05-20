@@ -1996,6 +1996,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
         :ref:`point_cloud_distance_example`
         :ref:`point_cloud_neighbors_example`
 
@@ -2086,6 +2087,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
         :ref:`distance_between_surfaces_example`
 
         Examples
@@ -2201,6 +2203,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
 
         Examples
         --------
@@ -2280,6 +2283,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
         DataSet.find_cells_intersecting_line
+        DataSet.intersect_with_line
 
         Examples
         --------
@@ -2344,6 +2348,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
         DataSet.find_cells_along_line
+        DataSet.intersect_with_line
 
         Examples
         --------
@@ -2351,6 +2356,59 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pv.Sphere()
         >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
         array([  86, 1653])
+
+        """
+        return self.intersect_with_line(pointa, pointb, tolerance=tolerance)[1]
+
+    def intersect_with_line(
+        self: Self,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        *,
+        tolerance: float = 0.0,
+    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+        """Locate points and cell ids that intersect a line.
+
+        .. versionadded:: 0.49
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Length 3 coordinate of the start of the line.
+
+        pointb : sequence[float]
+            Length 3 coordinate of the end of the line.
+
+        tolerance : float, default: 0.0
+            The absolute tolerance to use to find cells along line.
+
+        Returns
+        -------
+        numpy.ndarray
+            Index or indices of the cell(s) that intersect
+            the line.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
+        DataSet.find_cells_along_line
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.intersect_with_line([0.0, 0, 0], [1.0, 0, 0])
+        (array([[0.4992667, 0.       , 0.       ],
+                [0.4992667, 0.       , 0.       ]], dtype=float32),
+         array([  86, 1653]))
 
         """
         if np.array(pointa).size != 3:
@@ -2361,16 +2419,16 @@ class DataSet(DataSetFilters, DataObject):
             raise TypeError(msg)
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
-        cell = _vtk.vtkGenericCell()
         self._cell_locator.IntersectWithLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
             points,
             id_list,
-            cell,
         )
-        return vtk_id_list_to_array(id_list)
+        intersection_points = _vtk.vtk_to_numpy(points.GetData())
+        intersection_cells = vtk_id_list_to_array(id_list)
+        return intersection_points, intersection_cells
 
     def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
@@ -2397,6 +2455,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
+        DataSet.intersect_with_line
 
         Examples
         --------
