@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import UserDict
-import copy as copylib
 import json
 import multiprocessing
 import pickle
@@ -486,8 +485,7 @@ def test_pickle_deletes_cached_locators():
         _ = getattr(poly, attr)
         assert attr in poly._cached_locators
 
-    # Indirectly pickle the mesh using Python's deepcopy
-    copylib.deepcopy(poly)
+    pickle.loads(pickle.dumps(poly))
 
 
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
