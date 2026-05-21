@@ -204,7 +204,8 @@ class DataObject(
             the extension of the filename.
 
         binary : bool, default: True
-            If ``True``, write as binary.  Otherwise, write as ASCII.
+            If ``True``, write as binary. Otherwise, write as ASCII.
+            VTK XML writers use appended raw binary data.
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY

@@ -80,6 +80,7 @@ from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
 from pyvista.core.utilities.writer import _DataFormatMixin
+from pyvista.core.utilities.writer import _XMLWriter
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
@@ -3224,10 +3225,28 @@ def test_writer_data_mode_mixin(writer_cls):
 
     obj = writer_cls('', mesh)
     assert obj.data_format == 'binary'
+    if isinstance(obj, _XMLWriter):
+        obj.writer.SetDataModeToAppended()
+        appended_data_mode = obj.writer.GetDataMode()
+        obj.writer.SetDataModeToBinary()
+        inline_binary_data_mode = obj.writer.GetDataMode()
+
+        obj.data_format = 'binary'
+
+        assert obj.writer.GetDataMode() == appended_data_mode
+        assert obj.writer.GetDataMode() != inline_binary_data_mode
+        assert not obj.writer.GetEncodeAppendedData()
     obj.data_format = 'ascii'
     assert obj.data_format == 'ascii'
+    if isinstance(obj, _XMLWriter):
+        # Switching back to ASCII must restore EncodeAppendedData, otherwise
+        # VTK suppresses the `<?xml ... ?>` declaration on subsequent writes.
+        assert obj.writer.GetEncodeAppendedData()
     obj.data_format = 'binary'
     assert obj.data_format == 'binary'
+    if isinstance(obj, _XMLWriter):
+        assert obj.writer.GetDataMode() == appended_data_mode
+        assert not obj.writer.GetEncodeAppendedData()
 
 
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])

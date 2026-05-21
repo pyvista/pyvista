@@ -31,6 +31,11 @@ _DataFormatOptions = Literal['binary', 'ascii']
 class _DataFormatMixin:
     # Different writers use different values to indicate the current format
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
+    _ascii0_binary1_appended2: ClassVar[dict[int, _DataFormatOptions]] = {
+        0: 'ascii',
+        1: 'binary',
+        2: 'binary',
+    }
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
     _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
 
@@ -55,18 +60,27 @@ class _DataFormatMixin:
         _validation.check_contains(get_args(_DataFormatOptions), data_format, name='data format')
         if data_format == 'binary':
             try:
-                # DataWriter, PLYWriter, STLWriter
-                self.writer.SetDataModeToBinary()  # type: ignore[attr-defined]
+                # XMLWriter: use appended, non-encoded binary data.
+                self.writer.SetDataModeToAppended()  # type: ignore[attr-defined]
+                self.writer.SetEncodeAppendedData(False)  # type: ignore[attr-defined]
             except AttributeError:
-                # XMLWriter
-                self.writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
+                try:
+                    # DataWriter, PLYWriter
+                    self.writer.SetDataModeToBinary()  # type: ignore[attr-defined]
+                except AttributeError:
+                    # STLWriter
+                    self.writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
         else:
             try:
-                # DataWriter, PLYWriter, STLWriter
+                # DataWriter, PLYWriter, XMLWriter
                 self.writer.SetDataModeToAscii()  # type: ignore[attr-defined]
             except AttributeError:
-                # XMLWriter
+                # STLWriter
                 self.writer.SetFileTypeToASCII()  # type: ignore[attr-defined]
+            with contextlib.suppress(AttributeError):
+                # Restore VTK XML default; SetEncodeAppendedData(False) suppresses
+                # the `<?xml ... ?>` declaration even in non-appended modes.
+                self.writer.SetEncodeAppendedData(True)  # type: ignore[attr-defined]
 
 
 @abstract_class
@@ -476,7 +490,7 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 @abstract_class
 class _XMLWriter(BaseWriter, _DataFormatMixin):
-    _format_mapping = _DataFormatMixin._ascii0_binary1
+    _format_mapping = _DataFormatMixin._ascii0_binary1_appended2
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

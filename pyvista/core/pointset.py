@@ -1571,6 +1571,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
+            VTK XML writers use appended raw binary data.
 
         texture : str, numpy.ndarray, optional
             Write a single texture array to file when using a PLY
@@ -3448,7 +3449,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             Output file name. VTU and VTK extensions are supported.
 
         binary : bool, default: True
-            If ``True``, write as binary, else ASCII.
+            If ``True``, write as binary, else ASCII. VTK XML writers use
+            appended raw binary data.
 
         texture : np.ndarray, str, None
             Ignored argument. Kept to maintain compatibility with supertype.
