@@ -77,6 +77,17 @@ def test_sphere_with_texture_map():
     assert sphere['Texture Coordinates'].shape == (sphere.n_points, 2)
 
 
+def test_sphere_with_texture_map_prime_meridian_on_plus_x():
+    sphere = pv.examples.planets._sphere_with_texture_map(
+        radius=1.0, lat_resolution=11, lon_resolution=21
+    )
+    pts = sphere.points
+    tc = sphere.active_texture_coordinates
+    plus_x_idx = np.argmax(pts[:, 0])
+    assert pts[plus_x_idx, 1] == pytest.approx(0.0, abs=1e-9)
+    assert tc[plus_x_idx, 0] == pytest.approx(0.5, abs=1e-9)
+
+
 def test_load_earth():
     mesh = pv.examples.planets.load_earth()
     assert isinstance(mesh, pv.PolyData)

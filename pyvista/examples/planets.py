@@ -48,7 +48,8 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     z = radius * np.cos(theta)
     sphere = pv.StructuredGrid(x, y, z)
     texture_coords = np.empty((sphere.n_points, 2))
-    texture_coords[:, 0] = phi.ravel('F') / phi.max()
+    # Shift u so the texture's prime meridian aligns with +X (ECEF, matches load_globe).
+    texture_coords[:, 0] = (phi.ravel('F') / phi.max() + 0.5) % 1.0
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
     sphere.active_texture_coordinates = texture_coords
     return sphere.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
