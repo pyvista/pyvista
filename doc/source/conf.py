@@ -458,6 +458,13 @@ def _filter_sphinx_gallery_warnings():
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
     )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
+    )
 
     # Treat all remaining warnings as errors
     warnings.simplefilter('error', append=True)
