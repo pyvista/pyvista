@@ -70,8 +70,11 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
 # Prevent deprecated features from being used in examples
