@@ -55,7 +55,6 @@ jobs:
     runs-on: blacksmith-8vcpu-ubuntu-2204
     needs: cache-pyvista-data
     env:
-      PARALLEL: "-j8" # Match the 8 vCPU Blacksmith runner
       TOX_COLORED: "yes"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
