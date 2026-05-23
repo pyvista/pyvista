@@ -16,14 +16,14 @@ jobs:
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the docstring job
-      runs-on: "ubuntu-24.04-self-hosted-gpu"
+      runs-on: "blacksmith-4vcpu-ubuntu-2204"
 
   docstringcheck:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04-self-hosted-gpu
+          - os: blacksmith-4vcpu-ubuntu-2204
             python-version: "3.14" # Should be the latest version supported
           - os: windows-latest
             python-version: "3.10" # Should be the oldest version supported
@@ -33,7 +33,6 @@ jobs:
     needs: cache-pyvista-data
     env:
       TOX_COLORED: "yes"
-      PARALLEL: "-n2"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
       - uses: actions/checkout@v6
@@ -50,6 +49,12 @@ jobs:
         if: runner.os == 'Windows'
         uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
 
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+        if: runner.os == 'Linux'
+        with:
+          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          version: 3.0
+
       - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
@@ -60,12 +65,17 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      - name: Test Package Docstrings
+      - name: Test Package Docstrings (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a tox run -f doctest
+
+      - name: Test Package Docstrings (Windows)
+        if: runner.os == 'Windows'
         run: tox run -f doctest
 
   vale:
     name: Vale
-    runs-on: ubuntu-22.04 # does not support self-hosted (yet)
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v6
         with:
