@@ -68,7 +68,7 @@ test = [
   'cmcrameri<1.10.0',
   'cmocean<4.0.4',
   'colorcet<3.2.0',
-  'embreex<4.4.1; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
+  'embreex<4.4.1',
   'fsspec<2026.4.0',
   'hypothesis<6.152.3',
   'imageio-ffmpeg<0.7.0',
@@ -270,6 +270,7 @@ markers = [
   'needs_download: this test downloads data during execution',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
+  'security: security regression test (refusal of unsafe paths, untrusted-input handling). Run with `pytest -m security`.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',

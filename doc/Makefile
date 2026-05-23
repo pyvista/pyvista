@@ -56,22 +56,17 @@ update-intersphinx:
 	cd intersphinx && ./update.sh
 
 gen-dataset-gallery:
-	@if [ ! -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
-		echo "Dataset gallery directory not found, running make_table.py..."; \
-		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery"; \
-		cd "$(SOURCEDIR)" && uv run python make_tables.py; \
+	@if [ -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
+		echo "Dataset gallery directory already exists, skipping. Run clean-dataset-gallery to clear."; \
 	else \
-		echo "Dataset gallery directory already exists, skipping generation."; \
-		echo "Run clean-dataset-gallery to clear the gallery."; \
+		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery" && cd "$(SOURCEDIR)" && uv run python make_tables.py; \
 	fi
 
 gen-external-examples:
-	@if [ ! -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
-		echo "external_examples.rst not found, running make_external_examples.py..."; \
-		cd "$(SOURCEDIR)" && uv run python make_external_gallery.py; \
+	@if [ -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
+		echo "external_examples.rst already exists, skipping. Run clean-external-examples to clear."; \
 	else \
-		echo "The file external_examples.rst already exists, skipping generation."; \
-		echo "Run clean-external-examples to clear the file."; \
+		cd "$(SOURCEDIR)" && uv run python make_external_gallery.py; \
 	fi
 
 # Spin up a local http server to view the rendered documentation.

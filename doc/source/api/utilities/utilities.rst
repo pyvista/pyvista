@@ -61,10 +61,8 @@ File IO
    read_exodus
    read_grdecl
    read_meshio
-   read_pickle
    read_texture
    save_meshio
-   save_pickle
    set_pickle_format
 
 Mesh Creation
