@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 import shutil
+from typing import TYPE_CHECKING
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from sphinx.util import logging
 from sphinx.util.osutil import relative_uri
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
+
+if TYPE_CHECKING:
+    from sphinx.environment import BuildEnvironment
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +28,15 @@ def is_path_relative_to(path, other):
     return path.is_relative_to(other)
 
 
-def _offline_viewer_paths(env, dest_file: Path):
+def _offline_viewer_paths(env: BuildEnvironment, dest_file: Path) -> tuple[str | None, str | None]:
     viewer_uri = (Path('_static') / Path(HTML_VIEWER_PATH).name).as_posix()
-    asset_uri = (
-        Path('_images') / Path(dest_file).relative_to(Path(env.app.outdir) / '_images')
-    ).as_posix()
+    try:
+        rel = dest_file.relative_to(Path(env.app.outdir) / '_images')
+    except ValueError:
+        logger.warning(f'{dest_file} is not under outdir/_images; cannot compute asset URI')
+        return None, None
+
+    asset_uri = (Path('_images') / rel).as_posix()
     page_uri = env.app.builder.get_target_uri(env.docname)
 
     rel_viewer_path = relative_uri(page_uri, viewer_uri)
@@ -92,6 +100,8 @@ class OfflineViewerDirective(Directive):
 
         env = self.state.document.settings.env
         rel_viewer_path, rel_asset_path = _offline_viewer_paths(env, dest_file)
+        if rel_viewer_path is None or rel_asset_path is None:
+            return []
         html = (
             f"<iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' "
             "width='100%%' height='400px' frameborder='0'></iframe>"

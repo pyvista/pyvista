@@ -82,3 +82,22 @@ def test_offline_viewer_paths_use_builder_target_uri(
 
     assert viewer_uri == expected_viewer_uri
     assert asset_uri == '../_images/plot_directive/guide/scene.vtksz'
+
+
+def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypatch, caplog):
+    monkeypatch.setattr(viewer_directive, 'HTML_VIEWER_PATH', '/tmp/viewer.html')
+    out_dir = tmp_path / '_build' / 'html'
+    dest_file = out_dir / 'plot_directive' / 'guide' / 'scene.vtksz'
+    dest_file.parent.mkdir(parents=True)
+    dest_file.touch()
+    env = SimpleNamespace(
+        docname='guide/example',
+        app=SimpleNamespace(outdir=out_dir, builder=_Builder('guide/example.html')),
+    )
+
+    with caplog.at_level('WARNING', logger=viewer_directive.__name__):
+        viewer_uri, asset_uri = viewer_directive._offline_viewer_paths(env, dest_file)
+
+    assert viewer_uri is None
+    assert asset_uri is None
+    assert 'is not under outdir/_images; cannot compute asset URI' in caplog.text
