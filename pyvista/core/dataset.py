@@ -2002,7 +2002,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
         :ref:`point_cloud_distance_example`
         :ref:`point_cloud_neighbors_example`
 
@@ -2094,7 +2094,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
         :ref:`distance_between_surfaces_example`
 
         Examples
@@ -2211,7 +2211,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2294,7 +2294,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_within_bounds
         DataSet.find_cells_intersecting_line
         DataSet.intersect_with_line
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2364,7 +2364,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_within_bounds
         DataSet.find_cells_along_line
         DataSet.intersect_with_line
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2420,7 +2420,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
         DataSet.find_closest_point
         DataSet.find_closest_cell
         DataSet.find_containing_cell
@@ -2513,7 +2513,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.intersect_with_line
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
 
         Examples
         --------

@@ -2520,7 +2520,7 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        PolyData.multi_ray_trace
+        PolyDataFilters.multi_ray_trace
         DataSet.intersect_with_line
         DataSet.find_closest_cell
         DataSet.find_containing_cell
@@ -2620,7 +2620,7 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        PolyData.ray_trace
+        PolyDataFilters.ray_trace
         DataSet.intersect_with_line
         DataSet.find_closest_cell
         DataSet.find_containing_cell
