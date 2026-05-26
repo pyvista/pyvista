@@ -2048,7 +2048,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2150,7 +2150,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
-        locator = self._cell_locator
+        locator = self._static_cell_locator
         cell = _vtk.vtkGenericCell()
 
         closest_cells: list[int] = []
@@ -2183,7 +2183,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2238,7 +2238,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
-        locator = self._cell_locator
+        locator = self._static_cell_locator
         containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if singular else np.array(containing_cells)
 
@@ -2254,7 +2254,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2310,7 +2310,7 @@ class DataSet(DataSetFilters, DataObject):
             tolerance = np.finfo(np.float32).eps
 
         id_list = _vtk.vtkIdList()
-        self._cell_locator.FindCellsAlongLine(
+        self._static_cell_locator.FindCellsAlongLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
@@ -2330,7 +2330,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2385,7 +2385,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2465,7 +2465,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             points.SetDataTypeToFloat()
 
-        self._cell_locator.IntersectWithLine(
+        self._static_cell_locator.IntersectWithLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
@@ -3655,10 +3655,10 @@ class DataSet(DataSetFilters, DataObject):
         return float(r2**0.5), (center[0], center[1], center[2])
 
     @cached_property
-    def _cell_locator(self) -> _vtk.vtkCellLocator:  # numpydoc ignore=RT01
+    def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
-        self._cached_locators.add('_cell_locator')
-        return _build_locator(self, _vtk.vtkCellLocator)
+        self._cached_locators.add('_static_cell_locator')
+        return _build_locator(self, _vtk.vtkStaticCellLocator)
 
     @cached_property
     def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01

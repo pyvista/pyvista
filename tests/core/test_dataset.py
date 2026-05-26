@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 import re
-import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -1074,21 +1073,19 @@ def test_intersect_with_line(points_dtype):
     assert cell_ids[0] in lower_ids
     assert cell_ids[1] in upper_ids
 
-    # Test again with a tolerance of zero to show that zero tolerance can fail to properly
-    # locate both intersections (and therefore tolerance should not be zero by default)
+    # Test again with a tolerance of zero
+    # This can sometimes fail depending on the locator and OS (and therefore tolerance should not
+    # be zero by default) but should work in this with vtkStaticCellLocator
     points, cell_ids = mesh.intersect_with_line(
         pointa, pointb, deduplicate_points=True, tolerance=0.0
     )
     assert points.ndim == 2
-    if sys.platform == 'darwin':
-        assert len(points) < 2
-    else:
-        assert len(points) == 2
+    assert len(points) == 2
 
 
 def test_build_locator_raises():
     poly = pv.PolyData()
-    match = 'Building vtkCellLocator requires a dataset with points and cells.'
+    match = 'Building vtkStaticCellLocator requires a dataset with points and cells.'
     with pytest.raises(ValueError, match=match):
         _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
 
