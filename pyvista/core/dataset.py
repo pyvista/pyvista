@@ -2301,7 +2301,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
-        array([  86,   87, 1652, 1653])
+        array([  87, 1653,   86, 1652])
 
         """
         if np.array(pointa).size != 3:
@@ -2371,7 +2371,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
-        array([  86, 1653])
+        array([1653,   86])
 
         """
         return self.intersect_with_line(pointa, pointb, tolerance=tolerance)[1]
@@ -2439,7 +2439,7 @@ class DataSet(DataSetFilters, DataObject):
                [0.4992667, 0.       , 0.       ]], dtype=float32)
 
         >>> cell_ids
-        array([  86, 1653])
+        array([1653,   86])
 
         Observe that `two` identical points are returned since two adjacent cells were intersected.
         Use ``deduplicate_points`` to return unique intersection points only.
@@ -2451,7 +2451,7 @@ class DataSet(DataSetFilters, DataObject):
         array([[0.4992667, 0.       , 0.       ]], dtype=float32)
 
         >>> cell_ids
-        array([86])
+        array([1653])
 
         """
         if (pointa := np.asarray(pointa)).size != 3:
