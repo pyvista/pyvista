@@ -2520,6 +2520,12 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
+        PolyData.multi_ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
         :ref:`ray_trace_moeller_example`
             Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
 
@@ -2611,6 +2617,15 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
+
+        See Also
+        --------
+        PolyData.ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
