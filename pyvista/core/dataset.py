@@ -2413,9 +2413,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        numpy.ndarray
-            Index or indices of the cell(s) that intersect
-            the line.
+        numpy.ndarray, numpy.ndarray
+            Tuple of arrays. The first is a 2D float array of intersection points, the second is
+            a 1D int array with indices of the cell IDs corresponding to the intersection points.
+            The number of intersection points always matches the number of intersection cell ids.
 
         See Also
         --------
