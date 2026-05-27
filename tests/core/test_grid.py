@@ -282,6 +282,56 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
         pv.UnstructuredGrid(input_cells_dict, points[..., :-1])
 
 
+def test_init_from_dict_variable_length():
+    rng = np.random.default_rng(seed=0)
+
+    # Higher-order Lagrange triangle (TRI10): its point count is data-defined, so a
+    # 2D [N, D] array sets D points per cell. This is the case from issue #8628.
+    points = rng.normal(size=(10, 3))
+    conn = np.arange(10).reshape(1, 10)
+    grid = pv.UnstructuredGrid({CellType.LAGRANGE_TRIANGLE: conn}, points)
+    assert grid.n_cells == 1
+    assert grid.celltypes[0] == CellType.LAGRANGE_TRIANGLE
+    assert grid.get_cell(0).n_points == 10
+    assert np.all(grid.cells_dict[CellType.LAGRANGE_TRIANGLE] == conn)
+
+    # Ragged polygons (a triangle and a pentagon) passed as a sequence of index
+    # arrays of differing length, and the resulting mesh has the expected geometry.
+    square = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float)
+    grid = pv.UnstructuredGrid({CellType.POLYGON: [np.arange(4)]}, square)
+    assert grid.n_cells == 1
+    assert grid.extract_surface(algorithm='dataset_surface').area == pytest.approx(1.0)
+
+    # A single dict mixing a fixed-size and a variable-size, ragged cell type.
+    points = rng.normal(size=(13, 3))
+    triangle = np.array([[0, 1, 2]])
+    polygons = [np.array([3, 4, 5, 6]), np.array([7, 8, 9, 10, 11, 12])]
+    grid = pv.UnstructuredGrid(
+        {CellType.TRIANGLE: triangle, CellType.POLYGON: polygons},
+        points,
+    )
+    assert grid.n_cells == 3
+    out = grid.cells_dict
+    assert np.all(out[CellType.TRIANGLE] == triangle)
+    assert isinstance(out[CellType.POLYGON], list)
+    assert np.all(out[CellType.POLYGON][0] == polygons[0])
+    assert np.all(out[CellType.POLYGON][1] == polygons[1])
+
+    # POLYHEDRON is defined by faces, not a point list, so it is rejected.
+    with pytest.raises(ValueError, match='POLYHEDRON'):
+        pv.UnstructuredGrid({CellType.POLYHEDRON: [np.arange(4)]}, points)
+
+    # A flat 1D array is ambiguous for a variable-length cell type.
+    with pytest.raises(ValueError, match='data-defined number of points'):
+        pv.UnstructuredGrid({CellType.POLYGON: np.arange(5)}, points)
+
+    # Out-of-range and negative indices are validated for variable-length cells too.
+    with pytest.raises(ValueError, match='Non-valid index'):
+        pv.UnstructuredGrid({CellType.POLYGON: [np.array([0, 1, 99])]}, points)
+    with pytest.raises(ValueError, match='Non-valid index'):
+        pv.UnstructuredGrid({CellType.POLYGON: np.array([[0, 1, -1]])}, points)
+
+
 def test_init_polyhedron():
     polyhedron_nodes = [
         [0.02, 0.0, 0.02],  # 17
@@ -332,19 +382,33 @@ def test_cells_dict_hexbeam_file():
 
 
 def test_cells_dict_variable_length():
+    # A single polygon round-trips through the cells dict (variable-length cell type).
     cells_poly = np.concatenate([[5], np.arange(5)])
     cells_types = np.array([CellType.POLYGON])
     points = np.random.default_rng().normal(size=(5, 3))
     grid = pv.UnstructuredGrid(cells_poly, cells_types, points)
 
-    # Dynamic sizes cell types are currently unsupported
-    with pytest.raises(ValueError):  # noqa: PT011
-        _ = grid.cells_dict
+    assert np.all(grid.cells_dict[CellType.POLYGON] == np.arange(5))
 
     grid.celltypes[:] = 255
     # Unknown cell types
     with pytest.raises(ValueError):  # noqa: PT011
         _ = grid.cells_dict
+
+
+def test_cells_dict_ragged_polygons():
+    # Polygons of differing sizes come back as a list of one index array per cell.
+    triangle = np.array([0, 1, 2])
+    pentagon = np.array([3, 4, 5, 6, 7])
+    cells = np.concatenate([[len(triangle)], triangle, [len(pentagon)], pentagon])
+    cells_types = np.array([CellType.POLYGON, CellType.POLYGON])
+    points = np.random.default_rng().normal(size=(8, 3))
+    grid = pv.UnstructuredGrid(cells, cells_types, points)
+
+    out = grid.cells_dict[CellType.POLYGON]
+    assert isinstance(out, list)
+    assert np.all(out[0] == triangle)
+    assert np.all(out[1] == pentagon)
 
 
 def test_cells_dict_empty_grid():
