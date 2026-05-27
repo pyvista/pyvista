@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import UserDict
+import copy
 import json
 import multiprocessing
 import pickle
@@ -451,6 +452,29 @@ def test_pickle_user_dict(sphere, pickle_format):
     unpickled = pickle.loads(pickled)
 
     assert unpickled.user_dict == user_dict
+
+
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_with_cached_locator(sphere, pickle_format):
+    """Regression test for #8697.
+
+    A cached cell locator (e.g. the lazily-built ``obbTree``) is an
+    unpicklable VTK object. It must not break pickling or deepcopy of the
+    dataset that caches it; instead it is dropped from the serialized state
+    and rebuilt lazily on demand.
+    """
+    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
+        pytest.xfail('VTK version not supported.')
+
+    pv.set_pickle_format(pickle_format)
+    _ = sphere.obbTree  # build and cache the locator
+    assert 'obbTree' in sphere.__dict__
+
+    for restored in (pickle.loads(pickle.dumps(sphere)), copy.deepcopy(sphere)):
+        assert restored == sphere
+        # the cache is not serialized; it is rebuilt lazily on demand
+        assert 'obbTree' not in restored.__dict__
+        assert restored.obbTree is not sphere.obbTree
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])

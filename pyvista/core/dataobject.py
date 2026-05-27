@@ -871,6 +871,21 @@ class DataObject(
         """
         self.CopyAttributes(dataset)
 
+    def _picklable_dict(self: Self) -> dict[str, Any]:
+        """Return a copy of ``__dict__`` that is safe to pickle.
+
+        Cached helper objects such as the lazily-built cell locator
+        (:attr:`~pyvista.PolyData.obbTree`) are VTK objects that cannot be
+        pickled. They are derived caches that are rebuilt on demand, so they
+        are excluded from the serialized state and simply recomputed after
+        unpickling.
+        """
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if not isinstance(value, _vtk.vtkAbstractCellLocator)
+        }
+
     def __getstate__(  # type: ignore[return]  # noqa: RET503
         self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
@@ -891,7 +906,7 @@ class DataObject(
 
         # Add this object's data to the state dictionary
         state_dict = serialized[1][0]
-        state_dict['_PYVISTA_STATE_DICT'] = self.__dict__.copy()
+        state_dict['_PYVISTA_STATE_DICT'] = self._picklable_dict()
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
@@ -917,7 +932,7 @@ class DataObject(
                 "\nUse `pyvista.PICKLE_FORMAT='vtk'`."
             )
             raise TypeError(msg)
-        state = self.__dict__.copy()
+        state = self._picklable_dict()
 
         if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
