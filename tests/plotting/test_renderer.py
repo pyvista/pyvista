@@ -9,6 +9,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista import examples
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -452,6 +453,29 @@ def test_actors_after_close():
     # methods that read `_actors` must tolerate the closed (None) state, not raise.
     assert pl.renderer.compute_bounds() is not None
     assert pl.renderer.remove_actor('nonexistent') is False
+
+
+def test_background_renderer_resize_after_close():
+    # Regression test for #8419: a background renderer can be closed (its `_actors`
+    # reset to None) while the parent plotter and its render window are still alive,
+    # e.g. when the background image is cleared and the window is later resized. The
+    # resize handler must not subscript the now-``None`` ``_actors`` collection.
+    pl = pv.Plotter()
+    pl.add_background_image(examples.mapfile)
+    background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
+    assert background_renderer is not None
+
+    background_renderer.close()
+
+    # The renderer is closed but the plotter/render window remain valid, so `resize`
+    # gets past its `parent`/`render_window` guards and would previously raise
+    # `TypeError: 'NoneType' object is not subscriptable` on `self._actors['background']`.
+    assert background_renderer._actors is None
+    assert background_renderer.parent is not None
+    assert background_renderer.parent.render_window is not None
+    background_renderer.resize()  # must return early via the closed-renderer guard
+
+    pl.close()
 
 
 @pytest.fixture
