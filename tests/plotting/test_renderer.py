@@ -449,6 +449,9 @@ def test_actors_after_close():
     assert pl.renderer._actors is None
     # and the public `actors` property keeps working, reporting no actors.
     assert pl.renderer.actors == {}
+    # methods that read `_actors` must tolerate the closed (None) state, not raise.
+    assert pl.renderer.compute_bounds() is not None
+    assert pl.renderer.remove_actor('nonexistent') is False
 
 
 @pytest.fixture

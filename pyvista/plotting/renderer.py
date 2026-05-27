@@ -373,7 +373,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = _PropCollection(self.GetViewProps())
+        self._actors: _PropCollection | None = _PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -661,7 +661,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             for ax in range(3):
                 update_axis(ax)
 
-        for name, actor in self._actors.items():
+        for name, actor in self.actors.items():
             if not actor.GetUseBounds() and not force_use_bounds:
                 continue
             if not actor.GetVisibility() and not force_visibility:
@@ -2976,12 +2976,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if isinstance(actor, str):
             name = actor
-            keys = list(self._actors.keys())
+            actors = self.actors
+            keys = list(actors.keys())
             names = [k for k in keys if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
-                actor = self._actors[name]
+                actor = actors[name]
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
