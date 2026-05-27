@@ -200,6 +200,9 @@ class RenderPasses(_NoNewAttrMixin):
             return
         self._pass_collection.RemoveItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.RemoveItem(self._shadow_map_pass)
+        # clear the cached pass (like the other ``disable_*_pass`` methods) so a
+        # subsequent ``enable_shadow_pass`` re-creates it instead of early-returning
+        self._shadow_map_pass = None
         self._update_passes()
 
     @_deprecate_positional_args

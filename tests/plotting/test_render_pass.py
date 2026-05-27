@@ -98,8 +98,23 @@ def test_shadow_pass():
 
     assert passes._pass_collection.IsItemPresent(ren_pass)
 
+    # enabling again should not add the pass again
+    assert passes.enable_shadow_pass() is None
+
     passes.disable_shadow_pass()
     assert not passes._pass_collection.IsItemPresent(ren_pass)
+    # the cached pass must be cleared so it can be re-enabled (regression #8685)
+    assert passes._shadow_map_pass is None
+
+    # re-enabling after disabling must restore the shadow pass
+    ren_pass = passes.enable_shadow_pass()
+    assert isinstance(ren_pass, _vtk.vtkShadowMapPass)
+    assert passes._pass_collection.IsItemPresent(ren_pass)
+
+    # disabling again should just do nothing
+    passes.disable_shadow_pass()
+    passes.disable_shadow_pass()
+    assert passes._shadow_map_pass is None
 
 
 def test_edl_pass():
