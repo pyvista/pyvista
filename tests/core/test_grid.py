@@ -331,6 +331,10 @@ def test_init_from_dict_variable_length():
     with pytest.raises(ValueError, match='Non-valid index'):
         pv.UnstructuredGrid({CellType.POLYGON: np.array([[0, 1, -1]])}, points)
 
+    # Each ragged cell must be a non-empty 1D integer array; an empty cell is rejected.
+    with pytest.raises(ValueError, match='non-empty 1D array'):
+        pv.UnstructuredGrid({CellType.POLYGON: [np.array([], dtype=int)]}, points)
+
 
 def test_init_polyhedron():
     polyhedron_nodes = [
@@ -409,6 +413,20 @@ def test_cells_dict_ragged_polygons():
     assert isinstance(out, list)
     assert np.all(out[0] == triangle)
     assert np.all(out[1] == pentagon)
+
+
+def test_cells_dict_polyhedron_raises():
+    # A polyhedron is defined by its faces, not a flat point list, so reading a grid
+    # that contains one back into a cells dict is rejected (mirrors the init guard).
+    points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=float)
+    face_stream = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+    cells = np.array([len(face_stream), *face_stream])
+    cell_types = np.array([CellType.POLYHEDRON])
+    grid = pv.UnstructuredGrid(cells, cell_types, points)
+    assert grid.get_cell(0).type == CellType.POLYHEDRON
+
+    with pytest.raises(ValueError, match='POLYHEDRON'):
+        _ = grid.cells_dict
 
 
 def test_cells_dict_empty_grid():
