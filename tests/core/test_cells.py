@@ -481,7 +481,10 @@ def test_init_cell_array_preserves_int32_storage(deep):
     offsets = np.array(OFFSETS_LIST, np.int32)
     connectivity = np.array(CONNECTIVITY_LIST, np.int32)
     cell_array = pv.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
-    assert cell_array.IsStorage32Bit()
+    # The array dtype reflects the native VTK storage width, so an int32 dtype here
+    # proves 32-bit storage was kept (no upcast copy). This is checked instead of
+    # ``IsStorage32Bit()`` because that method is not available on all supported VTK
+    # versions (e.g. 9.4.2).
     assert cell_array.offset_array.dtype == np.int32
     assert cell_array.connectivity_array.dtype == np.int32
     assert np.array_equal(cell_array.offset_array, offsets)
@@ -493,7 +496,7 @@ def test_init_cell_array_int64_uses_64bit_storage():
     cell_array = pv.core.cell.CellArray.from_arrays(
         np.array(OFFSETS_LIST, np.int64), np.array(CONNECTIVITY_LIST, np.int64)
     )
-    assert not cell_array.IsStorage32Bit()
+    assert cell_array.offset_array.dtype == np.int64
     assert cell_array.connectivity_array.dtype == np.int64
 
 
