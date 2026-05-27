@@ -993,6 +993,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The actors may also be unwrapped VTK objects.
 
         """
+        if self._actors is None:
+            # The renderer has been closed; it no longer holds any actors.
+            return {}
         return dict(self._actors.items())
 
     @_deprecate_positional_args(allowed=['actor'])
@@ -3957,9 +3960,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-        # Remove ref to `vtkPropCollection` held by vtkRenderer
-        if hasattr(self, '_actors'):
-            del self._actors
+        # Release the `_PropCollection` (and its ref to the `vtkPropCollection` held by
+        # vtkRenderer) by setting it to None rather than deleting the attribute. Deleting it
+        # conflicts with `_NoNewAttributesMixin`, which freezes attributes after `__init__` and
+        # so prevents the attribute from ever being restored (see #8419).
+        self._actors = None
 
         self._closed = True
 

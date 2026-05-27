@@ -435,6 +435,22 @@ def test_actors_prop_collection_init():
     assert pl.renderer._actors is prop_collection
 
 
+def test_actors_after_close():
+    # Regression test for #8419: closing a plotter must not leave the renderer's
+    # `_actors` attribute deleted (which `_NoNewAttributesMixin` could never restore,
+    # raising "'Renderer' object has no attribute '_actors'" on any later access).
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    assert len(pl.renderer.actors) == 1
+
+    pl.close()
+
+    # `_actors` is reset to None instead of being deleted, so accessing it no longer raises.
+    assert pl.renderer._actors is None
+    # and the public `actors` property keeps working, reporting no actors.
+    assert pl.renderer.actors == {}
+
+
 @pytest.fixture
 def prop_collection():
     vtk_collection = _vtk.vtkPropCollection()
