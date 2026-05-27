@@ -473,6 +473,30 @@ def test_init_cell_array_from_arrays(offsets, connectivity, deep):
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(offsets) - 1
 
 
+@pytest.mark.parametrize('deep', [False, True])
+def test_init_cell_array_preserves_int32_storage(deep):
+    # int32 offsets/connectivity should be stored natively as 32-bit instead of
+    # being cast up to int64, which avoids a copy that doubles memory on large
+    # meshes. See https://github.com/pyvista/pyvista/issues/8477
+    offsets = np.array(OFFSETS_LIST, np.int32)
+    connectivity = np.array(CONNECTIVITY_LIST, np.int32)
+    cell_array = pv.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
+    assert cell_array.IsStorage32Bit()
+    assert cell_array.offset_array.dtype == np.int32
+    assert cell_array.connectivity_array.dtype == np.int32
+    assert np.array_equal(cell_array.offset_array, offsets)
+    assert np.array_equal(cell_array.connectivity_array, connectivity)
+
+
+def test_init_cell_array_int64_uses_64bit_storage():
+    # int64 input should keep 64-bit storage (unchanged behavior).
+    cell_array = pv.core.cell.CellArray.from_arrays(
+        np.array(OFFSETS_LIST, np.int64), np.array(CONNECTIVITY_LIST, np.int64)
+    )
+    assert not cell_array.IsStorage32Bit()
+    assert cell_array.connectivity_array.dtype == np.int64
+
+
 REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
 
 
