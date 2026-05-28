@@ -56,7 +56,7 @@ jobs:
           - project: playwright
             timeout: 5 # usually takes ~2
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ matrix.timeout * 2 }}
+    timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
         shell: bash -l {0}
@@ -65,6 +65,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      - name: Set test timeout
+        run: echo "retry_test_timeout=$(( ${{ matrix.timeout }} / 2 ))" >> "$GITHUB_ENV"
+        id: set_timeout
 
       - uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
         with:
@@ -94,7 +98,7 @@ jobs:
       - name: Run tests (${{ matrix.project }})
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
-          timeout_minutes: ${{ matrix.timeout }}
+          timeout_minutes: ${{ steps.set_timeout.outputs.retry_test_timeout }}
           max_attempts: 2
           command: tox run -e integration-${{matrix.project}}
 
