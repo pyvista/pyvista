@@ -44,11 +44,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: ["mne", "trame", "pyvistaqt", "geovista", "playwright"]
+        include:
+          - project: mne
+            timeout: 20 # usually takes ~10
+          - project: trame
+            timeout: 8 # usually takes ~3
+          - project: pyvistaqt
+            timeout: 5 # usually takes ~2
+          - project: geovista
+            timeout: 10 # usually takes ~5
+          - project: playwright
+            timeout: 5 # usually takes ~2
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -el {0}
+    timeout-minutes: ${{ matrix.timeout }}
     env:
       MNE_LOGGING_LEVEL: "info"
 
@@ -85,7 +96,6 @@ jobs:
       - name: Run tests (${{ matrix.project }})
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
-          timeout_minutes: 20
           max_attempts: 2
           command: tox run -e integration-${{matrix.project}}
 
