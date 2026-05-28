@@ -44,24 +44,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: ["mne", "trame", "pyvistaqt", "geovista", "playwright"]
-    runs-on: ubuntu-22.04
+        include:
+          - project: mne
+            timeout: 20 # usually takes ~10
+          - project: trame
+            timeout: 8 # usually takes ~3
+          - project: pyvistaqt
+            timeout: 6 # usually takes ~2
+          - project: geovista
+            timeout: 10 # usually takes ~5
+          - project: playwright
+            timeout: 6 # usually takes ~2
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
         shell: bash -l {0}
-    env:
-      DISPLAY: ":99.0"
-      MNE_LOGGING_LEVEL: "info"
 
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
+      - name: Set test timeout
+        run: echo "retry_test_timeout=$(( ${{ matrix.timeout }} / 2 ))" | tee -a "$GITHUB_OUTPUT"
+        id: set_timeout
+
       - uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
         with:
           qt: ${{matrix.project == 'pyvistaqt' || matrix.project == 'mne'}}
-          pyvista: ${{matrix.project != 'pyvistaqt' && matrix.project != 'mne'}}
+          pyvista: ${{matrix.project != 'pyvistaqt' && matrix.project != 'mne' && matrix.project != 'geovista'}}
+          wm: false
 
       - uses: actions/setup-python@v6
         with:
@@ -71,7 +84,7 @@ jobs:
 
       - name: Set cache key for mne
         if: ${{ matrix.project == 'mne' }}
-        run: echo MNE_DATA_KEY=$(curl -L https://github.com/mne-tools/mne-testing-data/raw/refs/heads/master/version.txt) >> "$GITHUB_ENV"
+        run: echo MNE_DATA_KEY=$(curl -L https://github.com/mne-tools/mne-testing-data/raw/refs/heads/master/version.txt) | tee -a "$GITHUB_ENV"
 
       - uses: actions/cache@v5
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
@@ -82,21 +95,12 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      - name: Run tests (no xvfb)
-        if: ${{matrix.project != 'geovista'}}
+      - name: Run tests (${{ matrix.project }})
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
-          timeout_minutes: 30
-          max_attempts: 3
+          timeout_minutes: ${{ steps.set_timeout.outputs.retry_test_timeout }}
+          max_attempts: 2
           command: tox run -e integration-${{matrix.project}}
-
-      - name: Run tests (geovista)
-        if: ${{matrix.project == 'geovista'}}
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          command: xvfb-run -a tox run -e integration-${{matrix.project}}
 
   alert-on-failure:
     needs: Integration
