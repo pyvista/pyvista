@@ -83,11 +83,10 @@ jobs:
         run: pip install tox-uv
 
       - name: Run tests (${{ matrix.project }})
-        if: ${{matrix.project != 'geovista'}}
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
-          timeout_minutes: 30
-          max_attempts: 3
+          timeout_minutes: 20
+          max_attempts: 2
           command: tox run -e integration-${{matrix.project}}
 
   alert-on-failure:
