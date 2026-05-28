@@ -56,10 +56,10 @@ jobs:
           - project: playwright
             timeout: 5 # usually takes ~2
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
         shell: bash -l {0}
-    timeout-minutes: ${{ matrix.timeout }}
 
     steps:
       - uses: actions/checkout@v6
