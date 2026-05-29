@@ -1403,6 +1403,30 @@ def test_resample_cell_data(uniform):
     assert np.allclose(uniform.bounds, resampled.bounds)
 
 
+@pytest.mark.parametrize(
+    'dimensions',
+    [(10, 10, 1), (10, 1, 1), (1, 1, 1), (5, 5, 1)],
+)
+def test_resample_dimensions_to_singleton(uniform, dimensions):
+    # Reducing a non-singleton axis to a single point requires a magnification
+    # factor of zero, which vtkImageResize silently ignores. Regression test for
+    # https://github.com/pyvista/pyvista/issues/8022
+    resampled = uniform.resample(dimensions=dimensions)
+    assert np.array_equal(resampled.dimensions, dimensions)
+
+
+def test_resample_dimensions_to_singleton_values():
+    # The collapsed axis is sampled (not ignored): a 3D volume flattened to a
+    # single z-slice must contain the values from that slice.
+    image = pv.ImageData(dimensions=(4, 4, 4))
+    image['v'] = np.arange(image.n_points, dtype=float)
+    resampled = image.resample(dimensions=(4, 4, 1))
+    assert np.array_equal(resampled.dimensions, (4, 4, 1))
+    # Nearest interpolation samples the first (z=0) slice of the volume.
+    first_slice = image['v'].reshape(image.dimensions[::-1])[0].ravel()
+    assert np.array_equal(np.sort(resampled.active_scalars), np.sort(first_slice))
+
+
 def test_resample_inplace(uniform):
     resampled = uniform.resample()
     assert resampled is not uniform
