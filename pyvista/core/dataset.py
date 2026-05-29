@@ -1849,6 +1849,20 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
+        # `vtkAppendFilter` chooses its output point precision by inspecting the
+        # input's points, but only `vtkPointSet` subclasses store explicit
+        # points. A `RectilinearGrid` has implicit points, so the filter cannot
+        # detect their precision and defaults to single precision, silently
+        # downcasting float64 coordinates (see #7931). Set the output precision
+        # explicitly from the stored coordinate precision in that case.
+        if isinstance(self, _vtk.vtkRectilinearGrid):
+            coords = (  # type: ignore[unreachable]
+                self.GetXCoordinates(),
+                self.GetYCoordinates(),
+                self.GetZCoordinates(),
+            )
+            if any(c is not None and c.GetDataType() == _vtk.VTK_DOUBLE for c in coords):
+                alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         alg.Update()
         return _get_output(alg)
 

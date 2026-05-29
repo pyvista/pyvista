@@ -963,6 +963,25 @@ def test_cast_rectilinear_grid():
         assert np.allclose(structured.cell_data[k], v)
 
 
+@pytest.mark.parametrize('dtype', [np.float64, np.float32])
+def test_cast_rectilinear_grid_to_unstructured_grid_keeps_dtype(dtype):
+    # Casting a RectilinearGrid must preserve the coordinate precision (#7931).
+    # vtkAppendFilter cannot read the implicit points of a RectilinearGrid and
+    # would otherwise default to single precision, silently downcasting float64.
+    coord = np.array([0.1, 0.2, 0.3], dtype=dtype)
+    grid = pv.RectilinearGrid()
+    grid.x = coord
+    grid.y = np.array([0.0, 1.0], dtype=dtype)
+    grid.z = np.array([0.0], dtype=dtype)
+
+    ugrid = grid.cast_to_unstructured_grid()
+
+    assert ugrid.points.dtype == dtype
+    assert ugrid.n_points == grid.n_points
+    assert ugrid.n_cells == grid.n_cells
+    assert np.array_equal(np.unique(ugrid.points[:, 0]), coord)
+
+
 @pytest.mark.parametrize('as_rectilinear', [True, False])
 def test_cast_grid_scalars_and_cell_type(as_rectilinear):
     """Test cell type and scalars after casting to structured or unstructured grid."""

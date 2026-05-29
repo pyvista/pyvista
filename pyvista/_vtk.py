@@ -69,6 +69,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     'vtkCommonCore': (
         'VTK_ARIAL',
         'VTK_COURIER',
+        'VTK_DOUBLE',
         'VTK_DOUBLE_MAX',
         'VTK_DOUBLE_MIN',
         'VTK_FONT_FILE',
