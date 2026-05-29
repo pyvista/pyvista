@@ -1851,18 +1851,30 @@ class DataSet(DataSetFilters, DataObject):
         alg.AddInputData(self)
         # `vtkAppendFilter` chooses its output point precision by inspecting the
         # input's points, but only `vtkPointSet` subclasses store explicit
-        # points. A `RectilinearGrid` has implicit points, so the filter cannot
-        # detect their precision and defaults to single precision, silently
-        # downcasting float64 coordinates (see #7931). Set the output precision
-        # explicitly from the stored coordinate precision in that case.
+        # points. Datasets with implicit geometry (`RectilinearGrid`,
+        # `ImageData`) have no such points, so the filter cannot detect their
+        # precision and defaults to single precision, silently downcasting
+        # double coordinates (see #7931). For those, set the output precision
+        # explicitly from the input's coordinate precision. `vtkPointSet`
+        # inputs are left alone: the filter's default already preserves their
+        # precision.
+        input_is_double = False
         if isinstance(self, _vtk.vtkRectilinearGrid):
             coords = (  # type: ignore[unreachable]
                 self.GetXCoordinates(),
                 self.GetYCoordinates(),
                 self.GetZCoordinates(),
             )
-            if any(c is not None and c.GetDataType() == _vtk.VTK_DOUBLE for c in coords):
-                alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
+            input_is_double = any(
+                c is not None and c.GetDataType() == _vtk.VTK_DOUBLE for c in coords
+            )
+        elif isinstance(self, _vtk.vtkImageData):
+            # `ImageData` has no stored point array; its coordinates are derived
+            # from the origin and spacing, which VTK always keeps in double
+            # precision, so casting to single precision is always lossy.
+            input_is_double = True  # type: ignore[unreachable]
+        if input_is_double:
+            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         alg.Update()
         return _get_output(alg)
 
