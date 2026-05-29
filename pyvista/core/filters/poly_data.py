@@ -1865,7 +1865,7 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Compute point and/or cell normals for a mesh.
 
-        The filter can reorder polygons to insure consistent
+        The filter can reorder polygons to ensure consistent
         orientation across polygon neighbors. Sharp edges can be split
         and points duplicated with separate normals to give crisp
         (rendered) surface definition. It is also possible to globally
@@ -2098,8 +2098,8 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Clip a sphere in the X direction centered at the origin.  This
-        will leave behind half a sphere in the positive X direction.
+        Clip a sphere in the negative Z direction centered at the origin.
+        This will leave behind half a sphere in the negative Z direction.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()

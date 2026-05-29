@@ -671,7 +671,7 @@ class _BoundsSizeMixin:
 
         Examples
         --------
-        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        Get the size of a cube. The cube has edge lengths of ``(1.0, 1.0, 1.0)``
         by default.
 
         >>> import pyvista as pv
