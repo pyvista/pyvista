@@ -47,7 +47,7 @@ jobs:
         include:
           - project: mne
             # TODO: Intentionally set low, should set to 30
-            timeout: 8 # usually takes ~10, but the download can add time
+            timeout: 4 # usually takes ~10, but the download can add time
           - project: trame
             timeout: 8 # usually takes ~3
           - project: pyvistaqt
