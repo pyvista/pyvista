@@ -5,6 +5,7 @@ import os
 import re
 from typing import TYPE_CHECKING
 
+from packaging.requirements import InvalidRequirement
 from packaging.requirements import Requirement
 from packaging.version import Version
 from tox.execute.api import StdinSource
@@ -107,8 +108,16 @@ def _get_freezed_requirements(lines: list[str]) -> Generator[tuple[str, Version]
 
     Note that the name is normalized per packaging specifications (see https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization).
     """
-    for l in lines:
-        req = Requirement(l)
+    for line in lines:
+        # `uv pip freeze` may emit lines that are not valid PEP 508 requirements,
+        # eg. editable installs (`-e file:///path`) for integration packages
+        # installed from source. These have no `==` pin so skip them.
+        if not (line := line.strip()) or line.startswith(('-', '#')):
+            continue
+        try:
+            req = Requirement(line)
+        except InvalidRequirement:
+            continue
         if (m := re.match(r'(.*)==(\S+)', str(req.specifier))) is not None:
             yield _normalize_package_name(req.name), Version(m.group(2))
 
@@ -120,7 +129,11 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """  # noqa: D205
     # Load requirements from the constraints file
     with CONSTRAINTS_FILE.open() as f:
-        requirements = [Requirement(l) for l in f.read().splitlines()]
+        requirements = [
+            Requirement(stripped)
+            for line in f.read().splitlines()
+            if (stripped := line.strip()) and not stripped.startswith(('-', '#'))
+        ]
 
     # Load installed deps using freeze
     installer: UvInstaller = tox_env.installer

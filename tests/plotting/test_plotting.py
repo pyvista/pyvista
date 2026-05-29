@@ -43,6 +43,10 @@ from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+
+# Internal capture helper imported deliberately: the #8690 regression guard
+# must compare `Plotter.image` against the exact RGBA window capture.
+from pyvista.plotting.utilities.regression import image_from_window
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 from tests.plotting.conftest import AlgorithmExecutionTracker
@@ -2184,6 +2188,41 @@ def test_image_properties() -> None:
     img = pl.get_image_depth(fill_value=0.0)
     rng = np.ptp(img)
     assert 3.8 < rng < 3.9, rng  # 3.8460655 in testing
+    pl.close()
+
+
+@pytest.mark.parametrize('aa_type', [None, 'ssaa'])
+def test_image_rgb_matches_rgba_capture(aa_type, verify_image_cache) -> None:
+    """`Plotter.image` (RGB) must equal an RGBA capture with alpha dropped.
+
+    Selecting the RGB input buffer type on ``vtkWindowToImageFilter`` is not
+    pixel-equivalent to an RGBA capture sliced to RGB once render passes
+    (e.g. SSAA on a multi-renderer window) are active. A perf-only buffer-type
+    switch (#8652) silently changed AA captures; regression guard for #8690.
+    """
+    verify_image_cache.skip = True  # array equality is asserted directly
+
+    pl = pv.Plotter(shape=(2, 2), border=False)
+    pl.set_background('black')
+    cone = pv.Cone(resolution=4)
+    for ri in range(2):
+        for ci in range(2):
+            pl.subplot(ri, ci)
+            pl.add_mesh(cone)
+            pl.camera.zoom(5)
+            if aa_type:
+                pl.enable_anti_aliasing(aa_type=aa_type)
+    pl.show(auto_close=False)
+
+    rgb = pl.image  # default: RGB, alpha dropped
+    rgba = image_from_window(pl.render_window, scale=pl.image_scale, ignore_alpha=False)
+
+    assert rgb.shape[2] == 3
+    assert rgb.strides[1] == 3
+    assert rgb.flags['C_CONTIGUOUS']
+    # The default RGB image must be exactly the RGBA capture minus alpha,
+    # not a separate RGB-buffer read that diverges under render passes.
+    assert np.array_equal(rgb, rgba[:, :, :-1])
     pl.close()
 
 
