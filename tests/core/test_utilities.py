@@ -3248,6 +3248,79 @@ def test_writer_data_mode_mixin(writer_cls):
         assert obj.writer.GetDataMode() == appended_data_mode
         assert not obj.writer.GetEncodeAppendedData()
 
+        # encode_appended toggles base64 encoding of the appended data while
+        # keeping the appended (not inline) data mode.
+        obj.encode_appended = True
+        assert obj.encode_appended is True
+        assert obj.writer.GetDataMode() == appended_data_mode
+        assert obj.writer.GetEncodeAppendedData()
+
+        # The setting persists across an ascii round trip.
+        obj.data_format = 'ascii'
+        obj.data_format = 'binary'
+        assert obj.writer.GetDataMode() == appended_data_mode
+        assert obj.writer.GetEncodeAppendedData()
+
+        obj.encode_appended = False
+        assert obj.encode_appended is False
+        assert not obj.writer.GetEncodeAppendedData()
+
+        with pytest.raises(TypeError, match='encode_appended'):
+            obj.encode_appended = 'yes'
+
+
+# All concrete VTK XML writers and a representative mesh for each.
+_XML_WRITER_MESHES = {
+    pv.XMLImageDataWriter: pv.ImageData(dimensions=(3, 3, 3)),
+    pv.XMLPolyDataWriter: pv.Sphere(),
+    pv.XMLRectilinearGridWriter: pv.RectilinearGrid(
+        np.arange(3.0), np.arange(3.0), np.arange(3.0)
+    ),
+    pv.XMLStructuredGridWriter: ex.load_structured(),
+    pv.XMLUnstructuredGridWriter: ex.load_hexbeam(),
+}
+
+
+@pytest.mark.parametrize(('writer_cls', 'mesh'), list(_XML_WRITER_MESHES.items()))
+def test_xml_writer_binary_appended_raw(writer_cls, mesh, tmp_path):
+    """XML writers default to appended raw binary and round-trip correctly."""
+    filename = tmp_path / f'mesh{writer_cls.extensions[0]}'
+    mesh = mesh.copy()
+    mesh.point_data['test'] = np.arange(mesh.n_points, dtype=np.float64)
+
+    # Default binary: appended, raw (not base64), and not inline base64.
+    mesh.save(filename, binary=True)
+    contents = filename.read_bytes()
+    assert b'format="appended"' in contents
+    assert b'<AppendedData encoding="raw">' in contents
+    assert b'format="binary"' not in contents
+    assert pv.read(filename).n_points == mesh.n_points
+
+    # encode_appended=True restores standard-compliant base64 appended data.
+    writer = writer_cls(filename, mesh)
+    writer.encode_appended = True
+    writer.write()
+    contents = filename.read_bytes()
+    assert b'format="appended"' in contents
+    assert b'<AppendedData encoding="base64">' in contents
+    assert pv.read(filename).n_points == mesh.n_points
+
+
+@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
+def test_xml_writer_binary_appended_compression(compression, tmp_path):
+    """Appended raw binary round-trips with every compression option."""
+    mesh = ex.load_hexbeam()
+    filename = tmp_path / 'mesh.vtu'
+    writer = pv.XMLUnstructuredGridWriter(filename, mesh)
+    writer.compression = compression
+    writer.data_format = 'binary'
+    writer.write()
+
+    contents = filename.read_bytes()
+    assert b'format="appended"' in contents
+    assert b'<AppendedData encoding="raw">' in contents
+    assert pv.read(filename).n_points == mesh.n_points
+
 
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
 def test_fileio_extensions(cls):

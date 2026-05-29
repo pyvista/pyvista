@@ -205,7 +205,15 @@ class DataObject(
 
         binary : bool, default: True
             If ``True``, write as binary. Otherwise, write as ASCII.
-            VTK XML writers use appended raw binary data.
+
+            .. versionchanged:: 0.49.0
+                VTK XML writers (e.g. ``.vtp``, ``.vtu``, ``.vti``) now write
+                binary data as appended raw bytes instead of inline base64.
+                This produces smaller files that read faster, but technically
+                violates the XML standard. Use the writer class directly with
+                ``encode_appended=True`` (e.g.
+                :class:`~pyvista.XMLPolyDataWriter`) to restore base64-encoded,
+                standard-compliant output.
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY
