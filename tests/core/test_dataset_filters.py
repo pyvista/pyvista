@@ -1890,6 +1890,17 @@ def test_plot_over_line(tmpdir):
         progress_bar=True,
     )
     assert Path(filename).is_file()
+    mesh.plot_over_line(
+        a,
+        b,
+        resolution=None,
+        scalars='foo',
+        title='My Stuff',
+        ylabel='Component 1',
+        component=1,
+        show=False,
+        progress_bar=True,
+    )
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(
