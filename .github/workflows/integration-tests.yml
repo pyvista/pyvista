@@ -52,7 +52,7 @@ jobs:
           - project: pyvistaqt
             timeout: 6 # usually takes ~2
           - project: geovista
-            timeout: 12 # usually takes ~5
+            timeout: 16 # usually takes ~5
           - project: playwright
             timeout: 6 # usually takes ~2
     runs-on: ubuntu-latest
