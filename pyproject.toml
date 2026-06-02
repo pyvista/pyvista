@@ -46,7 +46,7 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.12.0',
+  'cyclopts<4.17.0',
   'matplotlib<3.10.10',
   'numpy<2.4.0',
   'pillow<12.3.0',
@@ -57,7 +57,7 @@ pinned = [ # Pinned versions of core dependencies
 
 typing = [
   'meshio<5.4.0',
-  'mypy<1.21.0',
+  'mypy<2.2.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
   'trimesh<4.13.0',
@@ -67,10 +67,10 @@ typing = [
 test = [
   'cmcrameri<1.10.0',
   'cmocean<4.0.4',
-  'colorcet<3.2.0',
+  'colorcet<3.3.0',
   'embreex<4.4.1',
-  'fsspec<2026.4.0',
-  'hypothesis<6.152.3',
+  'fsspec<2026.5.0',
+  'hypothesis<6.152.13',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
@@ -104,25 +104,25 @@ test = [
   { include-group = 'pinned' },
 ]
 
-test-playwright = ['playwright<1.59.0', { include-group = 'test' }]
+test-playwright = ['playwright<1.61.0', { include-group = 'test' }]
 
 docs = [
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
-  'colorcet==3.1.0',
+  'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
   'enum-tools==0.13.0',
-  'fsspec==2026.3.0',
+  'fsspec==2026.4.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.3',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
   'jupyterlab==4.5.7',
-  'lxml==6.1.0',
+  'lxml==6.1.1',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==1.20.2',
+  'mypy==2.1.0',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
   'pandas==2.3.3',
@@ -149,7 +149,7 @@ docs = [
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
   'trame-pyvista==0.1.0',
-  'trimesh==4.12.0',
+  'trimesh==4.12.2',
   'vtk-xref==0.1.2',
   { include-group = 'pinned' },
 ]
