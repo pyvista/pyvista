@@ -95,7 +95,7 @@ jobs:
       # vale --config doc/.vale.ini doc pyvista examples
       # GHA SHA is pinned to a reviewdog branch commit
       - name: "Run Vale"
-        uses: errata-ai/vale-action@0135b9fe2b3107365569cc3142b9a1c85221ea2f
+        uses: errata-ai/vale-action@85f9f7f2c5f449ac0ae5b66662961bae3f77ca6a
         with:
           files: '["doc", "pyvista", "examples"]'
           vale_flags: "--config=doc/.vale.ini"
