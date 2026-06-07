@@ -1914,6 +1914,21 @@ def test_plot_over_line(tmpdir):
         )
 
 
+def test_plot_over_line_component_errors():
+    mesh = examples.load_uniform()
+    mesh['foo'] = np.arange(mesh.n_cells * 3).reshape(mesh.n_cells, 3)
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+    b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
+
+    with pytest.raises(TypeError, match='component must be None or an integer'):
+        mesh.plot_over_line(a, b, scalars='foo', component=1.0, show=False)
+
+    match = 'component must be nonnegative and less than the dimensionality of the scalars array: 3'
+    for component in [-1, 3]:
+        with pytest.raises(ValueError, match=match):
+            mesh.plot_over_line(a, b, scalars='foo', component=component, show=False)
+
+
 def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
