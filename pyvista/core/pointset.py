@@ -2237,7 +2237,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             This property is deprecated and will be removed in a future release.
             VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
             may be removed in a future release of VTK. Please use
-            `polyhedral_faces` instead.
+            `polyhedron_faces` instead.
 
         Returns
         -------
@@ -2296,7 +2296,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             This property is deprecated and will be removed in a future release.
             VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
             may be removed in a future release of VTK. Please use
-            `polyhedral_face_locations` instead.
+            `polyhedron_face_locations` instead.
 
         Returns
         -------
@@ -2949,7 +2949,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
-        Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
+        Hides cells by setting the ghost_cells array to ``HIDDENCELL``.
 
         Parameters
         ----------
@@ -3003,7 +3003,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
         """Hide points without deleting them.
 
-        Hides points by setting the ghost_points array to ``HIDDEN_CELL``.
+        Hides points by setting the ghost_points array to ``HIDDENPOINT``.
 
         Parameters
         ----------
@@ -3660,6 +3660,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def cell_id(self, coords: ArrayLike[int]) -> int | NumpyArray[int] | None:
         """Return the cell ID.
 
+        The cell structured coordinates are the ``(i, j, k)`` index of a cell
+        along the grid's three structured axes, with ``(0, 0, 0)`` being the
+        first cell. This method maps those coordinates to the flat cell ID used
+        to index the grid's cells.
+
         Parameters
         ----------
         coords : ArrayLike[int]
@@ -3709,6 +3714,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ind: int | VectorLike[int],
     ) -> None | MatrixLike[int]:
         """Return the cell structured coordinates.
+
+        The cell structured coordinates are the ``(i, j, k)`` index of a cell
+        along the grid's three structured axes, with ``(0, 0, 0)`` being the
+        first cell. This method is the inverse of :meth:`cell_id`, mapping a
+        flat cell ID back to its structured coordinates.
 
         Parameters
         ----------
@@ -3929,7 +3939,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>>
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.compute_connectivity()
-        >>> grid.plot(show_edges=True)
+        >>> grid.plot(show_edges=True, scalars='ConnectivityFlags')
 
         """
         if inplace:
