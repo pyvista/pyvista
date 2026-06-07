@@ -1923,7 +1923,9 @@ def test_plot_over_line_component_errors():
     with pytest.raises(TypeError, match='component must be None or an integer'):
         mesh.plot_over_line(a, b, scalars='foo', component=1.0, show=False)
 
-    match = 'component must be nonnegative and less than the dimensionality of the scalars array: 3'
+    match = (
+        'component must be nonnegative and less than the dimensionality of the scalars array: 3'
+    )
     for component in [-1, 3]:
         with pytest.raises(ValueError, match=match):
             mesh.plot_over_line(a, b, scalars='foo', component=component, show=False)
