@@ -344,7 +344,7 @@ def get_array(  # noqa: PLR0917
         Dataset to get the array from.
 
     name : str
-        The name of the array to get the range.
+        The name of the array to search for.
 
     preference : str, default: "cell"
         When scalars is specified, this is the preferred array type to
