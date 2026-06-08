@@ -6,7 +6,7 @@ Plot with ``pyvista`` interactively within a `Jupyter
 <https://jupyter.org/>`_ notebook.
 
 .. note::
-   We recommend using the Trame-based backed. See :ref:`trame_jupyter`.
+   We recommend using the Trame-based backend. See :ref:`trame_jupyter`.
 
 
 Supported Modules
