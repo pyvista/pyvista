@@ -232,7 +232,7 @@ jobs:
       - name: Get app installation token (pyvista-examples)
         id: app-token
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
           private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
@@ -244,7 +244,7 @@ jobs:
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         with:
           external_repository: pyvista/pyvista-examples
           personal_token: ${{ steps.app-token.outputs.token }}
