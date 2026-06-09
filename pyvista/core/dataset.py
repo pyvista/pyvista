@@ -2431,7 +2431,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Intersection a line with a sphere.
+        Intersect a line with a surface mesh.
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
@@ -2454,6 +2454,47 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> cell_ids  # doctest:+SKIP
         array([86])
+
+        Intersect a line with a 3D cell. Here we create a single
+        :attr:`~pyvista.CellType.HEXAHEDRON` from :class:`~pyvista.ImageData`.
+
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 2)).to_hexahedra()
+
+        Intersecting the cell returns a single intersection point where the line first "hits" the
+        cell.
+
+        >>> pointa, pointb = (-1.0, 0.5, 0.5), (1.0, 0.5, 0.5)
+        >>> mesh.intersect_with_line(pointa, pointb)
+        (array([[0. , 0.5, 0.5]]), array([0]))
+
+        Reversing the point order returns a `different` intersection point on the opposide side
+        of the cell.
+
+        >>> mesh.intersect_with_line(pointb, pointa)
+        (array([[1. , 0.5, 0.5]]), array([0]))
+
+        Converting the cell to a surface mesh will yield `both` intersections since each face
+        is now a separate cell.
+
+        >>> mesh.extract_surface().intersect_with_line(pointa, pointb)
+        (array([[0. , 0.5, 0.5],
+                [1. , 0.5, 0.5]]),
+         array([2, 3]))
+
+        An intersection is still found if the line coincides with one of the cell's edges.
+
+        >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
+        (array([[0., 0., 0.]]), array([0]))
+
+        Similarly, intersections are found when the line is coincident with planar cells.
+
+        >>> mesh = pv.Plane(i_resolution=2, j_resolution=2)
+        >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
+        (array([[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]], dtype=float32),
+         array([0, 1, 2, 3]))
 
         """
         if (pointa := np.asarray(pointa)).size != 3:
