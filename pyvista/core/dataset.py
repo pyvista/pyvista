@@ -2490,8 +2490,7 @@ class DataSet(DataSetFilters, DataObject):
         (array([[0., 0., 0.],
                 [0., 0., 0.],
                 [0., 0., 0.],
-                [0., 0., 0.]], dtype=float32),
-         array([0, 1, 2, 3]))
+                [0., 0., 0.]], dtype=float32), array([0, 1, 2, 3]))
 
         """
         if (pointa := np.asarray(pointa)).size != 3:
