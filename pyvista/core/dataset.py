@@ -2475,8 +2475,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> mesh.extract_surface(algorithm=None).intersect_with_line(pointa, pointb)
         (array([[0. , 0.5, 0.5],
-                [1. , 0.5, 0.5]]),
-         array([2, 3]))
+               [1. , 0.5, 0.5]]), array([2, 3]))
 
         An intersection is still found if the line coincides with one of the cell's edges.
 
