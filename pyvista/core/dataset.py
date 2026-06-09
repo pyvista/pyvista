@@ -2473,7 +2473,7 @@ class DataSet(DataSetFilters, DataObject):
         Converting the cell to a surface mesh will yield `both` intersections since each face
         is now a separate cell.
 
-        >>> mesh.extract_surface().intersect_with_line(pointa, pointb)
+        >>> mesh.extract_surface(algorithm=None).intersect_with_line(pointa, pointb)
         (array([[0. , 0.5, 0.5],
                 [1. , 0.5, 0.5]]),
          array([2, 3]))
