@@ -2488,9 +2488,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pv.Plane(i_resolution=2, j_resolution=2)
         >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
         (array([[0., 0., 0.],
-                [0., 0., 0.],
-                [0., 0., 0.],
-                [0., 0., 0.]], dtype=float32), array([0, 1, 2, 3]))
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]], dtype=float32), array([0, 1, 2, 3]))
 
         """
         if (pointa := np.asarray(pointa)).size != 3:
