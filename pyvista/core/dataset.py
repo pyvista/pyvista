@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-import contextlib
 from copy import deepcopy
 from functools import cached_property
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
 from typing import TypeVar
@@ -130,7 +128,6 @@ class DataSet(DataSetFilters, DataObject):
     """
 
     plot = pv._plot.plot
-    _cached_locators: ClassVar[set[str]] = set()
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -3708,19 +3705,16 @@ class DataSet(DataSetFilters, DataObject):
     @cached_property
     def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
-        self._cached_locators.add('_static_cell_locator')
         return _build_locator(self, _vtk.vtkStaticCellLocator)
 
     @cached_property
     def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
-        self._cached_locators.add('_cell_tree_locator')
         return _build_locator(self, _vtk.vtkCellTreeLocator)
 
     @cached_property
     def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
-        self._cached_locators.add('_point_locator')
         return _build_locator(self, _vtk.vtkPointLocator)
 
     @cached_property
@@ -3735,15 +3729,7 @@ class DataSet(DataSetFilters, DataObject):
         if pv.version_info >= (0, 52):  # pragma: no cover
             msg = 'Remove PolyData.obbTree and DataSet._obb_tree properties.'
             raise RuntimeError(msg)
-        self._cached_locators.add('_obb_tree')
         return _build_locator(self, _vtk.vtkOBBTree)
-
-    def __del__(self) -> None:
-        """Delete the object."""
-        # Delete cached locators
-        for attr in self._cached_locators:
-            with contextlib.suppress(KeyError):
-                del self.__dict__[attr]
 
 
 _LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)

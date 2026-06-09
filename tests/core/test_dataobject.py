@@ -478,13 +478,9 @@ def test_pickle_invalid_format(sphere):
 def test_pickle_deletes_cached_locators():
     poly = pv.Cone()
 
-    # Verify none of the locators are initially cached
-    assert poly._cached_locators == set()
-
     for attr in ['_static_cell_locator', '_cell_tree_locator', '_point_locator']:
         # Access each locator to trigger the caching
         _ = getattr(poly, attr)
-        assert attr in poly._cached_locators
 
     pickle.loads(pickle.dumps(poly))
 

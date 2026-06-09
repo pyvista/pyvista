@@ -1857,14 +1857,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.n_open_edges == 0
 
-    def __del__(self) -> None:
-        """Delete the object."""
-        # avoid a reference cycle that can't be resolved with vtkPolyData
-        super().__del__()
-        self._glyph_geom = None
-        with contextlib.suppress(KeyError):
-            del self.__dict__['obbTree']
-
 
 @abstract_class
 class PointGrid(_PointSet):
