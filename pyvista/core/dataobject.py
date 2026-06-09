@@ -1089,7 +1089,7 @@ class DataObject(
         _clear_vtk_objects_from_dict(self.__dict__)
 
 
-def _clear_vtk_objects_from_dict(dict_: dict) -> None:
+def _clear_vtk_objects_from_dict(dict_: dict[str, Any]) -> None:
     for attr, value in tuple(dict_.items()):
         if isinstance(value, _vtk.vtkObjectBase):
             del dict_[attr]
