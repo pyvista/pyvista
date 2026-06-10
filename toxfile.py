@@ -25,13 +25,26 @@ if TYPE_CHECKING:
 CONSTRAINTS_FILE = 'constraints.txt'
 
 
+def _get_ci_xdist_auto_workers() -> str:
+    """Return a resource-aware worker count for heavy CI xdist jobs."""
+    cpu_count = os.cpu_count() or 1
+    return str(max(1, cpu_count // 2))
+
+
 @impl
 def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001, D103
     if os.environ.get('CI', 'false').lower() != 'true':
         return
 
-    if env_conf.env_name in ['docs-build', 'doctest-modules']:
+    if env_conf.env_name == 'docs-build':
         env_conf['set_env'].update({'VTK_DEFAULT_OPENGL_WINDOW': 'vtkEGLRenderWindow'})
+        return
+
+    if env_conf.env_name == 'doctest-modules':
+        updated = {'VTK_DEFAULT_OPENGL_WINDOW': 'vtkEGLRenderWindow'}
+        if os.environ['RUNNER_OS'] == 'Linux':
+            updated['PYTEST_XDIST_AUTO_NUM_WORKERS'] = _get_ci_xdist_auto_workers()
+        env_conf['set_env'].update(updated)
         return
 
     # For plotting tests on Linux with vtk < 9.4, some segfaults have been spotted
@@ -95,6 +108,8 @@ def _get_freezed_requirements(lines: list[str]) -> Generator[tuple[str, Version]
     Note that the name is normalized per packaging specifications (see https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization).
     """
     for l in lines:
+        if l.startswith('-e '):  # installed in editable mode, e.g., MNE-Python
+            continue
         req = Requirement(l)
         if (m := re.match(r'(.*)==(\S+)', str(req.specifier))) is not None:
             yield _normalize_package_name(req.name), Version(m.group(2))
