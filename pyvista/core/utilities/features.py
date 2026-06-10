@@ -216,9 +216,9 @@ def _voxelize_legacy(
             y = np.linspace(y_min, y_max, nof_voxels_y + 1)
             z = np.linspace(z_min, z_max, nof_voxels_z + 1)
         else:
-            x = np.arange(x_min, x_max, density_x) # type: ignore[arg-type]
-            y = np.arange(y_min, y_max, density_y) # type: ignore[arg-type]
-            z = np.arange(z_min, z_max, density_z) # type: ignore[arg-type]
+            x = np.arange(x_min, x_max, density_x)  # type: ignore[arg-type]
+            y = np.arange(y_min, y_max, density_y)  # type: ignore[arg-type]
+            z = np.arange(z_min, z_max, density_z)  # type: ignore[arg-type]
 
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering,
