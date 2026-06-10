@@ -68,6 +68,7 @@ Geometric Objects
    Superquadric
    Tetrahedron
    Text3D
+   TexturedSphere
    Triangle
    Tube
    Wavelet
