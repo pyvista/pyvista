@@ -34,12 +34,12 @@
   </em>
 </p>
 
-PyVista is:
+PyVista provides:
 
 - a NumPy-native API for 3D visualization and mesh analysis
 - dataset structures and filters for points, surfaces, and volumes
 - one plotting framework for notebooks, scripts, CI, and apps
-- streamlined 3D for newcomers and graphics experts alike
+- a streamlined 3D interface for newcomers and graphics experts alike
 
 ![PyVista IPython demo](https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif)
 
