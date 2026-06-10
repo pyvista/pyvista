@@ -405,6 +405,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSphereSource',
         'vtkSuperquadricSource',
         'vtkTessellatedBoxSource',
+        'vtkTexturedSphereSource',
     ),
     'vtkFiltersStatistics': (
         'vtkComputeQuartiles',

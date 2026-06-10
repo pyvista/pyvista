@@ -5442,6 +5442,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'SolidSphereGeneric',
         'Sphere',
         'Text3D',
+        'TexturedSphere',
     ]
 
     assert sorted(actual_names) == sorted(expected_names)
@@ -6283,3 +6284,10 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.camera.up = (0, 1, 0)
     pl.camera.parallel_scale = 0.15
     pl.show()
+
+
+@pytest.mark.parametrize('texture_shift', [0.0, 0.25])
+def test_textured_sphere(texture_shift):
+    texture = examples.load_globe_texture()
+    sphere = pv.TexturedSphere(texture_shift=texture_shift)
+    sphere.plot(texture=texture)

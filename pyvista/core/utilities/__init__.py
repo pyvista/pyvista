@@ -88,6 +88,7 @@ from .geometric_objects import Sphere as Sphere
 from .geometric_objects import Superquadric as Superquadric
 from .geometric_objects import Tetrahedron as Tetrahedron
 from .geometric_objects import Text3D as Text3D
+from .geometric_objects import TexturedSphere as TexturedSphere
 from .geometric_objects import Triangle as Triangle
 from .geometric_objects import Tube as Tube
 from .geometric_objects import Wavelet as Wavelet

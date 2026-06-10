@@ -494,6 +494,127 @@ def Sphere(  # noqa: PLR0917
     return surf
 
 
+def TexturedSphere(
+    *,
+    radius: float = 0.5,
+    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    theta_resolution: int = 30,
+    phi_resolution: int = 30,
+    texture_shift: float = 0.0,
+) -> PolyData:
+    """Create a sphere with texture coordinates.
+
+    The sphere describes a 2D surface similar to :func:`pyvista.Sphere`,
+    but also includes a texture coordinates array.
+
+    PyVista uses a convention where ``theta`` represents the azimuthal
+    angle (similar to degrees longitude on the globe) and ``phi``
+    represents the polar angle (similar to degrees latitude on the
+    globe). In contrast to latitude on the globe, here
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default.
+
+    See :ref:`create_sphere_example` for examples on creating spheres in
+    other ways.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    radius : float, default: 0.5
+        Sphere radius.
+
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center coordinate vector in ``[x, y, z]``.
+
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
+    theta_resolution : int, default: 30
+        Set the number of points in the azimuthal direction (ranging
+        from ``start_theta`` to ``end_theta``).
+
+    phi_resolution : int, default: 30
+        Set the number of points in the polar direction (ranging from
+        ``start_phi`` to ``end_phi``).
+
+    texture_shift : float, default: 0.0
+        Periodic offset applied to the first texture coordinate axis.
+
+        This shifts the texture mapping along the wrapped parametric
+        direction of the surface, effectively translating where the
+        texture begins without modifying geometry. By default, the
+        texture mapping starts where theta is 0.0.
+
+        The value is specified in normalized texture space, where
+        1.0 corresponds to a full wrap (360° equivalent on periodic
+        domains).
+
+    Returns
+    -------
+    pyvista.PolyData
+        Sphere mesh with texture coordinates.
+
+    See Also
+    --------
+    pyvista.Sphere: Sphere that describes outer 2D surface.
+
+    Examples
+    --------
+    Create a textured sphere using default parameters.
+
+    >>> import pyvista as pv
+    >>> sphere = pv.TexturedSphere()
+    >>> sphere.plot(show_edges=True)
+
+    The sphere has active texture coordinates. For example, we inspect
+    a representative coordinate.
+
+    >>> sphere.active_texture_coordinates[0]
+    pyvista_ndarray([0., 1.], dtype=float32)
+
+    Shift the texture coordinates by 0.5. This only shifts them in the
+    U direction.
+
+    >>> sphere = pv.TexturedSphere(texture_shift=0.5)
+    >>> sphere.active_texture_coordinates[0]
+    pyvista_ndarray([0.5, 1. ], dtype=float32)
+
+    Unlike :func:`~pyvista.Sphere`, the textured sphere is not a closed
+    surface and has open edges.
+
+    >>> sphere.n_open_edges
+    120
+
+    """
+    source = _vtk.vtkTexturedSphereSource()
+    source.SetRadius(radius)
+    source.SetThetaResolution(theta_resolution)
+    source.SetPhiResolution(phi_resolution)
+    source.Update()
+    output = wrap(source.GetOutput())
+    output.rotate_y(90, inplace=True)
+    translate(output, center, direction)
+
+    # Rename arrays
+    normals_name = 'Normals'
+    texture_coordinates_name = 'Texture Coordinates'
+    output.rename_array('Unnamed_0', normals_name)
+    output.rename_array('Unnamed_1', texture_coordinates_name)
+
+    # Need to make arrays active again since `rename_array` is buggy: https://github.com/pyvista/pyvista/issues/8746
+    output.point_data._active_normals_name = normals_name
+    output.point_data.active_texture_coordinates_name = texture_coordinates_name
+
+    # Shift the coordinate mapping
+    if texture_shift != 0.0:
+        output.active_texture_coordinates[:, 0] += texture_shift  # type: ignore[index]
+    return output
+
+
 @_deprecate_positional_args
 def SolidSphere(  # noqa: PLR0917
     outer_radius: float = 0.5,

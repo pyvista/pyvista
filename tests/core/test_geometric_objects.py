@@ -118,6 +118,20 @@ def test_solid_sphere():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
 
 
+def test_textured_sphere():
+    sphere = pv.TexturedSphere()
+    assert isinstance(sphere, pv.PolyData)
+    assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
+    assert sphere.point_data._active_normals_name == 'Normals'
+    assert sphere.n_points == 961
+
+    sphere = pv.TexturedSphere(phi_resolution=31)
+    assert sphere.n_points == 992
+
+    sphere = pv.TexturedSphere(phi_resolution=31, theta_resolution=31)
+    assert sphere.n_points == 1024
+
+
 def test_solid_sphere_hollow():
     sphere = pv.SolidSphere(
         outer_radius=1.0,
