@@ -556,11 +556,15 @@ def StructuredSphere(
         Azimuthal angle in degrees where the texture seam is located.
         By default, the texture seam is at ``theta=0`` degrees.
 
+        Setting this value is equivalent to transforming the output mesh
+        with :meth:`~pyvista.DataObjectFilters.rotate_z` (assuming a
+        default ``center`` and ``direction``).
+
         .. note::
 
             For textures of Earth, a value of ``180`` degrees is typically
             needed for the Prime Meridian to be correctly mapped to 0 degrees
-            longitude.
+            longitude on the positive x-axis.
 
     Returns
     -------

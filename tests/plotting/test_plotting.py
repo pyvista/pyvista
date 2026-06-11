@@ -6292,6 +6292,11 @@ def test_structured_sphere_theta_offset():
     texture = examples.load_globe_texture()
     pv.plot_compare_four(*data, display_kwargs={'texture': texture}, labels=list(map(str, angles)))
 
+    # Should be equivalent to a geometric transformation
+    for actual, angle in zip(data, angles, strict=True):
+        expected = pv.StructuredSphere().rotate_z(angle)
+        assert np.allclose(actual.points, expected.points)
+
 
 def test_structured_sphere_resolution_matches_sphere():
     data: dict[str, pv.DataSet] = {}
