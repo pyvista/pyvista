@@ -513,13 +513,15 @@ def StructuredSphere(
     - does not include pre-computed normals
     - is not a closed surface (it has a seam with open edges)
     - the points and arrays have double precision instead of single
+    - does not support setting start and end phi/theta angles
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
-    globe).
-
-    By default, ``theta=0`` is on the positive x-axis, and corresponds
+    globe). In contrast to latitude on the globe, here
+    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
+    Pole. ``phi=0`` is on the positive z-axis by default.
+    ``theta=0`` is on the positive x-axis by default, which corresponds
     to the mesh's seam (i.e. open edges). Use ``theta_offset`` to shift
     the seam's location.
 
