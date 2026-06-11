@@ -600,14 +600,11 @@ def TexturedSphere(
     translate(output, center, direction)
 
     # Rename arrays
-    normals_name = 'Normals'
-    texture_coordinates_name = 'Texture Coordinates'
-    output.rename_array('Unnamed_0', normals_name)
-    output.rename_array('Unnamed_1', texture_coordinates_name)
-
-    # Need to make arrays active again since `rename_array` is buggy: https://github.com/pyvista/pyvista/issues/8746
-    output.point_data._active_normals_name = normals_name
-    output.point_data.active_texture_coordinates_name = texture_coordinates_name
+    point_data = output.point_data
+    normals = point_data.GetNormals()
+    normals.SetName('Normals')
+    tcoords = point_data.GetTCoords()
+    tcoords.SetName('Texture Coordinates')
 
     # Shift the coordinate mapping
     if texture_shift != 0.0:
