@@ -5445,16 +5445,16 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'Polygon',
         'SolidSphere',
         'SolidSphereGeneric',
+        'StructuredSphere',
         'Sphere',
         'Text3D',
-        'TexturedSphere',
     ]
 
     # Skip for older VTK due to test issue with initializing TexturedSphere
     if pv.vtk_version_info < (9, 3):
         expected_names.remove('TexturedSphere')
 
-    assert sorted(actual_names) == sorted(expected_names)
+    assert set(actual_names) == set(expected_names)
     return functions.items()
 
 
@@ -6295,8 +6295,29 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
-@pytest.mark.parametrize('texture_seam_theta', [0.0, 90.0])
-def test_textured_sphere(texture_seam_theta):
+def test_structured_sphere_theta_offset():
+    angles = [0, 90, 180, 270]
+    data = [pv.StructuredSphere(theta_offset=angle) for angle in angles]
     texture = examples.load_globe_texture()
-    sphere = pv.TexturedSphere(texture_seam_theta=texture_seam_theta)
-    sphere.plot(texture=texture)
+    pv.plot_compare_four(*data, display_kwargs={'texture': texture}, labels=list(map(str, angles)))
+
+
+def test_structured_sphere_resolution_matches_sphere():
+    data: dict[str, pv.DataSet] = {}
+    angle1, angle2 = 4, 8
+    for phi, theta in [(angle1, angle2), (angle2, angle1)]:
+        kwargs = {'phi_resolution': phi, 'theta_resolution': theta}
+        data[f'Sphere {phi} {theta}'] = pv.Sphere(**kwargs)
+        data[f'Structured {phi} {theta}'] = pv.StructuredSphere(**kwargs)
+
+    pv.plot_compare_four(
+        *data.values(),
+        display_kwargs={'show_edges': True},
+        labels=list(data.keys()),
+        link=False,
+        camera_position=pv.CameraPosition(
+            position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
+            focal_point=(0.0, 0.0, 0.0),
+            viewup=(0.0, 0.0, 1.0),
+        ),
+    )

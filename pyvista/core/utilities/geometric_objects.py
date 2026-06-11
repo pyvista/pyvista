@@ -494,27 +494,36 @@ def Sphere(  # noqa: PLR0917
     return surf
 
 
-def TexturedSphere(
+def StructuredSphere(
     *,
     radius: float = 0.5,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
-    texture_seam_theta: float = 0.0,
-) -> PolyData:
-    """Create a sphere with texture coordinates.
+    theta_offset: float = 0.0,
+) -> StructuredGrid:
+    """Create a sphere as a :class:`~pyvista.StructuredGrid`.
 
-    The sphere describes a 2D surface similar to :func:`pyvista.Sphere`,
-    but also includes a texture coordinates array.
+    The grid is similar to :func:`~pyvista.Sphere`, except ``StructuredSphere``:
+
+    - is a ``StructuredGrid`` instead of :class:`~pyvista.PolyData`
+    - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells
+    - includes a texture coordinates array
+    - does not include pre-computed normals
+    - is not a closed surface (it has seam with open edges)
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
     represents the polar angle (similar to degrees latitude on the
-    globe). In contrast to latitude on the globe, here
-    ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
-    Pole. ``phi=0`` is on the positive z-axis by default.
-    ``theta=0`` is on the positive x-axis by default.
+    globe).
+
+    By default, ``theta=0`` is on the positive x-axis, and corresponds
+    to the mesh's seam (i.e. open edges). Use ``theta_offset`` to shift
+    the seam's location.
+
+    Note that the output has degenerate :attr:`~pyvista.CellType.QUAD`
+    cells at the poles that appear as triangles.
 
     See :ref:`create_sphere_example` for examples on creating spheres in
     other ways.
@@ -534,19 +543,14 @@ def TexturedSphere(
         the sphere's north pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
-        Set the number of points in the azimuthal direction (ranging
-        from ``start_theta`` to ``end_theta``).
+        Set the number of points in the azimuthal direction.
 
     phi_resolution : int, default: 30
-        Set the number of points in the polar direction (ranging from
-        ``start_phi`` to ``end_phi``).
+        Set the number of points in the polar direction.
 
-    texture_seam_theta : float, default: 0.0
-        Azimuthal angle in degrees where the texture seam will be located.
-
-        This modifies the texture mapping around the sphere without
-        modifying its geometry. By default, the texture seam is located
-        at ``theta=0`` degrees.
+    theta_offset : float, default: 0.0
+        Azimuthal angle in degrees where the texture seam is located.
+        By default, the texture seam is at ``theta=0`` degrees.
 
         .. note::
 
@@ -556,7 +560,7 @@ def TexturedSphere(
 
     Returns
     -------
-    pyvista.PolyData
+    pyvista.StructuredGrid
         Sphere mesh with texture coordinates.
 
     See Also
@@ -569,55 +573,41 @@ def TexturedSphere(
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> sphere = pv.TexturedSphere()
+    >>> sphere = pv.StructuredSphere()
     >>> sphere.plot(show_edges=True)
 
-    The sphere has active texture coordinates. For example, we inspect
-    a representative coordinate.
+    The sphere has active texture coordinates. Show the first coordinates.
 
     >>> sphere.active_texture_coordinates[0]
     pyvista_ndarray([0., 1.], dtype=float32)
 
-    Modify the texture's seam location. Setting it to 90 degrees shifts the texture coordinates
-    by 0.25 in the "U" direction.
+    Plot a textured sphere of Earth. Move the seam to the negative x-axis so
+    that zero degrees longitude corresponds to the center of the texture.
 
-    >>> sphere = pv.TexturedSphere(texture_seam_theta=90)
-    >>> sphere.active_texture_coordinates[0]
-    pyvista_ndarray([0.25, 1.  ], dtype=float32)
-
-    Unlike :func:`~pyvista.Sphere`, the textured sphere is not a closed
-    surface and has open edges.
-
-    >>> sphere.n_open_edges
-    120
-
-    Plot a textured sphere of Earth.
-
-    >>> sphere = pv.TexturedSphere(texture_seam_theta=180)
+    >>> sphere = pv.StructuredSphere(theta_offset=180)
     >>> texture = examples.load_globe_texture()
     >>> sphere.plot(texture=texture, smooth_shading=True)
 
     """
-    source = _vtk.vtkTexturedSphereSource()
-    source.SetRadius(radius)
-    source.SetThetaResolution(theta_resolution)
-    source.SetPhiResolution(phi_resolution)
-    source.Update()
-    output = wrap(source.GetOutput())
-    output.rotate_y(90, inplace=True)
-    translate(output, center, direction)
+    # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
+    phi, theta = np.mgrid[
+        0 : np.pi : phi_resolution * 1j,
+        0 : 2 * np.pi : (theta_resolution + 1) * 1j,
+    ]
 
-    # Rename arrays
-    point_data = output.point_data
-    normals = point_data.GetNormals()
-    normals.SetName('Normals')
-    tcoords = point_data.GetTCoords()
-    tcoords.SetName('Texture Coordinates')
+    theta_shifted = theta + np.deg2rad(theta_offset)
+    x = radius * np.sin(phi) * np.cos(theta_shifted)
+    y = radius * np.sin(phi) * np.sin(theta_shifted)
+    z = radius * np.cos(phi)
+    sphere = pv.StructuredGrid(x, y, z)
 
-    # Shift the coordinate mapping
-    if texture_seam_theta != 0.0:
-        output.active_texture_coordinates[:, 0] += texture_seam_theta / 360.0  # type: ignore[index]
-    return output
+    u = theta / (2 * np.pi)
+    v = phi[::-1, :] / phi.max()
+    sphere.active_texture_coordinates = np.c_[u.ravel('F'), v.ravel('F')]
+
+    sphere.rotate_y(90, inplace=True)
+    translate(sphere, center, direction)
+    return sphere
 
 
 @_deprecate_positional_args
