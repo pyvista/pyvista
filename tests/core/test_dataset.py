@@ -725,6 +725,31 @@ def test_rename_array_doesnt_delete():
     assert (mesh.point_data['renamed'] == 1).all()
 
 
+def test_rename_array_preserves_active_attributes():
+    # Regression test for issue #8746: renaming an array must not drop its active
+    # normals / texture coordinates / vectors designation, not only active scalars.
+    mesh = pv.Sphere()
+    n = mesh.n_points
+    point_data = mesh.point_data
+    point_data['my_normals'] = np.tile([0.0, 0.0, 1.0], (n, 1))
+    point_data.active_normals_name = 'my_normals'
+    point_data['my_tcoords'] = np.zeros((n, 2))
+    point_data.active_texture_coordinates_name = 'my_tcoords'
+    point_data['my_vectors'] = np.zeros((n, 3))
+    point_data.active_vectors_name = 'my_vectors'
+
+    mesh.rename_array('my_normals', 'renamed_normals', preference='point')
+    mesh.rename_array('my_tcoords', 'renamed_tcoords', preference='point')
+    mesh.rename_array('my_vectors', 'renamed_vectors', preference='point')
+
+    assert point_data.active_normals_name == 'renamed_normals'
+    assert point_data.active_normals is not None
+    assert point_data.active_texture_coordinates_name == 'renamed_tcoords'
+    assert point_data.active_texture_coordinates is not None
+    assert point_data.active_vectors_name == 'renamed_vectors'
+    assert point_data.active_vectors is not None
+
+
 def test_change_name_fail(hexbeam):
     with pytest.raises(KeyError):
         hexbeam.rename_array('not a key', '')

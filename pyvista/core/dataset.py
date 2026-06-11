@@ -798,12 +798,30 @@ class DataSet(DataSetFilters, DataObject):
             msg = f'Array with name {old_name} not found.'
             raise KeyError(msg)
 
+        # An array can also be the active normals, texture coordinates, vectors, etc.
+        # Popping it clears those designations on the vtkDataSetAttributes, so record
+        # them now and restore them after renaming, otherwise the rename silently drops
+        # them (see issue #8746). The active scalars are restored separately below via
+        # `set_active_scalars` so the dataset's cached scalars info stays in sync.
+        active_attributes: list[int] = []
+        if field != FieldAssociation.NONE:
+            attributes = data.VTKObject
+            for attribute_type in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
+                if attribute_type == _vtk.vtkDataSetAttributes.SCALARS:
+                    continue
+                attribute = attributes.GetAttribute(attribute_type)
+                if attribute is not None and attribute.GetName() == old_name:
+                    active_attributes.append(attribute_type)
+
         arr = data.pop(old_name)
         # Update the array's name before reassigning. This prevents taking a copy of the array in
         # `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
         # See issue #5244.
         arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
+
+        for attribute_type in active_attributes:
+            data.VTKObject.SetActiveAttribute(new_name, attribute_type)
 
         if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
