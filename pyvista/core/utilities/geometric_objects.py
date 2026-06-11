@@ -213,7 +213,7 @@ def Cylinder(  # noqa: PLR0917
 
 @_deprecate_positional_args
 def CylinderStructured(  # noqa: PLR0917
-    radius: float = 0.5,
+    radius: float | VectorLike[float] = 0.5,
     height: float = 1.0,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -231,7 +231,8 @@ def CylinderStructured(  # noqa: PLR0917
     radius : float | sequence[float], default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
-        specified by the ``radius``.
+        specified by the ``radius``. The sequence must be sorted
+        in ascending order.
 
     height : float, default: 1.0
         Height of the cylinder along its Z-axis.
@@ -244,7 +245,6 @@ def CylinderStructured(  # noqa: PLR0917
 
     theta_resolution : int, default: 32
         Number of points on the circular face of the cylinder.
-        Ignored if ``radius`` is an iterable.
 
     z_resolution : int, default: 10
         Number of points along the height (Z-axis) of the cylinder.
@@ -277,7 +277,12 @@ def CylinderStructured(  # noqa: PLR0917
 
     """
     # Define grid in polar coordinates
-    r = np.array([radius]).ravel()
+    r = _validation.validate_arrayN(
+        radius,
+        must_be_in_range=[0.0, np.inf],
+        strict_lower_bound=True,
+        must_be_sorted={'ascending': True, 'strict': True},
+    )
     nr = len(r)
     theta = np.linspace(0, 2 * np.pi, num=theta_resolution + 1)
     radius_matrix, theta_matrix = np.meshgrid(r, theta)
@@ -290,7 +295,6 @@ def CylinderStructured(  # noqa: PLR0917
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
-    zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
