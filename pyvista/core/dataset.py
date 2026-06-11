@@ -816,6 +816,7 @@ class DataSet(DataSetFilters, DataObject):
         arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
 
+        # Restore active attributes
         for attribute_type, prior_name in prior_active.items():
             restored_name = new_name if prior_name == old_name else prior_name
             attribute = data.VTKObject.GetAttribute(attribute_type)

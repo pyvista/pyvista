@@ -745,7 +745,9 @@ def test_rename_array_preserves_active_attributes():
     point_data.active_scalars_name = None
 
     def active_tensors_name():
-        # There is no attributes-level tensors accessor.
+        # There is no attributes-level tensors accessor, and the dataset-level
+        # `active_tensors_name` reports stale state after a rename (see issue #8749),
+        # so read the actual state from VTK directly.
         tensors = point_data.VTKObject.GetTensors()
         return None if tensors is None else tensors.GetName()
 
