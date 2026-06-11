@@ -5393,6 +5393,10 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     para_functions = _get_module_functions(pv.core.parametric_objects)
     functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
 
+    # Skip for older VTK due to test issue with initializing TexturedSphere
+    if 'TexturedSphere' in functions and pv.vtk_version_info < (9, 3):
+        functions.pop('TexturedSphere')
+
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param
     functions = {
@@ -5403,9 +5407,6 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     # Remove Spline from test case (if present).
     if 'Spline' in functions.keys():
         functions.pop('Spline')
-    # Skip for older VTK due to test issue with initializing TexturedSphere
-    if 'TexturedSphere' in functions.keys() and pv.vtk_version_info < (9, 3):
-        functions.pop('TexturedSphere')
 
     # Add a separate test for vtk < 9.3
     functions['Capsule_legacy'] = functions['Capsule']
@@ -5448,6 +5449,10 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'Text3D',
         'TexturedSphere',
     ]
+
+    # Skip for older VTK due to test issue with initializing TexturedSphere
+    if pv.vtk_version_info < (9, 3):
+        expected_names.remove('TexturedSphere')
 
     assert sorted(actual_names) == sorted(expected_names)
     return functions.items()
