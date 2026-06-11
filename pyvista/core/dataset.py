@@ -1975,7 +1975,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkPointLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkPointLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2046,7 +2046,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2182,7 +2182,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2254,7 +2254,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2332,7 +2332,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2389,7 +2389,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkStaticCellLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
@@ -2530,7 +2530,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. warning::
 
-            This filter internally builds and caches a :vtk:vtkCellTreeLocator`. If the mesh's
+            This filter internally builds and caches a :vtk:`vtkCellTreeLocator`. If the mesh's
             geometry is modified, the cache will no longer be valid.
 
         Parameters
