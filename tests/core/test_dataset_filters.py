@@ -1901,6 +1901,19 @@ def test_plot_over_line(tmpdir):
         show=False,
         progress_bar=True,
     )
+    # Test single-component scalars with a component selected
+    mesh['bar'] = np.arange(mesh.n_cells)
+    mesh.plot_over_line(
+        a,
+        b,
+        resolution=None,
+        scalars='bar',
+        title='My Stuff',
+        ylabel='Component 0',
+        component=0,
+        show=False,
+        progress_bar=True,
+    )
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(
