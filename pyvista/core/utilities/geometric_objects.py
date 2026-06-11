@@ -529,7 +529,8 @@ def StructuredSphere(
     cells at the poles that appear as triangles.
 
     See :ref:`create_sphere_example` for examples on creating spheres in
-    other ways.
+    other ways, including how to address the degenerate-quads problem
+    and plotting the sphere's seam.
 
     .. versionadded:: 0.49
 
