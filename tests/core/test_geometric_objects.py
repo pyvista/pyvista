@@ -123,13 +123,13 @@ def test_textured_sphere():
     assert isinstance(sphere, pv.PolyData)
     assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
     assert sphere.point_data._active_normals_name == 'Normals'
-    assert sphere.n_points == 961
+    assert sphere.n_cells == 1800
 
     sphere = pv.TexturedSphere(phi_resolution=31)
-    assert sphere.n_points == 992
+    assert sphere.n_cells == 1860
 
     sphere = pv.TexturedSphere(phi_resolution=31, theta_resolution=31)
-    assert sphere.n_points == 1024
+    assert sphere.n_cells == 1922
 
 
 def test_solid_sphere_hollow():
