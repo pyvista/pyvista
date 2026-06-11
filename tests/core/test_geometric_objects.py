@@ -122,6 +122,8 @@ def test_structured_sphere():
     sphere = pv.StructuredSphere()
     assert isinstance(sphere, pv.StructuredGrid)
     assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
+    assert sphere.active_texture_coordinates.dtype == np.float64
+    assert sphere.points.dtype == np.float64
     assert sphere.n_cells == 870
 
 

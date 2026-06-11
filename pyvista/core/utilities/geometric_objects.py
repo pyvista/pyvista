@@ -512,6 +512,7 @@ def StructuredSphere(
     - includes a texture coordinates array
     - does not include pre-computed normals
     - is not a closed surface (it has seam with open edges)
+    - the points and arrays have double precision instead of single
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
@@ -579,7 +580,7 @@ def StructuredSphere(
     The sphere has active texture coordinates. Show the first coordinates.
 
     >>> sphere.active_texture_coordinates[0]
-    pyvista_ndarray([0., 1.], dtype=float32)
+    pyvista_ndarray([0., 1.])
 
     Plot a textured sphere of Earth. Move the seam to the negative x-axis so
     that zero degrees longitude corresponds to the center of the texture.
