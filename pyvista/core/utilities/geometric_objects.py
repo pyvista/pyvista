@@ -568,6 +568,7 @@ def TexturedSphere(
     Create a textured sphere using default parameters.
 
     >>> import pyvista as pv
+    >>> from pyvista import examples
     >>> sphere = pv.TexturedSphere()
     >>> sphere.plot(show_edges=True)
 
@@ -589,6 +590,12 @@ def TexturedSphere(
 
     >>> sphere.n_open_edges
     120
+
+    Plot a textured sphere of Earth.
+
+    >>> sphere = pv.TexturedSphere(texture_seam_theta=180)
+    >>> texture = examples.load_globe_texture()
+    >>> sphere.plot(texture=texture, smooth_shading=True)
 
     """
     source = _vtk.vtkTexturedSphereSource()
