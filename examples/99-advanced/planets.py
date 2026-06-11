@@ -21,8 +21,6 @@ This example is inspired by `planet3D-MATLAB
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -143,3 +141,37 @@ pl.add_text('Venus Surface')
 pl.add_mesh(venus, texture=surface_texture, smooth_shading=True)
 pl.link_views()
 pl.show(cpos='xy')
+
+
+# %%
+# Plot the Earth and Prime Meridian
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the prime meridian at 0° longitude.
+# The prime meridian lies in the XZ plane on the +X side of Earth.
+
+earth = examples.planets.load_earth(radius=6378.1)
+earth_texture = examples.load_globe_texture()
+
+# Slice Earth with the XZ plane to create the full meridian circle
+meridian_circle = earth.slice('y')
+
+# Keep the +X half of the meridian circle (0° longitude)
+prime_meridian = meridian_circle.clip('x', origin=(0, 0, 0), invert=False)
+
+pl = pv.Plotter()
+pl.add_title('Prime Meridian of Earth', font_size=12)
+
+pl.add_mesh(
+    earth,
+    texture=earth_texture,
+    smooth_shading=True,
+)
+pl.add_mesh(
+    prime_meridian,
+    color='magenta',
+    line_width=10,
+    label='Prime Meridian',
+)
+
+pl.show_axes()
+pl.show()

@@ -36,7 +36,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
-    from pyvista.core import _vtk_core as _vtk
+    from pyvista import _vtk
 
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
@@ -151,7 +151,8 @@ def _check_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm
                     f'{algorithm.__class__.__name__} did not generate '
                     f'points with double precision.\n'
                     f'Input {mesh_in.__class__.__name__} points dtype is {points_in.dtype.name}, '
-                    f'output {mesh_out.__class__.__name__} points dtype is {points_out.dtype.name}.'
+                    f'output {mesh_out.__class__.__name__} points dtype is '
+                    f'{points_out.dtype.name}.'
                 )
                 if points_in.dtype != np.double:
                     msg += (

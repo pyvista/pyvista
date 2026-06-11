@@ -11,9 +11,9 @@ from typing import get_args
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _set_output_points_precision
 
 from .geometric_sources import translate

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import json
 import locale
 import os
 from pathlib import Path
@@ -11,7 +12,6 @@ import sys
 from typing import TYPE_CHECKING
 import warnings
 
-from atsphinx.mini18n import get_template_dir
 from docutils.parsers.rst.directives.images import Image
 
 if TYPE_CHECKING:
@@ -70,8 +70,11 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
 # Prevent deprecated features from being used in examples
@@ -96,7 +99,6 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -175,6 +177,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*InteractorStyleHandler'),
+    (r'py:.*', '.*WriterHandler'),
+    (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
@@ -192,6 +197,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_MeshType_co'),
+    (r'py:.*', '.*_T_Output_co'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
@@ -199,6 +205,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
+    # Python 3.14 typing internals leaked through get_type_hints() on
+    # forward-refs inside Union aliases (e.g., 'Color' inside ColorLike).
+    (r'py:.*', 'TypeAliasForwardRef'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -230,6 +239,11 @@ nitpick_ignore_regex = [
     # PyVista Widget enums
     (r'py:.*', '.*PickerType'),
     (r'py:.*', '.*ElementType'),
+    #
+    # PyVista shader/plotting enums
+    (r'py:.*', '.*ShaderType'),
+    (r'py:.*', '.*PointSpriteShape'),
+    (r'py:.*', '.*StereoType'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
@@ -283,6 +297,12 @@ nitpick_ignore_regex = [
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
     #
+    # pyarrow does not register a py:module entry in its intersphinx
+    # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
+    # inventory is loaded. ``pyarrow.Table`` is registered as a py:class
+    # and resolves normally.
+    (r'py:mod', 'pyarrow'),
+    #
     # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
     (r'py:.*', 'EmbeddableWidget'),
@@ -301,10 +321,29 @@ nitpick_ignore_regex = [
     #
     # Misc general ignores
     (r'py:.*', 'optional'),
+    #
+    # Private implementation types used in signatures
+    (r'py:.*', r'.*_SMPToolsContext'),
+    (r'py:.*', r'.*_ActiveArrayExistsInfoTuple'),
+    #
+    # Private algorithm classes returned by plotting utility functions
+    (r'py:.*', r'.*ActiveScalarsAlgorithm'),
+    (r'py:.*', r'.*AddIDsAlgorithm'),
+    (r'py:.*', r'.*CallbackFilterAlgorithm'),
+    (r'py:.*', r'.*CrinkleAlgorithm'),
+    (r'py:.*', r'.*PointSetToPolyDataAlgorithm'),
+    (r'py:.*', r'.*SmoothShadingAlgorithm'),
+    (r'py:.*', r'.*SourceAlgorithm'),
+    (r'py:.*', r'pyvista\.Common'),
+    #
+    # Long-form function paths used in some docstrings/examples
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.perlin_noise'),
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.sample_function'),
 ]
 
 
 add_module_names = False
+toc_object_entries_show_parents = 'hide'
 
 # Intersphinx mapping
 # NOTE: if these are changed, then doc/intersphinx/update.sh
@@ -312,30 +351,34 @@ add_module_names = False
 intersphinx_mapping = {
     'python': (
         'https://docs.python.org/3.11',
-        (None, '../intersphinx/python-objects.inv'),
+        ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
-        (None, '../intersphinx/scipy-objects.inv'),
+        ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
         'https://matplotlib.org/stable',
-        (None, '../intersphinx/matplotlib-objects.inv'),
+        ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
         'https://imageio.readthedocs.io/en/stable',
-        (None, '../intersphinx/imageio-objects.inv'),
+        ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
-        (None, '../intersphinx/pandas-objects.inv'),
+        ('../intersphinx/pandas-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'pyarrow': (
+        'https://arrow.apache.org/docs',
+        ('../intersphinx/pyarrow-objects.inv',),
+    ),
+    'pytest': ('https://docs.pytest.org/en/stable', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
-intersphinx_timeout = 10
+intersphinx_timeout = 5
 
 # Select if we want to generate production or dev documentation
 #
@@ -343,7 +386,7 @@ intersphinx_timeout = 10
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates', get_template_dir()]
+templates_path = ['_templates']
 
 # Autosummary configuration
 autosummary_context = {
@@ -388,6 +431,12 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+_repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
+_docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
+_context7_data = json.loads(_repo_context7.read_text())
+_context7_data['url'] = 'https://context7.com/websites/pyvista'
+_docs_context7.write_text(json.dumps(_context7_data, indent=2) + '\n')
+
 html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -408,6 +457,13 @@ def _filter_sphinx_gallery_warnings():
         'ignore',
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
+    )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
     )
 
     # Treat all remaining warnings as errors
@@ -505,7 +561,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']
@@ -560,6 +616,8 @@ html_theme_options = {
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
+    # Capping at depth 4 keeps classes nested under their section pages while
+    # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
     'icon_links': [
         {
@@ -581,6 +639,11 @@ html_theme_options = {
             'name': 'The Paper',
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
+        },
+        {
+            'name': 'PyPI',
+            'url': 'https://pypi.org/project/pyvista',
+            'icon': 'fa-brands fa-python',
         },
     ],
 }
@@ -722,19 +785,14 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
-# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
         'icon-links.html',
-        'mini18n/snippets/select-lang.html',
         'search-button-field.html',
         'sbt-sidebar-nav.html',
     ],
 }
-mini18n_default_language = language
-mini18n_support_languages = ['en', 'ja']
-locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
 class PlaceHolderImage(Image):

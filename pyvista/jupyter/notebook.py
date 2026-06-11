@@ -1,11 +1,8 @@
 """Support dynamic or static jupyter notebook plotting.
 
-Includes:
-
-* ``trame``
-* ``client``
-* ``server``
-* ``html``
+Trame backends (``trame``, ``client``, ``server``, ``html``) are
+provided by the optional :mod:`trame_pyvista` package, which registers
+them via the ``pyvista.jupyter_backends`` entry-point group.
 
 """
 
@@ -15,6 +12,10 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 from pyvista._warn_external import warn_external
+from pyvista.jupyter import _custom_backends
+from pyvista.jupyter import _ensure_entry_points
+from pyvista.jupyter import _get_custom_backend_handler
+from pyvista.jupyter import _resolve_backend
 
 if TYPE_CHECKING:
     import io
@@ -22,17 +23,17 @@ if TYPE_CHECKING:
 
     from IPython.lib.display import IFrame
     from PIL.Image import Image
+    from trame_pyvista.jupyter import EmbeddableWidget
+    from trame_pyvista.jupyter import Widget
 
     from pyvista import pyvista_ndarray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
-    from pyvista.trame.jupyter import EmbeddableWidget
-    from pyvista.trame.jupyter import Widget
 
 
 def handle_plotter(
     plotter: Plotter,
-    backend: JupyterBackendOptions | None = None,
+    backend: JupyterBackendOptions | str | None = None,
     screenshot: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
@@ -47,15 +48,47 @@ def handle_plotter(
     if screenshot is False:
         screenshot = None
 
-    try:
-        if backend in ['server', 'client', 'trame', 'html']:
-            from pyvista.trame.jupyter import show_trame  # noqa: PLC0415
+    # Auto-detect the best available backend when not specified
+    if backend is None:
+        backend = _resolve_backend()
+        if backend == 'static':
+            warn_external(
+                'Using static image for notebook display.\n'
+                'Install trame for interactive backends:'
+                ' pip install trame-pyvista'
+            )
 
-            return show_trame(plotter, mode=backend, **kwargs)
+    # Custom backends (registered or from entry points — including trame-pyvista)
+    custom_handler = _get_custom_backend_handler(backend)
+    if custom_handler is not None:
+        return cast(
+            'EmbeddableWidget | IFrame | Widget | Image',
+            custom_handler(plotter, screenshot=screenshot, **kwargs),
+        )
 
-    except ImportError as e:
+    # Trame backend names with no registered handler — fall back with a hint
+    if backend in ('server', 'client', 'trame', 'html'):
+        _ensure_entry_points()
+        if _custom_backends:
+            fallback_name, fallback_handler = next(iter(_custom_backends.items()))
+            available = [f'"{b}"' for b in sorted(_custom_backends.keys())]
+            available += ['"static"', '"none"']
+            warn_external(
+                f'No handler registered for notebook backend "{backend}".\n\n'
+                f'Using registered backend "{fallback_name}" instead.\n'
+                f'Available backends: {", ".join(available)}'
+            )
+            return cast(
+                'EmbeddableWidget | IFrame | Widget | Image',
+                fallback_handler(plotter, screenshot=screenshot, **kwargs),
+            )
+
         warn_external(
-            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
+            f'No handler registered for notebook backend "{backend}".\n\n'
+            'Falling back to a static output.\n'
+            'Available backends: "static", "none"\n'
+            'Install trame for interactive backends:'
+            ' pip install trame-pyvista'
         )
 
     return show_static_image(plotter, screenshot)

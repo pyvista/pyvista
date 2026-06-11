@@ -5,32 +5,36 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
+import importlib.util
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
-from .utilities.fileio import PICKLE_EXT
+from .utilities.fileio import _PICKLE_FILE_EXT
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import _raise_pickle_removed
 from .utilities.fileio import get_ext
 from .utilities.fileio import read
-from .utilities.fileio import save_pickle
 from .utilities.helpers import wrap
+from .utilities.misc import _DataObjectMeta
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
+from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
+from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_exts
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -49,9 +53,31 @@ DEFAULT_VECTOR_KEY = '_vectors'
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+def _raise_unexpected_writer_kwargs(
+    writer_kwargs: dict[str, Any],
+    file_ext: str,
+    *,
+    target: str,
+) -> None:
+    """Raise :class:`TypeError` for extras that would be silently dropped."""
+    names = sorted(writer_kwargs)
+    msg = (
+        f'save() got unexpected keyword arguments {names} for '
+        f'{target} for extension {file_ext!r}. Extra keyword arguments '
+        f'are only forwarded to custom writers registered via '
+        f'pyvista.register_writer.'
+    )
+    raise TypeError(msg)
+
+
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
+class DataObject(
+    _NoNewAttrMixin,
+    DisableVtkSnakeCase,
+    vtkPyVistaOverride,
+    metaclass=_DataObjectMeta,
+):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -81,8 +107,34 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
     def __getattr__(self: Self, item: str) -> Any:
-        """Get attribute from base class if not found."""
+        """Get attribute from base class if not found.
+
+        Before falling through to the VTK base class, check whether
+        ``item`` matches a pending ``pyvista.accessors`` entry point.
+        A match triggers a one-shot plugin import, after which normal
+        attribute resolution finds the newly-attached accessor
+        descriptor.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
+
+        if _resolve_pending_accessor(item):
+            return object.__getattribute__(self, item)
         return super().__getattribute__(item)
+
+    def __dir__(self: Self) -> list[str]:
+        """Include pending accessor names so tab completion surfaces them.
+
+        Plugin-contributed accessors registered via the ``pyvista.accessors``
+        entry-point group are imported lazily on first attribute access.
+        Listing their names alongside the normal attribute set lets IPython
+        / Jupyter / REPL tab completion surface them without paying the
+        plugin import cost ahead of time.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.core.utilities.accessor_registry import _pending_accessor_names
+
+        return sorted({*super().__dir__(), *_pending_accessor_names()})
 
     def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.
@@ -128,14 +180,18 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Save this vtk object to file.
 
         .. include:: /api/utilities/mesh_io.rst
 
-        .. versionadded:: 0.45
+        .. warning::
 
-            Support saving pickled meshes
+            ``.pkl`` / ``.pickle`` extensions are **not** supported and
+            will be refused. Pickle is a Python serialization protocol,
+            not a mesh file format (CWE-502). Use a real mesh format or
+            install ``pyvista-zstd`` for the ``.pv`` single-blob format.
 
         See Also
         --------
@@ -173,6 +229,25 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
 
             .. versionadded:: 0.47
 
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  Use
+            these to expose format-specific options such as compression
+            level or thread count.  When the target extension dispatches
+            to a built-in VTK writer, passing any extra keyword arguments
+            raises :class:`TypeError` — PyVista never silently drops
+            writer options.
+
+            .. versionadded:: 0.48
+
+        Raises
+        ------
+        TypeError
+            If ``**writer_kwargs`` are provided but the target extension
+            does not dispatch to a registered custom writer.
+        ValueError
+            If ``file_ext`` is not a supported extension.
+
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
@@ -191,16 +266,36 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         file_path = file_path.resolve()
         file_ext = get_ext(file_path)
 
-        if file_ext == '.vtkhdf' and binary is False:
-            msg = '.vtkhdf files can only be written in binary format.'
-            raise ValueError(msg)
-
         # Store complex and bitarray types as field data
         self._store_metadata()
 
-        # Save the object
+        # Dispatch order mirrors :func:`pyvista.read`: custom writers
+        # registered via :func:`pyvista.register_writer` win over
+        # built-in writers, so ``override=True`` actually replaces a
+        # built-in writer at save time.
         writer_exts = self._WRITERS.keys()
-        if file_ext in writer_exts:
+        if (custom_writer := _get_writer_ext_handler(file_ext)) is not None:
+            if not file_path.parent.exists():
+                msg = f'Parent directory does not exist: {file_path.parent}'
+                raise FileNotFoundError(msg)
+
+            custom_writer(self, str(file_path), **writer_kwargs)
+
+            if not file_path.exists():
+                msg = f'Custom writer failed to write file: {file_path}'
+                raise OSError(msg)
+
+        elif file_ext in writer_exts:
+            if writer_kwargs:
+                _raise_unexpected_writer_kwargs(
+                    writer_kwargs,
+                    file_ext,
+                    target='built-in VTK writer',
+                )
+            if file_ext == '.vtkhdf' and binary is False:
+                msg = '.vtkhdf files can only be written in binary format.'
+                raise ValueError(msg)
+
             # Save using the writer
             writer = self._WRITERS[file_ext](file_path, self)
             data_format = 'binary' if binary else 'ascii'
@@ -208,23 +303,31 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 texture=texture, data_format=data_format, compression=compression
             )
 
-            if file_path.parent.exists() is False:
+            if not file_path.parent.exists():
                 msg = f'Parent directory does not exist: {file_path.parent}'
                 raise FileNotFoundError(msg)
 
             writer.write()
 
-            if file_path.exists() is False:
+            if not file_path.exists():
                 msg = f'VTK writer failed to write file: {file_path}'
                 raise OSError(msg)
 
-        elif file_ext in PICKLE_EXT:
-            save_pickle(filename, self)
+        elif file_ext in _PICKLE_FILE_EXT:
+            _raise_pickle_removed()
         else:
             msg = (
                 f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
-                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Must be one of: '
+                f'{list(writer_exts) + _list_custom_writer_exts()}'
             )
+            if file_ext == '.pv' and not importlib.util.find_spec(
+                'pyvista-zstd'
+            ):  # pragma: no cover
+                msg += (
+                    ".\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
+                    'It can be installed with `pyvista[io]`.'
+                )
             raise ValueError(msg)
 
     def _store_metadata(self: Self) -> None:
@@ -566,11 +669,10 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
 
         .. note::
 
-            The user dict is a convenience property and is intended for metadata storage.
-            It has an inefficient dictionary implementation and should only be used to
-            store a small number of infrequently-accessed keys with relatively small
-            values. It should not be used to store frequently accessed array data
-            with many entries (a regular field data array should be used instead).
+            The user dict is a convenience property intended for metadata storage.
+            Values are JSON-serialized on every mutation, so it is not a substitute
+            for a regular field data array when storing bulk array data with many
+            entries (use a regular field data array for that instead).
 
         .. warning::
 
@@ -809,14 +911,6 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
-        from vtkmodules.vtkIOLegacy import vtkDataSetWriter
-        from vtkmodules.vtkIOXML import vtkXMLImageDataWriter
-        from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
-        from vtkmodules.vtkIOXML import vtkXMLRectilinearGridWriter
-        from vtkmodules.vtkIOXML import vtkXMLStructuredGridWriter
-        from vtkmodules.vtkIOXML import vtkXMLTableWriter
-        from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
-
         if isinstance(self, pv.MultiBlock):
             msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
@@ -831,12 +925,12 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             # dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             writers = {
-                _vtk.vtkImageData: vtkXMLImageDataWriter,
-                _vtk.vtkStructuredGrid: vtkXMLStructuredGridWriter,
-                _vtk.vtkRectilinearGrid: vtkXMLRectilinearGridWriter,
-                _vtk.vtkUnstructuredGrid: vtkXMLUnstructuredGridWriter,
-                _vtk.vtkPolyData: vtkXMLPolyDataWriter,
-                _vtk.vtkTable: vtkXMLTableWriter,
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+                _vtk.vtkTable: _vtk.vtkXMLTableWriter,
             }
 
             for parent_type, writer_type in writers.items():
@@ -855,7 +949,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             to_serialize = writer.GetOutputString()
 
         elif pv.PICKLE_FORMAT.lower() == 'legacy':
-            writer = vtkDataSetWriter()
+            writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
             writer.SetFileTypeToBinary()
@@ -913,14 +1007,6 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
-        from vtkmodules.vtkIOLegacy import vtkDataSetReader
-        from vtkmodules.vtkIOXML import vtkXMLImageDataReader
-        from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
-        from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader
-        from vtkmodules.vtkIOXML import vtkXMLStructuredGridReader
-        from vtkmodules.vtkIOXML import vtkXMLTableReader
-        from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
-
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
             'PICKLE_FORMAT',
@@ -934,12 +1020,12 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             # Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             readers = {
-                _vtk.vtkImageData: vtkXMLImageDataReader,
-                _vtk.vtkStructuredGrid: vtkXMLStructuredGridReader,
-                _vtk.vtkRectilinearGrid: vtkXMLRectilinearGridReader,
-                _vtk.vtkUnstructuredGrid: vtkXMLUnstructuredGridReader,
-                _vtk.vtkPolyData: vtkXMLPolyDataReader,
-                _vtk.vtkTable: vtkXMLTableReader,
+                _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+                _vtk.vtkTable: _vtk.vtkXMLTableReader,
             }
 
             for parent_type, reader_type in readers.items():
@@ -955,7 +1041,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = vtkDataSetReader()
+            reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
                 reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]

@@ -19,10 +19,11 @@ import warnings
 import numpy as np
 
 import pyvista as pv
+from pyvista import _PrecisionOptions
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-import pyvista.core._vtk_core as _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
@@ -131,43 +132,42 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Create a cylinder, translate it, and use iterative closest point to
         align mesh to its original position.
 
-        .. pyvista-plot::
-           :force_static:
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
+        >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
+        >>> aligned = transformed.align(source)
+        >>> _, closest_points = aligned.find_closest_cell(
+        ...     source.points, return_closest_point=True
+        ... )
+        >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
 
-            >>> import pyvista as pv
-            >>> import numpy as np
-            >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
-            >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
-            >>> aligned = transformed.align(source)
-            >>> _, closest_points = aligned.find_closest_cell(
-            ...     source.points, return_closest_point=True
-            ... )
-            >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
+        Visualize the source, transformed, and aligned meshes.
 
-            Visualize the source, transformed, and aligned meshes.
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_text('Before Alignment')
+        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
+        >>> _ = pl.add_mesh(transformed)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text('After Alignment')
+        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
+        >>> _ = pl.add_mesh(
+        ...     aligned,
+        ...     scalars=dist,
+        ...     scalar_bar_args={
+        ...         'title': 'Distance to Source',
+        ...         'fmt': '%.1E',
+        ...     },
+        ... )
+        >>> pl.show()
 
-            >>> pl = pv.Plotter(shape=(1, 2))
-            >>> _ = pl.add_text('Before Alignment')
-            >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
-            >>> _ = pl.add_mesh(transformed)
-            >>> pl.subplot(0, 1)
-            >>> _ = pl.add_text('After Alignment')
-            >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
-            >>> _ = pl.add_mesh(
-            ...     aligned,
-            ...     scalars=dist,
-            ...     scalar_bar_args={
-            ...         'title': 'Distance to Source',
-            ...         'fmt': '%.1E',
-            ...     },
-            ... )
-            >>> pl.show()
+        Show that the mean distance between the source and the target is
+        nearly zero.
 
-            Show that the mean distance between the source and the target is
-            nearly zero.
+        >>> np.abs(dist).mean()  # doctest:+SKIP
+        9.997635192915073e-05
 
-            >>> np.abs(dist).mean()  # doctest:+SKIP
-            9.997635192915073e-05
+        See :ref:`icp_registration_example` for more examples using this filter.
 
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
@@ -192,6 +192,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
         axis_2_direction: VectorLike[float] | str | None = None,
+        cell_centers: bool = False,
+        merge_points: bool = False,
         return_matrix: bool = False,
     ):
         """Align a dataset to the x-y-z axes.
@@ -233,6 +235,28 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
             name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        cell_centers : bool, default: False
+            Use the mesh's :meth:`~pyvista.DataObjectFilters.cell_centers` when
+            computing the :func:`~pyvista.principal_axes`. Points not associated
+            with cells are treated as vertex cells. By default, the mesh's
+            points are used directly.
+
+            .. versionadded:: 0.48
+
+        merge_points : bool, default: False
+            Merge coincident points with
+            :meth:`~pyvista.DataSetFilters.merge_points` before computing the
+            :func:`~pyvista.principal_axes`. Duplicate points can bias the
+            principal axes, so enabling this can improve the alignment. By
+            default the mesh's points are used as-is.
+
+            .. note::
+
+                Points are only merged for the alignment. The points of the
+                returned mesh are *not* merged.
+
+            .. versionadded:: 0.48
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
@@ -335,7 +359,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     labels=["X'", "Y'", "Z'"],
         ... )
 
-        Plot the original mesh with its local axes, along with the algned mesh and its
+        Plot the original mesh with its local axes, along with the aligned mesh and its
         axes.
 
         >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
@@ -364,7 +388,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector_
 
-        axes, std = pv.principal_axes(self.points, return_std=True)
+        # Get points and compute principal axes
+        input_mesh = self.cell_centers() if cell_centers else self
+        points = input_mesh.merge_points().points if merge_points else input_mesh.points
+        axes, std = pv.principal_axes(points, return_std=True)
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
             # Set directions of first two axes to +X,+Y by default
@@ -838,6 +865,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         --------
         threshold_percent
             Threshold a dataset by a percentage of its scalar range.
+        :meth:`~pyvista.DataSetFilters.remove_nan_cells`
+            Convenience wrapper to remove cells containing NaN values.
         :meth:`~pyvista.DataSetFilters.extract_values`
             Threshold-like filter for extracting specific values and ranges.
         :meth:`~pyvista.ImageDataFilters.image_threshold`
@@ -1089,6 +1118,120 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             continuous=continuous,
             preference=preference,
             method=method,
+            progress_bar=progress_bar,
+        )
+
+    @_deprecate_positional_args
+    def remove_nan_cells(  # type: ignore[misc]  # noqa: PLR0917
+        self: _DataSetType,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        component_mode: Literal['component', 'all', 'any'] = 'all',
+        component: int = 0,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> UnstructuredGrid:
+        """Remove cells whose scalar values are NaN.
+
+        A cell is considered NaN if any of its associated scalar values are
+        NaN. For point data, this means any cell containing a NaN point is
+        dropped; for cell data, cells whose value is NaN are dropped.
+
+        .. versionadded:: 0.48
+
+        .. note::
+            This filter is equivalent to calling
+            :meth:`~pyvista.DataSetFilters.threshold` with ``all_scalars=True``
+            and the default (auto-computed) value range, which uses
+            :func:`numpy.nanmin` and :func:`numpy.nanmax` to exclude NaN
+            values from the bounds. It is provided as a convenience because
+            ``threshold`` defaults to ``preference='cell'`` and
+            ``all_scalars=False``, which does not reliably remove NaN cells
+            from point data.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to check for NaN values. Defaults to the
+            currently active scalars.
+
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset. Must be either ``'point'``
+            or ``'cell'``.
+
+        component_mode : {'component', 'all', 'any'}, default: 'all'
+            The method to satisfy the criteria for multicomponent scalars.
+            ``'component'`` uses only the single component specified by
+            ``component``. ``'all'`` drops a cell if any component is NaN.
+            ``'any'`` keeps a cell as long as at least one component is
+            finite.
+
+        component : int, default: 0
+            When using ``component_mode='component'``, this sets which
+            component to check for NaN values.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset with NaN cells removed.
+
+        See Also
+        --------
+        threshold
+            Threshold a dataset by value. ``remove_nan_cells`` is a thin
+            wrapper around this filter.
+        :meth:`~pyvista.DataSetFilters.extract_cells`
+            Extract a subset of cells by index.
+        :meth:`~pyvista.DataSetFilters.extract_values`
+            Threshold-like filter for extracting specific values and ranges.
+
+        Examples
+        --------
+        Create a small grid with some NaN point values and remove the
+        affected cells.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
+        >>> values = np.arange(grid.n_points, dtype=float)
+        >>> values[::7] = np.nan
+        >>> grid.point_data['values'] = values
+        >>> cleaned = grid.remove_nan_cells(scalars='values')
+        >>> cleaned.n_cells < grid.n_cells
+        True
+        >>> bool(np.any(np.isnan(cleaned.point_data['values'])))
+        False
+
+        See :ref:`using_filters_example` for an end-to-end filter pipeline
+        that begins with this filter.
+
+        """
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        arr = get_array(self, scalars_, preference=preference, err=False)
+        if arr is None:
+            msg = f'No array {scalars_!r} found to remove NaN cells from.'
+            raise ValueError(msg)
+        # Integer, boolean, and non-numeric arrays cannot contain NaN values.
+        if arr.dtype == bool or not np.issubdtype(arr.dtype, np.floating):
+            return self.cast_to_unstructured_grid()
+        if arr.size == 0 or bool(np.all(np.isnan(arr))):
+            # Entire array is NaN (or empty) — no cells survive. Avoid passing
+            # a (nan, nan) range into VTK's threshold filter.
+            return self.extract_cells(
+                np.array([], dtype=int),
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+        return DataSetFilters.threshold(
+            self,
+            scalars=scalars_,
+            preference=preference,
+            all_scalars=True,
+            component_mode=component_mode,
+            component=component,
             progress_bar=progress_bar,
         )
 
@@ -1452,8 +1595,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> out.plot(color='lightblue', smooth_shading=True)
 
-        See :ref:`using_filters_example` or
-        :ref:`marching_cubes_example` for more examples using this
+        See :ref:`using_filters_example`, :ref:`marching_cubes_example`, or
+        :ref:`gyroid_example` for more examples using this
         filter.
 
         """
@@ -2824,6 +2967,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> edges = grid.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
 
+        See :ref:`convex_hull_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkDelaunay3D()
         alg.SetInputData(self)
@@ -3528,17 +3673,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             set_default_active_vectors(self)
 
         if max_time is not None:
-            if max_length is not None:
-                warn_external(
-                    '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
-                    PyVistaDeprecationWarning,
-                )
-            else:
-                warn_external(
-                    '``max_time`` parameter is deprecated.  It will be removed in v0.48',
-                    PyVistaDeprecationWarning,
-                )
-                max_length = max_time
+            msg = (
+                '``max_time`` parameter is deprecated and no longer supported. '
+                'Use ``max_length`` instead.'
+            )
+            raise DeprecationError(msg)
 
         if max_length is None:
             max_length = 4.0 * self.GetLength()
@@ -5073,7 +5212,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> extracted = mesh.extract_values(0, include_cells=False)
         >>> extracted.get_data_range()
         (np.float64(0.0), np.float64(0.0))
-        >>> extracted.plot(render_points_as_spheres=True, point_size=100)
+        >>> extracted.plot(render_points_as_spheres=True, point_size=100, color=True)
 
         Use ``ranges`` to extract values from a grid's point data in range.
 
@@ -5920,109 +6059,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             raise TypeError(msg) from None
         return merged
 
-    @_deprecate_positional_args(allowed=['quality_measure'])
-    def compute_cell_quality(  # type: ignore[misc]
-        self: _DataSetType,
-        quality_measure: str = 'scaled_jacobian',  # noqa: ARG002
-        null_value: float = -1.0,  # noqa: ARG002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002, ARG002
-    ):
-        """Compute a function of (geometric) quality for each cell of a mesh.
-
-        The per-cell quality is added to the mesh's cell data, in an
-        array named ``"CellQuality"``. Cell types not supported by this
-        filter or undefined quality of supported cell types will have an
-        entry of -1.
-
-        Defaults to computing the scaled Jacobian.
-
-        Options for cell quality measure:
-
-        - ``'area'``
-        - ``'aspect_beta'``
-        - ``'aspect_frobenius'``
-        - ``'aspect_gamma'``
-        - ``'aspect_ratio'``
-        - ``'collapse_ratio'``
-        - ``'condition'``
-        - ``'diagonal'``
-        - ``'dimension'``
-        - ``'distortion'``
-        - ``'jacobian'``
-        - ``'max_angle'``
-        - ``'max_aspect_frobenius'``
-        - ``'max_edge_ratio'``
-        - ``'med_aspect_frobenius'``
-        - ``'min_angle'``
-        - ``'oddy'``
-        - ``'radius_ratio'``
-        - ``'relative_size_squared'``
-        - ``'scaled_jacobian'``
-        - ``'shape'``
-        - ``'shape_and_size'``
-        - ``'shear'``
-        - ``'shear_and_size'``
-        - ``'skew'``
-        - ``'stretch'``
-        - ``'taper'``
-        - ``'volume'``
-        - ``'warpage'``
-
-        .. note::
-
-            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
-            for low-level technical information about how each metric is computed,
-            which :class:`~pyvista.CellType` it applies to as well as the metric's
-            full, normal, and acceptable range of values.
-
-        .. deprecated:: 0.45
-
-            Use :meth:`~pyvista.DataObjectFilters.cell_quality` instead. Note that
-            this new filter does not include an array named ``'CellQuality'``.
-
-        Parameters
-        ----------
-        quality_measure : str, default: 'scaled_jacobian'
-            The cell quality measure to use.
-
-        null_value : float, default: -1.0
-            Float value for undefined quality. Undefined quality are qualities
-            that could be addressed by this filter but is not well defined for
-            the particular geometry of cell in question, e.g. a volume query
-            for a triangle. Undefined quality will always be undefined.
-            The default value is -1.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Dataset with the computed mesh quality in the
-            ``cell_data`` as the ``"CellQuality"`` array.
-
-        Examples
-        --------
-        Compute and plot the minimum angle of a sample sphere mesh.
-
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
-        >>> cqual = sphere.compute_cell_quality('min_angle')  # doctest:+SKIP
-        >>> cqual.plot(show_edges=True)  # doctest:+SKIP
-
-        See the :ref:`mesh_quality_example` for more examples using this filter.
-
-        """
-        if pv.version_info >= (0, 49):  # pragma: no cover
-            msg = 'Remove this filter.'
-            raise RuntimeError(msg)
-
-        msg = (
-            'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
-            "new filter does not include an array named ``'CellQuality'`"
-        )
-        raise DeprecationError(msg)
-
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
     ):
@@ -6429,7 +6465,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
-        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
+        if not _vtk.has_attr('vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
                 f'was not found in VTK {pv.vtk_version_info}'
@@ -6951,7 +6987,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     def extract_cells_by_type(  # type: ignore[misc]
         self: _DataSetType,
         cell_types: int | VectorLike[int],
-        points_dtype=None,
+        points_dtype: _PrecisionOptions = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract cells of a specified type.
@@ -7224,7 +7260,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             raise TypeError(msg)
 
         # Do packing
-        if hasattr(_vtk, 'vtkPackLabels'):  # pragma: no cover
+        if _vtk.has_attr('vtkPackLabels'):  # pragma: no cover
             alg = _vtk.vtkPackLabels()
             alg.SetInputDataObject(self)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
@@ -7285,7 +7321,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         colors: str
         | ColorLike
         | Sequence[ColorLike]
-        | dict[float, ColorLike] = 'glasbey_category10',
+        | dict[float, ColorLike]
+        | ColormapOptions = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycle'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
@@ -7634,7 +7671,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 )
                 raise ValueError(msg)
             _is_rgb_sequence = False
-            if isinstance(colors, str):
+            if isinstance(colors, (str, matplotlib.colors.Colormap)):
                 try:
                     cmap = get_cmap_safe(cast('ColormapOptions', colors))
                 except ValueError:
@@ -7659,7 +7696,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             if not _is_rgb_sequence:
                 color_rgb_sequence = [
-                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                    getattr(c, color_type)
+                    for c in _local_validate_color_sequence(colors)  # type: ignore[arg-type]
                 ]
                 if len(color_rgb_sequence) == 1:
                     color_rgb_sequence = color_rgb_sequence * len(array)
@@ -7797,7 +7835,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated mask image. Set this value to control the
@@ -8050,7 +8088,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = surface.rotate(
+                reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
+            )
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
@@ -8112,7 +8152,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # Init output structure. The image stencil filters do not support
         # orientation, so we do not set the direction matrix
         binary_mask = pv.ImageData()
-        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.extent = reference_volume.extent
         binary_mask.spacing = reference_volume.spacing
         binary_mask.origin = reference_volume.origin
 
@@ -8133,7 +8173,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[type-var]
+        binary_mask['mask'] = scalars  # type: ignore[type-var, unused-ignore]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
@@ -8247,7 +8287,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, and ``spacing`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated rectilinear grid. Set this value to control the
@@ -8413,7 +8453,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ----------
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            and ``spacing`` as the reference.
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
             Dimensions of the voxelized mesh. Set this value to control the

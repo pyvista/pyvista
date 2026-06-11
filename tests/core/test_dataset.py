@@ -10,10 +10,9 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset as dataset_module
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -928,7 +927,7 @@ def test_find_closest_cells():
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
-    assert np.allclose(indices, np.arange(mesh.n_faces_strict))
+    assert np.allclose(indices, np.arange(mesh.n_faces))
 
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)
@@ -1534,13 +1533,8 @@ def mesh():
     return examples.load_globe()
 
 
-def test_active_array_info_deprecated():
-    match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
-        pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this deprecated class'
-        raise RuntimeError(msg)
+def test_active_array_info_removed():
+    assert not hasattr(pv.core.dataset, 'ActiveArrayInfo')
 
 
 def test_dimensionality():
@@ -1678,3 +1672,21 @@ def test_has_nonlinear_cells():
 
     assert not pv.UnstructuredGrid().has_nonlinear_cells
     assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells
+
+
+def test_bounding_sphere():
+    radius = 1.5
+    center = 1, 2, 3
+    mesh = pv.Sphere(radius=radius, center=center)
+    r, c = mesh.bounding_sphere
+    assert isinstance(r, float)
+    assert isinstance(c, tuple)
+    assert all(type(x) is float for x in c)
+
+    assert np.isclose(r, radius)
+    assert np.allclose(c, center)
+
+    mesh = pv.UnstructuredGrid()
+    r, c = mesh.bounding_sphere
+    assert np.isnan(r)
+    assert all(np.isnan(x) for x in c)

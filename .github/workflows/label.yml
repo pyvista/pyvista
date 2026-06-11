@@ -1,10 +1,17 @@
 name: "Pull Request Labeler"
-on:
-  pull_request:
+on: # zizmor: ignore[dangerous-triggers]
+  # Use pull_request_target (not pull_request) so fork PRs can be labeled:
+  # this trigger runs in the base repo context and has access to secrets.
+  # Safe here because no fork code is ever checked out or executed — do not
+  # add a checkout of github.event.pull_request.head.ref to this workflow.
+  pull_request_target:
     types: [opened, reopened]
 
+# Use the built-in GITHUB_TOKEN (pull_request_target runs in base-repo context,
+# so the token has write access to the PR). No PAT or App token needed.
 permissions:
-  id-token: none
+  contents: read
+  pull-requests: write
 
 jobs:
   triage:
@@ -14,46 +21,46 @@ jobs:
       - name: Label based on changed files
         uses: actions/labeler@v6
         with:
-          repo-token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Label based on branch name
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'doc/') || startsWith(github.event.pull_request.head.ref, 'docs')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: documentation
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'docker')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: docker
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'maint') || startsWith(github.event.pull_request.head.ref, 'testing') || startsWith(github.event.pull_request.head.ref, 'no-ci') || startsWith(github.event.pull_request.head.ref, 'ci')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: maintenance
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'junk')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: ignore-for-release
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'feat')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: enhancement
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch') || startsWith(github.event.pull_request.head.ref, 'bug')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: bug
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'release')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: release
       - uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf
         if: startsWith(github.event.pull_request.head.ref, 'breaking-change')
         with:
-          github_token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: breaking-change

@@ -13,8 +13,6 @@ be used for just about anything.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -36,7 +34,7 @@ pl.show()
 
 # %%
 # After interacting with the scene, the threshold mesh is available as:
-pl.threshold_meshes
+pl.widgets.threshold_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this

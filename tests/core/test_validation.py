@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import scipy
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.core import pyvista_ndarray
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
@@ -53,8 +53,6 @@ from pyvista.core._validation.check import _validate_shape_value
 from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._validation.validate import _set_default_kwarg_mandatory
 from pyvista.core._validation.validate import _validate_color_sequence
-from pyvista.core._vtk_core import vtkMatrix3x3
-from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from tests.conftest import NUMPY_VERSION_INFO
@@ -1095,8 +1093,8 @@ def test_cast_to_list():
 @pytest.mark.parametrize(
     ('cls', 'shape'),
     [
-        (vtkMatrix3x3, (3, 3)),
-        (vtkMatrix4x4, (4, 4)),
+        (_vtk.vtkMatrix3x3, (3, 3)),
+        (_vtk.vtkMatrix4x4, (4, 4)),
     ],
 )
 def test_array_from_vtkmatrix(cls, shape):

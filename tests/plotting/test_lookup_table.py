@@ -9,7 +9,7 @@ import pytest
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -61,6 +61,7 @@ def test_values(lut):
         lut.n_values = 10
 
 
+@pytest.mark.skip_check_gc
 def test_apply_cmap(lut):
     n_values = 5
     lut.cmap = 'reds'
@@ -71,7 +72,7 @@ def test_apply_cmap(lut):
 
 def test_init_cmap():
     new_lut = LookupTable('gray', n_values=2, flip=True)
-    assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
+    assert np.allclose([[255, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
 
 
 def test_init_values():

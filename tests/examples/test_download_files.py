@@ -155,10 +155,30 @@ def test_download_fea_hertzian_contact_cylinder():
 
 
 def test_download_nefertiti():
-    filename = examples.download_nefertiti(load=False)
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        filename = examples.download_nefertiti(load=False)
     assert Path(filename).is_file()
 
-    data = examples.download_nefertiti()
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        data = examples.download_nefertiti()
+    assert data.n_cells
+
+
+def test_download_washington_bust():
+    filename = examples.download_washington_bust(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_washington_bust()
+    assert isinstance(data, pv.PolyData)
+    assert data.n_cells
+
+
+def test_download_lincoln_life_mask():
+    filename = examples.download_lincoln_life_mask(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_lincoln_life_mask()
+    assert isinstance(data, pv.PolyData)
     assert data.n_cells
 
 
@@ -1249,3 +1269,14 @@ def test_download_warping_spheres():
     mesh = examples.download_warping_spheres()
     expected = pv.PolyData if pv.vtk_version_info < (9, 5, 0) else pv.PartitionedDataSet
     assert isinstance(mesh, expected)
+
+
+def test_download_frd():
+    filename = examples.download_frd(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.frd'
+
+    mesh = examples.download_frd()
+    assert isinstance(mesh, pv.UnstructuredGrid)
+    assert mesh.n_cells == 61
+    assert mesh.n_points == 190

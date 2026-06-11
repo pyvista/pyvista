@@ -10,9 +10,10 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
+from pyvista import _PrecisionOptions
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -29,7 +30,6 @@ from .geometric_sources import PolygonSource
 from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
-from .geometric_sources import _Source
 from .geometric_sources import translate
 
 with contextlib.suppress(ImportError):
@@ -198,6 +198,8 @@ def Cylinder(  # noqa: PLR0917
 
     The above examples are similar in terms of their behavior.
 
+    See :ref:`chemistry_molecule_example` for more examples using this function.
+
     """
     algo = CylinderSource(
         center=center,
@@ -215,7 +217,7 @@ def Cylinder(  # noqa: PLR0917
 
 @_deprecate_positional_args
 def CylinderStructured(  # noqa: PLR0917
-    radius: float = 0.5,
+    radius: float | VectorLike[float] = 0.5,
     height: float = 1.0,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -233,7 +235,8 @@ def CylinderStructured(  # noqa: PLR0917
     radius : float | sequence[float], default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
-        specified by the ``radius``.
+        specified by the ``radius``. The sequence must be sorted
+        in ascending order.
 
     height : float, default: 1.0
         Height of the cylinder along its Z-axis.
@@ -246,7 +249,6 @@ def CylinderStructured(  # noqa: PLR0917
 
     theta_resolution : int, default: 32
         Number of points on the circular face of the cylinder.
-        Ignored if ``radius`` is an iterable.
 
     z_resolution : int, default: 10
         Number of points along the height (Z-axis) of the cylinder.
@@ -279,7 +281,12 @@ def CylinderStructured(  # noqa: PLR0917
 
     """
     # Define grid in polar coordinates
-    r = np.array([radius]).ravel()
+    r = _validation.validate_arrayN(
+        radius,
+        must_be_in_range=[0.0, np.inf],
+        strict_lower_bound=True,
+        must_be_sorted={'ascending': True, 'strict': True},
+    )
     nr = len(r)
     theta = np.linspace(0, 2 * np.pi, num=theta_resolution + 1)
     radius_matrix, theta_matrix = np.meshgrid(r, theta)
@@ -292,7 +299,6 @@ def CylinderStructured(  # noqa: PLR0917
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
-    zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
@@ -961,6 +967,12 @@ def SolidSphereGeneric(  # noqa: PLR0917
             )
             celltypes.append(pv.CellType.PYRAMID)
 
+    def _reorder_wedge(points: list[int]) -> list[int]:
+        """Swap points 1,2 and 4,5 for wedge cells."""
+        points[1], points[2] = points[2], points[1]
+        points[4], points[5] = points[5], points[4]
+        return points
+
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
@@ -968,17 +980,20 @@ def SolidSphereGeneric(  # noqa: PLR0917
         for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
             axis0 = ir + 1 if include_origin else ir
             axis1 = ir + 2 if include_origin else ir + 1
+
+            raw_points = [
+                axis0,
+                _index(ir, 0, itheta),
+                _index(ir, 0, itheta + 1),
+                axis1,
+                _index(ir + 1, 0, itheta),
+                _index(ir + 1, 0, itheta + 1),
+            ]
+            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+                raw_points = _reorder_wedge(raw_points)
+
             cells.append(6)
-            cells.extend(
-                [
-                    axis0,
-                    _index(ir, 0, itheta + 1),
-                    _index(ir, 0, itheta),
-                    axis1,
-                    _index(ir + 1, 0, itheta + 1),
-                    _index(ir + 1, 0, itheta),
-                ],
-            )
+            cells.extend(raw_points)
             celltypes.append(pv.CellType.WEDGE)
 
     # now go downwards
@@ -986,17 +1001,20 @@ def SolidSphereGeneric(  # noqa: PLR0917
         for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
+
+            raw_points = [
+                axis0,
+                _index(ir, nphi - 1, itheta + 1),
+                _index(ir, nphi - 1, itheta),
+                axis1,
+                _index(ir + 1, nphi - 1, itheta + 1),
+                _index(ir + 1, nphi - 1, itheta),
+            ]
+            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+                raw_points = _reorder_wedge(raw_points)
+
             cells.append(6)
-            cells.extend(
-                [
-                    axis0,
-                    _index(ir, nphi - 1, itheta),
-                    _index(ir, nphi - 1, itheta + 1),
-                    axis1,
-                    _index(ir + 1, nphi - 1, itheta),
-                    _index(ir + 1, nphi - 1, itheta + 1),
-                ],
-            )
+            cells.extend(raw_points)
             celltypes.append(pv.CellType.WEDGE)
 
     # Form Hexahedra
@@ -1147,6 +1165,9 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     >>> pl.camera.zoom(0.8)
     >>> pl.show()
 
+    See :ref:`create_multiple_lines_example` and :ref:`color_lines_example`
+    for more examples.
+
     """
     if points is None:
         points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
@@ -1213,7 +1234,7 @@ def Cube(  # noqa: PLR0917
     bounds: VectorLike[float] | None = None,
     clean: bool = True,  # noqa: FBT001, FBT002
     point_dtype: str = 'float32',
-    points_dtype=None,
+    points_dtype: _PrecisionOptions = None,
 ) -> PolyData:
     """Create a cube.
 
@@ -1501,10 +1522,10 @@ def Disc(  # noqa: PLR0917
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, default: 1
-        Number of points in radial direction.
+        Number of cells in radial direction.
 
     c_res : int, default: 6
-        Number of points in circumferential direction.
+        Number of cells in circumferential direction.
 
     Returns
     -------
@@ -1629,6 +1650,8 @@ def Text3D(  # noqa: PLR0917
     ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
     ... )
     >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    See :ref:`create_text_3d_example` for more examples using this function.
 
     """
     return Text3DSource(
@@ -1798,6 +1821,9 @@ def CircularArc(  # noqa: PLR0917
     >>> _ = pl.view_xy()
     >>> pl.show()
 
+    See :ref:`create_circular_arc_example` and :ref:`flight_paths_example`
+    for more examples using this function.
+
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -1888,6 +1914,8 @@ def CircularArcFromNormal(  # noqa: PLR0917
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
+
+    See :ref:`create_circular_arc_example` for more examples using this function.
 
     """
     check_valid_vector(center, 'center')

@@ -5,16 +5,15 @@ import pathlib
 from pathlib import Path
 import re
 from unittest.mock import patch
-import warnings
 
 import numpy as np
 import pytest
+import trimesh
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
@@ -390,9 +389,6 @@ def test_polydata_subclass_del():
 
 
 def test_multi_ray_trace(sphere):
-    trimesh = pytest.importorskip('trimesh')
-    if not trimesh.ray.has_embree:
-        pytest.skip('Requires Embree')
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
@@ -696,7 +692,7 @@ def test_add(sphere, sphere_shifted):
     merged = sphere + sphere_shifted
     assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
-    assert merged.n_faces_strict == sphere.n_faces_strict + sphere_shifted.n_faces_strict
+    assert merged.n_faces == sphere.n_faces + sphere_shifted.n_faces
 
 
 @pytest.mark.usefixtures('force_points_precision_single')
@@ -829,12 +825,12 @@ def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
     assert mesh.n_points > sphere.n_points
-    assert mesh.n_faces_strict > sphere.n_faces_strict
+    assert mesh.n_faces > sphere.n_faces
 
     mesh = sphere.copy()
     mesh.subdivide(1, subfilter, inplace=True)
     assert mesh.n_points > sphere.n_points
-    assert mesh.n_faces_strict > sphere.n_faces_strict
+    assert mesh.n_faces > sphere.n_faces
 
 
 def test_invalid_subdivision(sphere):
@@ -869,11 +865,11 @@ def test_extract_feature_edges_no_data():
 def test_decimate(sphere):
     mesh = sphere.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -884,11 +880,11 @@ def test_decimate(sphere):
 def test_decimate_pro(sphere):
     mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -1008,7 +1004,7 @@ def test_cell_normals_computes_new_normals(ant):
 
 
 def test_face_normals(sphere):
-    assert sphere.face_normals.shape[0] == sphere.n_faces_strict
+    assert sphere.face_normals.shape[0] == sphere.n_faces
 
 
 def test_clip_plane(sphere):
@@ -1029,17 +1025,16 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= atol)
+    assert np.all(clipped_sphere.points[:, 2] <= atol)
 
 
 def test_extract_largest(sphere):
     mesh = sphere + pv.Sphere(radius=0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
-    assert largest.n_faces_strict == sphere.n_faces_strict
+    assert largest.n_faces == sphere.n_faces
 
     mesh.extract_largest(inplace=True)
-    assert mesh.n_faces_strict == sphere.n_faces_strict
+    assert mesh.n_faces == sphere.n_faces
 
 
 def test_clean(sphere):
@@ -1085,11 +1080,11 @@ def test_remove_points_any(sphere):
 
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces_strict)
+    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
-    assert sphere_copy.n_faces_strict == sphere.n_faces_strict - 1
+    assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
 def test_remove_points_fail(sphere, plane):
@@ -1302,9 +1297,10 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
-def test_flip_normals(sphere):
-    with pytest.warns(
-        PyVistaDeprecationWarning, match='`flip_normals` is deprecated. Use `flip_faces` instead'
+def test_flip_normals_removed(sphere):
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'`flip_normals` is deprecated\. Use `flip_faces` instead',
     ):
         sphere.flip_normals()
 
@@ -1349,7 +1345,7 @@ def test_n_lines():
     assert mesh.n_lines == 1
 
 
-def test_n_faces_strict():
+def test_n_faces():
     # Mesh with one face and one line
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1357,69 +1353,22 @@ def test_n_faces_strict():
         lines=[2, 0, 1],
     )
     assert mesh.n_cells == 2  # n_faces + n_lines
-    assert mesh.n_faces_strict == 1
+    assert mesh.n_faces == 1
 
 
-@pytest.fixture
-def default_n_faces():
-    pv.PolyData._USE_STRICT_N_FACES = False
-    yield
-    pv.PolyData._USE_STRICT_N_FACES = False
-
-
-def test_n_faces():
-    if pv._version.version_info[:2] >= (0, 46):
-        # At version 0.46, n_faces should raise an error instead of warning
-        mesh = pv.PolyData(
-            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
-            faces=[3, 0, 1, 2],
-            lines=[2, 0, 1],
-        )
-
-        # Should raise an AttributeError
-        with pytest.raises(
-            AttributeError,
-            match=r'The non-strict behavior of `pv.PolyData.n_faces` has been removed',
-        ):
-            _ = mesh.n_faces
-    else:
-        # Pre-0.46 behavior: warning
-        mesh = pv.PolyData(
-            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
-            faces=[3, 0, 1, 2],
-            lines=[2, 0, 1],
-        )
-
-        # Should raise a warning the first time
-        with pytest.warns(
-            pv.PyVistaDeprecationWarning,
-            match='The current behavior of `pv.PolyData.n_faces` has been deprecated',
-        ):
-            nf = mesh.n_faces
-
-        # Current (deprecated) behavior is that n_faces is aliased to n_cells
-        assert nf == mesh.n_cells
-
-        # Shouldn't raise deprecation warning the second time
-        with warnings.catch_warnings():
-            warnings.simplefilter('error')
-            nf1 = mesh.n_faces
-
-        assert nf1 == nf
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Convert default n_faces behavior to strict'
-        raise RuntimeError(msg)
-
-
-def test_opt_in_n_faces_strict():
-    pv.PolyData.use_strict_n_faces(True)
+def test_n_faces_strict_deprecated():
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
         faces=[3, 0, 1, 2],
         lines=[2, 0, 1],
     )
-    assert mesh.n_faces == mesh.n_faces_strict
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`n_faces_strict` is deprecated'):
+        assert mesh.n_faces_strict == mesh.n_faces
+
+
+def test_use_strict_n_faces_removed():
+    assert not hasattr(pv.PolyData, 'use_strict_n_faces')
+    assert not hasattr(pv.PolyData, '_USE_STRICT_N_FACES')
 
 
 def test_geodesic_disconnected(sphere, sphere_shifted):
@@ -1471,6 +1420,28 @@ def test_regular_faces_mutable():
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
 
 
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Merge order changed')
+def test_regular_faces_raises():
+    tri = pv.examples.cells.Triangle().extract_surface(algorithm=None)
+    quad = pv.examples.cells.Quadrilateral().extract_surface(algorithm=None)
+
+    mesh = tri + quad
+    match = (
+        'Cell array does not have regular cells. '
+        'Multiple cell sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+    mesh = tri + quad + quad + quad
+    match = (
+        'Mesh does not have regular faces. '
+        'Multiple face sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+
 def _assert_irregular_faces_equal(faces, expected):
     assert len(faces) == len(expected)
     assert all(map(np.array_equal, faces, expected))
@@ -1504,20 +1475,6 @@ def test_irregular_faces_mutable():
     mesh.irregular_faces[0][0] = 4
     expected = [(4, 1, 2, 3), *faces[1:]]
     _assert_irregular_faces_equal(mesh.irregular_faces, expected)
-
-
-@pytest.mark.parametrize('cells', ['faces', 'lines', 'strips', 'verts'])
-def test_n_faces_etc_deprecated(cells: str):
-    n_cells = 'n_' + cells
-    kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
-    with pytest.raises(
-        TypeError,
-        match=f'PolyData constructor parameter `{n_cells}` is deprecated and no longer used',
-    ):
-        _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
-        raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

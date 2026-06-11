@@ -17,8 +17,6 @@ path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.Plotter.add_mesh_slice_spline`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

@@ -9,10 +9,10 @@ from typing import overload
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from pyvista import PolyData
@@ -90,7 +90,12 @@ def vtk_points(  # noqa: PLR0917
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        if vtk_object.GetSize() == points_.size:
+        size = (
+            vtk_object.GetSize()
+            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
+            else vtk_object.GetCapacity()
+        )
+        if size == points_.size:
             vtkpts = _vtk.vtkPoints()
             vtkpts.SetData(points_.VTKObject)
             return vtkpts
@@ -134,6 +139,8 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> lines = pv.line_segments_from_points(points)
     >>> lines.plot()
+
+    See :ref:`graph_network_example` for more examples using this function.
 
     """
     if len(points) % 2 != 0:
@@ -182,6 +189,8 @@ def lines_from_points(
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> poly = pv.lines_from_points(points)
     >>> poly.plot(line_width=5)
+
+    See :ref:`lorenz_attractor_example` for more examples using this function.
 
     """
     poly = pv.PolyData()
@@ -654,7 +663,7 @@ def vector_poly_data(
 
     npts = orig.shape[0]
     vcells = pv.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),
+        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),  # type: ignore[arg-type]
     )
 
     # Create vtkPolyData object
@@ -736,6 +745,9 @@ def principal_axes(
 
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
+
+    :ref:`point_cloud_orientation_example`
+        Example using this function with point clouds.
 
     Parameters
     ----------

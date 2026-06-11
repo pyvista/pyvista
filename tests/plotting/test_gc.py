@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 import pyvista as pv
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 
 
 @pytest.mark.expect_check_gc_fail
@@ -22,7 +22,7 @@ def test_leak_vtk() -> None:
 def test_leak_pv(sphere) -> None:
     """A VTK leak within a pyvista object with a simple self-reference."""
     points = sphere.points
-    points.VTKObject._ref = points.VTKObject
+    points.VTKObject._ref = points
 
 
 def test_run_leak_tests(tmp_path: Path) -> None:
@@ -36,7 +36,7 @@ import pyvista as pv
 def test_leak_pv() -> None:
     sphere = pv.Sphere()
     points = sphere.points
-    points.VTKObject._ref = points.VTKObject
+    points.VTKObject._ref = points
 """)
 
     result = subprocess.run(

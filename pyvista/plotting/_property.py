@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -10,9 +11,9 @@ from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .opts import InterpolationType
+from .opts import RepresentationType
 
 
 class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
@@ -271,6 +272,15 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         * ``'wireframe'``
         * ``'points'``
 
+        The setter also accepts an integer or a
+        :class:`~pyvista.plotting.opts.RepresentationType` enum member.
+
+        See Also
+        --------
+        representation
+            Equivalent property which returns a
+            :class:`~pyvista.plotting.opts.RepresentationType` enum member.
+
         Examples
         --------
         Get the default style and visualize it.
@@ -297,25 +307,50 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRepresentationAsString()
 
     @style.setter
-    def style(self, new_style: str):
-        new_style = new_style.lower()
+    def style(self, new_style: str | int | RepresentationType):
+        self.representation = new_style
 
-        if new_style == 'wireframe':
-            self.SetRepresentationToWireframe()
-            if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
-        elif new_style == 'points':
-            self.SetRepresentationToPoints()
-        elif new_style == 'surface':
-            self.SetRepresentationToSurface()
-        else:
-            msg = (
-                f'Invalid style "{new_style}".  Must be one of the following:\n'
-                '\t"surface"\n'
-                '\t"wireframe"\n'
-                '\t"points"\n'
-            )
-            raise ValueError(msg)
+    @property
+    def representation(self) -> RepresentationType:  # numpydoc ignore=RT01
+        """Return or set the visualization representation of the mesh.
+
+        The setter accepts a string (case insensitive), an integer, or a
+        :class:`~pyvista.plotting.opts.RepresentationType` enum member. One of:
+
+        * ``'points'`` / :attr:`~pyvista.plotting.opts.RepresentationType.POINTS`
+        * ``'wireframe'`` / :attr:`~pyvista.plotting.opts.RepresentationType.WIREFRAME`
+        * ``'surface'`` / :attr:`~pyvista.plotting.opts.RepresentationType.SURFACE`
+
+        See Also
+        --------
+        style
+            Equivalent property which returns the representation as a string.
+
+        Examples
+        --------
+        Get the default representation.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.representation
+        <RepresentationType.SURFACE: 2>
+
+        Set the representation using the enum.
+
+        >>> from pyvista.plotting.opts import RepresentationType
+        >>> prop.representation = RepresentationType.WIREFRAME
+        >>> prop.representation
+        <RepresentationType.WIREFRAME: 1>
+
+        """
+        return RepresentationType.from_any(self.GetRepresentation())
+
+    @representation.setter
+    def representation(self, value: str | int | RepresentationType):
+        value = RepresentationType.from_any(value)
+        self.SetRepresentation(value.value)
+        if value == RepresentationType.WIREFRAME and not self._color_set:
+            self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01

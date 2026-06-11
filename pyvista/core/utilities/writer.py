@@ -20,10 +20,9 @@ from pyvista.core.utilities.misc import abstract_class
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from vtk import vtkWriter
-
     from pyvista import DataObject
     from pyvista import NumpyArray
+    from pyvista import _vtk
 
 _DataFormatOptions = Literal['binary', 'ascii']
 
@@ -37,7 +36,7 @@ class _DataFormatMixin:
 
     @property
     @abstractmethod
-    def writer(self) -> vtkWriter: ...
+    def writer(self) -> _vtk.vtkWriter: ...
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -112,7 +111,7 @@ class BaseWriter(_FileIOBase):
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
     @property
-    def writer(self) -> vtkWriter:
+    def writer(self) -> _vtk.vtkWriter:
         """Return the vtk writer object.
 
         Returns

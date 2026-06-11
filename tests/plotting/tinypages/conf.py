@@ -87,7 +87,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']

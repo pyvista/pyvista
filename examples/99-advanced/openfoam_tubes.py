@@ -11,8 +11,6 @@ This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

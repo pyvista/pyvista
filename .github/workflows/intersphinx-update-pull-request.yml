@@ -7,13 +7,14 @@ on:
 
 permissions:
   id-token: none
+  contents: read
 
 jobs:
   intersphinx_update:
     # This job can create issues/PRs/comments, so
     #   only run on the head `pyvista/pyvista` repo
     if: github.repository_owner == 'pyvista'
-    runs-on: ubuntu-22.04-self-hosted
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v6
         with:
@@ -22,11 +23,28 @@ jobs:
       - name: Update intersphinx objects
         run: make -C doc update-intersphinx
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0
+      - name: Get app installation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          author: pyvista-bot <53544751+pyvista-bot@users.noreply.github.com>
+          app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
+          private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
+          owner: pyvista
+          repositories: pyvista
+          # PR opened by an App installation token triggers CI (unlike PRs
+          # opened with GITHUB_TOKEN), which is the reason this job needs
+          # elevated credentials at all.
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          # Omit `author` so peter-evans/create-pull-request uses the App's
+          # bot identity automatically. To pin a specific identity instead,
+          # use: <APP_SLUG>[bot] <<APP_USER_ID>+<APP_SLUG>[bot]@users.noreply.github.com>
+          # where APP_USER_ID is visible in the App's bot profile URL.
           commit-message: "[create-pull-request] update local intersphinx"
           labels: |
             maintenance

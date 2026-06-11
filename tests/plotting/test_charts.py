@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
@@ -478,6 +478,12 @@ def test_chart_common(pl, chart_f, request):
     assert chart.title == title
     chart.legend_visible = False
     assert not chart.legend_visible
+
+    if isinstance(chart, pv.ChartMPL):
+        with pytest.raises(NotImplementedError, match='ChartMPL does not expose a VTK legend'):
+            _ = chart.legend
+    else:
+        assert chart.legend is chart.GetLegend()
 
 
 @pytest.mark.parametrize(

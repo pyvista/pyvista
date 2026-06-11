@@ -8,11 +8,10 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
-
-from . import _vtk
 
 if TYPE_CHECKING:
     from pyvista import Actor
@@ -500,7 +499,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def enable(self):
         """Enable the widget."""
-        if not self._pl._picker_in_use:
+        if not self._pl.picking._picker_in_use:
             self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
             'MouseMoveEvent',

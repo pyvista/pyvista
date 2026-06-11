@@ -31,3 +31,13 @@ PyVista.
    themes._SliderConfig
    themes._SliderStyleConfig
    themes._TrameConfig
+
+Custom Interactor Styles
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Themes can also choose the default interactor style by name through
+``Theme.interactor_style``. Downstream packages can register
+additional style names programmatically or through the
+``pyvista.interactor_styles`` entry-point group.
+
+.. autofunction:: pyvista.register_interactor_style

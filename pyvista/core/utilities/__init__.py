@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import contextlib
 
+from .accessor_registry import AccessorRegistration as AccessorRegistration
+from .accessor_registry import DataSetAccessor as DataSetAccessor
+from .accessor_registry import register_dataset_accessor as register_dataset_accessor
+from .accessor_registry import registered_accessors as registered_accessors
+from .accessor_registry import unregister_dataset_accessor as unregister_dataset_accessor
 from .arrays import FieldAssociation as FieldAssociation
 from .arrays import array_from_vtkmatrix as array_from_vtkmatrix
 from .arrays import cell_array as cell_array
@@ -110,6 +115,10 @@ from .image_sources import ImageGridSource as ImageGridSource
 from .image_sources import ImageMandelbrotSource as ImageMandelbrotSource
 from .image_sources import ImageNoiseSource as ImageNoiseSource
 from .image_sources import ImageSinusoidSource as ImageSinusoidSource
+from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from .reader_registry import has_scheme as has_scheme
+from .reader_registry import register_reader as register_reader
+from .writer_registry import register_writer as register_writer
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource as CapsuleSource
@@ -125,6 +134,7 @@ from .misc import abstract_class as abstract_class
 from .misc import assert_empty_kwargs as assert_empty_kwargs
 from .misc import check_valid_vector as check_valid_vector
 from .misc import conditional_decorator as conditional_decorator
+from .misc import enable_smp_tools as enable_smp_tools
 from .misc import has_module as has_module
 from .misc import set_new_attribute as set_new_attribute
 from .misc import threaded as threaded
@@ -181,6 +191,7 @@ from .reader import ExodusIIReader as ExodusIIReader
 from .reader import FacetReader as FacetReader
 from .reader import FLUENTCFFReader as FLUENTCFFReader
 from .reader import FluentReader as FluentReader
+from .reader import FRDReader as FRDReader
 from .reader import GambitReader as GambitReader
 from .reader import GaussianCubeReader as GaussianCubeReader
 from .reader import GESignaReader as GESignaReader

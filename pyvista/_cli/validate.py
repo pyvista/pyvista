@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
+    from .utils import _MeshAndPath
+
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
 
@@ -73,6 +75,19 @@ exclude_help = """
 Field(s) to exclude from the validation. This is similar to using FIELDS, but is subtractive
 instead of additive.
 """
+tolerance_help = """
+Value used for most floating point equality checks throughout the cell checking process, e.g. for
+checking coincident points or intersecting edges.
+"""
+planarity_tolerance_help = """
+Allowed relative distance a planar polyhedral cell face may protrude out of its plane compared to
+the largest distance between a face center and any of its corner points.
+"""
+size_tolerance_help = """
+Value used for evaluating the size of a cell. Cells with an absolute size less than or equal to
+this value are flagged as having zero size, and cells with a size less than this value are flagged
+as having negative size.
+"""
 report_help = """
 Show report. Control the body of the report with:
 - ``fields`` to show all validation fields.
@@ -112,7 +127,11 @@ def _validate(
     mesh_path: Annotated[
         str,
         Parameter(
-            help='Mesh to validate. Must be readable with ``pyvista.read``.',
+            help=(
+                'Mesh to validate. Must be readable with ``pyvista.read``. '
+                'Glob patterns (``*``, ``?``, ``[...]``) are expanded; '
+                'every match is validated in turn.'
+            ),
             converter=_converter_files,
         ),
     ],
@@ -135,6 +154,30 @@ def _validate(
             help=exclude_help,
         ),
     ] = None,
+    tolerance: Annotated[
+        float | None,
+        Parameter(
+            name='tolerance',
+            show_default=False,
+            help=tolerance_help,
+        ),
+    ] = None,
+    planarity_tolerance: Annotated[
+        float | None,
+        Parameter(
+            name='planarity-tolerance',
+            show_default=False,
+            help=planarity_tolerance_help,
+        ),
+    ] = None,
+    size_tolerance: Annotated[
+        float | None,
+        Parameter(
+            name='size-tolerance',
+            show_default=False,
+            help=size_tolerance_help,
+        ),
+    ] = None,
     report: Annotated[
         list[_ReportBodyOptions] | None,
         Parameter(
@@ -147,13 +190,54 @@ def _validate(
         ),
     ] = None,
 ) -> None:
-    mesh = mesh_path[0].mesh  # type: ignore[attr-defined]
-    path = mesh_path[0].path  # type: ignore[attr-defined]
+    # Cyclopts declares ``mesh_path`` as ``str`` for CLI parsing but ``_converter_files``
+    # replaces the string token with the list of read meshes — narrow the type here.
+    items: list[_MeshAndPath] = mesh_path  # type: ignore[assignment]
     report_body = report[0] if report else 'message'
+    for item in items:
+        mesh = item.mesh
+        if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
+            msg = (
+                f'Cannot validate {type(mesh).__name__} read from path {str(item.path)!r}: '
+                f'only DataSet and MultiBlock meshes are supported.'
+            )
+            _console_error(app=app, message=msg)
+        _validate_one(
+            mesh,
+            item.path,
+            fields=fields,
+            exclude=exclude,
+            tolerance=tolerance,
+            planarity_tolerance=planarity_tolerance,
+            size_tolerance=size_tolerance,
+            report=report,
+            report_body=report_body,
+        )
+
+
+def _validate_one(
+    mesh: pv.DataSet | pv.MultiBlock,
+    path: Path,
+    *,
+    fields: list[_LiteralMeshValidationFields] | None,
+    exclude: list[_LiteralMeshValidationFields] | None,
+    tolerance: float | None,
+    planarity_tolerance: float | None,
+    size_tolerance: float | None,
+    report: list[_ReportBodyOptions] | None,
+    report_body: _ReportBodyOptions,
+) -> None:
+    """Validate a single mesh and print its result to the console."""
     class_name = mesh.__class__.__name__
     try:
         out = pv.DataObjectFilters.validate_mesh(
-            mesh, validation_fields=fields, exclude_fields=exclude, report_body=report_body
+            mesh,
+            validation_fields=fields,
+            exclude_fields=exclude,
+            tolerance=tolerance,
+            planarity_tolerance=planarity_tolerance,
+            size_tolerance=size_tolerance,
+            report_body=report_body,
         )
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'

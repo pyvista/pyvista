@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+# Magic vtk imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
+# isort: off
+import vtkmodules.vtkRenderingFreeType  # noqa: F401, TID251
+import vtkmodules.vtkRenderingMatplotlib  # noqa: F401, TID251
+# isort: on
+
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
 
-from . import _vtk as _vtk
 from ._property import Property as Property
 from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart
@@ -29,6 +34,11 @@ from .colors import __getattr__  # noqa: F401
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
 from .colors import hex_colors as hex_colors
+from .component_registry import ComponentRegistration as ComponentRegistration
+from .component_registry import PlotterComponent as PlotterComponent
+from .component_registry import register_plotter_component as register_plotter_component
+from .component_registry import registered_plotter_components as registered_plotter_components
+from .component_registry import unregister_plotter_component as unregister_plotter_component
 from .composite_mapper import BlockAttributes as BlockAttributes
 from .composite_mapper import CompositeAttributes as CompositeAttributes
 from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
@@ -38,6 +48,7 @@ from .errors import RenderWindowUnavailable as RenderWindowUnavailable
 from .follower import Follower as Follower
 from .helpers import plot_arrows as plot_arrows
 from .helpers import plot_compare_four as plot_compare_four
+from .interactor_style_registry import register_interactor_style as register_interactor_style
 from .lights import Light as Light
 from .lookup_table import LookupTable as LookupTable
 from .mapper import DataSetMapper as DataSetMapper
@@ -47,7 +58,9 @@ from .mapper import OpenGLGPUVolumeRayCastMapper as OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper as PointGaussianMapper
 from .mapper import SmartVolumeMapper as SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolumeRayCastMapper
-from .picking import PickingHelper as PickingHelper
+from .opts import PointSpriteShape as PointSpriteShape
+from .opts import ShaderType as ShaderType
+from .picking import PickingComponent as PickingComponent
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter
@@ -65,8 +78,10 @@ from .text import TextProperty as TextProperty
 from .texture import Texture as Texture
 from .texture import image_to_texture as image_to_texture
 from .texture import numpy_to_texture as numpy_to_texture
+from .theme_registry import ThemeRegistration as ThemeRegistration
+from .theme_registry import registered_themes as registered_themes
 from .themes import DocumentTheme as _GlobalTheme
-from .themes import _set_plot_theme_from_env
+from .themes import _set_plot_theme_from_env as _set_plot_theme_from_env
 from .themes import load_theme as load_theme
 from .themes import set_plot_theme as set_plot_theme
 from .tools import FONTS as FONTS
@@ -82,7 +97,7 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scraper
 from .volume import Volume as Volume
 from .volume_property import VolumeProperty as VolumeProperty
-from .widgets import WidgetHelper as WidgetHelper
+from .widgets import WidgetComponent as WidgetComponent
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01
@@ -119,6 +134,3 @@ class QtInteractor:  # numpydoc ignore=PR01
 
 
 global_theme: _GlobalTheme = _GlobalTheme()
-
-# Set preferred plot theme
-_set_plot_theme_from_env()

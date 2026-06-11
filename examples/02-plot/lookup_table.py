@@ -10,8 +10,6 @@ the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -130,7 +128,7 @@ def set_min_alpha(min_value):
     if min_value > max_value:
         # force the movement of the maximum value
         max_value = min_value
-        pl.slider_widgets[1].GetRepresentation().SetValue(max_value)
+        pl.widgets.slider_widgets[1].GetRepresentation().SetValue(max_value)
     lut.alpha_range = (min_value, max_value)
 
 
@@ -139,7 +137,7 @@ def set_max_alpha(max_value):
     if max_value < min_value:
         # force the movement of the minimum value
         min_value = max_value
-        pl.slider_widgets[0].GetRepresentation().SetValue(min_value)
+        pl.widgets.slider_widgets[0].GetRepresentation().SetValue(min_value)
 
     lut.alpha_range = (min_value, max_value)
 
@@ -189,7 +187,7 @@ def make_double_slider(attr, idx):
         if min_value > max_value:
             # force the movement of the maximum value
             max_value = min_value
-            pl.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
+            pl.widgets.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
         setattr(lut, attr, (min_value, max_value))
 
         if attr == 'scalar_range':
@@ -200,7 +198,7 @@ def make_double_slider(attr, idx):
         if max_value < min_value:
             # force the movement of the minimum value
             min_value = max_value
-            pl.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
+            pl.widgets.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
         setattr(lut, attr, (min_value, max_value))
 
         if attr == 'scalar_range':

@@ -477,7 +477,7 @@ def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
     try:
         if pv.PLOT_DIRECTIVE_THEME is not None:
             pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
-        exec(code, ns)
+        exec(code, ns)  # noqa: S102
     except (Exception, SystemExit) as err:  # pragma: no cover
         # Annotate traceback with source file and line
         tb = traceback.format_exc()

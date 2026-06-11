@@ -9,16 +9,14 @@ This example shows how to add custom tools using the
 `jupyter_kwargs` option with :meth:`~pyvista.Plotter.show`.
 """
 
-from __future__ import annotations
-
 import asyncio
 
 import pyvista as pv
-from pyvista.trame.ui.vuetify3 import button
-from pyvista.trame.ui.vuetify3 import divider
-from pyvista.trame.ui.vuetify3 import select
-from pyvista.trame.ui.vuetify3 import slider
-from pyvista.trame.ui.vuetify3 import text_field
+from trame_pyvista.ui.vuetify3 import button
+from trame_pyvista.ui.vuetify3 import divider
+from trame_pyvista.ui.vuetify3 import select
+from trame_pyvista.ui.vuetify3 import slider
+from trame_pyvista.ui.vuetify3 import text_field
 
 # %%
 # Let's first create the menu items we want to add to the trame's toolbar.

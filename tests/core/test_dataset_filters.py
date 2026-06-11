@@ -20,9 +20,10 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import CellType
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -236,7 +237,12 @@ def test_clip_scalar_multiple():
     mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0)
     assert np.isclose(mesh_clip_y['y'].max(), 0.0)
     mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
-    assert np.isclose(mesh_clip_z['z'].max(), 0.0)
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
+        # Behavior change with vtkClipPolyData where the isovalue itself is no longer included
+        # in the inside-out mesh https://gitlab.kitware.com/vtk/vtk/-/work_items/20017
+        assert mesh_clip_z['z'].size == 0
+    else:
+        assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
 def test_clip_surface():
@@ -401,6 +407,177 @@ def test_threshold_multicomponent():
 
     with pytest.raises(TypeError):
         mesh.threshold(value=0.5, scalars='data', component_mode='component', component=0.5)
+
+
+def test_remove_nan_cells_point_data():
+    grid = pv.ImageData(dimensions=(7, 7, 7))
+    values = np.arange(grid.n_points, dtype=float)
+    # Sparse, explicit NaN points so that some cells survive.
+    nan_point_mask = np.zeros(grid.n_points, dtype=bool)
+    nan_point_mask[[0, 50, 100, 200, 300]] = True
+    values[nan_point_mask] = np.nan
+    grid.point_data['values'] = values
+
+    cleaned = grid.remove_nan_cells(scalars='values')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    assert 0 < cleaned.n_cells < grid.n_cells
+    assert not np.any(np.isnan(cleaned.point_data['values']))
+
+    # The surviving cells should be exactly the cells with no NaN point.
+    expected_cells = []
+    for cid in range(grid.n_cells):
+        point_ids = grid.get_cell(cid).point_ids
+        if not np.any(nan_point_mask[point_ids]):
+            expected_cells.append(cid)
+    assert cleaned.n_cells == len(expected_cells)
+
+
+def test_remove_nan_cells_cell_data():
+    grid = pv.ImageData(dimensions=(5, 5, 5))
+    cvals = np.arange(grid.n_cells, dtype=float)
+    cvals[::3] = np.nan
+    grid.cell_data['cvals'] = cvals
+
+    cleaned = grid.remove_nan_cells(scalars='cvals', preference='cell')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    expected_n = int(np.sum(~np.isnan(cvals)))
+    assert cleaned.n_cells == expected_n
+    assert not np.any(np.isnan(cleaned.cell_data['cvals']))
+
+
+def test_remove_nan_cells_active_scalars_default():
+    grid = pv.ImageData(dimensions=(4, 4, 4))
+    values = np.arange(grid.n_points, dtype=float)
+    values[::5] = np.nan
+    grid.point_data['values'] = values
+    grid.set_active_scalars('values')
+
+    explicit = grid.remove_nan_cells(scalars='values')
+    implicit = grid.remove_nan_cells()
+    assert explicit.n_cells == implicit.n_cells
+
+
+def test_remove_nan_cells_multicomponent():
+    mesh = pv.Plane()
+    data = np.zeros((mesh.n_cells, 3))
+    data[0, 0] = np.nan
+    data[1, :] = np.nan
+    mesh['data'] = data
+
+    # component_mode='all' drops any cell with any NaN component.
+    cleaned_all = mesh.remove_nan_cells(scalars='data', preference='cell', component_mode='all')
+    assert cleaned_all.n_cells == mesh.n_cells - 2
+
+    # component_mode='component' only checks the specified component.
+    cleaned_c0 = mesh.remove_nan_cells(
+        scalars='data', preference='cell', component_mode='component', component=0
+    )
+    assert cleaned_c0.n_cells == mesh.n_cells - 2
+
+    cleaned_c2 = mesh.remove_nan_cells(
+        scalars='data', preference='cell', component_mode='component', component=2
+    )
+    assert cleaned_c2.n_cells == mesh.n_cells - 1
+
+
+def test_remove_nan_cells_all_nan():
+    grid = pv.ImageData(dimensions=(3, 3, 3))
+    grid.point_data['values'] = np.full(grid.n_points, np.nan)
+    cleaned = grid.remove_nan_cells(scalars='values')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    assert cleaned.n_cells == 0
+
+
+def test_remove_nan_cells_integer_array():
+    grid = pv.ImageData(dimensions=(3, 3, 3))
+    grid.point_data['ints'] = np.arange(grid.n_points, dtype=np.int32)
+    cleaned = grid.remove_nan_cells(scalars='ints')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    assert cleaned.n_cells == grid.n_cells
+
+
+def test_remove_nan_cells_missing_scalar():
+    grid = pv.ImageData(dimensions=(3, 3, 3))
+    grid.point_data['values'] = np.arange(grid.n_points, dtype=float)
+    with pytest.raises(ValueError, match='No array'):
+        grid.remove_nan_cells(scalars='does_not_exist')
+
+
+def test_remove_nan_cells_only_checks_selected_array():
+    """Only the selected scalar array should drive NaN removal.
+
+    A NaN in a different point-data array must not cause a cell to be dropped,
+    and the untouched array must still carry its NaNs in the output. This is
+    the property the user was worried ``all_scalars=True`` might break —
+    ``all_scalars`` refers to "all points of a cell for the one selected
+    input array", not "all arrays in the dataset".
+    """
+    grid = pv.ImageData(dimensions=(7, 7, 7))
+
+    # 'target' has NaNs that we DO want to drive cell removal.
+    target = np.arange(grid.n_points, dtype=float)
+    target_nan_mask = np.zeros(grid.n_points, dtype=bool)
+    target_nan_mask[[0, 50, 100]] = True
+    target[target_nan_mask] = np.nan
+    grid.point_data['target'] = target
+
+    # 'other' has NaNs at entirely different points and must be ignored.
+    other = np.arange(grid.n_points, dtype=float) * 10.0
+    other_nan_mask = np.zeros(grid.n_points, dtype=bool)
+    other_nan_mask[[200, 250, 300]] = True
+    assert not np.any(target_nan_mask & other_nan_mask)
+    other[other_nan_mask] = np.nan
+    grid.point_data['other'] = other
+
+    cleaned = grid.remove_nan_cells(scalars='target')
+
+    # Some cells must survive or the test is vacuous.
+    assert cleaned.n_cells > 0
+
+    # No surviving cell should touch a 'target' NaN point.
+    assert not np.any(np.isnan(cleaned.point_data['target']))
+
+    # 'other' must be carried through with its NaNs intact — remove_nan_cells
+    # must not scrub unrelated arrays.
+    assert 'other' in cleaned.point_data
+    assert np.any(np.isnan(cleaned.point_data['other']))
+
+    # Cell count must match what you would get by checking only 'target'.
+    expected_kept = 0
+    for cid in range(grid.n_cells):
+        point_ids = grid.get_cell(cid).point_ids
+        if not np.any(target_nan_mask[point_ids]):
+            expected_kept += 1
+    assert cleaned.n_cells == expected_kept
+
+    # And the surviving set must be strictly larger than what you'd get if
+    # 'other' also gated removal — proving the two arrays are independent.
+    combined_mask = target_nan_mask | other_nan_mask
+    stricter_kept = 0
+    for cid in range(grid.n_cells):
+        point_ids = grid.get_cell(cid).point_ids
+        if not np.any(combined_mask[point_ids]):
+            stricter_kept += 1
+    assert cleaned.n_cells > stricter_kept
+
+
+def test_remove_nan_cells_matches_ptc_threshold_helper():
+    """The new filter should match the user's existing ptc-then-threshold recipe."""
+    grid = pv.ImageData(dimensions=(6, 6, 6))
+    values = np.arange(grid.n_points, dtype=float)
+    values[::11] = np.nan
+    grid.point_data['values'] = values
+    # Tag cells so we can compare surviving cell identities, not just counts.
+    grid.cell_data['cell_ids'] = np.arange(grid.n_cells, dtype=int)
+
+    cleaned = grid.remove_nan_cells(scalars='values')
+
+    # Reference implementation: ptc-then-threshold with the same cell tags.
+    threshed = grid.point_data_to_cell_data().threshold(scalars='values')
+    expected_ids = np.sort(threshed.cell_data['cell_ids'])
+    actual_ids = np.sort(cleaned.cell_data['cell_ids'])
+
+    np.testing.assert_array_equal(actual_ids, expected_ids)
 
 
 def test_threshold_percent(datasets):
@@ -595,7 +772,20 @@ def test_delaunay_2d_unstructured():
 
 
 @pytest.mark.usefixtures('force_points_precision_single')
-@pytest.mark.parametrize('method', ['contour', 'marching_cubes', 'flying_edges'])
+@pytest.mark.parametrize(
+    'method',
+    [
+        'contour',
+        pytest.param(
+            'marching_cubes',
+            marks=pytest.mark.needs_vtk_version(
+                (9, 4),
+                reason='vtkMarchingCubes does not preserve the input scalar name on vtk<9.4',
+            ),
+        ),
+        'flying_edges',
+    ],
+)
 def test_contour(uniform, method):
     iso = uniform.contour(method=method, progress_bar=True)
     assert iso is not None
@@ -1553,38 +1743,23 @@ def test_streamlines_max_length():
         )
         assert np.isclose(stream.length, 1)
 
-    def check_deprecation():
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 49):
-            msg = 'Remove ``max_time`` parameter in ``streamlines_from_source``'
-            raise RuntimeError(msg)
-
-    with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
-        stream = mesh.streamlines(
+    with pytest.raises(DeprecationError, match='``max_time`` parameter is deprecated'):
+        mesh.streamlines(
             vectors='vel',
             start_position=(0, 0, 0),
             integration_direction='forward',
             max_time=1,
             max_step_length=0.1,
         )
-    check_deprecation()
-    assert np.isclose(stream.length, 1)
 
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
-    ):
-        stream = mesh.streamlines(
+    with pytest.raises(DeprecationError, match='``max_time`` parameter is deprecated'):
+        mesh.streamlines(
             vectors='vel',
             start_position=(0, 0, 0),
             integration_direction='forward',
             max_time=5,
             max_length=1,
         )
-    check_deprecation()
-    assert np.isclose(stream.length, 1)
 
 
 def test_streamlines_errors(uniform_vec):
@@ -2990,9 +3165,11 @@ def test_extract_subset(uniform, rebase_coordinates):
     offset = (1, 2, 3)
     dict_ = {'foo': 'bar'}
     origin = (1.1, 2.2, 3.3)
+    direction_matrix = pv.Transform().rotate_x(30.0, point=(3.0, 4.0, 5.0)).matrix[:3, :3]
     uniform.user_dict = dict_
     uniform.offset = offset
     uniform.origin = origin
+    uniform.direction_matrix = direction_matrix
 
     new_offset = (2, 4, 6)
     new_dims = 4, 3, 2
@@ -3009,7 +3186,11 @@ def test_extract_subset(uniform, rebase_coordinates):
         # Test that we fix the confusing issue from extents in
         #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
         assert voi.origin != origin
-        assert voi.origin == voi.bounds[::2]
+        assert np.allclose(voi.origin, voi.points[0])
+        relative_offset = tuple(new_offset[i] - offset[i] for i in range(3))
+        dims = uniform.dimensions
+        start_idx = np.arange(np.prod(dims)).reshape(dims, order='F')[relative_offset]
+        assert np.allclose(voi.points[0], uniform.points[start_idx])
         assert voi.offset != new_offset
         assert voi.offset == (0, 0, 0)
     else:
@@ -3563,7 +3744,7 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces_strict
+    orig_n_faces = sphere.n_faces
     sub = sphere.subdivide_adaptive(
         max_edge_len=0.01,
         max_tri_area=0.001,
@@ -3572,9 +3753,9 @@ def test_subdivide_adaptive(sphere, inplace):
         inplace=inplace,
         progress_bar=True,
     )
-    assert sub.n_faces_strict > orig_n_faces
+    assert sub.n_faces > orig_n_faces
     if inplace:
-        assert sphere.n_faces_strict == sub.n_faces_strict
+        assert sphere.n_faces == sub.n_faces
 
 
 def test_invalid_subdivide_adaptive(cube):
@@ -3678,6 +3859,59 @@ def test_align_xyz():
 
     aligned = mesh.align_xyz(centered=False)
     assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_merge_points():
+    xyz_axes = np.eye(3)
+    points = np.vstack([xyz_axes, -xyz_axes])
+    # Add a bunch of duplicate points at +Z
+    biased_axis = xyz_axes[2]
+    points_with_duplicates = np.vstack([points, [biased_axis.tolist()] * 100])
+
+    _, matrix_no_duplicates = pv.PolyData(points).align_xyz(return_matrix=True)
+    _, matrix_with_duplicates_merged = pv.PolyData(points_with_duplicates).align_xyz(
+        merge_points=True, return_matrix=True
+    )
+    _, matrix_with_duplicates_not_merged = pv.PolyData(points_with_duplicates).align_xyz(
+        merge_points=False, return_matrix=True
+    )
+
+    axes_no_duplicates = matrix_no_duplicates[:3, :3]
+    axes_with_duplicates_merged = matrix_with_duplicates_merged[:3, :3]
+    axes_with_duplicates_not_merged = matrix_with_duplicates_not_merged[:3, :3]
+
+    # Duplicates removed - expect same result
+    assert np.array_equal(axes_no_duplicates, xyz_axes)
+    assert np.array_equal(axes_with_duplicates_merged, xyz_axes)
+    assert not np.array_equal(axes_with_duplicates_not_merged, xyz_axes)
+
+    # Duplicates not removed - expect principal axis is the biased axis
+    assert np.array_equal(axes_with_duplicates_not_merged[0], biased_axis)
+
+
+def test_align_xyz_cell_centers():
+    ellipse = pv.ParametricEllipsoid(1, 2, 3)
+    _, matrix = ellipse.align_xyz(cell_centers=False, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(ellipse.points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+    _, matrix = ellipse.align_xyz(cell_centers=True, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(ellipse.cell_centers().points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+
+def test_align_xyz_cell_centers_and_merge_points():
+    # Build an ellipsoid surface and duplicate every point so the raw point
+    # cloud is biased, but the cell centers are not.
+    ellipse = pv.ParametricEllipsoid(1, 2, 3)
+    duplicated = ellipse + ellipse
+
+    _, matrix = duplicated.align_xyz(cell_centers=True, merge_points=True, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(duplicated.cell_centers().merge_points().points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
 
 
 def test_align_xyz_return_matrix():
@@ -4084,11 +4318,12 @@ RED_RGB = pv.Color('red').int_rgb
     ('color_input', 'expected_rgb'),
     [
         ('viridis', VIRIDIS_RGB),
+        (pv.get_cmap_safe('viridis'), VIRIDIS_RGB),
         (COLORS_DICT, COLORS_DICT_RGB),
         (COLORS_DICT_RGB, COLORS_DICT_RGB),
         ('red', [RED_RGB, RED_RGB, RED_RGB, RED_RGB]),
     ],
-    ids=['cmap', 'dict', 'sequence', 'named_color'],
+    ids=['cmap_str', 'cmap_instance', 'dict', 'sequence', 'named_color'],
 )
 def test_color_labels_inputs(labeled_image, color_input, expected_rgb):
     label_scalars = labeled_image.active_scalars
@@ -4376,6 +4611,8 @@ def oriented_image():
     image = pv.ImageData()
     image.spacing = (1.1, 1.2, 1.3)
     image.dimensions = (10, 11, 12)
+    image.offset = (4, 5, 6)
+    image.origin = (3.1, 2.1, 1.1)
     image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
     image['scalars'] = np.ones((image.n_points,))
     return image

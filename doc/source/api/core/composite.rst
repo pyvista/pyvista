@@ -1,3 +1,5 @@
+.. _composite_api:
+
 Composite Datasets
 ==================
 

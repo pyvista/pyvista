@@ -10,8 +10,6 @@ Here we use :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>`.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 3

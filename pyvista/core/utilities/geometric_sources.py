@@ -16,12 +16,12 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista as pv
+from pyvista import _PrecisionOptions
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -50,24 +50,26 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
     @property
-    def points_dtype(self):
+    def points_dtype(self) -> _PrecisionOptions:
         return getattr(self, '_points_dtype', None)
 
     @points_dtype.setter
-    def points_dtype(self, points_dtype):
+    def points_dtype(self, points_dtype: _PrecisionOptions) -> None:
         self._points_dtype = points_dtype
 
-    def Update(self) -> None:
+    def Update(self) -> None:  # noqa: N802
         _set_output_points_precision(self)
         super().Update()
 
-    def GetOutput(self) -> pv.DataObject:
+    def GetOutput(self) -> pv.DataObject:  # noqa: N802
         out = wrap(super().GetOutput())
         _Source._check_output_points_precision(out, points_dtype=self.points_dtype, algorithm=self)
         return out
 
     @staticmethod
-    def _check_output_points_precision(mesh_out, *, points_dtype, algorithm):
+    def _check_output_points_precision(
+        mesh_out: DataSet, *, points_dtype: _PrecisionOptions, algorithm: _vtk.vtkAlgorithm
+    ) -> None:
         precision = points_dtype if points_dtype is not None else pv.POINTS_PRECISION
         if precision is not None:
             points = mesh_out.points
@@ -928,12 +930,16 @@ class MultipleLinesSource(_Source, _vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
-class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
+class Text3DSource(_NoNewAttrMixin):
     """3D text from a string.
 
     Generate 3D text from a string with a specified width, height or depth.
 
     .. versionadded:: 0.43
+
+    .. versionchanged:: 0.48
+
+        This class no longer inherits from :vtk:`vtkVectorText`, and uses composition instead.
 
     Parameters
     ----------
@@ -983,6 +989,7 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
         """Initialize source."""
         super().__init__()
 
+        self._source = _vtk.vtkVectorText()
         self._output = pv.PolyData()
 
         # Set params
@@ -1009,11 +1016,11 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
         """Return or set the text string."""
-        return self.GetText()
+        return self._source.GetText()
 
     @string.setter
     def string(self: Text3DSource, string: str | None) -> None:
-        self.SetText('' if string is None else string)
+        self._source.SetText('' if string is None else string)
 
     @property
     def process_empty_string(self: Text3DSource) -> bool:  # numpydoc ignore=RT01
@@ -1109,13 +1116,13 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
-                self.Update()
-                out = self.GetOutput()
+                self._source.Update()
+                out = self._source.GetOutput()
             else:
                 # 3D case, apply filters
                 # Create output filters to make text 3D
                 extrude = _vtk.vtkLinearExtrusionFilter()
-                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetInputConnection(self._source.GetOutputPort())
                 extrude.SetExtrusionTypeToNormalExtrusion()
                 extrude.SetVector(0, 0, 1)
 
@@ -1457,10 +1464,10 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
         The outer radius.
 
     r_res : int, default: 1
-        Number of points in radial direction.
+        Number of cells in radial direction.
 
     c_res : int, default: 6
-        Number of points in circumferential direction.
+        Number of cells in circumferential direction.
 
     Examples
     --------
@@ -1564,48 +1571,48 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
 
     @property
     def r_res(self: DiscSource) -> int:
-        """Get number of points in radial direction.
+        """Get number of cells in radial direction.
 
         Returns
         -------
         int
-            Number of points in radial direction.
+            Number of cells in radial direction.
 
         """
         return self.GetRadialResolution()
 
     @r_res.setter
     def r_res(self: DiscSource, r_res: int) -> None:
-        """Set number of points in radial direction.
+        """Set number of cells in radial direction.
 
         Parameters
         ----------
         r_res : int
-            Number of points in radial direction.
+            Number of cells in radial direction.
 
         """
         self.SetRadialResolution(r_res)
 
     @property
     def c_res(self: DiscSource) -> int:
-        """Get number of points in circumferential direction.
+        """Get number of cells in circumferential direction.
 
         Returns
         -------
         int
-            Number of points in circumferential direction.
+            Number of cells in circumferential direction.
 
         """
         return self.GetCircumferentialResolution()
 
     @c_res.setter
     def c_res(self: DiscSource, c_res: int) -> None:
-        """Set number of points in circumferential direction.
+        """Set number of cells in circumferential direction.
 
         Parameters
         ----------
         c_res : int
-            Number of points in circumferential direction.
+            Number of cells in circumferential direction.
 
         """
         self.SetCircumferentialResolution(c_res)

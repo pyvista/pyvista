@@ -13,12 +13,14 @@ import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKExecutionError
 from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+
+log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -279,8 +281,8 @@ class Observer(_NoNewAttrMixin):
                     file=sys.__stdout__,
                 )
                 traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as e:  # noqa: BLE001
+                log.debug('Failed to print VTK error message: %s', e)
 
     def has_event_occurred(self):  # numpydoc ignore=RT01
         """Ask self if an error has occurred since last queried.

@@ -12,8 +12,6 @@ The silhouette may be created using the `silhouette` keyword with
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

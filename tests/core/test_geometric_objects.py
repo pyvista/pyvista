@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import ItemsView
 from itertools import permutations
 import re
 from types import FunctionType
@@ -15,6 +14,7 @@ import pyvista as pv
 from tests.conftest import _get_module_functions
 
 if TYPE_CHECKING:
+    from collections.abc import ItemsView
     from types import FunctionType
 
 
@@ -90,6 +90,13 @@ def test_cylinder_structured():
     cyl = pv.CylinderStructured()
     assert np.any(cyl.points)
     assert np.any(cyl.n_cells)
+
+    match = 'must all be greater than 0.0'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[0.0, 1.0])
+    match = 'must be sorted in strict ascending order'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[1.0, 0.5])
 
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
@@ -846,7 +853,7 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
     # verify type of solid
     assert solid_from_str.n_points == n_vertices
-    assert solid_from_str.n_faces_strict == n_faces
+    assert solid_from_str.n_faces == n_faces
 
 
 def test_platonic_invalids():
@@ -863,7 +870,7 @@ def test_tetrahedron():
     center = (1, -2, 3)
     solid = pv.Tetrahedron(radius=radius, center=center)
     assert solid.n_points == 4
-    assert solid.n_faces_strict == 4
+    assert solid.n_faces == 4
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Tetrahedron(radius=2 * radius, center=center)
@@ -875,7 +882,7 @@ def test_octahedron():
     center = (1, -2, 3)
     solid = pv.Octahedron(radius=radius, center=center)
     assert solid.n_points == 6
-    assert solid.n_faces_strict == 8
+    assert solid.n_faces == 8
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Octahedron(radius=2 * radius, center=center)
@@ -887,7 +894,7 @@ def test_dodecahedron():
     center = (1, -2, 3)
     solid = pv.Dodecahedron(radius=radius, center=center)
     assert solid.n_points == 20
-    assert solid.n_faces_strict == 12
+    assert solid.n_faces == 12
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Dodecahedron(radius=2 * radius, center=center)
@@ -899,7 +906,7 @@ def test_icosahedron():
     center = (1, -2, 3)
     solid = pv.Icosahedron(radius=radius, center=center)
     assert solid.n_points == 12
-    assert solid.n_faces_strict == 20
+    assert solid.n_faces == 20
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Icosahedron(radius=2 * radius, center=center)
@@ -916,4 +923,4 @@ def test_icosphere():
     assert np.allclose(np.linalg.norm(icosphere.points - icosphere.center, axis=1), radius)
 
     icosahedron = pv.Icosahedron()
-    assert icosahedron.n_faces_strict * 4**nsub == icosphere.n_faces_strict
+    assert icosahedron.n_faces * 4**nsub == icosphere.n_faces

@@ -8,8 +8,6 @@ Generate and visualize meshes from data in longitude-latitude coordinates
 using :func:`~pyvista.grid_from_sph_coords`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 

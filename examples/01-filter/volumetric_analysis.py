@@ -9,8 +9,6 @@ Calculate mass properties such as the volume or area of datasets
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
 import numpy as np
 from pyvista import examples
 
@@ -88,7 +86,7 @@ largest = threshed.connectivity('largest', scalar_range=scalar_range)
 large_volume = largest.volume
 
 # Display it
-largest.plot(show_grid=True, cpos=[-2, 5, 3])
+largest.plot(show_grid=True, cpos=[-2, 5, 3], color=True)
 
 
 # %%

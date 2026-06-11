@@ -21,8 +21,6 @@ These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum 
 """
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista.plotting.opts import ElementType
 

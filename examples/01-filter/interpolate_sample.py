@@ -24,8 +24,6 @@ and :ref:`resampling_example`.
 """
 
 # sphinx_gallery_thumbnail_number = 7
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 
@@ -98,7 +96,7 @@ pl.show()
 # %%
 # While this filter is very useful for point clouds, it is possible to use
 # it to interpolate from the points on other mesh types. With
-# unstuitable choice of ``radius`` the interpolation doesn't look very good.
+# an unsuitable choice of ``radius`` the interpolation doesn't look very good.
 # It is recommended consider using :func:`pyvista.DataObjectFilters.sample` in a
 # case like this (see next section below). However, there may be cases with
 # non-point cloud meshes where :func:`pyvista.DataSetFilters.interpolate` is

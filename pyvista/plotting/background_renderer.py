@@ -32,11 +32,11 @@ class BackgroundRenderer(Renderer):
     ):
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
-        from . import _vtk  # noqa: PLC0415
+        from pyvista import _vtk  # noqa: PLC0415
 
         # read the image first as we don't need to create a render if
         # the image path is invalid
-        image_data = pv.read(image_path)
+        image_data = pv.read(image_path, cls=pv.ImageData)
 
         super().__init__(parent, border=False)
         self.SetLayer(0)

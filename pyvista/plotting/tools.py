@@ -12,9 +12,9 @@ from subprocess import TimeoutExpired
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
-from . import _vtk
 from .colors import Color
 
 
@@ -46,6 +46,9 @@ def supports_open_gl():
     global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
+        ren_win.SetOffScreenRendering(True)
+        if hasattr(ren_win, 'SetConnectContextToNSView'):
+            ren_win.SetConnectContextToNSView(False)
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 

@@ -22,8 +22,6 @@ with ``.show(auto_close=False)``.  You may also have to set
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -37,7 +35,7 @@ pl = pv.Plotter()
 pl.add_mesh(mesh, lighting=False)
 pl.camera.zoom(1.5)
 pl.show(auto_close=False)
-path = pl.generate_orbital_path(n_points=36, shift=mesh.length)
+path = pl.generate_orbital_path(n_points=20, shift=mesh.length)
 pl.open_gif('orbit.gif')
 pl.orbit_on_path(path, write_frames=True)
 pl.close()
@@ -50,7 +48,7 @@ pl.add_mesh(mesh, lighting=False)
 pl.show_grid()
 pl.show(auto_close=False)
 viewup = [0.5, 0.5, 1]
-path = pl.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=36)
+path = pl.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=20)
 pl.open_gif('orbit.gif')
 pl.orbit_on_path(path, write_frames=True, viewup=[0, 0, 1], step=0.05)
 pl.close()
@@ -65,7 +63,7 @@ viewup = [0, 1, 0]
 pl = pv.Plotter()
 pl.add_mesh(mesh)
 pl.show(auto_close=False)
-path = pl.generate_orbital_path(factor=2.0, n_points=36, viewup=viewup, shift=0.2)
+path = pl.generate_orbital_path(factor=2.0, n_points=20, viewup=viewup, shift=0.2)
 pl.open_gif('orbit.gif')
 pl.orbit_on_path(path, write_frames=True, viewup=viewup, step=0.05)
 pl.close()

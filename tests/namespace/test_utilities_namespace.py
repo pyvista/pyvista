@@ -18,6 +18,15 @@ with namespace_data.open() as f:
 def test_utilities_namespace(name):
     import pyvista.utilities as utilities  # noqa: PLR0402
 
+    # Force ``pyvista.utilities.__getattr__`` to fire by removing any
+    # attribute Python's import machinery may have cached on the parent
+    # module. Without this, a previous test that did
+    # ``from pyvista.utilities.<submodule> import ...`` leaves
+    # ``utilities.<name>`` populated, so ``hasattr`` resolves directly
+    # without triggering the deprecation warning. That made the test
+    # order-dependent.
+    utilities.__dict__.pop(name, None)
+
     with pytest.warns(PyVistaDeprecationWarning):
         assert hasattr(utilities, name)
 
@@ -43,7 +52,6 @@ def test_utilities_namespace(name):
         'sphinx_gallery',
         'transformations',
         'wrappers',
-        'xvfb',
     ],
 )
 def test_utilities_modules(name):
@@ -79,7 +87,6 @@ def _import_all_utilities():
     from pyvista.utilities.geometric_objects import PlatonicSolid  # noqa: F401
     from pyvista.utilities.helpers import vtk_id_list_to_array  # noqa: F401
     from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper  # noqa: F401
-    from pyvista.utilities.xvfb import start_xvfb  # noqa: F401
 
 
 def test_common_utilities_import_paths():

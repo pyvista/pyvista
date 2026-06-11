@@ -10,12 +10,12 @@ import matplotlib as mpl
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
@@ -959,7 +959,11 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
             return {}  # type: ignore[unreachable]
-        n_items = vtk_values.GetSize()
+        n_items = (
+            vtk_values.GetSize()
+            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
+            else vtk_values.GetCapacity()  # type: ignore[attr-defined]
+        )
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
         vtk_str = self.GetAnnotations()

@@ -16,12 +16,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
-from . import _vtk
 from .colors import COLOR_SCHEMES
 from .colors import SCHEME_NAMES
 from .colors import Color
@@ -488,12 +489,44 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def pen(self) -> Pen:  # numpydoc ignore=RT01
-        """Pen used to draw the axis."""
+        """Pen used to draw the axis.
+
+        Examples
+        --------
+        Create a 2D chart and change the x-axis color to red with a width of 5.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.pen.color = 'r'
+           >>> chart.x_axis.pen.width = 5
+           >>> chart.show()
+
+        """
         return self._pen
 
     @property
     def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
-        """Pen used to draw the grid lines."""
+        """Pen used to draw the grid lines.
+
+        Examples
+        --------
+        Create a 2D chart and change the x-axis grid lines to a dashed style.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.grid_pen.color = (0.5, 0.5, 0.5)
+           >>> chart.x_axis.grid_pen.style = '--'
+           >>> chart.show()
+
+        """
         return self._grid_pen
 
     @property
@@ -1133,6 +1166,14 @@ class _Chart(DocSubs):
     _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
+        try:
+            # Necessary for displaying charts, otherwise crashes on rendering
+            # Import lazily on init to delay import until it's needed
+            from vtkmodules import vtkRenderingContextOpenGL2  # noqa: F401, PLC0415, TID251
+        except ImportError:
+            msg = 'Unable to import `vtkRenderingContextOpenGL2`. Charts may not render.'
+            warn_external(msg)
+
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()
@@ -1545,6 +1586,27 @@ class _Chart(DocSubs):
     @title.setter
     def title(self, val) -> None:
         self.SetTitle(val)  # type: ignore[attr-defined]
+
+    @property
+    @doc_subs
+    def legend(self):  # numpydoc ignore=RT01
+        """Return the chart's legend.
+
+        Examples
+        --------
+        Create a {chart_name} with custom labels and access its legend.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> {chart_set_labels}
+           >>> legend = chart.legend
+           >>> chart.show()
+
+        """
+        return self.GetLegend()  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -4670,6 +4732,23 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         # See #1999 and #2031.
         if pv.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
+
+    @property
+    def legend(self):  # numpydoc ignore=RT01
+        """Access the legend of the underlying matplotlib axes.
+
+        Notes
+        -----
+        Unlike :class:`Chart2D`, :class:`ChartBox`, and :class:`ChartPie`,
+        the legend of a matplotlib-backed chart must be configured through
+        the matplotlib API on :attr:`figure`.
+
+        """
+        msg = (
+            'ChartMPL does not expose a VTK legend; configure the legend '
+            'through the underlying matplotlib figure instead (see `figure`).'
+        )
+        raise NotImplementedError(msg)
 
     @property
     def figure(self):  # numpydoc ignore=RT01

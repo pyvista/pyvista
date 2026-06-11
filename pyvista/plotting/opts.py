@@ -2,7 +2,60 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from pyvista.core.utilities.misc import AnnotatedIntEnum
+
+
+class ShaderType(str, Enum):
+    """Shader types for GLSL shader replacements.
+
+    .. versionadded:: 0.48
+
+    Attributes
+    ----------
+    VERTEX : str
+        Vertex shader.
+    FRAGMENT : str
+        Fragment shader.
+    GEOMETRY : str
+        Geometry shader.
+
+    """
+
+    VERTEX = 'vertex'
+    FRAGMENT = 'fragment'
+    GEOMETRY = 'geometry'
+
+
+class PointSpriteShape(str, Enum):
+    """Point sprite shape options for fragment shader rendering.
+
+    .. versionadded:: 0.48
+
+    Attributes
+    ----------
+    CIRCLE : str
+        Circular disc.
+    TRIANGLE : str
+        Upward-pointing triangle.
+    HEXAGON : str
+        Regular hexagon.
+    DIAMOND : str
+        Diamond (rotated square).
+    ASTERISK : str
+        Five-pointed asterisk.
+    STAR : str
+        Five-pointed star.
+
+    """
+
+    CIRCLE = 'circle'
+    TRIANGLE = 'triangle'
+    HEXAGON = 'hexagon'
+    DIAMOND = 'diamond'
+    ASTERISK = 'asterisk'
+    STAR = 'star'
 
 
 class InterpolationType(AnnotatedIntEnum):
@@ -83,3 +136,20 @@ class PickerType(AnnotatedIntEnum):
     SCENE = (7, 'Scene')
     VOLUME = (8, 'Volume')
     WORLD = (9, 'World')
+
+
+class StereoType(AnnotatedIntEnum):
+    """Types of stereo rendering."""
+
+    CRYSTAL_EYES = (1, 'Crystal Eyes')
+    RED_BLUE = (2, 'Red Blue')
+    INTERLACED = (3, 'Interlaced')
+    LEFT = (4, 'Left')
+    RIGHT = (5, 'Right')
+    DRESDEN = (6, 'Dresden')
+    ANAGLYPH = (7, 'Anaglyph')
+    CHECKERBOARD = (8, 'Checkerboard')
+    SPLITVIEWPORT_HORIZONTAL = (9, 'Split Viewport Horizontal')
+    FAKE = (10, 'Fake')
+    EMULATE = (11, 'Emulate')
+    ZSPACE_INSPIRE = (12, 'ZSpace Inspire')

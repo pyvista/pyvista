@@ -9,10 +9,11 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -1874,7 +1875,7 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Compute point and/or cell normals for a mesh.
 
-        The filter can reorder polygons to insure consistent
+        The filter can reorder polygons to ensure consistent
         orientation across polygon neighbors. Sharp edges can be split
         and points duplicated with separate normals to give crisp
         (rendered) surface definition. It is also possible to globally
@@ -2110,8 +2111,8 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Clip a sphere in the X direction centered at the origin.  This
-        will leave behind half a sphere in the positive X direction.
+        Clip a sphere in the negative Z direction centered at the origin.
+        This will leave behind half a sphere in the negative Z direction.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -2124,6 +2125,8 @@ class PolyDataFilters(DataSetFilters):
 
         >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
+
+        See :ref:`clip_closed_surface_example` for more examples using this filter.
 
         """
         # verify it is manifold
@@ -2200,6 +2203,8 @@ class PolyDataFilters(DataSetFilters):
         ...     feature_edges=False, manifold_edges=False
         ... )  # doctest:+SKIP
         >>> assert edges.n_cells == 0  # doctest:+SKIP
+
+        See :ref:`fill_holes_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkFillHolesFilter()
@@ -2990,21 +2995,12 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warn_external(
+        # Deprecated on v0.45.0, error on v0.49.0
+        msg = (
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
-            'Note that `inplace` is now `False` by default for the new filter.',
-            PyVistaDeprecationWarning,
+            'Note that `inplace` is now `False` by default for the new filter.'
         )
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
-            msg = 'Can only flip normals on an all triangle mesh.'
-            raise NotAllTrianglesError(msg)
-
-        f = self._connectivity_array  # type: ignore[attr-defined]
-
-        # swap first and last point index in-place
-        # See: https://stackoverflow.com/a/33362288/
-        f[::3], f[2::3] = f[2::3], f[::3].copy()
+        raise DeprecationError(msg)
 
     def _reverse_sense(  # type: ignore[misc]
         self: PolyData,
@@ -4427,7 +4423,11 @@ class PolyDataFilters(DataSetFilters):
         return wrap(mc.GetOutput())
 
     @_deprecate_positional_args
-    def triangulate_contours(self, display_errors: bool = False, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def triangulate_contours(  # type: ignore[misc]
+        self: _PolyDataType,
+        display_errors: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> _PolyDataType:
         """Triangulate and fill all 2D contours to create polygons.
 
         .. versionadded:: 0.44.0
@@ -4465,6 +4465,11 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        Raises
+        ------
+        RuntimeError
+            If the mesh does not contain lines.
+
         Returns
         -------
         pyvista.PolyData
@@ -4491,6 +4496,10 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
+        if self.n_lines == 0:
+            msg = '`triangulate_contours` requires the input PolyData to have lines.'
+            raise RuntimeError(msg)
+
         alg = _vtk.vtkContourTriangulator()
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)

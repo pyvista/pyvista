@@ -1,5 +1,3 @@
-!
-
 PyVista within a Docker Container
 =================================
 You can use ``pyvista`` from within a docker container with
@@ -37,82 +35,64 @@ start playing around with pyvista in jupyterlab. For example:
 
 Create your own Docker Container with PyVista
 ---------------------------------------------
-Clone PyVista and cd into this directory to create your own customized docker image.
+Both the ``latest`` and ``latest-slim`` images are produced from a single
+multi-stage Dockerfile at ``docker/Dockerfile``. The PyVista wheel is built
+*inside* the Docker build, so no pre-build steps are required. Clone the
+repository and run ``docker build`` from the project root:
 
 .. code-block:: bash
 
   git clone https://github.com/pyvista/pyvista
-  cd pyvista/docker
-  IMAGE=my-pyvista-jupyterlab:v0.1.0
-  docker build -t $IMAGE .
-  docker push $IMAGE
+  cd pyvista
 
-If you wish to have off-screen GPU support when rending on jupyterlab,
-see the notes about building with EGL at :ref:`building_vtk`,
-or use the custom, pre-built wheels at
-`Release 0.27.0 <https://github.com/pyvista/pyvista/releases/tag/0.27.0>`_.
-Install that customized vtk wheel onto your docker image by modifying
-the docker image at ``pyvista/docker/jupyter.Dockerfile`` with:
+  # JupyterLab image (equivalent to ghcr.io/pyvista/pyvista:latest)
+  docker build -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
 
-.. code-block:: docker
+  # Slim off-screen image (equivalent to ghcr.io/pyvista/pyvista:latest-slim)
+  docker build -f docker/Dockerfile --target slim -t my-pyvista-slim .
 
-  COPY vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl /tmp/
-  RUN pip install /tmp/vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl
+The ``jupyter`` target installs the ``jupyter``, ``colormaps``, and ``io``
+optional dependency groups directly from ``pyproject.toml``, so the package
+set always matches the project's pins. There is no separate
+``requirements.txt`` to keep in sync.
 
-Additionally, you must install GPU drivers on the docker image of the
-same version running on the host machine. For example, if you are
-running on Azure Kubernetes Service and the GPU nodes on the
-kubernetes cluster are running ``450.51.06``, you must install the same
-version on your image. Since you will be using the underlying kernel
-module, there's no reason to build it on the container (and trying
-will only result in an error).
-
-.. code-block:: docker
-
-  COPY NVIDIA-Linux-x86_64-450.51.06.run nvidia_drivers.run
-  RUN sudo apt-get install kmod libglvnd-dev pkg-config -yq
-  RUN ./NVIDIA-Linux-x86_64-450.51.06.run -s --no-kernel-module
-
-To verify that you're rendering on a GPU, first check the output of
-``nvidia-smi``. You should get something like:
+Override the Python version (must match a supported VTK wheel) via a build
+argument:
 
 .. code-block:: bash
 
-  $ nvidia-smi
-  Sun Nov  8 05:48:46 2020
-  +-----------------------------------------------------------------------------+
-  | NVIDIA-SMI 450.51.06    Driver Version: 450.51.06    CUDA Version: 11.0     |
-  |-------------------------------+----------------------+----------------------+
-  | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-  | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-  |                               |                      |               MIG M. |
-  |===============================+======================+======================|
-  |   0  Tesla K80           Off  | 00000001:00:00.0 Off |                    0 |
-  | N/A   34C    P8    32W / 149W |   1297MiB / 11441MiB |      0%      Default |
-  |                               |                      |                  N/A |
-  +-------------------------------+----------------------+----------------------+
+  docker build --build-arg PY_VERSION=3.12 \
+    -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
 
-Note the driver version (which is actually the kernel driver version),
-and verify it matches the version you installed on your docker image.
+GPU Rendering with the NVIDIA Container Runtime
+-----------------------------------------------
+Both published images ship with ``libegl1`` and set
+``NVIDIA_VISIBLE_DEVICES=all`` plus
+``NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute``. VTK 9.5+ picks
+the ``vtkEGLRenderWindow`` automatically, so rendering uses the host's
+NVIDIA driver when the container is started with the NVIDIA container
+runtime:
 
-Finally, check that your render window is using NVIDIA by running
-``ReportCapabilities``:
+.. code-block:: bash
+
+  docker run --rm --gpus all -p 8888:8888 ghcr.io/pyvista/pyvista:latest
+
+The only host-side requirement is the `NVIDIA Container Toolkit
+<https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html>`_.
+No in-container driver install, no kernel modules, no version matching
+against the host driver. On CPU-only hosts (no ``--gpus``) the same
+image transparently falls back to Mesa's ``llvmpipe`` software renderer
+via EGL.
+
+To verify you are rendering on a GPU, inspect
+``pv.Report()`` from inside the container:
 
 .. code-block:: python
 
-  >>> import pyvista as pv
-  >>> pl = pv.Plotter()
-  >>> print(pl.render_window.ReportCapabilities())
+    import pyvista as pv
 
-  OpenGL vendor string:  NVIDIA Corporation
-  OpenGL renderer string:  Tesla K80/PCIe/SSE2
-  OpenGL version string:  4.6.0 NVIDIA 450.51.06
-  OpenGL extensions:
-    GL_AMD_multi_draw_indirect
-    GL_AMD_seamless_cubemap_per_texture
-    GL_ARB_arrays_of_arrays
-    GL_ARB_base_instance
-    GL_ARB_bindless_texture
+    print(pv.Report())
 
-If you get ``display id not set``, then your environment is likely not
-set up correctly.
+The ``GPU Vendor`` and ``GPU Renderer`` fields should report the NVIDIA
+driver and the GPU model. ``Render Window`` should read
+``vtkEGLRenderWindow``.

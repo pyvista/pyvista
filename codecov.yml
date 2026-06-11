@@ -1,22 +1,24 @@
-comment:
-  layout: "diff"
-  behavior: default
+comment: false
 
+# `target: auto` keeps coverage from drifting downward over time. The small
+# threshold absorbs session-aggregation jitter on Codecov's side: matrix
+# uploads occasionally land as 1, 2, or 3 sessions on otherwise identical
+# runs, which moves the reported total by ~0.1% without any real change.
+# An entire matrix cell going missing (the failure mode from #8635) drops
+# coverage by far more than this and is also caught by `if_no_uploads`.
 coverage:
   status:
     project:
       default:
-        # basic
-        target: 90%
-        threshold: 0%
-        # advanced
-        if_not_found: success
+        target: auto
+        threshold: 0.5%
+        if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
     patch:
       default:
-        # basic
-        target: 90%
-        if_not_found: success
+        target: auto
+        threshold: 0.5%
+        if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error

@@ -7,8 +7,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 from pyvista.plotting.errors import PyVistaPickingError
 
 if TYPE_CHECKING:
@@ -54,9 +53,6 @@ def test_single_cell_picking():
     assert pl.picked_cells.n_cells == 1
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
-)
 def test_picked_cells_attribute():
     """Test the `picked_cells` attribute when selecting through multiple cells."""
 
@@ -95,18 +91,7 @@ def test_picked_cells_attribute():
     assert isinstance(pl.picked_cells, pv.UnstructuredGrid)
 
 
-@pytest.mark.parametrize(
-    'through',
-    [
-        False,
-        pytest.param(
-            True,
-            marks=pytest.mark.filterwarnings(
-                'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'  # noqa: E501
-            ),
-        ),
-    ],
-)
+@pytest.mark.parametrize('through', [False, True])
 def test_multi_cell_picking(through):
     cube = pv.Cube()
 
@@ -145,8 +130,7 @@ def test_multi_cell_picking(through):
     assert len(pl.picked_cells) == 2
 
     assert all('original_cell_ids' in b.cell_data for b in pl.picked_cells)
-    if through:
-        assert all('orig_extract_id' in b.cell_data for b in pl.picked_cells)
+    assert all('orig_extract_id' not in b.cell_data for b in pl.picked_cells)
 
     merged = pl.picked_cells.combine()
     n_sphere_cells = pv.wrap(src.GetOutput()).n_cells
@@ -252,7 +236,7 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()
     pl.show(auto_close=False)
 
-    assert pl._picking_text not in pl.renderer.actors
+    assert pl.picking._picking_text not in pl.renderer.actors
 
     width, height = pl.window_size
 
@@ -267,9 +251,6 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()  # ensure it can safely be called twice
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
-)
 def test_cell_picking_interactive():
     n_cells = []
 
@@ -291,10 +272,10 @@ def test_cell_picking_interactive():
     assert n_cells[0]
     assert pl.picked_cells
     assert 'original_cell_ids' in pl.picked_cells.cell_data
-    assert 'orig_extract_id' in pl.picked_cells.cell_data
+    assert 'orig_extract_id' not in pl.picked_cells.cell_data
 
 
-def test_cell_picking_warning():
+def test_cell_picking_original_ids():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
     pl.enable_cell_picking(through=True)
@@ -305,30 +286,18 @@ def test_cell_picking_warning():
     # simulate "r" keypress
     pl.iren._simulate_keypress('r')
     pl.iren._mouse_left_button_press(width // 2, height // 2)
-
-    pattern = re.escape(
-        'The `orig_extract_id` cell data has been deprecated and will be renamed to `original_cell_ids in a future version of PyVista.'  # noqa: E501
-    )
-    with pytest.warns(PyVistaDeprecationWarning, match=pattern):
-        pl.iren._mouse_left_button_release(width, height)
-
-    if pv.version_info >= (0, 49):
-        pytest.fail('Rename `orig_extract_id` cell data to `original_cell_ids.')
+    pl.iren._mouse_left_button_release(width, height)
 
     assert pl.picked_cells
     assert 'original_cell_ids' in pl.picked_cells.cell_data
-    assert 'orig_extract_id' in pl.picked_cells.cell_data
+    assert 'orig_extract_id' not in pl.picked_cells.cell_data
 
 
-def test_picked_cell_warning():
+def test_picked_cell_removed():
     pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='Use the `picked_cells` attribute instead'):
-        _ = pl.picked_cell
+    assert not hasattr(pl, 'picked_cell')
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
-)
 def test_cell_picking_interactive_subplot():
     n_cells = []
 
@@ -607,7 +576,6 @@ def test_block_picking(multiblock_poly):
 
 @pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
-@pytest.mark.skip_check_gc("vtkDataArray not gc'd with 'point' mode on Python 3.14 vtk dev wheels")
 def test_element_picking(mode):
     class Tracker:
         def __init__(self):
@@ -713,9 +681,6 @@ def test_element_picking_point_preserves_data():
     )
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
-)
 def test_switch_picking_type():
     pl = pv.Plotter()
     width, height = pl.window_size
@@ -828,3 +793,45 @@ def test_block_picking_across_four_subplots():
 
     expected = [2, 1] * 4
     assert picked == expected, f'Picked indices {picked}, but expected {expected}'
+
+
+def test_pick_click_position_forward(sphere):
+    """``Plotter.pick_click_position`` triggers a click-position store and pick."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    pos = pl.pick_click_position()
+    assert isinstance(pos, tuple)
+    assert len(pos) == 3
+    pl.close()
+
+
+def test_pick_mouse_position_forward(sphere):
+    """``Plotter.pick_mouse_position`` triggers a mouse-position store and pick."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    pos = pl.pick_mouse_position()
+    assert isinstance(pos, tuple)
+    assert len(pos) == 3
+    pl.close()
+
+
+def test_picked_path_geodesic_horizon_forward():
+    """The deprecated picked-path/geodesic/horizon getters forward from the component."""
+    pl = pv.Plotter()
+    assert pl.picked_path is pl.picking.picked_path
+    assert pl.picked_geodesic is pl.picking.picked_geodesic
+    assert pl.picked_horizon is pl.picking.picked_horizon
+    pl.close()
+
+
+def test_left_click_picking_observer_branch(sphere):
+    """``enable_point_picking(left_clicking=True)`` exercises the left-click branch."""
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_point_picking(left_clicking=True, callback=lambda p: None)  # noqa: ARG005
+    assert pl.picking._picking_left_clicking_observer is not None
+    pl.disable_picking()
+    assert pl.picking._picking_left_clicking_observer is None
+    pl.close()

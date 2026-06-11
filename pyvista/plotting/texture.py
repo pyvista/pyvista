@@ -8,13 +8,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
-
-from . import _vtk
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -160,7 +159,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     def _from_file(self, filename, **kwargs):
         try:
-            image = pv.read(filename, **kwargs)
+            image = pv.read(filename, cls=pv.ImageData, **kwargs)
             if image.n_points < 2:  # pragma: no cover
                 msg = 'Problem reading the image with VTK.'
                 raise RuntimeError(msg)
@@ -445,20 +444,84 @@ class Texture(DataObject, _vtk.vtkTexture):
         """
         return Texture(self.to_image().copy())  # type: ignore[abstract]
 
-    def to_skybox(self):
-        """Return the texture as a :vtk:`vtkSkybox` if cube mapping is enabled.
+    def to_skybox(
+        self,
+        *,
+        projection: Literal['auto', 'cube', 'sphere'] = 'auto',
+        floor_plane: Sequence[float] | None = None,
+        floor_right: Sequence[float] | None = None,
+    ):
+        """Return the texture as a :vtk:`vtkSkybox`.
+
+        Cubemap textures default to cube-map projection. Non-cubemap textures
+        default to spherical projection so equirectangular environment textures
+        can also be shown as skyboxes.
+
+        .. versionchanged:: 0.48
+
+            Non-cubemap textures now return a skybox using spherical
+            projection by default. Optional floor orientation parameters were
+            also added.
+
+        Parameters
+        ----------
+        projection : {'auto', 'cube', 'sphere'}, default: 'auto'
+            Skybox projection mode. ``'auto'`` selects ``'cube'`` for cubemap
+            textures and ``'sphere'`` otherwise.
+
+        floor_plane : sequence[float], optional
+            Floor plane for the skybox as ``(nx, ny, nz, d)``. This can be
+            used to orient equirectangular environments in scenes with a
+            custom up direction.
+
+        floor_right : sequence[float], optional
+            Right direction for the floor plane as ``(x, y, z)``.
 
         Returns
         -------
         :vtk:`vtkSkybox`
-            Skybox if cube mapping is enabled.  Otherwise, ``None``.
+            Skybox actor.
 
         """
-        if self.cube_map:
-            skybox = _vtk.vtkSkybox()
-            skybox.SetTexture(self)
-            return skybox
-        return None
+        _validation.check_contains(
+            ['auto', 'cube', 'sphere'],
+            must_contain=projection,
+            name='projection',
+        )
+
+        if projection == 'auto':
+            projection = 'cube' if self.cube_map else 'sphere'
+        elif projection == 'cube' and not self.cube_map:
+            msg = 'Cube projection requires a cubemap texture.'
+            raise ValueError(msg)
+
+        skybox = _vtk.vtkSkybox()
+        skybox.SetTexture(self)
+        if projection == 'cube':
+            skybox.SetProjectionToCube()
+        else:
+            skybox.SetProjectionToSphere()
+
+        if floor_plane is not None:
+            valid_floor_plane = _validation.validate_array(
+                floor_plane,
+                must_have_shape=4,
+                dtype_out=float,
+                to_tuple=True,
+                name='floor_plane',
+            )
+            skybox.SetFloorPlane(*valid_floor_plane)
+
+        if floor_right is not None:
+            valid_floor_right = _validation.validate_array3(
+                floor_right,
+                dtype_out=float,
+                to_tuple=True,
+                name='floor_right',
+            )
+            skybox.SetFloorRight(*valid_floor_right)
+
+        return skybox
 
     def __repr__(self):
         """Return the object representation."""

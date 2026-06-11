@@ -14,7 +14,7 @@ from typing import final
 from typing import get_args
 from typing import overload
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
