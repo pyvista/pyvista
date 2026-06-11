@@ -4491,8 +4491,9 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
 
-            Singleton dimensions are not resampled by this filter, e.g. 2D images
-            will remain 2D.
+            Singleton input dimensions are not resampled by this filter, e.g. 2D
+            images will remain 2D. An output dimension may be reduced to a singleton,
+            however, e.g. to flatten a 3D volume into a single 2D slice.
 
         .. versionadded:: 0.45
 
@@ -5014,8 +5015,19 @@ class ImageDataFilters(DataSetFilters):
 
         resize_filter = _vtk.vtkImageResize()
         resize_filter.SetInputData(input_image)
-        resize_filter.SetResizeMethodToMagnificationFactors()
-        resize_filter.SetMagnificationFactors(*magnification_factors)
+        # Reducing a non-singleton axis to a single point requires a magnification
+        # factor of zero, but `vtkImageResize` silently ignores zero factors and
+        # leaves the axis unchanged. Set the output dimensions explicitly in that
+        # case so that e.g. flattening a 3D volume to a 2D slice is honored.
+        target_dimensions = np.maximum(np.rint(new_dimensions).astype(int), 1)
+        if np.any((target_dimensions == 1) & ~singleton_dims):
+            # Preserve input singleton dimensions (these are never resampled).
+            target_dimensions[singleton_dims] = old_dimensions[singleton_dims]
+            resize_filter.SetResizeMethodToOutputDimensions()
+            resize_filter.SetOutputDimensions(*(int(d) for d in target_dimensions))
+        else:
+            resize_filter.SetResizeMethodToMagnificationFactors()
+            resize_filter.SetMagnificationFactors(*magnification_factors)
 
         # Set interpolation mode
         interpolator: _vtk.vtkAbstractImageInterpolator

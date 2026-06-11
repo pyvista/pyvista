@@ -33,6 +33,50 @@ def test_property_style(prop):
     assert prop.style == style
 
 
+def test_property_representation(prop):
+    from pyvista.plotting.opts import RepresentationType
+
+    # default
+    assert prop.representation == RepresentationType.SURFACE
+    assert prop.style == 'Surface'
+
+    # set via enum, string (case insensitive), and int
+    prop.representation = RepresentationType.WIREFRAME
+    assert prop.representation == RepresentationType.WIREFRAME
+    assert prop.style == 'Wireframe'
+
+    prop.representation = 'POINTS'
+    assert prop.representation == RepresentationType.POINTS
+    assert prop.style == 'Points'
+
+    prop.representation = 2
+    assert prop.representation == RepresentationType.SURFACE
+
+    # invalid values raise
+    with pytest.raises(ValueError):  # noqa: PT011
+        prop.representation = 'invalid'
+    with pytest.raises(ValueError):  # noqa: PT011
+        prop.representation = 99
+
+
+def test_property_style_accepts_representation_type(prop):
+    # Regression test for https://github.com/pyvista/pyvista/issues/8168
+    # `style` setter previously only accepted strings.
+    from pyvista.plotting.opts import RepresentationType
+
+    prop.style = RepresentationType.WIREFRAME
+    assert prop.style == 'Wireframe'
+    assert prop.representation == RepresentationType.WIREFRAME
+    # `style` getter still returns a string for backwards compatibility
+    assert isinstance(prop.style, str)
+
+
+def test_property_representation_wireframe_color(prop):
+    # setting wireframe applies the theme outline color when no color is set
+    prop.representation = 'wireframe'
+    assert prop.color == pv.Color(prop._theme.outline_color)
+
+
 def test_property_edge_color(prop):
     prop.edge_color = 'b'
     assert prop.edge_color.float_rgb == (0, 0, 1)
