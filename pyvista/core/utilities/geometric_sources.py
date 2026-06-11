@@ -1422,10 +1422,10 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
         The outer radius.
 
     r_res : int, default: 1
-        Number of points in radial direction.
+        Number of cells in radial direction.
 
     c_res : int, default: 6
-        Number of points in circumferential direction.
+        Number of cells in circumferential direction.
 
     Examples
     --------
@@ -1529,48 +1529,48 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
 
     @property
     def r_res(self: DiscSource) -> int:
-        """Get number of points in radial direction.
+        """Get number of cells in radial direction.
 
         Returns
         -------
         int
-            Number of points in radial direction.
+            Number of cells in radial direction.
 
         """
         return self.GetRadialResolution()
 
     @r_res.setter
     def r_res(self: DiscSource, r_res: int) -> None:
-        """Set number of points in radial direction.
+        """Set number of cells in radial direction.
 
         Parameters
         ----------
         r_res : int
-            Number of points in radial direction.
+            Number of cells in radial direction.
 
         """
         self.SetRadialResolution(r_res)
 
     @property
     def c_res(self: DiscSource) -> int:
-        """Get number of points in circumferential direction.
+        """Get number of cells in circumferential direction.
 
         Returns
         -------
         int
-            Number of points in circumferential direction.
+            Number of cells in circumferential direction.
 
         """
         return self.GetCircumferentialResolution()
 
     @c_res.setter
     def c_res(self: DiscSource, c_res: int) -> None:
-        """Set number of points in circumferential direction.
+        """Set number of cells in circumferential direction.
 
         Parameters
         ----------
         c_res : int
-            Number of points in circumferential direction.
+            Number of cells in circumferential direction.
 
         """
         self.SetCircumferentialResolution(c_res)
