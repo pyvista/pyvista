@@ -785,9 +785,6 @@ class DataSet(DataSetFilters, DataObject):
         """
         field = get_array_association(self, old_name, preference=preference)
 
-        was_active = False
-        if self.active_scalars_name == old_name:
-            was_active = True
         if field == FieldAssociation.POINT:
             data = self.point_data
         elif field == FieldAssociation.CELL:
@@ -798,20 +795,19 @@ class DataSet(DataSetFilters, DataObject):
             msg = f'Array with name {old_name} not found.'
             raise KeyError(msg)
 
-        # An array can also be the active normals, texture coordinates, vectors, etc.
-        # Popping it clears those designations on the vtkDataSetAttributes, so record
-        # them now and restore them after renaming, otherwise the rename silently drops
-        # them (see issue #8746). The active scalars are restored separately below via
-        # `set_active_scalars` so the dataset's cached scalars info stays in sync.
-        active_attributes: list[int] = []
+        # An array can be the active scalars, normals, texture coordinates, vectors,
+        # etc. Popping it clears those designations on the vtkDataSetAttributes, and
+        # re-adding it can promote it to the active scalars even if it was not active
+        # before (``DataSetAttributes.__setitem__`` activates new arrays when there
+        # are no active scalars). Snapshot every attribute role before renaming and
+        # restore the exact same state afterwards
+        # (see https://github.com/pyvista/pyvista/issues/8746).
+        prior_active: dict[int, str | None] = {}
         if field != FieldAssociation.NONE:
             attributes = data.VTKObject
             for attribute_type in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
-                if attribute_type == _vtk.vtkDataSetAttributes.SCALARS:
-                    continue
                 attribute = attributes.GetAttribute(attribute_type)
-                if attribute is not None and attribute.GetName() == old_name:
-                    active_attributes.append(attribute_type)
+                prior_active[attribute_type] = None if attribute is None else attribute.GetName()
 
         arr = data.pop(old_name)
         # Update the array's name before reassigning. This prevents taking a copy of the array in
@@ -820,11 +816,12 @@ class DataSet(DataSetFilters, DataObject):
         arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
 
-        for attribute_type in active_attributes:
-            data.VTKObject.SetActiveAttribute(new_name, attribute_type)
-
-        if was_active and field != FieldAssociation.NONE:
-            self.set_active_scalars(new_name, preference=field)
+        for attribute_type, prior_name in prior_active.items():
+            restored_name = new_name if prior_name == old_name else prior_name
+            attribute = data.VTKObject.GetAttribute(attribute_type)
+            current_name = None if attribute is None else attribute.GetName()
+            if current_name != restored_name:
+                data.VTKObject.SetActiveAttribute(restored_name, attribute_type)
 
     @property
     def active_scalars(self: Self) -> pyvista_ndarray | None:
