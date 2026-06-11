@@ -511,7 +511,7 @@ def StructuredSphere(
     - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells
     - includes a texture coordinates array
     - does not include pre-computed normals
-    - is not a closed surface (it has seam with open edges)
+    - is not a closed surface (it has a seam with open edges)
     - the points and arrays have double precision instead of single
 
     PyVista uses a convention where ``theta`` represents the azimuthal
@@ -590,10 +590,11 @@ def StructuredSphere(
     >>> sphere.plot(texture=texture, smooth_shading=True)
 
     """
-    # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
+    # For original implementation details see https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
+    phi_max, theta_max = np.pi, 2 * np.pi
     phi, theta = np.mgrid[
-        0 : np.pi : phi_resolution * 1j,  # type:ignore[misc]
-        0 : 2 * np.pi : (theta_resolution + 1) * 1j,  # type:ignore[misc]
+        0 : phi_max : phi_resolution * 1j,  # type:ignore[misc]
+        0 : theta_max : (theta_resolution + 1) * 1j,  # type:ignore[misc]
     ]
 
     theta_shifted = theta + np.deg2rad(theta_offset)
@@ -602,8 +603,8 @@ def StructuredSphere(
     z = radius * np.cos(phi)
     sphere = pv.StructuredGrid(x, y, z)
 
-    u = theta / (2 * np.pi)
-    v = phi[::-1, :] / phi.max()
+    u = theta / theta_max
+    v = phi[::-1, :] / phi_max
     sphere.active_texture_coordinates = np.c_[u.ravel('F'), v.ravel('F')]
 
     sphere.rotate_y(90, inplace=True)
