@@ -963,44 +963,42 @@ def test_cast_rectilinear_grid():
         assert np.allclose(structured.cell_data[k], v)
 
 
-def _dataset_with_point_precision(kind, dtype):
-    """Build a dataset of the given type whose coordinates use ``dtype``."""
-    if kind == 'PolyData':
-        mesh = pv.Sphere()
-        mesh.points = mesh.points.astype(dtype)
-        return mesh
-    if kind == 'StructuredGrid':
-        x, y, z = np.mgrid[0:3, 0:3, 0:3]
-        return pv.StructuredGrid(x.astype(dtype), y.astype(dtype), z.astype(dtype))
-    if kind == 'UnstructuredGrid':
-        mesh = examples.cells.Hexahedron()
-        mesh.points = mesh.points.astype(dtype)
-        return mesh
-    if kind == 'PointSet':
-        points = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype)
-        return pv.PointSet(points)
-    if kind == 'RectilinearGrid':
-        grid = pv.RectilinearGrid()
-        grid.x = np.array([0.1, 0.2, 0.3], dtype=dtype)
-        grid.y = np.array([0.0, 1.0], dtype=dtype)
-        grid.z = np.array([0.0], dtype=dtype)
-        return grid
-    msg = f'Unhandled dataset type {kind}'  # pragma: no cover
-    raise ValueError(msg)
+def _polydata(dtype):
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(dtype)
+    return mesh
+
+
+def _structured_grid(dtype):
+    coords = np.mgrid[0:3, 0:3, 0:3].astype(dtype)
+    return pv.StructuredGrid(*coords)
+
+
+def _unstructured_grid(dtype):
+    mesh = examples.cells.Hexahedron()
+    mesh.points = mesh.points.astype(dtype)
+    return mesh
+
+
+def _point_set(dtype):
+    return pv.PointSet(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype))
+
+
+def _rectilinear_grid(dtype):
+    grid = pv.RectilinearGrid()
+    grid.x = np.array([0.1, 0.2, 0.3], dtype=dtype)
+    grid.y = np.array([0.0, 1.0], dtype=dtype)
+    grid.z = np.array([0.0], dtype=dtype)
+    return grid
 
 
 @pytest.mark.parametrize(
-    'kind',
-    ['PolyData', 'StructuredGrid', 'UnstructuredGrid', 'PointSet', 'RectilinearGrid'],
+    'builder',
+    [_polydata, _structured_grid, _unstructured_grid, _point_set, _rectilinear_grid],
 )
 @pytest.mark.parametrize('dtype', [np.float64, np.float32])
-def test_cast_to_unstructured_grid_preserves_point_precision(kind, dtype):
-    # Casting to an UnstructuredGrid must preserve the coordinate precision for
-    # both single- and double-precision input, across all dataset types (#7931).
-    # vtkAppendFilter preserves precision for vtkPointSet inputs by default, but
-    # cannot read the implicit points of a RectilinearGrid and would otherwise
-    # silently downcast double coordinates to single precision.
-    mesh = _dataset_with_point_precision(kind, dtype)
+def test_cast_to_unstructured_grid_preserves_point_precision(builder, dtype):
+    mesh = builder(dtype)
 
     ugrid = mesh.cast_to_unstructured_grid()
 
@@ -1010,9 +1008,8 @@ def test_cast_to_unstructured_grid_preserves_point_precision(kind, dtype):
 
 
 def test_cast_image_data_to_unstructured_grid_is_double():
-    # ImageData has no stored point array; its coordinates are derived from the
-    # double-precision origin and spacing, so the cast must produce double
-    # precision points rather than silently downcasting to single (#7931).
+    # ImageData stores no points, so its always-double origin and spacing are
+    # the only source of precision; the cast must not downcast them (#7931).
     image = pv.ImageData(dimensions=(3, 3, 3), spacing=(0.1, 0.2, 0.3))
 
     ugrid = image.cast_to_unstructured_grid()

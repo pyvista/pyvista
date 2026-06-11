@@ -1833,6 +1833,20 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.UnstructuredGrid
             Dataset cast into a :class:`pyvista.UnstructuredGrid`.
 
+        Notes
+        -----
+        The coordinate precision of the input is preserved. This requires
+        special handling for datasets with implicit geometry
+        (:class:`~pyvista.RectilinearGrid`, :class:`~pyvista.ImageData`). The
+        underlying ``vtkAppendFilter`` detects point precision by inspecting the
+        input's stored points, but these datasets store their geometry
+        implicitly (per-axis coordinates, or origin and spacing) and have no
+        such points. The filter would otherwise default to single precision and
+        silently downcast double coordinates. A ``RectilinearGrid`` is cast to
+        double precision when any of its coordinate arrays is double; an
+        ``ImageData`` is always cast to double since its origin and spacing are
+        always stored in double precision.
+
         Examples
         --------
         Cast a :class:`pyvista.PolyData` to a
@@ -1849,30 +1863,12 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
-        # `vtkAppendFilter` chooses its output point precision by inspecting the
-        # input's points, but only `vtkPointSet` subclasses store explicit
-        # points. Datasets with implicit geometry (`RectilinearGrid`,
-        # `ImageData`) have no such points, so the filter cannot detect their
-        # precision and defaults to single precision, silently downcasting
-        # double coordinates (see #7931). For those, set the output precision
-        # explicitly from the input's coordinate precision. `vtkPointSet`
-        # inputs are left alone: the filter's default already preserves their
-        # precision.
-        input_is_double = False
-        if isinstance(self, _vtk.vtkRectilinearGrid):
-            coords = (  # type: ignore[unreachable]
-                self.GetXCoordinates(),
-                self.GetYCoordinates(),
-                self.GetZCoordinates(),
-            )
+        if isinstance(self, pv.RectilinearGrid):
             input_is_double = any(
-                c is not None and c.GetDataType() == _vtk.VTK_DOUBLE for c in coords
+                coords.dtype == np.float64 for coords in (self.x, self.y, self.z)
             )
-        elif isinstance(self, _vtk.vtkImageData):
-            # `ImageData` has no stored point array; its coordinates are derived
-            # from the origin and spacing, which VTK always keeps in double
-            # precision, so casting to single precision is always lossy.
-            input_is_double = True  # type: ignore[unreachable]
+        else:
+            input_is_double = isinstance(self, pv.ImageData)
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         alg.Update()
