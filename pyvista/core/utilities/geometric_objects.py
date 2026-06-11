@@ -501,7 +501,7 @@ def TexturedSphere(
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
-    texture_shift: float = 0.0,
+    texture_seam_theta: float = 0.0,
 ) -> PolyData:
     """Create a sphere with texture coordinates.
 
@@ -541,17 +541,18 @@ def TexturedSphere(
         Set the number of points in the polar direction (ranging from
         ``start_phi`` to ``end_phi``).
 
-    texture_shift : float, default: 0.0
-        Periodic offset applied to the first texture coordinate axis.
+    texture_seam_theta : float, default: 0.0
+        Azimuthal angle in degrees where the texture seam will be located.
 
-        This shifts the texture mapping along the wrapped parametric
-        direction of the surface, effectively translating where the
-        texture begins without modifying geometry. By default, the
-        texture mapping starts where theta is 0.0.
+        This modifies the texture mapping around the sphere without
+        modifying its geometry. By default, the texture seam is located
+        at ``theta=0`` degrees.
 
-        The value is specified in normalized texture space, where
-        1.0 corresponds to a full wrap (360° equivalent on periodic
-        domains).
+        .. note::
+
+            For textures of Earth, a value of ``180`` degrees is typically
+            needed for the Prime Meridian to be correctly mapped to 0 degrees
+            longitude.
 
     Returns
     -------
@@ -576,12 +577,12 @@ def TexturedSphere(
     >>> sphere.active_texture_coordinates[0]
     pyvista_ndarray([0., 1.], dtype=float32)
 
-    Shift the texture coordinates by 0.5. This only shifts them in the
-    U direction.
+    Modify the texture's seam location. Setting it to 90 degrees shifts the texture coordinates
+    by 0.25 in the "U" direction.
 
-    >>> sphere = pv.TexturedSphere(texture_shift=0.5)
+    >>> sphere = pv.TexturedSphere(texture_seam_theta=90)
     >>> sphere.active_texture_coordinates[0]
-    pyvista_ndarray([0.5, 1. ], dtype=float32)
+    pyvista_ndarray([0.25, 1.  ], dtype=float32)
 
     Unlike :func:`~pyvista.Sphere`, the textured sphere is not a closed
     surface and has open edges.
@@ -607,8 +608,8 @@ def TexturedSphere(
     tcoords.SetName('Texture Coordinates')
 
     # Shift the coordinate mapping
-    if texture_shift != 0.0:
-        output.active_texture_coordinates[:, 0] += texture_shift  # type: ignore[index]
+    if texture_seam_theta != 0.0:
+        output.active_texture_coordinates[:, 0] += texture_seam_theta / 360.0  # type: ignore[index]
     return output
 
 

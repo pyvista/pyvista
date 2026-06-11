@@ -5466,7 +5466,7 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
-    if name == 'TexturedSphere' and pv.vtk_version_info < (9,3):
+    if name == 'TexturedSphere' and pv.vtk_version_info < (9, 3):
         pytest.skip('Test issue with initializing TexturedSphere')
 
     positive_dir = direction == 'pos'
@@ -6290,8 +6290,8 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
-@pytest.mark.parametrize('texture_shift', [0.0, 0.25])
-def test_textured_sphere(texture_shift):
+@pytest.mark.parametrize('texture_seam_theta', [0.0, 90.0])
+def test_textured_sphere(texture_seam_theta):
     texture = examples.load_globe_texture()
-    sphere = pv.TexturedSphere(texture_shift=texture_shift)
+    sphere = pv.TexturedSphere(texture_seam_theta=texture_seam_theta)
     sphere.plot(texture=texture)
