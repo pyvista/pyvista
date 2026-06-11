@@ -605,9 +605,7 @@ def StructuredSphere(
     ]
 
     theta_shifted = theta + np.deg2rad(theta_offset)
-    x = radius * np.sin(phi) * np.cos(theta_shifted)
-    y = radius * np.sin(phi) * np.sin(theta_shifted)
-    z = radius * np.cos(phi)
+    x, y, z = pv.spherical_to_cartesian(radius, phi, theta_shifted)
     sphere = pv.StructuredGrid(x, y, z)
 
     u = theta / theta_max
