@@ -46,6 +46,13 @@ def test_cylinder_structured():
     assert np.any(cyl.points)
     assert np.any(cyl.n_cells)
 
+    match = 'must all be greater than 0.0'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[0.0, 1.0])
+    match = 'must be sorted in strict ascending order'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[1.0, 0.5])
+
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
 def test_arrow(scale):
