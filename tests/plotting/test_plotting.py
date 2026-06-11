@@ -5403,6 +5403,9 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     # Remove Spline from test case (if present).
     if 'Spline' in functions.keys():
         functions.pop('Spline')
+    # Skip for older VTK due to test issue with initializing TexturedSphere
+    if 'TexturedSphere' in functions.keys() and pv.vtk_version_info < (9, 3):
+        functions.pop('TexturedSphere')
 
     # Add a separate test for vtk < 9.3
     functions['Capsule_legacy'] = functions['Capsule']
@@ -5466,9 +5469,6 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
-    if name == 'TexturedSphere' and pv.vtk_version_info < (9, 3):
-        pytest.skip('Test issue with initializing TexturedSphere')
-
     positive_dir = direction == 'pos'
 
     # Add required args if needed
