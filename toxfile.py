@@ -108,6 +108,8 @@ def _get_freezed_requirements(lines: list[str]) -> Generator[tuple[str, Version]
     Note that the name is normalized per packaging specifications (see https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization).
     """
     for l in lines:
+        if l.startswith('-e '):  # installed in editable mode, e.g., MNE-Python
+            continue
         req = Requirement(l)
         if (m := re.match(r'(.*)==(\S+)', str(req.specifier))) is not None:
             yield _normalize_package_name(req.name), Version(m.group(2))
