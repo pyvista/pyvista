@@ -4029,6 +4029,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         tolerance: float | None = None,
         fname: str | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        component: int | None = None,
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
@@ -4077,6 +4078,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        component : int, optional
+            Set component of vector-valued scalars to plot. Must be
+            nonnegative and less than the number of components. If ``None``,
+            all components are plotted.
+
         Examples
         --------
         See the :ref:`plot_over_line_example` example.
@@ -4098,6 +4104,21 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
+        if component is not None:
+            try:
+                component_index = operator.index(component)
+            except TypeError:
+                msg = 'component must be None or an integer.'
+                raise TypeError(msg) from None
+            n_components = values.shape[1] if values.ndim > 1 else 1
+            if not 0 <= component_index < n_components:
+                msg = (
+                    'component must be nonnegative and less than the '
+                    f'dimensionality of the scalars array: {n_components}'
+                )
+                raise ValueError(msg)
+            if values.ndim > 1:
+                values = values[:, component_index]
 
         # Remainder is plotting
         if figure:
