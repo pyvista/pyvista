@@ -441,7 +441,7 @@ def test_actors_after_close():
     # `_actors` attribute deleted (which `_NoNewAttributesMixin` could never restore,
     # raising "'Renderer' object has no attribute '_actors'" on any later access).
     pl = pv.Plotter()
-    pl.add_mesh(pv.Sphere())
+    pl.add_mesh(pv.Sphere(), name='sph')
     assert len(pl.renderer.actors) == 1
 
     pl.close()
@@ -453,6 +453,9 @@ def test_actors_after_close():
     # methods that read `_actors` must tolerate the closed (None) state, not raise.
     assert pl.renderer.compute_bounds() is not None
     assert pl.renderer.remove_actor('nonexistent') is False
+    # Plotter-level methods that scan renderer actors must tolerate the closed state too.
+    assert pl.where_is('sph') == []
+    pl.increment_point_size_and_line_width(1)
 
 
 def test_background_renderer_resize_after_close():
