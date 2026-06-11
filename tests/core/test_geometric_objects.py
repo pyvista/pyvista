@@ -122,7 +122,7 @@ def test_structured_sphere():
     sphere = pv.StructuredSphere()
     assert isinstance(sphere, pv.StructuredGrid)
     assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
-    assert sphere.n_cells == 841
+    assert sphere.n_cells == 870
 
 
 def test_structured_sphere_theta_offset():

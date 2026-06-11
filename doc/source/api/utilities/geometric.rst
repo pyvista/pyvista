@@ -65,10 +65,10 @@ Geometric Objects
    SolidSphereGeneric
    Sphere
    Spline
+   StructuredSphere
    Superquadric
    Tetrahedron
    Text3D
-   TexturedSphere
    Triangle
    Tube
    Wavelet
