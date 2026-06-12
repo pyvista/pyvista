@@ -70,6 +70,9 @@ class BackgroundRenderer(Renderer):
         if self.parent.render_window is None:  # BasePlotter
             return
 
+        if self._actors is None:  # the renderer has been closed
+            return
+
         if self._prior_window_size != self.parent.window_size:
             self._prior_window_size = self.parent.window_size
 
