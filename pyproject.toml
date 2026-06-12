@@ -48,7 +48,7 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 pinned = [ # Pinned versions of core dependencies
   'cyclopts<4.17.0',
   'matplotlib<3.10.10',
-  'numpy<2.4.0',
+  'numpy<2.5.0',
   'pillow<12.3.0',
   'pooch<1.10.0',
   'scooby<0.12.0',
