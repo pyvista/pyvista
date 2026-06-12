@@ -213,6 +213,9 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
     @property
     def _state(self) -> _VerbosityOptions:
         int_to_string: dict[int, _VerbosityOptions] = {
+            # -10 is returned when VTK is built with VTK_ENABLE_LOGGING=OFF
+            # (loguru's Verbosity_OFF sentinel); treat it the same as 'off'.
+            -10: 'off',
             -9: 'off',
             -2: 'error',
             -1: 'warning',
