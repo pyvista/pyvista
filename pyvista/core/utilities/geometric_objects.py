@@ -604,8 +604,8 @@ def StructuredSphere(
     # For original implementation details see https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
     phi_max, theta_max = np.pi, 2 * np.pi
     phi, theta = np.mgrid[
-        0 : phi_max : phi_resolution * 1j,  # type:ignore[misc]
-        0 : theta_max : (theta_resolution + 1) * 1j,  # type:ignore[misc]
+        0 : phi_max : phi_resolution * 1j,
+        0 : theta_max : (theta_resolution + 1) * 1j,
     ]
 
     theta_shifted = theta + np.deg2rad(theta_offset)
