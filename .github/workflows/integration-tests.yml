@@ -46,13 +46,13 @@ jobs:
       matrix:
         include:
           - project: mne
-            timeout: 20 # usually takes ~10
+            timeout: 30 # usually takes ~10, but the download can add time
           - project: trame
             timeout: 8 # usually takes ~3
           - project: pyvistaqt
             timeout: 6 # usually takes ~2
           - project: geovista
-            timeout: 10 # usually takes ~5
+            timeout: 16 # usually takes ~5
           - project: playwright
             timeout: 6 # usually takes ~2
     runs-on: ubuntu-latest
