@@ -1845,7 +1845,8 @@ class DataSet(DataSetFilters, DataObject):
         silently downcast double coordinates. A ``RectilinearGrid`` is cast to
         double precision when any of its coordinate arrays is double; an
         ``ImageData`` is always cast to double since its origin and spacing are
-        always stored in double precision.
+        always stored in double precision. See the upstream VTK bug:
+        https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
 
         Examples
         --------
@@ -1863,6 +1864,12 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
+        # vtkAppendFilter falls back to single precision for datasets without
+        # explicit points (RectilinearGrid, ImageData) because it infers
+        # precision from vtkPointSet.GetPoints(), which is None for these types.
+        # Work around the VTK bug by setting output precision explicitly.
+        # See https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
+        # and https://github.com/pyvista/pyvista/issues/7931
         if isinstance(self, pv.RectilinearGrid):
             input_is_double = any(
                 coords.dtype == np.float64 for coords in (self.x, self.y, self.z)
