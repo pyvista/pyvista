@@ -373,7 +373,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = _PropCollection(self.GetViewProps())
+        self._actors: _PropCollection | None = _PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -661,7 +661,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             for ax in range(3):
                 update_axis(ax)
 
-        for name, actor in self._actors.items():
+        for name, actor in self.actors.items():
             if not actor.GetUseBounds() and not force_use_bounds:
                 continue
             if not actor.GetVisibility() and not force_visibility:
@@ -993,6 +993,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The actors may also be unwrapped VTK objects.
 
         """
+        if self._actors is None:
+            # The renderer has been closed; it no longer holds any actors.
+            return {}
         return dict(self._actors.items())
 
     @_deprecate_positional_args(allowed=['actor'])
@@ -2973,12 +2976,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if isinstance(actor, str):
             name = actor
-            keys = list(self._actors.keys())
+            actors = self.actors
+            keys = list(actors.keys())
             names = [k for k in keys if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
-                actor = self._actors[name]
+                actor = actors[name]
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
@@ -3957,9 +3961,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-        # Remove ref to `vtkPropCollection` held by vtkRenderer
-        if hasattr(self, '_actors'):
-            del self._actors
+        # Release the `_PropCollection` (and its ref to the `vtkPropCollection` held by
+        # vtkRenderer) by setting it to None rather than deleting the attribute. Deleting it
+        # conflicts with `_NoNewAttributesMixin`, which freezes attributes after `__init__` and
+        # so prevents the attribute from ever being restored (see #8419).
+        self._actors = None
 
         self._closed = True
 
