@@ -580,6 +580,22 @@ def test_set_active_tensors(hexbeam):
     active_component_consistency_check(hexbeam, 'tensors', 'point')
 
 
+def test_active_tensors_name_not_stale(hexbeam):
+    """Removing or renaming the active tensors array updates the reported name (#8749)."""
+    tensor_arr = np.arange(hexbeam.n_points * 9).reshape([hexbeam.n_points, 9])
+    hexbeam.point_data['tensor_arr'] = tensor_arr
+    hexbeam.active_tensors_name = 'tensor_arr'
+
+    hexbeam.point_data.remove('tensor_arr')
+    assert hexbeam.active_tensors_name is None
+    assert hexbeam.active_tensors is None
+
+    hexbeam.point_data['tensor_arr'] = tensor_arr
+    hexbeam.active_tensors_name = 'tensor_arr'
+    hexbeam.rename_array('tensor_arr', 'renamed_arr')
+    assert hexbeam.active_tensors_name == 'renamed_arr'
+
+
 def test_set_texture_coordinates(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.active_texture_coordinates = [1, 2, 3]
