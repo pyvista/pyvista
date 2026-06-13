@@ -577,7 +577,7 @@ def StructuredSphere(
 
     See Also
     --------
-    pyvista.Sphere: Sphere that describes outer 2D surface.
+    pyvista.Sphere
 
     Examples
     --------
