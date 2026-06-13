@@ -512,12 +512,12 @@ def StructuredSphere(
 
     The grid is similar to :func:`~pyvista.Sphere`, except ``StructuredSphere``:
 
-    - is a :class:`~pyvista.StructuredGrid` instead of :class:`~pyvista.PolyData`
-    - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells
-    - includes a texture coordinates array
-    - is not a closed surface (it has a seam with open edges)
-    - the points and arrays have double precision instead of single
-    - does not support setting start and end phi/theta angles
+    - is a :class:`~pyvista.StructuredGrid` instead of :class:`~pyvista.PolyData`,
+    - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells,
+    - includes a texture coordinates array,
+    - is not a closed surface (it has a seam with open edges),
+    - the points and arrays have double precision instead of single,
+    - does not support setting start and end phi/theta angles.
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
