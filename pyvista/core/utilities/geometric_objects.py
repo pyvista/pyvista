@@ -512,7 +512,7 @@ def StructuredSphere(
 
     The grid is similar to :func:`~pyvista.Sphere`, except ``StructuredSphere``:
 
-    - is a ``StructuredGrid`` instead of :class:`~pyvista.PolyData`
+    - is a :class:`~pyvista.StructuredGrid` instead of :class:`~pyvista.PolyData`
     - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells
     - includes a texture coordinates array
     - is not a closed surface (it has a seam with open edges)
