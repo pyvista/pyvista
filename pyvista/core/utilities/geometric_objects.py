@@ -432,7 +432,7 @@ def Sphere(  # noqa: PLR0917
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
+        the sphere's North Pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
         Set the number of points in the azimuthal direction (ranging
@@ -548,7 +548,7 @@ def StructuredSphere(
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
+        the sphere's North Pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
         Set the number of points in the azimuthal direction.
@@ -708,7 +708,7 @@ def SolidSphere(  # noqa: PLR0917
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
+        the sphere's North Pole at zero degrees ``phi``.
 
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``. Default is degrees.
@@ -839,7 +839,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     direction : sequence[float], default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
+        the sphere's North Pole at zero degrees ``phi``.
 
     radians : bool, default: False
         Whether to use radians for ``theta`` and ``phi``. Default is degrees.
