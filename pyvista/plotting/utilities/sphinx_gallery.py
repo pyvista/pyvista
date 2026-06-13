@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from pathlib import PurePosixPath
 import shutil
 from typing import TYPE_CHECKING
+from typing import cast
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -167,7 +169,9 @@ class Scraper:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
         image_path_iterator = block_vars['image_path_iterator']
-        image_names = generate_images(image_path_iterator, dynamic=False)
+        image_names = cast(
+            'list[str | PurePosixPath]', generate_images(image_path_iterator, dynamic=False)
+        )
         return figure_rst(image_names, gallery_conf['src_dir'])
 
 

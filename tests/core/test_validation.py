@@ -1164,5 +1164,6 @@ def test_validate_dimensionality_errors(dimensionality, message):
     ],
 )
 def test_validate_color_sequence_raises(n_colors, match):
+    pytest.importorskip('vtkmodules.vtkRenderingFreeType', reason='Requires plotting colors')
     with pytest.raises(ValueError, match=match):
         _validate_color_sequence('foo', n_colors=n_colors)

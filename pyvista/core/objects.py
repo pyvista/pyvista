@@ -54,7 +54,9 @@ class Table(DataObject, _vtk.vtkTable):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
-            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
+            elif type(args[0]).__name__ == 'DataFrame' and type(args[0]).__module__.startswith(
+                'pandas'
+            ):
                 self._from_pandas(args[0])
             else:
                 msg = f'Table unable to be made from ({type(args[0])})'

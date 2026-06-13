@@ -40,17 +40,20 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import Protocol
+from typing import TypeAlias
 from typing import TypeVar
 from typing import cast
 from typing import final
 from typing import runtime_checkable
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting import Texture
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -69,8 +72,12 @@ _FilePropIntType_co = TypeVar(
     covariant=True,
 )
 
-DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
-DatasetType = type[pv.DataSet] | type[pv.Texture] | type[NumpyArray[Any]] | type[pv.MultiBlock]
+if TYPE_CHECKING:
+    DatasetObject: TypeAlias = pv.DataSet | Texture | NumpyArray[Any] | pv.MultiBlock
+    DatasetType: TypeAlias = type[pv.DataSet | Texture | NumpyArray[Any] | pv.MultiBlock]
+else:
+    DatasetObject: TypeAlias = Any
+    DatasetType: TypeAlias = type[Any]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):

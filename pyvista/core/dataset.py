@@ -1371,7 +1371,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return sizes.cell_data['Volume'].sum().item()
+        volume = sizes.cell_data.get('Volume')
+        return 0.0 if volume is None else volume.sum().item()
 
     @property
     def area(
@@ -1413,7 +1414,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return sizes.cell_data['Area'].sum().item()
+        area = sizes.cell_data.get('Area')
+        return 0.0 if area is None else area.sum().item()
 
     def get_array(
         self: Self,
@@ -2166,7 +2168,7 @@ class DataSet(DataSetFilters, DataObject):
             dist2 = _vtk.mutable(0.0)
 
             locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)  # type: ignore[call-overload]
-            closest_cells.append(int(cell_id))  # type: ignore[call-overload]
+            closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
         out_cells: int | NumpyArray[int] = (

@@ -540,17 +540,3 @@ def test_table_repr_empty_omits_section():
     html = table._repr_html_()
     assert 'Table' in html
     assert 'Row Data' not in html
-
-
-def test_camera_position_repr():
-    cp = pv.CameraPosition((1.0, 2.0, 3.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0))
-    html = cp._repr_html_()
-    assert 'CameraPosition' in html
-    assert 'position' in html
-    assert 'focal_point' in html
-    assert 'viewup' in html
-    assert 'pv-copy-btn' in html
-    # Verify actual coordinate values appear formatted
-    assert '1.0000' in html
-    assert '2.0000' in html
-    assert '3.0000' in html

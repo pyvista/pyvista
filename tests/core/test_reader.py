@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 import re
 import textwrap
@@ -13,6 +14,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
@@ -29,11 +31,51 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
+def _vtk_class_available(module_name: str, class_name: str) -> bool:
+    try:
+        module = importlib.import_module(f'vtkmodules.{module_name}')
+    except ModuleNotFoundError:
+        return False
+    return hasattr(module, class_name)
+
+
+requires_texture = pytest.mark.skipif(
+    not _vtk.has_attr('vtkTexture'),
+    reason='Requires vtkTexture from VTK RenderingCore',
+)
+requires_facet_reader = pytest.mark.skipif(
+    not _vtk_class_available('vtkFiltersHybrid', 'vtkFacetReader'),
+    reason='Requires vtkFacetReader from VTK FiltersHybrid',
+)
+requires_io_parallel = pytest.mark.skipif(
+    not _vtk_class_available('vtkIOParallel', 'vtkMultiBlockPLOT3DReader'),
+    reason='Requires VTK IOParallel readers',
+)
+requires_cgns_reader = pytest.mark.skipif(
+    not _vtk_class_available('vtkIOCGNSReader', 'vtkCGNSReader'),
+    reason='Requires vtkCGNSReader from VTK IOCGNSReader',
+)
+requires_xdmf_reader = pytest.mark.skipif(
+    not _vtk_class_available('vtkIOXdmf2', 'vtkXdmfReader'),
+    reason='Requires vtkXdmfReader from VTK IOXdmf2',
+)
+requires_exodus_reader = pytest.mark.skipif(
+    not _vtk_class_available('vtkIOExodus', 'vtkExodusIIReader'),
+    reason='Requires vtkExodusIIReader from VTK IOExodus',
+)
+
+
 def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
     mesh_type = _CLASS_READER_RETURN_TYPE[type(reader)]
     allowed_types = (mesh_type,) if isinstance(mesh_type, str) else mesh_type
     actual_type = type(mesh).__name__
     assert actual_type in allowed_types
+
+
+def assert_images_close(left: pv.ImageData, right: pv.ImageData, tolerance: float = 5.0):
+    left_scalars = left.active_scalars.astype(np.int16)
+    right_scalars = right.active_scalars.astype(np.int16)
+    assert np.mean(np.abs(left_scalars - right_scalars)) < tolerance
 
 
 def test_reader_output_type_defined():
@@ -196,6 +238,7 @@ def test_read_cls_none_behaves_like_default(tmp_path):
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(npoints=st.integers().filter(lambda x: x < 2))
+@requires_texture
 def test_read_texture_raises(mocker: MockerFixture, npoints):
     from pyvista.core.utilities import fileio
 
@@ -210,6 +253,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 
 
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+@requires_exodus_reader
 def test_read_exodus_raises(sideset):
     with pytest.raises(
         TypeError,
@@ -580,6 +624,7 @@ def test_byureader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+@requires_facet_reader
 def test_facetreader():
     filename = examples.download_clown(load=False)
     reader = pv.get_reader(filename)
@@ -591,6 +636,7 @@ def test_facetreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+@requires_io_parallel
 def test_plot3dmetareader():
     filename = download_file('multi.p3d')
     download_file('multi-bin.xyz')
@@ -606,6 +652,7 @@ def test_plot3dmetareader():
         assert all([m.n_points, m.n_cells])
 
 
+@requires_io_parallel
 def test_multiblockplot3dreader():
     filename = download_file('multi-bin.xyz')
     q_filename = download_file('multi-bin.q')
@@ -965,6 +1012,7 @@ def test_openfoam_case_type():
         reader.case_type = 'wrong_value'
 
 
+@requires_cgns_reader
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
@@ -1057,11 +1105,11 @@ def test_jpeg_reader_writer(tmp_path):
 
     new_filename = tmp_path / 'new.jpg'
     mesh.save(new_filename)
-    assert pv.compare_images(filename, new_filename) < 5
+    assert_images_close(mesh, pv.read(new_filename))
 
     new_filename = tmp_path / 'new.jpeg'
     mesh.save(new_filename)
-    assert pv.compare_images(filename, new_filename) < 5
+    assert_images_close(mesh, pv.read(new_filename))
 
 
 def test_meta_image_reader():
@@ -1209,6 +1257,7 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+@requires_xdmf_reader
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -1630,6 +1679,7 @@ def test_remote_pickle_uri_refused(scheme, ext):
         pv.read(f'{scheme}://attacker.example/x{ext}')
 
 
+@requires_exodus_reader
 def test_exodus_reader_ext():
     # test against mug and exodus to check different valid file
     # extensions: .e and .exo
@@ -1654,6 +1704,7 @@ def test_exodus_reader_ext():
     assert_output_type(exo_reader.read(), exo_reader)
 
 
+@requires_exodus_reader
 def test_exodus_reader_core():
     # check internals
     fname_e = examples.download_mug(load=False)
@@ -1814,6 +1865,7 @@ def _test_block_arrays(block, array_names):
         assert not block.array_status(array_name)
 
 
+@requires_exodus_reader
 def test_exodus_blocks():
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)

@@ -32,23 +32,36 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
-from pyvista.plotting.component_registry import (
-    _restore_registry_state as _restore_component_registry_state,
-)
-from pyvista.plotting.component_registry import (
-    _save_registry_state as _save_component_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _restore_registry_state as _restore_style_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _save_registry_state as _save_style_registry_state,
-)
-from pyvista.plotting.theme_registry import (
-    _restore_registry_state as _restore_theme_registry_state,
-)
-from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
-from pyvista.plotting.utilities.gl_checks import uses_egl
+
+try:
+    from pyvista.plotting.component_registry import (
+        _restore_registry_state as _restore_component_registry_state,
+    )
+    from pyvista.plotting.component_registry import (
+        _save_registry_state as _save_component_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _restore_registry_state as _restore_style_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _save_registry_state as _save_style_registry_state,
+    )
+    from pyvista.plotting.theme_registry import (
+        _restore_registry_state as _restore_theme_registry_state,
+    )
+    from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
+    from pyvista.plotting.utilities.gl_checks import uses_egl
+except ModuleNotFoundError:
+    _restore_component_registry_state = None
+    _save_component_registry_state = None
+    _restore_style_registry_state = None
+    _save_style_registry_state = None
+    _restore_theme_registry_state = None
+    _save_theme_registry_state = None
+
+    def uses_egl():
+        return False
+
 
 pv.OFF_SCREEN = True
 
@@ -147,21 +160,27 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
-    style_registry_state = _save_style_registry_state()
     reader_registry_state = _save_registry_state()
     writer_registry_state = _save_writer_registry_state()
     accessor_registry_state = _save_accessor_registry_state()
-    component_registry_state = _save_component_registry_state()
-    theme_registry_state = _save_theme_registry_state()
+    if _save_style_registry_state is not None:
+        style_registry_state = _save_style_registry_state()
+        component_registry_state = _save_component_registry_state()
+        theme_registry_state = _save_theme_registry_state()
+    else:
+        style_registry_state = None
+        component_registry_state = None
+        theme_registry_state = None
 
     yield
 
-    _restore_style_registry_state(style_registry_state)
     _restore_registry_state(reader_registry_state)
     _restore_writer_registry_state(writer_registry_state)
     _restore_accessor_registry_state(accessor_registry_state)
-    _restore_component_registry_state(component_registry_state)
-    _restore_theme_registry_state(theme_registry_state)
+    if _restore_style_registry_state is not None:
+        _restore_style_registry_state(style_registry_state)
+        _restore_component_registry_state(component_registry_state)
+        _restore_theme_registry_state(theme_registry_state)
 
     pv.vtk_snake_case('error')
     assert pv.vtk_snake_case() == 'error'

@@ -13,6 +13,11 @@ from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
 
+requires_vtk_vector_text = pytest.mark.skipif(
+    not _vtk.has_attr('vtkVectorText'),
+    reason='Requires vtkVectorText from VTK RenderingFreeType',
+)
+
 
 @pytest.fixture
 def axes_geometry_source():
@@ -145,6 +150,7 @@ def test_translate_precision():
     assert np.array_equal(mesh.points, expected)
 
 
+@requires_vtk_vector_text
 def test_text3d_source_empty_string():
     # Test empty string is processed to have a single point
     src = pv.Text3DSource(process_empty_string=True)
@@ -166,6 +172,7 @@ def test_text3d_source_empty_string():
     assert out.bounds == (mx, mn, mx, mn, mx, mn)
 
 
+@requires_vtk_vector_text
 def test_text3d_source():
     src = pv.Text3DSource(string='Text')
     assert src.string == 'Text'
@@ -179,6 +186,7 @@ def test_text3d_source():
 @pytest.mark.parametrize('width', [None, 0, 2.2])
 @pytest.mark.parametrize('depth', [None, 0, 2.3])
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
+@requires_vtk_vector_text
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
         string=string,
@@ -245,6 +253,7 @@ def text3d_source_with_text():
     return pv.Text3DSource('TEXT')
 
 
+@requires_vtk_vector_text
 def test_text3d_source_update(text3d_source_with_text):
     assert text3d_source_with_text._modified
     assert text3d_source_with_text._output.n_points == 0
@@ -271,6 +280,7 @@ def text3d_source_test_params():
     )
 
 
+@requires_vtk_vector_text
 def test_text3d_source_output(text3d_source_with_text):
     # Store initial object references
     out1 = text3d_source_with_text._output
@@ -297,6 +307,7 @@ def test_text3d_source_output(text3d_source_with_text):
     'kwarg_tuple',
     text3d_source_test_params(),
 )
+@requires_vtk_vector_text
 def test_text3d_source_modified_init(kwarg_tuple):
     # Test init modifies source but does not update output
     name, value = kwarg_tuple
@@ -311,6 +322,7 @@ def test_text3d_source_modified_init(kwarg_tuple):
     'kwarg_tuple',
     text3d_source_test_params(),
 )
+@requires_vtk_vector_text
 def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     # Set test param
     name, value = kwarg_tuple

@@ -9,6 +9,12 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
+
+requires_vtk_vector_text = pytest.mark.skipif(
+    not _vtk.has_attr('vtkVectorText'),
+    reason='Requires vtkVectorText from VTK RenderingFreeType',
+)
 
 
 @given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
@@ -588,6 +594,7 @@ def test_superquadric():
 #     assert np.any(geom.points)
 
 
+@requires_vtk_vector_text
 def test_text_3d():
     mesh = pv.Text3D('foo', depth=0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
     assert mesh.n_points

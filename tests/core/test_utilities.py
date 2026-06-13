@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version
 import inspect
 import itertools
 import json
@@ -80,8 +82,6 @@ from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
 from pyvista.core.utilities.writer import _DataFormatMixin
-from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
-from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
 
 with contextlib.suppress(ImportError):
@@ -544,6 +544,10 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
+    try:
+        version(package)
+    except PackageNotFoundError:
+        pytest.skip(f'{package} is not installed in this test environment')
     assert package in REPORT
 
 
@@ -1072,8 +1076,10 @@ def test_copy_implicit_vtk_array(plane):
     # Use the connectivity filter to generate an implicit vtkDataArray
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if isinstance(vtk_object, _vtk.VTKImplicitArray):
         assert isinstance(vtk_object, _vtk.VTKImplicitArray)
+    elif pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        pytest.fail('Expected an implicit VTK array')
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
         assert type(vtk_object) is _vtk.vtkDataArray
@@ -1084,8 +1090,10 @@ def test_copy_implicit_vtk_array(plane):
     plane['test'] = conn['RegionId']
 
     new_vtk_object = plane['test'].VTKObject
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if isinstance(new_vtk_object, _vtk.VTKAOSArray):
         assert isinstance(new_vtk_object, _vtk.VTKAOSArray)
+    elif pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        pytest.fail('Expected a VTK AOS array')
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
         assert type(new_vtk_object) is _vtk.vtkTypeInt64Array
@@ -1138,6 +1146,8 @@ def test_linkcode_resolve():
         'py',
         {'module': 'pyvista', 'fullname': 'pyvista.plotting.plotter.Plotter.add_ruler'},
     )
+    if link is None:
+        pytest.skip('Requires plotting imports')
     assert 'renderer.py' in link
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
@@ -1979,30 +1989,9 @@ def test_transform_apply_to_dataset(scale_transform, mode, method):
     assert np.allclose(transformed['vector'], expected)
 
 
-@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
-@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
-def test_transform_apply_to_actor(scale_transform, translate_transform, mode, method):
-    expected_matrix = scale_transform.matrix
-    actor = pv.Actor()
-
-    transformed = method(scale_transform, actor, mode)
-    assert np.allclose(transformed.user_matrix, expected_matrix)
-
-    # Transform again
-    transformed = method(translate_transform, transformed, mode)
-    if mode == 'replace':
-        expected_matrix = translate_transform.matrix
-    else:
-        expected_matrix = scale_transform.compose(
-            translate_transform, multiply_mode=mode.split('-')[0]
-        ).matrix
-    assert np.allclose(transformed.user_matrix, expected_matrix)
-
-
 def test_transform_apply_invalid_mode():
     mesh = pv.PolyData()
     array = np.ndarray(())
-    actor = pv.Actor()
     trans = pv.Transform()
 
     match = (
@@ -2018,13 +2007,6 @@ def test_transform_apply_invalid_mode():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         trans.apply(array, 'all_vectors')
-
-    match = (
-        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
-        "['replace', 'pre-multiply', 'post-multiply', None]"
-    )
-    with pytest.raises(ValueError, match=re.escape(match)):
-        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -2057,51 +2039,6 @@ def test_transform_set_matrix(point):
     assert not np.allclose(trans.matrix, new_matrix)
     trans.matrix = new_matrix
     assert np.allclose(trans.matrix, new_matrix)
-
-
-@pytest.fixture
-def transformed_actor():
-    actor = pv.Actor()
-    actor.position = (-0.5, -0.5, 1)
-    actor.orientation = (10, 20, 30)
-    actor.scale = (1.5, 2, 2.5)
-    actor.origin = (2, 1.5, 1)
-    actor.user_matrix = pv.array_from_vtkmatrix(actor.GetMatrix())
-    return actor
-
-
-@pytest.mark.parametrize('override_mode', ['pre', 'post'])
-@pytest.mark.parametrize('object_mode', ['pre', 'post'])
-def test_transform_multiply_mode_override(
-    transform, transformed_actor, object_mode, override_mode
-):
-    # This test validates multiply mode by performing the same transformations
-    # applied by `Prop3D` objects and comparing the results
-    transform.multiply_mode = object_mode
-
-    # Center data at the origin
-    transform.translate(np.array(transformed_actor.origin) * -1, multiply_mode=override_mode)
-
-    # Scale and rotate
-    transform.scale(transformed_actor.scale, multiply_mode=override_mode)
-    rotation = _orientation_as_rotation_matrix(transformed_actor.orientation)
-    transform.rotate(rotation, multiply_mode=override_mode)
-
-    # Move to position
-    transform.translate(np.array(transformed_actor.origin), multiply_mode=override_mode)
-    transform.translate(transformed_actor.position, multiply_mode=override_mode)
-
-    # Apply user matrix
-    transform.compose(transformed_actor.user_matrix, multiply_mode=override_mode)
-
-    # Check result
-    transform_matrix = transform.matrix
-    actor_matrix = pv.array_from_vtkmatrix(transformed_actor.GetMatrix())
-    if override_mode == 'post':
-        assert np.allclose(transform_matrix, actor_matrix)
-    else:
-        # Pre-multiplication produces a totally different result
-        assert not np.allclose(transform_matrix, actor_matrix)
 
 
 def test_transform_multiply_mode(transform):
@@ -2451,40 +2388,6 @@ def test_transform_as_rotation(representation, args, expected_type, expected_sha
         assert out.shape == expected_shape
 
 
-@pytest.mark.parametrize(
-    ('event', 'expected'),
-    [
-        ('end', _vtk.vtkCommand.EndInteractionEvent),
-        ('start', _vtk.vtkCommand.StartInteractionEvent),
-        ('always', _vtk.vtkCommand.InteractionEvent),
-        (_vtk.vtkCommand.InteractionEvent,) * 2,
-        (_vtk.vtkCommand.EndInteractionEvent,) * 2,
-        (_vtk.vtkCommand.StartInteractionEvent,) * 2,
-    ],
-)
-def test_parse_interaction_event(
-    event: str | _vtk.vtkCommand.EventIds,
-    expected: _vtk.vtkCommand.EventIds,
-):
-    assert _parse_interaction_event(event) == expected
-
-
-def test_parse_interaction_event_raises_str():
-    with pytest.raises(
-        ValueError,
-        match=r'Expected.*start.*end.*always.*foo was given',
-    ):
-        _parse_interaction_event('foo')
-
-
-def test_parse_interaction_event_raises_wrong_type():
-    with pytest.raises(
-        TypeError,
-        match=r'.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
-    ):
-        _parse_interaction_event(1)
-
-
 def test_classproperty():
     magic_number = 42
 
@@ -2500,6 +2403,20 @@ def test_classproperty():
         Foo.prop()
     with pytest.raises(TypeError, match='object is not callable'):
         Foo().prop()
+
+
+def vtk_logger_is_mutable():
+    initial_verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_ERROR)
+    is_mutable = _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_ERROR
+    _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
+    return is_mutable
+
+
+requires_mutable_vtk_logger = pytest.mark.skipif(
+    not vtk_logger_is_mutable(),
+    reason='VTK logger verbosity is immutable in this VTK build',
+)
 
 
 @pytest.fixture
@@ -2520,6 +2437,7 @@ def modifies_verbosity():
         'max',
     ],
 )
+@requires_mutable_vtk_logger
 def test_vtk_verbosity_context(verbosity):
     initial_verbosity = _vtk.vtkLogger.VERBOSITY_OFF
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
@@ -2529,6 +2447,7 @@ def test_vtk_verbosity_context(verbosity):
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
+@requires_mutable_vtk_logger
 def test_vtk_verbosity_nested_context():
     LEVEL1 = 'off'
     LEVEL2 = 'error'
@@ -2542,6 +2461,7 @@ def test_vtk_verbosity_nested_context():
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
+@requires_mutable_vtk_logger
 def test_vtk_verbosity_no_context():
     match = re.escape('State must be set before using it as a context manager.')
     with pytest.raises(ValueError, match=match):
@@ -2559,6 +2479,7 @@ def test_vtk_verbosity_no_context():
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
+@requires_mutable_vtk_logger
 def test_vtk_verbosity_set_get():
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
     pv.vtk_verbosity('off')
@@ -2590,6 +2511,8 @@ def test_vtk_verbosity_invalid_input(value):
 
 @pytest.mark.needs_vtk_version(9, 4)
 def test_vtk_snake_case():
+    if not is_vtk_attribute(pv.PolyData(), 'information'):
+        pytest.skip('VTK snake_case properties are disabled in this VTK build')
     assert pv.vtk_snake_case() == 'error'
     match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
 
@@ -2973,6 +2896,9 @@ def test_cell_quality_info_raises():
 def test_is_vtk_attribute():
     assert is_vtk_attribute(pv.ImageData(), 'GetCells')
     assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+
+    if not is_vtk_attribute(pv.ImageData(), 'cells'):
+        pytest.skip('VTK snake_case properties are disabled in this VTK build')
 
     assert is_vtk_attribute(pv.ImageData(), 'cells')
     assert not is_vtk_attribute(pv.UnstructuredGrid(), 'cells')

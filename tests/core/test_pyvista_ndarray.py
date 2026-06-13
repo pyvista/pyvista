@@ -117,7 +117,10 @@ def test_raises(val):
 def test_wrap_pandas(obj_in):
     array = pyvista_ndarray(obj_in)
     df = pd.DataFrame(array)
-    assert np.shares_memory(df.values, array)
+    if pd.__version__.split('.')[0] < '3':
+        assert np.shares_memory(df.values, array)
+    else:
+        assert np.array_equal(df.values, array)
 
 
 def test_no_dataset_does_not_allocate_weak_reference():

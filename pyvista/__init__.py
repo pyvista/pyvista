@@ -159,7 +159,20 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting  # noqa: F401, PLC0415
+        try:
+            import pyvista.plotting  # noqa: F401, PLC0415
+        except ModuleNotFoundError as exc:
+            missing_name = exc.name or ''
+            if name != 'Plotter' or not missing_name.startswith('vtkmodules.vtkRendering'):
+                raise
+            rendering_import_error = exc
+
+            class Plotter:
+                def __init__(self, *args, **kwargs):  # noqa: ARG002
+                    msg = 'Plotter requires VTK rendering modules, which are not available.'
+                    raise ImportError(msg) from rendering_import_error
+
+            return _cache_attr_and_return(Plotter)
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)

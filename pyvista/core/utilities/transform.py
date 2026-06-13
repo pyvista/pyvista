@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
@@ -1781,16 +1783,18 @@ class Transform(
             must_contain=mode,
             name='mode',
         )
-        _validation.check_instance(
-            obj,
-            (
-                np.ndarray,
-                Sequence,
-                pv.DataSet,
-                pv.MultiBlock,
-                pv.Prop3D,
-            ),
+        prop3d_type = None
+        if prop3d_module := sys.modules.get('pyvista.plotting.prop3d'):
+            prop3d_type = getattr(prop3d_module, 'Prop3D', None)
+        allowed_input_types: tuple[type[Any], ...] = (
+            np.ndarray,
+            Sequence,
+            pv.DataSet,
+            pv.MultiBlock,
         )
+        if prop3d_type is not None:
+            allowed_input_types = (*allowed_input_types, prop3d_type)
+        _validation.check_instance(obj, allowed_input_types)
 
         inplace = not copy
         # Transform dataset
@@ -1809,7 +1813,7 @@ class Transform(
         matrix = self.inverse_matrix if inverse else self.matrix
 
         # Transform actor
-        if isinstance(obj, pv.Prop3D):
+        if prop3d_type is not None and isinstance(obj, prop3d_type):
             allowed = ['replace', 'pre-multiply', 'post-multiply', None]
             _check_mode('actors', mode, allowed)
             if mode in ['post-multiply', None]:
@@ -1830,7 +1834,10 @@ class Transform(
             matrix[:3, 3] = 0
 
         # Validate array - make sure we have floats
-        array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
+        array: NumpyArray[float] = _validation.validate_array(
+            cast('Any', obj),
+            must_have_shape=[(3,), (-1, 3)],
+        )
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
         # Transform a 1D array

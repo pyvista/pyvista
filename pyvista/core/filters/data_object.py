@@ -14,6 +14,7 @@ import itertools
 import re
 import reprlib
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import NamedTuple
@@ -1672,11 +1673,12 @@ class DataObjectFilters:
             size_data = mesh.compute_cell_sizes(
                 vertex_count=True, length=True, area=True, volume=True
             ).cell_data
+            zeros = np.zeros(mesh.n_cells)
             size = (
-                size_data['VertexCount']
-                + size_data['Length']
-                + size_data['Area']
-                + size_data['Volume']
+                size_data.get('VertexCount', zeros)
+                + size_data.get('Length', zeros)
+                + size_data.get('Area', zeros)
+                + size_data.get('Volume', zeros)
             )
 
             # NEGATIVE_SIZE
@@ -4908,7 +4910,10 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
-            alg.SetCellLocatorPrototype(locator)
+            try:
+                cast('Any', alg).SetCellLocator(locator)
+            except AttributeError:  # pragma: no cover
+                alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:

@@ -500,11 +500,13 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
+        result.origin = cast('pv.ImageData', self).origin
         if rebase_coordinates:
             # Adjust for the confusing issue with the extents
             #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-            result.origin = result.points[0]
+            first_point = result.points[0]
             result.offset = (0, 0, 0)
+            result.origin = first_point
         return result
 
     @staticmethod
@@ -1934,7 +1936,7 @@ class ImageDataFilters(DataSetFilters):
 
         threshold_filter = (
             _binary_image_threshold
-            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
+            if _vtk.has_attr('vtkImageBinaryThreshold')
             else _image_threshold
         )
         output = threshold_filter(
@@ -2472,16 +2474,23 @@ class ImageDataFilters(DataSetFilters):
         else:
             msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'  # type: ignore[unreachable]
             raise ValueError(msg)
-        if output_style == 'default':
-            alg.SetOutputStyleToDefault()
-        elif output_style == 'boundary':
-            alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':  # type: ignore[unreachable]
+        output_style_ = cast('str', output_style)
+        if output_style_ == 'selected':
             msg = f'Output style "{output_style}" is not implemented'
             raise NotImplementedError(msg)
-        else:
+        if output_style_ not in ['default', 'boundary']:
             msg = f'Invalid output style "{output_style}", use "default" or "boundary"'
             raise ValueError(msg)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message='Call to deprecated method SetOutputStyleTo',
+                category=DeprecationWarning,
+            )
+            if output_style == 'default':
+                alg.SetOutputStyleToDefault()
+            else:
+                alg.SetOutputStyleToBoundary()
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
@@ -2978,7 +2987,13 @@ class ImageDataFilters(DataSetFilters):
                 if select_inputs_ is not None
                 else None
             )
-            alg_.SetOutputStyleToSelected()
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    message='Call to deprecated method SetOutputStyleToSelected',
+                    category=DeprecationWarning,
+                )
+                alg_.SetOutputStyleToSelected()
             if select_outputs_ is not None:
                 # Use selected outputs
                 output_ids = _get_unique_labels_no_background(
@@ -2997,7 +3012,13 @@ class ImageDataFilters(DataSetFilters):
             output_ids = output_ids.astype(float)
 
             # Add selected outputs
-            [alg.AddSelectedLabel(label_id) for label_id in output_ids]  # type: ignore[func-returns-value]
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    message='Call to deprecated method AddSelectedLabel',
+                    category=DeprecationWarning,
+                )
+                [alg.AddSelectedLabel(label_id) for label_id in output_ids]  # type: ignore[func-returns-value]
 
             # The following logic enables the generation of internal boundaries
             if input_ids is not None:
@@ -3127,6 +3148,12 @@ class ImageDataFilters(DataSetFilters):
         PV_NAME = 'boundary_labels'
         if VTK_NAME in output.cell_data.keys():
             labels_array = output.cell_data[VTK_NAME]
+            internal = (
+                np.all(labels_array != background_value, axis=1)
+                if labels_array.ndim == 2
+                else np.zeros(labels_array.shape[0], dtype=bool)
+            )
+            labels_array[internal] = np.sort(labels_array[internal], axis=1)
             if not all(labels_array.shape):
                 # Array is empty but has non-zero shape, fix it here
                 # Mesh may also have non-zero points but this is cleaned later

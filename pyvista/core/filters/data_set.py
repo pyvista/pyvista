@@ -3717,9 +3717,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetIntegratorTypeToRungeKutta45()
         # set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            try:
+                cast('Any', alg).SetCellLocatorToStaticCellLocator()
+            except AttributeError:  # pragma: no cover
+                alg.SetInterpolatorTypeToCellLocator()
         else:
-            alg.SetInterpolatorTypeToDataSetPointLocator()
+            try:
+                cast('Any', alg).SetCellLocatorToJumpAndWalkCellLocator()
+            except AttributeError:  # pragma: no cover
+                alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg)
@@ -3896,9 +3902,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            try:
+                cast('Any', alg).SetCellLocatorToModifiedBSPTree()
+            except AttributeError:  # pragma: no cover
+                alg.SetInterpolatorTypeToCellLocator()
         else:
-            alg.SetInterpolatorTypeToDataSetPointLocator()
+            try:
+                cast('Any', alg).SetCellLocatorToJumpAndWalkCellLocator()
+            except AttributeError:  # pragma: no cover
+                alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
         _update_alg(
