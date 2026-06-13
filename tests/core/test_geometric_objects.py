@@ -128,8 +128,15 @@ def test_solid_sphere():
 def test_structured_sphere():
     sphere = pv.StructuredSphere()
     assert isinstance(sphere, pv.StructuredGrid)
+
     assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
     assert sphere.active_texture_coordinates.dtype == np.float64
+
+    assert sphere.point_data.active_normals_name == 'Normals'
+    normals = sphere.active_normals
+    assert normals.dtype == np.float64
+    assert np.allclose(np.linalg.norm(normals, axis=1), 1.0)
+
     assert sphere.points.dtype == np.float64
     assert sphere.n_cells == 870
 

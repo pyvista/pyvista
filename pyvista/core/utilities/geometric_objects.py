@@ -13,6 +13,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.utilities.misc import _reciprocal
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -514,7 +515,6 @@ def StructuredSphere(
     - is a ``StructuredGrid`` instead of :class:`~pyvista.PolyData`
     - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells
     - includes a texture coordinates array
-    - does not include pre-computed normals
     - is not a closed surface (it has a seam with open edges)
     - the points and arrays have double precision instead of single
     - does not support setting start and end phi/theta angles
@@ -612,9 +612,16 @@ def StructuredSphere(
     x, y, z = pv.spherical_to_cartesian(radius, phi, theta_shifted)
     sphere = pv.StructuredGrid(x, y, z)
 
+    # Add texture coordinates
     u = theta / theta_max
     v = phi[::-1, :] / phi_max
     sphere.active_texture_coordinates = np.c_[u.ravel('F'), v.ravel('F')]
+
+    # Add point normals
+    points = sphere.points
+    norms = np.linalg.norm(points, axis=1, keepdims=True)
+    points_normalized = points * _reciprocal(norms, value_if_division_by_zero=1.0)
+    sphere.point_data.active_normals = points_normalized
 
     sphere.rotate_y(90, inplace=True)
     translate(sphere, center, direction)
