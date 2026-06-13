@@ -6309,7 +6309,7 @@ def test_structured_sphere_resolution_matches_sphere():
     pv.plot_compare_four(
         *data.values(),
         display_kwargs={'show_edges': True},
-        labels=list(data.keys()),
+        labels=list(data),
         link=False,
         camera_position=pv.CameraPosition(
             position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
