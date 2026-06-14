@@ -6285,19 +6285,21 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
-def test_sphere_texture_seam_default():
+@pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
+def test_sphere_texture_seam_default(tessellation):
     texture = examples.load_globe_texture()
-    sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    sphere = pv.Sphere(texture_coordinates=True, tessellation=tessellation)
     sphere.plot(cpos='yz', zoom=2, texture=texture)
 
 
-def test_sphere_texture_seam():
+@pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
+def test_sphere_texture_seam(tessellation):
     data: dict[str, pv.DataSet] = {}
     for phi, theta in [(10, 20), (20, 10), (100, 150), (2, 4)]:
         data[f'p={phi} t={theta}'] = pv.Sphere(
             phi_resolution=phi,
             theta_resolution=theta,
-            tessellation='phi_theta',
+            tessellation=tessellation,
             texture_coordinates=True,
         )
     texture = examples.load_globe_texture()

@@ -2062,8 +2062,16 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             faces.flags['WRITEABLE'] = True
             replacement = dict(zip(seam_point_ids, new_point_ids, strict=True))
             polys = out.GetPolys()
-            # Use max to identify cells on the "far" side of the seam
-            seam_cell_ids = {max(out.point_cell_ids(point_id)) for point_id in seam_point_ids}
+
+            # Find seam cells where u coordinates span the 0->1 transition
+            seam_cell_ids = set()
+            for point_id in seam_point_ids:
+                for cell_id in out.point_cell_ids(point_id):
+                    cell_point_ids = out.get_cell(cell_id).point_ids
+                    u_vals = texture_coordinates[cell_point_ids, 0]
+                    if u_vals.max() - u_vals.min() > 0.5:  # spans the seam
+                        seam_cell_ids.add(cell_id)
+
             for cell_id in seam_cell_ids:
                 # Location of the face in the interleaved connectivity
                 faces_ids_loc = cell_id + polys.GetOffset(cell_id)
