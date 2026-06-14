@@ -6283,3 +6283,32 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.camera.up = (0, 1, 0)
     pl.camera.parallel_scale = 0.15
     pl.show()
+
+
+def test_sphere_texture_seam_default():
+    texture = examples.load_globe_texture()
+    sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    sphere.plot(cpos='yz', zoom=2, texture=texture)
+
+
+def test_sphere_texture_seam():
+    data: dict[str, pv.DataSet] = {}
+    for phi, theta in [(10, 20), (20, 10), (100, 150), (2, 4)]:
+        data[f'p={phi} t={theta}'] = pv.Sphere(
+            phi_resolution=phi,
+            theta_resolution=theta,
+            tessellation='phi_theta',
+            texture_coordinates=True,
+        )
+    texture = examples.load_globe_texture()
+
+    pv.plot_compare_four(
+        *data.values(),
+        display_kwargs={'texture': texture, 'smooth_shading': True},
+        labels=list(data.keys()),
+        link=False,
+        camera_position='yz',
+    )
+    # sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    # texture = examples.load_globe_texture()
+    # sphere.plot(texture=texture)

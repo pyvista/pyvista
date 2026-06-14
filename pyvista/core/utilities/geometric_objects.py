@@ -404,6 +404,8 @@ def Sphere(  # noqa: PLR0917
     end_theta: float = 360.0,
     start_phi: float = 0.0,
     end_phi: float = 180.0,
+    tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
+    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a sphere.
 
@@ -453,6 +455,21 @@ def Sphere(  # noqa: PLR0917
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
 
+    tessellation : 'triangle' | 'phi_theta', default: 'triangle'
+        Configure the tessellation of the sphere.
+
+        - ``'triangle'``: tessellate with all :attr:`~pyvista.CellType.TRIANGLE` cells.
+        - ``'phi_theta'``: tessellate the sphere with :attr:`~pyvista.CellType.QUAD` cells
+          aligned to the phi and theta directions. Cells at the poles are
+          :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+    texture_coordinates : bool, default: False
+        If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
+        Enabling this option will also generate a topological seam at ``theta=0`` by duplicating
+        vertices, and the sphere will not be a closed surface.
+
+        This option is only supported for complete spheres.
+
     Returns
     -------
     pyvista.PolyData
@@ -482,6 +499,21 @@ def Sphere(  # noqa: PLR0917
     >>> sphere = pv.Sphere(end_phi=90)
     >>> out = sphere.plot(show_edges=True)
 
+    Tessellate along ``phi`` and ``theta`` directions.
+    The sphere is mostly quads with triangles at the poles.
+
+    >>> sphere = pv.Sphere(tessellation='phi_theta')
+    >>> sphere.distinct_cell_types
+    {<CellType.TRIANGLE: 5>, <CellType.QUAD: 9>}
+
+    >>> out = sphere.plot(show_edges=True)
+
+    Include texture coordinates.
+
+    >>> sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    >>> sphere.active_texture_coordinates[0]
+    pyvista_ndarray([0., 1.], dtype=float32)
+
     """
     sphere = SphereSource(
         radius=radius,
@@ -491,6 +523,8 @@ def Sphere(  # noqa: PLR0917
         end_theta=end_theta,
         start_phi=start_phi,
         end_phi=end_phi,
+        tessellation=tessellation,
+        texture_coordinates=texture_coordinates,
     )
     surf = sphere.output
     surf.rotate_y(90, inplace=True)
