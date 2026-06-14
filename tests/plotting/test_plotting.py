@@ -6311,6 +6311,3 @@ def test_sphere_texture_seam(tessellation):
         link=False,
         camera_position='yz',
     )
-    # sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
-    # texture = examples.load_globe_texture()
-    # sphere.plot(texture=texture)
