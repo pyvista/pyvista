@@ -6283,3 +6283,26 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.camera.up = (0, 1, 0)
     pl.camera.parallel_scale = 0.15
     pl.show()
+
+
+def test_solid_sphere_resolution_matches_sphere():
+    import pyvista as pv
+
+    data: dict[str, pv.DataSet] = {}
+    angle1, angle2 = 4, 8
+    for phi, theta in [(angle1, angle2), (angle2, angle1)]:
+        kwargs = {'phi_resolution': phi, 'theta_resolution': theta}
+        data[f'Sphere {phi} {theta}'] = pv.Sphere(**kwargs)
+        data[f'Solid {phi} {theta}'] = pv.SolidSphere(**kwargs)
+
+    pv.plot_compare_four(
+        *data.values(),
+        display_kwargs={'show_edges': True},
+        labels=list(data),
+        link=False,
+        camera_position=pv.CameraPosition(
+            position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
+            focal_point=(0.0, 0.0, 0.0),
+            viewup=(0.0, 0.0, 1.0),
+        ),
+    )

@@ -644,7 +644,7 @@ def SolidSphere(  # noqa: PLR0917
         end_phi = np.pi if radians else 180.0
 
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution + 1)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
         radius=radius,
