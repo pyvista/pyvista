@@ -375,7 +375,7 @@ def test_sphere_source():
     assert algo.start_phi == 0.0
     assert algo.end_phi == 180.0
     assert algo.tessellation == 'triangle'
-    assert algo.texture_coordinates == False
+    assert algo.texture_coordinates is False
     center = (1.0, 2.0, 3.0)
     algo = pv.SphereSource(center=center)
     assert algo.center == center
