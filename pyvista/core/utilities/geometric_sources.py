@@ -33,6 +33,7 @@ from pyvista.core.utilities.misc import _reciprocal
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -1989,12 +1990,12 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
     @property
     def tessellation(
         self: SphereSource,
-    ) -> Literal['triangles', 'phi_theta']:  # numpydoc ignore: RT01
+    ) -> Literal['triangle', 'phi_theta']:  # numpydoc ignore: RT01
         """Configure the tessellation of the sphere."""
-        return 'phi_theta' if self.GetLatLongTessellation() else 'triangles'
+        return 'phi_theta' if self.GetLatLongTessellation() else 'triangle'
 
     @tessellation.setter
-    def tessellation(self: SphereSource, tessellation: Literal['triangles', 'phi_theta']) -> None:
+    def tessellation(self: SphereSource, tessellation: Literal['triangle', 'phi_theta']) -> None:
         self.SetLatLongTessellation(tessellation == 'phi_theta')
 
     @property
@@ -2047,7 +2048,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             points = out.points
             out.points = np.vstack((points, points[seam_point_ids]))
 
-            normals = out.active_normals
+            normals = cast('pyvista_ndarray', out.active_normals)
             out.point_data.active_normals = np.vstack((normals, normals[seam_point_ids]))
 
             texture_coordinates = _compute_texture_coordinates()

@@ -503,8 +503,8 @@ def Sphere(  # noqa: PLR0917
     The sphere is mostly quads with triangles at the poles.
 
     >>> sphere = pv.Sphere(tessellation='phi_theta')
-    >>> sphere.distinct_cell_types
-    {<CellType.TRIANGLE: 5>, <CellType.QUAD: 9>}
+    >>> sorted(sphere.distinct_cell_types)
+    [<CellType.TRIANGLE: 5>, <CellType.QUAD: 9>]
 
     >>> out = sphere.plot(show_edges=True)
 
