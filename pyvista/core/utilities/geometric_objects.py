@@ -463,12 +463,16 @@ def Sphere(  # noqa: PLR0917
           aligned to the phi and theta directions. Cells at the poles are
           :attr:`~pyvista.CellType.TRIANGLE` cells.
 
+          .. versionadded:: 0.49
+
     texture_coordinates : bool, default: False
         If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
         Enabling this option will also generate a topological seam at ``theta=0`` by duplicating
         vertices, and the sphere will not be a closed surface.
 
         This option is only supported for complete spheres.
+
+        .. versionadded:: 0.49
 
     Returns
     -------

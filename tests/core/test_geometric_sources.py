@@ -374,9 +374,18 @@ def test_sphere_source():
     assert algo.end_theta == 360.0
     assert algo.start_phi == 0.0
     assert algo.end_phi == 180.0
+    assert algo.tessellation == 'triangle'
+    assert algo.texture_coordinates == False
     center = (1.0, 2.0, 3.0)
     algo = pv.SphereSource(center=center)
     assert algo.center == center
+
+    algo.tessellation = 'phi_theta'
+    assert algo.tessellation == 'phi_theta'
+    algo.tessellation = 'triangle'
+    assert algo.tessellation == 'triangle'
+    algo.texture_coordinates = True
+    assert algo.texture_coordinates is True
 
 
 def test_line_source():
