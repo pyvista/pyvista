@@ -41,28 +41,36 @@ light = pv.Light()
 light.set_direction_angle(30, -20)
 
 # Load planets
-mercury = examples.planets.load_mercury(radius=2439.0)
+mercury = examples.planets.load_planet(radius=2439.0)
 mercury_texture = examples.planets.download_mercury_surface(texture=True)
-venus = examples.planets.load_venus(radius=6052.0)
+
+venus = examples.planets.load_planet(radius=6052.0)
 venus_texture = examples.planets.download_venus_surface(texture=True)
-earth = examples.planets.load_earth(radius=6378.1)
+
+earth = examples.planets.load_planet(radius=6378.1)
 earth_texture = examples.load_globe_texture()
-mars = examples.planets.load_mars(radius=3397.2)
+
+mars = examples.planets.load_planet(radius=3397.2)
 mars_texture = examples.planets.download_mars_surface(texture=True)
-jupiter = examples.planets.load_jupiter(radius=71492.0)
+
+jupiter = examples.planets.load_planet(radius=71492.0)
 jupiter_texture = examples.planets.download_jupiter_surface(texture=True)
-saturn = examples.planets.load_saturn(radius=60268.0)
+
+saturn = examples.planets.load_planet(radius=60268.0)
 saturn_texture = examples.planets.download_saturn_surface(texture=True)
 # Saturn's rings range from 7000.0 km to 80000.0 km from the surface of the planet
 inner = 60268.0 + 7000.0
 outer = 60268.0 + 80000.0
-saturn_rings = examples.planets.load_saturn_rings(inner=inner, outer=outer, c_res=50)
+saturn_rings = examples.planets.load_planet_rings(inner=inner, outer=outer, c_res=50)
 saturn_rings_texture = examples.planets.download_saturn_rings(texture=True)
-uranus = examples.planets.load_uranus(radius=25559.0)
+
+uranus = examples.planets.load_planet(radius=25559.0)
 uranus_texture = examples.planets.download_uranus_surface(texture=True)
-neptune = examples.planets.load_neptune(radius=24764.0)
+
+neptune = examples.planets.load_planet(radius=24764.0)
 neptune_texture = examples.planets.download_neptune_surface(texture=True)
-pluto = examples.planets.load_pluto(radius=1151.0)
+
+pluto = examples.planets.load_planet(radius=1151.0)
 pluto_texture = examples.planets.download_pluto_surface(texture=True)
 
 # Move planets to a nice position for the plotter. These numbers are not
@@ -126,7 +134,7 @@ pl.show(cpos='xy')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot Venus with and without its atmosphere.
 
-venus = examples.planets.load_venus()
+venus = examples.planets.load_planet(radius=6052.0)
 atmosphere_texture = examples.planets.download_venus_surface(
     atmosphere=True, texture=True
 )
@@ -149,7 +157,7 @@ pl.show(cpos='xy')
 # Plot the prime meridian at 0° longitude.
 # The prime meridian lies in the XZ plane on the +X side of Earth.
 
-earth = examples.planets.load_earth(radius=6378.1)
+earth = examples.planets.load_planet(radius=6378.1)
 earth_texture = examples.load_globe_texture()
 
 # Slice Earth with the XZ plane to create the full meridian circle
