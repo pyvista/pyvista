@@ -385,6 +385,8 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=100):
 
     Arguments are passed on to :func:`pyvista.Disc`.
 
+    .. versionadded:: 0.49
+
     Parameters
     ----------
     inner : float, default: 0.25
