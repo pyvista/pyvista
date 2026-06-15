@@ -95,6 +95,15 @@ def test_planets_deprecated(planet):
         _ = func()
 
 
+def test_load_saturn_rings_deprecated():
+    match = (
+        '`load_saturn_rings` is deprecated and will be removed in v0.52. '
+        'Use `load_planet_rings` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        _ = examples.planets.load_saturn_rings()
+
+
 def test_load_planet():
     planet = examples.planets.load_planet()
     assert isinstance(planet, pv.PolyData)
