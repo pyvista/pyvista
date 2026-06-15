@@ -30,7 +30,11 @@ quad = pv.PolyData(points, faces)
 # %%
 # Use :meth:`~pyvista.DataObjectFilters.validate_mesh` to show that the cell is not
 # convex.
-report = quad.validate_mesh()
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", pv.InvalidMeshWarning)
+    report = quad.validate_mesh()
 print(report.is_valid)
 # %%
 print(report.invalid_fields)

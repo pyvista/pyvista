@@ -2,7 +2,7 @@
 
 .DEFAULT_GOAL := test
 
-.PHONY: all clean coverage coverage-xml coverage-html coverage-docs docstyle sync-deps lint typecheck test test-core test-plotting doctest docs docs-test integration
+.PHONY: all clean coverage coverage-xml coverage-html coverage-docs docstyle sync-deps lint typecheck test test-core test-plotting doctest docs docs-test integration narrow-test
 
 # `all` is a POSIX convention; alias it to the default test target.
 all: test
@@ -96,3 +96,42 @@ integration:
 	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright)"; exit 1; }
 	@echo "Running integration-$(PROJECT) tests (matches CI)"
 	@uv run tox -e integration-$(PROJECT) -- $(ARGS)
+
+# -----------------------------------------------------------------------------
+# Local "narrow" / direct test helpers for fast iteration during development.
+# These avoid the full uv+tox setup and are intended for quick verification
+# of specific changes (e.g. the set_arrays bulk feature).
+#
+# Usage:
+#   make narrow-test
+#   make narrow-test ARGS="-q --tb=line"
+#
+# The targets below will auto-detect a reasonable Python (preferring known
+# dev envs) and install minimal extra deps (pytest, hypothesis) only if needed.
+# -----------------------------------------------------------------------------
+
+# PY can be overridden, e.g. make narrow-test PY=/path/to/python
+PY ?= $(or $(wildcard /home/wr1/.local/share/mamba/envs/b3secfem/bin/python), \
+           $(shell for p in python3 python /usr/bin/python3 /usr/bin/python; do \
+             [ -x "$$p" ] && $$p -c "import numpy" 2>/dev/null && echo "$$p" && break; \
+           done), \
+           python)
+
+_ensure-minimal-test-deps:
+	@$(PY) -c "import pytest, hypothesis" 2>/dev/null || \
+		( echo "Installing minimal test deps (pytest, hypothesis) into $(PY)..."; \
+		  $(PY) -m pip install -q pytest hypothesis )
+
+narrow-test: _ensure-minimal-test-deps
+	@echo "Running narrow tests focused on set_arrays / bulk data assignment changes"
+	PYTHONPATH=. $(PY) -m pytest \
+		-c /dev/null \
+		--override-ini="addopts=" \
+		tests/core/test_datasetattributes.py \
+		-k "set_arrays or test_update" \
+		$(ARGS)
+	@echo "Narrow test run finished (exit code above indicates success/failure)."
+
+# Also provide the old convenience names for backward compatibility in this workspace
+test-direct: narrow-test
+test-set-arrays: narrow-test

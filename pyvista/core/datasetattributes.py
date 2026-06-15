@@ -1186,7 +1186,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @_deprecate_positional_args(allowed=['arrays'])
     def set_arrays(
         self: Self,
-        arrays: dict[str, ArrayLike] | DataSetAttributes,
+        arrays: dict[str, ArrayLike[Any]] | DataSetAttributes,
         copy: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Set multiple arrays at once using the fast VTK path.
@@ -1201,7 +1201,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        arrays : dict[str, ArrayLike] or DataSetAttributes
+        arrays : dict[str, ArrayLike[Any]] or DataSetAttributes
             A dictionary mapping array names to array-like objects, or another
             :class:`DataSetAttributes` instance whose arrays will be copied in.
             All arrays must have a length compatible with the association

@@ -1041,7 +1041,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_cell_data()
         self.clear_field_data()
 
-    def set_cell_arrays(self: Self, arrays: dict[str, ArrayLike], copy: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def set_cell_arrays(self: Self, arrays: dict[str, ArrayLike[Any]], copy: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Set many cell arrays at once using the fast bulk path.
 
         Convenience wrapper for :meth:`~pyvista.DataSetAttributes.set_arrays`.
@@ -1066,7 +1066,7 @@ class DataSet(DataSetFilters, DataObject):
         self.cell_data.set_arrays(arrays, copy=copy)
         return self
 
-    def set_point_arrays(self: Self, arrays: dict[str, ArrayLike], copy: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def set_point_arrays(self: Self, arrays: dict[str, ArrayLike[Any]], copy: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Set many point arrays at once using the fast bulk path.
 
         Convenience wrapper for :meth:`~pyvista.DataSetAttributes.set_arrays`.

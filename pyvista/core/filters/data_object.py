@@ -1329,8 +1329,11 @@ class DataObjectFilters:
 
         Validate the mesh as a :class:`~pyvista.MultiBlock` instead.
 
+        >>> import warnings
         >>> multi = mesh.cast_to_multiblock()
-        >>> report = multi.validate_mesh()
+        >>> with warnings.catch_warnings():
+        ...     warnings.simplefilter("ignore", pv.InvalidMeshWarning)
+        ...     report = multi.validate_mesh()
         >>> print(report)
         Mesh Validation Report
         ----------------------
@@ -1349,7 +1352,9 @@ class DataObjectFilters:
         Instead of reporting problems with specific arrays, point ids, or cell ids, the errors
         are reported by block id. Here, block id ``0`` is reported as having non-convex cells.
 
-        >>> report = multi.validate_mesh(report_body='fields')
+        >>> with warnings.catch_warnings():
+        ...     warnings.simplefilter("ignore", pv.InvalidMeshWarning)
+        ...     report = multi.validate_mesh(report_body='fields')
         >>> print(report)
         Mesh Validation Report
         ----------------------
