@@ -70,11 +70,47 @@ def test_load_tetbeam():
     assert (mesh.celltypes == 10).all()
 
 
-def test_sphere_with_texture_map():
-    sphere = pv.examples.planets._sphere_with_texture_map()
-    assert isinstance(sphere, pv.PolyData)
-    assert 'Texture Coordinates' in sphere.point_data
-    assert sphere['Texture Coordinates'].shape == (sphere.n_points, 2)
+@pytest.mark.parametrize(
+    'planet',
+    [
+        'sun',
+        'moon',
+        'mercury',
+        'venus',
+        'earth',
+        'mars',
+        'jupiter',
+        'saturn',
+        'uranus',
+        'neptune',
+        'pluto',
+    ],
+)
+def test_planets_deprecated(planet):
+    match = (
+        f'`load_{planet}` is deprecated and will be removed in v0.52. Use `load_planet` instead.'
+    )
+    func = getattr(examples.planets, f'load_{planet}')
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        _ = func()
+
+
+def test_load_planet():
+    planet = examples.planets.load_planet()
+    assert isinstance(planet, pv.PolyData)
+    assert 'Texture Coordinates' in planet.point_data
+    assert planet['Texture Coordinates'].shape == (planet.n_points, 2)
+
+    assert planet.n_points == 5000
+    assert planet.n_cells == 4851
+    r = 1.0
+    assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e2)
+
+    r = 5
+    planet = examples.planets.load_planet(radius=r, lat_resolution=20, lon_resolution=30)
+    assert planet.n_points == 600
+    assert planet.n_cells == 551
+    assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e-1)
 
 
 def test_load_earth():

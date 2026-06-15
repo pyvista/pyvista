@@ -6,7 +6,6 @@ from pathlib import Path
 from pathlib import PureWindowsPath
 import re
 
-import numpy as np
 import pytest
 import requests
 from retry_requests import retry
@@ -247,42 +246,3 @@ def test_warn_if_path_not_accessible_no_write_permission():
     blocked_dir = system_dir / 'blocked'
     with pytest.warns(UserWarning, match='Unable to access'):
         _warn_if_path_not_accessible(blocked_dir, downloads._user_data_path_warn_msg)
-
-
-@pytest.mark.parametrize(
-    'planet',
-    [
-        'sun',
-        'moon',
-        'mercury',
-        'venus',
-        'earth',
-        'mars',
-        'jupiter',
-        'saturn',
-        'uranus',
-        'neptune',
-        'pluto',
-    ],
-)
-def test_planets_deprecated(planet):
-    match = (
-        f'`load_{planet}` is deprecated and will be removed in v0.52. Use `load_planet` instead.'
-    )
-    func = getattr(examples.planets, f'load_{planet}')
-    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-        _ = func()
-
-
-def test_load_planet():
-    planet = examples.planets.load_planet()
-    assert planet.n_points == 5000
-    assert planet.n_cells == 4851
-    r = 1.0
-    assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e2)
-
-    r = 5
-    planet = examples.planets.load_planet(radius=r, lat_resolution=20, lon_resolution=30)
-    assert planet.n_points == 600
-    assert planet.n_cells == 551
-    assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e-1)
