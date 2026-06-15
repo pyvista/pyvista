@@ -107,19 +107,6 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     pyvista.PolyData
         Sun dataset.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_sun()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_sun_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
-
     .. seealso::
 
         :func:`~pyvista.examples.planets.download_sun_surface`
@@ -158,19 +145,6 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     -------
     pyvista.PolyData
         Moon dataset.
-
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_moon()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_moon_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
 
     .. seealso::
 
@@ -211,19 +185,6 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     pyvista.PolyData
         Mercury dataset.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_mercury()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_mercury_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
-
     .. seealso::
 
         :func:`~pyvista.examples.planets.download_mercury_surface`
@@ -262,19 +223,6 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     -------
     pyvista.PolyData
         Venus dataset.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> mesh = examples.planets.load_venus()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_venus_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
 
     .. seealso::
 
@@ -315,17 +263,6 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     pyvista.PolyData
         Earth dataset.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_earth()  # +DOCTEST: SKIP
-    >>> texture = examples.load_globe_texture()  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
-
     .. seealso::
 
         :func:`~pyvista.examples.examples.load_globe_texture`
@@ -364,19 +301,6 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     -------
     pyvista.PolyData
         Mars dataset.
-
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_mars()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_mars_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
 
     .. seealso::
 
@@ -417,19 +341,6 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     pyvista.PolyData
         Jupiter dataset.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_jupiter()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_jupiter_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
-
     .. seealso::
 
         :func:`~pyvista.examples.planets.download_jupiter_surface`
@@ -468,19 +379,6 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     -------
     pyvista.PolyData
         Saturn dataset.
-
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_saturn()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_saturn_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
 
     .. seealso::
 
@@ -577,15 +475,6 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
     pyvista.PolyData
         Dataset with texture for Saturn's rings.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples
-    >>> mesh = examples.planets.load_saturn_rings()
-    >>> texture = examples.planets.download_saturn_rings(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
-
     .. seealso::
 
         :func:`~pyvista.examples.planets.download_saturn_rings`
@@ -639,19 +528,6 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     pyvista.PolyData
         Uranus dataset.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_uranus()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_uranus_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
-
     .. seealso::
 
         :func:`~pyvista.examples.planets.download_uranus_surface`
@@ -691,19 +567,6 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     pyvista.PolyData
         Neptune dataset.
 
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_neptune()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_neptune_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
-
     .. seealso::
 
         :func:`~pyvista.examples.planets.download_neptune_surface`
@@ -742,19 +605,6 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     -------
     pyvista.PolyData
         Pluto dataset.
-
-    Examples
-    --------
-    >>> import pyvista as pv  # +DOCTEST: SKIP
-    >>> from pyvista import examples  # +DOCTEST: SKIP
-    >>> mesh = examples.planets.load_pluto()  # +DOCTEST: SKIP
-    >>> texture = examples.planets.download_pluto_surface(
-    ...     texture=True
-    ... )  # +DOCTEST: SKIP
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )  # +DOCTEST: SKIP
-    >>> mesh.plot(texture=texture, background=image_path)  # +DOCTEST: SKIP
 
     .. seealso::
 
