@@ -2286,26 +2286,13 @@ class DatasetCard:
     @staticmethod
     def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
         # Get the corresponding function of the loader
-        func = None
+        for func_name in ['download_' + dataset_name, 'load_' + dataset_name]:
+            for module in [pv.examples.examples, pv.examples.downloads, pv.examples.planets]:
+                if func := getattr(module, func_name, None):
+                    return func, func_name
 
-        # Get `download` function from downloads.py or planets.py
-        func_name = 'download_' + dataset_name
-        if hasattr(pv.examples.downloads, func_name):
-            func = getattr(pv.examples.downloads, func_name)
-        elif hasattr(pv.examples.planets, func_name):
-            func = getattr(pv.examples.planets, func_name)
-        else:
-            # Get `load` function from examples.py or planets.py
-            func_name = 'load_' + dataset_name
-            if hasattr(pv.examples.examples, func_name):
-                func = getattr(pv.examples.examples, func_name)
-            elif hasattr(pv.examples.examples, func_name):
-                func = getattr(pv.examples.planets, func_name)
-
-        if func is None:
-            msg = f'Dataset function {func_name} does not exist.'
-            raise RuntimeError(msg)
-        return func, func_name
+        msg = f'No load or download function was found for {dataset_name}.'
+        raise RuntimeError(msg)
 
     @staticmethod
     def _generate_dataset_name(dataset_name: str):

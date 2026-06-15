@@ -8,6 +8,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
@@ -58,10 +59,19 @@ def load_planet(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     .. seealso::
 
+        :ref:`Planet Dataset <planet_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
         :ref:`planets_example`
             Example plot of the solar system.
 
     """
+    return _dataset_planet.load(
+        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    )
+
+
+def _planet_load_func(radius=1.0, lat_resolution=50, lon_resolution=100):
     # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
     theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, -np.pi : np.pi : lon_resolution * 1j]
     x = radius * np.sin(theta) * np.cos(phi)
@@ -73,6 +83,9 @@ def load_planet(radius=1.0, lat_resolution=50, lon_resolution=100):
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
     sphere.active_texture_coordinates = texture_coords
     return sphere.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+
+
+_dataset_planet = _DatasetLoader(_planet_load_func)
 
 
 def _planet_deprecated(name):
@@ -414,6 +427,9 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=50):
 
     .. seealso::
 
+        :ref:`Planet Rings Dataset <planet_rings_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
         :func:`~pyvista.examples.planets.download_saturn_rings`
             Download the texture of Saturn's rings.
 
@@ -427,6 +443,10 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=50):
             Example plot of the solar system.
 
     """
+    return _dataset_planet_rings.load(inner=inner, outer=outer, c_res=c_res)
+
+
+def _planet_rings_load_func(*, inner=0.25, outer=0.5, c_res=50):
     disc = pv.Disc(inner=inner, outer=outer, c_res=c_res)
     texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
@@ -434,6 +454,9 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=50):
     texture_coordinates[:, 1] = 0.0
     disc.active_texture_coordinates = texture_coordinates
     return disc
+
+
+_dataset_planet_rings = _DatasetLoader(_planet_rings_load_func)
 
 
 @_deprecate_positional_args
