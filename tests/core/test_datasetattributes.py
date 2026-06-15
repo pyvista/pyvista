@@ -761,7 +761,7 @@ def test_update(uniform, copy):
             assert shares_memory
 
 
-@pytest.mark.parametrize("copy", [True, False])
+@pytest.mark.parametrize('copy', [True, False])
 def test_set_arrays_dict(hexbeam, copy):
     """Basic functionality for dict input on cell/point/field."""
     # cell

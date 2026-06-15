@@ -1332,7 +1332,7 @@ class DataObjectFilters:
         >>> import warnings
         >>> multi = mesh.cast_to_multiblock()
         >>> with warnings.catch_warnings():
-        ...     warnings.simplefilter("ignore", pv.InvalidMeshWarning)
+        ...     warnings.simplefilter('ignore', pv.InvalidMeshWarning)
         ...     report = multi.validate_mesh()
         >>> print(report)
         Mesh Validation Report
@@ -1353,7 +1353,7 @@ class DataObjectFilters:
         are reported by block id. Here, block id ``0`` is reported as having non-convex cells.
 
         >>> with warnings.catch_warnings():
-        ...     warnings.simplefilter("ignore", pv.InvalidMeshWarning)
+        ...     warnings.simplefilter('ignore', pv.InvalidMeshWarning)
         ...     report = multi.validate_mesh(report_body='fields')
         >>> print(report)
         Mesh Validation Report

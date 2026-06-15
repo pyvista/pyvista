@@ -33,7 +33,7 @@ quad = pv.PolyData(points, faces)
 import warnings
 
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore", pv.InvalidMeshWarning)
+    warnings.simplefilter('ignore', pv.InvalidMeshWarning)
     report = quad.validate_mesh()
 print(report.is_valid)
 # %%
