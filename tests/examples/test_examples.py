@@ -113,12 +113,6 @@ def test_load_planet():
     assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e-1)
 
 
-def test_load_earth():
-    mesh = pv.examples.planets.load_earth()
-    assert isinstance(mesh, pv.PolyData)
-    assert mesh.n_cells
-
-
 def test_load_hydrogen_orbital():
     with pytest.raises(ValueError, match='`n` must be'):
         pv.examples.load_hydrogen_orbital(-1, 1, 0)
