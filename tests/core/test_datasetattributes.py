@@ -761,6 +761,105 @@ def test_update(uniform, copy):
             assert shares_memory
 
 
+def test_set_arrays_dict(hexbeam, copy):
+    """Basic functionality for dict input on cell/point/field."""
+    # cell
+    hexbeam.clear_data()
+    n = hexbeam.n_cells
+    arrs = {'a': np.arange(n), 'b': np.arange(n) + 10}
+    hexbeam.cell_data.set_arrays(arrs, copy=copy)
+    assert 'a' in hexbeam.cell_data
+    assert 'b' in hexbeam.cell_data
+    np.testing.assert_array_equal(hexbeam.cell_data['a'], arrs['a'])
+    # shares memory only when not copy and original was ndarray
+    if not copy:
+        assert np.shares_memory(hexbeam.cell_data['b'], arrs['b'])
+
+    # point
+    hexbeam.clear_data()
+    n = hexbeam.n_points
+    arrs = {'x': np.ones(n), 'y': np.zeros(n)}
+    hexbeam.point_data.set_arrays(arrs)
+    assert len(hexbeam.point_data) == 2
+
+    # field (scalars get len=1 handling)
+    hexbeam.clear_data()
+    hexbeam.field_data.set_arrays({'meta': 42, 'tag': np.array(7)})
+    assert 'meta' in hexbeam.field_data
+
+
+def test_set_arrays_from_other_dsa(uniform):
+    """Copying from another DataSetAttributes."""
+    src = uniform
+    dst = pv.ImageData(dimensions=src.dimensions)
+    dst.point_data.set_arrays(src.point_data, copy=True)
+    for k in src.point_data.keys():
+        assert k in dst.point_data
+        # copied so no share
+        assert not np.shares_memory(dst.point_data[k], src.point_data[k])
+
+    # copy=False path
+    dst2 = pv.ImageData(dimensions=src.dimensions)
+    dst2.point_data.set_arrays(src.point_data, copy=False)
+    for k in src.point_data.keys():
+        # when zero-copy possible they share
+        assert (
+            np.shares_memory(dst2.point_data[k], src.point_data[k])
+            or dst2.point_data[k].dtype != src.point_data[k].dtype
+        )
+
+
+def test_set_arrays_does_not_auto_set_active_scalars(hexbeam):
+    """Unlike [], set_arrays should not promote first array to active scalars."""
+    hexbeam.clear_data()
+    n = hexbeam.n_cells
+    hexbeam.cell_data.set_arrays({'one': np.arange(n), 'two': np.arange(n) + 1})
+    # no active scalars should have been chosen
+    assert hexbeam.cell_data.active_scalars_name is None
+
+
+def test_set_arrays_type_error(hexbeam):
+    with pytest.raises(TypeError, match='must be a dict or DataSetAttributes'):
+        hexbeam.cell_data.set_arrays([1, 2, 3])  # type: ignore[arg-type]
+
+
+def test_set_arrays_length_validation(hexbeam):
+    """_prepare_array length checks still apply."""
+    hexbeam.clear_data()
+    bad = {'bad': np.arange(3)}  # wrong length for cells
+    with pytest.raises(ValueError, match='Invalid array shape'):
+        hexbeam.cell_data.set_arrays(bad)
+
+
+def test_set_arrays_perf_guard(hexbeam):
+    """Guard that hundreds of arrays is fast (<0.5s for 600)."""
+    import time
+
+    hexbeam.clear_data()
+    n = hexbeam.n_cells
+    # 600 "plies"
+    many = {f'ply_{i}': np.random.default_rng(i).random(n) for i in range(600)}
+    t0 = time.perf_counter()
+    hexbeam.cell_data.set_arrays(many)
+    dt = time.perf_counter() - t0
+    assert dt < 0.5, f'set_arrays took {dt:.3f}s for 600 arrays (should be fast)'
+    assert len(hexbeam.cell_data) >= 600
+
+
+# Convenience wrappers on DataSet
+def test_dataset_set_point_cell_arrays(hexbeam):
+    hexbeam.clear_data()
+    npt = hexbeam.n_points
+    ncl = hexbeam.n_cells
+    pdata = {'p1': np.arange(npt), 'p2': np.arange(npt) + 100}
+    cdata = {'c1': np.arange(ncl)}
+    # test chaining and both
+    out = hexbeam.set_point_arrays(pdata).set_cell_arrays(cdata)
+    assert out is hexbeam
+    assert 'p1' in hexbeam.point_data
+    assert 'c1' in hexbeam.cell_data
+
+
 # -----------------------------------------------------------------------------
 # Tabular export: to_pandas / to_arrow / __arrow_c_stream__
 # -----------------------------------------------------------------------------

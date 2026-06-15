@@ -1183,6 +1183,93 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         for array_name in self.keys():
             self.remove(key=array_name)
 
+    @_deprecate_positional_args(allowed=['arrays'])
+    def set_arrays(
+        self: Self,
+        arrays: dict[str, ArrayLike] | DataSetAttributes,
+        copy: bool = True,  # noqa: FBT001, FBT002
+    ) -> None:
+        """Set multiple arrays at once using the fast VTK path.
+
+        This is the bulk counterpart to :func:`set_array` (and the ``[]``
+        operator / :meth:`update`).  It avoids the quadratic overhead that
+        repeated single-array assignments incur for large numbers of arrays
+        (hundreds of layers/plies in composite or drape workflows).
+
+        Internally this uses VTK ``AddArray`` in a tight loop (with a single
+        ``Modified()`` at the end for the ``dict`` input path).
+
+        Parameters
+        ----------
+        arrays : dict[str, ArrayLike] or DataSetAttributes
+            A dictionary mapping array names to array-like objects, or another
+            :class:`DataSetAttributes` instance whose arrays will be copied in.
+            All arrays must have a length compatible with the association
+            (``n_points``, ``n_cells``, or 1 for field data scalars).
+
+        copy : bool, default: True
+            When ``True`` (default) a copy of the data is made.  When ``False``
+            a zero-copy path is used where possible (the input must be
+            C-contiguous and of a VTK-compatible dtype).
+
+        See Also
+        --------
+        set_array
+        update
+
+        Notes
+        -----
+        * This method does **not** automatically promote the first added array
+          to be the active scalars (unlike the ``[]`` setter).  Use
+          :attr:`active_scalars_name` afterwards if needed.
+        * Adding arrays with duplicate names to an existing set will follow
+          the same semantics as repeated calls to :func:`set_array` (VTK
+          append/replace behaviour).
+        * For the common case of a plain ``dict`` this is dramatically faster
+          than ``.update(dict_of_arrays)`` once ``N > ~100``.
+
+        Examples
+        --------
+        Add a few hundred arrays efficiently (e.g. layered composite results).
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Sphere()
+        >>> n_layers = 200
+        >>> layers = {
+        ...     f'layer_{i}': np.random.default_rng(i).random(mesh.n_cells)
+        ...     for i in range(n_layers)
+        ... }
+        >>> mesh.cell_data.set_arrays(layers)
+        >>> len(mesh.cell_data) >= n_layers
+        True
+
+        Copy everything from another DataSetAttributes (point/cell/field).
+
+        >>> src = pv.Sphere()
+        >>> src.point_data.set_array(range(src.n_points), 'foo')
+        >>> src.point_data.set_array(range(src.n_points), 'bar')
+        >>> mesh = pv.Sphere()
+        >>> mesh.point_data.set_arrays(src.point_data, copy=True)
+        >>> 'foo' in mesh.point_data and 'bar' in mesh.point_data
+        True
+
+        """
+        if isinstance(arrays, dict):
+            for name, arr in arrays.items():
+                vtk_arr = self._prepare_array(data=arr, name=name, deep_copy=copy)
+                self.VTKObject.AddArray(vtk_arr)
+            self.VTKObject.Modified()
+        elif isinstance(arrays, DataSetAttributes):
+            # Delegate to set_array for the other-DataSetAttributes case.
+            # This reuses all the type / association / complex handling and is
+            # typically used with modest numbers of arrays.
+            for name in arrays.keys():
+                self.set_array(arrays[name], name, deep_copy=copy)
+        else:
+            msg = 'arrays must be a dict or DataSetAttributes'
+            raise TypeError(msg)
+
     @_deprecate_positional_args(allowed=['array_dict'])
     def update(
         self: Self,

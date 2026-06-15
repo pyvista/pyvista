@@ -529,6 +529,30 @@ and the name of the active scalars array can be accessed or set with
    >>> ugrid.cell_data.active_scalars_name = 'my-cell-data'
    >>> ugrid.cell_data
 
+When adding a very large number of arrays (hundreds), repeated use of
+``[]`` or :meth:`~pyvista.DataSetAttributes.update` can become slow
+(quadratic).  Use the dedicated bulk method instead:
+
+.. jupyter-execute::
+
+   >>> many = {
+   ...     f'layer_{i}': np.random.random(ugrid.n_cells) for i in range(50)
+   ... }
+   >>> ugrid.cell_data.set_arrays(many)  # fast O(N) path
+   >>> 'layer_0' in ugrid.cell_data and 'layer_49' in ugrid.cell_data
+   True
+
+Convenience helpers also exist directly on the dataset:
+
+.. jupyter-execute::
+
+   >>> ugrid.set_cell_arrays({'c0': range(ugrid.n_cells)})
+   >>> ugrid.set_point_arrays({'p0': range(ugrid.n_points)})
+
+See :meth:`pyvista.DataSetAttributes.set_arrays`,
+:meth:`pyvista.DataSet.set_cell_arrays` and
+:meth:`pyvista.DataSet.set_point_arrays` for details.
+
 
 Point Data
 ~~~~~~~~~~

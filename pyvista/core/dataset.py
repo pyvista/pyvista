@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from pyvista import CellType
     from pyvista import PointSet
 
+    from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumberType
     from ._typing_core import NumpyArray
@@ -1039,6 +1040,56 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
+
+    def set_cell_arrays(self: Self, arrays: dict[str, ArrayLike], copy: bool = True) -> Self:  # noqa: FBT001, FBT002
+        """Set many cell arrays at once using the fast bulk path.
+
+        Convenience wrapper for :meth:`~pyvista.DataSetAttributes.set_arrays`.
+
+        Parameters
+        ----------
+        arrays : dict
+            ``{name: array}`` mapping.
+        copy : bool, default: True
+            Copy the arrays.
+
+        Returns
+        -------
+        DataSet
+            Returns ``self`` for chaining.
+
+        See Also
+        --------
+        pyvista.DataSetAttributes.set_arrays
+
+        """
+        self.cell_data.set_arrays(arrays, copy=copy)
+        return self
+
+    def set_point_arrays(self: Self, arrays: dict[str, ArrayLike], copy: bool = True) -> Self:  # noqa: FBT001, FBT002
+        """Set many point arrays at once using the fast bulk path.
+
+        Convenience wrapper for :meth:`~pyvista.DataSetAttributes.set_arrays`.
+
+        Parameters
+        ----------
+        arrays : dict
+            ``{name: array}`` mapping.
+        copy : bool, default: True
+            Copy the arrays.
+
+        Returns
+        -------
+        DataSet
+            Returns ``self`` for chaining.
+
+        See Also
+        --------
+        pyvista.DataSetAttributes.set_arrays
+
+        """
+        self.point_data.set_arrays(arrays, copy=copy)
+        return self
 
     def _attributes_for_association(
         self: Self, association: FieldAssociation
