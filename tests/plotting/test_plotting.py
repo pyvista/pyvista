@@ -6285,15 +6285,25 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
-def test_solid_sphere_resolution_matches_sphere():
+@pytest.mark.parametrize(
+    ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (0, 90, 0, 90)]
+)
+def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta, end_theta):
     import pyvista as pv
 
     data: dict[str, pv.DataSet] = {}
-    angle1, angle2 = 4, 8
-    for phi, theta in [(angle1, angle2), (angle2, angle1)]:
-        kwargs = {'phi_resolution': phi, 'theta_resolution': theta}
-        data[f'Sphere {phi} {theta}'] = pv.Sphere(**kwargs)
-        data[f'Solid {phi} {theta}'] = pv.SolidSphere(**kwargs)
+    res1, res2 = 4, 8
+    for phi_res, theta_res in [(res1, res2), (res2, res1)]:
+        kwargs = {
+            'phi_resolution': phi_res,
+            'theta_resolution': theta_res,
+            'start_phi': start_phi,
+            'end_phi': end_phi,
+            'start_theta': start_theta,
+            'end_theta': end_theta,
+        }
+        data[f'Sphere {phi_res} {theta_res}'] = pv.Sphere(**kwargs)
+        data[f'Solid {phi_res} {theta_res}'] = pv.SolidSphere(**kwargs)
 
     pv.plot_compare_four(
         *data.values(),
