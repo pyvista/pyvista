@@ -459,11 +459,11 @@ def Sphere(  # noqa: PLR0917
         Configure the tessellation of the sphere.
 
         - ``'triangle'``: tessellate with all :attr:`~pyvista.CellType.TRIANGLE` cells.
-        - ``'phi_theta'``: tessellate the sphere with :attr:`~pyvista.CellType.QUAD` cells
+        - ``'phi_theta'``: tessellate with :attr:`~pyvista.CellType.QUAD` cells
           aligned to the phi and theta directions. Cells at the poles are
           :attr:`~pyvista.CellType.TRIANGLE` cells.
 
-          .. versionadded:: 0.49
+        .. versionadded:: 0.49
 
     texture_coordinates : bool, default: False
         If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
