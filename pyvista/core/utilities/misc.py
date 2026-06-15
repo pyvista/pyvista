@@ -459,15 +459,17 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
 
     def __getattr__(cls, name: str) -> Any:
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
-        if sys.meta_path is not None:
-            from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
-                _resolve_pending_accessor,
-            )
+        if sys.meta_path is None:
+            return None
 
-            if _resolve_pending_accessor(name):
-                return getattr(cls, name)
-            msg = f'type object {cls.__name__!r} has no attribute {name!r}'
-            raise AttributeError(msg)
+        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
+            _resolve_pending_accessor,
+        )
+
+        if _resolve_pending_accessor(name):
+            return getattr(cls, name)
+        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)
 
 
 def _hasattr_static(obj: Any, attr: str) -> bool:
