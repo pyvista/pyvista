@@ -114,9 +114,6 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_sun_surface`
             Download the surface of the Sun.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
-
         :ref:`planets_example`
             Example plot of the solar system.
 
@@ -152,9 +149,6 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_moon_surface`
             Download the surface of the Moon.
-
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
 
         :ref:`planets_example`
             Example plot of the solar system.
@@ -192,9 +186,6 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_mercury_surface`
             Download the surface of Mercury.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
-
         :ref:`planets_example`
             Example plot of the solar system.
 
@@ -230,9 +221,6 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_venus_surface`
             Download the surface of the Venus.
-
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
 
         :ref:`planets_example`
             Example plot of the solar system.
@@ -270,9 +258,6 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.examples.load_globe_texture`
             Download the surface of the Earth.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
-
         :ref:`planets_example`
             Example plot of the solar system.
 
@@ -309,9 +294,6 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_mars_surface`
             Download the surface of Mars.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
-
         :ref:`planets_example`
             Example plot of the solar system.
 
@@ -347,9 +329,6 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_jupiter_surface`
             Download the surface of Jupiter.
-
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
 
         :ref:`planets_example`
             Example plot of the solar system.
@@ -414,7 +393,7 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=100):
     outer : float, default: 0.5
         The outer radius.
 
-    c_res : int, default: 90
+    c_res : int, default: 100
         The number of points in the circumferential direction.
 
     Returns
@@ -438,6 +417,9 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=100):
 
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
+
+        :func:`~pyvista.examples.planets.download_saturn_surface`
+            Download the surface of Saturn.
 
         :ref:`planets_example`
             Example plot of the solar system.
@@ -535,9 +517,6 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_uranus_surface`
             Download the surface of Uranus.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
-
         :ref:`planets_example`
             Example plot of the solar system.
 
@@ -573,9 +552,6 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_neptune_surface`
             Download the surface of Neptune.
-
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
 
         :ref:`planets_example`
             Example plot of the solar system.
