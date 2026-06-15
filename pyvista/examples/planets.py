@@ -77,7 +77,7 @@ def load_planet(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 def _planet_deprecated(name):
     # Deprecated on 0.49.0, estimated removal on v0.52.0
-    if pv.version_info >= (0, 52):
+    if pv.version_info >= (0, 52):  # pragma: no cover
         msg = f'Remove deprecated function `load_{name}`.'
         raise RuntimeError(msg)
     warn_external(
@@ -380,7 +380,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_planet_rings(*, inner=0.25, outer=0.5, c_res=100):
+def load_planet_rings(*, inner=0.25, outer=0.5, c_res=50):
     """Load planetary as a disc with texture coordinates.
 
     Arguments are passed on to :func:`pyvista.Disc`.
@@ -395,8 +395,8 @@ def load_planet_rings(*, inner=0.25, outer=0.5, c_res=100):
     outer : float, default: 0.5
         The outer radius.
 
-    c_res : int, default: 100
-        The number of points in the circumferential direction.
+    c_res : int, default: 50
+        The number of cells in the circumferential direction.
 
     Returns
     -------
@@ -480,7 +480,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
 
     """
     # Deprecated on 0.49.0, estimated removal on v0.52.0
-    if pv.version_info >= (0, 52):
+    if pv.version_info >= (0, 52):  # pragma: no cover
         msg = 'Remove deprecated `load_saturn_rings`.'
         raise RuntimeError(msg)
     warn_external(

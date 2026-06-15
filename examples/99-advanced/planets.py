@@ -61,7 +61,7 @@ saturn_texture = examples.planets.download_saturn_surface(texture=True)
 # Saturn's rings range from 7000.0 km to 80000.0 km from the surface of the planet
 inner = 60268.0 + 7000.0
 outer = 60268.0 + 80000.0
-saturn_rings = examples.planets.load_planet_rings(inner=inner, outer=outer, c_res=50)
+saturn_rings = examples.planets.load_planet_rings(inner=inner, outer=outer)
 saturn_rings_texture = examples.planets.download_saturn_rings(texture=True)
 
 uranus = examples.planets.load_planet(radius=25559.0)

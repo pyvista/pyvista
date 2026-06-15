@@ -113,6 +113,15 @@ def test_load_planet():
     assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e-1)
 
 
+def test_load_planet_rings():
+    rings = examples.planets.load_planet_rings()
+    assert isinstance(rings, pv.PolyData)
+    assert 'Texture Coordinates' in rings.point_data
+    assert rings['Texture Coordinates'].shape == (rings.n_points, 2)
+    assert rings.n_points == 100
+    assert rings.n_cells == 50
+
+
 def test_load_hydrogen_orbital():
     with pytest.raises(ValueError, match='`n` must be'):
         pv.examples.load_hydrogen_orbital(-1, 1, 0)
