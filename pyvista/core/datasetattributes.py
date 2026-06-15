@@ -1267,7 +1267,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             for name in arrays.keys():
                 self.set_array(arrays[name], name, deep_copy=copy)
         else:
-            msg = 'arrays must be a dict or DataSetAttributes'
+            msg = 'arrays must be a dict or DataSetAttributes'  # type: ignore[unreachable]
             raise TypeError(msg)
 
     @_deprecate_positional_args(allowed=['array_dict'])
