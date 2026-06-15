@@ -2299,7 +2299,7 @@ class DatasetCard:
             func_name = 'load_' + dataset_name
             if hasattr(pv.examples.examples, func_name):
                 func = getattr(pv.examples.examples, func_name)
-            if hasattr(pv.examples.examples, func_name):
+            elif hasattr(pv.examples.examples, func_name):
                 func = getattr(pv.examples.planets, func_name)
 
         if func is None:
