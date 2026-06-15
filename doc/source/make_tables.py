@@ -2295,10 +2295,12 @@ class DatasetCard:
         elif hasattr(pv.examples.planets, func_name):
             func = getattr(pv.examples.planets, func_name)
         else:
-            # Get `load` function from examples.py
+            # Get `load` function from examples.py or planets.py
             func_name = 'load_' + dataset_name
             if hasattr(pv.examples.examples, func_name):
                 func = getattr(pv.examples.examples, func_name)
+            if hasattr(pv.examples.examples, func_name):
+                func = getattr(pv.examples.planets, func_name)
 
         if func is None:
             msg = f'Dataset function {func_name} does not exist.'
