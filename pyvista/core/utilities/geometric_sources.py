@@ -2035,8 +2035,8 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         out = wrap(self.GetOutput())
 
         if self.texture_coordinates:
-            partial_phi = (self.end_phi - self.start_phi) != 180
-            partial_theta = (self.end_theta - self.start_theta) != 360
+            partial_phi = not np.isclose(self.end_phi - self.start_phi, 180)
+            partial_theta = not np.isclose(self.end_theta - self.start_theta, 360)
             if partial_phi or partial_theta:
                 msg = 'Texture coordinates is not supported for partial spheres.'
                 raise ValueError(msg)
