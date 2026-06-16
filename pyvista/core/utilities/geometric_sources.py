@@ -2061,7 +2061,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
 
             # Replace point ids in seam cells with new duplicate points
             faces = out.faces
-            faces.flags['WRITEABLE'] = True
+            faces.flags['WRITEABLE'] = True  # Write in-place to avoid making a copy
             replacement = dict(zip(seam_point_ids, new_point_ids, strict=True))
             polys = out.GetPolys()
 
