@@ -2055,6 +2055,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             texture_coordinates = np.vstack(
                 (texture_coordinates, texture_coordinates[seam_point_ids])
             )
+            # Original seam "u" values are 0.0, duplicate values are 1.0
             texture_coordinates[new_point_ids, 0] = 1.0
             out.active_texture_coordinates = texture_coordinates
 
