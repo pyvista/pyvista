@@ -6312,7 +6312,7 @@ def test_sphere_texture_seam_default(tessellation, style):
 @pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
 def test_sphere_texture_seam(tessellation):
     data: dict[str, pv.DataSet] = {}
-    for phi, theta in [(10, 20), (20, 10), (100, 150), (2, 4)]:
+    for phi, theta in [(10, 20), (20, 10), (100, 150), (4, 8)]:
         data[f'p={phi} t={theta}'] = pv.Sphere(
             phi_resolution=phi,
             theta_resolution=theta,
