@@ -472,6 +472,17 @@ def Sphere(  # noqa: PLR0917
 
         This option is only supported for complete spheres.
 
+        .. note::
+
+            For textures of Earth such as :func:`~pyvista.examples.examples.load_globe_texture`,
+            the texture's seam corresponds to 180 degrees longitude. Accordingly, it is necessary
+            to rotate the sphere 180 degrees along the polar axis, (e.g. using
+            :meth:`~pyvista.DataSetFilters.rotate_x`) to ensure correct orientation with
+            the Prime Meridian along the positive x-axis.
+
+            In this case, consider using :func:`~pyvista.examples.planets.load_earth` instead,
+            which already includes this rotation.
+
         .. versionadded:: 0.49
 
     Returns
@@ -484,6 +495,8 @@ def Sphere(  # noqa: PLR0917
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
+    :func:`pyvista.examples.planets.load_earth`
+        Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
 
     Examples
     --------
