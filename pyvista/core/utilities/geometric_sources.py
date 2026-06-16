@@ -2066,13 +2066,15 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             polys = out.GetPolys()
 
             # Find seam cells where u coordinates span the 0->1 transition
+            candidate_cell_ids = {
+                cell_id for point_id in seam_point_ids for cell_id in out.point_cell_ids(point_id)
+            }
             seam_cell_ids = set()
-            for point_id in seam_point_ids:
-                for cell_id in out.point_cell_ids(point_id):
-                    cell_point_ids = out.get_cell(cell_id).point_ids
-                    u_vals = texture_coordinates[cell_point_ids, 0]
-                    if u_vals.max() - u_vals.min() > 0.5:  # spans the seam
-                        seam_cell_ids.add(cell_id)
+            for cell_id in candidate_cell_ids:
+                cell_point_ids = out.get_cell(cell_id).point_ids
+                u_vals = texture_coordinates[cell_point_ids, 0]
+                if u_vals.max() - u_vals.min() > 0.5:
+                    seam_cell_ids.add(cell_id)
 
             for cell_id in seam_cell_ids:
                 # Location of the face in the interleaved connectivity
