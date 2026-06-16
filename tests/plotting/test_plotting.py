@@ -6286,10 +6286,27 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
 
 
 @pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
-def test_sphere_texture_seam_default(tessellation):
-    texture = examples.load_globe_texture()
+@pytest.mark.parametrize('style', ['textured', 'edges'])
+def test_sphere_texture_seam_default(tessellation, style):
     sphere = pv.Sphere(texture_coordinates=True, tessellation=tessellation)
-    sphere.plot(cpos='yz', zoom=2, texture=texture)
+    plot_kwargs = {}
+    pl = pv.Plotter()
+    if style == 'textured':
+        plot_kwargs['texture'] = examples.load_globe_texture()
+    else:
+        sphere['u_coords'] = sphere.active_texture_coordinates[:, 0]
+        plot_kwargs['show_edges'] = True
+        seam = sphere.extract_feature_edges(
+            boundary_edges=True,
+            feature_edges=False,
+            manifold_edges=False,
+            non_manifold_edges=False,
+        )
+        pl.add_mesh(seam, color='magenta', line_width=3)
+    pl.add_mesh(sphere, **plot_kwargs)
+    pl.view_yz()
+    pl.zoom_camera(2)
+    pl.show()
 
 
 @pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
