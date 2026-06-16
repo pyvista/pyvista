@@ -477,7 +477,7 @@ def Sphere(  # noqa: PLR0917
             For textures of Earth such as :func:`~pyvista.examples.examples.load_globe_texture`,
             the texture's seam corresponds to 180 degrees longitude. Accordingly, it is necessary
             to rotate the sphere 180 degrees along the polar axis, (e.g. using
-            :meth:`~pyvista.DataSetFilters.rotate_x`) to ensure correct orientation with
+            :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
             the Prime Meridian along the positive x-axis.
 
             In this case, consider using :func:`~pyvista.examples.planets.load_earth` instead,
