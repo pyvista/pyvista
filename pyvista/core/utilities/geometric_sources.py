@@ -2057,7 +2057,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             partial_phi = not np.isclose(self.end_phi - self.start_phi, 180)
             partial_theta = not np.isclose(self.end_theta - self.start_theta, 360)
             if partial_phi or partial_theta:
-                msg = 'Texture coordinates is not supported for partial spheres'
+                msg = 'Texture coordinates are not supported for partial spheres'
                 raise ValueError(msg)
             # Insert a topological seam by duplicating points
             # This is needed so that texture coordinates do NOT render with a seam

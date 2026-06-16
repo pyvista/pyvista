@@ -131,7 +131,7 @@ def test_sphere_texture_coordinates():
     )
     assert sphere.n_open_edges == (phi_resolution - 1) * 2
 
-    match = 'Texture coordinates is not supported for partial spheres'
+    match = 'Texture coordinates are not supported for partial spheres'
     with pytest.raises(ValueError, match=match):
         _ = pv.Sphere(texture_coordinates=True, start_phi=1)
     with pytest.raises(ValueError, match=match):
