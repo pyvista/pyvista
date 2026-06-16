@@ -33,7 +33,8 @@ def pytest_generate_tests(metafunc):
         test_cases_planets = [
             case for case in test_cases_planets if case.dataset_function[0].startswith('download')
         ]
-        test_cases = [*test_cases_downloads, *test_cases_planets]
+        test_cases_gltf = _generate_dataset_loader_test_cases_from_module(pv.examples.gltf)
+        test_cases = [*test_cases_downloads, *test_cases_planets, *test_cases_gltf]
         ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
