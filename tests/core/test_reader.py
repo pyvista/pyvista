@@ -1377,7 +1377,8 @@ def test_prostar_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_grdecl_reader(tmp_path):
+@pytest.mark.parametrize('as_reader', [True, False])
+def test_grdecl_reader(tmp_path, as_reader):
     def read(content, include_content, **kwargs):
         path = tmp_path
 
@@ -1387,7 +1388,14 @@ def test_grdecl_reader(tmp_path):
         with Path.open(path / '3x3x3_include.grdecl', 'w') as f:
             f.write(''.join(include_content))
 
-        return pv.core.utilities.fileio.read_grdecl(path / '3x3x3.grdecl', **kwargs)
+        filepath = path / '3x3x3.grdecl'
+        if as_reader:
+            reader = pv.GRDECLReader(filepath)
+            for key, value in kwargs.items():
+                setattr(reader, key, value)
+            return reader.read()
+        else:
+            return pv.core.utilities.fileio.read_grdecl(filepath, **kwargs)
 
     path = Path(__file__).parent.parent / 'example_files'
 
@@ -1446,6 +1454,22 @@ def test_grdecl_reader(tmp_path):
     include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
+
+
+def test_erdgcl_reader_properties():
+    path = Path(__file__).parent.parent / 'example_files' / '3x3x3.grdecl'
+
+    reader = pv.GRDECLReader(path)
+    assert reader.elevation is True
+    reader.elevation = False
+    assert reader.elevation is False
+
+    assert reader.other_keywords is None
+    reader.other_keywords = ['KEYWORD']
+    assert reader.other_keywords == ['KEYWORD']
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
 
 
 def test_nek5000_reader():

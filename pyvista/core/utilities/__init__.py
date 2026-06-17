@@ -197,6 +197,7 @@ from .reader import GaussianCubeReader as GaussianCubeReader
 from .reader import GESignaReader as GESignaReader
 from .reader import GIFReader as GIFReader
 from .reader import GLTFReader as GLTFReader
+from .reader import GRDECLReader as GRDECLReader
 from .reader import HDFReader as HDFReader
 from .reader import HDRReader as HDRReader
 from .reader import JPEGReader as JPEGReader

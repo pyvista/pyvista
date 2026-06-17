@@ -446,8 +446,6 @@ def _read_dispatch(  # noqa: PLR0911
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
-    if ext.lower() == '.grdecl':
-        return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
         msg = (
             'VRML files must be imported directly into a Plotter. '
