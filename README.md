@@ -20,12 +20,26 @@
   <a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" /></a>
 </p>
 
-PyVista is:
+<p align="center">
+  <em>
+    PyVista is an open source, community-owned project, MIT licensed and
+    <a href="https://numfocus.org/sponsored-projects/affiliated-projects">NumFOCUS Affiliated</a>.
+  </em>
+</p>
+
+<p align="center">
+  <em>
+    <a href="https://codimensional.com"><strong>CoDimensional PBC</strong></a>,
+    founded by PyVista maintainers, is the project's commercial steward.
+  </em>
+</p>
+
+PyVista provides:
 
 - a NumPy-native API for 3D visualization and mesh analysis
 - dataset structures and filters for points, surfaces, and volumes
 - one plotting framework for notebooks, scripts, CI, and apps
-- streamlined 3D for newcomers and graphics experts alike
+- a streamlined 3D interface for newcomers and graphics experts alike
 
 ![PyVista IPython demo](https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif)
 

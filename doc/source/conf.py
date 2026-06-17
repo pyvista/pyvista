@@ -680,6 +680,7 @@ html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
+    'codimensional.css',  # pin partner card to bottom of right sidebar
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -793,6 +794,13 @@ html_sidebars = {
         'sbt-sidebar-nav.html',
     ],
 }
+
+# Pin the CoDimensional PBC partner card to the bottom of the right
+# (secondary) sidebar, below the page table of contents, on every page.
+html_theme_options['secondary_sidebar_items'] = [
+    'page-toc.html',
+    'codimensional.html',
+]
 
 
 class PlaceHolderImage(Image):
