@@ -213,7 +213,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 def test_read_exodus_raises(sideset):
     match = (
         '`read_exodus` is deprecated and will be removed in a future version. '
-        'Use `pyvista.ExodusIIReader` instead.'
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
         with pytest.raises(

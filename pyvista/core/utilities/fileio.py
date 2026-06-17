@@ -586,7 +586,7 @@ def read_exodus(  # noqa: PLR0917
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
     .. deprecated:: 0.49
-        Use :class:`~pyvista.ExodusIIReader` instead.
+        Use :func:`pyvista.read` or :class:`pyvista.ExodusIIReader` instead.
 
     Parameters
     ----------
@@ -636,7 +636,7 @@ def read_exodus(  # noqa: PLR0917
         raise RuntimeError(msg)
     msg = (
         '`read_exodus` is deprecated and will be removed in a future version. '
-        'Use `pyvista.ExodusIIReader` instead.'
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
     )
     warn_external(msg, PyVistaDeprecationWarning)
 
