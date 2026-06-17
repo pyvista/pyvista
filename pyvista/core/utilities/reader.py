@@ -79,6 +79,7 @@ _mesh_types = Literal[
     'StructuredGrid',
     'PointSet',
     'PartitionedDataSet',
+    'ExplicitStructuredGrid',
 ]
 _legacy_dataset_types = Literal[  # no PointSet
     'UnstructuredGrid',

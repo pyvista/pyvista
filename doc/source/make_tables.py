@@ -406,6 +406,10 @@ class PartitionedDataSetIOTable(MeshIOTable):
     class_name = 'PartitionedDataSet'
 
 
+class ExplicitStructuredGridIOTable(MeshIOTable):
+    class_name = 'ExplicitStructuredGrid'
+
+
 class CellQualityMeasuresTable(DocTable):
     """Class to generate table for cell quality measures."""
 
@@ -3588,6 +3592,7 @@ def make_all_tables() -> list[str]:  # noqa: D103
     UnstructuredGridIOTable.generate()
     MultiBlockIOTable.generate()
     PartitionedDataSetIOTable.generate()
+    ExplicitStructuredGridIOTable.generate()
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
