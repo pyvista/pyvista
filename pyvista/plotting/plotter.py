@@ -609,6 +609,11 @@ class BasePlotter(_BoundsSizeMixin):
             Set the camera viewing angle to one compatible with the
             default three.js perspective (``'xy'``).
 
+        See Also
+        --------
+        pyvista.GLTFReader
+            Read GLTF file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -646,6 +651,11 @@ class BasePlotter(_BoundsSizeMixin):
         filename : str | Path
             Path to the VRML file.
 
+        See Also
+        --------
+        pyvista.VRMLReader
+            Read VRML file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -677,6 +687,11 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         filename : str | Path
             Path to the 3DS file.
+
+        See Also
+        --------
+        pyvista.ThreeDSReader
+            Read 3DS file as a mesh.
 
         Examples
         --------
@@ -710,6 +725,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         filename_mtl : str | Path, optional
             Path to the .mtl file.
+
+        See Also
+        --------
+        pyvista.OBJReader
+            Read OBJ file as a mesh.
 
         Examples
         --------
@@ -8479,9 +8499,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         """
         return [
-            actor.mapper.dataset
+            pv.wrap(actor.GetMapper().GetDataSetInput())
             for actor in self.actors.values()
-            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
+            if hasattr(actor, 'GetMapper') and hasattr(actor.GetMapper(), 'GetDataSetInput')
         ]
 
 
