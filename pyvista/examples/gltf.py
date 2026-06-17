@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import pooch
 
-import pyvista as pv
-from pyvista import _vtk
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples.downloads import USER_DATA_PATH
 
@@ -32,23 +30,11 @@ def _download_gltf(path: str):
     return GLTF_FETCHER.fetch(path)
 
 
-def _read_as_meshes(file: str) -> pv.DataObject | tuple[pv.DataObject, ...]:
-    pl = pv.Plotter()
-    pl.import_gltf(file)
-    meshes = tuple(
-        pv.wrap(actor.GetMapper().GetDataSetInput())
-        for actor in pl.actors.values()
-        if isinstance(actor, _vtk.vtkActor)
-    )
-    return meshes[0] if len(meshes) == 1 else meshes
-
-
 def _gltf_loader(name):
     return _SingleFileDownloadableDatasetLoader(
         _GLTF_PATHS[name],
         base_url=_GLTF_BASE_URL,
         download_func=_download_gltf,
-        read_func=_read_as_meshes,  # type: ignore[arg-type]
     )
 
 
