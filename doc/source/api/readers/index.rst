@@ -67,8 +67,10 @@ Reader Classes
     STLReader
     SegYReader
     SeriesReader
+    ThreeDSReader
     TIFFReader
     TecplotReader
+    VRMLReader
     VTKDataSetReader
     VTKPDataSetReader
     XMLImageDataReader

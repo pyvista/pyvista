@@ -1947,3 +1947,17 @@ def test_forbid_empty_series_file(tmp_path: Path):
 
     with pytest.raises(ValueError, match='No datasets found in series file'):
         pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_vrml_reader():
+    filename = examples.vrml.download_grasshopper()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_threeds_reader():
+    filename = examples.download_3ds.download_iflamigm()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
