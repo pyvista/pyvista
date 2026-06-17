@@ -8498,11 +8498,17 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [
-            pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
-            for actor in self.actors.values()
-            if hasattr(actor, 'GetMapper') and _mapper_has_data_set_input(actor.GetMapper())
-        ]
+        meshes = []
+        for actor in self.actors.values():
+            if mapper := getattr(actor, 'GetMapper', None)():
+                if _mapper_has_data_set_input(mapper):
+                    # Need to update any input connections to ensure a mesh is generated
+                    if conn := mapper.GetInputConnection(0, 0):
+                        conn.GetProducer().Update()
+
+                    dataset = _mapper_get_data_set_input(mapper)
+                    meshes.append(pv.wrap(dataset))
+        return meshes
 
 
 # Tracks created plotters.  This is the end of the module as we need to
