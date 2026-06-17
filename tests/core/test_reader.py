@@ -211,11 +211,16 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
-    with pytest.raises(
-        TypeError,
-        match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
-    ):
-        pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
+    match = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.ExodusIIReader` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
+        ):
+            pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
 
 
 def test_get_reader_fail(tmp_path):

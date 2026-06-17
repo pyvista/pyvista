@@ -444,8 +444,6 @@ def _read_dispatch(  # noqa: PLR0911
         return read_meshio(filename, file_format)
 
     ext = _get_ext_force(filename, force_ext)
-    if ext in ['.e', '.exo']:
-        return read_exodus(filename)
     if ext.lower() == '.grdecl':
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
@@ -587,6 +585,9 @@ def read_exodus(  # noqa: PLR0917
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
+    .. deprecated:: 0.49
+        Use :class:`~pyvista.ExodusIIReader` instead.
+
     Parameters
     ----------
     filename : str, Path
@@ -629,6 +630,15 @@ def read_exodus(  # noqa: PLR0917
 
     """
     from .helpers import wrap  # noqa: PLC0415
+
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.ExodusIIReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
 
     reader = _vtk.vtkExodusIIReader()
     reader.SetFileName(str(filename))
