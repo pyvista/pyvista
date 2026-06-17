@@ -2758,7 +2758,7 @@ class _GRDECLReader(BaseVTKReader):
 class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
     """GRDECLReader for .grdecl files.
 
-    Uses :func:`~pyvista.read_erdgcl` internally.
+    Uses :func:`~pyvista.read_grdecl` internally.
 
     .. versionadded:: 0.49
 
