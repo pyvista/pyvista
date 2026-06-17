@@ -41,6 +41,7 @@ Reader Classes
     GESignaReader
     GIFReader
     GLTFReader
+    GRDECLReader
     HDFReader
     HDRReader
     JPEGReader
