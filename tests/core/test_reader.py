@@ -1391,6 +1391,9 @@ def test_grdecl_reader(tmp_path):
 
     path = Path(__file__).parent.parent / 'example_files'
 
+    mesh = pv.read(path / '3x3x3.grdecl')
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
+
     with Path.open(path / '3x3x3.grdecl') as f:
         content = list(f)
 
