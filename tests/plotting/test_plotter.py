@@ -699,6 +699,31 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_plotter_meshes_mapper_without_dataset_input():
+    mapper = _vtk.vtkPolyDataMapper()
+    assert mapper.GetInput() is None
+
+    actor = _vtk.vtkActor()
+    actor.SetMapper(mapper)
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(actor)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_actor_without_mapper():
+    prop = _vtk.vtkPropAssembly()
+    assert not hasattr(prop, 'GetMapper')
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(prop)
+
+    result = pl.meshes
+    assert result == []
+
+
 def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
     pl = pv.Plotter()

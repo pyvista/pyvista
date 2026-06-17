@@ -8500,14 +8500,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         """
         meshes: list[pv.DataSet | pv.MultiBlock] = []
         for actor in self.actors.values():
-            if getter := getattr(actor, 'GetMapper', None):
-                mapper = getter()
-                if _mapper_has_data_set_input(mapper):
+            try:
+                mapper = actor.GetMapper()
+                dataset = _mapper_get_data_set_input(mapper)
+            except AttributeError:
+                continue
+            else:
+                if isinstance(dataset, _vtk.vtkDataObject):
                     # Need to update any input connections to ensure a mesh is generated
                     if conn := mapper.GetInputConnection(0, 0):
                         conn.GetProducer().Update()
-
-                    dataset = _mapper_get_data_set_input(mapper)
                     meshes.append(pv.wrap(dataset))
         return meshes
 
