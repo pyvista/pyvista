@@ -2799,7 +2799,7 @@ class GIFReader(BaseReader['ImageData']):
 
 
 def _read_from_plotter(filename, kind: Literal['vrml', '3ds']):
-    pl = pv.Plotter()
+    pl = pv.Plotter(off_screen=True)
     importer = getattr(pl, f'import_{kind}')
     importer(filename)
     meshes = pv.MultiBlock(pl.meshes)

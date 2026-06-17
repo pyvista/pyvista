@@ -8499,9 +8499,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         """
         return [
-            pv.wrap(actor.GetMapper().GetDataSetInput())
+            pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
             for actor in self.actors.values()
-            if hasattr(actor, 'GetMapper') and hasattr(actor.GetMapper(), 'GetDataSetInput')
+            if hasattr(actor, 'GetMapper') and _mapper_has_data_set_input(actor.GetMapper())
         ]
 
 
