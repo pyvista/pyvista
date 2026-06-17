@@ -6961,8 +6961,8 @@ class BasePlotter(_BoundsSizeMixin):
         >>> mesh = pv.Sphere()
         >>>_ = plotter.add.mesh(mesh)
         >>> plotter.reset_camera_clipping_range()
+
         """
-        
         self.renderer.ResetCameraClippingRange()
 
     @_deprecate_positional_args(allowed=['light'])
