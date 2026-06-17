@@ -3668,7 +3668,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             return self.reader.GetSideSetArrayName(name)
         if isinstance(name, str):
             return name
-        msg = f'Could not parse sideset ID/name: {name} with type {type(name)}'
+        msg = f'Could not parse sideset ID/name: {name} with type {type(name)}'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     def enable_side_set_array(self, name: str | int) -> None:
