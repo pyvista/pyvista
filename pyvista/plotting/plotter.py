@@ -79,6 +79,7 @@ from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .opts import StereoType
 from .picking import PickingComponent
+from .prop_collection import _PropCollection
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
 from .renderer import Renderer
@@ -8498,19 +8499,28 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        meshes: list[pv.DataSet | pv.MultiBlock] = []
-        for actor in self.actors.values():
+
+        def _append_actor_dataset(prop: _vtk.vtkProp) -> None:
             try:
-                mapper = actor.GetMapper()
+                mapper = prop.GetMapper()  # type: ignore[attr-defined]
                 dataset = _mapper_get_data_set_input(mapper)
             except AttributeError:
-                continue
+                return
             else:
                 if isinstance(dataset, _vtk.vtkDataObject):
                     # Need to update any input connections to ensure a mesh is generated
                     if conn := mapper.GetInputConnection(0, 0):
                         conn.GetProducer().Update()
                     meshes.append(pv.wrap(dataset))
+
+        meshes: list[pv.DataSet | pv.MultiBlock] = []
+        for actor in self.actors.values():
+            if isinstance(actor, _vtk.vtkPropAssembly):
+                for part in _PropCollection(actor.GetParts()):
+                    _append_actor_dataset(part)
+            else:
+                _append_actor_dataset(actor)
+
         return meshes
 
 
