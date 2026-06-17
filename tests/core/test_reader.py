@@ -1854,6 +1854,77 @@ def test_exodus_blocks():
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
 
 
+def test_exodus_reader_animate_mode_shapes():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    # check default value matches vtkExodusIIReader default
+    default = bool(e_reader.reader.GetAnimateModeShapes())
+    assert e_reader.animate_mode_shapes == default
+
+    # check setter
+    e_reader.animate_mode_shapes = True
+    assert e_reader.reader.GetAnimateModeShapes() == 1
+
+    e_reader.animate_mode_shapes = False
+    assert e_reader.reader.GetAnimateModeShapes() == 0
+
+
+def test_exodus_reader_side_set_arrays():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    expected_names = ['bottom', 'top']
+
+    # check count and names
+    assert e_reader.number_side_set_arrays == len(expected_names)
+    assert e_reader.side_set_array_names == expected_names
+
+    # check all enabled by default (matching read_exodus default behavior)
+    for name in expected_names:
+        assert e_reader.side_set_array_status(name)
+
+    # check disable/enable by name
+    for name in expected_names:
+        e_reader.disable_side_set_array(name)
+        assert not e_reader.side_set_array_status(name)
+
+        e_reader.enable_side_set_array(name)
+        assert e_reader.side_set_array_status(name)
+
+    # check disable/enable by index
+    for i, _ in enumerate(expected_names):
+        e_reader.disable_side_set_array(i)
+        assert not e_reader.side_set_array_status(i)
+
+        e_reader.enable_side_set_array(i)
+        assert e_reader.side_set_array_status(i)
+
+    # check enable_all / disable_all
+    e_reader.disable_all_side_set_arrays()
+    for name in expected_names:
+        assert not e_reader.side_set_array_status(name)
+
+    e_reader.enable_all_side_set_arrays()
+    for name in expected_names:
+        assert e_reader.side_set_array_status(name)
+
+
+@pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+def test_exodus_reader_side_set_array_raises(sideset):
+    e_reader = pv.get_reader(examples.download_mug(load=False))
+    match = re.escape(f'Could not parse sideset ID/name: {sideset}')
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.enable_side_set_array(sideset)
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.disable_side_set_array(sideset)
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.side_set_array_status(sideset)
+
+
 def test_vtu_series_reader():
     filename = examples.download_file('vtu_series/wavy.zip')
     reader = pv.get_reader(filename[0])

@@ -3223,6 +3223,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
+        self.enable_all_side_set_arrays()
 
     def read_global(self) -> pv.Table:
         """Read enabled global data.
@@ -3618,6 +3619,119 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         """
         self.reader.SetTimeStep(time_point)
+
+    @property
+    def animate_mode_shapes(self) -> bool:
+        """Return or set whether mode shape animation is enabled.
+
+        When ``True``, the reader will report a continuous time range [0, 1]
+        and animate the displacements in a periodic sinusoid.
+
+        .. versionadded:: 0.49
+
+        """
+        return bool(self.reader.GetAnimateModeShapes())
+
+    @animate_mode_shapes.setter
+    def animate_mode_shapes(self, value: bool) -> None:
+        self.reader.SetAnimateModeShapes(value)
+
+    @property
+    def number_side_set_arrays(self) -> int:
+        """Return the number of side set arrays.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfSideSetArrays()
+
+    @property
+    def side_set_array_names(self) -> list[str]:
+        """Return the list of all side set array names.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        list[str]
+
+        """
+        return [self.reader.GetSideSetArrayName(i) for i in range(self.number_side_set_arrays)]
+
+    def _resolve_side_set_name(self, name: str | int) -> str:
+        """Resolve a side set name or index to a name."""
+        if isinstance(name, int):
+            return self.reader.GetSideSetArrayName(name)
+        if isinstance(name, str):
+            return name
+        msg = f'Could not parse sideset ID/name: {name} with type {type(name)}'
+        raise TypeError(msg)
+
+    def enable_side_set_array(self, name: str | int) -> None:
+        """Enable a side set array by name or index.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        name : str | int
+            Side set name or index.
+
+        """
+        self.reader.SetSideSetArrayStatus(self._resolve_side_set_name(name), 1)
+
+    def disable_side_set_array(self, name: str | int) -> None:
+        """Disable a side set array by name or index.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        name : str | int
+            Side set name or index.
+
+        """
+        self.reader.SetSideSetArrayStatus(self._resolve_side_set_name(name), 0)
+
+    def side_set_array_status(self, name: str | int) -> bool:
+        """Get the enabled status of a side set array by name or index.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        name : str | int
+            Side set name or index.
+
+        Returns
+        -------
+        bool
+            Whether the side set array is enabled.
+
+        """
+        return bool(self.reader.GetSideSetArrayStatus(self._resolve_side_set_name(name)))
+
+    def enable_all_side_set_arrays(self) -> None:
+        """Enable all side sets.
+
+        .. versionadded:: 0.49
+
+        """
+        for name in self.side_set_array_names:
+            self.enable_side_set_array(name)
+
+    def disable_all_side_set_arrays(self) -> None:
+        """Disable all side sets.
+
+        .. versionadded:: 0.49
+
+        """
+        for name in self.side_set_array_names:
+            self.disable_side_set_array(name)
 
 
 class _FRDReader(BaseVTKReader):
