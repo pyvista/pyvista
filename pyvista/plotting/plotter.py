@@ -8500,6 +8500,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         """
 
+        def _iter_leaf_props(prop: _vtk.vtkProp) -> Iterator[_vtk.vtkProp]:
+            if hasattr(prop, 'GetParts'):
+                for part in _PropCollection(prop.GetParts()):
+                    yield from _iter_leaf_props(part)
+            else:
+                yield prop
+
         def _append_actor_dataset(prop: _vtk.vtkProp) -> None:
             try:
                 mapper = prop.GetMapper()  # type: ignore[attr-defined]
@@ -8515,11 +8522,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         meshes: list[pv.DataSet | pv.MultiBlock] = []
         for actor in self.actors.values():
-            if isinstance(actor, _vtk.vtkPropAssembly):
-                for part in _PropCollection(actor.GetParts()):
-                    _append_actor_dataset(part)
-            else:
-                _append_actor_dataset(actor)
+            for leaf in _iter_leaf_props(actor):
+                _append_actor_dataset(leaf)
 
         return meshes
 
