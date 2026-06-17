@@ -126,8 +126,9 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
 
     # Load installed deps using freeze
     installer: UvInstaller = tox_env.installer
+    cmd = [*installer.freeze_cmd(), '--exclude-editable']
     out = tox_env.execute(
-        installer.freeze_cmd(),
+        cmd=cmd,
         stdin=StdinSource.OFF,
         show=False,
         run_id='check_deps',
