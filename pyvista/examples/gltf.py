@@ -26,15 +26,11 @@ GLTF_FETCHER = pooch.create(  # type: ignore[attr-defined]
 )
 
 
-def _download_gltf(path: str):
-    return GLTF_FETCHER.fetch(path)
-
-
 def _gltf_loader(name):
     return _SingleFileDownloadableDatasetLoader(
         _GLTF_PATHS[name],
         base_url=_GLTF_BASE_URL,
-        download_func=_download_gltf,
+        download_func=GLTF_FETCHER.fetch,
     )
 
 
