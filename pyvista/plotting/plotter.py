@@ -8498,9 +8498,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        meshes = []
+        meshes: list[pv.DataSet | pv.MultiBlock] = []
         for actor in self.actors.values():
-            if mapper := getattr(actor, 'GetMapper', None)():
+            if getter := getattr(actor, 'GetMapper', None):
+                mapper = getter()
                 if _mapper_has_data_set_input(mapper):
                     # Need to update any input connections to ensure a mesh is generated
                     if conn := mapper.GetInputConnection(0, 0):
