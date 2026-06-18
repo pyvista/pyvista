@@ -380,7 +380,7 @@ def read(  # noqa: PLR0917
     >>> mesh = pv.read('mesh.obj')  # doctest:+SKIP
 
     Load a ``.foam`` file and use keyword arguments to set reader-specific properties
-    such as :attr:`~pyvista.POpenFOAMReader.skip_zero_time`.
+    such as :attr:`~pyvista.OpenFOAMReader.skip_zero_time`.
 
     >>> file = examples.download_openfoam_tubes(load=False)
     >>> mesh = pv.read(file, skip_zero_time=True)
