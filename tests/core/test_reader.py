@@ -1964,3 +1964,16 @@ def test_threeds_reader():
     reader = pv.get_reader(filename)
     mesh = reader.read()
     assert isinstance(mesh, pv.MultiBlock)
+
+    # Necessary to check bounds since these will be uninitialized if Update()
+    # wasn't called when reading
+    expected_bounds = pv.BoundsTuple(
+        x_min=-5.379246234893799,
+        x_max=5.364696979522705,
+        y_min=-1.9769330024719238,
+        y_max=2.731842041015625,
+        z_min=-7.883847236633301,
+        z_max=5.437096118927002,
+    )
+
+    assert np.allclose(mesh.bounds, expected_bounds)
