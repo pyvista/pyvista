@@ -8516,8 +8516,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             else:
                 if isinstance(dataset, _vtk.vtkDataObject):
                     # Need to update any input connections to ensure a mesh is generated
-                    if conn := mapper.GetInputConnection(0, 0):
-                        conn.GetProducer().Update()
+                    if input_alg := mapper.GetInputAlgorithm():
+                        input_alg.Update()
                     meshes.append(pv.wrap(dataset))
 
         meshes: list[pv.DataSet | pv.MultiBlock] = []
