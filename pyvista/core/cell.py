@@ -709,8 +709,7 @@ class CellArray(
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
 
-        self.ExportLegacyFormat(idarr := _vtk.vtkIdTypeArray())
-        imported_size = _vtk.vtk_to_numpy(idarr).size
+        imported_size = self.GetNumberOfCells() + self.GetNumberOfConnectivityIds()
 
         # https://github.com/pyvista/pyvista/pull/5404
         if imported_size != cells.size:
@@ -766,8 +765,22 @@ class CellArray(
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
-        vtk_offsets = numpy_to_idarr(offsets, deep=deep)
-        vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        offsets = np.asarray(offsets)
+        connectivity = np.asarray(connectivity)
+
+        # ``vtkCellArray`` natively supports 32-bit storage (VTK >= 9). When both
+        # arrays are already ``int32`` we preserve that instead of casting up to
+        # ``pv.ID_TYPE`` (``int64``), which avoids copying and doubling the memory of
+        # large offset/connectivity arrays. See https://github.com/pyvista/pyvista/issues/8477
+        if offsets.dtype == np.int32 and connectivity.dtype == np.int32:
+            vtk_offsets = _vtk.numpy_to_vtk(np.ascontiguousarray(offsets.ravel()), deep=deep)
+            vtk_connectivity = _vtk.numpy_to_vtk(
+                np.ascontiguousarray(connectivity.ravel()), deep=deep
+            )
+            self.Use32BitStorage()
+        else:
+            vtk_offsets = numpy_to_idarr(offsets, deep=deep)
+            vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get

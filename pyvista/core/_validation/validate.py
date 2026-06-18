@@ -77,7 +77,7 @@ def validate_array(
     strict_upper_bound: bool = False,
     reshape_to: int | tuple[int, ...] | None = None,
     broadcast_to: int | tuple[int, ...] | None = None,
-    dtype_out: npt.DTypeLike = None,
+    dtype_out: npt.DTypeLike | None = None,
     as_any: bool = True,
     copy: bool = False,
     to_list: bool = False,

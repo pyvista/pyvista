@@ -2392,6 +2392,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         """
         for renderer in self.renderers:
+            if renderer._actors is None:  # the renderer has been closed
+                continue
             for actor in renderer._actors:
                 if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
@@ -7052,7 +7054,8 @@ class BasePlotter(_BoundsSizeMixin):
         return [
             tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
-            if name in self.renderers[index]._actors.keys()
+            if self.renderers[index]._actors is not None
+            and name in self.renderers[index]._actors.keys()
         ]
 
     # =======================================================================

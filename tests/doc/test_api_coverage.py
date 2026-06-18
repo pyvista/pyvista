@@ -85,9 +85,11 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'parse_font_family',  # internal helper
         'raise_has_duplicates',  # internal assertion
         'raise_not_matching',  # internal assertion
+        'read_pickle',  # back-compat stub; raises ValueError (pickle is not a file format)
         'remove_alpha',  # internal helper
         'row_array',  # low-level array-by-row accessor
         'run_image_filter',  # internal helper
+        'save_pickle',  # back-compat stub; raises ValueError (pickle is not a file format)
         'scale_point',  # internal helper
         'system_supports_plotting',  # internal helper
         'threaded',  # internal threading decorator

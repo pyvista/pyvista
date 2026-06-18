@@ -70,8 +70,11 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
 # Prevent deprecated features from being used in examples
@@ -455,6 +458,13 @@ def _filter_sphinx_gallery_warnings():
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
     )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
+    )
 
     # Treat all remaining warnings as errors
     warnings.simplefilter('error', append=True)
@@ -670,6 +680,7 @@ html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
+    'codimensional.css',  # pin partner card to bottom of right sidebar
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -783,6 +794,13 @@ html_sidebars = {
         'sbt-sidebar-nav.html',
     ],
 }
+
+# Pin the CoDimensional PBC partner card to the bottom of the right
+# (secondary) sidebar, below the page table of contents, on every page.
+html_theme_options['secondary_sidebar_items'] = [
+    'page-toc.html',
+    'codimensional.html',
+]
 
 
 class PlaceHolderImage(Image):

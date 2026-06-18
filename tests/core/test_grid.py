@@ -445,7 +445,7 @@ def test_save_bad_extension():
     # can extend it (e.g. pyvista_zarr adding ``.zarr``). Verify the
     # bad-extension framing and that all the built-in extensions are
     # listed; that's the contract users rely on.
-    builtin_exts = ['.vtu', '.vtk', '.pkl', '.pickle']
+    builtin_exts = ['.vtu', '.vtk']
     # ``.pv`` / ``.zvtk`` come from the optional ``pyvista-zstd`` plugin which
     # is only installed in envs that pin VTK >= 9.4 (see tox.ini).
     if importlib.util.find_spec('pyvista_zstd') is not None:

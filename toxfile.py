@@ -13,6 +13,8 @@ from tox.tox_env.errors import Fail
 from tox_uv._run import UvVenvRunner
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from tox.config.sets import EnvConfigSet
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
@@ -23,13 +25,26 @@ if TYPE_CHECKING:
 CONSTRAINTS_FILE = 'constraints.txt'
 
 
+def _get_ci_xdist_auto_workers() -> str:
+    """Return a resource-aware worker count for heavy CI xdist jobs."""
+    cpu_count = os.cpu_count() or 1
+    return str(max(1, cpu_count // 2))
+
+
 @impl
 def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001, D103
     if os.environ.get('CI', 'false').lower() != 'true':
         return
 
-    if env_conf.env_name in ['docs-build', 'doctest-modules']:
+    if env_conf.env_name == 'docs-build':
         env_conf['set_env'].update({'VTK_DEFAULT_OPENGL_WINDOW': 'vtkEGLRenderWindow'})
+        return
+
+    if env_conf.env_name == 'doctest-modules':
+        updated = {'VTK_DEFAULT_OPENGL_WINDOW': 'vtkEGLRenderWindow'}
+        if os.environ['RUNNER_OS'] == 'Linux':
+            updated['PYTEST_XDIST_AUTO_NUM_WORKERS'] = _get_ci_xdist_auto_workers()
+        env_conf['set_env'].update(updated)
         return
 
     # For plotting tests on Linux with vtk < 9.4, some segfaults have been spotted
@@ -82,6 +97,24 @@ def tox_on_install(  # noqa: PLR0917
             getattr(package, 'deps', []).append(constraints_file_dep)
 
 
+def _normalize_package_name(name: str) -> str:
+    """Taken from https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization."""
+    return re.sub(r'[-_.]+', '-', name).lower()
+
+
+def _get_freezed_requirements(lines: list[str]) -> Generator[tuple[str, Version], None, None]:
+    """From a freeze output, get the list of installed requirements as (name, version) tuples.
+
+    Note that the name is normalized per packaging specifications (see https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization).
+    """
+    for l in lines:
+        if l.startswith('-e '):  # installed in editable mode, e.g., MNE-Python
+            continue
+        req = Requirement(l)
+        if (m := re.match(r'(.*)==(\S+)', str(req.specifier))) is not None:
+            yield _normalize_package_name(req.name), Version(m.group(2))
+
+
 @impl
 def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """Check that deps declared in the constraints_file (ie. during the `deps` step above)
@@ -93,8 +126,9 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
 
     # Load installed deps using freeze
     installer: UvInstaller = tox_env.installer
+    cmd = [*installer.freeze_cmd(), '--exclude-editable']
     out = tox_env.execute(
-        installer.freeze_cmd(),
+        cmd=cmd,
         stdin=StdinSource.OFF,
         show=False,
         run_id='check_deps',
@@ -103,21 +137,16 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
     # Parse installed deps from the freeze output.
     # Relies on the fact the the freeze command outputs lines in the
     # form of `package==version` (eg. `vtk==9.2.2`)
-    installed = out.out.splitlines()
-
-    installed = [(Requirement(r).name, Requirement(r).specifier) for r in installed]
-    installed = [
-        (r[0], Version(m.group(2)))
-        for r in installed
-        if (m := re.match(r'(.*)==(\S+)', str(r[1]))) is not None
-    ]
+    installed = list(_get_freezed_requirements(out.out.splitlines()))
 
     # Check that the installed requirements match the constraints file ones
     for req in requirements:
         # Get the installed requirement matching the current one
-        installed_req = next((r for r in installed if r[0] == req.name), None)
+        name = _normalize_package_name(req.name)
+
+        installed_req = next((r for r in installed if r[0] == name), None)
         if not installed_req:
-            msg = f'The required package {req.name} is not installed in the environment.'
+            msg = f'The required package {name} is not installed in the environment.'
             raise Fail(msg)
 
         # Check that the installed requirement version matches the specifier in
@@ -130,6 +159,6 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
             raise Fail(msg)
 
         logging.warning(  # noqa: LOG015
-            f'Installed {req.name} version ({version_installed}) matches the required version'
+            f'Installed {name} version ({version_installed}) matches the required version'
             f' ({req.specifier}).'
         )

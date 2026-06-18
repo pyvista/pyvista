@@ -72,17 +72,13 @@ jobs:
     with:
       runs-on: "ubuntu-22.04"
 
-  # For self-hosted runners, we need to cache each runner separately
+  # The macOS self-hosted runner needs its own cache (GitHub-hosted runners
+  # share cache-github-hosted across Linux and Windows).
   cache-macOS-self-hosted:
     name: Cache pyvista/data
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "macos-15-self-hosted"
-  cache-ubuntu-self-hosted:
-    name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "ubuntu-22.04-self-hosted"
 
   macOS:
     name: ${{ matrix.name }}
@@ -161,8 +157,8 @@ jobs:
 
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
-    runs-on: ${{ matrix.runner-labels }}
-    needs: cache-ubuntu-self-hosted
+    runs-on: ubuntu-22.04
+    needs: cache-github-hosted
     strategy:
       fail-fast: false
 
@@ -173,35 +169,28 @@ jobs:
           - python-version: "3.10"
             vtk-version: "9.2.2"
             numpy-version: "1.26"
-            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.11"
             vtk-version: "9.2.6"
             numpy-version: "latest"
-            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.12"
             vtk-version: "9.3.1"
             numpy-version: "latest"
-            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
             vtk-version: "9.4.2"
             numpy-version: "latest"
-            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
             vtk-version: "9.5.2"
             numpy-version: "latest"
-            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.14"
             vtk-version: "latest"
             numpy-version: "latest"
-            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.14"
             vtk-version: "latest"
             numpy-version: "nightly"
-            runner-labels: "ubuntu-22.04-self-hosted"
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
-      PARALLEL: "-n4" # flag for pytest-xdist
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
     steps:
       - uses: actions/checkout@v6
         with:
@@ -215,14 +204,14 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
         with:
-          packages: xvfb
+          packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -275,8 +264,8 @@ jobs:
     name: Linux VTK Dev Testing
     permissions:
       contents: read
-    runs-on: ubuntu-22.04-self-hosted
-    needs: cache-ubuntu-self-hosted
+    runs-on: ubuntu-22.04
+    needs: cache-github-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -295,14 +284,14 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
         with:
-          packages: xvfb
+          packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -344,7 +333,7 @@ jobs:
     needs: cache-github-hosted
     env:
       CI_WINDOWS: true
-      PARALLEL: "-n2" # flag for pytest-xdist
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
     strategy:
       fail-fast: false
       matrix:
@@ -437,7 +426,7 @@ jobs:
           path: coverage*.xml
 
       - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           fail_ci_if_error: true
           use_oidc: true

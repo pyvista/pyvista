@@ -126,7 +126,7 @@ def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
     expected = textwrap.dedent(
         """\
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown option: "--foo=1".                                         │
+    │ Unknown option: --foo=1.                                           │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -795,7 +795,7 @@ def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
     out = capsys.readouterr().out
     expected = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
-        '│ Invalid value for "FIELDS": unable to convert "foo" into           │\n'
+        '│ Invalid value for FIELDS: unable to convert "foo" into             │\n'
         '│ Literal[cell_data_wrong_length,                                    │\n'
         '│ point_data_wrong_length]|Literal[non_finite_points,                │\n'
         '│ unused_points]|Literal[coincident_points, degenerate_faces,        │\n'
@@ -1073,8 +1073,8 @@ class CasesPlot:
     @case(tags='raises')
     def case_anti_aliasing_raises(self):
         return '--anti-aliasing=foo', [
-            'Invalid value for "--anti-aliasing": unable to convert "foo" into',
-            "one of {'ssaa', 'msaa', 'fxaa'}.",
+            'Invalid value "foo" for --anti-aliasing. Choose from: "ssaa",',
+            '"msaa", "fxaa".',
         ]
 
     @case(tags='raises')
@@ -1083,12 +1083,12 @@ class CasesPlot:
         """Test when the window size does not have exactly two elements."""
         if window_size == '100':
             errors = [
-                'Invalid value "[100]" for "--window-size". Window size must be a',
+                'Invalid value "[100]" for --window-size. Window size must be a',
                 'list of two integers.',
             ]
         elif window_size in {'100 200 300', '[100,200,300]'}:
             errors = [
-                'Invalid value "[100, 200, 300]" for "--window-size". Window size ',
+                'Invalid value "[100, 200, 300]" for --window-size. Window size ',
                 'must be a list of two integers.',
             ]
 
@@ -1100,7 +1100,7 @@ class CasesPlot:
         """Test when the window size does not have the correct type."""
         obj = 'a' if window_size == '100 a' else 'b'
         return f'--window-size {window_size}', [
-            f'Invalid value for "--window-size": unable to convert "{obj}" into int.',
+            f'Invalid value for --window-size: unable to convert "{obj}" into int.',
         ]
 
     @case(tags='raises')
@@ -1235,7 +1235,7 @@ class CasesPlotFiles:
     @case(tags='raises')
     def case_empty(self):
         """Test when no files are passed"""
-        return '', ['Command "plot" parameter "--files" requires an argument.']
+        return '', ['Command "plot" parameter --files requires an argument.']
 
     @case(tags='raises')
     def case_one_exists(self, tmp_path: Path):
