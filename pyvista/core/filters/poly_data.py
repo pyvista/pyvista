@@ -2858,7 +2858,7 @@ class PolyDataFilters(DataSetFilters):
             normals = self.point_normals
 
         if flip:
-            normals *= -1  # type: ignore[misc]
+            normals *= -1
 
         pl.add_arrows(
             centers,

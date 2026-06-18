@@ -726,6 +726,56 @@ def test_rename_array_doesnt_delete():
     assert (mesh.point_data['renamed'] == 1).all()
 
 
+def test_rename_array_preserves_active_attributes():
+    # Regression test for issue #8746: renaming an array must not drop its active
+    # normals / texture coordinates / vectors / tensors designation, and must not
+    # promote the renamed array to the active scalars.
+    mesh = pv.Sphere()
+    n = mesh.n_points
+    point_data = mesh.point_data
+    point_data['my_normals'] = np.tile([0.0, 0.0, 1.0], (n, 1))
+    point_data.active_normals_name = 'my_normals'
+    point_data['my_tcoords'] = np.zeros((n, 2))
+    point_data.active_texture_coordinates_name = 'my_tcoords'
+    point_data['my_vectors'] = np.zeros((n, 3))
+    point_data.active_vectors_name = 'my_vectors'
+    point_data['my_tensors'] = np.zeros((n, 9))
+    mesh.active_tensors_name = 'my_tensors'
+    # Active normals/tcoords/vectors/tensors but explicitly NO active scalars:
+    # renaming must not add any.
+    point_data.active_scalars_name = None
+
+    def active_tensors_name():
+        # There is no attributes-level tensors accessor, and the dataset-level
+        # `active_tensors_name` reports stale state after a rename (see issue #8749),
+        # so read the actual state from VTK directly.
+        tensors = point_data.VTKObject.GetTensors()
+        return None if tensors is None else tensors.GetName()
+
+    # Sanity check the setup before renaming.
+    assert point_data.active_normals_name == 'my_normals'
+    assert point_data.active_texture_coordinates_name == 'my_tcoords'
+    assert point_data.active_vectors_name == 'my_vectors'
+    assert active_tensors_name() == 'my_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+    mesh.rename_array('my_normals', 'renamed_normals', preference='point')
+    mesh.rename_array('my_tcoords', 'renamed_tcoords', preference='point')
+    mesh.rename_array('my_vectors', 'renamed_vectors', preference='point')
+    mesh.rename_array('my_tensors', 'renamed_tensors', preference='point')
+
+    assert point_data.active_normals_name == 'renamed_normals'
+    assert point_data.active_normals is not None
+    assert point_data.active_texture_coordinates_name == 'renamed_tcoords'
+    assert point_data.active_texture_coordinates is not None
+    assert point_data.active_vectors_name == 'renamed_vectors'
+    assert point_data.active_vectors is not None
+    assert active_tensors_name() == 'renamed_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+
 def test_change_name_fail(hexbeam):
     with pytest.raises(KeyError):
         hexbeam.rename_array('not a key', '')

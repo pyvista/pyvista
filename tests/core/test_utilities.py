@@ -2571,6 +2571,15 @@ def test_vtk_verbosity_set_get():
         pv.vtk_verbosity()
 
 
+def test_vtk_verbosity_logging_disabled():
+    # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
+    # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
+    mock_logger = mock.MagicMock()
+    mock_logger.GetCurrentVerbosityCutoff.return_value = -10
+    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+        assert pv.vtk_verbosity() == 'off'
+
+
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
     match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
