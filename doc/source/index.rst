@@ -10,6 +10,22 @@
 
 |
 
+.. raw:: html
+
+   <p align="center">
+     <em>
+       PyVista is an open source, community-owned project, MIT licensed and
+       <a href="https://numfocus.org/sponsored-projects/affiliated-projects">NumFOCUS Affiliated</a>.
+     </em>
+   </p>
+
+   <p align="center">
+     <em>
+       <a href="https://codimensional.com"><strong>CoDimensional PBC</strong></a>,
+       founded by PyVista maintainers, is the project's commercial steward.
+     </em>
+   </p>
+
 
 Overview
 ********
@@ -322,7 +338,7 @@ Status
 Professional Support
 ********************
 
-PyVista is a community-driven Open Source project, but many users and organizations rely on it in production workflows, research pipelines, and custom visualization systems. If you need expert guidance, development help, or guaranteed support, there are several ways to engage with the people who build and maintain PyVista.
+PyVista is a community-owned Open Source project, but many users and organizations rely on it in production workflows, research pipelines, and custom visualization systems. If you need expert guidance, development help, or guaranteed support, there are several ways to engage with the people who build and maintain PyVista.
 
 For general inquiries, reach out to info@pyvista.org and we can help connect you with the right community experts for your 3D visualization or analysis needs.
 
