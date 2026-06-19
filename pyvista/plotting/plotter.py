@@ -6964,6 +6964,7 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.reset_camera_clipping_range()
         >>> pl.camera.clipping_range != (1.0, 10.0)
         True
+
         """
         self.renderer.ResetCameraClippingRange()
 
