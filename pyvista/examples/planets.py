@@ -72,17 +72,13 @@ def load_planet(radius=1.0, lat_resolution=50, lon_resolution=100):
 
 
 def _planet_load_func(radius=1.0, lat_resolution=50, lon_resolution=100):
-    # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
-    theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, -np.pi : np.pi : lon_resolution * 1j]
-    x = radius * np.sin(theta) * np.cos(phi)
-    y = radius * np.sin(theta) * np.sin(phi)
-    z = radius * np.cos(theta)
-    sphere = pv.StructuredGrid(x, y, z)
-    texture_coords = np.empty((sphere.n_points, 2))
-    texture_coords[:, 0] = (phi.ravel('F') + np.pi) / (2 * np.pi)
-    texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
-    sphere.active_texture_coordinates = texture_coords
-    return sphere.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+    return pv.Sphere(
+        radius=radius,
+        theta_resolution=lon_resolution,
+        phi_resolution=lat_resolution,
+        texture_coordinates=True,
+        tessellation='phi_theta',
+    ).rotate_z(180)  # rotate to align Earth's Prime Meridian to +X axis (0 degrees longitude)
 
 
 _dataset_planet = _DatasetLoader(_planet_load_func)
