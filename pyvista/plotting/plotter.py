@@ -6957,11 +6957,13 @@ class BasePlotter(_BoundsSizeMixin):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> mesh = pv.Sphere()
-        >>>_ = plotter.add.mesh(mesh)
-        >>> plotter.reset_camera_clipping_range()
-
+        >>> _ = pl.add_mesh(mesh)
+        >>> pl.camera.clipping_range = (1.0, 10.0)
+        >>> pl.reset_camera_clipping_range()
+        >>> pl.camera.clipping_range != (1.0, 10.0)
+        True
         """
         self.renderer.ResetCameraClippingRange()
 
