@@ -6952,7 +6952,20 @@ class BasePlotter(_BoundsSizeMixin):
             self._first_time = False
 
     def reset_camera_clipping_range(self) -> None:
-        """Reset camera clipping planes."""
+        """Reset camera clipping planes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Sphere()
+        >>> _ = pl.add_mesh(mesh)
+        >>> pl.camera.clipping_range = (1.0, 10.0)
+        >>> pl.reset_camera_clipping_range()
+        >>> pl.camera.clipping_range != (1.0, 10.0)
+        True
+
+        """
         self.renderer.ResetCameraClippingRange()
 
     @_deprecate_positional_args(allowed=['light'])
