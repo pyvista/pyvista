@@ -5,6 +5,7 @@ from __future__ import annotations
 # Magic vtk imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
 # isort: off
 import vtkmodules.vtkRenderingFreeType  # noqa: F401, TID251
+import vtkmodules.vtkRenderingContextOpenGL2  # noqa: F401, TID251
 import vtkmodules.vtkRenderingMatplotlib  # noqa: F401, TID251
 # isort: on
 
