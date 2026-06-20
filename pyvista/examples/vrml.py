@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from pyvista.examples.downloads import download_file
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 
-def download_teapot():  # pragma: no cover
-    """Download the a 2-manifold solid version of the famous teapot example.
+def download_teapot():
+    """Download a 2-manifold solid version of the famous teapot example.
 
     The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
     originally modeled by Martin Newell at the University of Utah in
@@ -28,11 +28,19 @@ def download_teapot():  # pragma: no cover
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Teapot Dataset <teapot_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return download_file('vrml/teapot.wrl')
+    return _dataset_teapot.download()
 
 
-def download_sextant():  # pragma: no cover
+_dataset_teapot = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
+
+
+def download_sextant():
     """Download the sextant example.
 
     Returns
@@ -49,11 +57,19 @@ def download_sextant():  # pragma: no cover
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Sextant Dataset <sextant_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return download_file('vrml/sextant.wrl')
+    return _dataset_sextant.download()
 
 
-def download_grasshopper():  # pragma: no cover
+_dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
+
+
+def download_grasshopper():
     """Download the grasshoper example.
 
     .. versionadded:: 0.45
@@ -77,5 +93,13 @@ def download_grasshopper():  # pragma: no cover
     ... )
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Grasshopper Dataset <grasshopper_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return download_file('grasshopper/grasshop.wrl')
+    return _dataset_grasshopper.download()
+
+
+_dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grasshop.wrl')

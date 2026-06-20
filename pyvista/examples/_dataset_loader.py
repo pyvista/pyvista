@@ -419,7 +419,10 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     def __init__(
         self,
         path: str,
+        *,
         target_file: str | None = None,
+        base_url: str | None = None,
+        download_func=None,
     ):
         _SingleFile.__init__(self, path)
 
@@ -442,8 +445,8 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             self._download_func = lambda _: path
         else:
             # Relative path, use vars from downloads.py
-            self._base_url = SOURCE
-            self._download_func = download_file
+            self._base_url = base_url or SOURCE
+            self._download_func = download_func or download_file
             self._source_name = Path(path).name if Path(path).is_absolute() else path
 
         target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
@@ -502,9 +505,13 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
         read_func: Callable[[str], DatasetObject] | None = None,
         load_func: Callable[[DatasetObject], DatasetObject] | None = None,
         target_file: str | None = None,
+        download_func=None,
+        base_url=None,
     ):
         _SingleFileDatasetLoader.__init__(self, path, read_func=read_func, load_func=load_func)
-        _DownloadableFile.__init__(self, path, target_file=target_file)
+        _DownloadableFile.__init__(
+            self, path, target_file=target_file, download_func=download_func, base_url=base_url
+        )
 
 
 class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
