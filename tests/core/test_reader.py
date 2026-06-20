@@ -1395,7 +1395,12 @@ def test_grdecl_reader(tmp_path, as_reader):
                 setattr(reader, key, value)
             return reader.read()
         else:
-            return pv.core.utilities.fileio.read_grdecl(filepath, **kwargs)
+            match = (
+                '`read_grdecl` is deprecated and will be removed in a future version. '
+                'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+            )
+            with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+                return pv.core.utilities.fileio.read_grdecl(filepath, **kwargs)
 
     path = Path(__file__).parent.parent / 'example_files'
 

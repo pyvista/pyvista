@@ -34,7 +34,7 @@ from .fileio import _FileIOBase
 from .fileio import _get_ext_force
 from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
-from .fileio import read_grdecl
+from .fileio import _read_grdecl
 from .helpers import wrap
 from .misc import _NoNewAttrMixin
 from .misc import abstract_class
@@ -2737,7 +2737,7 @@ class _GRDECLReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the GRDECL file and store internally to `_data_object`."""
-        self._data_object = read_grdecl(
+        self._data_object = _read_grdecl(
             self._filename,
             elevation=self._elevation,
             other_keywords=self._other_keywords,
