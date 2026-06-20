@@ -565,10 +565,17 @@ def StructuredSphere(
 
     - is a :class:`~pyvista.StructuredGrid` instead of :class:`~pyvista.PolyData`,
     - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells,
-    - includes a texture coordinates array,
+    - includes a texture coordinates array by default,
     - is not a closed surface (it has a seam with open edges),
     - the points and arrays have double precision instead of single,
     - does not support setting start and end phi/theta angles.
+
+    In particular, these two calls generate very similar geometry:
+
+    .. code-block:: python
+
+        sphere1 = pv.StructuredSphere().extract_surface()
+        sphere2 = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
@@ -587,6 +594,13 @@ def StructuredSphere(
     other ways, including how to address the degenerate-quads problem
     and plotting the sphere's seam.
 
+    .. warning::
+
+        Rendering :class:`~pyvista.StructuredGrid` with a texture will show
+        a visible discontinuity at the texture's seam. It is therefore
+        recommended to call :meth:`~pyvista.DataObjectFilters.extract_surface`
+        for prior to rendering for best visual results.
+
     .. versionadded:: 0.49
 
     Parameters
@@ -603,6 +617,9 @@ def StructuredSphere(
 
     theta_resolution : int, default: 30
         Set the number of points in the azimuthal direction.
+
+        .. note::
+            The theta dimension of the structured grid will be one more than this value.
 
     phi_resolution : int, default: 30
         Set the number of points in the polar direction.
@@ -643,6 +660,13 @@ def StructuredSphere(
 
     >>> sphere.active_texture_coordinates[0]
     pyvista_ndarray([0., 1.])
+
+    Show the dimensions. Since it has a seam with duplicate points in the theta direction, its
+    dimension is one more than the resolution.
+
+    >>> sphere = pv.StructuredSphere(phi_resolution=10, theta_resolution=20)
+    >>> sphere.dimensions
+    (10, 21, 1)
 
     Plot a textured sphere of Earth. Move the seam to the negative x-axis so
     that zero degrees longitude corresponds to the center of the texture.
