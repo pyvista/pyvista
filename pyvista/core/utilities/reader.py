@@ -34,12 +34,14 @@ from .fileio import _FileIOBase
 from .fileio import _get_ext_force
 from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
+from .fileio import read_grdecl
 from .helpers import wrap
 from .misc import _NoNewAttrMixin
 from .misc import abstract_class
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Sequence
 
     # These are referenced as string forward references in ``BaseReader``
     # generic parameterization on subclasses (e.g. ``BaseReader['PolyData']``)
@@ -49,6 +51,7 @@ if TYPE_CHECKING:
     # cannot see the reference inside a string literal.
     from pyvista import DataObject
     from pyvista import DataSet  # noqa: F401
+    from pyvista import ExplicitStructuredGrid  # noqa: F401
     from pyvista import ImageData  # noqa: F401
     from pyvista import MultiBlock  # noqa: F401
     from pyvista import PartitionedDataSet  # noqa: F401
@@ -76,6 +79,7 @@ _mesh_types = Literal[
     'StructuredGrid',
     'PointSet',
     'PartitionedDataSet',
+    'ExplicitStructuredGrid',
 ]
 _legacy_dataset_types = Literal[  # no PointSet
     'UnstructuredGrid',
@@ -2725,6 +2729,84 @@ class SegYReader(BaseReader['DataSet']):
     _output_types = ('StructuredGrid', 'ImageData')
 
 
+class _GRDECLReader(BaseVTKReader):
+    """Simulate a VTK reader for GRDECL files."""
+
+    def UpdateInformation(self) -> None:
+        """Update information from file."""
+
+    def Update(self) -> None:
+        """Read the GRDECL file and store internally to `_data_object`."""
+        self._data_object = read_grdecl(
+            self._filename,
+            elevation=self._elevation,
+            other_keywords=self._other_keywords,
+        )
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._elevation: bool = True
+        self._other_keywords: Sequence[str] | None = None
+
+    @property
+    def elevation(self) -> bool:
+        return self._elevation
+
+    @elevation.setter
+    def elevation(self, value: bool) -> None:
+        self._elevation = value
+
+    @property
+    def other_keywords(self) -> Sequence[str] | None:
+        return self._other_keywords
+
+    @other_keywords.setter
+    def other_keywords(self, value: Sequence[str] | None) -> None:
+        self._other_keywords = value
+
+
+class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
+    """GRDECLReader for .grdecl files.
+
+    Uses :func:`~pyvista.read_grdecl` internally.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    path : str | Path
+        Path to the GRDECL file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> reader = pv.get_reader('file.GRDECL')  # doctest:+SKIP
+    >>> reader.elevation = False  # doctest:+SKIP
+    >>> mesh = reader.read()  # doctest:+SKIP
+
+    """
+
+    _class_reader = _GRDECLReader
+
+    @property
+    def elevation(self) -> bool:
+        """Convert depths to elevations and flip grid along Z axis."""
+        return self._reader.elevation
+
+    @elevation.setter
+    def elevation(self, value: bool) -> None:
+        self._reader.elevation = value
+
+    @property
+    def other_keywords(self) -> Sequence[str] | None:
+        """Additional keywords to read."""
+        return self._reader.other_keywords
+
+    @other_keywords.setter
+    def other_keywords(self, value: Sequence[str] | None) -> None:
+        self._reader.other_keywords = value
+
+
 class _GIFReader(BaseVTKReader):
     """Simulate a VTK reader for GIF files."""
 
@@ -4228,6 +4310,7 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.grdecl': GRDECLReader,
     '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,
