@@ -33,6 +33,7 @@ from pyvista.core.utilities.misc import _reciprocal
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -1741,6 +1742,25 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
 
+    tessellation : 'triangle' | 'phi_theta', default: 'triangle'
+        Configure the tessellation of the sphere.
+
+        - ``'triangle'``: tessellate with all :attr:`~pyvista.CellType.TRIANGLE` cells.
+        - ``'phi_theta'``: tessellate with :attr:`~pyvista.CellType.QUAD` cells
+          aligned to the phi and theta directions. Cells at the poles are
+          :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        .. versionadded:: 0.49
+
+    texture_coordinates : bool, default: False
+        If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
+        Enabling this option will also generate a topological seam at ``theta=0`` by duplicating
+        vertices, and the sphere will not be a closed surface.
+
+        This option is only supported for complete spheres.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
@@ -1777,6 +1797,8 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         end_theta: float = 360.0,
         start_phi: float = 0.0,
         end_phi: float = 180.0,
+        tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
+        texture_coordinates: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the sphere source class."""
         super().__init__()
@@ -1789,6 +1811,8 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         self.end_theta = end_theta
         self.start_phi = start_phi
         self.end_phi = end_phi
+        self.tessellation = tessellation
+        self._texture_coordinates = texture_coordinates
 
     @property
     def center(self: SphereSource) -> tuple[float, float, float]:
@@ -1983,6 +2007,26 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         self.SetEndPhi(end_phi)
 
     @property
+    def tessellation(
+        self: SphereSource,
+    ) -> Literal['triangle', 'phi_theta']:  # numpydoc ignore: RT01
+        """Configure the tessellation of the sphere."""
+        return 'phi_theta' if self.GetLatLongTessellation() else 'triangle'
+
+    @tessellation.setter
+    def tessellation(self: SphereSource, tessellation: Literal['triangle', 'phi_theta']) -> None:
+        self.SetLatLongTessellation(tessellation == 'phi_theta')
+
+    @property
+    def texture_coordinates(self) -> bool:  # numpydoc ignore: RT01
+        """Enable or disable the generation of texture coordinates."""
+        return self._texture_coordinates
+
+    @texture_coordinates.setter
+    def texture_coordinates(self, texture_coordinates: bool) -> None:
+        self._texture_coordinates = texture_coordinates
+
+    @property
     def output(self: SphereSource) -> PolyData:
         """Get the output data object for a port on this algorithm.
 
@@ -1992,8 +2036,76 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             Sphere surface.
 
         """
+
+        def _compute_texture_coordinates() -> NumpyArray[float]:
+            """Compute phi and theta from points and normalize as texture coordinates."""
+            x, y, z = points[:, 0], points[:, 1], points[:, 2]
+
+            theta = np.arctan2(y, x)  # [-pi, pi]
+            theta = np.mod(theta, 2 * np.pi)  # [0, 2pi)
+
+            phi = np.arccos(z / self.radius)  # [0, pi]
+
+            u = theta / (2 * np.pi)
+            v = 1.0 - phi / np.pi
+            return np.c_[u, v]
+
         self.Update()
-        return wrap(self.GetOutput())
+        out = wrap(self.GetOutput())
+
+        if self.texture_coordinates:
+            partial_phi = not np.isclose(self.end_phi - self.start_phi, 180)
+            partial_theta = not np.isclose(self.end_theta - self.start_theta, 360)
+            if partial_phi or partial_theta:
+                msg = 'Texture coordinates are not supported for partial spheres'
+                raise ValueError(msg)
+            # Insert a topological seam by duplicating points
+            # This is needed so that texture coordinates do NOT render with a seam
+            n_points = out.n_points
+            seam_point_ids = range(2, self.phi_resolution)  # Skip the poles (ids 0 and 1)
+            new_point_ids = range(n_points, n_points + len(seam_point_ids))
+            points = out.points
+            out.points = np.vstack((points, points[seam_point_ids]))
+
+            normals = cast('pyvista_ndarray', out.active_normals)
+            out.point_data.active_normals = np.vstack((normals, normals[seam_point_ids]))
+
+            texture_coordinates = _compute_texture_coordinates()
+            texture_coordinates = np.vstack(
+                (texture_coordinates, texture_coordinates[seam_point_ids])
+            )
+            # Original seam "u" values are 0.0, duplicate values are 1.0
+            texture_coordinates[new_point_ids, 0] = 1.0
+            out.active_texture_coordinates = texture_coordinates
+
+            # Replace point ids in seam cells with new duplicate points
+            faces = out.faces
+            faces.flags['WRITEABLE'] = True  # Write in-place to avoid making a copy
+            replacement = dict(zip(seam_point_ids, new_point_ids, strict=True))
+            polys = out.GetPolys()
+
+            # Find seam cells where u coordinates span the 0->1 transition
+            candidate_cell_ids = {
+                cell_id for point_id in seam_point_ids for cell_id in out.point_cell_ids(point_id)
+            }
+            seam_cell_ids = set()
+            for cell_id in candidate_cell_ids:
+                cell_point_ids = out.get_cell(cell_id).point_ids
+                u_vals = texture_coordinates[cell_point_ids, 0]
+                if u_vals.max() - u_vals.min() > 0.5:
+                    seam_cell_ids.add(cell_id)
+
+            for cell_id in seam_cell_ids:
+                # Location of the face in the interleaved connectivity
+                faces_ids_loc = cell_id + polys.GetOffset(cell_id)
+                for i in range(faces[faces_ids_loc]):  # For every point referenced by the cell
+                    face_point_id = faces_ids_loc + i + 1
+                    pid = faces[face_point_id]
+                    if pid in replacement:
+                        faces[face_point_id] = replacement[pid]
+            out.faces = faces
+
+        return out
 
 
 class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):

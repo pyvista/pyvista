@@ -2680,6 +2680,15 @@ class GLTFReader(BaseReader['MultiBlock']):
 
     Wraps :vtk:`vtkGLTFReader`.
 
+    .. note::
+        This reads the file's mesh geometry only. Any plot-specific
+        items such as colors or material properties are not read.
+
+    See Also
+    --------
+    pyvista.Plotter.import_gltf
+        Import a glTF file into a plotter.
+
     """
 
     _vtk_module_name = 'vtkIOGeometry'
@@ -2869,6 +2878,109 @@ class GIFReader(BaseReader['ImageData']):
     """
 
     _class_reader = _GIFReader
+
+
+def _read_from_plotter(filename, kind: Literal['vrml', '3ds']):
+    pl = pv.Plotter(off_screen=True)
+    importer = getattr(pl, f'import_{kind}')
+    importer(filename)
+    meshes = pv.MultiBlock(pl.meshes)
+    pl.close()
+    return meshes
+
+
+class _VRMLReader(BaseVTKReader):
+    """Simulate a VTK reader for VRML files."""
+
+    def Update(self) -> None:
+        """Read the VRML and store internally to `_data_object`."""
+        self._data_object = _read_from_plotter(self._filename, 'vrml')
+
+    def UpdateInformation(self):
+        """Update Information from file."""
+
+
+class VRMLReader(BaseReader['MultiBlock']):
+    """VRMLReader for .wrl and .vrml files.
+
+    .. note::
+        This reads the file's mesh geometry only. Any plot-specific
+        items such as colors or material properties are not read.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    path : str
+        Path of the VRML to read.
+
+    See Also
+    --------
+    pyvista.Plotter.import_vrml
+        Import a VTML file into a plotter.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> from pathlib import Path
+    >>> filename = examples.vrml.download_grasshopper()
+    >>> Path(filename).name
+    'grasshop.wrl'
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _VRMLReader
+
+
+class _ThreeDSReader(BaseVTKReader):
+    """Simulate a VTK reader for 3DS files."""
+
+    def Update(self) -> None:
+        """Read the 3DS and store internally to `_data_object`."""
+        self._data_object = _read_from_plotter(self._filename, '3ds')
+
+    def UpdateInformation(self):
+        """Update Information from file."""
+
+
+class ThreeDSReader(BaseReader['MultiBlock']):
+    """ThreeDSReader for .3ds files.
+
+    .. note::
+        This reads the file's mesh geometry only. Any plot-specific
+        items such as colors or material properties are not read.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    path : str
+        Path of the 3DS to read.
+
+    See Also
+    --------
+    pyvista.Plotter.import_3ds
+        Import a 3DS file into a plotter.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> from pathlib import Path
+    >>> filename = examples.download_3ds.download_iflamigm()
+    >>> Path(filename).name
+    'iflamigm.3ds'
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _ThreeDSReader
 
 
 class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
@@ -4178,6 +4290,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
 
 CLASS_READERS = {
     # Standard dataset readers:
+    '.3ds': ThreeDSReader,
     '.bmp': BMPReader,
     '.cas': FluentReader,
     '.case': EnSightReader,
@@ -4236,6 +4349,7 @@ CLASS_READERS = {
     '.tif': TIFFReader,
     '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
+    '.vrml': VRMLReader,
     '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
@@ -4248,6 +4362,7 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.series': SeriesReader,
+    '.wrl': VRMLReader,
     '.xdmf': XdmfReader,
 }
 

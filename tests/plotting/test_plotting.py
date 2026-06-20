@@ -205,14 +205,6 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 
 def test_import_vrml():
     filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
-
-    match = (
-        'VRML files must be imported directly into a Plotter. '
-        'See `pyvista.Plotter.import_vrml` for details.'
-    )
-    with pytest.raises(ValueError, match=match):
-        pv.read(filename)
-
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -6283,3 +6275,48 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.camera.up = (0, 1, 0)
     pl.camera.parallel_scale = 0.15
     pl.show()
+
+
+@pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
+@pytest.mark.parametrize('style', ['textured', 'edges'])
+def test_sphere_texture_seam_default(tessellation, style):
+    sphere = pv.Sphere(texture_coordinates=True, tessellation=tessellation)
+    plot_kwargs = {}
+    pl = pv.Plotter()
+    if style == 'textured':
+        plot_kwargs['texture'] = examples.load_globe_texture()
+    else:
+        sphere['u_coords'] = sphere.active_texture_coordinates[:, 0]
+        plot_kwargs['show_edges'] = True
+        seam = sphere.extract_feature_edges(
+            boundary_edges=True,
+            feature_edges=False,
+            manifold_edges=False,
+            non_manifold_edges=False,
+        )
+        pl.add_mesh(seam, color='magenta', line_width=3)
+    pl.add_mesh(sphere, **plot_kwargs)
+    pl.view_yz()
+    pl.zoom_camera(2)
+    pl.show()
+
+
+@pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
+def test_sphere_texture_seam(tessellation):
+    data: dict[str, pv.DataSet] = {}
+    for phi, theta in [(10, 20), (20, 10), (100, 150), (4, 8)]:
+        data[f'p={phi} t={theta}'] = pv.Sphere(
+            phi_resolution=phi,
+            theta_resolution=theta,
+            tessellation=tessellation,
+            texture_coordinates=True,
+        )
+    texture = examples.load_globe_texture()
+
+    pv.plot_compare_four(
+        *data.values(),
+        display_kwargs={'texture': texture, 'smooth_shading': True},
+        labels=list(data.keys()),
+        link=False,
+        camera_position='yz',
+    )
