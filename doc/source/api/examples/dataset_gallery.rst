@@ -32,6 +32,10 @@ Datasets in this section are organized by the module they are imported from.
 
             .. include:: /api/examples/dataset-gallery/planets_carousel.rst
 
+        .. tab-item:: glTF
+
+            .. include:: /api/examples/dataset-gallery/gltf_carousel.rst
+
 
 Browse Datasets by Type
 -----------------------
