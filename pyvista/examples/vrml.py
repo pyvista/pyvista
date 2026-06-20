@@ -28,16 +28,11 @@ def download_teapot():
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
 
-    .. seealso::
-
-        :ref:`Teapot Dataset <teapot_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
+    # _dataset_teapot should be moved outside of this function, but we cannot due to
+    # the teapot name being used already, see https://github.com/pyvista/pyvista/issues/8773
+    _dataset_teapot = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
     return _dataset_teapot.download()
-
-
-_dataset_teapot = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
 
 
 def download_sextant():

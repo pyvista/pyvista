@@ -2779,6 +2779,15 @@ class DatasetCardFetcher:
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
         """Add a new dataset card so that it can be fetched later."""
+        if card := cls.DATASET_CARDS_OBJ.get(dataset_name):
+            existing_module = card.loader._module.__name__
+            new_module = dataset_loader._module.__name__
+            msg = (
+                f'Cannot add dataset {dataset_name!r} from {new_module}.\n'
+                f'A dataset with this name already exists from {existing_module}.\n'
+                f'The name must be unique'
+            )
+            raise RuntimeError(msg)
         cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
     @classmethod
