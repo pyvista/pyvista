@@ -41,13 +41,13 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
         Sphere mesh with texture coordinates.
 
     """
-    sphere = pv.StructuredSphere(
+    return pv.Sphere(
         radius=radius,
         theta_resolution=lon_resolution,
         phi_resolution=lat_resolution,
-        theta_offset=180,  # Ensure Earth's Prime Meridian is at 0 degrees longitude
-    )
-    return sphere.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+        texture_coordinates=True,
+        tessellation='phi_theta',
+    ).rotate_z(180)  # rotate to align Earth's Prime Meridian to +X axis (0 degrees longitude)
 
 
 @_deprecate_positional_args

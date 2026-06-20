@@ -6317,3 +6317,48 @@ def test_structured_sphere_resolution_matches_sphere():
             viewup=(0.0, 0.0, 1.0),
         ),
     )
+
+
+@pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
+@pytest.mark.parametrize('style', ['textured', 'edges'])
+def test_sphere_texture_seam_default(tessellation, style):
+    sphere = pv.Sphere(texture_coordinates=True, tessellation=tessellation)
+    plot_kwargs = {}
+    pl = pv.Plotter()
+    if style == 'textured':
+        plot_kwargs['texture'] = examples.load_globe_texture()
+    else:
+        sphere['u_coords'] = sphere.active_texture_coordinates[:, 0]
+        plot_kwargs['show_edges'] = True
+        seam = sphere.extract_feature_edges(
+            boundary_edges=True,
+            feature_edges=False,
+            manifold_edges=False,
+            non_manifold_edges=False,
+        )
+        pl.add_mesh(seam, color='magenta', line_width=3)
+    pl.add_mesh(sphere, **plot_kwargs)
+    pl.view_yz()
+    pl.zoom_camera(2)
+    pl.show()
+
+
+@pytest.mark.parametrize('tessellation', ['triangle', 'phi_theta'])
+def test_sphere_texture_seam(tessellation):
+    data: dict[str, pv.DataSet] = {}
+    for phi, theta in [(10, 20), (20, 10), (100, 150), (4, 8)]:
+        data[f'p={phi} t={theta}'] = pv.Sphere(
+            phi_resolution=phi,
+            theta_resolution=theta,
+            tessellation=tessellation,
+            texture_coordinates=True,
+        )
+    texture = examples.load_globe_texture()
+
+    pv.plot_compare_four(
+        *data.values(),
+        display_kwargs={'texture': texture, 'smooth_shading': True},
+        labels=list(data.keys()),
+        link=False,
+        camera_position='yz',
+    )
