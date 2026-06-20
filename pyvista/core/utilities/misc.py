@@ -458,6 +458,10 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
     """
 
     def __getattr__(cls, name: str) -> Any:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is None:  # pragma: no cover
+            return None  # type: ignore[unreachable]
+
         from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
             _resolve_pending_accessor,
         )
