@@ -90,6 +90,13 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'dual_sphere_animation': '.gif',
 }
 
+DATASET_GALLERY_MODULES = [
+    pv.examples.examples,
+    pv.examples.downloads,
+    pv.examples.planets,
+    pv.examples.gltf,
+]
+
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
 ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
@@ -243,7 +250,9 @@ def _meshio_info_dict():
                 f'File format name could not be determined for {io_class.__name__}'
             )
             name = next(iter(extensions)).removeprefix('.').upper()
-        return name
+
+        # Convert number in name to actual number, e.g. `ThreeDS` -> `3DS`
+        return name.replace('Three', '3')
 
     meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
     reader_info = _reader_info_dict()
@@ -360,7 +369,7 @@ class MeshIOTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return MESHIO_INFO[cls.class_name].values()
+        return dict(sorted(MESHIO_INFO[cls.class_name].items())).values()
 
     @classmethod
     def get_header(cls, _):
@@ -404,6 +413,10 @@ class MultiBlockIOTable(MeshIOTable):
 
 class PartitionedDataSetIOTable(MeshIOTable):
     class_name = 'PartitionedDataSet'
+
+
+class ExplicitStructuredGridIOTable(MeshIOTable):
+    class_name = 'ExplicitStructuredGrid'
 
 
 class CellQualityMeasuresTable(DocTable):
@@ -2294,6 +2307,9 @@ class DatasetCard:
         msg = f'No load or download function was found for {dataset_name}.'
         raise RuntimeError(msg)
 
+        msg = f'No load or download function was found for {dataset_name}.'
+        raise RuntimeError(msg)
+
     @staticmethod
     def _generate_dataset_name(dataset_name: str):
         # Format dataset name for indexing and section heading
@@ -2773,9 +2789,8 @@ class DatasetCardFetcher:
     @classmethod
     def init_cards(cls):
         """Download and load all datasets and initialize a card object for each dataset."""
-        cls._init_cards_from_module(pv.examples.examples)
-        cls._init_cards_from_module(pv.examples.downloads)
-        cls._init_cards_from_module(pv.examples.planets)
+        for module in DATASET_GALLERY_MODULES:
+            cls._init_cards_from_module(module)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -3215,6 +3230,18 @@ class PlanetsCarousel(DatasetGalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
 
 
+class GltfCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the gltf module."""
+
+    name = 'gltf_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.gltf>` module.'
+    badge = ModuleBadge('glTF', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.gltf)
+
+
 class PointSetCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of PointSet cards."""
 
@@ -3541,6 +3568,7 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
+    GltfCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
@@ -3577,6 +3605,7 @@ def make_all_tables() -> list[str]:  # noqa: D103
     UnstructuredGridIOTable.generate()
     MultiBlockIOTable.generate()
     PartitionedDataSetIOTable.generate()
+    ExplicitStructuredGridIOTable.generate()
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)

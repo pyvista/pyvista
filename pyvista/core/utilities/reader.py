@@ -34,12 +34,14 @@ from .fileio import _FileIOBase
 from .fileio import _get_ext_force
 from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
+from .fileio import read_grdecl
 from .helpers import wrap
 from .misc import _NoNewAttrMixin
 from .misc import abstract_class
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Sequence
 
     # These are referenced as string forward references in ``BaseReader``
     # generic parameterization on subclasses (e.g. ``BaseReader['PolyData']``)
@@ -49,6 +51,7 @@ if TYPE_CHECKING:
     # cannot see the reference inside a string literal.
     from pyvista import DataObject
     from pyvista import DataSet  # noqa: F401
+    from pyvista import ExplicitStructuredGrid  # noqa: F401
     from pyvista import ImageData  # noqa: F401
     from pyvista import MultiBlock  # noqa: F401
     from pyvista import PartitionedDataSet  # noqa: F401
@@ -76,6 +79,7 @@ _mesh_types = Literal[
     'StructuredGrid',
     'PointSet',
     'PartitionedDataSet',
+    'ExplicitStructuredGrid',
 ]
 _legacy_dataset_types = Literal[  # no PointSet
     'UnstructuredGrid',
@@ -2676,6 +2680,15 @@ class GLTFReader(BaseReader['MultiBlock']):
 
     Wraps :vtk:`vtkGLTFReader`.
 
+    .. note::
+        This reads the file's mesh geometry only. Any plot-specific
+        items such as colors or material properties are not read.
+
+    See Also
+    --------
+    pyvista.Plotter.import_gltf
+        Import a glTF file into a plotter.
+
     """
 
     _vtk_module_name = 'vtkIOGeometry'
@@ -2714,6 +2727,84 @@ class SegYReader(BaseReader['DataSet']):
     _vtk_module_name = 'vtkIOSegY'
     _vtk_class_name = 'vtkSegYReader'
     _output_types = ('StructuredGrid', 'ImageData')
+
+
+class _GRDECLReader(BaseVTKReader):
+    """Simulate a VTK reader for GRDECL files."""
+
+    def UpdateInformation(self) -> None:
+        """Update information from file."""
+
+    def Update(self) -> None:
+        """Read the GRDECL file and store internally to `_data_object`."""
+        self._data_object = read_grdecl(
+            self._filename,
+            elevation=self._elevation,
+            other_keywords=self._other_keywords,
+        )
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._elevation: bool = True
+        self._other_keywords: Sequence[str] | None = None
+
+    @property
+    def elevation(self) -> bool:
+        return self._elevation
+
+    @elevation.setter
+    def elevation(self, value: bool) -> None:
+        self._elevation = value
+
+    @property
+    def other_keywords(self) -> Sequence[str] | None:
+        return self._other_keywords
+
+    @other_keywords.setter
+    def other_keywords(self, value: Sequence[str] | None) -> None:
+        self._other_keywords = value
+
+
+class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
+    """GRDECLReader for .grdecl files.
+
+    Uses :func:`~pyvista.read_grdecl` internally.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    path : str | Path
+        Path to the GRDECL file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> reader = pv.get_reader('file.GRDECL')  # doctest:+SKIP
+    >>> reader.elevation = False  # doctest:+SKIP
+    >>> mesh = reader.read()  # doctest:+SKIP
+
+    """
+
+    _class_reader = _GRDECLReader
+
+    @property
+    def elevation(self) -> bool:
+        """Convert depths to elevations and flip grid along Z axis."""
+        return self._reader.elevation
+
+    @elevation.setter
+    def elevation(self, value: bool) -> None:
+        self._reader.elevation = value
+
+    @property
+    def other_keywords(self) -> Sequence[str] | None:
+        """Additional keywords to read."""
+        return self._reader.other_keywords
+
+    @other_keywords.setter
+    def other_keywords(self, value: Sequence[str] | None) -> None:
+        self._reader.other_keywords = value
 
 
 class _GIFReader(BaseVTKReader):
@@ -2787,6 +2878,109 @@ class GIFReader(BaseReader['ImageData']):
     """
 
     _class_reader = _GIFReader
+
+
+def _read_from_plotter(filename, kind: Literal['vrml', '3ds']):
+    pl = pv.Plotter(off_screen=True)
+    importer = getattr(pl, f'import_{kind}')
+    importer(filename)
+    meshes = pv.MultiBlock(pl.meshes)
+    pl.close()
+    return meshes
+
+
+class _VRMLReader(BaseVTKReader):
+    """Simulate a VTK reader for VRML files."""
+
+    def Update(self) -> None:
+        """Read the VRML and store internally to `_data_object`."""
+        self._data_object = _read_from_plotter(self._filename, 'vrml')
+
+    def UpdateInformation(self):
+        """Update Information from file."""
+
+
+class VRMLReader(BaseReader['MultiBlock']):
+    """VRMLReader for .wrl and .vrml files.
+
+    .. note::
+        This reads the file's mesh geometry only. Any plot-specific
+        items such as colors or material properties are not read.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    path : str
+        Path of the VRML to read.
+
+    See Also
+    --------
+    pyvista.Plotter.import_vrml
+        Import a VTML file into a plotter.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> from pathlib import Path
+    >>> filename = examples.vrml.download_grasshopper()
+    >>> Path(filename).name
+    'grasshop.wrl'
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _VRMLReader
+
+
+class _ThreeDSReader(BaseVTKReader):
+    """Simulate a VTK reader for 3DS files."""
+
+    def Update(self) -> None:
+        """Read the 3DS and store internally to `_data_object`."""
+        self._data_object = _read_from_plotter(self._filename, '3ds')
+
+    def UpdateInformation(self):
+        """Update Information from file."""
+
+
+class ThreeDSReader(BaseReader['MultiBlock']):
+    """ThreeDSReader for .3ds files.
+
+    .. note::
+        This reads the file's mesh geometry only. Any plot-specific
+        items such as colors or material properties are not read.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    path : str
+        Path of the 3DS to read.
+
+    See Also
+    --------
+    pyvista.Plotter.import_3ds
+        Import a 3DS file into a plotter.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> from pathlib import Path
+    >>> filename = examples.download_3ds.download_iflamigm()
+    >>> Path(filename).name
+    'iflamigm.3ds'
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _class_reader = _ThreeDSReader
 
 
 class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
@@ -4096,6 +4290,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
 
 CLASS_READERS = {
     # Standard dataset readers:
+    '.3ds': ThreeDSReader,
     '.bmp': BMPReader,
     '.cas': FluentReader,
     '.case': EnSightReader,
@@ -4115,6 +4310,7 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.grdecl': GRDECLReader,
     '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,
@@ -4153,6 +4349,7 @@ CLASS_READERS = {
     '.tif': TIFFReader,
     '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
+    '.vrml': VRMLReader,
     '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
@@ -4165,6 +4362,7 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.series': SeriesReader,
+    '.wrl': VRMLReader,
     '.xdmf': XdmfReader,
 }
 

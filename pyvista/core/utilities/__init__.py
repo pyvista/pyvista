@@ -197,6 +197,7 @@ from .reader import GaussianCubeReader as GaussianCubeReader
 from .reader import GESignaReader as GESignaReader
 from .reader import GIFReader as GIFReader
 from .reader import GLTFReader as GLTFReader
+from .reader import GRDECLReader as GRDECLReader
 from .reader import HDFReader as HDFReader
 from .reader import HDRReader as HDRReader
 from .reader import JPEGReader as JPEGReader
@@ -228,8 +229,10 @@ from .reader import SeriesReader as SeriesReader
 from .reader import SLCReader as SLCReader
 from .reader import STLReader as STLReader
 from .reader import TecplotReader as TecplotReader
+from .reader import ThreeDSReader as ThreeDSReader
 from .reader import TIFFReader as TIFFReader
 from .reader import TimeReader as TimeReader
+from .reader import VRMLReader as VRMLReader
 from .reader import VTKDataSetReader as VTKDataSetReader
 from .reader import VTKPDataSetReader as VTKPDataSetReader
 from .reader import XdmfReader as XdmfReader

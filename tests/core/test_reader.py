@@ -1377,7 +1377,8 @@ def test_prostar_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_grdecl_reader(tmp_path):
+@pytest.mark.parametrize('as_reader', [True, False])
+def test_grdecl_reader(tmp_path, as_reader):
     def read(content, include_content, **kwargs):
         path = tmp_path
 
@@ -1387,9 +1388,19 @@ def test_grdecl_reader(tmp_path):
         with Path.open(path / '3x3x3_include.grdecl', 'w') as f:
             f.write(''.join(include_content))
 
-        return pv.core.utilities.fileio.read_grdecl(path / '3x3x3.grdecl', **kwargs)
+        filepath = path / '3x3x3.grdecl'
+        if as_reader:
+            reader = pv.GRDECLReader(filepath)
+            for key, value in kwargs.items():
+                setattr(reader, key, value)
+            return reader.read()
+        else:
+            return pv.core.utilities.fileio.read_grdecl(filepath, **kwargs)
 
     path = Path(__file__).parent.parent / 'example_files'
+
+    mesh = pv.read(path / '3x3x3.grdecl')
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
 
     with Path.open(path / '3x3x3.grdecl') as f:
         content = list(f)
@@ -1446,6 +1457,22 @@ def test_grdecl_reader(tmp_path):
     include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
+
+
+def test_erdgcl_reader_properties():
+    path = Path(__file__).parent.parent / 'example_files' / '3x3x3.grdecl'
+
+    reader = pv.GRDECLReader(path)
+    assert reader.elevation is True
+    reader.elevation = False
+    assert reader.elevation is False
+
+    assert reader.other_keywords is None
+    reader.other_keywords = ['KEYWORD']
+    assert reader.other_keywords == ['KEYWORD']
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
 
 
 def test_nek5000_reader():
@@ -1947,3 +1974,30 @@ def test_forbid_empty_series_file(tmp_path: Path):
 
     with pytest.raises(ValueError, match='No datasets found in series file'):
         pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_vrml_reader():
+    filename = examples.vrml.download_grasshopper()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_threeds_reader():
+    filename = examples.download_3ds.download_iflamigm()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+    # Necessary to check bounds since these will be uninitialized if Update()
+    # wasn't called when reading
+    expected_bounds = pv.BoundsTuple(
+        x_min=-5.379246234893799,
+        x_max=5.364696979522705,
+        y_min=-1.9769330024719238,
+        y_max=2.731842041015625,
+        z_min=-7.883847236633301,
+        z_max=5.437096118927002,
+    )
+
+    assert np.allclose(mesh.bounds, expected_bounds)
