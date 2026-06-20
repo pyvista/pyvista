@@ -2300,12 +2300,9 @@ class DatasetCard:
     def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
         # Get the corresponding function of the loader
         for func_name in ['download_' + dataset_name, 'load_' + dataset_name]:
-            for module in [pv.examples.examples, pv.examples.downloads, pv.examples.planets]:
+            for module in DATASET_GALLERY_MODULES:
                 if func := getattr(module, func_name, None):
                     return func, func_name
-
-        msg = f'No load or download function was found for {dataset_name}.'
-        raise RuntimeError(msg)
 
         msg = f'No load or download function was found for {dataset_name}.'
         raise RuntimeError(msg)
@@ -2784,6 +2781,15 @@ class DatasetCardFetcher:
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
         """Add a new dataset card so that it can be fetched later."""
+        if card := cls.DATASET_CARDS_OBJ.get(dataset_name):
+            existing_module = card.loader._module.__name__
+            new_module = dataset_loader._module.__name__
+            msg = (
+                f'Cannot add dataset {dataset_name!r} from {new_module}.\n'
+                f'A dataset with this name already exists from {existing_module}.\n'
+                f'The name must be unique'
+            )
+            raise RuntimeError(msg)
         cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
     @classmethod
@@ -2816,7 +2822,8 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 # Load data
-                print(f'loading datasets... {dataset_name}', flush=True)
+                module_name = module.__name__.removeprefix('pyvista.')
+                print(f'loading datasets from {module_name}... {dataset_name}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
