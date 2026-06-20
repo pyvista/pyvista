@@ -90,6 +90,13 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'dual_sphere_animation': '.gif',
 }
 
+DATASET_GALLERY_MODULES = [
+    pv.examples.examples,
+    pv.examples.downloads,
+    pv.examples.planets,
+    pv.examples.gltf,
+]
+
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
 ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
@@ -2288,24 +2295,13 @@ class DatasetCard:
     @staticmethod
     def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
         # Get the corresponding function of the loader
-        func = None
+        for func_name in ['download_' + dataset_name, 'load_' + dataset_name]:
+            for module in DATASET_GALLERY_MODULES:
+                if func := getattr(module, func_name, None):
+                    return func, func_name
 
-        # Get `download` function from downloads.py or planets.py
-        func_name = 'download_' + dataset_name
-        if hasattr(pv.examples.downloads, func_name):
-            func = getattr(pv.examples.downloads, func_name)
-        elif hasattr(pv.examples.planets, func_name):
-            func = getattr(pv.examples.planets, func_name)
-        else:
-            # Get `load` function from examples.py
-            func_name = 'load_' + dataset_name
-            if hasattr(pv.examples.examples, func_name):
-                func = getattr(pv.examples.examples, func_name)
-
-        if func is None:
-            msg = f'Dataset function {func_name} does not exist.'
-            raise RuntimeError(msg)
-        return func, func_name
+        msg = f'No load or download function was found for {dataset_name}.'
+        raise RuntimeError(msg)
 
     @staticmethod
     def _generate_dataset_name(dataset_name: str):
@@ -2786,9 +2782,8 @@ class DatasetCardFetcher:
     @classmethod
     def init_cards(cls):
         """Download and load all datasets and initialize a card object for each dataset."""
-        cls._init_cards_from_module(pv.examples.examples)
-        cls._init_cards_from_module(pv.examples.downloads)
-        cls._init_cards_from_module(pv.examples.planets)
+        for module in DATASET_GALLERY_MODULES:
+            cls._init_cards_from_module(module)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -3228,6 +3223,18 @@ class PlanetsCarousel(DatasetGalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
 
 
+class GltfCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the gltf module."""
+
+    name = 'gltf_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.gltf>` module.'
+    badge = ModuleBadge('glTF', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.gltf)
+
+
 class PointSetCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of PointSet cards."""
 
@@ -3554,6 +3561,7 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
+    GltfCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
