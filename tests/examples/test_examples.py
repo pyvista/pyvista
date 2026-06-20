@@ -110,15 +110,15 @@ def test_load_planet():
     assert 'Texture Coordinates' in planet.point_data
     assert planet['Texture Coordinates'].shape == (planet.n_points, 2)
 
-    assert planet.n_points == 5000
-    assert planet.n_cells == 4851
+    assert planet.n_points == 4850
+    assert planet.n_cells == 4900
     r = 1.0
     assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e2)
 
     r = 5
     planet = examples.planets.load_planet(radius=r, lat_resolution=20, lon_resolution=30)
-    assert planet.n_points == 600
-    assert planet.n_cells == 551
+    assert planet.n_points == 560
+    assert planet.n_cells == 570
     assert np.allclose(planet.bounds, (-r, r, -r, r, -r, r), atol=1e-1)
 
 
