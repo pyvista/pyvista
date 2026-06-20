@@ -79,6 +79,7 @@ from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .opts import StereoType
 from .picking import PickingComponent
+from .prop_collection import _PropCollection
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
 from .renderer import Renderer
@@ -609,6 +610,11 @@ class BasePlotter(_BoundsSizeMixin):
             Set the camera viewing angle to one compatible with the
             default three.js perspective (``'xy'``).
 
+        See Also
+        --------
+        pyvista.GLTFReader
+            Read GLTF file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -646,6 +652,11 @@ class BasePlotter(_BoundsSizeMixin):
         filename : str | Path
             Path to the VRML file.
 
+        See Also
+        --------
+        pyvista.VRMLReader
+            Read VRML file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -677,6 +688,11 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         filename : str | Path
             Path to the 3DS file.
+
+        See Also
+        --------
+        pyvista.ThreeDSReader
+            Read 3DS file as a mesh.
 
         Examples
         --------
@@ -710,6 +726,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         filename_mtl : str | Path, optional
             Path to the .mtl file.
+
+        See Also
+        --------
+        pyvista.OBJReader
+            Read OBJ file as a mesh.
 
         Examples
         --------
@@ -8491,11 +8512,33 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [
-            actor.mapper.dataset
-            for actor in self.actors.values()
-            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
-        ]
+
+        def _iter_leaf_props(prop: _vtk.vtkProp) -> Iterator[_vtk.vtkProp]:
+            if hasattr(prop, 'GetParts'):
+                for part in _PropCollection(prop.GetParts()):
+                    yield from _iter_leaf_props(part)
+            else:
+                yield prop
+
+        def _append_actor_dataset(prop: _vtk.vtkProp) -> None:
+            try:
+                mapper = prop.GetMapper()  # type: ignore[attr-defined]
+                dataset = _mapper_get_data_set_input(mapper)
+            except AttributeError:
+                return
+            else:
+                if isinstance(dataset, _vtk.vtkDataObject):
+                    # Need to update any input connections to ensure a mesh is generated
+                    if input_alg := mapper.GetInputAlgorithm():
+                        input_alg.Update()
+                    meshes.append(pv.wrap(dataset))
+
+        meshes: list[pv.DataSet | pv.MultiBlock] = []
+        for actor in self.actors.values():
+            for leaf in _iter_leaf_props(actor):
+                _append_actor_dataset(leaf)
+
+        return meshes
 
 
 # Tracks created plotters.  This is the end of the module as we need to

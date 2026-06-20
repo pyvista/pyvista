@@ -1391,6 +1391,9 @@ def test_grdecl_reader(tmp_path):
 
     path = Path(__file__).parent.parent / 'example_files'
 
+    mesh = pv.read(path / '3x3x3.grdecl')
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
+
     with Path.open(path / '3x3x3.grdecl') as f:
         content = list(f)
 
@@ -1947,3 +1950,30 @@ def test_forbid_empty_series_file(tmp_path: Path):
 
     with pytest.raises(ValueError, match='No datasets found in series file'):
         pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_vrml_reader():
+    filename = examples.vrml.download_grasshopper()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_threeds_reader():
+    filename = examples.download_3ds.download_iflamigm()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+    # Necessary to check bounds since these will be uninitialized if Update()
+    # wasn't called when reading
+    expected_bounds = pv.BoundsTuple(
+        x_min=-5.379246234893799,
+        x_max=5.364696979522705,
+        y_min=-1.9769330024719238,
+        y_max=2.731842041015625,
+        z_min=-7.883847236633301,
+        z_max=5.437096118927002,
+    )
+
+    assert np.allclose(mesh.bounds, expected_bounds)

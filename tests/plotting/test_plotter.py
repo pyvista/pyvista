@@ -699,6 +699,74 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_plotter_meshes_mapper_without_dataset_input():
+    mapper = _vtk.vtkPolyDataMapper()
+    assert mapper.GetInput() is None
+
+    actor = _vtk.vtkActor()
+    actor.SetMapper(mapper)
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(actor)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_actor_without_mapper():
+    prop = _vtk.vtkPropAssembly()
+    assert not hasattr(prop, 'GetMapper')
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(prop)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_from_assembly():
+    assembly = pv.AxesAssembly()
+    n_3d_actors = 6
+    n_2d_actors = 3
+    assert len(assembly.parts) == n_2d_actors + n_3d_actors
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(assembly)
+
+    result = pl.meshes
+    assert len(result) == n_3d_actors
+
+    # Ensure all actors with meshes are included in result
+    for part in assembly.parts:
+        if isinstance(part, pv.DataObject):
+            assert part in result
+        else:
+            assert part not in result
+
+
+def test_plotter_meshes_from_nested_assembly():
+    assembly = pv.AxesAssembly()
+    subassembly = pv.AxesAssembly()
+    assembly.AddPart(subassembly)
+    n_3d_actors = 6
+    n_2d_actors = 3
+    n_nested = 1
+    assert len(assembly.parts) == n_2d_actors + n_3d_actors + n_nested
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(assembly)
+
+    result = pl.meshes
+    assert len(result) == n_3d_actors * 2
+
+    # Ensure all actors with meshes are included in result
+    for part in [*assembly.parts, *subassembly.parts]:
+        if isinstance(part, pv.DataObject):
+            assert part in result
+        else:
+            assert part not in result
+
+
 def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
     pl = pv.Plotter()

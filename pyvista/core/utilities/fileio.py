@@ -448,12 +448,6 @@ def _read_dispatch(  # noqa: PLR0911
         return read_exodus(filename)
     if ext.lower() == '.grdecl':
         return read_grdecl(filename)
-    if ext in ['.wrl', '.vrml']:
-        msg = (
-            'VRML files must be imported directly into a Plotter. '
-            'See `pyvista.Plotter.import_vrml` for details.'
-        )
-        raise ValueError(msg)
     if ext in _PICKLE_FILE_EXT:
         _raise_pickle_removed()
 

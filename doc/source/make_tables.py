@@ -243,7 +243,9 @@ def _meshio_info_dict():
                 f'File format name could not be determined for {io_class.__name__}'
             )
             name = next(iter(extensions)).removeprefix('.').upper()
-        return name
+
+        # Convert number in name to actual number, e.g. `ThreeDS` -> `3DS`
+        return name.replace('Three', '3')
 
     meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
     reader_info = _reader_info_dict()
@@ -360,7 +362,7 @@ class MeshIOTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return MESHIO_INFO[cls.class_name].values()
+        return dict(sorted(MESHIO_INFO[cls.class_name].items())).values()
 
     @classmethod
     def get_header(cls, _):
