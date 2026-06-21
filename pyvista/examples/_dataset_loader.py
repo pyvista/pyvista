@@ -174,7 +174,10 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         a human to open on a browser.
         """
         # Make single urls iterable and replace 'raw' with 'blob'
-        url_raw = self.source_url_raw
+        return _Downloadable._raw_to_blob(self.source_url_raw)
+
+    @staticmethod
+    def _raw_to_blob(url_raw):
         url_iter = [url_raw] if isinstance(url_raw, str) else url_raw
         url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
         return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)

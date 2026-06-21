@@ -15,7 +15,7 @@ _GLTF_PATHS: dict[str, str] = {
     'milk_truck': 'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
 }
 
-_GLTF_BASE_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
+_GLTF_BASE_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/'
 
 
 GLTF_FETCHER = pooch.create(  # type: ignore[attr-defined]

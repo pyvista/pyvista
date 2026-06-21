@@ -35,6 +35,7 @@ from scipy.stats import linregress
 
 import pyvista as pv
 from pyvista import _validation
+from pyvista import examples
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
@@ -51,6 +52,8 @@ from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
 from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
+from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE
+from pyvista.examples.downloads import _FILE_CACHE
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
@@ -2690,9 +2693,13 @@ class DatasetPropsGenerator:
         # Collect url names and links as sequences
         name = loader.source_name
         names = [name] if isinstance(name, str) else name
-        url = loader.source_url_blob
+        url = loader.source_url_raw
         urls = [url] if isinstance(url, str) else url
+        # Ensure urls are not based on local cache
+        if loader._module is examples.downloads and _FILE_CACHE:
+            urls = [url.replace(loader.base_url, _DEFAULT_VTK_DATA_SOURCE) for url in urls]
 
+        urls = examples._dataset_loader._Downloadable._raw_to_blob(urls)
         # Use dict to create an ordered set to make sure links are unique
         url_dict = {url: name for name, url in zip(names, urls, strict=True)}
 
