@@ -958,6 +958,7 @@ class PolyDataFilters(DataSetFilters):
         feature_smoothing: bool = False,  # noqa: FBT001, FBT002
         non_manifold_smoothing: bool = False,  # noqa: FBT001, FBT002
         normalize_coordinates: bool = False,  # noqa: FBT001, FBT002
+        window_function: str | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -1063,6 +1064,24 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
+        if window_function is not None:
+            window_functions = {
+                'blackman': alg.SetWindowFunctionToBlackman,
+                'hamming': alg.SetWindowFunctionToHamming,
+                'hanning': alg.SetWindowFunctionoHanning,
+                'nuttall': alg.SetWindowFunctionToNuttall,
+            }
+
+            try:
+                set_window_function = window_functions[window_function.lower()]
+            except KeyError as err:
+                msg = (
+                    f"Invalid window_function '{window_function}'. "
+                    f"Expected one of: {', '.join(window_functions)}."
+                )
+                raise ValueError(msg) from err
+
+            set_window_function()
         _update_alg(
             alg, progress_bar=progress_bar, message='Smoothing Mesh using Taubin Smoothing'
         )
