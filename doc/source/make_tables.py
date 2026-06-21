@@ -2697,7 +2697,12 @@ class DatasetPropsGenerator:
         urls = [url] if isinstance(url, str) else url
         # Ensure urls are not based on local cache
         if loader._module is examples.downloads and _FILE_CACHE:
-            urls = [url.replace(loader.base_url, _DEFAULT_VTK_DATA_SOURCE) for url in urls]
+            base = loader.base_url
+            bases = [base] if isinstance(base, str) else base
+            urls = [
+                url.replace(base, _DEFAULT_VTK_DATA_SOURCE)
+                for base, url in zip(bases, urls, strict=True)
+            ]
 
         urls = examples._dataset_loader._Downloadable._raw_to_blob(urls)
         # Use dict to create an ordered set to make sure links are unique
