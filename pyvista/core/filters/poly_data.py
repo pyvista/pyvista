@@ -1012,6 +1012,11 @@ class PolyDataFilters(DataSetFilters):
             smoothing, and translate and scale the position coordinates back to
             the original coordinate frame.
 
+        window_function : str, optional
+            Window function used by the underlying
+            :vtk:`vtkWindowedSincPolyDataFilter`. Accepted values are
+            ``'blackman'``, ``'hamming'``, ``'hanning'``, and ``'nuttall'``.
+
         inplace : bool, default: False
             Updates mesh in-place.
 
