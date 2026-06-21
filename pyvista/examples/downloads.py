@@ -2615,8 +2615,20 @@ def download_doorman(load=True):  # noqa: FBT002
 
     Examples
     --------
+    Import the OBJ file with its materials into a :class:`~pyvista.Plotter`.
+
+    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> dataset = examples.download_doorman()
+    >>> file = examples.download_doorman(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_obj(file)
+    >>> pl.view_xy()
+    >>> pl.show(auto_close=False)
+
+    Get the imported mesh as a :class:`~pyvista.MultiBlock` and plot
+    it without the textures.
+
+    >>> dataset = pv.MultiBlock(pl.meshes)
     >>> dataset.plot(cpos='xy')
 
     .. seealso::
