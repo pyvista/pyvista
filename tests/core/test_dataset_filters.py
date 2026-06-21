@@ -1638,6 +1638,22 @@ def test_smooth_taubin(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
+@pytest.mark.parametrize('window_function', ['blackman', 'hamming', 'hanning', 'nuttall'])
+def test_smooth_taubin_window_function(uniform, window_function):
+    surf = uniform.extract_surface(algorithm=None).clean()
+    smoothed = surf.smooth_taubin(window_function=window_function)
+
+    assert smoothed.n_points == surf.n_points
+    assert smoothed.n_cells == surf.n_cells
+
+
+def test_smooth_taubin_invalid_window_function(uniform):
+    surf = uniform.extract_surface(algorithm=None).clean()
+
+    with pytest.raises(ValueError, match='Invalid window_function'):
+        surf.smooth_taubin(window_function='invalid')
+
+
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines(
