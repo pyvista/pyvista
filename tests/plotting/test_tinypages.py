@@ -87,6 +87,11 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # verify a figure is *not* generated when show isn't called
     assert not plot_file(20, 0, 0).exists()
 
+    # verify only one figure is generated when there are two plotters,
+    # but show is only called on one
+    assert not plot_file(26, 0, 0).exists()
+    assert plot_file(26, 0, 1).exists()
+
     # test skip directive
     assert not plot_file(10, 0, 0).exists()
 
