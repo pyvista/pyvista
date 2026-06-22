@@ -549,6 +549,8 @@ def render_figures(
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                         shutil.move(plotter._gif_filename, image_file.filename)
                     else:
+                        if plotter._closed or not plotter._rendered:
+                            continue
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
                         try:
                             plotter.screenshot(image_file.filename)
