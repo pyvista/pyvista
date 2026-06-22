@@ -663,9 +663,8 @@ _CELL_TYPE_INFO = dict(
 
 
 def _warn_deprecated_removed(member: CellType) -> None:
-    if getattr(member, 'name', None) in _DEPRECATED_CELL_TYPES:
-        msg = f'{member!r} is deprecated and will be removed in a future version.'
-        warn_external(msg, PyVistaDeprecationWarning)
+    msg = f'{member!r} is deprecated and will be removed in a future version.'
+    warn_external(msg, PyVistaDeprecationWarning)
 
 
 def _warn_deprecated_renamed(name: str) -> None:
@@ -697,9 +696,6 @@ class _CellTypeMeta(EnumMeta):
         name = member.name
         if name in _DEPRECATED_CELL_TYPES:
             _warn_deprecated_removed(member)
-        elif new_name := _RENAMED_CELL_TYPES.get(name):
-            # Return the member with the new name
-            member = getattr(cls, new_name)
         return member
 
     @property
