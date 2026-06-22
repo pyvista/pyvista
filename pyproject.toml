@@ -76,7 +76,6 @@ test = [
   'colorcet<3.3.0',
   'embreex<4.4.1',
   'fsspec<2026.5.0',
-  'fvtk>=9.6.2,<9.7.0; python_version >= "3.12"', # optional VTK backend; exercised by the report + fvtk-backend tests
   'hypothesis<6.152.13',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
