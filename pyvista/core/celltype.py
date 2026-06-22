@@ -692,8 +692,8 @@ class _CellTypeMeta(EnumMeta):
             _warn_deprecated_renamed(name)
         return member
 
-    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # noqa: ANN
-        member = super().__call__(value, *args, **kwargs)
+    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]  # noqa: ANN
+        member = super().__call__(value, *args, **kwargs)  # type: ignore[var-annotated]
         name = member.name
         if name in _DEPRECATED_CELL_TYPES:
             _warn_deprecated_removed(member)
@@ -757,7 +757,7 @@ class _CellTypeMeta(EnumMeta):
          <CellType.QUADRATIC_EDGE: 21>,
          <CellType.CUBIC_LINE: 35>,
          <CellType.PARAMETRIC_CURVE: 51>,
-         <CellType.HIGHER_ORDER_EDGE: 60>,
+         <CellType.HIGHER_ORDER_CURVE: 60>,
          <CellType.LAGRANGE_CURVE: 68>,
          <CellType.BEZIER_CURVE: 75>]
 
@@ -779,7 +779,7 @@ class _CellTypeMeta(EnumMeta):
          <CellType.PARAMETRIC_TRI_SURFACE: 53>,
          <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
          <CellType.HIGHER_ORDER_TRIANGLE: 61>,
-         <CellType.HIGHER_ORDER_QUAD: 62>,
+         <CellType.HIGHER_ORDER_QUADRILATERAL: 62>,
          <CellType.HIGHER_ORDER_POLYGON: 63>,
          <CellType.LAGRANGE_TRIANGLE: 69>,
          <CellType.LAGRANGE_QUADRILATERAL: 70>,
