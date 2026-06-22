@@ -2623,11 +2623,13 @@ def download_doorman(load=True):  # noqa: FBT002
     >>> pl = pv.Plotter()
     >>> pl.import_obj(file)
     >>> pl.view_xy()
-    >>> pl.show(auto_close=False)
+    >>> pl.show()
 
     Get the imported mesh as a :class:`~pyvista.MultiBlock` and plot
     it without the textures.
 
+    >>> pl = pv.Plotter()
+    >>> pl.import_obj(file)
     >>> dataset = pv.MultiBlock(pl.meshes)
     >>> dataset.plot(cpos='xy')
 
