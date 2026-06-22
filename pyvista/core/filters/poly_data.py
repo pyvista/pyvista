@@ -1016,6 +1016,7 @@ class PolyDataFilters(DataSetFilters):
             Window function used by the underlying
             :vtk:`vtkWindowedSincPolyDataFilter`. Accepted values are
             ``'blackman'``, ``'hamming'``, ``'hanning'``, and ``'nuttall'``.
+            This option requires VTK 9.4.0 or later.
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -1070,6 +1071,10 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
         if window_function is not None:
+            if pv.vtk_version_info < (9, 4, 0):
+                msg = '`window_function` requires VTK 9.4.0 or later.'
+                raise pv.VTKVersionError(msg)
+
             window_functions = {
                 'blackman': alg.SetWindowFunctionToBlackman,
                 'hamming': alg.SetWindowFunctionToHamming,
@@ -1082,7 +1087,7 @@ class PolyDataFilters(DataSetFilters):
             except KeyError as err:
                 msg = (
                     f"Invalid window_function '{window_function}'. "
-                    f"Expected one of: {', '.join(window_functions)}."
+                    f'Expected one of: {", ".join(window_functions)}.'
                 )
                 raise ValueError(msg) from err
 
