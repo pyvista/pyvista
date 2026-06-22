@@ -10,8 +10,10 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import importlib
+import importlib.abc
 import importlib.util
 import os
+import sys
 from typing import TYPE_CHECKING
 
 
@@ -43,6 +45,45 @@ def _resolve_vtk_backend() -> str:
 _VTK_BACKEND = _resolve_vtk_backend()
 
 
+class _VtkmodulesToFvtkFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """Route ``import vtkmodules[.*]`` to ``fvtk[.*]``.
+
+    When PyVista runs on the fvtk backend, third-party packages that import
+    ``vtkmodules`` directly (e.g. ``pyvista-zstd``, ``trame-vtk``) must resolve
+    to fvtk as well: fvtk and stock VTK are the same VTK version with the same
+    shared-library SONAMEs, so loading both into one process fails with
+    ``undefined symbol`` errors. This finder keeps a single VTK build in the
+    process by aliasing each requested ``vtkmodules`` name to its ``fvtk``
+    counterpart in :data:`sys.modules`.
+    """
+
+    _PREFIX = 'vtkmodules'
+
+    def find_spec(
+        self,
+        fullname: str,
+        path: Sequence[str] | None = None,  # noqa: ARG002
+        target: ModuleType | None = None,  # noqa: ARG002
+    ) -> ModuleSpec | None:
+        if fullname == self._PREFIX or fullname.startswith(self._PREFIX + '.'):
+            return importlib.util.spec_from_loader(fullname, self)
+        return None
+
+    def create_module(self, spec: ModuleSpec) -> ModuleType:
+        module = importlib.import_module('fvtk' + spec.name[len(self._PREFIX) :])
+        sys.modules[spec.name] = module  # alias under the requested vtkmodules name
+        return module
+
+    def exec_module(self, module: ModuleType) -> None:
+        """No-op: the target module was already executed by ``import_module``."""
+
+
+if _VTK_BACKEND == 'fvtk' and not any(
+    isinstance(finder, _VtkmodulesToFvtkFinder) for finder in sys.meta_path
+):
+    sys.meta_path.insert(0, _VtkmodulesToFvtkFinder())
+
+
 def _import_from(module_name: str, class_name: str) -> Any:
     """Import ``class_name`` from the backend's ``module_name``.
 
@@ -58,6 +99,9 @@ def _import_from(module_name: str, class_name: str) -> Any:
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Sequence
+    from importlib.machinery import ModuleSpec
+    from types import ModuleType
     from typing import Any
 
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
