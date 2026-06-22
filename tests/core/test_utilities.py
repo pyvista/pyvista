@@ -561,6 +561,10 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
+    elif package == 'fvtk' and sys.version_info < (3, 12):
+        # fvtk (optional VTK backend) ships a single abi3 wheel for Python >=3.12,
+        # so it cannot be installed to appear in the report on older interpreters.
+        pytest.skip('fvtk requires Python >= 3.12')
     assert package in REPORT
 
 

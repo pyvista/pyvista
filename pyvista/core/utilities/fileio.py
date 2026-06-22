@@ -75,8 +75,8 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 def _lazy_vtk_import(module_name: str, class_name: str) -> type:
-    """Lazy import of a class from vtkmodules."""
-    module = importlib.import_module(f'vtkmodules.{module_name}')
+    """Lazy import of a class from the selected VTK backend (vtkmodules or fvtk)."""
+    module = importlib.import_module(f'{_vtk._VTK_BACKEND}.{module_name}')
     return getattr(module, class_name)
 
 

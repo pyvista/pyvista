@@ -41,6 +41,12 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
+# Additive opt-in to the community `fvtk` fork as the VTK backend. Installs
+# alongside the base `vtk` dependency (fvtk imports as `fvtk`, so it does not
+# clobber or conflict with stock VTK). When present and no explicit selection
+# is made, PyVista auto-selects fvtk; see `PYVISTA_VTK_BACKEND`. Single abi3
+# wheel, Python >=3.12.
+fvtk = ['fvtk>=9.6.2,<9.7.0; python_version >= "3.12"']
 io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
@@ -70,6 +76,7 @@ test = [
   'colorcet<3.3.0',
   'embreex<4.4.1',
   'fsspec<2026.5.0',
+  'fvtk>=9.6.2,<9.7.0; python_version >= "3.12"', # optional VTK backend; exercised by the report + fvtk-backend tests
   'hypothesis<6.152.13',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',

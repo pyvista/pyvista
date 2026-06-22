@@ -11,6 +11,11 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
 
+# A wrapped VTK class' ``__module__`` is rooted at the selected backend
+# (``vtkmodules`` for stock VTK, ``fvtk`` for the fork). Accept both so the
+# override-stripping and snake_case guards work under either backend.
+_VTK_MODULE_PREFIXES = ('vtkmodules.', f'{_vtk._VTK_BACKEND}.')
+
 
 class VersionInfo(NamedTuple):
     """Version information as a named tuple."""
@@ -92,7 +97,7 @@ class vtkPyVistaOverride:  # noqa: N801
             for base in cls.__bases__:
                 if (
                     hasattr(base, '__module__')
-                    and base.__module__.startswith('vtkmodules.')
+                    and base.__module__.startswith(_VTK_MODULE_PREFIXES)
                     and hasattr(base, 'override')
                 ):
                     # For now, just remove any overrides for these classes
@@ -200,7 +205,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
         return None
 
     cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
-    return cls is not None and cls.__module__.startswith('vtkmodules')
+    return cls is not None and cls.__module__.startswith(_VTK_MODULE_PREFIXES)
 
 
 # Wrap the check in an LRU cache

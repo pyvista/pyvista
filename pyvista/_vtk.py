@@ -10,7 +10,51 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import importlib
+import importlib.util
+import os
 from typing import TYPE_CHECKING
+
+
+def _resolve_vtk_backend() -> str:
+    """Return the root package PyVista resolves VTK imports against.
+
+    Selection order:
+
+    1. The ``PYVISTA_VTK_BACKEND`` environment variable, if set, always wins
+       (e.g. ``vtkmodules`` to force stock VTK, or ``fvtk`` to force the fork).
+    2. Otherwise, if the community ``fvtk`` fork is installed, it is auto-selected
+       in preference to stock VTK. Installing ``pyvista[fvtk]`` is therefore the
+       only action needed to opt in -- ``fvtk`` imports as its own package and
+       coexists with stock ``vtk``, so this never clobbers a stock install.
+    3. Otherwise fall back to stock ``vtkmodules``.
+
+    Resolved once when this module is first imported, so ``PYVISTA_VTK_BACKEND``
+    must be set before importing :mod:`pyvista`.
+    """
+    backend = os.environ.get('PYVISTA_VTK_BACKEND')
+    if backend:
+        return backend
+    if importlib.util.find_spec('fvtk') is not None:
+        return 'fvtk'
+    return 'vtkmodules'
+
+
+#: Root package every VTK import is resolved against (``vtkmodules`` or ``fvtk``).
+_VTK_BACKEND = _resolve_vtk_backend()
+
+
+def _import_from(module_name: str, class_name: str) -> Any:
+    """Import ``class_name`` from the backend's ``module_name``.
+
+    Mirrors ``from {backend}.{module_name} import {class_name}`` semantics:
+    a missing module or missing attribute both raise ``ImportError``.
+    """
+    module = importlib.import_module(f'{_VTK_BACKEND}.{module_name}')
+    try:
+        return getattr(module, class_name)
+    except AttributeError as e:  # match `from m import c` (raises ImportError)
+        raise ImportError(str(e)) from e
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -712,7 +756,7 @@ def __getattr__(name: str):
         # Attempt to import the vtkmodule and the desired attribute
         # Convert module or attribute errors into a similar message that would otherwise be
         # seen when doing `from vtkmodules.vtkModule import vtkClass`
-        module_full_name = f'vtkmodules.{module_name}'
+        module_full_name = f'{_VTK_BACKEND}.{module_name}'
         error_msg = (
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
             'The cause is likely attributable to VTK version or a custom VTK build.'
@@ -767,11 +811,11 @@ def has_attr(name: str) -> bool:
 
 def _import_vtkPythonItem():  # noqa: N802
     try:
-        from vtkmodules.vtkPythonContext2D import vtkPythonItem  # noqa: TID251
+        return _import_from('vtkPythonContext2D', 'vtkPythonItem')
     except ImportError:  # pragma: no cover
         # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
 
-        class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
+        class vtkPythonItem:  # noqa: N801
             """Empty placeholder."""
 
             def __init__(self) -> None:  # pragma: no cover
@@ -786,22 +830,16 @@ def _import_vtkPythonItem():  # noqa: N802
 
 def _import_vtkExtractCells():  # noqa: N802
     try:  # Module changed in VTK 9.3.0
-        from vtkmodules.vtkFiltersCore import vtkExtractCells  # noqa: TID251
+        return _import_from('vtkFiltersCore', 'vtkExtractCells')
     except ImportError:
-        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef] # noqa: TID251
-            vtkExtractCells,
-        )
-    return vtkExtractCells
+        return _import_from('vtkFiltersExtraction', 'vtkExtractCells')
 
 
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
-        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities  # noqa: TID251
+        return _import_from('vtkCommonDataModel', 'vtkCellTypeUtilities')
     except ImportError:
-        from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment] # noqa: TID251
-            vtkCellTypes as vtkCellTypeUtilities,
-        )
-    return vtkCellTypeUtilities
+        return _import_from('vtkCommonDataModel', 'vtkCellTypes')
 
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
