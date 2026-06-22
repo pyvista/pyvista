@@ -154,30 +154,42 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         """Return the base url of the download."""
 
     @property
-    def source_url_raw(self) -> _FilePropStrType_co:
-        """Return the raw source of the download.
+    def source_url(self) -> _FilePropStrType_co:
+        """Return the source of the download.
 
-        This is the full URL used to download the data directly.
+        This is the full URL or local cached path used to download the data directly.
         """
+        return self._source_url()
+
+    def _source_url(self, *, web_blob: bool = False):
+        base_url = self.base_url
+        base_url_iter = [base_url] if isinstance(base_url, str) else list(base_url)
+        if web_blob:
+            # Ensure urls are not based on a local cache path
+            from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE  # noqa: PLC0415
+            from pyvista.examples.downloads import _FILE_CACHE  # noqa: PLC0415
+            from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
+
+            for i, base in enumerate(base_url_iter):
+                new_base = _DEFAULT_VTK_DATA_SOURCE if _FILE_CACHE and (base == SOURCE) else base
+                assert new_base.startswith('http')
+                new_base = new_base.replace('/raw/', '/blob/')
+                assert '/blob/' in new_base
+                base_url_iter[i] = new_base
+
         name = self.source_name
         name_iter = [name] if isinstance(name, str) else name
-        url = self.base_url
-        base_url_iter = [url] if isinstance(url, str) else url
-        url_raw = list(map(os.path.join, base_url_iter, name_iter))
-        return url_raw[0] if isinstance(name, str) else tuple(url_raw)
+        urls = list(map(os.path.join, base_url_iter, name_iter))
+        return urls[0] if isinstance(name, str) else tuple(urls)
 
     @property
-    def source_url_blob(self) -> _FilePropStrType_co:
-        """Return the blob source of the download.
+    def web_url(self) -> _FilePropStrType_co:
+        """Return the web source of the download as blob instead of raw.
 
         This URL is useful for linking to the source webpage for
         a human to open on a browser.
         """
-        # Make single urls iterable and replace 'raw' with 'blob'
-        url_raw = self.source_url_raw
-        url_iter = [url_raw] if isinstance(url_raw, str) else url_raw
-        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
-        return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
+        return self._source_url(web_blob=True)
 
     @property
     @abstractmethod

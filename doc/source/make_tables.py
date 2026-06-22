@@ -2688,7 +2688,7 @@ class DatasetPropsGenerator:
         # Collect url names and links as sequences
         name = loader.source_name
         names = [name] if isinstance(name, str) else name
-        url = loader.source_url_blob
+        url = loader.web_url
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
@@ -3212,6 +3212,16 @@ class DownloadsCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.downloads)
+
+    @classmethod
+    def generate(cls):
+        super().generate()
+        # Sanity check to ensure proper URLs are generated due to complexity with
+        # using local cached data for downloads
+        with open(cls.path) as f:
+            content = f.read()
+        real_url = 'https://github.com/pyvista/data/blob/master/Data/cow.vtp'
+        assert real_url in content
 
 
 class PlanetsCarousel(DatasetGalleryCarousel):
