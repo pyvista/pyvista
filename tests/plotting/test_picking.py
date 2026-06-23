@@ -574,6 +574,7 @@ def test_block_picking(multiblock_poly):
     assert pl.picked_block_index == picked_blocks[0]
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
 def test_element_picking(mode):
     class Tracker:

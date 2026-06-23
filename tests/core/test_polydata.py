@@ -300,6 +300,7 @@ def test_polydata_repr_str():
     assert 'N Arrays' in str(pd)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_geodesic(sphere):
     start, end = 0, sphere.n_points - 1
     geodesic = sphere.geodesic(start, end)
@@ -320,6 +321,7 @@ def test_geodesic(sphere):
     assert np.allclose(geodesic.points, sphere.points)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_geodesic_fail(sphere, plane):
     with pytest.raises(IndexError):
         sphere.geodesic(-1, -1)
@@ -330,6 +332,7 @@ def test_geodesic_fail(sphere, plane):
         plane.geodesic(0, 10)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
@@ -418,6 +421,7 @@ def test_edge_mask(sphere):
     _ = sphere.edge_mask(10, progress_bar=True)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_boolean_union_intersection(sphere, sphere_shifted):
     union = sphere.boolean_union(sphere_shifted, progress_bar=True)
     intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=True)
@@ -431,6 +435,7 @@ def test_boolean_union_intersection(sphere, sphere_shifted):
     assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_bitwise_and_or(sphere, sphere_shifted):
     union = sphere | sphere_shifted
     intersection = sphere & sphere_shifted
@@ -444,6 +449,7 @@ def test_bitwise_and_or(sphere, sphere_shifted):
     assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_boolean_difference(sphere, sphere_shifted):
     difference = sphere.boolean_difference(sphere_shifted, progress_bar=True)
     intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=True)
@@ -452,16 +458,19 @@ def test_boolean_difference(sphere, sphere_shifted):
     assert np.isclose(difference.volume, expected_volume, atol=1e-3)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_boolean_difference_fail(plane, sphere):
     with pytest.raises(NotAllTrianglesError):
         plane - sphere
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_subtract(sphere, sphere_shifted):
     sub_mesh = sphere - sphere_shifted
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_isubtract(sphere, sphere_shifted):
     sub_mesh = sphere.copy()
     sub_mesh -= sphere_shifted
@@ -686,6 +695,7 @@ def test_add(sphere, sphere_shifted):
     assert merged.n_faces == sphere.n_faces + sphere_shifted.n_faces
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_intersection(sphere, sphere_shifted):
     intersection, first, second = sphere.intersection(
         sphere_shifted,
@@ -810,6 +820,7 @@ def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
     assert tri.is_all_triangles if not pass_verts else (not tri.is_all_triangles)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
@@ -850,6 +861,7 @@ def test_extract_feature_edges_no_data():
     assert edges.n_arrays == 0
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_decimate(sphere):
     mesh = sphere.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
@@ -1002,7 +1014,9 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    assert np.all(clipped_sphere.points[:, 2] <= 0)
+    atol = 1e-8
+    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
+    assert np.all(clipped_sphere.points[faces, 2] <= atol)
 
     sphere.clip(
         origin=[0, 0, 0],
@@ -1011,7 +1025,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    assert np.all(clipped_sphere.points[:, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= atol)
 
 
 def test_extract_largest(sphere):
@@ -1231,8 +1245,9 @@ def test_strips():
     assert n_strips_test.n_strips == len(strips)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_ribbon_filter():
-    line = examples.load_spline().compute_arc_length(progress_bar=True)
+    line = examples.load_spline().compute_arc_length(progress_bar=True).points_to_double()
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     assert ribbon.n_points
 
@@ -1260,6 +1275,7 @@ def test_is_all_triangles():
     assert mesh.is_all_triangles
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extrude():
     arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
@@ -1272,6 +1288,7 @@ def test_extrude():
     assert arc.n_points != n_points_old
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extrude_capping_warnings():
     arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):

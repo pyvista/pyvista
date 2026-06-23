@@ -1274,6 +1274,7 @@ def test_fit_plane_to_points_resolution(airplane):
     assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_fit_plane_to_points():
     # Fit a plane to a plane's points
     center = (1, 2, 3)
@@ -1477,7 +1478,7 @@ def test_no_new_attr_mixin_side_effects():
 
     class Child(Parent): ...
 
-    # Test that setting attributes on lasses does not trigger a call to the getter
+    # Test that setting attributes on classes does not trigger a call to the getter
     obj = Parent()
     obj.foo = 42
     assert obj.getter_call_count == 0
@@ -1871,7 +1872,7 @@ class CasesTransformApply:
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
-        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, float
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
@@ -1879,7 +1880,7 @@ class CasesTransformApply:
             pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
             True,
             pv.PolyData,
-            np.float32,
+            float,
         )
 
     def case_polydata_float(self):

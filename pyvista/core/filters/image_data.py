@@ -2513,6 +2513,7 @@ class ImageDataFilters(DataSetFilters):
         smoothing_relaxation: float = 0.5,
         smoothing_distance: float | None = None,
         smoothing_scale: float = 1.0,
+        points_dtype=None,
         progress_bar: bool = False,
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
@@ -3115,7 +3116,7 @@ class ImageDataFilters(DataSetFilters):
         with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
-        output: pv.PolyData = _get_output(alg)
+        output: pv.PolyData = _get_output(alg, points_dtype=points_dtype)
 
         (  # Clear temp scalars from input
             alg_input.point_data.remove(temp_scalars_name)

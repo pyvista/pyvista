@@ -13,11 +13,8 @@ import pathlib
 from pathlib import Path
 import re
 import time
-from types import FunctionType
-from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypeVar
 from typing import get_args
 
 import numpy as np
@@ -43,6 +40,7 @@ from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.conftest import _get_module_functions
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 from tests.plotting.conftest import AlgorithmExecutionTracker
@@ -51,6 +49,7 @@ from tests.plotting.conftest import get_actor_mapper_input
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
+    from types import FunctionType
 
     from pytest_mock import MockerFixture
 
@@ -2284,6 +2283,7 @@ def test_array_volume_rendering(uniform, verify_image_cache):
     pv.plot(arr, volume=True, opacity='linear')
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()
@@ -3456,6 +3456,7 @@ def test_ssaa_pass():
     pl.show()
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @skip_windows_mesa
 def test_ssao_pass(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
@@ -3471,6 +3472,7 @@ def test_ssao_pass(verify_image_cache):
 
 
 @skip_mesa
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_ssao_pass_from_helper(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True  # high variance (~1000) on MacOS 15
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
@@ -5185,6 +5187,7 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_voxelize_volume_removed():
     with pytest.raises(
@@ -5328,23 +5331,6 @@ def test_create_axes_orientation_box(verify_image_cache):
     pl = pv.Plotter()
     _ = pl.add_actor(actor)
     pl.show()
-
-
-_TypeType = TypeVar('_TypeType', bound=type)
-
-
-def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
-    """Get all members of a specified type which are defined locally inside a module."""
-
-    def is_local(obj):
-        return type(obj) is typ and obj.__module__ == module.__name__
-
-    return dict(inspect.getmembers(module, predicate=is_local))
-
-
-def _get_module_functions(module: ModuleType):
-    """Get all functions defined locally inside a module."""
-    return _get_module_members(module, typ=FunctionType)
 
 
 def _get_default_kwargs(call: Callable) -> dict[str, Any]:
@@ -5531,6 +5517,7 @@ def test_direction_objects(direction_obj_test_case):
     pl.show()
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
@@ -5563,6 +5550,7 @@ def _show_edges():
     pv.global_theme.show_edges = flag
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
 @pytest.mark.parametrize(
     ('select_inputs', 'select_outputs'),
@@ -5639,6 +5627,7 @@ def test_contour_labels_boundary_style(
     pl.show(return_cpos=True)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     ('smoothing_distance', 'smoothing_scale'),
     [(0, None), (None, 0), (5, 0.5), (5, 1)],
@@ -5686,6 +5675,7 @@ def test_contour_labels_smoothing_constraint(
     pl.show()
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('_show_edges')
 @pytest.mark.parametrize('smoothing', [True, False])
 @pytest.mark.needs_vtk_version(9, 3, 0)
