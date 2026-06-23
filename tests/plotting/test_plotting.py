@@ -2300,6 +2300,16 @@ def test_plot_compare_four():
     )
 
 
+def test_plot_compare_four_camera_position():
+    mesh = examples.download_foot_bones()
+    cpos = pv.CameraPosition(
+        position=(-0.7780, -12.74, -2.019),
+        focal_point=(1.257, -1.716, -0.2136),
+        viewup=(-0.2696, -0.1070, 0.9570),
+    )
+    pv.plot_compare_four(mesh, mesh, mesh, mesh, camera_position=cpos)
+
+
 @skip_lesser_9_4_X_depth_peeling
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
