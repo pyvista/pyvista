@@ -10,6 +10,7 @@ from pytest_cases import parametrize
 import pyvista as pv
 from pyvista import CellType
 from pyvista import _vtk
+from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.examples import cells
 from pyvista.examples.cells import _NOT_SUPPORTED_CELL_SOURCE
 from pyvista.examples.cells import _NOT_SUPPORTED_PARAMETRIC
@@ -267,8 +268,13 @@ def test_generate_cell_blocks_invalid_parametric(cell_type):
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is None])
 def test_generate_cell_blocks_invalid_abstract(generator, cell_type):
     match = f'{cell_type!r} is not supported'
-    with pytest.raises(ValueError, match=match):
-        cells.generate_cell_blocks(cell_type, generator=generator)
+    if cell_type.name in _DEPRECATED_CELL_TYPES:
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            with pytest.raises(ValueError, match=match):
+                cells.generate_cell_blocks(cell_type, generator=generator)
+    else:
+        with pytest.raises(ValueError, match=match):
+            cells.generate_cell_blocks(cell_type, generator=generator)
 
 
 def test_generate_cell_blocks_unsupported_action():

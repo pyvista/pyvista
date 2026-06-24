@@ -41,6 +41,7 @@ Reader Classes
     GESignaReader
     GIFReader
     GLTFReader
+    GRDECLReader
     HDFReader
     HDRReader
     JPEGReader
@@ -67,8 +68,10 @@ Reader Classes
     STLReader
     SegYReader
     SeriesReader
+    ThreeDSReader
     TIFFReader
     TecplotReader
+    VRMLReader
     VTKDataSetReader
     VTKPDataSetReader
     XMLImageDataReader

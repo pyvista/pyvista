@@ -90,6 +90,15 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'dual_sphere_animation': '.gif',
 }
 
+DATASET_GALLERY_MODULES = [
+    pv.examples.examples,
+    pv.examples.downloads,
+    pv.examples.planets,
+    pv.examples.gltf,
+    pv.examples.download_3ds,
+    pv.examples.vrml,
+]
+
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
 ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
@@ -243,7 +252,9 @@ def _meshio_info_dict():
                 f'File format name could not be determined for {io_class.__name__}'
             )
             name = next(iter(extensions)).removeprefix('.').upper()
-        return name
+
+        # Convert number in name to actual number, e.g. `ThreeDS` -> `3DS`
+        return name.replace('Three', '3')
 
     meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
     reader_info = _reader_info_dict()
@@ -360,7 +371,7 @@ class MeshIOTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return MESHIO_INFO[cls.class_name].values()
+        return dict(sorted(MESHIO_INFO[cls.class_name].items())).values()
 
     @classmethod
     def get_header(cls, _):
@@ -404,6 +415,10 @@ class MultiBlockIOTable(MeshIOTable):
 
 class PartitionedDataSetIOTable(MeshIOTable):
     class_name = 'PartitionedDataSet'
+
+
+class ExplicitStructuredGridIOTable(MeshIOTable):
+    class_name = 'ExplicitStructuredGrid'
 
 
 class CellQualityMeasuresTable(DocTable):
@@ -2286,24 +2301,13 @@ class DatasetCard:
     @staticmethod
     def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
         # Get the corresponding function of the loader
-        func = None
+        for func_name in ['download_' + dataset_name, 'load_' + dataset_name]:
+            for module in DATASET_GALLERY_MODULES:
+                if func := getattr(module, func_name, None):
+                    return func, func_name
 
-        # Get `download` function from downloads.py or planets.py
-        func_name = 'download_' + dataset_name
-        if hasattr(pv.examples.downloads, func_name):
-            func = getattr(pv.examples.downloads, func_name)
-        elif hasattr(pv.examples.planets, func_name):
-            func = getattr(pv.examples.planets, func_name)
-        else:
-            # Get `load` function from examples.py
-            func_name = 'load_' + dataset_name
-            if hasattr(pv.examples.examples, func_name):
-                func = getattr(pv.examples.examples, func_name)
-
-        if func is None:
-            msg = f'Dataset function {func_name} does not exist.'
-            raise RuntimeError(msg)
-        return func, func_name
+        msg = f'No load or download function was found for {dataset_name}.'
+        raise RuntimeError(msg)
 
     @staticmethod
     def _generate_dataset_name(dataset_name: str):
@@ -2688,7 +2692,7 @@ class DatasetPropsGenerator:
         # Collect url names and links as sequences
         name = loader.source_name
         names = [name] if isinstance(name, str) else name
-        url = loader.source_url_blob
+        url = loader.web_url
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
@@ -2779,14 +2783,22 @@ class DatasetCardFetcher:
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
         """Add a new dataset card so that it can be fetched later."""
+        if card := cls.DATASET_CARDS_OBJ.get(dataset_name):
+            existing_module = card.loader._module.__name__
+            new_module = dataset_loader._module.__name__
+            msg = (
+                f'Cannot add dataset {dataset_name!r} from {new_module}.\n'
+                f'A dataset with this name already exists from {existing_module}.\n'
+                f'The name must be unique'
+            )
+            raise RuntimeError(msg)
         cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
     @classmethod
     def init_cards(cls):
         """Download and load all datasets and initialize a card object for each dataset."""
-        cls._init_cards_from_module(pv.examples.examples)
-        cls._init_cards_from_module(pv.examples.downloads)
-        cls._init_cards_from_module(pv.examples.planets)
+        for module in DATASET_GALLERY_MODULES:
+            cls._init_cards_from_module(module)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -2812,7 +2824,8 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 # Load data
-                print(f'loading datasets... {dataset_name}', flush=True)
+                module_name = module.__name__.removeprefix('pyvista.')
+                print(f'loading datasets from {module_name}... {dataset_name}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
@@ -3213,6 +3226,16 @@ class DownloadsCarousel(DatasetGalleryCarousel):
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.downloads)
 
+    @classmethod
+    def generate(cls):
+        super().generate()
+        # Sanity check to ensure proper URLs are generated due to complexity with
+        # using local cached data for downloads
+        with open(cls.path) as f:
+            content = f.read()
+        real_url = 'https://github.com/pyvista/data/blob/master/Data/cow.vtp'
+        assert real_url in content
+
 
 class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
@@ -3224,6 +3247,52 @@ class PlanetsCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
+
+
+class GltfCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the gltf module."""
+
+    name = 'gltf_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.gltf>` module.'
+    badge = ModuleBadge('glTF', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.gltf)
+
+    @classmethod
+    def generate(cls):
+        super().generate()
+        # Sanity check to ensure proper URLs are generated due to complexity with
+        # using local cached data for downloads
+        with open(cls.path) as f:
+            content = f.read()
+        real_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf'
+        assert real_url in content
+
+
+class VRMLCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the vrml module."""
+
+    name = 'vrml_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.vrml>` module.'
+    badge = ModuleBadge('VRML', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.vrml)
+
+
+class ThreeDSCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the 3ds module."""
+
+    name = '3ds_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.download_3ds>` module.'
+    badge = ModuleBadge('3DS', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.download_3ds)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -3552,6 +3621,9 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
+    GltfCarousel,
+    VRMLCarousel,
+    ThreeDSCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
@@ -3588,6 +3660,7 @@ def make_all_tables() -> list[str]:  # noqa: D103
     UnstructuredGridIOTable.generate()
     MultiBlockIOTable.generate()
     PartitionedDataSetIOTable.generate()
+    ExplicitStructuredGridIOTable.generate()
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)

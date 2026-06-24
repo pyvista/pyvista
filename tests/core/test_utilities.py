@@ -370,6 +370,23 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
+def test_read_reader_kwargs():
+    file = ex.download_openfoam_tubes(load=False)
+
+    no_kwargs = pv.read(file)
+    with_kwargs = pv.read(file, skip_zero_time=True)
+
+    # Meshes should be different due to zero time skip
+    assert no_kwargs != with_kwargs
+
+    match = (
+        '`POpenFOAMReader.enable_patch_array` is a method, but using kwargs with `pyvista.read` is'
+        ' only\nsupported for attributes. Use `pyvista.get_reader` instead to call reader methods.'
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(file, enable_patch_array=True)
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -403,16 +420,6 @@ def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
     fname.write_bytes(b'not a real mesh file')
     with pytest.raises(OSError, match='not able to be automatically read'):
         fileio.read(fname)
-
-
-@mock.patch('pyvista.core.utilities.fileio.read_exodus')
-def test_pyvista_read_exodus(read_exodus_mock):
-    # check that reading a file with extension .e calls `read_exodus`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pv.read(ex.globefile, force_ext='.e')
-    args, _kwargs = read_exodus_mock.call_args
-    filename = args[0]
-    assert filename == Path(ex.globefile)
 
 
 def test_get_array_cell(hexbeam):
