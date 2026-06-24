@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from .downloads import download_file
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 
-def download_iflamigm():  # pragma: no cover
+def download_iflamigm():
     """Download a iflamigm image.
 
     .. versionadded:: 0.44.0
@@ -24,5 +24,13 @@ def download_iflamigm():  # pragma: no cover
     >>> pl.import_3ds(download_3ds_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Iflamigm Dataset <iflamigm_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return download_file('iflamigm.3ds')
+    return _dataset_iflamigm.download()
+
+
+_dataset_iflamigm = _SingleFileDownloadableDatasetLoader('iflamigm.3ds')

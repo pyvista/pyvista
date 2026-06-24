@@ -95,6 +95,8 @@ DATASET_GALLERY_MODULES = [
     pv.examples.downloads,
     pv.examples.planets,
     pv.examples.gltf,
+    pv.examples.download_3ds,
+    pv.examples.vrml,
 ]
 
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
@@ -2781,6 +2783,15 @@ class DatasetCardFetcher:
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
         """Add a new dataset card so that it can be fetched later."""
+        if card := cls.DATASET_CARDS_OBJ.get(dataset_name):
+            existing_module = card.loader._module.__name__
+            new_module = dataset_loader._module.__name__
+            msg = (
+                f'Cannot add dataset {dataset_name!r} from {new_module}.\n'
+                f'A dataset with this name already exists from {existing_module}.\n'
+                f'The name must be unique'
+            )
+            raise RuntimeError(msg)
         cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
     @classmethod
@@ -3259,6 +3270,30 @@ class GltfCarousel(DatasetGalleryCarousel):
         assert real_url in content
 
 
+class VRMLCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the vrml module."""
+
+    name = 'vrml_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.vrml>` module.'
+    badge = ModuleBadge('VRML', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.vrml)
+
+
+class ThreeDSCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the 3ds module."""
+
+    name = '3ds_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.download_3ds>` module.'
+    badge = ModuleBadge('3DS', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.download_3ds)
+
+
 class PointSetCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of PointSet cards."""
 
@@ -3586,6 +3621,8 @@ CAROUSEL_LIST = [
     DownloadsCarousel,
     PlanetsCarousel,
     GltfCarousel,
+    VRMLCarousel,
+    ThreeDSCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,

@@ -571,6 +571,16 @@ def test_download_sextant_vrml():
     assert Path(filename).is_file()
 
 
+def test_download_grasshopper():
+    filename = examples.vrml.download_grasshopper()
+    assert Path(filename).is_file()
+
+
+def test_download_iflamigm():
+    filename = examples.download_3ds.download_iflamigm()
+    assert Path(filename).is_file()
+
+
 def test_download_cavity():
     filename = examples.download_cavity(load=False)
     assert Path(filename).is_file()
