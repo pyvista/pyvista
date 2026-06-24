@@ -721,6 +721,23 @@ def read_grdecl(
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
     """
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function private'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_grdecl` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    return _read_grdecl(filename, elevation=elevation, other_keywords=other_keywords)
+
+
+def _read_grdecl(
+    filename: str | Path,
+    *,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
+) -> ExplicitStructuredGrid:
     property_keywords = (
         'ACTNUM',
         'COORD',
