@@ -381,6 +381,7 @@ class BasePlotter(_BoundsSizeMixin):
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._initialized = False
+        self._show_called = False
 
         # Tracks plotter components (see
         # ``pyvista.plotting.component_registry``) that have been
@@ -8191,6 +8192,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                        viewup=(0.0, 0.0, 1.0))
 
         """
+        self._show_called = True
+
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
