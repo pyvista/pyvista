@@ -41,7 +41,7 @@ def _resolve_vtk_backend() -> str:
     return 'vtkmodules'
 
 
-#: Root package every VTK import is resolved against (``vtkmodules`` or ``fvtk``).
+# Root package every VTK import is resolved against (``vtkmodules`` or ``fvtk``).
 _VTK_BACKEND = _resolve_vtk_backend()
 
 
