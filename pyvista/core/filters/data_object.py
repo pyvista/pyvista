@@ -237,16 +237,49 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         | None = None,
         **cell_validator_kwargs,
     ) -> None:
-        if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
-            validation_fields = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            validation_fields.remove('unused_points')
-
         data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
             validation_fields, exclude_fields
         )
+        # Remove or error on fields unsupported for specific mesh types
+        _unsupported: dict[DataSet, tuple[_LiteralMeshValidationFields, ...]] = {}
+        if isinstance(mesh, pv.PointSet):
+            _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
+        if isinstance(mesh, pv.Grid):
+            _unsupported[type(mesh)] = (
+                'wrong_number_of_points',
+                'intersecting_edges',
+                'intersecting_faces',
+                'non_contiguous_edges',
+                'non_convex',
+                'inverted_faces',
+                'non_planar_faces',
+                'degenerate_faces',
+                'coincident_points',
+            )
+
+        for mesh_type, unsupported_fields in _unsupported.items():
+            unsupported_set = set(unsupported_fields)
+            bad_point_fields = unsupported_set & set(point_fields)
+            bad_cell_fields = unsupported_set & set(cell_fields)
+            bad_fields = bad_point_fields | bad_cell_fields
+
+            if bad_fields:
+                if validation_fields is not None:
+                    # User explicitly requested this field (directly or via a group)
+                    # Use the group name in the error if the user passed it
+                    if 'cells' in validation_fields and bad_cell_fields:
+                        field_name = 'cells'
+                    elif 'points' in validation_fields and bad_point_fields:
+                        field_name = 'points'
+                    else:
+                        field_name = next(iter(bad_fields))
+                    msg = f'Field {field_name!r} is not supported for {mesh_type.__name__}.'
+                    raise ValueError(msg)
+                else:
+                    # Default case: remove unsupported fields without error
+                    cell_fields = tuple(f for f in cell_fields if f not in unsupported_set)
+                    point_fields = tuple(f for f in point_fields if f not in unsupported_set)
+
         self._validation_report = _MeshValidator._generate_report(
             mesh,
             data_fields=data_fields,
@@ -1628,31 +1661,40 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
-        cell_validator = _vtk.vtkCellValidator()
-        cell_validator.SetInputData(self)
-        cell_validator.SetTolerance(tol)
-        if pv.vtk_version_info >= (9, 6, 0):
-            # vtkCellValidator stores PlanarityTolerance as static class state, so we must
-            # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
-            cell_validator.SetPlanarityTolerance(
-                planarity_tolerance if planarity_tolerance is not None else 0.1
-            )
-        cell_validator.Update()
-        output = _get_output(cell_validator)
+        # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+        skip_validator = isinstance(self, pv.Grid)
+        if skip_validator:
+            output = self.copy(deep=False)
+        else:
+            cell_validator = _vtk.vtkCellValidator()
+            cell_validator.SetInputData(self)
+            cell_validator.SetTolerance(tol)
+            if pv.vtk_version_info >= (9, 6, 0):
+                # vtkCellValidator stores PlanarityTolerance as static class state, so we must
+                # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
+                cell_validator.SetPlanarityTolerance(
+                    planarity_tolerance if planarity_tolerance is not None else 0.1
+                )
+            cell_validator.Update()
+            output = _get_output(cell_validator)
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
-            validity_state = np.array(
-                mesh.cell_data['ValidityState'],
-                dtype=np.int64,
-                copy=True,
-            )
+            if skip_validator:
+                validity_state = np.zeros(shape=(self.n_cells,), dtype=np.int64)
+            else:
+                validity_state = np.array(
+                    mesh.cell_data['ValidityState'],
+                    dtype=np.int64,
+                    copy=True,
+                )
             mesh.cell_data['validity_state'] = validity_state
-            del mesh.cell_data['ValidityState']
+            if not skip_validator:
+                del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
 
-            set_pyvista_validity_state(mesh)
+            mesh._set_pyvista_validity_state(size_tolerance=size_tolerance)
 
             # Extract indices of invalid cells and store as field data
             mesh.field_data['invalid'] = np.where(validity_state != 0)[0]
@@ -1661,60 +1703,58 @@ class DataObjectFilters:
                     continue
                 mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
 
-        def set_pyvista_validity_state(mesh: DataSet):
-            # Use points dtype eps by default
-            size_tol: float = (
-                size_tolerance if size_tolerance is not None else np.finfo(mesh.points.dtype).eps
-            )
-
-            state = mesh.cell_data['validity_state']
-
-            size_data = mesh.compute_cell_sizes(
-                vertex_count=True, length=True, area=True, volume=True
-            ).cell_data
-            size = (
-                size_data['VertexCount']
-                + size_data['Length']
-                + size_data['Area']
-                + size_data['Volume']
-            )
-
-            # NEGATIVE_SIZE
-            state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
-
-            # ZERO_SIZE
-            state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
-
-            # INVALID_POINT_REFERENCES
-            if hasattr(mesh, 'dimensions'):
-                return  # Cell connectivity is explicitly defined and cannot be invalid
-
-            ugrid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
-
-            # Find invalid connectivity entries
-            conn = ugrid.cell_connectivity
-            n_cells = ugrid.n_cells
-            invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
-            if not np.any(invalid_conn):
-                return
-
-            # Map invalid connectivity indices to cell IDs
-            invalid_conn_ids = np.nonzero(invalid_conn)[0]
-            cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
-
-            # Build per-cell boolean mask
-            is_invalid = np.zeros(n_cells, dtype=bool)
-            is_invalid[cell_ids] = True
-            state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
-            return
-
         if isinstance(output, pv.DataSet):
             post_process(output)
         else:
             output.generic_filter(post_process)
         return output
+
+    def _set_pyvista_validity_state(self: DataSet, *, size_tolerance: float | None = None):
+        # Use points dtype eps by default
+        size_tol: float = (
+            size_tolerance if size_tolerance is not None else np.finfo(self.points.dtype).eps
+        )
+
+        state = self.cell_data['validity_state']
+
+        size_data = self.compute_cell_sizes(
+            vertex_count=True, length=True, area=True, volume=True
+        ).cell_data
+        size = (
+            size_data['VertexCount']
+            + size_data['Length']
+            + size_data['Area']
+            + size_data['Volume']
+        )
+
+        # NEGATIVE_SIZE
+        state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
+
+        # ZERO_SIZE
+        state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
+
+        # INVALID_POINT_REFERENCES
+        if hasattr(self, 'dimensions'):
+            return  # Cell connectivity is explicitly defined and cannot be invalid
+
+        ugrid = self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+
+        # Find invalid connectivity entries
+        conn = ugrid.cell_connectivity
+        n_cells = ugrid.n_cells
+        invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
+        if not np.any(invalid_conn):
+            return
+
+        # Map invalid connectivity indices to cell IDs
+        invalid_conn_ids = np.nonzero(invalid_conn)[0]
+        cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
+
+        # Build per-cell boolean mask
+        is_invalid = np.zeros(n_cells, dtype=bool)
+        is_invalid[cell_ids] = True
+        state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
+        return
 
     @_deprecate_positional_args(allowed=['trans'])
     def transform(  # noqa: PLR0917
