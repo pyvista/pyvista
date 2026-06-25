@@ -1881,6 +1881,20 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+def test_validate_mesh_imagedata():
+    # Ensure we avoid VTK bug: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+    image = pv.ImageData(dimensions=(256, 256, 256))
+    image.validate_mesh(action='error')
+
+    match = "Cell field 'wrong_number_of_points' is not supported for ImageData."
+    with pytest.raises(ValueError, match=match):
+        image.validate_mesh('cells')
+
+    match = "Cell field 'non_convex' is not supported for ImageData."
+    with pytest.raises(ValueError, match=match):
+        image.validate_mesh(['non_convex'])
+
+
 @pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
 def test_validate_mesh_planarity_tolerance():
     match = 'Planarity tolerance requires VTK 9.6 or later.'
@@ -2307,11 +2321,6 @@ def test_cell_validator():
     for name in CELL_STATUS_ARRAY_NAMES:
         array = validated.field_data[name]
         assert array.shape == (0,)
-
-
-# def test_cell_validator_imagedata():
-#     image = examples.load_channels()
-#     image.cell_validator()
 
 
 @pytest.mark.needs_vtk_version(9, 6, 0)

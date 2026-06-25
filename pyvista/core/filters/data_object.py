@@ -245,6 +245,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         if isinstance(mesh, pv.PointSet):
             _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
         if isinstance(mesh, pv.Grid):
+            # Avoid vtkCellValidator fields since these may crash: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
             _unsupported[type(mesh)] = (
                 'wrong_number_of_points',
                 'intersecting_edges',
@@ -257,28 +258,18 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'coincident_points',
             )
 
-        for mesh_type, unsupported_fields in _unsupported.items():
-            unsupported_set = set(unsupported_fields)
-            bad_point_fields = unsupported_set & set(point_fields)
-            bad_cell_fields = unsupported_set & set(cell_fields)
-            bad_fields = bad_point_fields | bad_cell_fields
-
-            if bad_fields:
-                if validation_fields is not None:
-                    # User explicitly requested this field (directly or via a group)
-                    # Use the group name in the error if the user passed it
-                    if 'cells' in validation_fields and bad_cell_fields:
-                        field_name = 'cells'
-                    elif 'points' in validation_fields and bad_point_fields:
-                        field_name = 'points'
+        for mesh_type, unsupported_field in _unsupported.items():
+            for field in unsupported_field:
+                if field in cell_fields or field in point_fields:
+                    if validation_fields is not None:
+                        # User explicitly requested this field (directly or via a group)
+                        kind = 'Point' if field in point_fields else 'Cell'
+                        msg = f'{kind} field {field!r} is not supported for {mesh_type.__name__}.'
+                        raise ValueError(msg)
                     else:
-                        field_name = next(iter(bad_fields))
-                    msg = f'Field {field_name!r} is not supported for {mesh_type.__name__}.'
-                    raise ValueError(msg)
-                else:
-                    # Default case: remove unsupported fields without error
-                    cell_fields = tuple(f for f in cell_fields if f not in unsupported_set)
-                    point_fields = tuple(f for f in point_fields if f not in unsupported_set)
+                        # Default case: remove unsupported fields without error
+                        cell_fields = tuple(f for f in cell_fields if f != field)
+                        point_fields = tuple(f for f in point_fields if f != field)
 
         self._validation_report = _MeshValidator._generate_report(
             mesh,
