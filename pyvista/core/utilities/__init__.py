@@ -85,6 +85,7 @@ from .geometric_objects import Rectangle as Rectangle
 from .geometric_objects import SolidSphere as SolidSphere
 from .geometric_objects import SolidSphereGeneric as SolidSphereGeneric
 from .geometric_objects import Sphere as Sphere
+from .geometric_objects import StructuredSphere as StructuredSphere
 from .geometric_objects import Superquadric as Superquadric
 from .geometric_objects import Tetrahedron as Tetrahedron
 from .geometric_objects import Text3D as Text3D

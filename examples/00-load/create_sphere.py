@@ -46,11 +46,12 @@ mesh.get_cell(0).type
 # The structure of the mesh can be important. Instead of a
 # triangulated mesh, it can be useful to have a structured
 # mesh that has an i-j-k ordering that allows for simplified
-# cell connectivity.
+# cell connectivity. The following example is similar to how
+# :func:`~pyvista.StructuredSphere` is implemented.
 #
 # The points are generated as a regular grid in spherical coordinates using
 # :func:`pyvista.spherical_to_cartesian`.
-# Here, we will used the convention that ``theta`` is the
+# Here, we use the convention that ``theta`` is the
 # azimuthal angle, similar to longitude on the globe.  ``phi`` is the
 # polar angle, similar to latitude on the globe.
 

@@ -162,6 +162,62 @@ def test_solid_sphere():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
 
 
+def test_structured_sphere():
+    sphere = pv.StructuredSphere()
+    assert isinstance(sphere, pv.StructuredGrid)
+
+    assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
+    assert sphere.active_texture_coordinates.dtype == np.float64
+
+    assert sphere.point_data.active_normals_name == 'Normals'
+    normals = sphere.active_normals
+    assert normals.dtype == np.float64
+    assert np.allclose(np.linalg.norm(normals, axis=1), 1.0)
+
+    assert sphere.points.dtype == np.float64
+    assert sphere.n_cells == 870
+
+
+def test_structured_sphere_theta_offset():
+    sphere = pv.StructuredSphere()
+    sphere_shifted = pv.StructuredSphere(theta_offset=90)
+    assert np.allclose(
+        sphere.active_texture_coordinates, sphere_shifted.active_texture_coordinates
+    )
+    assert not np.allclose(sphere.points, sphere_shifted.points)
+
+    assert sphere.extract_surface(algorithm=None).n_open_edges > 0
+    assert sphere_shifted.extract_surface(algorithm=None).n_open_edges > 0
+
+    seam = sphere.extract_feature_edges(
+        non_manifold_edges=True, feature_edges=False, manifold_edges=False
+    )
+    seam_shifted = sphere_shifted.extract_feature_edges(
+        non_manifold_edges=True, feature_edges=False, manifold_edges=False
+    )
+    # Seam is on the +x axis
+    expected = pv.BoundsTuple(
+        x_min=0.0,
+        x_max=0.5,
+        y_min=0.0,
+        y_max=0.0,
+        z_min=-0.5,
+        z_max=0.5,
+    )
+    assert np.allclose(seam.bounds, expected, atol=1e-3)
+
+    # Seam is on the +y axis
+    expected = pv.BoundsTuple(
+        x_min=0.0,
+        x_max=0.0,
+        y_min=0.0,
+        y_max=0.5,
+        z_min=-0.5,
+        z_max=0.5,
+    )
+    assert np.allclose(seam_shifted.bounds, expected, atol=1e-3)
+
+
 def test_solid_sphere_hollow():
     sphere = pv.SolidSphere(
         outer_radius=1.0,
