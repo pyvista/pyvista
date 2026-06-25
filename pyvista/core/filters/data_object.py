@@ -241,7 +241,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             validation_fields, exclude_fields
         )
         # Remove or error on fields unsupported for specific mesh types
-        _unsupported: dict[DataSet, tuple[_LiteralMeshValidationFields, ...]] = {}
+        _unsupported: dict[
+            type[_DataSetOrMultiBlockType], tuple[_LiteralMeshValidationFields, ...]
+        ] = {}
         if isinstance(mesh, pv.PointSet):
             _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
         if isinstance(mesh, pv.Grid):

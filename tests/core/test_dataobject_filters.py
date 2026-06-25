@@ -27,6 +27,7 @@ from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
+from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -1881,18 +1882,33 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
-def test_validate_mesh_imagedata():
-    # Ensure we avoid VTK bug: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
-    image = pv.ImageData(dimensions=(256, 256, 256))
-    image.validate_mesh(action='error')
+@pytest.fixture
+def image150():
+    # Dims must be large enough to replicate VTK bug: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+    return pv.ImageData(dimensions=(150, 150, 150))
+
+
+def test_validate_mesh_imagedata(image150):
+    image150.cell_validator()
+    image150.validate_mesh(action='error')
 
     match = "Cell field 'wrong_number_of_points' is not supported for ImageData."
     with pytest.raises(ValueError, match=match):
-        image.validate_mesh('cells')
+        image150.validate_mesh('cells')
 
-    match = "Cell field 'non_convex' is not supported for ImageData."
+
+@pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
+def test_validate_mesh_imagedata_vtk_fields(image150, field):
+    # Ensure vtk fields raise error
+    match = f'Cell field {field!r} is not supported for ImageData.'
     with pytest.raises(ValueError, match=match):
-        image.validate_mesh(['non_convex'])
+        image150.validate_mesh([field])
+
+
+@pytest.mark.parametrize('field', [f.lower() for f in _PYVISTA_CELL_STATUS_INFO if f != 'VALID'])
+def test_validate_mesh_imagedata_pyvista_fields(image150, field):
+    # Ensure pyvista fields DO NOT raise error
+    image150.validate_mesh(field)
 
 
 @pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
