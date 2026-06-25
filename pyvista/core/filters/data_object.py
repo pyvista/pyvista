@@ -1685,7 +1685,7 @@ class DataObjectFilters:
                 del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
 
-            mesh._set_pyvista_validity_state(size_tolerance=size_tolerance)
+            set_pyvista_validity_state(mesh)
 
             # Extract indices of invalid cells and store as field data
             mesh.field_data['invalid'] = np.where(validity_state != 0)[0]
@@ -1694,58 +1694,60 @@ class DataObjectFilters:
                     continue
                 mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
 
+        def set_pyvista_validity_state(mesh: DataSet):
+            # Use points dtype eps by default
+            size_tol: float = (
+                size_tolerance if size_tolerance is not None else np.finfo(mesh.points.dtype).eps
+            )
+
+            state = mesh.cell_data['validity_state']
+
+            size_data = mesh.compute_cell_sizes(
+                vertex_count=True, length=True, area=True, volume=True
+            ).cell_data
+            size = (
+                size_data['VertexCount']
+                + size_data['Length']
+                + size_data['Area']
+                + size_data['Volume']
+            )
+
+            # NEGATIVE_SIZE
+            state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
+
+            # ZERO_SIZE
+            state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
+
+            # INVALID_POINT_REFERENCES
+            if hasattr(mesh, 'dimensions'):
+                return  # Cell connectivity is explicitly defined and cannot be invalid
+
+            ugrid = (
+                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+            )
+
+            # Find invalid connectivity entries
+            conn = ugrid.cell_connectivity
+            n_cells = ugrid.n_cells
+            invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
+            if not np.any(invalid_conn):
+                return
+
+            # Map invalid connectivity indices to cell IDs
+            invalid_conn_ids = np.nonzero(invalid_conn)[0]
+            cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
+
+            # Build per-cell boolean mask
+            is_invalid = np.zeros(n_cells, dtype=bool)
+            is_invalid[cell_ids] = True
+            state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
+            return
+
         if isinstance(output, pv.DataSet):
             post_process(output)
         else:
             output.generic_filter(post_process)
         return output
-
-    def _set_pyvista_validity_state(self: DataSet, *, size_tolerance: float | None = None):
-        # Use points dtype eps by default
-        size_tol: float = (
-            size_tolerance if size_tolerance is not None else np.finfo(self.points.dtype).eps
-        )
-
-        state = self.cell_data['validity_state']
-
-        size_data = self.compute_cell_sizes(
-            vertex_count=True, length=True, area=True, volume=True
-        ).cell_data
-        size = (
-            size_data['VertexCount']
-            + size_data['Length']
-            + size_data['Area']
-            + size_data['Volume']
-        )
-
-        # NEGATIVE_SIZE
-        state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
-
-        # ZERO_SIZE
-        state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
-
-        # INVALID_POINT_REFERENCES
-        if hasattr(self, 'dimensions'):
-            return  # Cell connectivity is explicitly defined and cannot be invalid
-
-        ugrid = self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
-
-        # Find invalid connectivity entries
-        conn = ugrid.cell_connectivity
-        n_cells = ugrid.n_cells
-        invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
-        if not np.any(invalid_conn):
-            return
-
-        # Map invalid connectivity indices to cell IDs
-        invalid_conn_ids = np.nonzero(invalid_conn)[0]
-        cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
-
-        # Build per-cell boolean mask
-        is_invalid = np.zeros(n_cells, dtype=bool)
-        is_invalid[cell_ids] = True
-        state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
-        return
 
     @_deprecate_positional_args(allowed=['trans'])
     def transform(  # noqa: PLR0917
