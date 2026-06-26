@@ -1107,9 +1107,7 @@ class PolyDataFilters(DataSetFilters):
                 'nuttall': alg.SetWindowFunctionToNuttall,
             }
 
-            window_function_ = (
-                'nuttall' if window_function is None else window_function.lower()
-            )
+            window_function_ = 'nuttall' if window_function is None else window_function.lower()
             try:
                 set_window_function = window_functions[window_function_]
             except KeyError as err:
