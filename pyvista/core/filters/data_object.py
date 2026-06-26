@@ -235,6 +235,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         exclude_fields: _LiteralMeshValidationFields
         | Sequence[_LiteralMeshValidationFields]
         | None = None,
+        *,
+        name: str | None,
         **cell_validator_kwargs,
     ) -> None:
         if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
@@ -249,6 +251,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         )
         self._validation_report = _MeshValidator._generate_report(
             mesh,
+            name=name,
             data_fields=data_fields,
             point_fields=point_fields,
             cell_fields=cell_fields,
@@ -378,6 +381,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _generate_report(
         mesh: _DataSetOrMultiBlockType,
         *,
+        name,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -392,6 +396,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if isinstance(mesh, pv.DataSet):
                 return _MeshValidator._validate_dataset(  # type: ignore[return-value]
                     mesh,
+                    name=name,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -400,6 +405,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
                     mesh,
+                    name=name,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -410,6 +416,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_dataset(
         mesh: _DataSetType,
         *,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -444,12 +451,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 else:
                     message_body.append(message)
         if message_body:
-            header = _MeshValidator._create_message_header(validated_mesh)
+            header = _MeshValidator._create_message_header(validated_mesh, name=name)
             message_structure = [header, message_body]
         else:
             message_structure = []
         dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
         return _MeshValidationReport(
+            _name=name,
             _mesh=validated_mesh,
             _message=message_structure,
             _subreports=None,
@@ -461,6 +469,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_multiblock(
         mesh: _MultiBlockType,
         *,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -477,6 +486,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 report = _MeshValidator._generate_report(
                     block,
+                    name=None,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -504,11 +514,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             dataclass_fields[field] = invalid_block_ids
 
         if message_body:
-            header = _MeshValidator._create_message_header(validated_mesh)
+            header = _MeshValidator._create_message_header(validated_mesh, name=name)
             message = [header, message_body]
         else:
             message = []
         return _MeshValidationReport(
+            _name=name,
             _mesh=validated_mesh,
             _message=message,
             _subreports=tuple(reports),
@@ -713,8 +724,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _MESH_HAS = 'Mesh has'
 
     @staticmethod
-    def _create_message_header(obj: object) -> str:
-        return f'{obj.__class__.__name__} mesh is not valid:'
+    def _create_message_header(obj: object, *, name: str | None) -> str:
+        name = f' {name!r} ' if name else ' '
+        return f'{obj.__class__.__name__} mesh{name}is not valid:'
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
@@ -788,6 +800,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     """Dataclass to report mesh validation results."""
 
     # Non-fields
+    _name: InitVar[str | None]
     _mesh: InitVar[_DataSetOrMultiBlockType]
     _message: InitVar[_NestedStrings | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
@@ -817,15 +830,21 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     def __post_init__(
         self,
+        _name: str | None,
         _mesh: _DataSetOrMultiBlockType,
         _message: _NestedStrings | None,
         _subreports: tuple[_MeshValidationReport[DataSet] | None, ...] | None,
         _report_body: _ReportBodyOptions | None,
     ) -> None:
+        object.__setattr__(self, '_name', _name)
         object.__setattr__(self, '_mesh', _mesh)
         object.__setattr__(self, '_message', _message)
         object.__setattr__(self, '_subreports', _subreports)
         object.__setattr__(self, '_report_body', _report_body)
+
+    @property
+    def name(self) -> str | None:
+        return self._name  # type: ignore[attr-defined]
 
     @property
     def mesh(self) -> _DataSetOrMultiBlockType:
@@ -957,7 +976,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                 lines.append(f'{indent}{key:<{label_width}} : {value}')
 
         mesh = self.mesh
-        mesh_items: dict[str, str | int] = {'Type': mesh.__class__.__name__}
+        name = self.name
+        mesh_items: dict[str, str | int] = {} if name is None else {'Name': f'{name!r}'}
+        mesh_items['Type'] = mesh.__class__.__name__
         # Set report content based on mesh type
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
@@ -1021,6 +1042,7 @@ class DataObjectFilters:
         *,
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         report_body: _ReportBodyOptions = 'message',
+        name: str | None = None,
         **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
@@ -1096,6 +1118,7 @@ class DataObjectFilters:
           summary of any problems detected, and is formatted for printing to console. This is the
           message used when the ``action`` keyword is set for emitting warnings or raising errors.
           This value is ``None`` if the mesh is valid.
+        - ``name``: The name of the mesh (if provided).
 
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
@@ -1147,6 +1170,11 @@ class DataObjectFilters:
             Using ``'fields'`` as the body is more explicit in terms of showing `which` fields
             have been validated. Using ``'message'`` is typically visually more compact though,
             and the message includes additional cell type-specific information.
+
+            .. versionadded:: 0.48
+
+        name : str, optional
+            Name to use in the validation report and error messages.
 
             .. versionadded:: 0.48
 
@@ -1414,6 +1442,7 @@ class DataObjectFilters:
             self,
             _convert_cell_status(validation_fields),
             _convert_cell_status(exclude_fields),
+            name=name,
             **cell_validator_kwargs,
         ).validation_report
 

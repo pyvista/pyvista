@@ -1945,13 +1945,20 @@ def invalid_random_polydata():
     return pv.PolyData(points, faces=faces)
 
 
+def test_validate_mesh_name():
+    name = 'poly'
+    report = pv.PolyData().validate_mesh(name=name)
+    assert report.name == name
+
+
 def test_validate_mesh_report_str():
-    report = pv.Sphere().validate_mesh(report_body='fields')
+    report = pv.Sphere().validate_mesh(report_body='fields', name='Sphere')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh info:\n'
+        "    Name                     : 'Sphere'\n"
         '    Type                     : PolyData\n'
         '    N Points                 : 842\n'
         '    N Cells                  : 1680\n'
@@ -1984,12 +1991,13 @@ def test_validate_mesh_report_str():
 
 def test_validate_mesh_composite_report_str():
     multi = pv.Sphere().cast_to_multiblock()
-    report = multi.validate_mesh(report_body='fields')
+    report = multi.validate_mesh(report_body='fields', name='Sphere')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh info:\n'
+        "    Name                     : 'Sphere'\n"
         '    Type                     : MultiBlock\n'
         '    N Blocks                 : 1\n'
         'Report summary:\n'

@@ -482,6 +482,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
+        "    Name           : 'ant.ply'\n"
         '    Type           : PolyData\n'
         '    N Points       : 486\n'
         '    N Cells        : 912\n'
@@ -502,6 +503,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
+        "    Name                     : 'ant.ply'\n"
         '    Type                     : PolyData\n'
         '    N Points                 : 486\n'
         '    N Cells                  : 912\n'
@@ -589,6 +591,7 @@ def test_validate_invalid_mesh(
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
+        "    Name               : 'ant.vtm'\n"
         '    Type               : MultiBlock\n'
         '    N Blocks           : 1\n'
         'Report summary:\n'
@@ -643,6 +646,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f'{b}Mesh Validation Report{_}\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         f'{b}Mesh info:{_}\n'
+        f"    Name               : {g}'cow.vtk'{_}\n"
         f'    Type               : {m}UnstructuredGrid{_}\n'
         f'    N Points           : {cb}2905{_}\n'
         f'    N Cells            : {cb}3263{_}\n'
@@ -682,6 +686,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f'{b}Mesh Validation Report{_}\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         f'{b}Mesh info:{_}\n'
+        f"    Name                        : {g}'cow.vtk'{_}\n"
         f'    Type                        : {m}UnstructuredGrid{_}\n'
         f'    N Points                    : {cb}2905{_}\n'
         f'    N Cells                     : {cb}3263{_}\n'
