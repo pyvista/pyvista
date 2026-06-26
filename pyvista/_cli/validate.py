@@ -114,10 +114,6 @@ def _converter_report(
     raise ValueError(msg)
 
 
-def _insert_mesh_path(string: str, path: Path) -> str:
-    return string.replace('mesh is not valid', f'mesh {path.name!r} is not valid', 1)
-
-
 @app.command(
     usage=f'Usage: [bold]{pv.__name__} validate MESH-PATH [FIELDS...] [--exclude FIELDS...]',
     help_formatter=HELP_FORMATTER,
@@ -232,6 +228,7 @@ def _validate_one(
     try:
         out = pv.DataObjectFilters.validate_mesh(
             mesh,
+            name=path.name,
             validation_fields=fields,
             exclude_fields=exclude,
             tolerance=tolerance,
@@ -246,15 +243,10 @@ def _validate_one(
         if report is not None:
             # Print the full report
             report_string = str(out)
-            if report_body == 'fields':
-                invalid_fields = out.invalid_fields
-            else:
-                invalid_fields = None
-                report_string = _insert_mesh_path(report_string, path)
+            invalid_fields = out.invalid_fields if report_body == 'fields' else None
             app.console.print(_MeshValidator._colorize_output(report_string, invalid_fields))
         elif (message := out.message) is not None:
             # Only print the error message and show the file name
-            message = _insert_mesh_path(message, path)
             app.console.print(_MeshValidator._colorize_output(message))
         else:
             # Mesh is valid
