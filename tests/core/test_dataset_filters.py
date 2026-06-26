@@ -1640,27 +1640,35 @@ def test_smooth_taubin(uniform):
 
 @pytest.mark.needs_vtk_version(9, 4)
 @pytest.mark.parametrize('window_function', ['blackman', 'hamming', 'hanning', 'nuttall'])
-def test_smooth_taubin_window_function(uniform, window_function):
-    surf = uniform.extract_surface(algorithm=None).clean()
-    smoothed = surf.smooth_taubin(window_function=window_function)
+def test_smooth_taubin_window_function(ant, window_function):
+    smoothed = ant.smooth_taubin(window_function=window_function)
 
-    assert smoothed.n_points == surf.n_points
-    assert smoothed.n_cells == surf.n_cells
+    assert smoothed.n_points == ant.n_points
+    assert smoothed.n_cells == ant.n_cells
 
 
 @pytest.mark.needs_vtk_version(9, 4)
-def test_smooth_taubin_invalid_window_function(uniform):
-    surf = uniform.extract_surface(algorithm=None).clean()
+def test_smooth_taubin_window_function_default(ant):
+    smoothed_default = ant.smooth_taubin()
+    smoothed_nuttall = ant.smooth_taubin(window_function='nuttall')
 
-    with pytest.raises(ValueError, match='Invalid window_function'):
-        surf.smooth_taubin(window_function='invalid')
+    assert np.allclose(smoothed_default.points, smoothed_nuttall.points)
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_smooth_taubin_invalid_window_function(ant):
+    match = re.escape(
+        "Invalid window_function 'invalid'. Expected one of: blackman, hamming, hanning, nuttall."
+    )
+    with pytest.raises(ValueError, match=match):
+        ant.smooth_taubin(window_function='invalid')
 
 
 @pytest.mark.needs_vtk_version(less_than=(9, 4))
-def test_smooth_taubin_window_function_vtk_version():
+def test_smooth_taubin_window_function_vtk_version(ant):
     match = '`window_function` requires VTK 9.4.0 or later.'
     with pytest.raises(pv.VTKVersionError, match=match):
-        pv.Sphere().smooth_taubin(window_function='nuttall')
+        ant.smooth_taubin(window_function='nuttall')
 
 
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
