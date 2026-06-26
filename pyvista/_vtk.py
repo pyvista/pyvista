@@ -782,6 +782,17 @@ _VTK_CLASS_TO_MODULE: dict[str, str] = {
     for cls in classes
 }
 
+# Fallback modules for classes whose home module differs between VTK builds. The
+# tiered ``cvista`` backend relocates the view/camera-dependent FiltersHybrid
+# filters into ``vtkFiltersHybridRendering`` (so the core tier stays rendering-free);
+# stock VTK keeps them in ``vtkFiltersHybrid``. ``__getattr__`` tries the primary
+# module first, then these alternates, so either build resolves the class.
+_VTK_CLASS_ALT_MODULES: dict[str, tuple[str, ...]] = {
+    'vtkPolyDataSilhouette': ('vtkFiltersHybridRendering',),
+    'vtkRenderLargeImage': ('vtkFiltersHybridRendering',),
+    'vtkAdaptiveDataSetSurfaceFilter': ('vtkFiltersHybridRendering',),
+}
+
 
 def __getattr__(name: str):
     """Lazy attribute access.
@@ -808,14 +819,19 @@ def __getattr__(name: str):
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
             'The cause is likely attributable to VTK version or a custom VTK build.'
         )
-        try:
-            module = importlib.import_module(module_full_name)
-        except ModuleNotFoundError as e:
-            raise ImportError(error_msg) from e
-        try:
-            obj = getattr(module, name)
-        except AttributeError as e:
-            raise ImportError(error_msg) from e
+        candidate_modules = (module_name, *_VTK_CLASS_ALT_MODULES.get(name, ()))
+        obj = _missing = object()
+        last_exc: Exception | None = None
+        for candidate in candidate_modules:
+            try:
+                module = importlib.import_module(f'{_VTK_BACKEND}.{candidate}')
+                obj = getattr(module, name)
+                break
+            except (ModuleNotFoundError, AttributeError) as e:
+                last_exc = e
+                continue
+        if obj is _missing:
+            raise ImportError(error_msg) from last_exc
 
     # Cache object for next access
     globals()[name] = obj
