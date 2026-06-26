@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import faulthandler
 import functools
+import importlib
 from importlib import metadata
 from inspect import BoundArguments
 from inspect import Parameter
@@ -87,6 +88,32 @@ except ImportError:  # core-only VTK backend: rendering modules are absent
         return False
 else:
     HAS_PLOTTING = True
+
+
+def _has_vtk_module(module_name: str) -> bool:
+    """Return ``True`` if a (possibly omitted) VTK IO module is importable.
+
+    A core-only VTK backend (e.g. the rendering-free cvista wheel) ships none of
+    the heavy / third-party IO modules. The readers/writers that wrap them only
+    import lazily on first use, so tests that exercise those formats fail at
+    *runtime* on a core-only build. Probing the module here (mirrors
+    ``HAS_PLOTTING``) lets us auto-apply the ``needs_io_extra`` marker so the
+    core-only subset can deselect them with ``-m "not needs_io_extra"``.
+    """
+    try:
+        importlib.import_module(f'vtkmodules.{module_name}')
+    except ImportError:
+        return False
+    else:
+        return True
+
+
+# IO-tier VTK modules omitted from a core-only build. Each maps to readers /
+# writers (see ``pyvista.core.utilities.reader``) that wrap the module lazily.
+HAS_IO_HDF = _has_vtk_module('vtkIOHDF')  # HDFReader, .vtkhdf save
+HAS_IO_ENSIGHT = _has_vtk_module('vtkIOEnSight')  # EnSightReader (.case)
+HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
+HAS_IO_EXTRA = HAS_IO_HDF and HAS_IO_ENSIGHT and HAS_IO_CHEMISTRY
 
 pv.OFF_SCREEN = True
 
@@ -474,6 +501,25 @@ _RENDERING_ONLY_MODULES = frozenset(
 )
 
 
+# Tests that exercise an IO-tier format physically implemented in a VTK module
+# omitted from a core-only build. Matched by a substring of the test's *name*
+# (mirrors ``_RENDERING_NAME_KEYWORDS``); each keyword group is gated on the
+# corresponding ``HAS_IO_*`` probe so the marking is a no-op on a full VTK build.
+# Keywords are chosen to be specific enough not to catch unrelated core tests
+# (e.g. ``hdf``/``ensight`` rather than the generic ``cube``/``case``).
+_IO_EXTRA_NAME_KEYWORDS = (
+    ('hdf', HAS_IO_HDF),  # HDFReader, .vtkhdf save, download_can_crushed_hdf
+    ('ensight', HAS_IO_ENSIGHT),  # EnSightReader (.case)
+    ('pdbreader', HAS_IO_CHEMISTRY),  # PDBReader
+    ('gaussian_cubes_reader', HAS_IO_CHEMISTRY),  # GaussianCubeReader (.cube)
+)
+
+
+def _name_needs_io_extra(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw, available in _IO_EXTRA_NAME_KEYWORDS if not available)
+
+
 def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
     """Skip collecting modules that import rendering at module scope.
 
@@ -493,10 +539,16 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
 
 
 def pytest_collection_modifyitems(config, items):  # noqa: ARG001
-    """Auto-apply the ``needs_rendering`` marker (see ``_RENDERING_*`` above)."""
+    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` markers.
+
+    See ``_RENDERING_*`` and ``_IO_EXTRA_*`` above. The ``needs_io_extra``
+    marking only fires when the relevant ``HAS_IO_*`` probe reports the module
+    absent, so it is a no-op on a full VTK build.
+    """
     tests_root = pathlib.Path(__file__).parent
     plotting_dir = tests_root / 'plotting'
     mark = pytest.mark.needs_rendering
+    io_extra_mark = pytest.mark.needs_io_extra
     for item in items:
         path = pathlib.Path(str(getattr(item, 'fspath', item.nodeid)))
         rel = None
@@ -513,6 +565,8 @@ def pytest_collection_modifyitems(config, items):  # noqa: ARG001
         )
         if needs:
             item.add_marker(mark)
+        if _name_needs_io_extra(item):
+            item.add_marker(io_extra_mark)
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
