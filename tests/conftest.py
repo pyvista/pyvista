@@ -7,6 +7,7 @@ from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
+import pathlib
 import platform
 import re
 
@@ -32,23 +33,60 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
-from pyvista.plotting.component_registry import (
-    _restore_registry_state as _restore_component_registry_state,
-)
-from pyvista.plotting.component_registry import (
-    _save_registry_state as _save_component_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _restore_registry_state as _restore_style_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _save_registry_state as _save_style_registry_state,
-)
-from pyvista.plotting.theme_registry import (
-    _restore_registry_state as _restore_theme_registry_state,
-)
-from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
-from pyvista.plotting.utilities.gl_checks import uses_egl
+
+# ``pyvista.plotting`` (and importing any of its submodules) eagerly loads the
+# VTK rendering modules. A *core-only* VTK backend -- e.g. the rendering-free
+# ``cvista`` wheel used for offline data processing -- ships no rendering
+# modules, so these imports raise ``ImportError``/``ModuleNotFoundError``. Guard
+# them so the test suite can still be collected and the core-only subset
+# (``pytest -m "not needs_rendering"``) can run. When plotting is unavailable the
+# plotting-only registry save/restore hooks become no-ops and ``uses_egl`` is
+# treated as ``False``; the autouse fixtures below skip the plotting branches and
+# every ``needs_rendering`` test is deselected, so these stubs are never relied
+# upon by a test that actually exercises rendering.
+try:
+    from pyvista.plotting.component_registry import (
+        _restore_registry_state as _restore_component_registry_state,
+    )
+    from pyvista.plotting.component_registry import (
+        _save_registry_state as _save_component_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _restore_registry_state as _restore_style_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _save_registry_state as _save_style_registry_state,
+    )
+    from pyvista.plotting.theme_registry import (
+        _restore_registry_state as _restore_theme_registry_state,
+    )
+    from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
+    from pyvista.plotting.utilities.gl_checks import uses_egl
+except ImportError:  # core-only VTK backend: rendering modules are absent
+    HAS_PLOTTING = False
+
+    def _save_component_registry_state():
+        return None
+
+    def _restore_component_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_style_registry_state():
+        return None
+
+    def _restore_style_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_theme_registry_state():
+        return None
+
+    def _restore_theme_registry_state(state):  # noqa: ARG001
+        return None
+
+    def uses_egl():
+        return False
+else:
+    HAS_PLOTTING = True
 
 pv.OFF_SCREEN = True
 
@@ -353,6 +391,128 @@ def pytest_addoption(parser):
         default=False,
         help='run Playwright-based tests',
     )
+
+
+# --- core-only test selection --------------------------------------------------
+# Auto-apply the ``needs_rendering`` marker so that ``pytest -m "not
+# needs_rendering"`` selects the subset of tests that run without any VTK
+# rendering module installed (the offline data-processing use case served by the
+# rendering-free ``cvista`` core wheel). We mark by *location* and *fixture*
+# rather than editing hundreds of test files.
+#
+# A test needs rendering if any of the following hold:
+#   1. It lives under ``tests/plotting/`` (the canonical rendering test tree).
+#   2. It requests a fixture that builds a real ``Plotter`` (``texture`` /
+#      ``image`` in this conftest, or any fixture defined in
+#      ``tests/plotting/conftest.py``).
+#   3. It lives in one of the few non-``tests/plotting`` modules that
+#      instantiate a ``Plotter`` (directly or via ``mocker.patch.object(pv,
+#      'Plotter')``, which still triggers the rendering import). Keep this list
+#      tight and explicit so the marking stays precise.
+#
+# Fixtures that build a real Plotter and therefore require rendering. Requesting
+# any of these marks the test as ``needs_rendering``.
+_RENDERING_FIXTURES = frozenset({'texture', 'image'})
+
+# A handful of otherwise-core tests exercise data objects/readers that are
+# physically implemented in modules excluded from a core-only VTK build:
+#   * ``Text3D`` / ``Text3DSource`` -> ``vtkRenderingFreeType.vtkVectorText``
+#   * the VRML, 3DS and Facet readers and texture reading -> ``vtkFiltersHybrid``
+#     / rendering modules
+# These tests are scattered inside core test modules (not whole files), so they
+# are matched by a substring of the test's *name* rather than hand-edited.
+_RENDERING_NAME_KEYWORDS = (
+    'text3d',
+    'text_3d',
+    'vrml_reader',
+    'threeds_reader',
+    'facetreader',
+    'read_texture',
+    'jpeg_reader',
+)
+
+
+def _name_needs_rendering(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw in _RENDERING_NAME_KEYWORDS)
+
+
+# Non-``tests/plotting`` modules (relative to ``tests/``) whose tests require
+# rendering because they construct a Plotter at runtime.
+_RENDERING_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'test_cli.py',
+        'examples/test_gltf.py',
+        'typing/test_return_type.py',
+        # The modules below additionally evaluate plotting symbols (``pv.Color``,
+        # ``pv.get_cmap_safe``, ``import pyvista.plotting``) at *module scope*, so
+        # they cannot even be collected when rendering is absent. They are skipped
+        # entirely on a rendering-free backend (see ``_RENDERING_ONLY_MODULES``
+        # and ``pytest_ignore_collect`` below).
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+# Subset of ``_RENDERING_MODULES`` that import plotting / rendering at *module
+# scope*. Their import fails outright when rendering is absent, so on a
+# rendering-free backend they must be skipped at collection time (a per-item
+# marker is too late -- the module body already failed to import).
+_RENDERING_ONLY_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+
+def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
+    """Skip collecting modules that import rendering at module scope.
+
+    Only relevant when the active VTK backend ships no rendering modules
+    (``HAS_PLOTTING is False``); otherwise these modules collect and run
+    normally (and carry the ``needs_rendering`` marker).
+    """
+    if HAS_PLOTTING:
+        return None
+
+    tests_root = pathlib.Path(__file__).parent
+    try:
+        rel = pathlib.Path(str(collection_path)).relative_to(tests_root).as_posix()
+    except ValueError:
+        return None
+    return True if rel in _RENDERING_ONLY_MODULES else None
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ARG001
+    """Auto-apply the ``needs_rendering`` marker (see ``_RENDERING_*`` above)."""
+    tests_root = pathlib.Path(__file__).parent
+    plotting_dir = tests_root / 'plotting'
+    mark = pytest.mark.needs_rendering
+    for item in items:
+        path = pathlib.Path(str(getattr(item, 'fspath', item.nodeid)))
+        rel = None
+        try:
+            rel = path.relative_to(tests_root).as_posix()
+        except ValueError:
+            rel = path.as_posix()
+
+        needs = (
+            plotting_dir in path.parents
+            or rel in _RENDERING_MODULES
+            or bool(_RENDERING_FIXTURES.intersection(getattr(item, 'fixturenames', ())))
+            or _name_needs_rendering(item)
+        )
+        if needs:
+            item.add_marker(mark)
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
