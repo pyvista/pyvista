@@ -1062,9 +1062,7 @@ class PolyDataFilters(DataSetFilters):
         Use :func:`~pyvista.plot_compare_four` to show differences between
         window functions.
 
-        >>> import pyvista as pv
-        >>>
-        >>> mesh = pv.examples.download_foot_bones()
+        >>> mesh = examples.download_foot_bones()
         >>> multi_compare = pv.MultiBlock()
         >>> multi_compare['nuttall'] = mesh.smooth_taubin(window_function='nuttall')
         >>> multi_compare['blackman'] = mesh.smooth_taubin(window_function='blackman')
@@ -1109,10 +1107,10 @@ class PolyDataFilters(DataSetFilters):
                 'nuttall': alg.SetWindowFunctionToNuttall,
             }
 
+            window_function_ = (
+                'nuttall' if window_function is None else window_function.lower()
+            )
             try:
-                window_function_ = (
-                    'nuttall' if window_function is None else window_function.lower()
-                )
                 set_window_function = window_functions[window_function_]
             except KeyError as err:
                 msg = (
