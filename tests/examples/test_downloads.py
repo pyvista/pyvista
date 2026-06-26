@@ -61,7 +61,7 @@ def _is_valid_url(url):
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
-        sources = test_case.dataset_loader[1].source_url_blob
+        sources = test_case.dataset_loader[1].source_url
     except pv.VTKVersionError as e:
         reason = e.args[0]
         pytest.skip(reason)
