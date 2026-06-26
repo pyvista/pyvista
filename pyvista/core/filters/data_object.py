@@ -237,16 +237,42 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         | None = None,
         **cell_validator_kwargs,
     ) -> None:
-        if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
-            validation_fields = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            validation_fields.remove('unused_points')
-
         data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
             validation_fields, exclude_fields
         )
+        # Remove or error on fields unsupported for specific mesh types
+        _unsupported: dict[
+            type[_DataSetOrMultiBlockType], tuple[_LiteralMeshValidationFields, ...]
+        ] = {}
+        if isinstance(mesh, pv.PointSet):
+            _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
+        if isinstance(mesh, pv.Grid):
+            # Avoid vtkCellValidator fields since these may crash: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+            _unsupported[type(mesh)] = (
+                'wrong_number_of_points',
+                'intersecting_edges',
+                'intersecting_faces',
+                'non_contiguous_edges',
+                'non_convex',
+                'inverted_faces',
+                'non_planar_faces',
+                'degenerate_faces',
+                'coincident_points',
+            )
+
+        for mesh_type, unsupported_field in _unsupported.items():
+            for field in unsupported_field:
+                if field in cell_fields or field in point_fields:
+                    if validation_fields is not None:
+                        # User explicitly requested this field (directly or via a group)
+                        kind = 'Point' if field in point_fields else 'Cell'
+                        msg = f'{kind} field {field!r} is not supported for {mesh_type.__name__}.'
+                        raise ValueError(msg)
+                    else:
+                        # Default case: remove unsupported fields without error
+                        cell_fields = tuple(f for f in cell_fields if f != field)
+                        point_fields = tuple(f for f in point_fields if f != field)
+
         self._validation_report = _MeshValidator._generate_report(
             mesh,
             data_fields=data_fields,
@@ -1628,28 +1654,37 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
-        cell_validator = _vtk.vtkCellValidator()
-        cell_validator.SetInputData(self)
-        cell_validator.SetTolerance(tol)
-        if pv.vtk_version_info >= (9, 6, 0):
-            # vtkCellValidator stores PlanarityTolerance as static class state, so we must
-            # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
-            cell_validator.SetPlanarityTolerance(
-                planarity_tolerance if planarity_tolerance is not None else 0.1
-            )
-        cell_validator.Update()
-        output = _get_output(cell_validator)
+        # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+        skip_validator = isinstance(self, pv.Grid)
+        if skip_validator:
+            output = self.copy(deep=False)
+        else:
+            cell_validator = _vtk.vtkCellValidator()
+            cell_validator.SetInputData(self)
+            cell_validator.SetTolerance(tol)
+            if pv.vtk_version_info >= (9, 6, 0):
+                # vtkCellValidator stores PlanarityTolerance as static class state, so we must
+                # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
+                cell_validator.SetPlanarityTolerance(
+                    planarity_tolerance if planarity_tolerance is not None else 0.1
+                )
+            cell_validator.Update()
+            output = _get_output(cell_validator)
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
-            validity_state = np.array(
-                mesh.cell_data['ValidityState'],
-                dtype=np.int64,
-                copy=True,
-            )
+            if skip_validator:
+                validity_state = np.zeros(shape=(self.n_cells,), dtype=np.int64)
+            else:
+                validity_state = np.array(
+                    mesh.cell_data['ValidityState'],
+                    dtype=np.int64,
+                    copy=True,
+                )
             mesh.cell_data['validity_state'] = validity_state
-            del mesh.cell_data['ValidityState']
+            if not skip_validator:
+                del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
 
             set_pyvista_validity_state(mesh)
