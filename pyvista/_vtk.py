@@ -23,10 +23,10 @@ def _resolve_vtk_backend() -> str:
     Selection order:
 
     1. The ``PYVISTA_VTK_BACKEND`` environment variable, if set, always wins
-       (e.g. ``vtkmodules`` to force stock VTK, or ``fvtk`` to force the fork).
-    2. Otherwise, if the community ``fvtk`` fork is installed, it is auto-selected
-       in preference to stock VTK. Installing ``pyvista[fvtk]`` is therefore the
-       only action needed to opt in -- ``fvtk`` imports as its own package and
+       (e.g. ``vtkmodules`` to force stock VTK, or ``cvista`` to force the fork).
+    2. Otherwise, if the community ``cvista`` fork is installed, it is auto-selected
+       in preference to stock VTK. Installing ``pyvista[cvista]`` is therefore the
+       only action needed to opt in -- ``cvista`` imports as its own package and
        coexists with stock ``vtk``, so this never clobbers a stock install.
     3. Otherwise fall back to stock ``vtkmodules``.
 
@@ -36,25 +36,28 @@ def _resolve_vtk_backend() -> str:
     backend = os.environ.get('PYVISTA_VTK_BACKEND')
     if backend:
         return backend
-    if importlib.util.find_spec('fvtk') is not None:
-        return 'fvtk'
+    if importlib.util.find_spec('cvista') is not None:
+        return 'cvista'
     return 'vtkmodules'
 
 
-# Root package every VTK import is resolved against (``vtkmodules`` or ``fvtk``).
+# Root package every VTK import is resolved against (``vtkmodules`` or ``cvista``).
 _VTK_BACKEND = _resolve_vtk_backend()
 
 
-class _VtkmodulesToFvtkFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
-    """Route ``import vtkmodules[.*]`` to ``fvtk[.*]``.
+class _VtkmodulesToCvistaFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """Route ``import vtkmodules[.*]`` to ``cvista[.*]``.
 
-    When PyVista runs on the fvtk backend, third-party packages that import
-    ``vtkmodules`` directly (e.g. ``pyvista-zstd``, ``trame-vtk``) must resolve
-    to fvtk as well: fvtk and stock VTK are the same VTK version with the same
-    shared-library SONAMEs, so loading both into one process fails with
-    ``undefined symbol`` errors. This finder keeps a single VTK build in the
-    process by aliasing each requested ``vtkmodules`` name to its ``fvtk``
-    counterpart in :data:`sys.modules`.
+    When PyVista runs on the cvista backend, third-party packages that import
+    ``vtkmodules`` directly (e.g. ``pyvista-zstd``, ``trame-vtk``) should resolve
+    to cvista as well. As of cvista 9.6.2.2 the fork ships VTK libraries under
+    cvista-distinct SONAMEs, so cvista and stock VTK *can* coexist in one process
+    without ``undefined symbol`` errors -- but they are then two separate VTK type
+    systems: a ``vtkPolyData`` from stock ``vtkmodules`` is a different C++ class
+    than one from ``cvista`` and cannot be handed across the boundary. This finder
+    keeps a single VTK build in the process by aliasing each requested
+    ``vtkmodules`` name to its ``cvista`` counterpart in :data:`sys.modules`, so
+    objects created by third-party code interoperate with PyVista's.
     """
 
     _PREFIX = 'vtkmodules'
@@ -70,7 +73,7 @@ class _VtkmodulesToFvtkFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader
         return None
 
     def create_module(self, spec: ModuleSpec) -> ModuleType:
-        module = importlib.import_module('fvtk' + spec.name[len(self._PREFIX) :])
+        module = importlib.import_module('cvista' + spec.name[len(self._PREFIX) :])
         sys.modules[spec.name] = module  # alias under the requested vtkmodules name
         return module
 
@@ -78,10 +81,10 @@ class _VtkmodulesToFvtkFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader
         """No-op: the target module was already executed by ``import_module``."""
 
 
-if _VTK_BACKEND == 'fvtk' and not any(
-    isinstance(finder, _VtkmodulesToFvtkFinder) for finder in sys.meta_path
+if _VTK_BACKEND == 'cvista' and not any(
+    isinstance(finder, _VtkmodulesToCvistaFinder) for finder in sys.meta_path
 ):
-    sys.meta_path.insert(0, _VtkmodulesToFvtkFinder())
+    sys.meta_path.insert(0, _VtkmodulesToCvistaFinder())
 
 
 def _import_from(module_name: str, class_name: str) -> Any:

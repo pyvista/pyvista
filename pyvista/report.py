@@ -12,7 +12,7 @@ import scooby
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._vtk import _VTK_BACKEND
 
-# ``{pkg}`` is filled with the selected VTK backend (vtkmodules or fvtk) in `_run`.
+# ``{pkg}`` is filled with the selected VTK backend (vtkmodules or cvista) in `_run`.
 _cmd_render_window_info = """
 from {pkg}.vtkRenderingCore import vtkRenderer, vtkRenderWindow
 import {pkg}.vtkRenderingOpenGL2
@@ -295,8 +295,8 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = [
-            # fvtk extra (alternative VTK backend)
-            'fvtk',
+            # cvista extra (alternative VTK backend)
+            'cvista',
             # Misc.
             'pytest-pyvista',
             'pyvistaqt',
