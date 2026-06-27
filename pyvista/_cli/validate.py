@@ -16,6 +16,7 @@ from pyvista.core.filters.data_object import _ReportBodyOptions
 
 from .app import app
 from .utils import HELP_FORMATTER
+from .utils import _check_paths_readable
 from .utils import _console_error
 from .utils import _converter_files
 
@@ -189,6 +190,7 @@ def _validate(
     # Cyclopts declares ``mesh_path`` as ``str`` for CLI parsing but ``_converter_files``
     # replaces the string token with the list of read meshes — narrow the type here.
     items: list[_MeshAndPath] = mesh_path  # type: ignore[assignment]
+    _check_paths_readable(app, items)
     report_body = report[0] if report else 'message'
     for item in items:
         mesh = item.mesh

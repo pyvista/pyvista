@@ -81,7 +81,7 @@ HELP_FORMATTER = _PyvistaHelpFormatter(
 
 
 class _MeshAndPath(NamedTuple):
-    mesh: DataObject
+    mesh: DataObject | None
     path: Path
 
 
@@ -139,6 +139,19 @@ def _check_paths_exist(paths: list[str]) -> list[Path]:
     return [Path(v) for v in values]
 
 
+def _check_paths_readable(app: App, meshes_and_paths: list[_MeshAndPath]) -> None:
+    """Check that read output is not None after read.
+
+    Raises a console error (SystemExit) listing any paths that could not be read.
+    """
+    not_readable = [str(item.path) for item in meshes_and_paths if item.mesh is None]
+    if len(not_readable) > 0:
+        n = len(not_readable)
+        literal_file = 'file' if n == 1 else 'files'
+        msg = f'{n} {literal_file} not readable by PyVista:\n{not_readable}'
+        _console_error(app=app, message=msg)
+
+
 _MULTIBLOCK_EXTS = frozenset({'.vtm', '.vtmb'})
 
 
@@ -184,7 +197,6 @@ def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
     checked = _check_paths_exist(paths)
 
     meshes_and_paths: list[_MeshAndPath] = []
-    not_readable: list[str] = []
     for path in checked:
         try:
             with warnings.catch_warnings():
@@ -194,16 +206,8 @@ def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
                 )
                 mesh = pv.read(path)
         except Exception:  # noqa: BLE001
-            not_readable.append(str(path))
-        else:
-            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=path))
-
-    if len(not_readable) > 0:
-        n = len(not_readable)
-        literal_file = 'file' if n == 1 else 'files'
-        msg = f'{n} {literal_file} not readable by PyVista:\n{not_readable}'
-        raise ValueError(msg)
-
+            mesh = None
+        meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=path))
     return meshes_and_paths
 
 
@@ -213,10 +217,10 @@ def _converter_files(
 ) -> list[_MeshAndPath]:
     """Helper function used to read provided files.
 
-    Raises errors if:
-
-    - any file does not exits
-    - any file is not readable with ``pv.read``
+    Raises errors if any file does not exist, but does NOT raise an
+    error if a file cannot be read. Instead, any file not readable with
+    ``pv.read`` has a mesh value of None. Use ``_raise_if_not_readable``
+    after conversion to raise an error for non-readable files.
 
     Glob patterns (``*``, ``?``, ``[...]``) are expanded before validation.
 
