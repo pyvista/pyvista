@@ -3368,8 +3368,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         global_extractor = _vtk.vtkExtractExodusGlobalTemporalVariables()
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()
-
-        return wrap(global_extractor.GetOutputDataObject(0))
+        return wrap(global_extractor.GetOutputDataObject(0))  # type: ignore[return-value]
 
     @property
     def element_blocks(self):

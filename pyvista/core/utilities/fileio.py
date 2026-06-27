@@ -94,7 +94,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
         if cls._vtk_class_name:
-            return getattr(_vtk, cls._vtk_class_name)  # type: ignore[return-value]
+            return getattr(_vtk, cls._vtk_class_name)
         return None
 
     @classmethod
