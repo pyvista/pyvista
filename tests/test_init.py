@@ -8,7 +8,11 @@ import pytest
 
 CORE_VTKMODULES = {
     'vtkmodules.numpy_interface',
+    'vtkmodules.numpy_interface._vtk_array_mixin',
     'vtkmodules.numpy_interface.dataset_adapter',
+    'vtkmodules.numpy_interface.utils',
+    'vtkmodules.numpy_interface.vtk_none_array',
+    'vtkmodules.numpy_interface.vtk_partitioned_array',
     'vtkmodules.util',
     'vtkmodules.util.data_model',
     'vtkmodules.util.execution_model',
