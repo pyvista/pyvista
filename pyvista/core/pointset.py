@@ -2356,17 +2356,27 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(arr)
 
     @property
-    def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
+    def cells_dict(  # numpydoc ignore=RT01
+        self,
+    ) -> dict[np.uint8, NumpyArray[int] | list[NumpyArray[int]]]:
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
-        type in an ordered fashion.  Note that this function only
-        works with element types of fixed sizes.
+        type in an ordered fashion.  For a cell type whose cells all have
+        the same number of points the value is a single ``[N, D]`` array;
+        for a cell type with a data-defined number of points whose cells
+        differ in size (e.g. :attr:`~pyvista.CellType.POLYGON`) the value
+        is instead a list of ``N`` 1D arrays, one per cell.
 
         .. versionchanged:: 0.46
 
             An empty dict ``{}`` is returned instead of ``None`` if
             the input is empty.
+
+        .. versionchanged:: 0.49
+
+            Cell types with a data-defined number of points are now
+            supported (previously this raised a ``ValueError``).
 
         Returns
         -------
