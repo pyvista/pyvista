@@ -76,9 +76,22 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 def _lazy_vtk_import(module_name: str, class_name: str) -> type:
-    """Lazy import of a class from vtkmodules."""
-    module = importlib.import_module(f'vtkmodules.{module_name}')
-    return getattr(module, class_name)
+    """Lazy import of a class from the selected VTK backend (vtkmodules or cvista).
+
+    Some classes live in a different module depending on the VTK build (the tiered
+    ``cvista`` backend relocates a few rendering-coupled classes — e.g. ``vtkGLTFReader``
+    moves from ``vtkIOGeometry`` to ``vtkIOImport``). Try the declared module first,
+    then any registered alternates, so a class resolves under either layout.
+    """
+    candidates = (module_name, *_vtk._VTK_CLASS_ALT_MODULES.get(class_name, ()))
+    last_exc: Exception | None = None
+    for candidate in candidates:
+        try:
+            module = importlib.import_module(f'{_vtk._VTK_BACKEND}.{candidate}')
+            return getattr(module, class_name)
+        except (ModuleNotFoundError, AttributeError) as e:
+            last_exc = e
+    raise last_exc  # type: ignore[misc]
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):

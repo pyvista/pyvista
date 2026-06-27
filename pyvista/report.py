@@ -10,10 +10,12 @@ from types import ModuleType  # noqa: TC003
 import scooby
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._vtk import _VTK_BACKEND
 
+# ``{pkg}`` is filled with the selected VTK backend (vtkmodules or cvista) in `_run`.
 _cmd_render_window_info = """
-from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
-import vtkmodules.vtkRenderingOpenGL2
+from {pkg}.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+import {pkg}.vtkRenderingOpenGL2
 ren = vtkRenderer()
 win = vtkRenderWindow()
 win.OffScreenRenderingOn()
@@ -26,14 +28,16 @@ print('vtkRenderWindow class name: ', win.GetClassName())
 """
 
 _cmd_math_text = """
-import vtkmodules.vtkRenderingFreeType
-import vtkmodules.vtkRenderingMatplotlib
-print(vtkmodules.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported())
+import {pkg}.vtkRenderingFreeType
+import {pkg}.vtkRenderingMatplotlib
+print({pkg}.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported())
 """
 
 
 def _run(cmd: str):
-    return subprocess.run([sys.executable, '-c', cmd], check=False, capture_output=True)
+    return subprocess.run(
+        [sys.executable, '-c', cmd.format(pkg=_VTK_BACKEND)], check=False, capture_output=True
+    )
 
 
 def _get_cached_render_window_info(attr_name: str = ''):
@@ -291,6 +295,8 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = [
+            # cvista extra (alternative VTK backend)
+            'cvista',
             # Misc.
             'pytest-pyvista',
             'pyvistaqt',

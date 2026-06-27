@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+import importlib.util
 import inspect
 import itertools
 import json
@@ -551,6 +552,12 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
+    elif package == 'fvtk' and importlib.util.find_spec('fvtk') is None:
+        # fvtk is an alternative VTK backend. It shares stock VTK's library
+        # SONAMEs, so the two cannot be imported in the same process and fvtk is
+        # not installed in the stock test environments. The report covers it in
+        # the dedicated vtk_fvtk CI env, where fvtk is installed and active.
+        pytest.skip('fvtk (alternative VTK backend) is not installed in this environment')
     assert package in REPORT
 
 

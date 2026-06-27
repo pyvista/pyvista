@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import faulthandler
 import functools
+import importlib
 from importlib import metadata
 from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
+import pathlib
 import platform
 import re
 
@@ -32,23 +34,86 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
-from pyvista.plotting.component_registry import (
-    _restore_registry_state as _restore_component_registry_state,
-)
-from pyvista.plotting.component_registry import (
-    _save_registry_state as _save_component_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _restore_registry_state as _restore_style_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _save_registry_state as _save_style_registry_state,
-)
-from pyvista.plotting.theme_registry import (
-    _restore_registry_state as _restore_theme_registry_state,
-)
-from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
-from pyvista.plotting.utilities.gl_checks import uses_egl
+
+# ``pyvista.plotting`` (and importing any of its submodules) eagerly loads the
+# VTK rendering modules. A *core-only* VTK backend -- e.g. the rendering-free
+# ``cvista`` wheel used for offline data processing -- ships no rendering
+# modules, so these imports raise ``ImportError``/``ModuleNotFoundError``. Guard
+# them so the test suite can still be collected and the core-only subset
+# (``pytest -m "not needs_rendering"``) can run. When plotting is unavailable the
+# plotting-only registry save/restore hooks become no-ops and ``uses_egl`` is
+# treated as ``False``; the autouse fixtures below skip the plotting branches and
+# every ``needs_rendering`` test is deselected, so these stubs are never relied
+# upon by a test that actually exercises rendering.
+try:
+    from pyvista.plotting.component_registry import (
+        _restore_registry_state as _restore_component_registry_state,
+    )
+    from pyvista.plotting.component_registry import (
+        _save_registry_state as _save_component_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _restore_registry_state as _restore_style_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _save_registry_state as _save_style_registry_state,
+    )
+    from pyvista.plotting.theme_registry import (
+        _restore_registry_state as _restore_theme_registry_state,
+    )
+    from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
+    from pyvista.plotting.utilities.gl_checks import uses_egl
+except ImportError:  # core-only VTK backend: rendering modules are absent
+    HAS_PLOTTING = False
+
+    def _save_component_registry_state():
+        return None
+
+    def _restore_component_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_style_registry_state():
+        return None
+
+    def _restore_style_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_theme_registry_state():
+        return None
+
+    def _restore_theme_registry_state(state):  # noqa: ARG001
+        return None
+
+    def uses_egl():
+        return False
+else:
+    HAS_PLOTTING = True
+
+
+def _has_vtk_module(module_name: str) -> bool:
+    """Return ``True`` if a (possibly omitted) VTK IO module is importable.
+
+    A core-only VTK backend (e.g. the rendering-free cvista wheel) ships none of
+    the heavy / third-party IO modules. The readers/writers that wrap them only
+    import lazily on first use, so tests that exercise those formats fail at
+    *runtime* on a core-only build. Probing the module here (mirrors
+    ``HAS_PLOTTING``) lets us auto-apply the ``needs_io_extra`` marker so the
+    core-only subset can deselect them with ``-m "not needs_io_extra"``.
+    """
+    try:
+        importlib.import_module(f'vtkmodules.{module_name}')
+    except ImportError:
+        return False
+    else:
+        return True
+
+
+# IO-tier VTK modules omitted from a core-only build. Each maps to readers /
+# writers (see ``pyvista.core.utilities.reader``) that wrap the module lazily.
+HAS_IO_HDF = _has_vtk_module('vtkIOHDF')  # HDFReader, .vtkhdf save
+HAS_IO_ENSIGHT = _has_vtk_module('vtkIOEnSight')  # EnSightReader (.case)
+HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
+HAS_IO_EXTRA = HAS_IO_HDF and HAS_IO_ENSIGHT and HAS_IO_CHEMISTRY
 
 pv.OFF_SCREEN = True
 
@@ -355,6 +420,155 @@ def pytest_addoption(parser):
     )
 
 
+# --- core-only test selection --------------------------------------------------
+# Auto-apply the ``needs_rendering`` marker so that ``pytest -m "not
+# needs_rendering"`` selects the subset of tests that run without any VTK
+# rendering module installed (the offline data-processing use case served by the
+# rendering-free ``cvista`` core wheel). We mark by *location* and *fixture*
+# rather than editing hundreds of test files.
+#
+# A test needs rendering if any of the following hold:
+#   1. It lives under ``tests/plotting/`` (the canonical rendering test tree).
+#   2. It requests a fixture that builds a real ``Plotter`` (``texture`` /
+#      ``image`` in this conftest, or any fixture defined in
+#      ``tests/plotting/conftest.py``).
+#   3. It lives in one of the few non-``tests/plotting`` modules that
+#      instantiate a ``Plotter`` (directly or via ``mocker.patch.object(pv,
+#      'Plotter')``, which still triggers the rendering import). Keep this list
+#      tight and explicit so the marking stays precise.
+#
+# Fixtures that build a real Plotter and therefore require rendering. Requesting
+# any of these marks the test as ``needs_rendering``.
+_RENDERING_FIXTURES = frozenset({'texture', 'image'})
+
+# A handful of otherwise-core tests exercise data objects/readers that are
+# physically implemented in modules excluded from a core-only VTK build:
+#   * ``Text3D`` / ``Text3DSource`` -> ``vtkRenderingFreeType.vtkVectorText``
+#   * the VRML, 3DS and Facet readers and texture reading -> ``vtkFiltersHybrid``
+#     / rendering modules
+# These tests are scattered inside core test modules (not whole files), so they
+# are matched by a substring of the test's *name* rather than hand-edited.
+_RENDERING_NAME_KEYWORDS = (
+    'text3d',
+    'text_3d',
+    'vrml_reader',
+    'threeds_reader',
+    'facetreader',
+    'read_texture',
+    'jpeg_reader',
+)
+
+
+def _name_needs_rendering(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw in _RENDERING_NAME_KEYWORDS)
+
+
+# Non-``tests/plotting`` modules (relative to ``tests/``) whose tests require
+# rendering because they construct a Plotter at runtime.
+_RENDERING_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'test_cli.py',
+        'examples/test_gltf.py',
+        'typing/test_return_type.py',
+        # The modules below additionally evaluate plotting symbols (``pv.Color``,
+        # ``pv.get_cmap_safe``, ``import pyvista.plotting``) at *module scope*, so
+        # they cannot even be collected when rendering is absent. They are skipped
+        # entirely on a rendering-free backend (see ``_RENDERING_ONLY_MODULES``
+        # and ``pytest_ignore_collect`` below).
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+# Subset of ``_RENDERING_MODULES`` that import plotting / rendering at *module
+# scope*. Their import fails outright when rendering is absent, so on a
+# rendering-free backend they must be skipped at collection time (a per-item
+# marker is too late -- the module body already failed to import).
+_RENDERING_ONLY_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+
+# Tests that exercise an IO-tier format physically implemented in a VTK module
+# omitted from a core-only build. Matched by a substring of the test's *name*
+# (mirrors ``_RENDERING_NAME_KEYWORDS``); each keyword group is gated on the
+# corresponding ``HAS_IO_*`` probe so the marking is a no-op on a full VTK build.
+# Keywords are chosen to be specific enough not to catch unrelated core tests
+# (e.g. ``hdf``/``ensight`` rather than the generic ``cube``/``case``).
+_IO_EXTRA_NAME_KEYWORDS = (
+    ('hdf', HAS_IO_HDF),  # HDFReader, .vtkhdf save, download_can_crushed_hdf
+    ('ensight', HAS_IO_ENSIGHT),  # EnSightReader (.case)
+    ('pdbreader', HAS_IO_CHEMISTRY),  # PDBReader
+    ('gaussian_cubes_reader', HAS_IO_CHEMISTRY),  # GaussianCubeReader (.cube)
+)
+
+
+def _name_needs_io_extra(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw, available in _IO_EXTRA_NAME_KEYWORDS if not available)
+
+
+def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
+    """Skip collecting modules that import rendering at module scope.
+
+    Only relevant when the active VTK backend ships no rendering modules
+    (``HAS_PLOTTING is False``); otherwise these modules collect and run
+    normally (and carry the ``needs_rendering`` marker).
+    """
+    if HAS_PLOTTING:
+        return None
+
+    tests_root = pathlib.Path(__file__).parent
+    try:
+        rel = pathlib.Path(str(collection_path)).relative_to(tests_root).as_posix()
+    except ValueError:
+        return None
+    return True if rel in _RENDERING_ONLY_MODULES else None
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ARG001
+    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` markers.
+
+    See ``_RENDERING_*`` and ``_IO_EXTRA_*`` above. The ``needs_io_extra``
+    marking only fires when the relevant ``HAS_IO_*`` probe reports the module
+    absent, so it is a no-op on a full VTK build.
+    """
+    tests_root = pathlib.Path(__file__).parent
+    plotting_dir = tests_root / 'plotting'
+    mark = pytest.mark.needs_rendering
+    io_extra_mark = pytest.mark.needs_io_extra
+    for item in items:
+        path = pathlib.Path(str(getattr(item, 'fspath', item.nodeid)))
+        rel = None
+        try:
+            rel = path.relative_to(tests_root).as_posix()
+        except ValueError:
+            rel = path.as_posix()
+
+        needs = (
+            plotting_dir in path.parents
+            or rel in _RENDERING_MODULES
+            or bool(_RENDERING_FIXTURES.intersection(getattr(item, 'fixturenames', ())))
+            or _name_needs_rendering(item)
+        )
+        if needs:
+            item.add_marker(mark)
+        if _name_needs_io_extra(item):
+            item.add_marker(io_extra_mark)
+
+
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
@@ -415,11 +629,38 @@ def _get_min_max_vtk_version(
     return _pad_version(_min), _pad_version(_max), bounds
 
 
+# Tests that intentionally diverge under the fvtk backend (an alternative VTK
+# build). fvtk omits the VTK 9.4+ snake_case wrapper API by design and ships a
+# trimmed module set, so a handful of behaviors differ from stock VTK. Keyed by
+# test function name; skipped only when the active backend is fvtk.
+_FVTK_DIVERGENT_TESTS = {
+    # fvtk omits the VTK snake_case wrapper API (by design)
+    'test_vtk_snake_case_api_is_disabled': 'fvtk omits the VTK snake_case wrapper API',
+    'test_dir_snake_case_visible_when_allowed': 'fvtk omits the VTK snake_case wrapper API',
+    'test_is_vtk_attribute': 'fvtk omits the VTK snake_case wrapper API',
+    'test_vtk_snake_case': 'fvtk omits the VTK snake_case wrapper API',
+    'test_vtk_class_does_not_exist': 'fvtk wraps a trimmed VTK class set',
+    'test_vtk_module_does_not_exist': 'fvtk wraps a trimmed VTK module set',
+    'test_plotting_import_loads_context_opengl2': 'module loads under the fvtk namespace',
+    # fvtk ships a trimmed module set and uses narrower container widths
+    'test_xdmf_reader': 'fvtk does not ship vtkIOXdmf2',
+    'test_download_meshio_xdmf': 'fvtk does not ship vtkIOXdmf2',
+    'test_cell_status': 'fvtk diverges on vtkCellStatus enum exposure',
+    'test_save_compression': 'fvtk stores indices as int32 (smaller, less compressible)',
+    'test_to_from_trimesh_points_faces': 'fvtk stores connectivity as int32 (no zero-copy share)',
+}
+
+
 def pytest_runtest_setup(item: pytest.Item):
     """Custom setup to handle skips based on VTK version.
 
     See custom marks in pyproject.toml.
     """
+    if pv._vtk._VTK_BACKEND == 'fvtk':
+        reason = _FVTK_DIVERGENT_TESTS.get(getattr(item, 'originalname', '') or item.name)
+        if reason is not None:
+            pytest.skip(f'fvtk backend: {reason}')
+
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):

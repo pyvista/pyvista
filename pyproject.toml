@@ -41,6 +41,13 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
+# Additive opt-in to the community `cvista` fork as the VTK backend. Installs
+# alongside the base `vtk` dependency (cvista imports as `cvista`, so it does not
+# clobber or conflict with stock VTK). When present and no explicit selection
+# is made, PyVista auto-selects cvista; see `PYVISTA_VTK_BACKEND`. abi3 wheels
+# (CPython 3.12+) plus per-version cp310/cp311 wheels; 9.6.2.2 is the first
+# release whose distinct SONAMEs let cvista co-load with stock VTK.
+cvista = ['cvista>=9.6.2.2,<9.7.0']
 io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
@@ -268,7 +275,9 @@ log_cli_level = "INFO"
 markers = [
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
+  'needs_io_extra: this test requires an IO-tier VTK module omitted from a core-only build (vtkIOHDF / vtkIOEnSight / vtkIOChemistry, e.g. .vtkhdf, EnSight .case, PDB/XYZ/GaussianCube readers). Auto-applied (only when the module is actually absent) via the HAS_IO_* probes in conftest.py. Deselect with `-m "not needs_io_extra"` alongside `not needs_rendering` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
+  'needs_rendering: this test requires VTK rendering modules (Plotter, .plot(), screenshots, charts, widgets). Auto-applied to tests/plotting. Deselect with `-m "not needs_rendering"` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'security: security regression test (refusal of unsafe paths, untrusted-input handling). Run with `pytest -m security`.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
