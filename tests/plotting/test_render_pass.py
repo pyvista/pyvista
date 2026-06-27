@@ -101,6 +101,9 @@ def test_shadow_pass():
     passes.disable_shadow_pass()
     assert not passes._pass_collection.IsItemPresent(ren_pass)
 
+    ren_pass = passes.enable_shadow_pass()
+    assert isinstance(ren_pass, _vtk.vtkShadowMapPass)
+
 
 def test_edl_pass():
     _ren, passes = make_passes()
@@ -129,9 +132,10 @@ def test_ssao_pass():
     assert isinstance(ren_pass, _vtk.vtkSSAOPass)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
-    # enabling again should just not add the pass again
-    ren_pass = passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
+    # enabling again should update parameters but not add a new pass
+    ren_pass = passes.enable_ssao_pass(radius=0.8, bias=0.005, kernel_size=16, blur=False)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
+    assert ren_pass.GetRadius() == pytest.approx(0.8)
 
     passes.disable_ssao_pass()
     assert not passes._passes

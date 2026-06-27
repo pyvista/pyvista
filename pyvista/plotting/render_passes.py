@@ -114,8 +114,16 @@ class RenderPasses(_NoNewAttrMixin):
             return self._renderer_ref()
         return None  # type: ignore[unreachable]
 
+    @property
+    def _render_window(self):
+        """Return the render window."""
+        if self._renderer is not None:
+            return self._renderer.GetRenderWindow()
+        return None
+
     def deep_clean(self):
         """Delete all render passes."""
+        self._release_all_passes()
         if self._renderer is not None:
             self._renderer.SetPass(None)
         self._renderer_ref = None  # type: ignore[assignment]
@@ -200,6 +208,8 @@ class RenderPasses(_NoNewAttrMixin):
             return
         self._pass_collection.RemoveItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.RemoveItem(self._shadow_map_pass)
+        self._release_pass(self._shadow_map_pass)
+        self._shadow_map_pass = None
         self._update_passes()
 
     @_deprecate_positional_args
@@ -264,14 +274,16 @@ class RenderPasses(_NoNewAttrMixin):
             msg = 'SSAO pass is incompatible with the depth of field pass.'
             raise RuntimeError(msg)
 
-        if self._ssao_pass is not None:
-            return None
-        self._ssao_pass = _vtk.vtkSSAOPass()
+        is_new_pass = False
+        if self._ssao_pass is None:
+            is_new_pass = True
+            self._ssao_pass = _vtk.vtkSSAOPass()
         self._ssao_pass.SetRadius(radius)
         self._ssao_pass.SetBias(bias)
         self._ssao_pass.SetKernelSize(kernel_size)
         self._ssao_pass.SetBlur(blur)
-        self._add_pass(self._ssao_pass)
+        if is_new_pass:
+            self._add_pass(self._ssao_pass)
         return self._ssao_pass
 
     def disable_ssao_pass(self):
@@ -351,4 +363,32 @@ class RenderPasses(_NoNewAttrMixin):
             if not self._passes[class_name]:
                 self._passes.pop(class_name)
 
+        self._release_pass(render_pass)
+
         self._update_passes()
+
+    def _release_pass(self, render_pass):
+        """Release graphics resources for the pass."""
+        rw = self._render_window
+        if render_pass is None or rw is None:
+            return
+        render_pass.ReleaseGraphicsResources(rw)
+        if render_pass is self._shadow_map_pass:
+            render_pass.GetShadowMapBakerPass().ReleaseGraphicsResources(rw)
+
+    def _release_all_passes(self):
+        """Release graphics resources for all :vtk:`vtkRenderPass`."""
+        rw = self._render_window
+        if rw is None:
+            return
+
+        for passes_list in self._passes.values():
+            for p in passes_list:
+                p.ReleaseGraphicsResources(rw)
+
+        if self._shadow_map_pass is not None:
+            self._shadow_map_pass.ReleaseGraphicsResources(rw)
+            self._shadow_map_pass.GetShadowMapBakerPass().ReleaseGraphicsResources(rw)
+
+        if self.__camera_pass is not None:
+            self.__camera_pass.ReleaseGraphicsResources(rw)
