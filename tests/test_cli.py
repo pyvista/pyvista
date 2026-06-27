@@ -1255,7 +1255,7 @@ class CasesPlotFiles:
         m = mocker.patch.object(pv, 'read')
         m.side_effect = Exception('Not readable')
 
-        return f'--files {f1.as_posix()}', ['1 file not readable by PyVista:']
+        return f'--files {f1.as_posix()}', ['Path is not readable by PyVista:']
 
 
 @parametrize_with_cases(

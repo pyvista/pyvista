@@ -24,6 +24,7 @@ from rich.text import Text
 import pyvista as pv
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from collections.abc import Sequence
 
     from cyclopts import App
@@ -139,19 +140,6 @@ def _check_paths_exist(paths: list[str]) -> list[Path]:
     return [Path(v) for v in values]
 
 
-def _check_paths_readable(app: App, meshes_and_paths: list[_MeshAndPath]) -> None:
-    """Check that read output is not None after read.
-
-    Raises a console error (SystemExit) listing any paths that could not be read.
-    """
-    not_readable = [str(item.path) for item in meshes_and_paths if item.mesh is None]
-    if len(not_readable) > 0:
-        n = len(not_readable)
-        literal_file = 'file' if n == 1 else 'files'
-        msg = f'{n} {literal_file} not readable by PyVista:\n{not_readable}'
-        _console_error(app=app, message=msg)
-
-
 _MULTIBLOCK_EXTS = frozenset({'.vtm', '.vtmb'})
 
 
@@ -189,26 +177,30 @@ def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Pat
     return kept, filtered
 
 
-def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
-    """Expand globs, verify each path exists, and read it with ``pv.read``.
+class MeshPathsReader:
+    def __init__(self, paths: list[str]) -> None:
+        self._paths: list[Path] = _check_paths_exist(paths)
 
-    Raises a ``ValueError`` if any path is missing or unreadable.
+    def __iter__(self) -> Iterator[_MeshAndPath]:
+        for path in self._paths:
+            yield _load_path(path)
+
+
+def _load_path(path: Path) -> _MeshAndPath:
+    """Read a path with ``pv.read``.
+
+    Raises a ``ValueError`` if the path is unreadable.
     """
-    checked = _check_paths_exist(paths)
-
-    meshes_and_paths: list[_MeshAndPath] = []
-    for path in checked:
-        try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    'ignore',
-                    category=pv.InvalidMeshWarning,
-                )
-                mesh = pv.read(path)
-        except Exception:  # noqa: BLE001
-            mesh = None
-        meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=path))
-    return meshes_and_paths
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
+            )
+            return _MeshAndPath(mesh=pv.read(path), path=path)
+    except Exception:  # noqa: BLE001
+        msg = f'Path is not readable by PyVista:\n{path}'
+        raise ValueError(msg)
 
 
 def _converter_files(
@@ -225,4 +217,4 @@ def _converter_files(
     Glob patterns (``*``, ``?``, ``[...]``) are expanded before validation.
 
     """  # noqa: D401
-    return _load_paths([t.value for t in tokens])
+    return list(MeshPathsReader([t.value for t in tokens]))

@@ -20,7 +20,6 @@ from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 from .app import app
 from .utils import HELP_FORMATTER
-from .utils import _check_paths_readable
 from .utils import _console_error
 from .utils import _converter_files
 from .utils import _MeshAndPath
@@ -134,7 +133,6 @@ def _plot(
     ],
 ) -> None:
     items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
-    _check_paths_readable(app, items)
     try:
         res = pv.plot(
             var_item=[m.mesh for m in items],  # type: ignore [arg-type]
