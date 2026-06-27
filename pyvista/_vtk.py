@@ -791,6 +791,10 @@ _VTK_CLASS_ALT_MODULES: dict[str, tuple[str, ...]] = {
     'vtkPolyDataSilhouette': ('vtkFiltersHybridRendering',),
     'vtkRenderLargeImage': ('vtkFiltersHybridRendering',),
     'vtkAdaptiveDataSetSurfaceFilter': ('vtkFiltersHybridRendering',),
+    # cvista moves the glTF reader/texture to vtkIOImport so vtkIOGeometry stays
+    # rendering-free; stock VTK keeps them in vtkIOGeometry.
+    'vtkGLTFReader': ('vtkIOImport',),
+    'vtkGLTFTexture': ('vtkIOImport',),
 }
 
 
