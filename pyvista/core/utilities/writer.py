@@ -31,6 +31,11 @@ _DataFormatOptions = Literal['binary', 'ascii']
 class _DataFormatMixin:
     # Different writers use different values to indicate the current format
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
+    _ascii0_binary1_appended2: ClassVar[dict[int, _DataFormatOptions]] = {
+        0: 'ascii',
+        1: 'binary',
+        2: 'binary',
+    }
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
     _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
 
@@ -54,19 +59,18 @@ class _DataFormatMixin:
     def data_format(self, data_format: _DataFormatOptions) -> None:
         _validation.check_contains(get_args(_DataFormatOptions), data_format, name='data format')
         if data_format == 'binary':
-            try:
-                # DataWriter, PLYWriter, STLWriter
-                self.writer.SetDataModeToBinary()  # type: ignore[attr-defined]
-            except AttributeError:
-                # XMLWriter
-                self.writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
+            self._set_data_format_binary()
         else:
-            try:
-                # DataWriter, PLYWriter, STLWriter
-                self.writer.SetDataModeToAscii()  # type: ignore[attr-defined]
-            except AttributeError:
-                # XMLWriter
-                self.writer.SetFileTypeToASCII()  # type: ignore[attr-defined]
+            self._set_data_format_ascii()
+
+    def _set_data_format_binary(self) -> None:
+        # Legacy DataSet/PolyData/Rectilinear/Structured/Unstructured, PLY, STL,
+        # and SimplePoints writers all use the legacy file-type API. XML writers
+        # override this hook to use the data-mode API instead.
+        self.writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
+
+    def _set_data_format_ascii(self) -> None:
+        self.writer.SetFileTypeToASCII()  # type: ignore[attr-defined]
 
 
 @abstract_class
@@ -476,11 +480,50 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 @abstract_class
 class _XMLWriter(BaseWriter, _DataFormatMixin):
-    _format_mapping = _DataFormatMixin._ascii0_binary1
+    _format_mapping = _DataFormatMixin._ascii0_binary1_appended2
 
     def __init__(self, *args, **kwargs) -> None:
+        # Must be set before ``super().__init__`` since that sets ``data_format``.
+        self._encode_appended = False
         super().__init__(*args, **kwargs)
         self.compression = 'zlib'
+
+    def _set_data_format_binary(self) -> None:
+        # XML writers default to appended raw binary: smaller files and faster
+        # reads than inline base64. Set ``encode_appended=True`` for base64-encoded
+        # appended data, which keeps the file compliant with the XML standard.
+        self.writer.SetDataModeToAppended()  # type: ignore[attr-defined]
+        self.writer.SetEncodeAppendedData(self._encode_appended)  # type: ignore[attr-defined]
+
+    def _set_data_format_ascii(self) -> None:
+        self.writer.SetDataModeToAscii()  # type: ignore[attr-defined]
+        # Restore the VTK XML default; ``SetEncodeAppendedData(False)`` suppresses
+        # the ``<?xml ... ?>`` declaration even in non-appended modes.
+        self.writer.SetEncodeAppendedData(True)  # type: ignore[attr-defined]
+
+    @property
+    def encode_appended(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether appended binary data is base64-encoded.
+
+        When ``data_format`` is ``'binary'``, XML writers store array data in an
+        appended section. By default (``False``) that section holds raw,
+        non-encoded bytes, which yields smaller files and faster reads but
+        technically violates the XML standard. Set to ``True`` to base64-encode
+        the appended data and keep the file compliant with the XML standard,
+        matching VTK's default behavior.
+
+        .. versionadded:: 0.49.0
+
+        """
+        return self._encode_appended
+
+    @encode_appended.setter
+    def encode_appended(self, value: bool) -> None:
+        _validation.check_instance(value, bool, name='encode_appended')
+        self._encode_appended = value
+        if self.data_format == 'binary':
+            # Re-apply so the new encoding takes effect immediately.
+            self._set_data_format_binary()
 
     @property
     def compression(self) -> _CompressionOptions:

@@ -736,8 +736,9 @@ def test_save(sphere, extension, binary, tmpdir):
     sphere.save(filename, binary=binary)
     if binary:
         if extension == '.vtp':
-            with Path(filename).open() as f:
-                assert 'binary' in f.read(1000)
+            contents = Path(filename).read_bytes()
+            assert b'format="appended"' in contents
+            assert b'<AppendedData encoding="raw">' in contents
         elif extension in ('.geo', '.obj', '.iv'):
             # Binary is not supported
             assert not is_binary(filename)

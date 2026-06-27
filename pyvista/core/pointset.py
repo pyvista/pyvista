@@ -1572,6 +1572,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
 
+            .. versionchanged:: 0.49.0
+                VTK XML writers (e.g. ``.vtp``, ``.vtu``, ``.vti``) now write
+                binary data as appended raw bytes instead of inline base64.
+                This produces smaller files that read faster, but technically
+                violates the XML standard. Use the writer class directly with
+                ``encode_appended=True`` (e.g.
+                :class:`~pyvista.XMLPolyDataWriter`) to restore base64-encoded,
+                standard-compliant output.
+
         texture : str, numpy.ndarray, optional
             Write a single texture array to file when using a PLY
             file.  Texture array must be a 3 or 4 component array with
@@ -3449,6 +3458,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         binary : bool, default: True
             If ``True``, write as binary, else ASCII.
+
+            .. versionchanged:: 0.49.0
+                VTK XML writers (e.g. ``.vtu``) now write binary data as
+                appended raw bytes instead of inline base64. This produces
+                smaller files that read faster, but technically violates the
+                XML standard. Use the writer class directly with
+                ``encode_appended=True`` (e.g.
+                :class:`~pyvista.XMLUnstructuredGridWriter`) to restore
+                base64-encoded, standard-compliant output.
 
         texture : np.ndarray, str, None
             Ignored argument. Kept to maintain compatibility with supertype.
