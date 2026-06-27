@@ -3,7 +3,6 @@ from __future__ import annotations
 import faulthandler
 import functools
 from importlib import metadata
-from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
@@ -64,6 +63,72 @@ PILLOW_VERSION_INFO = VersionInfo(
 )
 
 faulthandler.enable()
+
+
+def needs_vtk_version(
+    *versions: int | tuple[int],
+    at_least: tuple[int] | None = None,
+    less_than: tuple[int] | None = None,
+    reason: str | None = None,
+) -> None:
+    """Skip if the current VTK version does not satisfy constraints."""
+
+    def _pad_version(val: tuple[int] | None):
+        if val is None:
+            return val
+
+        if (l := len(val)) == (expected := 3):
+            return val
+
+        if l > expected:
+            msg = f'Version tuple incorrect length (needs <= {expected})'
+            raise ValueError(msg)
+
+        return val + (0,) * (expected - l)
+
+    if len(versions) > 0 and at_least is not None:
+        msg = 'Cannot specify both *versions and `at_least` keyword argument.'
+        raise ValueError(msg)
+
+    if len(versions) > 0:
+        _min = versions[0] if len(versions) == 1 and isinstance(versions[0], tuple) else versions
+        _min = _pad_version(_min)
+        _max = _pad_version(less_than)
+    else:
+        _min = _pad_version(at_least)
+        _max = _pad_version(less_than)
+
+        if _max is None and _min is None:
+            msg = 'Need to specify either `at_least` or `less_than`.'
+            raise ValueError(msg)
+
+    _min = (_min,) if isinstance(_min, int) else _min
+    _max = (_max,) if isinstance(_max, int) else _max
+
+    if (_min is not None and _min <= pv._MIN_SUPPORTED_VTK_VERSION) or (
+        _max is not None and _max <= pv._MIN_SUPPORTED_VTK_VERSION
+    ):
+        msg = "The 'needs_vtk_version' constraint is no longer necessary and can be removed."
+        raise pv.VTKVersionError(msg)
+
+    curr_version = pv.vtk_version_info
+
+    if _max is None and curr_version < _min:
+        pytest.skip(reason or f'Test needs VTK version >= {_min}, current is {curr_version}.')
+
+    if _min is None and curr_version >= _max:
+        pytest.skip(reason or f'Test needs VTK version < {_max}, current is {curr_version}.')
+
+    if _min is not None and _max is not None:
+        if _min > _max:
+            msg = 'Cannot specify a minimum version greater than the maximum one.'
+            raise ValueError(msg)
+
+        if curr_version < _min or curr_version >= _max:
+            pytest.skip(
+                reason
+                or (f'Test needs {_min} <= VTK version < {_max}, current is {curr_version}.')
+            )
 
 
 def flaky_test(
@@ -371,123 +436,23 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
         return bounds
 
 
-def _get_min_max_vtk_version(
-    item_mark: pytest.Mark,
-    sig: Signature,
-) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
-    bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-
-    def _pad_version(val: tuple[int] | None):
-        if val is None:
-            return val
-
-        if (l := len(val)) == (expected := 3):
-            return val
-
-        if l > expected:
-            msg = f'Version tuple incorrect length (needs <= {expected})'
-            raise ValueError(msg)
-
-        return val + (0,) * (expected - l)
-
-    # Distinguish scenarios from positional arguments
-    if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['at_least'] is not None):
-        msg = (
-            f'Cannot specify both *args and `at_least` keyword argument to '
-            f'`{item_mark.name}` marker.'
-        )
-        raise ValueError(msg)
-
-    if len(args) > 0:
-        min_version = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
-        return _pad_version(min_version), _pad_version(bounds.arguments['less_than']), bounds
-
-    _min = bounds.arguments['at_least']
-    _max = bounds.arguments['less_than']
-
-    if _max is None and _min is None:
-        msg = (
-            f'Need to specify either `at_least` or `less_than` keyword arguments to '
-            f'`{item_mark.name}` marker.'
-        )
-        raise ValueError(msg)
-
-    return _pad_version(_min), _pad_version(_max), bounds
-
-
 def pytest_runtest_setup(item: pytest.Item):
     """Custom setup to handle skips based on VTK version.
 
     See custom marks in pyproject.toml.
     """
-    needs_vtk_version = 'needs_vtk_version'
-    # this test needs a given VTK version
-    for item_mark in item.iter_markers(needs_vtk_version):
-        sig = Signature(
-            [
-                Parameter(
-                    'args',
-                    kind=Parameter.VAR_POSITIONAL,
-                    annotation=int | tuple[int],
-                ),
-                Parameter(
-                    'at_least',
-                    kind=Parameter.KEYWORD_ONLY,
-                    annotation=tuple[int] | None,
-                    default=None,
-                ),
-                Parameter(
-                    'less_than',
-                    kind=Parameter.KEYWORD_ONLY,
-                    default=None,
-                    annotation=tuple[int] | None,
-                ),
-                Parameter(
-                    'reason',
-                    kind=Parameter.KEYWORD_ONLY,
-                    default=None,
-                    annotation=str | None,
-                ),
-            ]
-        )
-        _min, _max, bounds = _get_min_max_vtk_version(item_mark=item_mark, sig=sig)
-        _min = (_min,) if isinstance(_min, int) else _min
-        _max = (_max,) if isinstance(_max, int) else _max
+    needs_vtk_version_marker = 'needs_vtk_version'
 
-        if (_min is not None and _min <= pv._MIN_SUPPORTED_VTK_VERSION) or (
-            _max is not None and _max <= pv._MIN_SUPPORTED_VTK_VERSION
-        ):
+    # this test needs a given VTK version
+    for item_mark in item.iter_markers(needs_vtk_version_marker):
+        try:
+            needs_vtk_version(*item_mark.args, **item_mark.kwargs)
+        except pv.VTKVersionError as e:
             msg = (
-                f'The {needs_vtk_version!r} marker is no longer necessary\n'
+                f'The {needs_vtk_version_marker!r} marker is no longer necessary\n'
                 f'and can be removed from test {item}.'
             )
-            raise pv.VTKVersionError(msg)
-
-        curr_version = pv.vtk_version_info
-
-        if _max is None and curr_version < _min:
-            reason = item_mark.kwargs.get(
-                'reason', f'Test needs VTK version >= {_min}, current is {curr_version}.'
-            )
-            pytest.skip(reason=reason)
-
-        if _min is None and curr_version >= _max:
-            reason = item_mark.kwargs.get(
-                'reason', f'Test needs VTK version < {_max}, current is {curr_version}.'
-            )
-            pytest.skip(reason=reason)
-
-        if _min is not None and _max is not None:
-            if _min > _max:
-                msg = 'Cannot specify a minimum version greater than the maximum one.'
-                raise ValueError(msg)
-
-            if curr_version < _min or curr_version >= _max:
-                reason = item_mark.kwargs.get(
-                    'reason',
-                    f'Test needs {_min} <= VTK version < {_max}, current is {curr_version}.',
-                )
-                pytest.skip(reason=reason)
+            raise pv.VTKVersionError(msg) from e
 
     if item_mark := item.get_closest_marker('skip_egl'):
         sig = Signature(
