@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
-import importlib
 import itertools
 import json
 from pathlib import Path
@@ -75,14 +74,7 @@ _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
-def _lazy_vtk_import(module_name: str, class_name: str) -> type:
-    """Lazy import of a class from vtkmodules."""
-    module = importlib.import_module(f'vtkmodules.{module_name}')
-    return getattr(module, class_name)
-
-
 class _FileIOBase(ABC, _NoNewAttrMixin):
-    _vtk_module_name: str = ''
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -101,8 +93,8 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
-        if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
+        if cls._vtk_class_name:
+            return getattr(_vtk, cls._vtk_class_name)  # type: ignore[return-value]
         return None
 
     @classmethod
