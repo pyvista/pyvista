@@ -241,7 +241,8 @@ def _convert_one(
         return False
     _save_mesh(mesh, out_path)
     if announce:
-        CLI_APP.console.print(f'[green]Saved:[/green] {out_path}')
+        msg = f'[green]Saved:[/green] {out_path}'
+        CLI_APP.console.print(msg)
     return True
 
 
@@ -301,9 +302,8 @@ def _convert_many(
         msg = f'\n[yellow]{n_renames} collision{s} resolved by renaming:[/yellow]'
         CLI_APP.console.print(msg)
         for path_in, original, renamed in renames:
-            CLI_APP.console.print(
-                f'  {path_in.name} → {renamed.name} (would have collided with {original.name})'
-            )
+            msg = f'  {path_in.name} → {renamed.name} (would have collided with {original.name})'
+            CLI_APP.console.print(msg)
 
     if n_skipped := len(skipped):
         s = 's' if n_skipped > 1 else ''

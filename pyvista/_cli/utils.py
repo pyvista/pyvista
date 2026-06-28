@@ -208,7 +208,8 @@ def _read_mesh(
     except Exception:  # noqa: BLE001
         if skip_unreadable:
             if announce_unreadable:
-                CLI_APP.console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
+                msg = f'[yellow]Skipping unreadable file:[/yellow] {path}'
+                CLI_APP.console.print(msg)
             return None
         else:
             msg = f'Path is not readable by PyVista:\n{path}'

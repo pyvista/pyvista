@@ -349,9 +349,8 @@ def _validate_many(
 
     n_total = n_valid + n_invalid
     if n_invalid:
-        CLI_APP.console.print(
-            f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
-        )
+        msg = f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
+        CLI_APP.console.print(msg)
         CLI_APP.console.print('\n'.join(invalid_output))
     elif n_total:
         if n_total == 1:
