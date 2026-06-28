@@ -109,6 +109,7 @@ def _expand_globs(values: list[str]) -> list[str]:
     """
     expanded: list[str] = []
     for v in values:
+        v = str(Path(v).expanduser())  # noqa: PLW2901
         if any(c in v for c in _GLOB_CHARS):
             matches = sorted(glob(v, recursive=True))  # noqa: PTH207
             if matches:
