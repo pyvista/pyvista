@@ -246,7 +246,7 @@ class MeshPaths:
         dropped = self._paths_dropped
         if dropped:
             n = len(dropped)
-            listed = ', '.join(str(p) for p in dropped[:5])
+            listed = ', '.join(p.as_posix() for p in dropped[:5])
             if n > 5:
                 listed += f', ... ({n - 5} more)'
             self._app.console.print(

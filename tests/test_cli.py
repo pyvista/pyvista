@@ -1637,6 +1637,7 @@ def test_validate_skip_unreadable(
 
 
 @pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.needs_vtk_version(9, 5, reason='needs vtkhdf read support')
 def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
     """A mesh type that is not a DataSet or MultiBlock exits with a clear error."""
     path = Path(pv.examples.download_warping_spheres(load=False))
