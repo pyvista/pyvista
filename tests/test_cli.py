@@ -365,6 +365,7 @@ def test_command_glob(
     command: str,
     glob_style: str,
 ):
+    """Globbing should work with both shell expansion and Python expansion."""
     second = tmp_example_dir / 'ant2.ply'
     shutil.copy(tmp_ant_file, second)
     pattern = '*.ply'
@@ -376,8 +377,13 @@ def test_command_glob(
     if command == 'convert':
         command_str += ' .vtp'
     if glob_style == 'shell':
+        # No string -> shell does the globbing
         assert "'" not in command_str
         assert '"' not in command_str
+    else:
+        # As a string -> Python does the globbing
+        assert "'" in command_str or '"' in command_str
+
     main(shlex.split(command_str))
     out = capsys.readouterr().out
     assert 'Error' not in out
