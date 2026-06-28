@@ -32,7 +32,6 @@ from pyvista.core.errors import InvalidMeshWarning
 from ._frd import _FRDParser
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
-from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
 from .fileio import _read_grdecl
 from .helpers import wrap
@@ -669,7 +668,6 @@ class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataReader'
 
 
@@ -680,7 +678,6 @@ class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPImageDataReader'
 
 
@@ -708,7 +705,6 @@ class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelec
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLRectilinearGridReader'
 
 
@@ -719,7 +715,6 @@ class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSele
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPRectilinearGridReader'
 
 
@@ -747,7 +742,6 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
 
@@ -758,7 +752,6 @@ class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSe
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPUnstructuredGridReader'
 
 
@@ -788,7 +781,6 @@ class XMLPolyDataReader(BaseReader['PolyData'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPolyDataReader'
 
 
@@ -811,7 +803,6 @@ class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelecti
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLStructuredGridReader'
 
 
@@ -822,7 +813,6 @@ class XMLMultiBlockDataReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataReader'
 
 
@@ -852,7 +842,6 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 
     """
 
-    _vtk_module_name = 'vtkIOEnSight'
     _vtk_class_name = 'vtkGenericEnSightReader'
 
     def _set_filename(self, filename) -> None:
@@ -935,7 +924,6 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOpenFOAMReader'
 
     def _set_defaults_post(self) -> None:
@@ -1218,7 +1206,6 @@ class POpenFOAMReader(OpenFOAMReader):
     parallel reconstructed data, and decomposed data.
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPOpenFOAMReader'
 
     @property
@@ -1281,7 +1268,6 @@ class PLYReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOPLY'
     _vtk_class_name = 'vtkPLYReader'
 
 
@@ -1304,7 +1290,6 @@ class OBJReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOBJReader'
 
 
@@ -1327,7 +1312,6 @@ class STLReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkSTLReader'
 
 
@@ -1347,7 +1331,6 @@ class TecplotReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkTecplotReader'
 
 
@@ -1377,7 +1360,6 @@ class VTKDataSetReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetReader'
     _output_types = get_args(_legacy_dataset_types)
 
@@ -1398,7 +1380,6 @@ class VTKPDataSetReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPDataSetReader'
     _output_types = get_args(_legacy_dataset_types)
 
@@ -1422,7 +1403,6 @@ class BYUReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkBYUReader'
 
 
@@ -1445,7 +1425,6 @@ class FacetReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkFiltersHybrid'
     _vtk_class_name = 'vtkFacetReader'
 
 
@@ -1456,7 +1435,6 @@ class Plot3DMetaReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPlot3DMetaReader'
 
 
@@ -1514,7 +1492,6 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         - ``MultiBlockPlot3DReader.VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE``
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkMultiBlockPLOT3DReader'
 
     # pull in function name enum values as class constants
@@ -1689,7 +1666,6 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOCGNSReader'
     _vtk_class_name = 'vtkCGNSReader'
 
     def _set_defaults_post(self) -> None:
@@ -1972,7 +1948,6 @@ class BinaryMarchingCubesReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMCubesReader'
 
 
@@ -2144,7 +2119,6 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
 
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkNek5000Reader'
 
     def __init__(self, path):
@@ -2194,11 +2168,8 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.TIME_STEPS()
-
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
@@ -2226,9 +2197,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         float
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
@@ -2253,9 +2222,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
             Time or iteration value to set as active.
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
@@ -2336,7 +2303,6 @@ class DICOMReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDICOMImageReader'
 
 
@@ -2359,7 +2325,6 @@ class BMPReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkBMPReader'
 
 
@@ -2382,7 +2347,6 @@ class DEMReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDEMReader'
 
 
@@ -2405,7 +2369,6 @@ class JPEGReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkJPEGReader'
 
 
@@ -2428,7 +2391,6 @@ class MetaImageReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkMetaImageReader'
 
 
@@ -2451,7 +2413,6 @@ class NIFTIReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNIFTIImageReader'
 
 
@@ -2474,7 +2435,6 @@ class NRRDReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNrrdReader'
 
 
@@ -2497,7 +2457,6 @@ class PNGReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNGReader'
 
 
@@ -2520,7 +2479,6 @@ class PNMReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNMReader'
 
 
@@ -2543,7 +2501,6 @@ class SLCReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkSLCReader'
 
 
@@ -2569,7 +2526,6 @@ class TIFFReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkTIFFReader'
 
     def _set_defaults_post(self) -> None:
@@ -2607,7 +2563,6 @@ class HDRReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkHDRReader'
 
 
@@ -2618,7 +2573,6 @@ class PTSReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkPTSReader'
 
 
@@ -2641,7 +2595,6 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkAVSucdReader'
 
 
@@ -2664,7 +2617,6 @@ class HDFReader(BaseReader['DataObject']):
 
     """
 
-    _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
     _output_types = (
         'ImageData',
@@ -2691,7 +2643,6 @@ class GLTFReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkGLTFReader'
 
 
@@ -2702,7 +2653,6 @@ class FluentReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkFLUENTReader'
 
 
@@ -2713,7 +2663,6 @@ class MFIXReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMFIXReader'
 
 
@@ -2724,7 +2673,6 @@ class SegYReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOSegY'
     _vtk_class_name = 'vtkSegYReader'
     _output_types = ('StructuredGrid', 'ImageData')
 
@@ -3007,7 +2955,6 @@ class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
 
     """
 
-    _vtk_module_name = 'vtkIOXdmf2'
     _vtk_class_name = 'vtkXdmfReader'
     _output_types = ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid')
 
@@ -3073,7 +3020,6 @@ class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPartitionedDataSetReader'
 
 
@@ -3094,7 +3040,6 @@ class FLUENTCFFReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOFLUENTCFF'
     _vtk_class_name = 'vtkFLUENTCFFReader'
 
 
@@ -3116,7 +3061,6 @@ class GambitReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkGAMBITReader'
 
 
@@ -3137,7 +3081,6 @@ class GaussianCubeReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
     _output_types = ('ImageData', 'PolyData')
 
@@ -3250,7 +3193,6 @@ class MINCImageReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOMINC'
     _vtk_class_name = 'vtkMINCImageReader'
 
 
@@ -3272,7 +3214,6 @@ class PDBReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkPDBReader'
 
 
@@ -3294,7 +3235,6 @@ class GESignaReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkGESignaReader'
 
 
@@ -3325,7 +3265,6 @@ class ParticleReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkParticleReader'
 
     @property
@@ -3380,7 +3319,6 @@ class ProStarReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkProStarReader'
 
 
@@ -3402,7 +3340,6 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     """
 
-    _vtk_module_name = 'vtkIOExodus'
     _vtk_class_name = 'vtkExodusIIReader'
 
     def _set_defaults_post(self):
@@ -3428,14 +3365,10 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             Global data from Exodus II file
 
         """
-        global_extractor = _lazy_vtk_import(
-            'vtkFiltersExtraction', 'vtkExtractExodusGlobalTemporalVariables'
-        )()
-
+        global_extractor = _vtk.vtkExtractExodusGlobalTemporalVariables()
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()
-
-        return wrap(global_extractor.GetOutputDataObject(0))
+        return wrap(global_extractor.GetOutputDataObject(0))  # type: ignore[return-value]
 
     @property
     def element_blocks(self):
@@ -3753,9 +3686,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
