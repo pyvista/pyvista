@@ -360,10 +360,13 @@ def _validate_many(
             msg = '[green]1 mesh validated: '
             msg += _mesh_is_valid_message(mesh_type.__name__, path)
         else:
-            msg = f'[green]All {n_total} mesh{"es" if n_total > 1 else ""} are valid.[/green]'
+            es = 'es' if n_total > 1 else ''
+            msg = f'[green]All {n_total} mesh{es} are valid.[/green]'
         CLI_APP.console.print(msg)
 
-    if skipped:
-        CLI_APP.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
+    if n_skipped := len(skipped):
+        s = 's' if n_skipped > 1 else ''
+        msg = f'\n[yellow]{n_skipped} file{s} skipped (unreadable):[/yellow]'
+        CLI_APP.console.print(msg)
         for path in skipped:
             CLI_APP.console.print(f'  {path}')

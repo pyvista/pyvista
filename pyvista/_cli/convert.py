@@ -196,10 +196,11 @@ def _build_output_map(
         else:
             collisions.append((seen[base_out], path_in, base_out))
 
-    if collisions:
+    if n_collisions := len(collisions):
         lines = '\n'.join(f'  {a.name} + {b.name} → {out}' for a, b, out in collisions)
+        s = 's' if n_collisions > 1 else ''
         msg = (
-            f'{len(collisions)} output collision(s) detected:\n{lines}\n'
+            f'{n_collisions} output collision{s} detected:\n{lines}\n'
             'Use --resolve-collisions to rename automatically.'
         )
         _console_error(msg)
@@ -287,25 +288,26 @@ def _convert_many(
                 n_converted += 1
             progress.update(task, advance=1)
 
+    s = 's' if n_converted != 1 else ''
     if len(out_dirs) == 1:
-        CLI_APP.console.print(
-            f'[green]Saved {n_converted} files to:[/green] {next(iter(out_dirs))}/'
-        )
+        msg = f'[green]Saved {n_converted} file{s} to:[/green] {next(iter(out_dirs))}/'
+        CLI_APP.console.print(msg)
     else:
-        CLI_APP.console.print(
-            f'[green]Saved {n_converted} files across {len(out_dirs)} directories.[/green]'
-        )
+        msg = f'[green]Saved {n_converted} file{s} across {len(out_dirs)} directories.[/green]'
+        CLI_APP.console.print(msg)
 
-    if renames:
-        CLI_APP.console.print(
-            f'\n[yellow]{len(renames)} collision(s) resolved by renaming:[/yellow]'
-        )
+    if n_renames := len(renames):
+        s = 's' if n_renames > 1 else ''
+        msg = f'\n[yellow]{n_renames} collision{s} resolved by renaming:[/yellow]'
+        CLI_APP.console.print(msg)
         for path_in, original, renamed in renames:
             CLI_APP.console.print(
                 f'  {path_in.name} → {renamed.name} (would have collided with {original.name})'
             )
 
-    if skipped:
-        CLI_APP.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
+    if n_skipped := len(skipped):
+        s = 's' if n_skipped > 1 else ''
+        msg = f'\n[yellow]{len(skipped)} file{s} skipped (unreadable):[/yellow]'
+        CLI_APP.console.print(msg)
         for path_in in skipped:
             CLI_APP.console.print(f'  {path_in}')

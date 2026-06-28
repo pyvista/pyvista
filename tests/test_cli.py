@@ -413,7 +413,7 @@ def test_multiblock_drops_sidecar_children(
     main(shlex.split(f'{command} m.vtm {child_tokens} {output_token}'))
 
     out = capsys.readouterr().out
-    assert f'Skipping {n_children} file(s) inside MultiBlock sidecar directories: ' in out, out
+    assert f'Skipping {n_children} files inside MultiBlock sidecar directories: ' in out, out
     assert 'm/m_0.vtp,' in out, out
     if n_children == 2:
         assert 'm/m_1.vtp\n' in out, out
@@ -1444,53 +1444,6 @@ def test_help(capsys: pytest.CaptureFixture):
     assert expected == capsys.readouterr().out
 
 
-@parametrize(
-    as_script=[True, False],
-    tokens_err_codes=[
-        ('--foo', 1),
-        ('report --foo', 1),
-        ('plot --foo', 1),
-        ('', 0),
-        ('report --help', 0),
-        ('plot --help', 0),
-        ('--help', 0),
-    ],
-)
-def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
-    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
-
-    argv, exit_code_expected = tokens_err_codes
-    args += [*shlex.split(argv)]
-
-    process = subprocess.run(
-        args,
-        check=False,
-        capture_output=True,
-        encoding='utf-8',
-    )
-
-    assert process.returncode == exit_code_expected
-
-
-@parametrize(func=['plot', 'report'])
-@parametrize(ret=['foo', None])
-def test_print(
-    mock_plot: MagicMock,
-    mock_report: MagicMock,
-    func: str,
-    capsys: pytest.CaptureFixture,
-    ret: str | None,
-):
-    """Test that the output of the functions are sent to stdout."""
-    mock = mock_plot if func == 'plot' else mock_report
-    mock.return_value = ret
-    tokens = func if func == 'report' else f'{func} {Path(pv.examples.antfile).as_posix()}'
-    main(tokens)
-
-    expected = f'{ret}\n' if ret is not None else ''
-    assert capsys.readouterr().out == expected
-
-
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_convert_collision_error(ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """Two inputs with the same stem colliding on the same output raises an error by default."""
@@ -1500,7 +1453,7 @@ def test_convert_collision_error(ant, tmp_example_dir: Path, capsys: pytest.Capt
         main(shlex.split('convert ant.ply ant.vtp .pv'))
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out, out
-    assert '1 output collision(s) detected' in out, out
+    assert '1 output collision detected' in out, out
     assert 'ant.ply + ant.vtp' in out, out
     assert '--resolve-collisions' in out, out
     assert e.value.code == 1
@@ -1522,9 +1475,9 @@ def test_convert_resolve_collisions(ant, tmp_example_dir: Path, capsys: pytest.C
     assert (tmp_example_dir / 'out' / 'ant_2.pv').is_file()
 
     saved_pos = out.index('Saved 3 files')
-    renamed_pos = out.index('collision(s) resolved by renaming')
+    renamed_pos = out.index('collisions resolved by renaming')
     assert saved_pos < renamed_pos, out
-    assert '2 collision(s) resolved by renaming' in out, out
+    assert '2 collisions resolved by renaming' in out, out
     assert 'ant.vtp → ant_1.pv' in out, out
     assert 'ant.obj → ant_2.pv' in out, out
 
@@ -1573,8 +1526,8 @@ def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.Capt
 
     assert (tmp_example_dir / 'ant.pv').is_file()
     assert not (tmp_example_dir / 'bad.pv').exists()
-    assert out.index('Saved 1 files') < out.index('file(s) skipped (unreadable)'), out
-    assert '1 file(s) skipped (unreadable)' in out, out
+    assert out.index('Saved 1 file') < out.index('1 file skipped (unreadable)'), out
+    assert '1 file skipped (unreadable)' in out, out
     assert 'bad.vtp' in out, out
 
     # All skipped -> saved count is 0
@@ -1583,7 +1536,7 @@ def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.Capt
     main(shlex.split('convert bad.vtp bad2.vtp .pv --skip-unreadable'))
     out = capsys.readouterr().out
     assert 'Saved 0 files' in out, out
-    assert '2 file(s) skipped (unreadable)' in out, out
+    assert '2 files skipped (unreadable)' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1636,7 +1589,7 @@ def test_validate_skip_unreadable(
         'Validating bad.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
         "1 mesh validated: PolyData mesh 'ant.ply' is valid!\n"
         '\n'
-        '1 file(s) skipped (unreadable):\n'
+        '1 file skipped (unreadable):\n'
         '  bad.vtp\n'
     )
     assert out == expected, out
@@ -1648,13 +1601,14 @@ def test_validate_skip_unreadable(
     out = capsys.readouterr().out
     expected = (
         'Validating bad2.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n\n'
-        '2 file(s) skipped (unreadable):\n  bad.vtp\n  bad2.vtp\n'
+        '2 files skipped (unreadable):\n  bad.vtp\n  bad2.vtp\n'
     )
     assert out == expected, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.needs_vtk_version(9, 5, reason='needs vtkhdf read support')
+@pytest.mark.skip_windows(reason='path in error is wrapped differently by rich')
 def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
     """A mesh type that is not a DataSet or MultiBlock exits with a clear error."""
     path = Path(pv.examples.download_warping_spheres(load=False))
@@ -1665,3 +1619,50 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
     assert 'Cannot validate PartitionedDataSet' in out, out
     assert 'only DataSet and MultiBlock meshes are supported' in out, out
     assert e.value.code == 1
+
+
+@parametrize(
+    as_script=[True, False],
+    tokens_err_codes=[
+        ('--foo', 1),
+        ('report --foo', 1),
+        ('plot --foo', 1),
+        ('', 0),
+        ('report --help', 0),
+        ('plot --help', 0),
+        ('--help', 0),
+    ],
+)
+def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
+    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
+
+    argv, exit_code_expected = tokens_err_codes
+    args += [*shlex.split(argv)]
+
+    process = subprocess.run(
+        args,
+        check=False,
+        capture_output=True,
+        encoding='utf-8',
+    )
+
+    assert process.returncode == exit_code_expected
+
+
+@parametrize(func=['plot', 'report'])
+@parametrize(ret=['foo', None])
+def test_print(
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    func: str,
+    capsys: pytest.CaptureFixture,
+    ret: str | None,
+):
+    """Test that the output of the functions are sent to stdout."""
+    mock = mock_plot if func == 'plot' else mock_report
+    mock.return_value = ret
+    tokens = func if func == 'report' else f'{func} {Path(pv.examples.antfile).as_posix()}'
+    main(tokens)
+
+    expected = f'{ret}\n' if ret is not None else ''
+    assert capsys.readouterr().out == expected

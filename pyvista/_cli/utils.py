@@ -240,12 +240,13 @@ class MeshPaths:
 
     def _print_dropped_multiblock_sidecar_dirs(self) -> None:
         dropped = self._paths_dropped
-        if dropped:
-            n = len(dropped)
+        if n_dropped := len(dropped):
             listed = ', '.join(p.as_posix() for p in dropped[:5])
-            if n > 5:
-                listed += f', ... ({n - 5} more)'
-            CLI_APP.console.print(
-                f'[yellow]Skipping {n} file(s) inside MultiBlock sidecar directories:[/yellow] '
-                f'{listed}'
+            if n_dropped > 5:
+                listed += f', ... ({n_dropped - 5} more)'
+            s = 's' if n_dropped > 1 else ''
+            msg = (
+                f'[yellow]Skipping {n_dropped} file{s} inside MultiBlock sidecar '
+                f'directories:[/yellow] {listed}'
             )
+            CLI_APP.console.print(msg)
