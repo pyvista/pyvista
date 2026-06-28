@@ -356,6 +356,34 @@ def test_convert_glob(tmp_example_dir, tmp_ant_file: Path):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize('command', COMMANDS_WITH_PATHS)
+@pytest.mark.parametrize('glob_style', ['shell', 'python'])
+def test_command_glob(
+    tmp_example_dir,
+    tmp_ant_file: Path,
+    capsys: pytest.CaptureFixture,
+    command: str,
+    glob_style: str,
+):
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
+    pattern = '*.ply'
+    if glob_style == 'python':
+        # Encapsulate in a string so the shell does not expand it
+        # Instead, the CLI code will glob the string
+        pattern = f'{pattern!r}'
+    command_str = f'{command} {pattern}'
+    if command == 'convert':
+        command_str += ' .vtp'
+    if glob_style == 'shell':
+        assert "'" not in command_str
+        assert '"' not in command_str
+    main(shlex.split(command_str))
+    out = capsys.readouterr().out
+    assert 'Error' not in out
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_convert_glob_subdir_writes_adjacent(tmp_example_dir, tmp_ant_file: Path):
     """Bare ``.ext`` output places each converted file next to its input."""
     sub = tmp_example_dir / 'sub'
