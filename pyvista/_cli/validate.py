@@ -18,6 +18,7 @@ from .app import app
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
 from .utils import _console_error
+from .utils import skip_unreadable
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -184,9 +185,10 @@ def _validate(
             help=report_help,
         ),
     ] = None,
+    skip_unreadable: skip_unreadable = False,
 ) -> None:
     # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(paths, app=app)  # type: ignore[assignment]
+    mesh_paths = MeshPaths(paths, app=app, skip_unreadable=skip_unreadable)  # type: ignore[assignment]
     report_body = report[0] if report else 'message'
     for mesh, path in mesh_paths:
         if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):

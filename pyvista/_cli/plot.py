@@ -22,6 +22,7 @@ from .app import app
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
 from .utils import _console_error
+from .utils import skip_unreadable
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -97,6 +98,7 @@ def _plot(
     ],
     /,
     *,
+    skip_unreadable: skip_unreadable = False,
     off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
     full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     screenshot: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
@@ -131,7 +133,7 @@ def _plot(
     ],
 ) -> None:
     # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(var_item, app=app)  # type: ignore [assignment]
+    mesh_paths = MeshPaths(var_item, app=app, skip_unreadable=skip_unreadable)  # type: ignore [assignment]
     meshes = [m.mesh for m in mesh_paths]
     try:
         res = pv.plot(

@@ -9,10 +9,12 @@ from __future__ import annotations
 from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Annotated
 from typing import NamedTuple
 from typing import NoReturn
 import warnings
 
+from cyclopts import Parameter
 from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
 from cyclopts.help import HelpEntry
@@ -77,6 +79,18 @@ HELP_FORMATTER = _PyvistaHelpFormatter(
         ),
     ),
 )
+
+_skip_unreadable_help = """
+Skip any paths that are not readable instead of raising an error.
+"""
+skip_unreadable = Annotated[
+    bool,
+    Parameter(
+        name='skip-unreadable',
+        negative='',
+        help=_skip_unreadable_help,
+    ),
+]
 
 
 class _MeshAndPath(NamedTuple):
@@ -176,7 +190,14 @@ def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Pat
     return kept, filtered
 
 
-def _read_mesh(path: Path, app: App) -> DataObject:
+def _read_mesh(
+    path: Path,
+    *,
+    app: App,
+    skip_unreadable: bool,
+    announce: bool,
+    append_skip_unreadable_msg: bool,
+) -> DataObject | None:
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -185,23 +206,39 @@ def _read_mesh(path: Path, app: App) -> DataObject:
             )
             return pv.read(path)
     except Exception:  # noqa: BLE001
-        msg = f'Path is not readable by PyVista:\n{path}'
-        _console_error(app=app, message=msg)
+        if skip_unreadable:
+            if announce:
+                app.console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
+            return None
+        else:
+            msg = f'Path is not readable by PyVista:\n{path}'
+            if append_skip_unreadable_msg:
+                msg += '\nUse --skip-unreadable to skip this file.'
+            _console_error(app=app, message=msg)
 
 
 class MeshPaths:
-    def __init__(self, paths: list[str], *, app: App) -> None:
+    def __init__(self, paths: list[str], *, app: App, skip_unreadable: bool) -> None:
+        self._app = app
+        self._skip_unreadable = skip_unreadable
+
         inital_paths = _validate_paths(paths, app=app)
         input_paths, dropped_paths = _filter_multiblock_children(inital_paths)
         self.paths: list[Path] = input_paths
         self._paths_dropped: list[Path] = dropped_paths
-
-        self._app = app
         self._print_dropped_multiblock_sidecar_dirs()
 
     def __iter__(self) -> Iterator[_MeshAndPath]:
         for path in self.paths:
-            mesh = _read_mesh(path, app=self._app)
+            mesh = _read_mesh(
+                path,
+                app=self._app,
+                skip_unreadable=self._skip_unreadable,
+                announce=True,
+                append_skip_unreadable_msg=True,
+            )
+            if mesh is None:
+                continue
             yield _MeshAndPath(mesh=mesh, path=path)
 
     def _print_dropped_multiblock_sidecar_dirs(self) -> None:
