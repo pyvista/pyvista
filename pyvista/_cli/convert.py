@@ -117,7 +117,7 @@ def _convert(
     except ValueError as e:
         _console_error(app=app, message=str(e))
 
-    input_paths = MeshPaths(file_in_tokens, app=app, skip_unreadable=False).paths
+    input_paths = MeshPaths(file_in_tokens, app=app, skip_unreadable=False, announce=False).paths
 
     path_out = Path(file_out)
     ext_only = _is_extension_only(file_out)
@@ -240,7 +240,7 @@ def _convert_one(
         path_in,
         app=app,
         skip_unreadable=skip_unreadable,
-        announce=announce,
+        announce_unreadable=announce,
         append_skip_unreadable_msg=False,
     )
     if mesh is None:
@@ -284,7 +284,7 @@ def _convert_many(
                 path_in,
                 app=app,
                 skip_unreadable=skip_unreadable,
-                announce=False,
+                announce_unreadable=False,
                 append_skip_unreadable_msg=True,
             )
             if mesh is None:

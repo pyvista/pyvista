@@ -8,6 +8,12 @@ from typing import cast
 from typing import get_args
 
 from cyclopts import Parameter
+from rich.progress import BarColumn
+from rich.progress import MofNCompleteColumn
+from rich.progress import Progress
+from rich.progress import TextColumn
+from rich.progress import TimeElapsedColumn
+from rich.progress import TimeRemainingColumn
 
 import pyvista as pv
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
@@ -187,27 +193,36 @@ def _validate(
     ] = None,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
-    # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(paths, app=app, skip_unreadable=skip_unreadable)  # type: ignore[assignment]
+    mesh_paths = MeshPaths(paths, app=app, skip_unreadable=skip_unreadable, announce=False)  # type: ignore[assignment]
     report_body = report[0] if report else 'message'
-    for mesh, path in mesh_paths:
-        if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
-            msg = (
-                f'Cannot validate {type(mesh).__name__} read from path {str(path)!r}: '
-                f'only DataSet and MultiBlock meshes are supported.'
-            )
-            _console_error(app=app, message=msg)
-        _validate_one(
-            mesh,
-            path,
-            fields=fields,
-            exclude=exclude,
-            tolerance=tolerance,
-            planarity_tolerance=planarity_tolerance,
-            size_tolerance=size_tolerance,
-            report=report,
-            report_body=report_body,
+
+    kwargs = dict(
+        fields=fields,
+        exclude=exclude,
+        tolerance=tolerance,
+        planarity_tolerance=planarity_tolerance,
+        size_tolerance=size_tolerance,
+        report=report,
+        report_body=report_body,
+    )
+
+    n_paths = len(mesh_paths.paths)
+
+    if n_paths == 1:
+        mesh, path = next(iter(mesh_paths))
+        _validate_one(mesh, path, announce=True, **kwargs)
+    else:
+        _validate_many(mesh_paths, skip_unreadable=skip_unreadable, **kwargs)
+
+
+def _check_mesh_type(mesh: object, path: Path) -> None:
+    """Exit with a console error if ``mesh`` is not a supported type."""
+    if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
+        msg = (
+            f'Cannot validate {type(mesh).__name__} read from path {str(path)!r}: '
+            f'only DataSet and MultiBlock meshes are supported.'
         )
+        _console_error(app=app, message=msg)
 
 
 def _validate_one(
@@ -221,9 +236,14 @@ def _validate_one(
     size_tolerance: float | None,
     report: list[_ReportBodyOptions] | None,
     report_body: _ReportBodyOptions,
-) -> None:
-    """Validate a single mesh and print its result to the console."""
+    announce: bool,
+) -> str | None:
+    """Validate a single mesh and optionally print its result to the console.
+
+    Returns ``True`` if the mesh is valid, ``False`` otherwise.
+    """
     class_name = mesh.__class__.__name__
+    _check_mesh_type(mesh, path)
     try:
         out = pv.DataObjectFilters.validate_mesh(
             mesh,
@@ -238,15 +258,88 @@ def _validate_one(
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
         _console_error(app=app, message=msg)
+
+    if report is not None:
+        report_string = str(out)
+        invalid_fields = out.invalid_fields if report_body == 'fields' else None
+        output = _MeshValidator._colorize_output(report_string, invalid_fields)
+        announcement = output
+    elif (message := out.message) is not None:
+        output = _MeshValidator._colorize_output(message)
+        announcement = output
     else:
-        if report is not None:
-            # Print the full report
-            report_string = str(out)
-            invalid_fields = out.invalid_fields if report_body == 'fields' else None
-            app.console.print(_MeshValidator._colorize_output(report_string, invalid_fields))
-        elif (message := out.message) is not None:
-            # Only print the error message and show the file name
-            app.console.print(_MeshValidator._colorize_output(message))
-        else:
-            # Mesh is valid
-            app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
+        announcement = f'[green]{class_name} mesh {path.name!r} is valid![/green]'
+        output = None
+    if announce:
+        app.console.print(announcement)
+    return output
+
+
+def _validate_many(
+    mesh_paths: MeshPaths,
+    *,
+    skip_unreadable: bool,  # noqa: ARG001
+    fields: list[_LiteralMeshValidationFields] | None,
+    exclude: list[_LiteralMeshValidationFields] | None,
+    tolerance: float | None,
+    planarity_tolerance: float | None,
+    size_tolerance: float | None,
+    report: list[_ReportBodyOptions] | None,
+    report_body: _ReportBodyOptions,
+) -> None:
+    """Validate each mesh under a progress bar and report a summary."""
+    columns = (
+        TextColumn('[progress.description]{task.description}'),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn('•'),
+        TimeElapsedColumn(),
+        TextColumn('<'),
+        TimeRemainingColumn(),
+    )
+
+    n_valid = 0
+    n_invalid = 0
+    skipped: list[Path] = []
+    invalid_output: list[str] = []
+
+    with Progress(*columns, console=app.console, transient=False) as progress:
+        task = progress.add_task('Validating', total=len(mesh_paths.paths))
+        for mesh, path in mesh_paths:
+            progress.update(task, description=f'Validating [cyan]{path.name}[/cyan]')
+            if mesh is None:
+                skipped.append(path)
+            else:
+                output = _validate_one(
+                    mesh,
+                    path,
+                    fields=fields,
+                    exclude=exclude,
+                    tolerance=tolerance,
+                    planarity_tolerance=planarity_tolerance,
+                    size_tolerance=size_tolerance,
+                    report=report,
+                    report_body=report_body,
+                    announce=False,
+                )
+
+                if output:
+                    n_invalid += 1
+                    invalid_output.append(output)
+                else:
+                    n_valid += 1
+            progress.update(task, advance=1)
+
+    n_total = n_valid + n_invalid
+    if n_invalid:
+        app.console.print(
+            f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
+        )
+        app.console.print('\n'.join(invalid_output))
+    else:
+        app.console.print(f'[green]All {n_total} meshes are valid.[/green]')
+
+    if skipped:
+        app.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
+        for path in skipped:
+            app.console.print(f'  {path}')

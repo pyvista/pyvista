@@ -133,7 +133,7 @@ def _plot(
     ],
 ) -> None:
     # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(var_item, app=app, skip_unreadable=skip_unreadable)  # type: ignore [assignment]
+    mesh_paths = MeshPaths(var_item, app=app, skip_unreadable=skip_unreadable, announce=True)  # type: ignore [assignment]
     meshes = [m.mesh for m in mesh_paths]
     try:
         res = pv.plot(

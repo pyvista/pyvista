@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     console = Console(
         width=70,
-        force_terminal=True,
+        force_terminal=False,
         highlight=False,
         color_system=None,
         legacy_windows=False,
@@ -481,7 +481,10 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     shutil.copy2(tmp_ant_file, tmp_ant_file2)
     main(f'validate {str(tmp_ant_file)!r} {str(tmp_ant_file2)!r}')
     out = capsys.readouterr().out
-    expected = "PolyData mesh 'ant.ply' is valid!\nPolyData mesh 'ant2.ply' is valid!\n"
+    expected = (
+        'Validating ant2.ply ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
+        'All 2 meshes are valid.\n'
+    )
     assert out == expected
 
     main(f'validate {str(tmp_ant_file)!r} --report')
@@ -942,7 +945,12 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
     # Test the parameters defaults
     cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
-    plot_defaults = {name: plot_sig.parameters[name].default for name in cli_sig.parameters}
+    cli_defaults.pop('skip_unreadable')
+    plot_defaults = {
+        name: plot_sig.parameters[name].default
+        for name in cli_sig.parameters
+        if name != 'skip_unreadable'
+    }
 
     assert cli_defaults == plot_defaults
 
@@ -959,6 +967,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
     plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
     cli_annotations = inspect.get_annotations(_plot, eval_str=True)
+    cli_annotations.pop('skip_unreadable')
 
     cli_annotations = {
         k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
@@ -1344,8 +1353,10 @@ def test_validate_glob_expands_files(
     shutil.copy(tmp_ant_file, second)
     main(shlex.split("validate '*.ply'"))
     out = capsys.readouterr().out
-    assert f"PolyData mesh '{tmp_ant_file.name}' is valid!" in out, out
-    assert f"PolyData mesh '{second.name}' is valid!" in out, out
+    assert (
+        'Validating ant2.ply ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
+        'All 2 meshes are valid.'
+    ) in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')

@@ -94,7 +94,7 @@ skip_unreadable = Annotated[
 
 
 class _MeshAndPath(NamedTuple):
-    mesh: DataObject
+    mesh: DataObject | None
     path: Path
 
 
@@ -195,7 +195,7 @@ def _read_mesh(
     *,
     app: App,
     skip_unreadable: bool,
-    announce: bool,
+    announce_unreadable: bool,
     append_skip_unreadable_msg: bool,
 ) -> DataObject | None:
     try:
@@ -207,7 +207,7 @@ def _read_mesh(
             return pv.read(path)
     except Exception:  # noqa: BLE001
         if skip_unreadable:
-            if announce:
+            if announce_unreadable:
                 app.console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
             return None
         else:
@@ -218,9 +218,12 @@ def _read_mesh(
 
 
 class MeshPaths:
-    def __init__(self, paths: list[str], *, app: App, skip_unreadable: bool) -> None:
+    def __init__(
+        self, paths: list[str], *, app: App, skip_unreadable: bool, announce: bool
+    ) -> None:
         self._app = app
         self._skip_unreadable = skip_unreadable
+        self._announce = announce
 
         inital_paths = _validate_paths(paths, app=app)
         input_paths, dropped_paths = _filter_multiblock_children(inital_paths)
@@ -234,11 +237,9 @@ class MeshPaths:
                 path,
                 app=self._app,
                 skip_unreadable=self._skip_unreadable,
-                announce=True,
+                announce_unreadable=self._announce,
                 append_skip_unreadable_msg=True,
             )
-            if mesh is None:
-                continue
             yield _MeshAndPath(mesh=mesh, path=path)
 
     def _print_dropped_multiblock_sidecar_dirs(self) -> None:
