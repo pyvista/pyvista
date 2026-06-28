@@ -43,8 +43,16 @@ if TYPE_CHECKING:
     from pytest_cases.case_parametrizer_new import Case
     from pytest_mock import MockerFixture
 
-COMMANDS_WITH_PATHS = ['convert', 'validate', 'plot']
-COMMANDS_WITHOUT_KWARGS = ['report', 'convert', 'validate']
+COMMANDS_WITH_PATHS = [  # Commands that accept positional-only path or paths
+    'convert',
+    'validate',
+    'plot',
+]
+COMMANDS_WITHOUT_KWARGS = [  # Commands which do not have generic **kwargs in signature
+    'report',
+    'convert',
+    'validate',
+]
 
 
 @pytest.fixture
