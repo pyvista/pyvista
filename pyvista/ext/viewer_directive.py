@@ -51,10 +51,10 @@ class OfflineViewerDirective(Directive):
     has_content = True
 
     def run(self):  # pragma: no cover
-        source_dir = Path(self.state.document.settings.env.app.srcdir)
-        output_dir = Path(self.state.document.settings.env.app.outdir)
+        source_dir = Path(self.state.document.settings.env.CLI_APP.srcdir)
+        output_dir = Path(self.state.document.settings.env.CLI_APP.outdir)
         # _build directory
-        build_dir = Path(self.state.document.settings.env.app.outdir).parent
+        build_dir = Path(self.state.document.settings.env.CLI_APP.outdir).parent
 
         # this is the path passed to 'offlineviewer:: <path>` directive
         source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])

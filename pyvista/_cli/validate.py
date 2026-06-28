@@ -20,7 +20,7 @@ from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from pyvista.core.filters.data_object import _MeshValidator
 from pyvista.core.filters.data_object import _ReportBodyOptions
 
-from .app import app
+from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
 from .utils import _console_error
@@ -119,7 +119,7 @@ def _converter_report(
     raise ValueError(msg)
 
 
-@app.command(
+@CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
     help="Validate a mesh's array data, points, and cells.",
@@ -193,7 +193,7 @@ def _validate(
     ] = None,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
-    mesh_paths = MeshPaths(paths, app=app, skip_unreadable=skip_unreadable, announce=False)
+    mesh_paths = MeshPaths(paths, skip_unreadable=skip_unreadable, announce=False)
     report_body = report[0] if report else 'message'
     n_paths = len(mesh_paths.paths)
 
@@ -233,7 +233,7 @@ def _check_mesh_type(mesh: object, path: Path) -> None:
             f'Cannot validate {type(mesh).__name__} read from path {str(path)!r}: '
             f'only DataSet and MultiBlock meshes are supported.'
         )
-        _console_error(app=app, message=msg)
+        _console_error(message=msg)
 
 
 def _validate_one(
@@ -268,7 +268,7 @@ def _validate_one(
         )
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
-        _console_error(app=app, message=msg)
+        _console_error(message=msg)
 
     if report is not None:
         report_string = str(out)
@@ -282,7 +282,7 @@ def _validate_one(
         announcement = _mesh_is_valid_message(class_name, path)
         output = None
     if announce:
-        app.console.print(announcement)
+        CLI_APP.console.print(announcement)
     return output
 
 
@@ -319,7 +319,7 @@ def _validate_many(
     not_skipped: list[Path] = []
     invalid_output: list[str] = []
 
-    with Progress(*columns, console=app.console, transient=False) as progress:
+    with Progress(*columns, console=CLI_APP.console, transient=False) as progress:
         task = progress.add_task('Validating', total=len(mesh_paths.paths))
         for mesh, path in mesh_paths:
             progress.update(task, description=f'Validating [cyan]{path.name}[/cyan]')
@@ -349,10 +349,10 @@ def _validate_many(
 
     n_total = n_valid + n_invalid
     if n_invalid:
-        app.console.print(
+        CLI_APP.console.print(
             f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
         )
-        app.console.print('\n'.join(invalid_output))
+        CLI_APP.console.print('\n'.join(invalid_output))
     elif n_total:
         if n_total == 1:
             path = not_skipped[0]
@@ -361,9 +361,9 @@ def _validate_many(
             msg += _mesh_is_valid_message(mesh_type.__name__, path)
         else:
             msg = f'[green]All {n_total} mesh{"es" if n_total > 1 else ""} are valid.[/green]'
-        app.console.print(msg)
+        CLI_APP.console.print(msg)
 
     if skipped:
-        app.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
+        CLI_APP.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
         for path in skipped:
-            app.console.print(f'  {path}')
+            CLI_APP.console.print(f'  {path}')

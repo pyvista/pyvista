@@ -25,10 +25,11 @@ from rich.text import Text
 
 import pyvista as pv
 
+from .app import CLI_APP
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from cyclopts import App
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import Group
@@ -98,7 +99,7 @@ class _MeshAndPath(NamedTuple):
     path: Path
 
 
-def _console_error(*, app: App, message: str | Group, title: str = 'PyVista Error') -> NoReturn:
+def _console_error(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
     panel = Panel(
         message,
         title=title,
@@ -107,7 +108,7 @@ def _console_error(*, app: App, message: str | Group, title: str = 'PyVista Erro
         expand=True,
         title_align='left',
     )
-    app.error_console.print(panel)
+    CLI_APP.error_console.print(panel)
     raise SystemExit(1)
 
 
@@ -135,7 +136,7 @@ def _expand_globs(values: list[str]) -> list[str]:
     return expanded
 
 
-def _validate_paths(paths: list[str], app: App) -> list[Path]:
+def _validate_paths(paths: list[str]) -> list[Path]:
     """Expand globs and verify each path exists.
 
     Prints a console error and exists, listing any missing paths.
@@ -149,7 +150,7 @@ def _validate_paths(paths: list[str], app: App) -> list[Path]:
         missing = missing[0] if n_missings == 1 else missing
 
         msg = f'{n_missings} {literal_file} not found: {missing}'
-        _console_error(app=app, message=msg)
+        _console_error(message=msg)
     return [Path(v) for v in values]
 
 
@@ -193,7 +194,6 @@ def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Pat
 def _read_mesh(
     path: Path,
     *,
-    app: App,
     skip_unreadable: bool,
     announce_unreadable: bool,
     append_skip_unreadable_msg: bool,
@@ -208,24 +208,21 @@ def _read_mesh(
     except Exception:  # noqa: BLE001
         if skip_unreadable:
             if announce_unreadable:
-                app.console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
+                CLI_APP.console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
             return None
         else:
             msg = f'Path is not readable by PyVista:\n{path}'
             if append_skip_unreadable_msg:
                 msg += '\nUse --skip-unreadable to skip this file.'
-            _console_error(app=app, message=msg)
+            _console_error(message=msg)
 
 
 class MeshPaths:
-    def __init__(
-        self, paths: list[str], *, app: App, skip_unreadable: bool, announce: bool
-    ) -> None:
-        self._app = app
+    def __init__(self, paths: list[str], *, skip_unreadable: bool, announce: bool) -> None:
         self._skip_unreadable = skip_unreadable
         self._announce = announce
 
-        inital_paths = _validate_paths(paths, app=app)
+        inital_paths = _validate_paths(paths)
         input_paths, dropped_paths = _filter_multiblock_children(inital_paths)
         self.paths: list[Path] = input_paths
         self._paths_dropped: list[Path] = dropped_paths
@@ -235,7 +232,6 @@ class MeshPaths:
         for path in self.paths:
             mesh = _read_mesh(
                 path,
-                app=self._app,
                 skip_unreadable=self._skip_unreadable,
                 announce_unreadable=self._announce,
                 append_skip_unreadable_msg=True,
@@ -249,7 +245,7 @@ class MeshPaths:
             listed = ', '.join(p.as_posix() for p in dropped[:5])
             if n > 5:
                 listed += f', ... ({n - 5} more)'
-            self._app.console.print(
+            CLI_APP.console.print(
                 f'[yellow]Skipping {n} file(s) inside MultiBlock sidecar directories:[/yellow] '
                 f'{listed}'
             )

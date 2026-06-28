@@ -30,7 +30,7 @@ from pytest_cases import parametrize_with_cases
 from rich.console import Console
 
 import pyvista as pv
-from pyvista.__main__ import app
+from pyvista.__main__ import CLI_APP
 from pyvista.__main__ import main
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from tests.core.test_dataobject_filters import _add_vtk_array
@@ -51,9 +51,9 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
         color_system=None,
         legacy_windows=False,
     )
-    monkeypatch.setattr(app, 'console', console)
-    monkeypatch.setattr(app, 'error_console', console)
-    monkeypatch.setattr(app, 'help_format', 'plaintext')
+    monkeypatch.setattr(CLI_APP, 'console', console)
+    monkeypatch.setattr(CLI_APP, 'error_console', console)
+    monkeypatch.setattr(CLI_APP, 'help_format', 'plaintext')
 
 
 @pytest.fixture
@@ -65,9 +65,9 @@ def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
         color_system='standard',
         legacy_windows=False,
     )
-    monkeypatch.setattr(app, 'console', console)
-    monkeypatch.setattr(app, 'error_console', console)
-    monkeypatch.setattr(app, 'help_format', 'plaintext')
+    monkeypatch.setattr(CLI_APP, 'console', console)
+    monkeypatch.setattr(CLI_APP, 'error_console', console)
+    monkeypatch.setattr(CLI_APP, 'help_format', 'plaintext')
 
 
 @pytest.mark.parametrize('args', [[], ''])

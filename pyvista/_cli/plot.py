@@ -18,7 +18,7 @@ from rich.text import Text
 import pyvista as pv
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
-from .app import app
+from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
 from .utils import _console_error
@@ -39,7 +39,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):
             msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
-            app.console.print(
+            CLI_APP.console.print(
                 Panel(
                     msg,
                     style='magenta',
@@ -78,7 +78,7 @@ class Groups(StrEnum):
     RETURN = 'Return'
 
 
-@app.command(
+@CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
     help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
@@ -133,7 +133,7 @@ def _plot(
     ],
 ) -> None:
     # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(var_item, app=app, skip_unreadable=skip_unreadable, announce=True)
+    mesh_paths = MeshPaths(var_item, skip_unreadable=skip_unreadable, announce=True)
     meshes = [m.mesh for m in mesh_paths]
     try:
         res = pv.plot(
@@ -162,7 +162,7 @@ def _plot(
 
     except Exception as ex:  # noqa: BLE001
         # Prevent traceback and output error along with help message
-        app.help_print(tokens='plot')
+        CLI_APP.help_print(tokens='plot')
 
         msg = Group(
             ':warning: The following exception has been raised when calling [u]pv.plot[/u]:',
@@ -173,6 +173,6 @@ def _plot(
             NewLine(),
             Text('Please check the provided arguments.'),
         )
-        _console_error(app=app, message=msg)
+        _console_error(message=msg)
     else:
         return res

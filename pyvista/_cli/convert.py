@@ -15,7 +15,7 @@ from rich.progress import TimeRemainingColumn
 
 import pyvista as pv
 
-from .app import app
+from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
 from .utils import _console_error
@@ -43,7 +43,7 @@ _resolve_collisions_help = (
 )
 
 
-@app.command(
+@CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} convert PATH-IN [PATH-IN...] PATH-OUT',
     help_formatter=HELP_FORMATTER,
 )
@@ -103,10 +103,8 @@ def _convert(
     ```
     """
     if len(paths) < 2:
-        _console_error(
-            app=app,
-            message='convert requires at least one input file and an output spec.',
-        )
+        msg = 'convert requires at least one input file and an output spec.'
+        _console_error(msg)
 
     file_out = paths[-1]
     file_in_tokens = paths[:-1]
@@ -114,21 +112,19 @@ def _convert(
     try:
         _validate_out_has_extension(file_out)
     except ValueError as e:
-        _console_error(app=app, message=str(e))
+        _console_error(message=str(e))
 
-    input_paths = MeshPaths(file_in_tokens, app=app, skip_unreadable=False, announce=False).paths
+    input_paths = MeshPaths(file_in_tokens, skip_unreadable=False, announce=False).paths
 
     path_out = Path(file_out)
     ext_only = _is_extension_only(file_out)
     if not ext_only and len(input_paths) > 1:
-        _console_error(
-            app=app,
-            message=(
-                f'Cannot write {len(input_paths)} inputs to a single named output '
-                f'{file_out!r}. Use an extension-only output spec (e.g. '
-                f"'{path_out.suffix}') to reuse each input's stem."
-            ),
+        msg = (
+            f'Cannot write {len(input_paths)} inputs to a single named output '
+            f'{file_out!r}. Use an extension-only output spec (e.g. '
+            f"'{path_out.suffix}') to reuse each input's stem."
         )
+        _console_error(msg)
 
     if len(input_paths) > 1:
         _convert_many(
@@ -202,13 +198,11 @@ def _build_output_map(
 
     if collisions:
         lines = '\n'.join(f'  {a.name} + {b.name} → {out}' for a, b, out in collisions)
-        _console_error(
-            app=app,
-            message=(
-                f'{len(collisions)} output collision(s) detected:\n{lines}\n'
-                'Use --resolve-collisions to rename automatically.'
-            ),
+        msg = (
+            f'{len(collisions)} output collision(s) detected:\n{lines}\n'
+            'Use --resolve-collisions to rename automatically.'
         )
+        _console_error(msg)
 
     return result, renames
 
@@ -222,7 +216,8 @@ def _save_mesh(mesh: pv.DataObject, out_path: Path) -> None:
     try:
         mesh.save(out_path)
     except Exception as e:  # noqa: BLE001
-        _console_error(app=app, message=f'Failed to save output file: {out_path}\n{e}')
+        msg = f'Failed to save output file: {out_path}\n{e}'
+        _console_error(msg)
 
 
 def _convert_one(
@@ -237,7 +232,6 @@ def _convert_one(
     out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
     mesh = _read_mesh(
         path_in,
-        app=app,
         skip_unreadable=skip_unreadable,
         announce_unreadable=announce,
         append_skip_unreadable_msg=False,
@@ -246,7 +240,7 @@ def _convert_one(
         return False
     _save_mesh(mesh, out_path)
     if announce:
-        app.console.print(f'[green]Saved:[/green] {out_path}')
+        CLI_APP.console.print(f'[green]Saved:[/green] {out_path}')
     return True
 
 
@@ -275,13 +269,12 @@ def _convert_many(
     n_converted = 0
     skipped: list[Path] = []
 
-    with Progress(*columns, console=app.console, transient=False) as progress:
+    with Progress(*columns, console=CLI_APP.console, transient=False) as progress:
         task = progress.add_task('Converting', total=len(input_paths))
         for path_in, out_path in output_map.items():
             progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
             mesh = _read_mesh(
                 path_in,
-                app=app,
                 skip_unreadable=skip_unreadable,
                 announce_unreadable=False,
                 append_skip_unreadable_msg=True,
@@ -295,20 +288,24 @@ def _convert_many(
             progress.update(task, advance=1)
 
     if len(out_dirs) == 1:
-        app.console.print(f'[green]Saved {n_converted} files to:[/green] {next(iter(out_dirs))}/')
+        CLI_APP.console.print(
+            f'[green]Saved {n_converted} files to:[/green] {next(iter(out_dirs))}/'
+        )
     else:
-        app.console.print(
+        CLI_APP.console.print(
             f'[green]Saved {n_converted} files across {len(out_dirs)} directories.[/green]'
         )
 
     if renames:
-        app.console.print(f'\n[yellow]{len(renames)} collision(s) resolved by renaming:[/yellow]')
+        CLI_APP.console.print(
+            f'\n[yellow]{len(renames)} collision(s) resolved by renaming:[/yellow]'
+        )
         for path_in, original, renamed in renames:
-            app.console.print(
+            CLI_APP.console.print(
                 f'  {path_in.name} → {renamed.name} (would have collided with {original.name})'
             )
 
     if skipped:
-        app.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
+        CLI_APP.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
         for path_in in skipped:
-            app.console.print(f'  {path_in}')
+            CLI_APP.console.print(f'  {path_in}')
