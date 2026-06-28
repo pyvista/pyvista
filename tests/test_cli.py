@@ -545,6 +545,18 @@ def test_convert_help(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+def test_convert_compound_extension(tmp_example_dir: Path):
+    """Compound extensions like .nii.gz are correctly stripped from the input stem
+    and replaced with the target extension."""
+    src = Path(pv.examples.download_brain_atlas_with_sides(load=False))
+    dst = tmp_example_dir / src.name
+    shutil.copy(src, dst)
+    main(shlex.split(f'convert {str(dst)!r} .vti'))
+    # stem should be bare (no .nii residue), extension replaced
+    assert (tmp_example_dir / f'{dst.name[: -len(".nii.gz")]}.vti').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(f'validate {str(tmp_ant_file)!r}')
     out = capsys.readouterr().out

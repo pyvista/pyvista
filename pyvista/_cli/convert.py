@@ -14,6 +14,7 @@ from rich.progress import TimeElapsedColumn
 from rich.progress import TimeRemainingColumn
 
 import pyvista as pv
+from pyvista.core.utilities.fileio import get_ext
 
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
@@ -148,11 +149,15 @@ def _resolve_out_path(path_in: Path, path_out: Path, *, ext_only: bool) -> Path:
 
     A bare extension-only spec (``.pv``) is written next to each input. An extension-only
     spec with an explicit parent (``out/.pv``) is written into that parent.
+    Compound extensions like ``.nii.gz`` are handled using ``get_ext()``.
     """
     if not ext_only:
         return path_out
     out_dir = path_in.parent if str(path_out.parent) == '.' else path_out.parent
-    return out_dir / f'{path_in.stem}{path_out.stem}'
+    target_ext = get_ext(path_out) or path_out.stem
+    in_ext = get_ext(path_in)
+    bare_stem = path_in.name[: -len(in_ext)] if in_ext else path_in.stem
+    return out_dir / f'{bare_stem}{target_ext}'
 
 
 def _build_output_map(
