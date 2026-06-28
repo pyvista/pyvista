@@ -366,6 +366,7 @@ def test_convert_glob(tmp_example_dir, tmp_ant_file: Path):
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize('command', COMMANDS_WITH_PATHS)
 @pytest.mark.parametrize('glob_style', ['shell', 'python'])
+@pytest.mark.needs_vtk_version(9, 4, reason='shell convert crashes parallel workers')
 def test_command_glob(
     tmp_example_dir,
     tmp_ant_file: Path,
