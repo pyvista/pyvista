@@ -137,6 +137,7 @@ def _validate(
         ),
     ],
     /,
+    *,
     fields: Annotated[
         list[_LiteralMeshValidationFields] | None,
         Parameter(
@@ -146,7 +147,6 @@ def _validate(
             help=fields_help,
         ),
     ] = None,
-    *,
     exclude: Annotated[
         list[_LiteralMeshValidationFields] | None,
         Parameter(

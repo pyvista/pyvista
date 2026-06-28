@@ -17,6 +17,8 @@ from typing import get_args
 import numpy as np
 import pytest
 
+from pyvista._cli.plot import _plot as cli_plot
+
 needs_pyvista_zstd = pytest.mark.skipif(
     importlib.util.find_spec('pyvista_zstd') is None,
     reason='pyvista-zstd is not installed (registers the .pv extension)',
@@ -40,6 +42,9 @@ if TYPE_CHECKING:
 
     from pytest_cases.case_parametrizer_new import Case
     from pytest_mock import MockerFixture
+
+COMMANDS_WITH_PATHS = ['convert', 'validate', 'plot']
+COMMANDS_WITHOUT_KWARGS = ['report', 'convert', 'validate']
 
 
 @pytest.fixture
@@ -121,8 +126,8 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-@pytest.mark.parametrize('command', ['report', 'convert'])
-def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
+@pytest.mark.parametrize('command', COMMANDS_WITHOUT_KWARGS)
+def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
     expected = textwrap.dedent(
         """\
     ╭─ Error ────────────────────────────────────────────────────────────╮
@@ -133,7 +138,21 @@ def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
     with pytest.raises(SystemExit) as e:
         main(f'{command} --foo=1')
     assert e.value.code == 1
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[-4:])
+    out = capsys.readouterr().out
+    actual = '\n'.join(out.split('\n')[-4:])
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize('command', COMMANDS_WITH_PATHS)
+def test_command_paths_required(capsys: pytest.CaptureFixture, command):
+    with pytest.raises(SystemExit) as e:
+        main(f'{command}')
+    assert e.value.code == 1
+    out = capsys.readouterr().out
+    expected = f'Command "{command}" parameter PATHS requires an argument'
+    actual = '\n'.join(out.split('\n')[-3:])
+    assert expected in actual
 
 
 @pytest.fixture
@@ -797,7 +816,7 @@ def test_validate_help(capsys: pytest.CaptureFixture):
     assert '│ * PATHS  -' in out, out
     assert 'Mesh(es) to validate.' in out, out
 
-    assert '│ FIELDS --fields -f     -' in out, out
+    assert '│ --fields -f            -' in out, out
     assert 'Field(s) to validate.' in out, out
 
     assert '│ --exclude -e           -' in out, out
@@ -896,12 +915,14 @@ def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
 
 
+# CLI-only parameters that have no counterpart in pv.plot
+_CLI_ONLY_PARAMS = {'skip_unreadable', 'paths'}
+
+
 @fixture
 def missing_plot_arguments():
     """Argument names in the `pv.plot` signature which are intentionally removed from the
-    `pv.cli.plot._plot` function
-    """
-
+    `pv.cli.plot._plot` function."""
     return {
         'jupyter_backend',
         'theme',
@@ -910,15 +931,14 @@ def missing_plot_arguments():
         'cpos',
         'jupyter_kwargs',
         'notebook',
+        'var_item',  # intentionally renamed to 'paths' in the CLI
     }
 
 
 @fixture
 def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
     """Default arguments of `pv.plot`."""
-
     params = inspect.signature(pv.plot).parameters
-
     return {
         p: v.default
         for p, v in params.items()
@@ -943,11 +963,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     """
     plot_sig = inspect.signature(pv.plot)
     plot_params = set(plot_sig.parameters.keys())
-
-    # Test the parameters names
-    from pyvista._cli.plot import _plot
-
-    cli_sig = inspect.signature(_plot)
+    cli_sig = inspect.signature(cli_plot)
     cli_params = set(cli_sig.parameters.keys())
 
     diff = plot_params - cli_params - missing_plot_arguments
@@ -955,15 +971,15 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
         f'Found unexpected differences {diff} in the CLI plot signature arguments'
     )
 
-    # Test the parameters defaults
-    cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
-    cli_defaults.pop('skip_unreadable')
-    plot_defaults = {
-        name: plot_sig.parameters[name].default
-        for name in cli_sig.parameters
-        if name != 'skip_unreadable'
-    }
+    # 'var_item' is intentionally renamed to 'paths' in the CLI
+    assert 'paths' in cli_params
+    assert 'var_item' in plot_params
 
+    # Test the parameters defaults
+    cli_defaults = {
+        name: p.default for name, p in cli_sig.parameters.items() if name not in _CLI_ONLY_PARAMS
+    }
+    plot_defaults = {name: plot_sig.parameters[name].default for name in cli_defaults}
     assert cli_defaults == plot_defaults
 
     # Test the parameters annotations
@@ -978,8 +994,10 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     from pyvista.plotting.themes import Theme  # noqa: F401
 
     plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
-    cli_annotations = inspect.get_annotations(_plot, eval_str=True)
-    cli_annotations.pop('skip_unreadable')
+    cli_annotations = inspect.get_annotations(cli_plot, eval_str=True)
+
+    for param in _CLI_ONLY_PARAMS:
+        cli_annotations.pop(param, None)
 
     cli_annotations = {
         k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
@@ -991,7 +1009,6 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
     # Filter the ones which have intentionally different annotations
     excludes = {'anti_aliasing', 'background', 'border_color', 'var_item', 'screenshot'}
-
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
 
@@ -1267,7 +1284,7 @@ class CasesPlotFiles:
     @case(tags='raises')
     def case_empty(self):
         """Test when no files are passed"""
-        return '', ['Command "plot" parameter paths requires an argument.']
+        return '', ['Command "plot" parameter PATHS requires an argument.']
 
     @case(tags='raises')
     def case_one_exists(self, tmp_path: Path):
@@ -1302,7 +1319,7 @@ def test_plot_called_files(
 @parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
-    """Test that errors are correctly raised for the --files argument"""
+    """Test that errors are correctly raised for the paths argument"""
     with pytest.raises(SystemExit) as e:
         main(f'plot {tokens}')
 

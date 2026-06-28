@@ -84,13 +84,12 @@ class Groups(StrEnum):
     help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
 )
 def _plot(
-    var_item: Annotated[
+    paths: Annotated[
         list[str],
         Parameter(
-            name='paths',
             consume_multiple=True,
             help=(
-                'File(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
+                'Paths(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
                 'Each match must be readable with ``pyvista.read``.'
             ),
             group=Groups.IN,
@@ -133,7 +132,7 @@ def _plot(
     ],
 ) -> None:
     # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(var_item, skip_unreadable=skip_unreadable, announce=True)
+    mesh_paths = MeshPaths(paths, skip_unreadable=skip_unreadable, announce=True)
     meshes = [m.mesh for m in mesh_paths]
     try:
         res = pv.plot(

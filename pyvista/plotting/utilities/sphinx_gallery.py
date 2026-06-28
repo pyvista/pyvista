@@ -80,8 +80,8 @@ def _process_events_before_scraping(plotter):
     if plotter.iren is not None and plotter.iren.initialized:
         # check for pyvistaqt app which can be specifically bound to pyvista plotter
         # objects in order to interact with qt, then process the events from qt
-        if hasattr(plotter, 'app') and plotter.CLI_APP is not None:
-            plotter.CLI_APP.processEvents()
+        if hasattr(plotter, 'app') and plotter.app is not None:
+            plotter.app.processEvents()
         plotter.update()
 
 
