@@ -844,7 +844,7 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
 )
 def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     # Test that all fields specified in the annotations work
-    main(f'validate {tmp_ant_file!s} -f{field}')
+    main(f'validate {tmp_ant_file!s} -f {field}')
 
     # Discard captured output to clean up test output
     capsys.readouterr()
@@ -1460,3 +1460,229 @@ def test_print(
 
     expected = f'{ret}\n' if ret is not None else ''
     assert capsys.readouterr().out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_collision_error(ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """Two inputs with the same stem colliding on the same output raises an error by default."""
+    second = tmp_example_dir / 'ant.vtp'
+    ant.save(second)  # ant.vtp → ant.pv collides with ant.ply → ant.pv
+    with pytest.raises(SystemExit) as e:
+        main(shlex.split('convert ant.ply ant.vtp .pv'))
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert '1 output collision(s) detected' in out, out
+    assert 'ant.ply + ant.vtp' in out, out
+    assert '--resolve-collisions' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_resolve_collisions(ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """--resolve-collisions renames colliding outputs and reports them after the summary."""
+    second = tmp_example_dir / 'ant.vtp'
+    ant.save(second)
+    main(shlex.split('convert ant.ply ant.vtp .pv --resolve-collisions'))
+    out = capsys.readouterr().out
+
+    # Both outputs exist
+    assert (tmp_example_dir / 'ant.pv').is_file()
+    assert (tmp_example_dir / 'ant_1.pv').is_file()
+
+    # Summary line comes before rename report
+    saved_pos = out.index('Saved 2 files')
+    renamed_pos = out.index('collision(s) resolved by renaming')
+    assert saved_pos < renamed_pos, out
+
+    # Rename report content
+    assert '1 collision(s) resolved by renaming' in out, out
+    assert 'ant.vtp → ant_1.pv' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_resolve_collisions_triple(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """Three inputs sharing a stem get _1 and _2 suffixes."""
+    second = tmp_example_dir / 'ant.vtp'
+    third = tmp_example_dir / 'ant.obj'
+    pv.Sphere().save(second)
+    pv.Sphere().save(third)
+    main(shlex.split('convert ant.ply ant.vtp ant.obj .pv --resolve-collisions'))
+    out = capsys.readouterr().out
+
+    assert (tmp_example_dir / 'ant.pv').is_file()
+    assert (tmp_example_dir / 'ant_1.pv').is_file()
+    assert (tmp_example_dir / 'ant_2.pv').is_file()
+    assert '2 collision(s) resolved by renaming' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_resolve_collisions_subdir(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """--resolve-collisions works with an explicit output directory."""
+    second = tmp_example_dir / 'ant.vtp'
+    pv.Sphere().save(second)
+    main(shlex.split('convert ant.ply ant.vtp out/.pv --resolve-collisions'))
+    out = capsys.readouterr().out
+
+    assert (tmp_example_dir / 'out' / 'ant.pv').is_file()
+    assert (tmp_example_dir / 'out' / 'ant_1.pv').is_file()
+    assert '1 collision(s) resolved by renaming' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """Unreadable files are skipped and reported at the end, not mid-progress."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')  # unreadable
+    main(shlex.split('convert ant.ply bad.vtp .pv --skip-unreadable'))
+    out = capsys.readouterr().out
+
+    # Good file converted, bad file skipped
+    assert (tmp_example_dir / 'ant.pv').is_file()
+    assert not (tmp_example_dir / 'bad.pv').exists()
+
+    # Summary comes before skip report
+    saved_pos = out.index('Saved 1 files')
+    skipped_pos = out.index('file(s) skipped (unreadable)')
+    assert saved_pos < skipped_pos, out
+
+    assert '1 file(s) skipped (unreadable)' in out, out
+    assert 'bad.vtp' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_skip_unreadable_all_skipped(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """When all files are skipped the saved count is 0."""
+    bad1 = tmp_example_dir / 'bad1.vtp'
+    bad2 = tmp_example_dir / 'bad2.vtp'
+    bad1.write_text('')
+    bad2.write_text('')
+    main(shlex.split('convert bad1.vtp bad2.vtp .pv --skip-unreadable'))
+    out = capsys.readouterr().out
+
+    assert 'Saved 0 files' in out, out
+    assert '2 file(s) skipped (unreadable)' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_many_all_valid(
+    tmp_example_dir: Path, tmp_ant_file: Path, capsys: pytest.CaptureFixture
+):
+    """All-valid summary is printed after the progress bar, no per-file lines."""
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy2(tmp_ant_file, second)
+    main(shlex.split('validate ant.ply ant2.ply'))
+    out = capsys.readouterr().out
+
+    assert 'All 2 meshes are valid.' in out, out
+    # Individual "is valid!" lines must not appear
+    assert 'is valid!' not in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_many_some_invalid(
+    tmp_ant_file: Path,
+    tmp_cow_file_invalid: Path,
+    capsys: pytest.CaptureFixture,
+):
+    """Invalid-mesh messages are deferred and printed after the summary line."""
+    main(f'validate {str(tmp_ant_file)!r} {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+
+    # Summary line
+    assert '1 invalid meshes out of 2 meshes validated.' in out, out
+    assert "UnstructuredGrid mesh 'cow.vtk' is not valid:" in out, out
+
+    # Error message printed after summary
+    summary_pos = out.index('invalid')
+    message_pos = out.index("'cow.vtk' is not valid")
+    assert summary_pos < message_pos, out
+
+    # No "is valid!" noise
+    assert 'is valid!' not in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_many_all_invalid(
+    tmp_cow_file_invalid: Path,
+    tmp_ant_file_invalid_multiblock: Path,
+    capsys: pytest.CaptureFixture,
+):
+    """Summary line reflects all-invalid case."""
+    main(f'validate {str(tmp_cow_file_invalid)!r} {str(tmp_ant_file_invalid_multiblock)!r}')
+    out = capsys.readouterr().out
+
+    assert '2 invalid meshes out of 2 meshes validated.' in out, out
+    assert "UnstructuredGrid mesh 'cow.vtk' is not valid:" in out, out
+    assert "MultiBlock mesh 'ant.vtm' is not valid:" in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_many_messages_after_summary(
+    tmp_example_dir: Path,
+    tmp_ant_file: Path,
+    tmp_cow_file_invalid: Path,
+    capsys: pytest.CaptureFixture,
+):
+    """Deferred invalid messages all appear after the summary, not interleaved."""
+    second_invalid = tmp_example_dir / 'cow2.vtk'
+    shutil.copy2(tmp_cow_file_invalid, second_invalid)
+    main(f'validate {str(tmp_ant_file)!r} {str(tmp_cow_file_invalid)!r} {str(second_invalid)!r}')
+    out = capsys.readouterr().out
+
+    summary_pos = out.index('invalid')
+    # Both error messages appear after summary
+    assert out.index("'cow.vtk' is not valid") > summary_pos, out
+    assert out.index("'cow2.vtk' is not valid") > summary_pos, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """A single unreadable file with --skip-unreadable exits cleanly."""
+    bad = tmp_example_dir / 'bad.foo'
+    bad.write_text('')
+    # Single-file path — would normally hard-error; with skip it should not raise
+    main(f'validate {str(bad)!r} --skip-unreadable')
+    out = capsys.readouterr().out
+    # Nothing to validate, no crash
+    assert out == '', out
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_validate_skip_unreadable_many(
+    tmp_example_dir: Path,
+    capsys: pytest.CaptureFixture,
+):
+    """Unreadable files in a many-file run are skipped and reported after the summary."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')
+    main(shlex.split('validate ant.ply bad.vtp --skip-unreadable'))
+    out = capsys.readouterr().out
+
+    # Summary reflects only the readable file
+    expected = (
+        'Validating bad.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
+        "1 mesh validated: PolyData mesh 'ant.ply' is valid!\n"
+        '\n'
+        '1 file(s) skipped (unreadable):\n'
+        '  bad.vtp\n'
+    )
+    assert out == expected, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_skip_unreadable_all_skipped(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture
+):
+    """When every file is unreadable and skipped, a sane zero-count summary is shown."""
+    bad1 = tmp_example_dir / 'bad1.foo'  # Invalid ext
+    bad2 = tmp_example_dir / 'bad2.vtp'  # Valid ext, invalid file
+    bad1.write_text('')
+    bad2.write_text('')
+    main(shlex.split('validate bad1.foo bad2.vtp --skip-unreadable'))
+    out = capsys.readouterr().out
+
+    expected = (
+        'Validating bad2.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n\n'
+        '2 file(s) skipped (unreadable):\n  bad1.foo\n  bad2.vtp\n'
+    )
+    assert out == expected, out

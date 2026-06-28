@@ -251,7 +251,7 @@ def _validate_one(
 ) -> str | None:
     """Validate a single mesh and optionally print its result to the console.
 
-    Returns ``True`` if the mesh is valid, ``False`` otherwise.
+    Returns None if the mesh is valid, and the report as a string otherwise .
     """
     class_name = mesh.__class__.__name__
     _check_mesh_type(mesh, path)
@@ -279,11 +279,15 @@ def _validate_one(
         output = _MeshValidator._colorize_output(message)
         announcement = output
     else:
-        announcement = f'[green]{class_name} mesh {path.name!r} is valid![/green]'
+        announcement = _mesh_is_valid_message(class_name, path)
         output = None
     if announce:
         app.console.print(announcement)
     return output
+
+
+def _mesh_is_valid_message(class_name: str, path: Path) -> str:
+    return f'[green]{class_name} mesh {path.name!r} is valid![/green]'
 
 
 def _validate_many(
@@ -312,6 +316,7 @@ def _validate_many(
     n_valid = 0
     n_invalid = 0
     skipped: list[Path] = []
+    not_skipped: list[Path] = []
     invalid_output: list[str] = []
 
     with Progress(*columns, console=app.console, transient=False) as progress:
@@ -321,6 +326,7 @@ def _validate_many(
             if mesh is None:
                 skipped.append(path)
             else:
+                not_skipped.append(path)
                 output = _validate_one(
                     mesh,
                     path,
@@ -347,8 +353,15 @@ def _validate_many(
             f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
         )
         app.console.print('\n'.join(invalid_output))
-    else:
-        app.console.print(f'[green]All {n_total} meshes are valid.[/green]')
+    elif n_total:
+        if n_total == 1:
+            path = not_skipped[0]
+            mesh_type = type(pv.read(path))
+            msg = '[green]1 mesh validated: '
+            msg += _mesh_is_valid_message(mesh_type.__name__, path)
+        else:
+            msg = f'[green]All {n_total} mesh{"es" if n_total > 1 else ""} are valid.[/green]'
+        app.console.print(msg)
 
     if skipped:
         app.console.print(f'\n[yellow]{len(skipped)} file(s) skipped (unreadable):[/yellow]')
