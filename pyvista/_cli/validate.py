@@ -193,26 +193,37 @@ def _validate(
     ] = None,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
-    mesh_paths = MeshPaths(paths, app=app, skip_unreadable=skip_unreadable, announce=False)  # type: ignore[assignment]
+    mesh_paths = MeshPaths(paths, app=app, skip_unreadable=skip_unreadable, announce=False)
     report_body = report[0] if report else 'message'
-
-    kwargs = dict(
-        fields=fields,
-        exclude=exclude,
-        tolerance=tolerance,
-        planarity_tolerance=planarity_tolerance,
-        size_tolerance=size_tolerance,
-        report=report,
-        report_body=report_body,
-    )
-
     n_paths = len(mesh_paths.paths)
 
     if n_paths == 1:
         mesh, path = next(iter(mesh_paths))
-        _validate_one(mesh, path, announce=True, **kwargs)
+        if mesh is not None:
+            _validate_one(
+                mesh,
+                path,
+                announce=True,
+                fields=fields,
+                exclude=exclude,
+                tolerance=tolerance,
+                planarity_tolerance=planarity_tolerance,
+                size_tolerance=size_tolerance,
+                report=report,
+                report_body=report_body,
+            )
     else:
-        _validate_many(mesh_paths, skip_unreadable=skip_unreadable, **kwargs)
+        _validate_many(
+            mesh_paths,
+            skip_unreadable=skip_unreadable,
+            fields=fields,
+            exclude=exclude,
+            tolerance=tolerance,
+            planarity_tolerance=planarity_tolerance,
+            size_tolerance=size_tolerance,
+            report=report,
+            report_body=report_body,
+        )
 
 
 def _check_mesh_type(mesh: object, path: Path) -> None:
@@ -226,7 +237,7 @@ def _check_mesh_type(mesh: object, path: Path) -> None:
 
 
 def _validate_one(
-    mesh: pv.DataSet | pv.MultiBlock,
+    mesh: pv.DataObject,
     path: Path,
     *,
     fields: list[_LiteralMeshValidationFields] | None,
@@ -245,7 +256,7 @@ def _validate_one(
     class_name = mesh.__class__.__name__
     _check_mesh_type(mesh, path)
     try:
-        out = pv.DataObjectFilters.validate_mesh(
+        out = pv.DataObjectFilters.validate_mesh(  # type: ignore[type-var]
             mesh,
             name=path.name,
             validation_fields=fields,

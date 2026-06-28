@@ -214,7 +214,7 @@ def _build_output_map(
     return result, renames
 
 
-def _save_mesh(mesh: pv.DataSet, out_path: Path) -> None:
+def _save_mesh(mesh: pv.DataObject, out_path: Path) -> None:
     """Save ``mesh`` to ``out_path``, creating parent directories as needed.
 
     Raises a console error on failure.
