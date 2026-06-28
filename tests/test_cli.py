@@ -413,6 +413,7 @@ def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize('command', ['convert', 'plot', 'validate'])
 @pytest.mark.parametrize('n_children', [2, 6])
+@pytest.mark.needs_vtk_version(9, 4, reason='crashes parallel workers')
 def test_multiblock_drops_sidecar_children(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, command: str, n_children: int
 ):
