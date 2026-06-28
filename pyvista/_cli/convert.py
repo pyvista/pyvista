@@ -67,7 +67,6 @@ def _convert(
     resolve_collisions: Annotated[
         bool,
         Parameter(
-            name='--resolve-collisions',
             negative='',
             help=_resolve_collisions_help,
         ),

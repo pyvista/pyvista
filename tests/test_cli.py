@@ -364,8 +364,10 @@ def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
 
 @needs_pyvista_zstd
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_multiblock_drops_sidecar_children(
-    tmp_example_dir: Path, capsys: pytest.CaptureFixture
+@pytest.mark.parametrize('command', ['convert', 'plot', 'validate'])
+@pytest.mark.parametrize('n_children', [2, 6])
+def test_multiblock_drops_sidecar_children(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture, command: str, n_children: int
 ):
     """A parent ``.vtm`` paired with its sidecar children must be converted 1:1.
 
@@ -373,26 +375,36 @@ def test_convert_multiblock_drops_sidecar_children(
     holding each child block. A recursive glob would pick up the children and convert
     them individually; the converter should drop them and convert only the parent.
     """
-    inner = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    blocks = [pv.Sphere(), pv.Cube()]
+    if n_children == 6:
+        blocks.extend([pv.Cone(), pv.Arrow(), pv.Disc(), pv.Icosphere()])
+
+    inner = pv.MultiBlock(blocks)
+    assert inner.n_blocks == n_children
     inner.save(tmp_example_dir / 'm.vtm')
     sidecar = tmp_example_dir / 'm'
     assert sidecar.is_dir()
     children = sorted(sidecar.glob('*.vtp'))
-    assert len(children) == 2
+    assert len(children) == n_children
 
-    main(
-        shlex.split(
-            f'convert m.vtm {children[0].relative_to(tmp_example_dir).as_posix()!r} '
-            f'{children[1].relative_to(tmp_example_dir).as_posix()!r} .pv'
-        )
+    output_token = '.pv' if command == 'convert' else ''
+    child_tokens = ' '.join(
+        f'{child.relative_to(tmp_example_dir).as_posix()!r}' for child in children
     )
+    main(shlex.split(f'{command} m.vtm {child_tokens} {output_token}'))
 
     out = capsys.readouterr().out
-    assert 'Skipping 2 file(s) inside MultiBlock sidecar directories' in out, out
-    # Only the parent is converted — children stay untouched
-    assert (tmp_example_dir / 'm.pv').is_file()
-    assert not (sidecar / 'm_0.pv').exists()
-    assert not (sidecar / 'm_1.pv').exists()
+    assert f'Skipping {n_children} file(s) inside MultiBlock sidecar directories: ' in out, out
+    assert 'm/m_0.vtp,' in out, out
+    if n_children == 2:
+        assert 'm/m_1.vtp\n' in out, out
+    else:
+        assert 'm/m_1.vtp, m/m_2.vtp, m/m_3.vtp, m/m_4.vtp, ... (1 more)' in out, out
+    if output_token:
+        # Only the parent is converted — children stay untouched
+        assert (tmp_example_dir / 'm.pv').is_file()
+        assert not (sidecar / 'm_0.pv').exists()
+        assert not (sidecar / 'm_1.pv').exists()
 
 
 @needs_pyvista_zstd
@@ -1501,6 +1513,40 @@ def test_convert_resolve_collisions(ant, tmp_example_dir: Path, capsys: pytest.C
 
 
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_resolve_collisions_counter_increment(
+    ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture
+):
+    """The rename counter increments past _1 when _1 is itself already claimed."""
+    # ant.ply -> ant.pv  (first, claims the base)
+    # ant.vtp -> ant.pv  (collision, tries ant_1.pv, claims it)
+    # ant_1.ply exists as a real input, so it also claims ant_1.pv before the
+    # collision renamer gets there -- forcing the while loop to increment to _2
+    ant_1 = tmp_example_dir / 'ant_1.ply'
+    ant.save(ant_1)
+    second = tmp_example_dir / 'ant.vtp'
+    ant.save(second)
+
+    main(shlex.split('convert ant.ply ant_1.ply ant.vtp .pv --resolve-collisions'))
+    out = capsys.readouterr().out
+
+    assert (tmp_example_dir / 'ant.pv').is_file()  # ant.ply
+    assert (tmp_example_dir / 'ant_1.pv').is_file()  # ant_1.ply
+    assert (tmp_example_dir / 'ant_2.pv').is_file()  # ant.vtp, bumped past _1
+    assert 'ant.vtp → ant_2.pv' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """A single unreadable file with --skip-unreadable announces the skip and does not save."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')
+    main(f'convert {str(bad)!r} .pv --skip-unreadable')
+    out = capsys.readouterr().out
+    assert 'Skipping unreadable file' in out, out
+    assert not (tmp_example_dir / 'bad.pv').exists()
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """Unreadable files are skipped and reported after the summary; all-skipped -> 0 saved."""
     bad = tmp_example_dir / 'bad.vtp'
@@ -1588,3 +1634,16 @@ def test_validate_skip_unreadable(
         '2 file(s) skipped (unreadable):\n  bad.vtp\n  bad2.vtp\n'
     )
     assert out == expected, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
+    """A mesh type that is not a DataSet or MultiBlock exits with a clear error."""
+    path = Path(pv.examples.download_warping_spheres(load=False))
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(path)!r}')
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert 'Cannot validate PartitionedDataSet' in out, out
+    assert 'only DataSet and MultiBlock meshes are supported' in out, out
+    assert e.value.code == 1
