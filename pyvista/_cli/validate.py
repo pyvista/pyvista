@@ -16,16 +16,14 @@ from pyvista.core.filters.data_object import _ReportBodyOptions
 
 from .app import app
 from .utils import HELP_FORMATTER
+from .utils import MeshPaths
 from .utils import _console_error
-from .utils import _converter_files
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
     from cyclopts import Token
-
-    from .utils import _MeshAndPath
 
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
@@ -128,7 +126,6 @@ def _validate(
                 'Glob patterns (``*``, ``?``, ``[...]``) are expanded; '
                 'every match is validated in turn.'
             ),
-            converter=_converter_files,
         ),
     ],
     fields: Annotated[
@@ -186,21 +183,19 @@ def _validate(
         ),
     ] = None,
 ) -> None:
-    # Cyclopts declares ``mesh_path`` as ``str`` for CLI parsing but ``_converter_files``
-    # replaces the string token with the list of read meshes — narrow the type here.
-    items: list[_MeshAndPath] = mesh_path  # type: ignore[assignment]
+    # Use MeshPath obj to validate input paths and handle mesh reading errors
+    mesh_paths = MeshPaths([mesh_path], app=app)  # type: ignore[assignment]
     report_body = report[0] if report else 'message'
-    for item in items:
-        mesh = item.mesh
+    for mesh, path in mesh_paths:
         if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
             msg = (
-                f'Cannot validate {type(mesh).__name__} read from path {str(item.path)!r}: '
+                f'Cannot validate {type(mesh).__name__} read from path {str(path)!r}: '
                 f'only DataSet and MultiBlock meshes are supported.'
             )
             _console_error(app=app, message=msg)
         _validate_one(
             mesh,
-            item.path,
+            path,
             fields=fields,
             exclude=exclude,
             tolerance=tolerance,

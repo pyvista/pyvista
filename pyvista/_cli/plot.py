@@ -20,9 +20,8 @@ from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 from .app import app
 from .utils import HELP_FORMATTER
+from .utils import MeshPaths
 from .utils import _console_error
-from .utils import _converter_files
-from .utils import _MeshAndPath
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -93,7 +92,6 @@ def _plot(
                 'File(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
                 'Each match must be readable with ``pyvista.read``.'
             ),
-            converter=_converter_files,
             group=Groups.IN,
             negative='',
         ),
@@ -132,10 +130,12 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
-    items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
+    # Use MeshPath obj to validate input paths and handle mesh reading errors
+    mesh_paths = MeshPaths(var_item, app=app)  # type: ignore [assignment]
+    meshes = [m.mesh for m in mesh_paths]
     try:
         res = pv.plot(
-            var_item=[m.mesh for m in items],  # type: ignore [arg-type]
+            var_item=meshes,  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,

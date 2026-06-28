@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Annotated
-import warnings
 
 from cyclopts import Parameter
 from rich.progress import BarColumn
@@ -18,9 +17,9 @@ import pyvista as pv
 
 from .app import app
 from .utils import HELP_FORMATTER
-from .utils import _check_paths_exist
+from .utils import MeshPaths
 from .utils import _console_error
-from .utils import _filter_multiblock_children
+from .utils import _read_mesh
 
 
 def _is_extension_only(file_out: str) -> bool:
@@ -101,21 +100,8 @@ def _convert(
     except ValueError as e:
         _console_error(app=app, message=str(e))
 
-    try:
-        input_paths = _check_paths_exist(file_in_tokens)
-    except ValueError as e:
-        _console_error(app=app, message=str(e))
-
-    input_paths, dropped = _filter_multiblock_children(input_paths)
-    if dropped:
-        n = len(dropped)
-        listed = ', '.join(str(p) for p in dropped[:5])
-        if n > 5:
-            listed += f', ... ({n - 5} more)'
-        app.console.print(
-            f'[yellow]Skipping {n} file(s) inside MultiBlock sidecar directories:[/yellow] '
-            f'{listed}'
-        )
+    # Use MeshPath obj to validate input paths and handle mesh read errors
+    input_paths = MeshPaths(file_in_tokens, app=app).paths
 
     path_out = Path(file_out)
     ext_only = _is_extension_only(file_out)
@@ -133,13 +119,6 @@ def _convert(
         _convert_many(input_paths, path_out)
     else:
         _convert_one(input_paths[0], path_out, ext_only=ext_only, announce=True)
-
-
-def _read_mesh(path_in: Path) -> pv.DataObject:
-    """Read ``path_in`` while suppressing :class:`pv.InvalidMeshWarning`."""
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
-        return pv.read(path_in)
 
 
 def _resolve_out_path(path_in: Path, path_out: Path, *, ext_only: bool) -> Path:
@@ -165,10 +144,7 @@ def _convert_one(
     out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    try:
-        mesh = _read_mesh(path_in)
-    except Exception as e:  # noqa: BLE001
-        _console_error(app=app, message=f'Failed to read input file: {path_in}\n{e}')
+    mesh = _read_mesh(path_in, app=app)
 
     try:
         mesh.save(out_path)

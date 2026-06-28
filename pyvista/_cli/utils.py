@@ -25,10 +25,8 @@ import pyvista as pv
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from collections.abc import Sequence
 
     from cyclopts import App
-    from cyclopts import Token
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import Group
@@ -82,7 +80,7 @@ HELP_FORMATTER = _PyvistaHelpFormatter(
 
 
 class _MeshAndPath(NamedTuple):
-    mesh: DataObject | None
+    mesh: DataObject
     path: Path
 
 
@@ -122,10 +120,10 @@ def _expand_globs(values: list[str]) -> list[str]:
     return expanded
 
 
-def _check_paths_exist(paths: list[str]) -> list[Path]:
+def _check_paths_exist(paths: list[str], app: App) -> list[Path]:
     """Expand globs and verify each path exists.
 
-    Raises a ``ValueError`` listing any missing paths.
+    Prints a console error and exists, listing any missing paths.
     """
     values = _expand_globs(paths)
     if not all((files := {v: Path(v).exists() for v in values}).values()):
@@ -136,7 +134,7 @@ def _check_paths_exist(paths: list[str]) -> list[Path]:
         missing = missing[0] if n_missings == 1 else missing
 
         msg = f'{n_missings} {literal_file} not found: {missing}'
-        raise ValueError(msg)
+        _console_error(app=app, message=msg)
     return [Path(v) for v in values]
 
 
@@ -177,44 +175,42 @@ def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Pat
     return kept, filtered
 
 
-class MeshPathsReader:
-    def __init__(self, paths: list[str]) -> None:
-        self._paths: list[Path] = _check_paths_exist(paths)
-
-    def __iter__(self) -> Iterator[_MeshAndPath]:
-        for path in self._paths:
-            yield _load_path(path)
-
-
-def _load_path(path: Path) -> _MeshAndPath:
-    """Read a path with ``pv.read``.
-
-    Raises a ``ValueError`` if the path is unreadable.
-    """
+def _read_mesh(path: Path, app: App) -> DataObject:
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore',
                 category=pv.InvalidMeshWarning,
             )
-            return _MeshAndPath(mesh=pv.read(path), path=path)
+            return pv.read(path)
     except Exception:  # noqa: BLE001
         msg = f'Path is not readable by PyVista:\n{path}'
-        raise ValueError(msg)
+        _console_error(app=app, message=msg)
 
 
-def _converter_files(
-    type_: type,  # noqa: ARG001
-    tokens: Sequence[Token],
-) -> list[_MeshAndPath]:
-    """Helper function used to read provided files.
+class MeshPaths:
+    def __init__(self, paths: list[str], *, app: App) -> None:
+        inital_paths = _check_paths_exist(paths, app=app)
+        input_paths, dropped_paths = _filter_multiblock_children(inital_paths)
+        self.paths: list[Path] = input_paths
+        self._paths_dropped: list[Path] = dropped_paths
 
-    Raises errors if any file does not exist, but does NOT raise an
-    error if a file cannot be read. Instead, any file not readable with
-    ``pv.read`` has a mesh value of None. Use ``_raise_if_not_readable``
-    after conversion to raise an error for non-readable files.
+        self._app = app
+        self._print_dropped_multiblock_sidecar_dirs()
 
-    Glob patterns (``*``, ``?``, ``[...]``) are expanded before validation.
+    def __iter__(self) -> Iterator[_MeshAndPath]:
+        for path in self.paths:
+            mesh = _read_mesh(path, app=self._app)
+            yield _MeshAndPath(mesh=mesh, path=path)
 
-    """  # noqa: D401
-    return list(MeshPathsReader([t.value for t in tokens]))
+    def _print_dropped_multiblock_sidecar_dirs(self) -> None:
+        dropped = self._paths_dropped
+        if dropped:
+            n = len(dropped)
+            listed = ', '.join(str(p) for p in dropped[:5])
+            if n > 5:
+                listed += f', ... ({n - 5} more)'
+            self._app.console.print(
+                f'[yellow]Skipping {n} file(s) inside MultiBlock sidecar directories:[/yellow] '
+                f'{listed}'
+            )

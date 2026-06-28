@@ -304,7 +304,7 @@ def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
 
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out, out
-    assert 'Failed to read input file:' in out, out
+    assert 'Path is not readable by PyVista:' in out, out
     assert name in out, out
     assert e.value.code == 1
 
