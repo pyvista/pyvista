@@ -120,7 +120,7 @@ def _expand_globs(values: list[str]) -> list[str]:
     return expanded
 
 
-def _check_paths_exist(paths: list[str], app: App) -> list[Path]:
+def _validate_paths(paths: list[str], app: App) -> list[Path]:
     """Expand globs and verify each path exists.
 
     Prints a console error and exists, listing any missing paths.
@@ -190,7 +190,7 @@ def _read_mesh(path: Path, app: App) -> DataObject:
 
 class MeshPaths:
     def __init__(self, paths: list[str], *, app: App) -> None:
-        inital_paths = _check_paths_exist(paths, app=app)
+        inital_paths = _validate_paths(paths, app=app)
         input_paths, dropped_paths = _filter_multiblock_children(inital_paths)
         self.paths: list[Path] = input_paths
         self._paths_dropped: list[Path] = dropped_paths

@@ -458,7 +458,7 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     main('convert --help')
 
     out = capsys.readouterr().out
-    assert 'Usage: pyvista convert FILE-IN [FILE-IN...] FILE-OUT' in out, out
+    assert 'Usage: pyvista convert PATH-IN [PATH-IN...] PATH-OUT' in out, out
     assert 'Convert a mesh file to another format.' in out, out
     assert 'glob patterns are expanded' in out, out
     assert 'pyvista convert foo.abc bar.xyz' in out, out
@@ -474,6 +474,14 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(f'validate {str(tmp_ant_file)!r}')
     out = capsys.readouterr().out
     expected = "PolyData mesh 'ant.ply' is valid!\n"
+    assert out == expected
+
+    # Test multiple files
+    tmp_ant_file2 = tmp_ant_file.with_stem(tmp_ant_file.stem + '2')
+    shutil.copy2(tmp_ant_file, tmp_ant_file2)
+    main(f'validate {str(tmp_ant_file)!r} {str(tmp_ant_file2)!r}')
+    out = capsys.readouterr().out
+    expected = "PolyData mesh 'ant.ply' is valid!\nPolyData mesh 'ant2.ply' is valid!\n"
     assert out == expected
 
     main(f'validate {str(tmp_ant_file)!r} --report')
@@ -764,43 +772,44 @@ def test_validate_help(capsys: pytest.CaptureFixture):
     main('validate --help')
     out = capsys.readouterr().out
     usage = (
-        'Usage: pyvista validate MESH-PATH [FIELDS...] [--exclude FIELDS...]\n'
+        'Usage: pyvista validate PATH... [--fields FIELD...] [--exclude \n'
+        'FIELD...]\n'
         '\n'
         "Validate a mesh's array data, points, and cells.\n"
     )
     assert usage in out, out
 
-    assert '│ * MESH-PATH --mesh-path  -' in out, out
-    assert 'Mesh to validate.' in out, out
+    assert '│ * PATHS  -' in out, out
+    assert 'Mesh(es) to validate.' in out, out
 
-    assert '│ FIELDS --fields          -' in out, out
+    assert '│ FIELDS --fields -f     -' in out, out
     assert 'Field(s) to validate.' in out, out
 
-    assert '│ --exclude -e             -' in out, out
+    assert '│ --exclude -e           -' in out, out
     assert 'Field(s) to exclude' in out, out
 
-    assert '│ --tolerance              -' in out, out
+    assert '│ --tolerance            -' in out, out
     assert 'Field(s) to exclude' in out, out
 
-    assert '│ --planarity-tolerance    -' in out, out
+    assert '│ --planarity-tolerance  -' in out, out
     assert 'Allowed relative distance' in out, out
 
-    assert '│ --size-tolerance         -' in out, out
+    assert '│ --size-tolerance       -' in out, out
     assert 'Value used for evaluating' in out, out
 
-    assert '│ --report                 -' in out, out
+    assert '│ --report               -' in out, out
     assert 'Show report.' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
-        main(f'validate {str(tmp_ant_file)!r} foo')
+        main(f'validate {str(tmp_ant_file)!r} --fields foo')
 
     out = capsys.readouterr().out
     expected = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
-        '│ Invalid value for FIELDS: unable to convert "foo" into             │\n'
+        '│ Invalid value for --fields: unable to convert "foo" into           │\n'
         '│ Literal[cell_data_wrong_length,                                    │\n'
         '│ point_data_wrong_length]|Literal[non_finite_points,                │\n'
         '│ unused_points]|Literal[coincident_points, degenerate_faces,        │\n'
@@ -817,7 +826,7 @@ def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
-        main(f'validate {str(tmp_ant_file)!r} points -e cells')
+        main(f'validate {str(tmp_ant_file)!r} -f points -e cells')
 
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out, out
@@ -832,7 +841,7 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
 )
 def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     # Test that all fields specified in the annotations work
-    main(f'validate {tmp_ant_file!s} {field}')
+    main(f'validate {tmp_ant_file!s} -f{field}')
 
     # Discard captured output to clean up test output
     capsys.readouterr()
@@ -1143,7 +1152,7 @@ def test_plot_called(
 ):
     """Test that the pv.plot function is called with the expected arguments."""
     file = Path(pv.examples.antfile).as_posix()
-    main(f'plot --files={file} {tokens}')
+    main(f'plot {file} {tokens}')
     mock_plot.assert_called_once_with(var_item=[pv.read(file)], **expected_kwargs)
 
 
@@ -1165,7 +1174,7 @@ def test_plot_called_kwargs(
     """
 
     file = Path(pv.examples.antfile).as_posix()
-    main(f'plot --files {file} {tokens}')
+    main(f'plot {file} {tokens}')
 
     case = current_cases['tokens']
     tags = get_case_tags(case_func=case.func)
@@ -1181,7 +1190,7 @@ def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.Captu
 
     file = Path(pv.examples.antfile).as_posix()
     with pytest.raises(SystemExit) as e:
-        main(f'plot --files {file} {tokens}')
+        main(f'plot {file} {tokens}')
 
     assert e.value.code == 1
 
@@ -1209,17 +1218,14 @@ class CasesPlotFiles:
         kwargs['var_item'] = [pv.read(f) for f in files]
         return ' '.join(files), kwargs
 
-    @parametrize(with_space=[True, False])
     @pytest.mark.usefixtures('mock_pv_read')
-    def case_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
-        """Test when multiple keyword arguments are given for files."""
+    def case_multiple_kargs(self, default_plot_kwargs: dict):
+        """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
 
         files = [Path(pv.examples.antfile).as_posix()] * 2
         kwargs['var_item'] = [pv.read(f) for f in files]
-
-        prefix = '--files ' if with_space else '--files='
-        return prefix + ' '.join(files), kwargs
+        return ' '.join(files), kwargs
 
     @case(tags='raises')
     def case_not_exists(self, tmp_path: Path):
@@ -1235,18 +1241,18 @@ class CasesPlotFiles:
     @case(tags='raises')
     def case_not_exists_kw(self, tmp_path: Path):
         """Test when the file does not exists as keyword."""
-        return f'--files={(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
+        return f'{(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
 
     @case(tags='raises')
     def case_empty(self):
         """Test when no files are passed"""
-        return '', ['Command "plot" parameter --files requires an argument.']
+        return '', ['Command "plot" parameter paths requires an argument.']
 
     @case(tags='raises')
     def case_one_exists(self, tmp_path: Path):
         """Test when one file does not exists."""
         (f1 := (tmp_path / 'f1.vtp')).touch()
-        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
+        return f'{f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
 
     @case(tags='raises')
     def case_not_readable(self, tmp_path: Path, mocker: MockerFixture):
@@ -1255,7 +1261,7 @@ class CasesPlotFiles:
         m = mocker.patch.object(pv, 'read')
         m.side_effect = Exception('Not readable')
 
-        return f'--files {f1.as_posix()}', ['Path is not readable by PyVista:']
+        return f'{f1.as_posix()}', ['Path is not readable by PyVista:']
 
 
 @parametrize_with_cases(
@@ -1289,7 +1295,7 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
 @parametrize(
     tokens_ncalls_args=[
         ('file1.ply file2.ply', 2, ['file1.ply', 'file2.ply']),
-        ('--files file1.ply file2.ply file3.ply', 3, ['file1.ply', 'file2.ply', 'file3.ply']),
+        ('file1.ply file2.ply file3.ply', 3, ['file1.ply', 'file2.ply', 'file3.ply']),
     ],
     idgen=lambda **args: args['tokens_ncalls_args'][0],
 )
@@ -1322,7 +1328,7 @@ def test_add_mesh_volume_called(
 
 @pytest.mark.usefixtures('mock_pv_read')
 def test_plot_glob_expands_files(mock_add_mesh: MagicMock, tmp_example_dir: Path):
-    """Plot's --files argument should accept glob patterns (same path as convert)."""
+    """Plot's paths argument should accept glob patterns (same path as convert)."""
     for name in ('a.ply', 'b.ply'):
         shutil.copy(pv.examples.antfile, tmp_example_dir / name)
     main(shlex.split("plot '*.ply'"))
@@ -1362,7 +1368,7 @@ def test_plot_help(capsys: pytest.CaptureFixture):
 
     expected = textwrap.dedent(
         """\
-        Usage: pyvista plot file (file2) [OPTIONS]
+        Usage: pyvista plot PATH... [OPTIONS]
 
         Plot one or more mesh files in an interactive window that can be 
         customized with various options.
@@ -1438,7 +1444,7 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
-    tokens = func if func == 'report' else f'{func} --files={Path(pv.examples.antfile).as_posix()}'
+    tokens = func if func == 'report' else f'{func} {Path(pv.examples.antfile).as_posix()}'
     main(tokens)
 
     expected = f'{ret}\n' if ret is not None else ''

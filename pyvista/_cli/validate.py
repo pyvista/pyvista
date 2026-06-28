@@ -113,25 +113,27 @@ def _converter_report(
 
 
 @app.command(
-    usage=f'Usage: [bold]{pv.__name__} validate MESH-PATH [FIELDS...] [--exclude FIELDS...]',
+    usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
     help="Validate a mesh's array data, points, and cells.",
 )
 def _validate(
-    mesh_path: Annotated[
-        str,
+    paths: Annotated[
+        list[str],
         Parameter(
+            consume_multiple=True,
             help=(
-                'Mesh to validate. Must be readable with ``pyvista.read``. '
+                'Mesh(es) to validate. Must be readable with ``pyvista.read``. '
                 'Glob patterns (``*``, ``?``, ``[...]``) are expanded; '
                 'every match is validated in turn.'
             ),
         ),
     ],
+    /,
     fields: Annotated[
         list[_LiteralMeshValidationFields] | None,
         Parameter(
-            name='fields',
+            name=('fields', '-f'),
             consume_multiple=True,
             negative=[],
             help=fields_help,
@@ -184,7 +186,7 @@ def _validate(
     ] = None,
 ) -> None:
     # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths([mesh_path], app=app)  # type: ignore[assignment]
+    mesh_paths = MeshPaths(paths, app=app)  # type: ignore[assignment]
     report_body = report[0] if report else 'message'
     for mesh, path in mesh_paths:
         if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):

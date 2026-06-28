@@ -36,18 +36,16 @@ def _validate_out_has_extension(file_out: str) -> None:
 
 
 @app.command(
-    usage=f'Usage: [bold]{pv.__name__} convert FILE-IN [FILE-IN...] FILE-OUT',
+    usage=f'Usage: [bold]{pv.__name__} convert PATH-IN [PATH-IN...] PATH-OUT',
     help_formatter=HELP_FORMATTER,
 )
 def _convert(
-    files: Annotated[
+    paths: Annotated[
         list[str],
         Parameter(
-            name='files',
             consume_multiple=True,
-            negative='',
             help=(
-                'One or more input files followed by the output spec. '
+                'One or more input paths followed by the output spec. '
                 'Inputs may include glob patterns (e.g. ``*.vtu``) and must be readable '
                 'with ``pyvista.read``. The final token is the output: a full filename '
                 '(``bar.xyz``) when converting a single input, or an extension-only spec '
@@ -56,6 +54,7 @@ def _convert(
             ),
         ),
     ],
+    /,
 ) -> None:
     """Convert a mesh file to another format.
 
@@ -86,14 +85,14 @@ def _convert(
     # Writes out/a.pv, out/b.pv, ... into the explicit out directory
     ```
     """
-    if len(files) < 2:
+    if len(paths) < 2:
         _console_error(
             app=app,
             message='convert requires at least one input file and an output spec.',
         )
 
-    file_out = files[-1]
-    file_in_tokens = files[:-1]
+    file_out = paths[-1]
+    file_in_tokens = paths[:-1]
 
     try:
         _validate_out_has_extension(file_out)

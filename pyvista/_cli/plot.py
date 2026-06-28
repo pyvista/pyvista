@@ -78,7 +78,7 @@ class Groups(StrEnum):
 
 
 @app.command(
-    usage=f'Usage: [bold]{pv.__name__} plot file (file2) [OPTIONS]',
+    usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
     help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
 )
@@ -86,16 +86,16 @@ def _plot(
     var_item: Annotated[
         list[str],
         Parameter(
-            name='files',
+            name='paths',
             consume_multiple=True,
             help=(
                 'File(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
                 'Each match must be readable with ``pyvista.read``.'
             ),
             group=Groups.IN,
-            negative='',
         ),
     ],
+    /,
     *,
     off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
     full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
