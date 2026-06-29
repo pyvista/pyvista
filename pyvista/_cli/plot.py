@@ -134,7 +134,9 @@ def _plot(
 ) -> None:
     valid_paths = validate_paths(paths)
     # Inform users about --skip-unreadable option when there are multiple inputs
-    on_error_if_unreadable = 'exit+hint' if len(valid_paths) > 1 else 'exit'
+    on_error_if_unreadable: Literal['exit+hint', 'exit'] = (
+        'exit+hint' if len(valid_paths) > 1 else 'exit'
+    )
     meshes = [
         read_mesh(path, on_error='suppress' if skip_unreadable else on_error_if_unreadable)
         for path in valid_paths
