@@ -474,6 +474,17 @@ def test_pickle_invalid_format(sphere):
         pickle.dumps(sphere)
 
 
+@pytest.mark.needs_vtk_version((9, 3), reason='VTK < 9.3 has limited pickle support.')
+def test_pickle_deletes_cached_locators():
+    poly = pv.Cone()
+
+    for attr in ['_static_cell_locator', '_cell_tree_locator', '_point_locator']:
+        # Access each locator to trigger the caching
+        _ = getattr(poly, attr)
+
+    pickle.loads(pickle.dumps(poly))
+
+
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
     match = re.escape(
