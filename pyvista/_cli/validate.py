@@ -326,9 +326,7 @@ def _validate_many(
             progress.update(task, description=f'Validating [cyan]{path.name}[/cyan]')
             mesh = _read_mesh(
                 path,
-                skip_unreadable=skip_unreadable,
-                announce_unreadable=False,
-                append_skip_unreadable_msg=True,
+                on_error='suppress' if skip_unreadable else 'exit+hint',
             )
             if mesh is None:
                 skipped.append(path)

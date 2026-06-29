@@ -240,9 +240,7 @@ def _convert_one(
     out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
     mesh = _read_mesh(
         path_in,
-        skip_unreadable=skip_unreadable,
-        announce_unreadable=announce,
-        append_skip_unreadable_msg=False,
+        on_error=('suppress+warn' if announce else 'suppress') if skip_unreadable else 'exit',
     )
     if mesh is None:
         return False
@@ -284,9 +282,7 @@ def _convert_many(
             progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
             mesh = _read_mesh(
                 path_in,
-                skip_unreadable=skip_unreadable,
-                announce_unreadable=False,
-                append_skip_unreadable_msg=True,
+                on_error='suppress' if skip_unreadable else 'exit+hint',
             )
             if mesh is None:
                 skipped.append(path_in)
