@@ -19,8 +19,8 @@ from pyvista.core.utilities.fileio import get_ext
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
-from .utils import _console_error
 from .utils import _read_mesh
+from .utils import print_error_and_exit
 from .utils import skip_unreadable
 
 
@@ -105,7 +105,7 @@ def _convert(
     """
     if len(paths) < 2:
         msg = 'convert requires at least one input file and an output spec.'
-        _console_error(msg)
+        print_error_and_exit(msg)
 
     file_out = paths[-1]
     file_in_tokens = paths[:-1]
@@ -113,7 +113,7 @@ def _convert(
     try:
         _validate_out_has_extension(file_out)
     except ValueError as e:
-        _console_error(message=str(e))
+        print_error_and_exit(message=str(e))
 
     input_paths = MeshPaths(file_in_tokens, skip_unreadable=False, announce=False).paths
 
@@ -125,7 +125,7 @@ def _convert(
             f'{file_out!r}. Use an extension-only output spec (e.g. '
             f"'{path_out.suffix}') to reuse each input's stem."
         )
-        _console_error(msg)
+        print_error_and_exit(msg)
 
     if len(input_paths) > 1:
         _convert_many(
@@ -210,7 +210,7 @@ def _build_output_map(
             f'{n_collisions} output collision{s} detected:\n{lines}\n'
             'Use --resolve-collisions to rename automatically.'
         )
-        _console_error(msg)
+        print_error_and_exit(msg)
 
     return result, renames
 
@@ -225,7 +225,7 @@ def _save_mesh(mesh: pv.DataObject, out_path: Path) -> None:
         mesh.save(out_path)
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to save output file: {out_path}\n{e}'
-        _console_error(msg)
+        print_error_and_exit(msg)
 
 
 def _convert_one(

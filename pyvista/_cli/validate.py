@@ -23,8 +23,8 @@ from pyvista.core.filters.data_object import _ReportBodyOptions
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
-from .utils import _console_error
 from .utils import _read_mesh
+from .utils import print_error_and_exit
 from .utils import skip_unreadable
 
 if TYPE_CHECKING:
@@ -234,7 +234,7 @@ def _check_mesh_type(mesh: object, path: Path) -> None:
             f'Cannot validate {type(mesh).__name__} read from path {str(path)!r}: '
             f'only DataSet and MultiBlock meshes are supported.'
         )
-        _console_error(message=msg)
+        print_error_and_exit(message=msg)
 
 
 def _validate_one(
@@ -269,7 +269,7 @@ def _validate_one(
         )
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
-        _console_error(message=msg)
+        print_error_and_exit(message=msg)
 
     if report is not None:
         report_string = str(out)

@@ -21,7 +21,7 @@ from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
-from .utils import _console_error
+from .utils import print_error_and_exit
 from .utils import skip_unreadable
 
 if TYPE_CHECKING:
@@ -172,6 +172,6 @@ def _plot(
             NewLine(),
             Text('Please check the provided arguments.'),
         )
-        _console_error(message=msg)
+        print_error_and_exit(message=msg)
     else:
         return res

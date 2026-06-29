@@ -102,7 +102,7 @@ class _MeshAndPath(NamedTuple):
     path: Path
 
 
-def _console_error(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
+def print_error_and_exit(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
     panel = Panel(
         message,
         title=title,
@@ -153,7 +153,7 @@ def _validate_paths(paths: list[str]) -> list[Path]:
         missing = missing[0] if n_missings == 1 else missing
 
         msg = f'{n_missings} {literal_file} not found: {missing}'
-        _console_error(message=msg)
+        print_error_and_exit(message=msg)
     return [Path(v) for v in values]
 
 
@@ -234,7 +234,7 @@ def _read_mesh(
             msg = f'Path is not readable by PyVista:\n{path}'
             if on_error == 'exit+hint':
                 msg += '\nUse --skip-unreadable to skip this file.'
-            _console_error(message=msg)
+            print_error_and_exit(message=msg)
 
 
 class MeshPaths:
