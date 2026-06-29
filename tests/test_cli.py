@@ -79,15 +79,16 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture
 def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
-    console = Console(
+    Console_ = partial(
+        Console,
         width=70,
         highlight=True,
         force_terminal=True,
         color_system='standard',
         legacy_windows=False,
     )
-    monkeypatch.setattr(CLI_APP, 'console', console)
-    monkeypatch.setattr(CLI_APP, 'error_console', console)
+    monkeypatch.setattr(CLI_APP, 'console', Console_(stderr=False))
+    monkeypatch.setattr(CLI_APP, 'error_console', Console_(stderr=True))
     monkeypatch.setattr(CLI_APP, 'help_format', 'plaintext')
 
 
