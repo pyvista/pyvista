@@ -280,15 +280,18 @@ def _validate_one(
         invalid_fields = out.invalid_fields if report_body == 'fields' else None
         output = _MeshValidator._colorize_output(report_string, invalid_fields)
         announcement = output
+        console = CLI_APP.console  # Actual program output for stdout
     elif (message := out.message) is not None:
         output = _MeshValidator._colorize_output(message)
         announcement = output
+        console = CLI_APP.console  # Actual program output for stdout
     else:
+        # Mesh is valid,
         announcement = _mesh_is_valid_message(class_name, path)
+        console = CLI_APP.error_console  # print to stderr for user info only
         output = None
     if announce:
-        # Use `console` instead of `error_console` since this is actual program output
-        CLI_APP.console.print(announcement)
+        console.print(announcement)
     return output
 
 

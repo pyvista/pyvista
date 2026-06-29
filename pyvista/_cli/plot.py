@@ -163,7 +163,7 @@ def _plot(
 
     except Exception as ex:  # noqa: BLE001
         # Prevent traceback and output error along with help message
-        CLI_APP.help_print(tokens='plot')
+        CLI_APP.help_print(tokens='plot', console=CLI_APP.error_console)
 
         msg = Group(
             ':warning: The following exception has been raised when calling [u]pv.plot[/u]:',
