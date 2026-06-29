@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Literal
-from typing import NamedTuple
 from typing import NoReturn
 from typing import get_args
 import warnings
@@ -31,8 +30,6 @@ from pyvista import _validation
 from .app import CLI_APP
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import Group
@@ -95,11 +92,6 @@ skip_unreadable = Annotated[
         help=_skip_unreadable_help,
     ),
 ]
-
-
-class _MeshAndPath(NamedTuple):
-    mesh: DataObject | None
-    path: Path
 
 
 def print_error_and_exit(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
@@ -221,7 +213,7 @@ def validate_paths(paths: list[str]) -> list[Path]:
 _ReadMeshOptions = Literal['exit', 'exit+hint', 'suppress', 'suppress+warn']
 
 
-def _read_mesh(
+def read_mesh(
     path: Path,
     *,
     on_error: _ReadMeshOptions = 'exit',
@@ -243,6 +235,11 @@ def _read_mesh(
         - ``'suppress+warn'``: return ``None`` and print a console error indicating the path is
           not readable.
 
+    Returns
+    -------
+    DataObject | None
+        Mesh object or None, depending on ``on_error`` value.
+
     """
     _validation.check_contains(get_args(_ReadMeshOptions), must_contain=on_error, name='on_error')
     try:
@@ -259,20 +256,3 @@ def _read_mesh(
             if on_error == 'exit+hint':
                 msg += '\nUse --skip-unreadable to skip this file.'
             print_error_and_exit(message=msg)
-
-
-class MeshPaths:
-    def __init__(self, paths: list[str], *, skip_unreadable: bool, announce: bool) -> None:
-        self._skip_unreadable = skip_unreadable
-        self._announce = announce
-        self.paths = validate_paths(paths)
-
-    def __iter__(self) -> Iterator[_MeshAndPath]:
-        for path in self.paths:
-            mesh = _read_mesh(
-                path,
-                on_error=('suppress+warn' if self._announce else 'suppress')
-                if self._skip_unreadable
-                else 'exit+hint',
-            )
-            yield _MeshAndPath(mesh=mesh, path=path)

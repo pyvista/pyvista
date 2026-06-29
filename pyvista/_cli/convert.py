@@ -18,10 +18,10 @@ from pyvista.core.utilities.fileio import get_ext
 
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
-from .utils import MeshPaths
-from .utils import _read_mesh
 from .utils import print_error_and_exit
+from .utils import read_mesh
 from .utils import skip_unreadable
+from .utils import validate_paths
 
 
 def _is_extension_only(file_out: str) -> bool:
@@ -115,7 +115,7 @@ def _convert(
     except ValueError as e:
         print_error_and_exit(message=str(e))
 
-    input_paths = MeshPaths(file_in_tokens, skip_unreadable=False, announce=False).paths
+    input_paths = validate_paths(file_in_tokens)
 
     path_out = Path(file_out)
     ext_only = _is_extension_only(file_out)
@@ -238,7 +238,7 @@ def _convert_one(
 ) -> bool:
     """Read a single input, save it under the resolved output path, and optionally announce."""
     out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
-    mesh = _read_mesh(
+    mesh = read_mesh(
         path_in,
         on_error=('suppress+warn' if announce else 'suppress') if skip_unreadable else 'exit',
     )
@@ -280,7 +280,7 @@ def _convert_many(
         task = progress.add_task('Converting', total=len(input_paths))
         for path_in, out_path in output_map.items():
             progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
-            mesh = _read_mesh(
+            mesh = read_mesh(
                 path_in,
                 on_error='suppress' if skip_unreadable else 'exit+hint',
             )

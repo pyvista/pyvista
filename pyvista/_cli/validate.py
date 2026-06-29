@@ -22,10 +22,10 @@ from pyvista.core.filters.data_object import _ReportBodyOptions
 
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
-from .utils import MeshPaths
-from .utils import _read_mesh
 from .utils import print_error_and_exit
+from .utils import read_mesh
 from .utils import skip_unreadable
+from .utils import validate_paths
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -194,12 +194,16 @@ def _validate(
     ] = None,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
-    mesh_paths = MeshPaths(paths, skip_unreadable=skip_unreadable, announce=False)
+    valid_paths = validate_paths(paths)
     report_body = report[0] if report else 'message'
-    n_paths = len(mesh_paths.paths)
+    n_paths = len(valid_paths)
 
     if n_paths == 1:
-        mesh, path = next(iter(mesh_paths))
+        path = valid_paths[0]
+        mesh = read_mesh(
+            path,
+            on_error='suppress' if skip_unreadable else 'exit',
+        )
         if mesh is not None:
             _validate_one(
                 mesh,
@@ -215,7 +219,7 @@ def _validate(
             )
     else:
         _validate_many(
-            mesh_paths,
+            valid_paths,
             skip_unreadable=skip_unreadable,
             fields=fields,
             exclude=exclude,
@@ -292,7 +296,7 @@ def _mesh_is_valid_message(class_name: str, path: Path) -> str:
 
 
 def _validate_many(
-    mesh_paths: MeshPaths,
+    paths: list[Path],
     *,
     skip_unreadable: bool,
     fields: list[_LiteralMeshValidationFields] | None,
@@ -321,10 +325,10 @@ def _validate_many(
     invalid_output: list[str] = []
 
     with Progress(*columns, console=CLI_APP.error_console, transient=False) as progress:
-        task = progress.add_task('Validating', total=len(mesh_paths.paths))
-        for path in mesh_paths.paths:
+        task = progress.add_task('Validating', total=len(paths))
+        for path in paths:
             progress.update(task, description=f'Validating [cyan]{path.name}[/cyan]')
-            mesh = _read_mesh(
+            mesh = read_mesh(
                 path,
                 on_error='suppress' if skip_unreadable else 'exit+hint',
             )

@@ -20,9 +20,10 @@ from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
-from .utils import MeshPaths
 from .utils import print_error_and_exit
+from .utils import read_mesh
 from .utils import skip_unreadable
+from .utils import validate_paths
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -131,9 +132,10 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
-    # Use MeshPath obj to validate input paths and handle mesh reading errors
-    mesh_paths = MeshPaths(paths, skip_unreadable=skip_unreadable, announce=True)
-    meshes = [m.mesh for m in mesh_paths]
+    valid_paths = validate_paths(paths)
+    meshes = [
+        read_mesh(path, on_error='suppress' if skip_unreadable else 'exit') for path in valid_paths
+    ]
     try:
         res = pv.plot(
             var_item=meshes,  # type: ignore [arg-type]
