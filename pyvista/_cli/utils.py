@@ -139,22 +139,18 @@ def _expand_globs(values: list[str]) -> list[str]:
     return expanded
 
 
-def _validate_paths(paths: list[str]) -> list[Path]:
-    """Expand globs and verify each path exists.
+def _check_paths_exist(paths: list[Path]) -> None:
+    """Print a console error and exit if any paths do not exist."""
+    files = {p: p.exists() for p in paths}
+    if not all(files.values()):
+        missing = [str(p) for p, exists in files.items() if not exists]
+        n_missing = len(missing)
 
-    Prints a console error and exists, listing any missing paths.
-    """
-    values = _expand_globs(paths)
-    if not all((files := {v: Path(v).exists() for v in values}).values()):
-        missing: str | list[str] = [k for k, v in files.items() if not v]
-        n_missings = len(missing)
+        literal_file = 'file' if n_missing == 1 else 'files'
+        missing_display = missing[0] if n_missing == 1 else missing
 
-        literal_file = 'file' if n_missings == 1 else 'files'
-        missing = missing[0] if n_missings == 1 else missing
-
-        msg = f'{n_missings} {literal_file} not found: {missing}'
+        msg = f'{n_missing} {literal_file} not found: {missing_display}'
         print_error_and_exit(message=msg)
-    return [Path(v) for v in values]
 
 
 _MULTIBLOCK_EXTS = frozenset({'.vtm', '.vtmb'})
@@ -192,6 +188,34 @@ def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Pat
         else:
             kept.append(p)
     return kept, filtered
+
+
+def validate_paths(paths: list[str]) -> list[Path]:
+    """Expand globs, verify existence, and filter MultiBlock sidecar children.
+
+    Prints a console message for any sidecar children that were filtered out.
+
+    Returns
+    -------
+    list[Path]
+        The validated input paths.
+
+    """
+    expanded = _expand_globs(paths)
+    path_objects = [Path(v) for v in expanded]
+    _check_paths_exist(path_objects)
+    kept, dropped = _filter_multiblock_children(path_objects)
+    if n_dropped := len(dropped):
+        listed = ', '.join(p.as_posix() for p in dropped[:5])
+        if n_dropped > 5:
+            listed += f', ... ({n_dropped - 5} more)'
+        s = 's' if n_dropped > 1 else ''
+        msg = (
+            f'[yellow]Skipping {n_dropped} file{s} inside MultiBlock sidecar '
+            f'directories:[/yellow] {listed}'
+        )
+        CLI_APP.error_console.print(msg)
+    return kept
 
 
 _ReadMeshOptions = Literal['exit', 'exit+hint', 'suppress', 'suppress+warn']
@@ -241,12 +265,7 @@ class MeshPaths:
     def __init__(self, paths: list[str], *, skip_unreadable: bool, announce: bool) -> None:
         self._skip_unreadable = skip_unreadable
         self._announce = announce
-
-        inital_paths = _validate_paths(paths)
-        input_paths, dropped_paths = _filter_multiblock_children(inital_paths)
-        self.paths: list[Path] = input_paths
-        self._paths_dropped: list[Path] = dropped_paths
-        self._print_dropped_multiblock_sidecar_dirs()
+        self.paths = validate_paths(paths)
 
     def __iter__(self) -> Iterator[_MeshAndPath]:
         for path in self.paths:
@@ -257,16 +276,3 @@ class MeshPaths:
                 else 'exit+hint',
             )
             yield _MeshAndPath(mesh=mesh, path=path)
-
-    def _print_dropped_multiblock_sidecar_dirs(self) -> None:
-        dropped = self._paths_dropped
-        if n_dropped := len(dropped):
-            listed = ', '.join(p.as_posix() for p in dropped[:5])
-            if n_dropped > 5:
-                listed += f', ... ({n_dropped - 5} more)'
-            s = 's' if n_dropped > 1 else ''
-            msg = (
-                f'[yellow]Skipping {n_dropped} file{s} inside MultiBlock sidecar '
-                f'directories:[/yellow] {listed}'
-            )
-            CLI_APP.console.print(msg)
