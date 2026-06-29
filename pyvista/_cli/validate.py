@@ -24,6 +24,7 @@ from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import MeshPaths
 from .utils import _console_error
+from .utils import _read_mesh
 from .utils import skip_unreadable
 
 if TYPE_CHECKING:
@@ -293,7 +294,7 @@ def _mesh_is_valid_message(class_name: str, path: Path) -> str:
 def _validate_many(
     mesh_paths: MeshPaths,
     *,
-    skip_unreadable: bool,  # noqa: ARG001
+    skip_unreadable: bool,
     fields: list[_LiteralMeshValidationFields] | None,
     exclude: list[_LiteralMeshValidationFields] | None,
     tolerance: float | None,
@@ -319,10 +320,16 @@ def _validate_many(
     not_skipped: list[Path] = []
     invalid_output: list[str] = []
 
-    with Progress(*columns, console=CLI_APP.console, transient=False) as progress:
+    with Progress(*columns, console=CLI_APP.error_console, transient=False) as progress:
         task = progress.add_task('Validating', total=len(mesh_paths.paths))
-        for mesh, path in mesh_paths:
+        for path in mesh_paths.paths:
             progress.update(task, description=f'Validating [cyan]{path.name}[/cyan]')
+            mesh = _read_mesh(
+                path,
+                skip_unreadable=skip_unreadable,
+                announce_unreadable=False,
+                append_skip_unreadable_msg=True,
+            )
             if mesh is None:
                 skipped.append(path)
             else:

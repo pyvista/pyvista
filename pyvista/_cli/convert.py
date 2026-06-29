@@ -278,7 +278,7 @@ def _convert_many(
     n_converted = 0
     skipped: list[Path] = []
 
-    with Progress(*columns, console=CLI_APP.console, transient=False) as progress:
+    with Progress(*columns, console=CLI_APP.error_console, transient=False) as progress:
         task = progress.add_task('Converting', total=len(input_paths))
         for path_in, out_path in output_map.items():
             progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
