@@ -247,7 +247,7 @@ def _convert_one(
     _save_mesh(mesh, out_path)
     if announce:
         msg = f'[green]Saved:[/green] {out_path}'
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
     return True
 
 
@@ -293,22 +293,22 @@ def _convert_many(
     s = 's' if n_converted != 1 else ''
     if len(out_dirs) == 1:
         msg = f'[green]Saved {n_converted} file{s} to:[/green] {next(iter(out_dirs))}/'
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
     else:
         msg = f'[green]Saved {n_converted} file{s} across {len(out_dirs)} directories.[/green]'
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
 
     if n_renames := len(renames):
         s = 's' if n_renames > 1 else ''
         msg = f'\n[yellow]{n_renames} collision{s} resolved by renaming:[/yellow]'
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
         for path_in, original, renamed in renames:
             msg = f'  {path_in.name} → {renamed.name} (would have collided with {original.name})'
-            CLI_APP.console.print(msg)
+            CLI_APP.error_console.print(msg)
 
     if n_skipped := len(skipped):
         s = 's' if n_skipped > 1 else ''
         msg = f'\n[yellow]{len(skipped)} file{s} skipped (unreadable):[/yellow]'
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
         for path_in in skipped:
-            CLI_APP.console.print(f'  {path_in}')
+            CLI_APP.error_console.print(f'  {path_in}')

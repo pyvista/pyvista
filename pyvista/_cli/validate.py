@@ -287,6 +287,7 @@ def _validate_one(
         announcement = _mesh_is_valid_message(class_name, path)
         output = None
     if announce:
+        # Use `console` instead of `error_console` since this is actual program output
         CLI_APP.console.print(announcement)
     return output
 
@@ -357,19 +358,19 @@ def _validate_many(
     n_total = n_valid + n_invalid
     if n_invalid:
         msg = f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
-        CLI_APP.console.print(msg)
-        CLI_APP.console.print('\n'.join(invalid_output))
+        CLI_APP.error_console.print(msg)
+        CLI_APP.error_console.print('\n'.join(invalid_output))
     elif n_total:
         msg = (
             '[green]1 mesh is valid.[/green]'
             if n_total == 1
             else f'[green]All {n_total} meshes are valid.[/green]'
         )
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
 
     if n_skipped := len(skipped):
         s = 's' if n_skipped > 1 else ''
         msg = f'\n[yellow]{n_skipped} file{s} skipped (unreadable):[/yellow]'
-        CLI_APP.console.print(msg)
+        CLI_APP.error_console.print(msg)
         for path in skipped:
-            CLI_APP.console.print(f'  {path}')
+            CLI_APP.error_console.print(f'  {path}')

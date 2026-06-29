@@ -40,7 +40,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):
             msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
-            CLI_APP.console.print(
+            CLI_APP.error_console.print(
                 Panel(
                     msg,
                     style='magenta',
