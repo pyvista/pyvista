@@ -321,7 +321,6 @@ def _validate_many(
     n_valid = 0
     n_invalid = 0
     skipped: list[Path] = []
-    not_skipped: list[Path] = []
     invalid_output: list[str] = []
 
     with Progress(*columns, console=CLI_APP.error_console, transient=False) as progress:
@@ -335,7 +334,6 @@ def _validate_many(
             if mesh is None:
                 skipped.append(path)
             else:
-                not_skipped.append(path)
                 output = _validate_one(
                     mesh,
                     path,
@@ -362,14 +360,11 @@ def _validate_many(
         CLI_APP.console.print(msg)
         CLI_APP.console.print('\n'.join(invalid_output))
     elif n_total:
-        if n_total == 1:
-            path = not_skipped[0]
-            mesh_type = type(pv.read(path))
-            msg = '[green]1 mesh validated: '
-            msg += _mesh_is_valid_message(mesh_type.__name__, path)
-        else:
-            es = 'es' if n_total > 1 else ''
-            msg = f'[green]All {n_total} mesh{es} are valid.[/green]'
+        msg = (
+            '[green]1 mesh is valid.[/green]'
+            if n_total == 1
+            else f'[green]All {n_total} meshes are valid.[/green]'
+        )
         CLI_APP.console.print(msg)
 
     if n_skipped := len(skipped):

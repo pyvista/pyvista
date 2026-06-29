@@ -1660,7 +1660,7 @@ def test_validate_skip_unreadable(
     out = capsys.readouterr().out
     expected = (
         'Validating bad.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
-        "1 mesh validated: PolyData mesh 'ant.ply' is valid!\n"
+        '1 mesh is valid.\n'
         '\n'
         '1 file skipped (unreadable):\n'
         '  bad.vtp\n'

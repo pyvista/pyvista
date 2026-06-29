@@ -252,16 +252,14 @@ def _convert_one(
 
 
 def _convert_many(
-    input_paths: list[Path],
+    paths: list[Path],
     path_out: Path,
     *,
     skip_unreadable: bool,
     resolve_collisions: bool,
 ) -> None:
     """Convert each input under a progress bar and report the destination directory(s)."""
-    output_map, renames = _build_output_map(
-        input_paths, path_out, resolve_collisions=resolve_collisions
-    )
+    output_map, renames = _build_output_map(paths, path_out, resolve_collisions=resolve_collisions)
 
     columns = (
         TextColumn('[progress.description]{task.description}'),
@@ -277,7 +275,7 @@ def _convert_many(
     skipped: list[Path] = []
 
     with Progress(*columns, console=CLI_APP.error_console, transient=False) as progress:
-        task = progress.add_task('Converting', total=len(input_paths))
+        task = progress.add_task('Converting', total=len(paths))
         for path_in, out_path in output_map.items():
             progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
             mesh = read_mesh(
