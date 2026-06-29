@@ -190,10 +190,12 @@ def _build_output_map(
             result[path_in] = base_out
         elif resolve_collisions:
             n = counters.get(base_out, 1)
-            candidate = base_out.with_stem(f'{base_out.stem}_{n}')
+            out_ext = get_ext(base_out)
+            out_bare = base_out.name[: -len(out_ext)] if out_ext else base_out.stem
+            candidate = base_out.with_name(f'{out_bare}_{n}{out_ext}')
             while candidate in seen:
                 n += 1
-                candidate = base_out.with_stem(f'{base_out.stem}_{n}')
+                candidate = base_out.with_name(f'{out_bare}_{n}{out_ext}')
             counters[base_out] = n + 1
             seen[candidate] = path_in
             result[path_in] = candidate

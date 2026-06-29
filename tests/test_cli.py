@@ -32,6 +32,7 @@ from pytest_cases import parametrize_with_cases
 from rich.console import Console
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.__main__ import CLI_APP
 from pyvista.__main__ import main
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
@@ -253,7 +254,7 @@ def tmp_example_dir(tmp_path):
 
 @pytest.fixture
 def tmp_ant_file(tmp_example_dir):
-    src = Path(pv.examples.antfile)
+    src = Path(examples.antfile)
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
     return dst
@@ -261,7 +262,7 @@ def tmp_ant_file(tmp_example_dir):
 
 @pytest.fixture
 def tmp_cow_file_invalid(tmp_example_dir):
-    src = Path(pv.examples.download_cow(load=False))
+    src = Path(examples.download_cow(load=False))
     # Need to save as vtk, not vtp, since XML reader doesn't like invalid arrays
     dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
 
@@ -548,12 +549,28 @@ def test_convert_help(capsys: pytest.CaptureFixture):
 def test_convert_compound_extension(tmp_example_dir: Path):
     """Compound extensions like .nii.gz are correctly stripped from the input stem
     and replaced with the target extension."""
-    src = Path(pv.examples.download_brain_atlas_with_sides(load=False))
+    src = Path(examples.download_brain_atlas_with_sides(load=False))
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
     main(shlex.split(f'convert {str(dst)!r} .vti'))
     # stem should be bare (no .nii residue), extension replaced
     assert (tmp_example_dir / f'{dst.name[: -len(".nii.gz")]}.vti').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_compound_extension_collision(tmp_example_dir: Path):
+    """Collision renaming with .nii.gz inputs produces foo_1.vti, not foo.nii_1.vti."""
+    src = Path(examples.download_brain_atlas_with_sides(load=False))
+    bare = src.name[: -len('.nii.gz')]
+    # Two different input filenames that share the same bare stem -> collision on output
+    dst_gz = tmp_example_dir / f'{bare}.nii.gz'
+    dst_nii = tmp_example_dir / f'{bare}.nii'
+    shutil.copy(src, dst_gz)
+    shutil.copy(src, dst_nii)
+    main(shlex.split(f'convert {str(dst_gz)!r} {str(dst_nii)!r} out/.vti --resolve-collisions'))
+    assert (tmp_example_dir / 'out' / f'{bare}.vti').is_file()
+    assert (tmp_example_dir / 'out' / f'{bare}_1.vti').is_file()
+    assert not (tmp_example_dir / 'out' / f'{bare}.nii_1.vti').exists()
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1245,7 +1262,7 @@ def test_plot_called(
     mock_plot: MagicMock,
 ):
     """Test that the pv.plot function is called with the expected arguments."""
-    file = Path(pv.examples.antfile).as_posix()
+    file = Path(examples.antfile).as_posix()
     main(f'plot {file} {tokens}')
     mock_plot.assert_called_once_with(var_item=[pv.read(file)], **expected_kwargs)
 
@@ -1267,7 +1284,7 @@ def test_plot_called_kwargs(
     when supplementary kw arguments are added to the command line.
     """
 
-    file = Path(pv.examples.antfile).as_posix()
+    file = Path(examples.antfile).as_posix()
     main(f'plot {file} {tokens}')
 
     case = current_cases['tokens']
@@ -1282,7 +1299,7 @@ def test_plot_called_kwargs(
 def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
     """Test that the plot CLI is raising expected exit errors."""
 
-    file = Path(pv.examples.antfile).as_posix()
+    file = Path(examples.antfile).as_posix()
     with pytest.raises(SystemExit) as e:
         main(f'plot {file} {tokens}')
 
@@ -1300,7 +1317,7 @@ class CasesPlotFiles:
     def case_single_args(self, default_plot_kwargs: dict):
         """Test when only a single positional argument is given for files."""
         kwargs = default_plot_kwargs
-        f = Path(pv.examples.antfile).as_posix()
+        f = Path(examples.antfile).as_posix()
         kwargs['var_item'] = [pv.read(f)]
         return f, kwargs
 
@@ -1308,7 +1325,7 @@ class CasesPlotFiles:
     def case_multiple_args(self, default_plot_kwargs: dict):
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
-        files = [Path(pv.examples.antfile).as_posix()] * 2
+        files = [Path(examples.antfile).as_posix()] * 2
         kwargs['var_item'] = [pv.read(f) for f in files]
         return ' '.join(files), kwargs
 
@@ -1317,7 +1334,7 @@ class CasesPlotFiles:
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
 
-        files = [Path(pv.examples.antfile).as_posix()] * 2
+        files = [Path(examples.antfile).as_posix()] * 2
         kwargs['var_item'] = [pv.read(f) for f in files]
         return ' '.join(files), kwargs
 
@@ -1410,7 +1427,7 @@ def test_add_mesh_volume_called(
     tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
 
     for a in args:
-        shutil.copy(pv.examples.antfile, tmp_path / a)
+        shutil.copy(examples.antfile, tmp_path / a)
 
     os.chdir(tmp_path)
     main(f'plot {tokens}')
@@ -1424,7 +1441,7 @@ def test_add_mesh_volume_called(
 def test_plot_glob_expands_files(mock_add_mesh: MagicMock, tmp_example_dir: Path):
     """Plot's paths argument should accept glob patterns (same path as convert)."""
     for name in ('a.ply', 'b.ply'):
-        shutil.copy(pv.examples.antfile, tmp_example_dir / name)
+        shutil.copy(examples.antfile, tmp_example_dir / name)
     main(shlex.split("plot '*.ply'"))
     assert mock_add_mesh.call_count == 2
 
@@ -1667,7 +1684,7 @@ def test_validate_skip_unreadable(
 @pytest.mark.skip_windows(reason='path in error is wrapped differently by rich')
 def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
     """A mesh type that is not a DataSet or MultiBlock exits with a clear error."""
-    path = Path(pv.examples.download_warping_spheres(load=False))
+    path = Path(examples.download_warping_spheres(load=False))
     with pytest.raises(SystemExit) as e:
         main(f'validate {str(path)!r}')
     out = capsys.readouterr().out
@@ -1717,7 +1734,7 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
-    tokens = func if func == 'report' else f'{func} {Path(pv.examples.antfile).as_posix()}'
+    tokens = func if func == 'report' else f'{func} {Path(examples.antfile).as_posix()}'
     main(tokens)
 
     expected = f'{ret}\n' if ret is not None else ''
