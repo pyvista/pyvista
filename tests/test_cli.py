@@ -1436,6 +1436,39 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
         assert error in err, err
 
 
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_skip_unreadable_hint(
+    tmp_ant_file, tmp_example_dir: Path, capsys: pytest.CaptureFixture
+):
+    """Test that --skip-unreadable hint is given for multiple args, but not for one arg."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')
+    assert len(list(tmp_example_dir.iterdir())) == 2
+    with pytest.raises(SystemExit) as e:
+        main('plot *.*')
+    assert e.value.code == 1
+
+    out, err = capture_out_err(capsys)
+    not_readable_msg = 'Path is not readable by PyVista:'
+    use_skip_unreadable_msg = 'Use --skip-unreadable to skip this file.'
+    assert out == ''
+    assert not_readable_msg in err, err
+    assert use_skip_unreadable_msg in err, err
+
+    # Repeat the same test, but this time there is only one file
+    tmp_ant_file.unlink()
+    assert len(list(tmp_example_dir.iterdir())) == 1
+
+    with pytest.raises(SystemExit) as e:
+        main('plot *.*')
+    assert e.value.code == 1
+
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert not_readable_msg in err, err
+    assert use_skip_unreadable_msg not in err, err
+
+
 @parametrize(
     tokens_ncalls_args=[
         ('file1.ply file2.ply', 2, ['file1.ply', 'file2.ply']),
