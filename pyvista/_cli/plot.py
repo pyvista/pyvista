@@ -143,7 +143,7 @@ def _plot(
     ]
     try:
         res = pv.plot(
-            var_item=meshes,  # type: ignore [arg-type]
+            var_item=[mesh for mesh in meshes if mesh is not None],  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,

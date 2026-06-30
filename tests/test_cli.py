@@ -1455,7 +1455,11 @@ def test_plot_skip_unreadable_hint(
     assert not_readable_msg in err, err
     assert use_skip_unreadable_msg in err, err
 
+    # Using --skip-unreadable command should succeed
+    main('plot *.* --skip-unreadable')
+
     # Repeat the same test, but this time there is only one file
+    # It still fails, but the hint to use --skip-unreadable is omitted
     tmp_ant_file.unlink()
     assert len(list(tmp_example_dir.iterdir())) == 1
 
@@ -1467,6 +1471,9 @@ def test_plot_skip_unreadable_hint(
     assert out == ''
     assert not_readable_msg in err, err
     assert use_skip_unreadable_msg not in err, err
+
+    # Using --skip-unreadable command should succeed
+    main('plot *.* --skip-unreadable')
 
 
 @parametrize(
