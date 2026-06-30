@@ -106,6 +106,23 @@ jobs:
       - name: Build
         run: cmake --build vtk-build --parallel
 
+      - name: Assert macOS dylibs exist
+        if: runner.os == 'macOS'
+        run: |
+          cd vtk-build
+          missing=0
+          for lib in libvtktoken libvtksys; do
+            if ! find lib -name "${lib}*.dylib" -print -quit | grep -q .; then
+              echo "::error::Expected $lib*.dylib in vtk-build/lib but found none"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Contents of vtk-build/lib:"
+            ls -la lib/ || echo "(lib/ directory does not exist)"
+            exit 1
+          fi
+
       - name: Show ccache statistics
         if: runner.os != 'Windows'
         run: ccache --show-stats
@@ -127,7 +144,7 @@ jobs:
           mkdir -p wheelhouse
           case "$RUNNER_OS" in
             Linux)   auditwheel repair dist/*.whl -w wheelhouse/ ;;
-            macOS)   delocate-wheel -w wheelhouse -v dist/*.whl ;;
+            macOS)   DYLD_LIBRARY_PATH="$PWD/lib" delocate-wheel -w wheelhouse -v dist/*.whl ;;
             Windows) delvewheel repair --add-path bin -w wheelhouse dist/*.whl ;;
           esac
 
