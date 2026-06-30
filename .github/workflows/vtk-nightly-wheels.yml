@@ -124,3 +124,25 @@ jobs:
         with:
           name: vtk-nightly-${{ runner.os }}-py${{ matrix.python-version }}
           path: vtk-build/wheelhouse/*.whl
+
+      - name: Install VTK wheel
+        shell: bash
+        run: |
+          set -e
+          cd vtk-build/wheelhouse
+
+          echo "Found wheels:"
+          ls -lh *.whl
+
+          VTK_WHEEL=$(ls *.whl | head -n 1)
+          python -m pip install "$VTK_WHEEL"
+
+      - name: Install PyVista
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install -e .
+
+      - name: Run PyVista report
+        shell: bash
+        run: pyvista report
