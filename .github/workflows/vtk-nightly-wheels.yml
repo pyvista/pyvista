@@ -26,7 +26,14 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.14"
+          architecture: ${{ runner.os == 'macOS' && 'arm64' || 'x64' }}
+
+      - name: Validate macOS Python arch
+        if: runner.os == 'macOS'
+        run: |
+          python -c "import platform; print(platform.machine())"
+          python -c "import platform; assert platform.machine() == 'arm64'"
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
