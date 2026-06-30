@@ -1,0 +1,78 @@
+name: VTK Nightly Wheels (master)
+
+permissions:
+  actions: read
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.14"]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout VTK master
+        run: git clone --depth 1 --branch master https://gitlab.kitware.com/vtk/vtk.git vtk-src
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install ninja
+          if [ "$RUNNER_OS" = "Linux" ]; then pip install auditwheel; fi
+          if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
+          if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Configure
+        shell: bash
+        run: |
+          mkdir vtk-build && cd vtk-build
+          cmake -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVTK_WHEEL_BUILD=ON \
+            -DVTK_WRAP_PYTHON=ON \
+            -DVTK_BUILD_TESTING=OFF \
+            -DVTK_BUILD_DOCUMENTATION=OFF \
+            -DVTK_BUILD_EXAMPLES=OFF \
+            -DVTK_VERSION_SUFFIX=dev$(date +%Y%m%d) \
+            -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)") \
+            ../vtk-src
+
+      - name: Build
+        run: cmake --build vtk-build --parallel
+
+      - name: Build wheel
+        shell: bash
+        run: cd vtk-build && python setup.py bdist_wheel
+
+      - name: Repair wheel
+        shell: bash
+        run: |
+          cd vtk-build
+          mkdir -p wheelhouse
+          case "$RUNNER_OS" in
+            Linux)   auditwheel repair dist/*.whl -w wheelhouse/ ;;
+            macOS)   delocate-wheel -w wheelhouse -v dist/*.whl ;;
+            Windows) delvewheel repair -w wheelhouse dist/*.whl ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vtk-nightly-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-build/wheelhouse/*.whl
