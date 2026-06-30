@@ -112,7 +112,13 @@ jobs:
 
       - name: Build wheel
         shell: bash
-        run: cd vtk-build && python setup.py bdist_wheel
+        run: |
+          cd vtk-build
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            export _PYTHON_HOST_PLATFORM="macosx-11.0-arm64"
+            export ARCHFLAGS="-arch arm64"
+          fi
+          python setup.py bdist_wheel
 
       - name: Repair wheel
         shell: bash
@@ -122,7 +128,7 @@ jobs:
           case "$RUNNER_OS" in
             Linux)   auditwheel repair dist/*.whl -w wheelhouse/ ;;
             macOS)   delocate-wheel -w wheelhouse -v dist/*.whl ;;
-            Windows) delvewheel repair -w wheelhouse dist/*.whl ;;
+            Windows) delvewheel repair --add-path bin -w wheelhouse dist/*.whl ;;
           esac
 
       - name: Upload VTK wheel
