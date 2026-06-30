@@ -52,6 +52,11 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
           if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
 
+      - name: Set macOS architecture
+        if: runner.os == 'macOS'
+        shell: bash
+        run: echo "CMAKE_OSX_ARCHITECTURES=arm64" >> "$GITHUB_ENV"
+
       - name: Configure ccache
         if: runner.os != 'Windows'
         shell: bash
