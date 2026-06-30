@@ -104,6 +104,21 @@ def test_load_saturn_rings_deprecated():
         _ = examples.planets.load_saturn_rings()
 
 
+def test_download_sheen_chair_deprecated(monkeypatch):
+    match = (
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.'
+    )
+    monkeypatch.setattr(
+        examples.gltf._dataset_sheen_chair,
+        'download',
+        lambda: 'SheenChair.glb',
+    )
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert examples.gltf.download_sheen_chair() == 'SheenChair.glb'
+
+
 def test_load_planet():
     planet = examples.planets.load_planet()
     assert isinstance(planet, pv.PolyData)
