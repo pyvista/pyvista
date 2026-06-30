@@ -159,9 +159,9 @@ def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
     with pytest.raises(SystemExit) as e:
         main(f'{command} --foo=1')
     assert e.value.code == 1
-    outerr = capsys.readouterr()
-    assert outerr.out == ''
-    actual = '\n'.join(outerr.err.split('\n')[-4:])
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    actual = '\n'.join(err.split('\n')[-4:])
     assert actual == expected
 
 
@@ -412,8 +412,9 @@ def test_command_glob(
         assert "'" in command_str or '"' in command_str
 
     main(shlex.split(command_str))
-    out = capsys.readouterr().out
-    assert 'Error' not in out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Error' not in err
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -555,7 +556,8 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 def test_convert_help(capsys: pytest.CaptureFixture):
     main('convert --help')
 
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     assert 'Usage: pyvista convert PATH-IN [PATH-IN...] PATH-OUT' in out, out
     assert 'Convert a mesh file to another format.' in out, out
     assert 'glob patterns are expanded' in out, out
@@ -685,7 +687,8 @@ def test_validate_tolerance(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
         f'--size-tolerance 1e-4 '
         f'--planarity-tolerance 0.2'
     )
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         "PolyData mesh 'ant.ply' is not valid:\n"
         ' ▪ Mesh has 20 TRIANGLE cells with zero area. Invalid cell ids: [423, \n'
@@ -701,7 +704,8 @@ def test_validate_invalid_mesh(
     capsys: pytest.CaptureFixture,
 ):
     main(f'validate {str(tmp_cow_file_invalid)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
         ' ▪ Mesh has 1 point array with incorrect length (length must be 2905).\n'
@@ -717,7 +721,8 @@ def test_validate_invalid_mesh(
     assert out == expected
 
     main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         "MultiBlock mesh 'ant.vtm' is not valid:\n"
         " ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
@@ -728,7 +733,8 @@ def test_validate_invalid_mesh(
     assert out == expected
 
     main(f'validate {str(tmp_ant_file_invalid_multiblock)!r} --report')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
@@ -761,7 +767,8 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     rib = '\x1b[3;91m'  # red italic bright
 
     main(f'validate {str(tmp_cow_file_invalid)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
         f' ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
@@ -782,7 +789,8 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     assert out == expected
 
     main(f'validate {str(tmp_cow_file_invalid)!r} --report message')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
 
     expected = (
         f'{b}Mesh Validation Report{_}\n'
@@ -822,7 +830,8 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     assert out == expected
 
     main(f'validate {str(tmp_cow_file_invalid)!r} --report fields')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
 
     expected = (
         f'{b}Mesh Validation Report{_}\n'
@@ -906,7 +915,8 @@ def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_help(capsys: pytest.CaptureFixture):
     main('validate --help')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     usage = (
         'Usage: pyvista validate PATH... [--fields FIELD...] [--exclude \n'
         'FIELD...]\n'
@@ -981,17 +991,19 @@ def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     # Test that all fields specified in the annotations work
     main(f'validate {tmp_ant_file!s} -f {field}')
 
-    # Discard captured output to clean up test output
-    capsys.readouterr()
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'is valid' in err
 
     # Test that all fields are documented
     main(f'validate {tmp_ant_file!s} --help')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     if f'• {field}:' not in out:
         pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
 
     # Discard captured output to clean up test output
-    capsys.readouterr()
+    _, _ = capture_out_err(capsys)
 
 
 @pytest.fixture
@@ -1547,7 +1559,9 @@ def test_report_help(capsys: pytest.CaptureFixture):
             Generate a PyVista software environment report.
        """
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert expected == '\n'.join(out.split('\n')[:4])
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1562,12 +1576,16 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         customized with various options.
         """  # noqa: W291
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:5])
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert expected == '\n'.join(out.split('\n')[:5])
 
 
 def test_version(capsys: pytest.CaptureFixture):
     main('--version')
-    assert capsys.readouterr().out == f'pyvista {pv.__version__}\n'
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert out == f'pyvista {pv.__version__}\n'
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1589,7 +1607,9 @@ def test_help(capsys: pytest.CaptureFixture):
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )
-    assert expected == capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert out == expected
 
 
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
@@ -1734,7 +1754,9 @@ def test_validate_skip_unreadable(
     bad = tmp_example_dir / 'bad.foo'
     bad.write_text('')
     main(f'validate {str(bad)!r} --skip-unreadable')
-    assert capsys.readouterr().out == '', bad
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert err == ''
 
     # One readable, one unreadable -- skip report after summary
     bad_vtp = tmp_example_dir / 'bad.vtp'
@@ -1824,4 +1846,6 @@ def test_print(
     main(tokens)
 
     expected = f'{ret}\n' if ret is not None else ''
-    assert capsys.readouterr().out == expected
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert out == expected
