@@ -1,5 +1,6 @@
 accept = [
   200, # Link is OK
+  202, # Accepted by bot-hostile domains while the target remains reachable
   403, # Skip domains known to return 403 Forbidden to bots
   418, # Skip domains (e.g. IEEE via doi.org) returning "I'm a teapot" to bots
   429, # Network error: Too Many Requests
@@ -13,6 +14,7 @@ exclude = [
   'file:///home/*',
   'http://861c873f6352:8888/*',
   'https://github.com/pyvista/pyvista/settings/branches',
+  'https://prod.sandia.gov/techlib-noauth/access-control.cgi/2004/041617.pdf',
   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
   'https://repology.org',
 ]
