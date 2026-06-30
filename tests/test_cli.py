@@ -1436,6 +1436,7 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
         assert error in err, err
 
 
+@pytest.mark.needs_vtk_version(9, 4, reason='workers crash older vtk')
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_skip_unreadable_hint(
     tmp_ant_file, tmp_example_dir: Path, capsys: pytest.CaptureFixture
