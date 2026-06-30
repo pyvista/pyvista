@@ -33,10 +33,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            ccache \
             libx11-dev \
             libxt-dev \
             libgl1-mesa-dev \
             libxcursor-dev
+
+      - name: Install macOS build dependencies
+        if: runner.os == 'macOS'
+        run: brew install ccache
 
       - name: Install build tools
         shell: bash
@@ -47,6 +52,20 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
           if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
 
+      - name: Configure ccache
+        if: runner.os != 'Windows'
+        shell: bash
+        run: echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+
+      - name: Restore ccache
+        if: runner.os != 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: vtk-nightly-ccache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            vtk-nightly-ccache-${{ runner.os }}-
+
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         if: runner.os == 'Windows'
 
@@ -54,6 +73,14 @@ jobs:
         shell: bash
         run: |
           mkdir vtk-build && cd vtk-build
+
+          CMAKE_ARGS=""
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            CMAKE_ARGS="$CMAKE_ARGS \
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+          fi
+
           cmake -GNinja \
             -DCMAKE_BUILD_TYPE=Release \
             -DVTK_WHEEL_BUILD=ON \
@@ -63,10 +90,15 @@ jobs:
             -DVTK_BUILD_EXAMPLES=OFF \
             -DVTK_VERSION_SUFFIX=dev$(date +%Y%m%d) \
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)") \
+            $CMAKE_ARGS \
             ../vtk-src
 
       - name: Build
         run: cmake --build vtk-build --parallel
+
+      - name: Show ccache statistics
+        if: runner.os != 'Windows'
+        run: ccache --show-stats
 
       - name: Build wheel
         shell: bash
