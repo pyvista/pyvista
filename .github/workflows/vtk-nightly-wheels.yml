@@ -28,6 +28,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libxt-dev \
+            libgl1-mesa-dev \
+            libxcursor-dev
+
       - name: Install build tools
         shell: bash
         run: |
