@@ -7812,6 +7812,24 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
+    border_width : float, default: 2.0
+        Width of the border in pixels when enabled.
+
+    title : str, optional
+        Window title.
+
+    splitting_position : float, optional
+        The splitting position of the renderers.
+
+    groups : tuple, optional
+        Grouping for renderers.
+
+    row_weights : tuple
+        Row weights for renderers.
+
+    col_weights : tuple, optional
+        Column weights for renderers.
+
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
         set differently in the relevant theme's ``window_size``
@@ -7819,6 +7837,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     line_smoothing : bool, default: False
         If ``True``, enable line smoothing.
+
+    point_smoothing : bool, default: False
+        If ``True``, enable point smoothing.
 
     polygon_smoothing : bool, default: False
         If ``True``, enable polygon smoothing.
