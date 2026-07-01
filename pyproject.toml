@@ -118,7 +118,7 @@ docs = [
   'imageio==2.37.3',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.5.7',
+  'jupyterlab==4.5.9',
   'lxml==6.1.1',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
