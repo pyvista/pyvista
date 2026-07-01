@@ -8,24 +8,30 @@ from typing import cast
 from typing import get_args
 
 from cyclopts import Parameter
+from rich.progress import BarColumn
+from rich.progress import MofNCompleteColumn
+from rich.progress import Progress
+from rich.progress import TextColumn
+from rich.progress import TimeElapsedColumn
+from rich.progress import TimeRemainingColumn
 
 import pyvista as pv
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from pyvista.core.filters.data_object import _MeshValidator
 from pyvista.core.filters.data_object import _ReportBodyOptions
 
-from .app import app
+from .app import CLI_APP
 from .utils import HELP_FORMATTER
-from .utils import _console_error
-from .utils import _converter_files
+from .utils import print_error_and_exit
+from .utils import read_mesh
+from .utils import skip_unreadable
+from .utils import validate_paths
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
     from cyclopts import Token
-
-    from .utils import _MeshAndPath
 
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
@@ -114,33 +120,34 @@ def _converter_report(
     raise ValueError(msg)
 
 
-@app.command(
-    usage=f'Usage: [bold]{pv.__name__} validate MESH-PATH [FIELDS...] [--exclude FIELDS...]',
+@CLI_APP.command(
+    usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
     help="Validate a mesh's array data, points, and cells.",
 )
 def _validate(
-    mesh_path: Annotated[
-        str,
+    paths: Annotated[
+        list[str],
         Parameter(
+            consume_multiple=True,
             help=(
-                'Mesh to validate. Must be readable with ``pyvista.read``. '
+                'Mesh(es) to validate. Must be readable with ``pyvista.read``. '
                 'Glob patterns (``*``, ``?``, ``[...]``) are expanded; '
                 'every match is validated in turn.'
             ),
-            converter=_converter_files,
         ),
     ],
+    /,
+    *,
     fields: Annotated[
         list[_LiteralMeshValidationFields] | None,
         Parameter(
-            name='fields',
+            name=('fields', '-f'),
             consume_multiple=True,
             negative=[],
             help=fields_help,
         ),
     ] = None,
-    *,
     exclude: Annotated[
         list[_LiteralMeshValidationFields] | None,
         Parameter(
@@ -185,22 +192,35 @@ def _validate(
             help=report_help,
         ),
     ] = None,
+    skip_unreadable: skip_unreadable = False,
 ) -> None:
-    # Cyclopts declares ``mesh_path`` as ``str`` for CLI parsing but ``_converter_files``
-    # replaces the string token with the list of read meshes — narrow the type here.
-    items: list[_MeshAndPath] = mesh_path  # type: ignore[assignment]
+    valid_paths = validate_paths(paths)
     report_body = report[0] if report else 'message'
-    for item in items:
-        mesh = item.mesh
-        if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
-            msg = (
-                f'Cannot validate {type(mesh).__name__} read from path {str(item.path)!r}: '
-                f'only DataSet and MultiBlock meshes are supported.'
+    n_paths = len(valid_paths)
+
+    if n_paths == 1:
+        path = valid_paths[0]
+        mesh = read_mesh(
+            path,
+            on_error='suppress' if skip_unreadable else 'exit',
+        )
+        if mesh is not None:
+            _validate_one(
+                mesh,
+                path,
+                announce=True,
+                fields=fields,
+                exclude=exclude,
+                tolerance=tolerance,
+                planarity_tolerance=planarity_tolerance,
+                size_tolerance=size_tolerance,
+                report=report,
+                report_body=report_body,
             )
-            _console_error(app=app, message=msg)
-        _validate_one(
-            mesh,
-            item.path,
+    else:
+        _validate_many(
+            valid_paths,
+            skip_unreadable=skip_unreadable,
             fields=fields,
             exclude=exclude,
             tolerance=tolerance,
@@ -211,8 +231,18 @@ def _validate(
         )
 
 
+def _check_mesh_type(mesh: object, path: Path) -> None:
+    """Exit with a console error if ``mesh`` is not a supported type."""
+    if not isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
+        msg = (
+            f'Cannot validate {type(mesh).__name__} read from path {str(path)!r}: '
+            f'only DataSet and MultiBlock meshes are supported.'
+        )
+        print_error_and_exit(message=msg)
+
+
 def _validate_one(
-    mesh: pv.DataSet | pv.MultiBlock,
+    mesh: pv.DataObject,
     path: Path,
     *,
     fields: list[_LiteralMeshValidationFields] | None,
@@ -222,11 +252,16 @@ def _validate_one(
     size_tolerance: float | None,
     report: list[_ReportBodyOptions] | None,
     report_body: _ReportBodyOptions,
-) -> None:
-    """Validate a single mesh and print its result to the console."""
+    announce: bool,
+) -> str | None:
+    """Validate a single mesh and optionally print its result to the console.
+
+    Returns None if the mesh is valid, and the report as a string otherwise .
+    """
     class_name = mesh.__class__.__name__
+    _check_mesh_type(mesh, path)
     try:
-        out = pv.DataObjectFilters.validate_mesh(
+        out = pv.DataObjectFilters.validate_mesh(  # type: ignore[type-var]
             mesh,
             name=path.name,
             validation_fields=fields,
@@ -238,16 +273,107 @@ def _validate_one(
         )
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
-        _console_error(app=app, message=msg)
+        print_error_and_exit(message=msg)
+
+    if report is not None:
+        report_string = str(out)
+        invalid_fields = out.invalid_fields if report_body == 'fields' else None
+        output = _MeshValidator._colorize_output(report_string, invalid_fields)
+        announcement = output
+        console = CLI_APP.console  # Actual program output for stdout
+    elif (message := out.message) is not None:
+        output = _MeshValidator._colorize_output(message)
+        announcement = output
+        console = CLI_APP.console  # Actual program output for stdout
     else:
-        if report is not None:
-            # Print the full report
-            report_string = str(out)
-            invalid_fields = out.invalid_fields if report_body == 'fields' else None
-            app.console.print(_MeshValidator._colorize_output(report_string, invalid_fields))
-        elif (message := out.message) is not None:
-            # Only print the error message and show the file name
-            app.console.print(_MeshValidator._colorize_output(message))
-        else:
-            # Mesh is valid
-            app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
+        # Mesh is valid,
+        announcement = _mesh_is_valid_message(class_name, path)
+        console = CLI_APP.error_console  # print to stderr for user info only
+        output = None
+    if announce:
+        console.print(announcement)
+    return output
+
+
+def _mesh_is_valid_message(class_name: str, path: Path) -> str:
+    return f'[green]{class_name} mesh {path.name!r} is valid![/green]'
+
+
+def _validate_many(
+    paths: list[Path],
+    *,
+    skip_unreadable: bool,
+    fields: list[_LiteralMeshValidationFields] | None,
+    exclude: list[_LiteralMeshValidationFields] | None,
+    tolerance: float | None,
+    planarity_tolerance: float | None,
+    size_tolerance: float | None,
+    report: list[_ReportBodyOptions] | None,
+    report_body: _ReportBodyOptions,
+) -> None:
+    """Validate each mesh under a progress bar and report a summary."""
+    columns = (
+        TextColumn('[progress.description]{task.description}'),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn('•'),
+        TimeElapsedColumn(),
+        TextColumn('<'),
+        TimeRemainingColumn(),
+    )
+
+    n_valid = 0
+    n_invalid = 0
+    skipped: list[Path] = []
+    invalid_output: list[str] = []
+
+    with Progress(*columns, console=CLI_APP.error_console, transient=False) as progress:
+        task = progress.add_task('Validating', total=len(paths))
+        for path in paths:
+            progress.update(task, description=f'Validating [cyan]{path.name}[/cyan]')
+            mesh = read_mesh(
+                path,
+                on_error='suppress' if skip_unreadable else 'exit+hint',
+            )
+            if mesh is None:
+                skipped.append(path)
+            else:
+                output = _validate_one(
+                    mesh,
+                    path,
+                    fields=fields,
+                    exclude=exclude,
+                    tolerance=tolerance,
+                    planarity_tolerance=planarity_tolerance,
+                    size_tolerance=size_tolerance,
+                    report=report,
+                    report_body=report_body,
+                    announce=False,
+                )
+
+                if output:
+                    n_invalid += 1
+                    invalid_output.append(output)
+                else:
+                    n_valid += 1
+            progress.update(task, advance=1)
+
+    n_total = n_valid + n_invalid
+    if n_invalid:
+        msg = f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
+        CLI_APP.error_console.print(msg)
+        CLI_APP.error_console.print('\n'.join(invalid_output))
+    elif n_total:
+        msg = (
+            '[green]1 mesh is valid.[/green]'
+            if n_total == 1
+            else f'[green]All {n_total} meshes are valid.[/green]'
+        )
+        CLI_APP.error_console.print(msg)
+
+    if n_skipped := len(skipped):
+        s = 's' if n_skipped > 1 else ''
+        msg = f'\n[yellow]{n_skipped} file{s} skipped (unreadable):[/yellow]'
+        CLI_APP.error_console.print(msg)
+        for path in skipped:
+            CLI_APP.error_console.print(f'  {path}')

@@ -1202,7 +1202,7 @@ class DataObjectFilters:
         name : str, optional
             Name to use in the validation report and error messages.
 
-            .. versionadded:: 0.48
+            .. versionadded:: 0.49
 
         cell_validator_kwargs
             Keyword arguments passed to :meth:`~pyvista.DataObjectFilters.cell_validator`.
