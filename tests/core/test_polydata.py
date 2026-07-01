@@ -1023,23 +1023,78 @@ def test_extract_largest(sphere):
     assert mesh.n_faces == sphere.n_faces
 
 
-def test_clean(sphere):
+@pytest.mark.parametrize(
+    'static',
+    [
+        pytest.param(
+            True,
+            marks=pytest.mark.needs_vtk_version(
+                (9, 6),
+                reason='`static=True` requires VTK >= 9.6.',
+            ),
+        ),
+        False,
+    ],
+)
+def test_clean(sphere, static):
     mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
-    cleaned = mesh.clean(merge_tol=1e-5)
+    cleaned = mesh.clean(merge_tol=1e-5, static=static)
     assert cleaned.n_points == sphere.n_points
 
-    mesh.clean(merge_tol=1e-5, inplace=True)
+    mesh.clean(merge_tol=1e-5, inplace=True, static=static)
     assert mesh.n_points == sphere.n_points
 
-    cleaned = mesh.clean(point_merging=False)
-    assert cleaned.n_points == mesh.n_points
+    if static:
+        # static=True is incompatible with point_merging=False
+        with pytest.raises(ValueError, match='requires `point_merging=True`'):
+            mesh.clean(point_merging=False, static=static)
+    else:
+        cleaned = mesh.clean(point_merging=False, static=static)
+        assert cleaned.n_points == mesh.n_points
 
     # test with points but no cells
     mesh = pv.PolyData()
     mesh.points = (0, 0, 0)
-    cleaned = mesh.clean()
+    cleaned = mesh.clean(static=static)
     assert cleaned.n_points == 0
+
+
+@pytest.mark.needs_vtk_version((9, 6), reason='`static=True` requires VTK >= 9.6.')
+def test_clean_static_equivalent_to_serial(sphere):
+    # The static and serial filters are NOT expected to produce equal meshes:
+    # they emit the same set of points and cells but in a different order, so
+    # `static_cleaned == serial_cleaned` is intentionally false. This test
+    # asserts the weaker (and correct) guarantee: the two outputs contain the
+    # same set of point coordinates and the same set of cells.
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
+    static_cleaned = mesh.clean(merge_tol=1e-5, static=True)
+    serial_cleaned = mesh.clean(merge_tol=1e-5, static=False)
+    assert static_cleaned.n_points == serial_cleaned.n_points
+    assert static_cleaned.n_cells == serial_cleaned.n_cells
+
+    def _sorted_points(poly):
+        return poly.points[np.lexsort(poly.points.T)]
+
+    assert np.allclose(_sorted_points(static_cleaned), _sorted_points(serial_cleaned))
+
+    def _cell_coord_set(poly):
+        # Each cell as a frozenset of its (rounded) point coordinates, so the
+        # comparison is invariant to both point ordering and connectivity
+        # reindexing between the two filters.
+        cells = []
+        for cid in range(poly.n_cells):
+            pts = poly.get_cell(cid).points
+            cells.append(frozenset(map(tuple, np.round(pts, 8))))
+        return sorted(map(sorted, cells))
+
+    assert _cell_coord_set(static_cleaned) == _cell_coord_set(serial_cleaned)
+
+
+def test_clean_static_requires_vtk_96(sphere, monkeypatch):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 5, 0))
+    with pytest.raises(pv.VTKVersionError, match=r'requires VTK >= 9\.6'):
+        sphere.clean(static=True)
 
 
 def test_area(sphere_dense, cube_dense):
