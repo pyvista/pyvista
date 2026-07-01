@@ -151,6 +151,7 @@ jobs:
 
   test-pyvista:
     needs: build-vtk
+    if: ${{ !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
@@ -165,24 +166,35 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Download VTK wheel artifact
+        id: download-wheel
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
           path: vtk-wheel
 
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        run: |
+          echo "::warning::No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }} — build-vtk must have failed for this leg. Skipping."
+
       - name: Install VTK wheel
+        if: steps.download-wheel.outcome == 'success'
         shell: bash
         run: python -m pip install vtk-wheel/*.whl
 
       - name: Checkout PyVista
+        if: steps.download-wheel.outcome == 'success'
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Install PyVista
+        if: steps.download-wheel.outcome == 'success'
         shell: bash
         run: python -m pip install -e .
 
       - name: Run PyVista report
+        if: steps.download-wheel.outcome == 'success'
         shell: bash
         run: pyvista report
