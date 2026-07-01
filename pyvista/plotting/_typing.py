@@ -92,7 +92,24 @@ CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
 CameraPositionOptions = (
-    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+    Literal[
+        'xy',
+        'xz',
+        'yz',
+        'yx',
+        'zx',
+        'zy',
+        'iso',
+        '+x',
+        'x',
+        '-x',
+        '+y',
+        'y',
+        '-y',
+        '+z',
+        'z',
+        '-z',
+    ]
     | VectorLike[float]
     | MatrixLike[float]
     | CameraPosition
