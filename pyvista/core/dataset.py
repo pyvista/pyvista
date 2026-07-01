@@ -1849,6 +1849,21 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.UnstructuredGrid
             Dataset cast into a :class:`pyvista.UnstructuredGrid`.
 
+        Notes
+        -----
+        The coordinate precision of the input is preserved. This requires
+        special handling for datasets with implicit geometry
+        (:class:`~pyvista.RectilinearGrid`, :class:`~pyvista.ImageData`). The
+        underlying ``vtkAppendFilter`` detects point precision by inspecting the
+        input's stored points, but these datasets store their geometry
+        implicitly (per-axis coordinates, or origin and spacing) and have no
+        such points. The filter would otherwise default to single precision and
+        silently downcast double coordinates. A ``RectilinearGrid`` is cast to
+        double precision when any of its coordinate arrays is double; an
+        ``ImageData`` is always cast to double since its origin and spacing are
+        always stored in double precision. See the upstream VTK bug:
+        https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
+
         Examples
         --------
         Cast a :class:`pyvista.PolyData` to a
@@ -1865,6 +1880,20 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
+        # vtkAppendFilter falls back to single precision for datasets without
+        # explicit points (RectilinearGrid, ImageData) because it infers
+        # precision from vtkPointSet.GetPoints(), which is None for these types.
+        # Work around the VTK bug by setting output precision explicitly.
+        # See https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
+        # and https://github.com/pyvista/pyvista/issues/7931
+        if isinstance(self, pv.RectilinearGrid):
+            input_is_double = any(
+                coords.dtype == np.float64 for coords in (self.x, self.y, self.z)
+            )
+        else:
+            input_is_double = isinstance(self, pv.ImageData)
+        if input_is_double:
+            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         alg.Update()
         return _get_output(alg)
 
