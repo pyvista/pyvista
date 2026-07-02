@@ -778,7 +778,7 @@ To install these locally, run
 For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
 the VTK dev wheels. The tests only run when the label is applied.
 
-These wheels are `typically` published weekly but not always since it depends on VTK
+These wheels are *typically* published weekly but not always since it depends on VTK
 CI workflows to succeed for publishing, and these may be in a failed state for several weeks.
 Instead, it is possible to build VTK directly from master and test against it using the
 ``vtk-master-testing`` label to ensure the tests run against the latest VTK source changes.
