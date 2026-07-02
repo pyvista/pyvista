@@ -21,8 +21,22 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout VTK master
-        run: git clone --depth 1 --branch master https://gitlab.kitware.com/vtk/vtk.git vtk-src
+      - name: Checkout VTK master (pinned to nightly date-stamp commit)
+        shell: bash
+        run: |
+          # Depth 200 since we want to ensure we capture kwrobot's date-stamp commit
+          git clone --depth 200 --branch master https://gitlab.kitware.com/vtk/vtk.git vtk-src
+          cd vtk-src
+
+          NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' -n 1 --format=%H)"
+          if [ -z "$NIGHTLY_SHA" ]; then
+            echo "No 'VTK Nightly Date Stamp' commit found in the last 200 commits on master"
+            exit 1
+          fi
+
+          echo "Pinning build to VTK's nightly date-stamp commit: $NIGHTLY_SHA"
+          git checkout "$NIGHTLY_SHA"
+          echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@v5
         with:
@@ -106,7 +120,7 @@ jobs:
             -DVTK_BUILD_TESTING=OFF
             -DVTK_BUILD_DOCUMENTATION=OFF
             -DVTK_BUILD_EXAMPLES=OFF
-            -DVTK_VERSION_SUFFIX=dev$(date +%Y%m%d)
+            -DVTK_VERSION_SUFFIX=dev0+g${VTK_NIGHTLY_SHA:0:8}
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)")
             -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
             -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
