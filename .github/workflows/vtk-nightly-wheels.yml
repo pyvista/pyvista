@@ -51,10 +51,9 @@ jobs:
         run: brew install ccache
 
       - name: Install build tools
-        shell: bash
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          pip install ninja
+          pip install ninja matplotlib
           if [ "$RUNNER_OS" = "Linux" ]; then pip install auditwheel; fi
           if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
           if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
@@ -113,6 +112,7 @@ jobs:
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)") \
             -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
             -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
+            -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES \
             ../vtk-src
 
       - name: Build
