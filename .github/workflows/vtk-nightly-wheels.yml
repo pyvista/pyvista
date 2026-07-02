@@ -65,6 +65,7 @@ jobs:
         run: brew install ccache
 
       - name: Install build tools
+        shell: bash
         run: |
           python -m pip install --upgrade pip wheel setuptools
           pip install ninja matplotlib
@@ -77,6 +78,7 @@ jobs:
         run: echo "CMAKE_OSX_ARCHITECTURES=arm64" >> "$GITHUB_ENV"
 
       - name: Set compiler launcher
+        shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
@@ -106,9 +108,11 @@ jobs:
 
       - name: Enable sccache GHA backend (Windows)
         if: runner.os == 'Windows'
+        shell: bash
         run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
 
       - name: Configure
+        shell: bash
         run: |
           mkdir vtk-build && cd vtk-build
 
@@ -139,9 +143,11 @@ jobs:
         run: cmake --build vtk-build --parallel
 
       - name: Show compiler cache statistics
+        shell: bash
         run: $COMPILER_LAUNCHER --show-stats
 
       - name: Build wheel
+        shell: bash
         run: |
           cd vtk-build
           if [ "$RUNNER_OS" = "macOS" ]; then
@@ -163,6 +169,7 @@ jobs:
           echo "VTK_DYLIB_DIR=$LIBDIR" >> "$GITHUB_ENV"
 
       - name: Repair wheel
+        shell: bash
         run: |
           cd vtk-build
           mkdir -p wheelhouse
