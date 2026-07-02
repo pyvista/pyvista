@@ -1,0 +1,212 @@
+name: VTK Nightly Wheels (master)
+
+permissions:
+  actions: read
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build-vtk:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.14"]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout VTK master
+        run: git clone --depth 1 --branch master https://gitlab.kitware.com/vtk/vtk.git vtk-src
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ runner.os == 'macOS' && 'arm64' || 'x64' }}
+
+      - name: Validate macOS Python arch
+        if: runner.os == 'macOS'
+        run: |
+          python -c "import platform; print(platform.machine())"
+          python -c "import platform; assert platform.machine() == 'arm64'"
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ccache \
+            libx11-dev \
+            libxt-dev \
+            libgl1-mesa-dev \
+            libxcursor-dev
+
+      - name: Install macOS build dependencies
+        if: runner.os == 'macOS'
+        run: brew install ccache
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install ninja
+          if [ "$RUNNER_OS" = "Linux" ]; then pip install auditwheel; fi
+          if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
+          if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
+
+      - name: Set macOS architecture
+        if: runner.os == 'macOS'
+        run: echo "CMAKE_OSX_ARCHITECTURES=arm64" >> "$GITHUB_ENV"
+
+      - name: Set compiler launcher
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          else
+            echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure ccache (Linux & macOS)
+        if: runner.os != 'Windows'
+        run: echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+
+      - name: Restore ccache (Linux & macOS)
+        if: runner.os != 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: vtk-nightly-ccache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            vtk-nightly-ccache-${{ runner.os }}-
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Set up sccache (Windows)
+        if: runner.os == 'Windows'
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696
+
+      - name: Enable sccache GHA backend (Windows)
+        if: runner.os == 'Windows'
+        run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Configure
+        shell: bash
+        run: |
+          mkdir vtk-build && cd vtk-build
+
+          cmake -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVTK_WHEEL_BUILD=ON \
+            -DVTK_WRAP_PYTHON=ON \
+            -DVTK_BUILD_TESTING=OFF \
+            -DVTK_BUILD_DOCUMENTATION=OFF \
+            -DVTK_BUILD_EXAMPLES=OFF \
+            -DVTK_VERSION_SUFFIX=dev$(date +%Y%m%d) \
+            -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)") \
+            -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
+            ../vtk-src
+
+      - name: Build
+        run: cmake --build vtk-build --parallel
+
+      - name: Show compiler cache statistics
+        shell: bash
+        run: $COMPILER_LAUNCHER --show-stats
+
+      - name: Build wheel
+        shell: bash
+        run: |
+          cd vtk-build
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            export _PYTHON_HOST_PLATFORM="macosx-11.0-arm64"
+            export ARCHFLAGS="-arch arm64"
+          fi
+          python setup.py bdist_wheel
+
+      - name: Locate macOS VTK dylibs
+        if: runner.os == 'macOS'
+        run: |
+          cd vtk-build
+          LIBDIR="$(dirname "$(find . -name 'libvtksys*.dylib' -print -quit)")"
+          if [ -z "$LIBDIR" ]; then
+            echo "::error::could not locate libvtksys*.dylib anywhere under vtk-build"
+            exit 1
+          fi
+          echo "Found VTK dylibs in: $LIBDIR"
+          echo "VTK_DYLIB_DIR=$LIBDIR" >> "$GITHUB_ENV"
+
+      - name: Repair wheel
+        shell: bash
+        run: |
+          cd vtk-build
+          mkdir -p wheelhouse
+          case "$RUNNER_OS" in
+            Linux)   auditwheel repair dist/*.whl -w wheelhouse/ ;;
+            macOS)   DYLD_LIBRARY_PATH="$PWD/$VTK_DYLIB_DIR" delocate-wheel --require-archs arm64 -w wheelhouse -v dist/*.whl ;;
+            Windows) delvewheel repair --add-path bin -w wheelhouse dist/*.whl ;;
+          esac
+
+      - name: Upload VTK wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-build/wheelhouse/*.whl
+
+  test-pyvista:
+    needs: build-vtk
+    if: ${{ !cancelled() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.14"]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        run: |
+          echo "::warning::No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }} — build-vtk must have failed for this leg. Skipping."
+
+      - name: Install VTK wheel
+        if: steps.download-wheel.outcome == 'success'
+        shell: bash
+        run: python -m pip install vtk-wheel/*.whl
+
+      - name: Checkout PyVista
+        if: steps.download-wheel.outcome == 'success'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install PyVista
+        if: steps.download-wheel.outcome == 'success'
+        shell: bash
+        run: python -m pip install -e .
+
+      - name: Run PyVista report
+        if: steps.download-wheel.outcome == 'success'
+        shell: bash
+        run: pyvista report
