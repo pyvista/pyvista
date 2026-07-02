@@ -106,7 +106,7 @@ jobs:
 
     runs-on: ${{ matrix.runner-labels }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -125,7 +125,7 @@ jobs:
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
@@ -192,7 +192,7 @@ jobs:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
       PARALLEL: "-n auto" # Use all available cores on the selected runner
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -202,13 +202,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -271,7 +271,7 @@ jobs:
       matrix:
         python-version: ["3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -282,13 +282,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+      - uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4
         with:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -339,7 +339,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -350,7 +350,7 @@ jobs:
           cache: "pip"
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -414,7 +414,7 @@ jobs:
       contents: read
     steps:
       # Needs to checkout only for codecov to match file names
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -443,7 +443,7 @@ jobs:
     permissions:
       id-token: write # this permission is mandatory for trusted publishing
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

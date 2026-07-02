@@ -45,7 +45,7 @@ jobs:
               latest=auto
               suffix=-slim,onlatest=true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
