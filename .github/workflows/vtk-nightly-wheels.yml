@@ -195,6 +195,11 @@ jobs:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
 
     steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -211,12 +216,6 @@ jobs:
         if: steps.download-wheel.outcome != 'success'
         run: |
           echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
-
-      - name: Checkout PyVista
-        if: steps.download-wheel.outcome == 'success'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - name: Install tox-uv
         if: steps.download-wheel.outcome == 'success'
