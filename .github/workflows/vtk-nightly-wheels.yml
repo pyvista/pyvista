@@ -63,11 +63,20 @@ jobs:
         if: runner.os == 'macOS'
         run: echo "CMAKE_OSX_ARCHITECTURES=arm64" >> "$GITHUB_ENV"
 
-      - name: Configure ccache
+      - name: Set compiler launcher
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          else
+            echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure ccache (Linux & macOS)
         if: runner.os != 'Windows'
         run: echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
 
-      - name: Restore ccache
+      - name: Restore ccache (Linux & macOS)
         if: runner.os != 'Windows'
         uses: actions/cache@v4
         with:
@@ -79,17 +88,19 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         if: runner.os == 'Windows'
 
+      - name: Set up sccache (Windows)
+        if: runner.os == 'Windows'
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696
+
+      - name: Enable sccache GHA backend (Windows)
+        if: runner.os == 'Windows'
+        run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+        shell: bash
+
       - name: Configure
         shell: bash
         run: |
           mkdir vtk-build && cd vtk-build
-
-          CMAKE_ARGS=""
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            CMAKE_ARGS="$CMAKE_ARGS \
-              -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-          fi
 
           cmake -GNinja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -100,15 +111,16 @@ jobs:
             -DVTK_BUILD_EXAMPLES=OFF \
             -DVTK_VERSION_SUFFIX=dev$(date +%Y%m%d) \
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)") \
-            $CMAKE_ARGS \
+            -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
             ../vtk-src
 
       - name: Build
         run: cmake --build vtk-build --parallel
 
-      - name: Show ccache statistics
-        if: runner.os != 'Windows'
-        run: ccache --show-stats
+      - name: Show compiler cache statistics
+        shell: bash
+        run: $COMPILER_LAUNCHER --show-stats
 
       - name: Build wheel
         shell: bash
