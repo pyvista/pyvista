@@ -763,10 +763,13 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage (note t
     def test():
         """Test is skipped with a custom message"""
 
-VTK Dev Wheel Testing
-^^^^^^^^^^^^^^^^^^^^^
+Testing against VTK master
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 Most unit testing is run with stable VTK releases. However, it is sometimes useful to
-run tests with the latest VTK dev wheels. To install these locally, run
+run tests against the VTK master source.
+
+VTK provides development wheels published to the VTK wheels index for this purpose.
+To install these locally, run
 
 .. code-block:: shell
 
@@ -774,6 +777,14 @@ run tests with the latest VTK dev wheels. To install these locally, run
 
 For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
 the VTK dev wheels. The tests only run when the label is applied.
+
+These wheels are `typically` published weekly but not always since it depends on VTK
+CI workflows to succeed for publishing, and these may be in a failed state for several weeks.
+Instead, it is possible to build VTK directly from master and test against it using the
+``vtk-master-testing`` label to ensure the tests run against the latest VTK source changes.
+Just like ``vtk-dev-testing``, the tests only run when the label is applied.
+
+The two labels are independent and can be applied separately.
 
 .. note::
 
