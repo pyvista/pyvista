@@ -1,4 +1,4 @@
-name: VTK Nightly Wheels (master)
+name: Build/Test VTK Master Wheels
 
 permissions:
   actions: read
