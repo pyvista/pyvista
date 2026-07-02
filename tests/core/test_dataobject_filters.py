@@ -27,6 +27,7 @@ from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
+from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -1732,7 +1733,7 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays, as_composite):
 
 
 def test_validate_mesh_default_fields():
-    mesh = pv.ImageData()
+    mesh = pv.UnstructuredGrid()
     report1 = str(mesh.validate_mesh())
     report2 = str(mesh.validate_mesh(['data', 'cells', 'points']))
     assert report1 == report2
@@ -1881,6 +1882,35 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+@pytest.fixture
+def image150():
+    # Dims must be large enough to replicate VTK bug: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+    return pv.ImageData(dimensions=(150, 150, 150))
+
+
+def test_validate_mesh_imagedata(image150):
+    image150.cell_validator()
+    image150.validate_mesh(action='error')
+
+    match = "Cell field 'wrong_number_of_points' is not supported for ImageData."
+    with pytest.raises(ValueError, match=match):
+        image150.validate_mesh('cells')
+
+
+@pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
+def test_validate_mesh_imagedata_vtk_fields(image150, field):
+    # Ensure vtk fields raise error
+    match = f'Cell field {field!r} is not supported for ImageData.'
+    with pytest.raises(ValueError, match=match):
+        image150.validate_mesh([field])
+
+
+@pytest.mark.parametrize('field', [f.lower() for f in _PYVISTA_CELL_STATUS_INFO if f != 'VALID'])
+def test_validate_mesh_imagedata_pyvista_fields(image150, field):
+    # Ensure pyvista fields DO NOT raise error
+    image150.validate_mesh(field)
+
+
 @pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
 def test_validate_mesh_planarity_tolerance():
     match = 'Planarity tolerance requires VTK 9.6 or later.'
@@ -1945,13 +1975,20 @@ def invalid_random_polydata():
     return pv.PolyData(points, faces=faces)
 
 
+def test_validate_mesh_name():
+    name = 'poly'
+    report = pv.PolyData().validate_mesh(name=name)
+    assert report.name == name
+
+
 def test_validate_mesh_report_str():
-    report = pv.Sphere().validate_mesh(report_body='fields')
+    report = pv.Sphere().validate_mesh(report_body='fields', name='Sphere')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh info:\n'
+        "    Name                     : 'Sphere'\n"
         '    Type                     : PolyData\n'
         '    N Points                 : 842\n'
         '    N Cells                  : 1680\n'
@@ -1984,12 +2021,13 @@ def test_validate_mesh_report_str():
 
 def test_validate_mesh_composite_report_str():
     multi = pv.Sphere().cast_to_multiblock()
-    report = multi.validate_mesh(report_body='fields')
+    report = multi.validate_mesh(report_body='fields', name='Sphere')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh info:\n'
+        "    Name                     : 'Sphere'\n"
         '    Type                     : MultiBlock\n'
         '    N Blocks                 : 1\n'
         'Report summary:\n'

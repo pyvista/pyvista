@@ -423,16 +423,6 @@ def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
         fileio.read(fname)
 
 
-@mock.patch('pyvista.core.utilities.fileio.read_exodus')
-def test_pyvista_read_exodus(read_exodus_mock):
-    # check that reading a file with extension .e calls `read_exodus`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pv.read(ex.globefile, force_ext='.e')
-    args, _kwargs = read_exodus_mock.call_args
-    filename = args[0]
-    assert filename == Path(ex.globefile)
-
-
 def test_get_array_cell(hexbeam):
     carr = np.random.default_rng().random(hexbeam.n_cells)
     hexbeam.cell_data.set_array(carr, 'test_data')

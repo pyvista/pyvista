@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
-import importlib
 import itertools
 import json
 from pathlib import Path
@@ -26,6 +25,7 @@ from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -74,14 +74,7 @@ _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
-def _lazy_vtk_import(module_name: str, class_name: str) -> type:
-    """Lazy import of a class from the selected VTK backend (vtkmodules or fvtk)."""
-    module = importlib.import_module(f'{_vtk._VTK_BACKEND}.{module_name}')
-    return getattr(module, class_name)
-
-
 class _FileIOBase(ABC, _NoNewAttrMixin):
-    _vtk_module_name: str = ''
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -100,8 +93,8 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
-        if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
+        if cls._vtk_class_name:
+            return getattr(_vtk, cls._vtk_class_name)
         return None
 
     @classmethod
@@ -467,8 +460,6 @@ def _read_dispatch(  # noqa: PLR0911
         return read_meshio(filename, file_format)
 
     ext = _get_ext_force(filename, force_ext)
-    if ext in ['.e', '.exo']:
-        return read_exodus(filename)
     if ext in _PICKLE_FILE_EXT:
         _raise_pickle_removed()
 
@@ -599,6 +590,9 @@ def read_exodus(  # noqa: PLR0917
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
+    .. deprecated:: 0.49
+        Use :func:`pyvista.read` or :class:`pyvista.ExodusIIReader` instead.
+
     Parameters
     ----------
     filename : str, Path
@@ -641,6 +635,15 @@ def read_exodus(  # noqa: PLR0917
 
     """
     from .helpers import wrap  # noqa: PLC0415
+
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
 
     reader = _vtk.vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -710,6 +713,23 @@ def read_grdecl(
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
     """
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function private'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_grdecl` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    return _read_grdecl(filename, elevation=elevation, other_keywords=other_keywords)
+
+
+def _read_grdecl(
+    filename: str | Path,
+    *,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
+) -> ExplicitStructuredGrid:
     property_keywords = (
         'ACTNUM',
         'COORD',

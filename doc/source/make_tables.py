@@ -95,6 +95,8 @@ DATASET_GALLERY_MODULES = [
     pv.examples.downloads,
     pv.examples.planets,
     pv.examples.gltf,
+    pv.examples.download_3ds,
+    pv.examples.vrml,
 ]
 
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
@@ -2690,7 +2692,7 @@ class DatasetPropsGenerator:
         # Collect url names and links as sequences
         name = loader.source_name
         names = [name] if isinstance(name, str) else name
-        url = loader.source_url_blob
+        url = loader.web_url
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
@@ -2781,6 +2783,15 @@ class DatasetCardFetcher:
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
         """Add a new dataset card so that it can be fetched later."""
+        if card := cls.DATASET_CARDS_OBJ.get(dataset_name):
+            existing_module = card.loader._module.__name__
+            new_module = dataset_loader._module.__name__
+            msg = (
+                f'Cannot add dataset {dataset_name!r} from {new_module}.\n'
+                f'A dataset with this name already exists from {existing_module}.\n'
+                f'The name must be unique'
+            )
+            raise RuntimeError(msg)
         cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
     @classmethod
@@ -2813,7 +2824,8 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 # Load data
-                print(f'loading datasets... {dataset_name}', flush=True)
+                module_name = module.__name__.removeprefix('pyvista.')
+                print(f'loading datasets from {module_name}... {dataset_name}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
@@ -3214,6 +3226,16 @@ class DownloadsCarousel(DatasetGalleryCarousel):
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.downloads)
 
+    @classmethod
+    def generate(cls):
+        super().generate()
+        # Sanity check to ensure proper URLs are generated due to complexity with
+        # using local cached data for downloads
+        with open(cls.path) as f:
+            content = f.read()
+        real_url = 'https://github.com/pyvista/data/blob/master/Data/cow.vtp'
+        assert real_url in content
+
 
 class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
@@ -3237,6 +3259,40 @@ class GltfCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.gltf)
+
+    @classmethod
+    def generate(cls):
+        super().generate()
+        # Sanity check to ensure proper URLs are generated due to complexity with
+        # using local cached data for downloads
+        with open(cls.path) as f:
+            content = f.read()
+        real_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf'
+        assert real_url in content
+
+
+class VRMLCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the vrml module."""
+
+    name = 'vrml_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.vrml>` module.'
+    badge = ModuleBadge('VRML', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.vrml)
+
+
+class ThreeDSCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the 3ds module."""
+
+    name = '3ds_carousel'
+    doc = 'Datasets from the :mod:`gltf <pyvista.examples.download_3ds>` module.'
+    badge = ModuleBadge('3DS', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.download_3ds)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -3566,6 +3622,8 @@ CAROUSEL_LIST = [
     DownloadsCarousel,
     PlanetsCarousel,
     GltfCarousel,
+    VRMLCarousel,
+    ThreeDSCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,

@@ -174,11 +174,18 @@ def test_solid_sphere_hollow():
 
 
 def test_solid_sphere_generic():
-    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
+    radius_resolution = 5
+    theta_resolution = 11
+    phi_resolution = 13
+    sphere = pv.SolidSphere(
+        radius_resolution=radius_resolution,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+    )
     sphere_seq = pv.SolidSphereGeneric(
-        radius=np.linspace(0, 0.5, 5),
-        theta=np.linspace(0, 360, 11),
-        phi=np.linspace(0, 180, 13),
+        radius=np.linspace(0, 0.5, radius_resolution),
+        theta=np.linspace(0, 360, theta_resolution + 1),
+        phi=np.linspace(0, 180, phi_resolution),
     )
     assert sphere == sphere_seq
 
@@ -292,7 +299,7 @@ def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match='radius resolution must be 2 or more'):
         pv.SolidSphere(radius_resolution=1)
     with pytest.raises(ValueError, match='theta resolution must be 2 or more'):
-        pv.SolidSphere(theta_resolution=1)
+        pv.SolidSphere(theta_resolution=0)
     with pytest.raises(ValueError, match='phi resolution must be 2 or more'):
         pv.SolidSphere(phi_resolution=1)
 

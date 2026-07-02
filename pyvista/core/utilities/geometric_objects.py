@@ -480,7 +480,7 @@ def Sphere(  # noqa: PLR0917
             :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
             the Prime Meridian along the positive x-axis.
 
-            In this case, consider using :func:`~pyvista.examples.planets.load_earth` instead,
+            In this case, consider using :func:`~pyvista.examples.planets.load_planet` instead,
             which already includes this rotation.
 
         .. versionadded:: 0.49
@@ -495,7 +495,7 @@ def Sphere(  # noqa: PLR0917
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
-    :func:`pyvista.examples.planets.load_earth`
+    :func:`pyvista.examples.planets.load_planet`
         Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
 
     Examples
@@ -695,7 +695,7 @@ def SolidSphere(  # noqa: PLR0917
         end_phi = np.pi if radians else 180.0
 
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution + 1)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
         radius=radius,

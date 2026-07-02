@@ -2904,9 +2904,13 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     ... )
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
+    Generate a 5x5x5 grid comprised of all 3D concrete cell types with no gaps.
 
-    >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
+    >>> cell_types = [
+    ...     ctype
+    ...     for ctype in pv.CellType
+    ...     if ctype.dimension == 3 and ctype.vtk_class is not None
+    ... ]
     >>> cell_blocks = generate_cell_blocks(
     ...     cell_types,
     ...     'source',
