@@ -112,6 +112,7 @@ jobs:
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)") \
             -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
             -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER \
+            -DCMAKE_CXX_FLAGS="/wd4244" \
             -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES \
             ../vtk-src
 
