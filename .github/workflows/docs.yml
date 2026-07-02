@@ -1,0 +1,253 @@
+name: Build Documentation
+
+on: # zizmor: ignore[cache-poisoning]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 1 * *" # once a month on main
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: none
+
+jobs:
+  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # via workflow_run) can associate the build with its PR — workflow_run events
+  # do not include pull_request data for fork PRs.
+  pr-info:
+    name: Save PR info
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Save PR metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          mkdir -p pr-info
+          printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
+          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
+          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pr-info
+          path: pr-info/
+
+  cache-pyvista-data:
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
+    with:
+      # Runner should match the actual runner used by the build job
+      runs-on: "blacksmith-8vcpu-ubuntu-2204"
+
+  doc:
+    name: Build Documentation
+    runs-on: blacksmith-8vcpu-ubuntu-2204
+    needs: cache-pyvista-data
+    env:
+      TOX_COLORED: "yes"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.14
+          cache: "pip"
+
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+        with:
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime xvfb
+          version: 3.0
+
+      - name: Restore pyvista/data cache
+        uses: actions/cache/restore@v5
+        with:
+          path: pyvista-data
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Build Documentation
+        run: timeout 3600 xvfb-run -a tox run -e docs-build
+
+      # Build a development wheel and bundle a PEP 503 simple index into the
+      # docs output. Once the docs deploy to dev.pyvista.org, users can
+      # install with:
+      #   pip install --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+      # The wheel version is <base>+g<shortsha>, so every commit produces a
+      # uniquely-named wheel that pip's resolver picks up via --pre -U.
+      # Built on every docs run so PR Netlify previews exercise the wheel
+      # tree end-to-end; only the main-branch deploy lands on dev.pyvista.org.
+      - name: Build development wheel and simple index
+        run: |
+          python -m pip install --upgrade build
+          python doc/make_dev_wheel.py --html-dir doc/_build/html
+
+      - name: Dump Sphinx Build Warnings and Errors
+        if: always()
+        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+
+      - name: Dump VTK Warnings and Errors
+        if: always()
+        run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
+
+      - name: Dump Sphinx Execution Error Logs
+        if: always()
+        run: |
+          shopt -s nullglob
+          for f in /tmp/sphinx-err-*.log; do
+            cat "$f"
+          done
+
+      # Translated (i18n) docs are built in a dedicated pipeline in
+      # pyvista/pyvista-doc-translations. See issue #8626.
+
+      - name: Upload HTML documentation
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-build
+          path:
+            | # Only vtksz files in 'doc/_build/html/_images/' are used. Exclude all others since these files may be large.
+            doc/_build/html/
+            !doc/_build/html/index-*.vtksz
+            !doc/_build/html/api/**/*.vtksz
+            !doc/_build/html/extras/**/*.vtksz
+            !doc/_build/html/getting-started/**/*.vtksz
+            !doc/_build/html/user-guide/**/*.vtksz
+
+      - name: Upload non-interactive HTML documentation
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-build-light
+          path: |
+            doc/_build/html/
+            !doc/_build/html/**/*.vtksz
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: examples
+          path: doc/source/examples/
+
+      - name: Get Notebooks
+        run: |
+          mkdir _notebooks
+          find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pyvista-notebooks
+          path: _notebooks
+
+  test:
+    name: Test Documentation
+    runs-on: ubuntu-22.04
+    needs: doc
+    if: ${{ !cancelled() }}
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.14
+          cache: "pip"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: docs-build
+          path: doc/_build/html
+
+      - name: Test Documentation
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test
+
+      - name: Upload Images for Failed Tests
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: doc-failed-test-images
+          path: _doc_failed_test_images
+
+      - name: Upload Generated Images
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: doc-generated-test-images
+          path: _doc_generated_test_images
+
+  # Netlify deploys (preview, image report, release) live in docs-deploy.yml,
+  # triggered via workflow_run. Keeping them out of this workflow means fork PR
+  # CI is never blocked waiting on a deployment approval.
+
+  publish-notebooks:
+    name: Publish Notebooks for MyBinder
+    runs-on: ubuntu-22.04
+    needs: doc
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.14
+      - name: Install Dependencies
+        run: |
+          pip install cookiecutter
+      - uses: actions/download-artifact@v8
+        with:
+          name: pyvista-notebooks
+          path: .
+
+      - name: Make Cookiecutter
+        run: |
+          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          rm -rf ./pyvista-examples/notebooks/
+          cp -r doc/source/examples/ ./pyvista-examples/
+          ls -l ./pyvista-examples/
+
+      - name: Get app installation token (pyvista-examples)
+        id: app-token
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
+          private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
+          owner: pyvista
+          # Scope the token to only pyvista-examples — the only repo this
+          # step writes to. The App must be installed on pyvista-examples.
+          repositories: pyvista-examples
+          permission-contents: write
+
+      - name: Publish notebooks on release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
+        with:
+          external_repository: pyvista/pyvista-examples
+          personal_token: ${{ steps.app-token.outputs.token }}
+          publish_dir: pyvista-examples
+          publish_branch: master
+          exclude_assets: ""

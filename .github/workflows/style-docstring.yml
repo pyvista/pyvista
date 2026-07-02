@@ -1,0 +1,109 @@
+# check spelling, codestyle
+name: Style and Docstring Check
+
+on: [pull_request, merge_group, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: none
+
+jobs:
+  cache-pyvista-data:
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
+    with:
+      # Runner should match the actual runner used by the docstring job
+      runs-on: "blacksmith-4vcpu-ubuntu-2204"
+
+  docstringcheck:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: blacksmith-4vcpu-ubuntu-2204
+            python-version: "3.14" # Should be the latest version supported
+          - os: windows-latest
+            python-version: "3.10" # Should be the oldest version supported
+
+    runs-on: ${{ matrix.os }}
+
+    needs: cache-pyvista-data
+    env:
+      TOX_COLORED: "yes"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Setup headless display on Windows
+        if: runner.os == 'Windows'
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+        if: runner.os == 'Linux'
+        with:
+          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          version: 3.0
+
+      - name: Restore pyvista/data cache
+        uses: actions/cache/restore@v5
+        with:
+          path: pyvista-data
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Test Package Docstrings (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a tox run -f doctest
+
+      - name: Test Package Docstrings (Windows)
+        if: runner.os == 'Windows'
+        run: tox run -f doctest
+
+  vale:
+    name: Vale
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.14
+
+      - name: Install test dependencies
+        run: |
+          pip install --upgrade pip
+          pip install . --group docs
+
+      # this is equivalent to
+      # vale --config doc/.vale.ini doc pyvista examples
+      # GHA SHA is pinned to a reviewdog branch commit
+      - name: "Run Vale"
+        uses: errata-ai/vale-action@85f9f7f2c5f449ac0ae5b66662961bae3f77ca6a
+        with:
+          files: '["doc", "pyvista", "examples"]'
+          vale_flags: "--config=doc/.vale.ini"
+          reporter: github-pr-check
+          level: error
+          filter_mode: nofilter
+          fail_on_error: true
+          version: 2.29.5
+          reviewdog_url: https://github.com/reviewdog/reviewdog/releases/download/v0.17.5/reviewdog_0.17.5_Linux_x86_64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
