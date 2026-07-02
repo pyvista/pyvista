@@ -53,14 +53,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: ${{ runner.os == 'macOS' && 'arm64' || 'x64' }}
           cache: "pip"
-
-      - name: Validate macOS Python arch
-        if: runner.os == 'macOS'
-        run: |
-          python -c "import platform; print(platform.machine())"
-          python -c "import platform; assert platform.machine() == 'arm64'"
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
@@ -85,10 +78,6 @@ jobs:
           if [ "$RUNNER_OS" = "Linux" ]; then pip install auditwheel; fi
           if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
           if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
-
-      - name: Set macOS architecture
-        if: runner.os == 'macOS'
-        run: echo "CMAKE_OSX_ARCHITECTURES=arm64" >> "$GITHUB_ENV"
 
       - name: Set compiler launcher
         shell: bash
