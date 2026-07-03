@@ -5331,9 +5331,10 @@ class BasePlotter(_BoundsSizeMixin):
         # Stop any background `orbit_on_path(threaded=True)` thread before
         # tearing anything else down, so it stops touching this plotter's
         # VTK objects once they're cleared.
-        if self._orbit_thread is not None and self._orbit_thread.is_alive():
-            self._orbit_stop_event.set()
-            self._orbit_thread.join(timeout=5)
+        if self._orbit_thread is not None:
+            if self._orbit_thread.is_alive():
+                self._orbit_stop_event.set()
+                self._orbit_thread.join(timeout=5)
 
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
