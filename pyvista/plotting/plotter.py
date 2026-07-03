@@ -5333,6 +5333,9 @@ class BasePlotter(_BoundsSizeMixin):
         # VTK objects once they're cleared.
         if self._orbit_thread is not None:
             if self._orbit_thread.is_alive():
+                # `_orbit_stop_event` is always set alongside `_orbit_thread` in
+                # `orbit_on_path`, so it can't be `None` here.
+                assert self._orbit_stop_event is not None  # noqa: S101
                 self._orbit_stop_event.set()
                 self._orbit_thread.join(timeout=5)
 
