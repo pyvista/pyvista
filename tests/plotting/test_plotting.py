@@ -3261,6 +3261,7 @@ def test_orbit_on_path(sphere):
     pl.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_orbit_on_path_threaded_stopped_on_close(sphere):
     # Regression test: `close()` must stop a threaded `orbit_on_path()` run before
     # returning. Otherwise the orbit thread keeps running afterward, and while it

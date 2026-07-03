@@ -3965,7 +3965,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._marker_actor = None
         self._border_actor = None
         self.cube_axes_actor = None
-        self._render_passes.deep_clean()
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
