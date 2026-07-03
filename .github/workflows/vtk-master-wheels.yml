@@ -50,7 +50,7 @@ jobs:
           echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -208,19 +208,19 @@ jobs:
 
     steps:
       - name: Checkout PyVista
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - name: Download VTK wheel artifact
         id: download-wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
@@ -241,7 +241,7 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -286,19 +286,19 @@ jobs:
 
     steps:
       - name: Checkout PyVista
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - name: Download VTK wheel artifact
         id: download-wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
@@ -314,7 +314,7 @@ jobs:
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -359,19 +359,19 @@ jobs:
 
     steps:
       - name: Checkout PyVista
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - name: Download VTK wheel artifact
         id: download-wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
@@ -387,7 +387,7 @@ jobs:
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
