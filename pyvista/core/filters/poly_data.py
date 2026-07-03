@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -958,6 +959,7 @@ class PolyDataFilters(DataSetFilters):
         feature_smoothing: bool = False,  # noqa: FBT001, FBT002
         non_manifold_smoothing: bool = False,  # noqa: FBT001, FBT002
         normalize_coordinates: bool = False,  # noqa: FBT001, FBT002
+        window_function: Literal['blackman', 'hamming', 'hanning', 'nuttall'] | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -1011,6 +1013,13 @@ class PolyDataFilters(DataSetFilters):
             smoothing, and translate and scale the position coordinates back to
             the original coordinate frame.
 
+        window_function : str, optional
+            Window function used by the underlying
+            :vtk:`vtkWindowedSincPolyDataFilter`. Accepted values are
+            ``'blackman'``, ``'hamming'``, ``'hanning'``, and ``'nuttall'``.
+            ``'nuttall'`` is used by default when available. This option
+            requires VTK 9.4.0 or later.
+
         inplace : bool, default: False
             Updates mesh in-place.
 
@@ -1050,6 +1059,29 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_text('Smoothed Mesh')
         >>> pl.show()
 
+        Use :func:`~pyvista.plot_compare_four` to show differences between
+        window functions.
+
+        >>> mesh = examples.download_foot_bones()
+        >>> multi_compare = pv.MultiBlock()
+        >>> multi_compare['nuttall'] = mesh.smooth_taubin(window_function='nuttall')
+        >>> multi_compare['blackman'] = mesh.smooth_taubin(window_function='blackman')
+        >>> multi_compare['hamming'] = mesh.smooth_taubin(window_function='hamming')
+        >>> multi_compare['hanning'] = mesh.smooth_taubin(window_function='hanning')
+        >>>
+        >>> cpos = pv.CameraPosition(
+        ...     position=(-0.7780, -12.74, -2.019),
+        ...     focal_point=(1.257, -1.716, -0.2136),
+        ...     viewup=(-0.2696, -0.1070, 0.9570),
+        ... )
+        >>>
+        >>> pv.plot_compare_four(
+        ...     *multi_compare,
+        ...     display_kwargs={'show_edges': True},
+        ...     labels=multi_compare.keys(),
+        ...     camera_position=cpos,
+        ... )
+
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
@@ -1063,6 +1095,29 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
+        if window_function is not None and pv.vtk_version_info < (9, 4, 0):
+            msg = '`window_function` requires VTK 9.4.0 or later.'
+            raise pv.VTKVersionError(msg)
+
+        if pv.vtk_version_info >= (9, 4, 0):
+            window_functions = {
+                'blackman': alg.SetWindowFunctionToBlackman,
+                'hamming': alg.SetWindowFunctionToHamming,
+                'hanning': alg.SetWindowFunctionoHanning,
+                'nuttall': alg.SetWindowFunctionToNuttall,
+            }
+
+            window_function_ = 'nuttall' if window_function is None else window_function.lower()
+            try:
+                set_window_function = window_functions[window_function_]
+            except KeyError as err:
+                msg = (
+                    f"Invalid window_function '{window_function}'. "
+                    f'Expected one of: {", ".join(window_functions)}.'
+                )
+                raise ValueError(msg) from err
+
+            set_window_function()
         _update_alg(
             alg, progress_bar=progress_bar, message='Smoothing Mesh using Taubin Smoothing'
         )

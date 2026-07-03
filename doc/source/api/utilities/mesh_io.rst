@@ -29,6 +29,10 @@
 
     .. include:: /api/utilities/io_table/UnstructuredGrid_io_table.rst
 
+.. dropdown:: :class:`~pyvista.ExplicitStructuredGrid` File Formats
+
+    .. include:: /api/utilities/io_table/ExplicitStructuredGrid_io_table.rst
+
 .. dropdown:: :class:`~pyvista.MultiBlock` File Formats
 
     .. include:: /api/utilities/io_table/MultiBlock_io_table.rst

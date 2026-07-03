@@ -267,3 +267,13 @@ but the source will always be included with a conditional caption:
     >>> import pyvista as pv
     >>> sphere = pv.Sphere()
     >>> sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
+
+
+**Plot 26** Plotters that do not call show do not generate images.
+
+.. pyvista-plot::
+
+    >>> import pyvista as pv
+    >>> pl1 = pv.Plotter()
+    >>> pl2 = pv.Plotter()
+    >>> pl2.show()

@@ -113,6 +113,43 @@ def test_sphere_theta():
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
+def test_sphere_texture_coordinates():
+    sphere = pv.Sphere(texture_coordinates=False)
+    assert sphere.active_texture_coordinates is None
+    assert sphere.n_open_edges == 0
+
+    phi_resolution = 30
+    sphere = pv.Sphere(
+        texture_coordinates=True, tessellation='phi_theta', phi_resolution=phi_resolution
+    )
+    assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
+    assert sphere.n_open_edges == (phi_resolution - 1) * 2
+
+    phi_resolution = 50
+    sphere = pv.Sphere(
+        texture_coordinates=True, tessellation='phi_theta', phi_resolution=phi_resolution
+    )
+    assert sphere.n_open_edges == (phi_resolution - 1) * 2
+
+    match = 'Texture coordinates are not supported for partial spheres'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.Sphere(texture_coordinates=True, start_phi=1)
+    with pytest.raises(ValueError, match=match):
+        _ = pv.Sphere(texture_coordinates=True, start_theta=1)
+
+
+def test_sphere_tessellation():
+    sphere = pv.Sphere(tessellation='triangle')
+    assert sphere.distinct_cell_types == {pv.CellType.TRIANGLE}
+    assert sphere.n_cells == 1680
+    assert sphere.n_open_edges == 0
+
+    sphere = pv.Sphere(tessellation='phi_theta')
+    assert sphere.distinct_cell_types == {pv.CellType.TRIANGLE, pv.CellType.QUAD}
+    assert sphere.n_cells == 870
+    assert sphere.n_open_edges == 0
+
+
 def test_solid_sphere():
     sphere = pv.SolidSphere()
     assert isinstance(sphere, pv.UnstructuredGrid)
@@ -137,11 +174,18 @@ def test_solid_sphere_hollow():
 
 
 def test_solid_sphere_generic():
-    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
+    radius_resolution = 5
+    theta_resolution = 11
+    phi_resolution = 13
+    sphere = pv.SolidSphere(
+        radius_resolution=radius_resolution,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+    )
     sphere_seq = pv.SolidSphereGeneric(
-        radius=np.linspace(0, 0.5, 5),
-        theta=np.linspace(0, 360, 11),
-        phi=np.linspace(0, 180, 13),
+        radius=np.linspace(0, 0.5, radius_resolution),
+        theta=np.linspace(0, 360, theta_resolution + 1),
+        phi=np.linspace(0, 180, phi_resolution),
     )
     assert sphere == sphere_seq
 
@@ -255,7 +299,7 @@ def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match='radius resolution must be 2 or more'):
         pv.SolidSphere(radius_resolution=1)
     with pytest.raises(ValueError, match='theta resolution must be 2 or more'):
-        pv.SolidSphere(theta_resolution=1)
+        pv.SolidSphere(theta_resolution=0)
     with pytest.raises(ValueError, match='phi resolution must be 2 or more'):
         pv.SolidSphere(phi_resolution=1)
 

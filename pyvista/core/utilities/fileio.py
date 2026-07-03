@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
-import importlib
 import itertools
 import json
 from pathlib import Path
@@ -75,14 +74,7 @@ _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
-def _lazy_vtk_import(module_name: str, class_name: str) -> type:
-    """Lazy import of a class from vtkmodules."""
-    module = importlib.import_module(f'vtkmodules.{module_name}')
-    return getattr(module, class_name)
-
-
 class _FileIOBase(ABC, _NoNewAttrMixin):
-    _vtk_module_name: str = ''
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -101,8 +93,8 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
-        if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
+        if cls._vtk_class_name:
+            return getattr(_vtk, cls._vtk_class_name)
         return None
 
     @classmethod
@@ -263,6 +255,7 @@ def read(  # noqa: PLR0917
     *,
     cls: type[DataObject] | None = None,
     validate: bool | None = None,
+    **kwargs,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -335,6 +328,21 @@ def read(  # noqa: PLR0917
 
         .. versionadded:: 0.48
 
+    **kwargs : dict, optional
+        Additional keyword arguments set on the reader after initialization but before reading
+        the file.
+
+        This is effectively the same as using :func:`~pyvista.get_reader` and ``setattr``.
+
+        .. code-block:: python
+
+            reader = pyvista.get_reader(file)
+            for key, value in kwargs.items():
+                setattr(reader, key, value)
+            mesh = reader.read()
+
+        .. versionadded:: 0.49
+
     Returns
     -------
     pyvista.DataSet | pyvista.MultiBlock
@@ -364,6 +372,12 @@ def read(  # noqa: PLR0917
 
     >>> mesh = pv.read('mesh.obj')  # doctest:+SKIP
 
+    Load a ``.foam`` file and use keyword arguments to set reader-specific properties
+    such as :attr:`~pyvista.OpenFOAMReader.skip_zero_time`.
+
+    >>> file = examples.download_openfoam_tubes(load=False)
+    >>> mesh = pv.read(file, skip_zero_time=True)
+
     """
     result = _read_dispatch(
         filename,
@@ -371,6 +385,7 @@ def read(  # noqa: PLR0917
         file_format=file_format,
         progress_bar=progress_bar,
         validate=validate,
+        **kwargs,
     )
     if cls is not None and not isinstance(result, cls):
         msg = (
@@ -388,6 +403,7 @@ def _read_dispatch(  # noqa: PLR0911
     file_format: str | None,
     progress_bar: bool,
     validate: bool | None,
+    **kwargs,
 ) -> DataObject:
     """Dispatch a filename to the right reader and return the wrapped mesh."""
     if file_format is not None and force_ext is not None:
@@ -444,16 +460,6 @@ def _read_dispatch(  # noqa: PLR0911
         return read_meshio(filename, file_format)
 
     ext = _get_ext_force(filename, force_ext)
-    if ext in ['.e', '.exo']:
-        return read_exodus(filename)
-    if ext.lower() == '.grdecl':
-        return read_grdecl(filename)
-    if ext in ['.wrl', '.vrml']:
-        msg = (
-            'VRML files must be imported directly into a Plotter. '
-            'See `pyvista.Plotter.import_vrml` for details.'
-        )
-        raise ValueError(msg)
     if ext in _PICKLE_FILE_EXT:
         _raise_pickle_removed()
 
@@ -483,6 +489,7 @@ def _read_dispatch(  # noqa: PLR0911
                 )
             raise OSError(msg)
     else:
+        _set_reader_attributes(reader, **kwargs)
         observer = Observer()
         observer.observe(reader.reader)
         if progress_bar:
@@ -497,32 +504,28 @@ def _read_dispatch(  # noqa: PLR0911
         return mesh
 
 
-def _apply_attrs_to_reader(
-    reader: BaseReader[Any], attrs: dict[str, object | Sequence[object]]
-) -> None:
-    """For a given pyvista reader, call methods according to attrs.
+def _set_reader_attributes(reader: BaseReader[Any], **kwargs) -> None:
+    """Set reader attributes using keyword arguments.
 
     Parameters
     ----------
     reader : pyvista.BaseReader
-        Reader to call methods on.
+        Reader to set attributes on.
 
-    attrs : dict
-        Mapping of methods to call on reader.
+    **kwargs : dict
+        Mapping of attributes to set on reader.
 
     """
-    warn_external(
-        'attrs use is deprecated.  Use a Reader class for more flexible control',
-        PyVistaDeprecationWarning,
-    )
-    for name, args in attrs.items():
-        attr = getattr(reader.reader, name)
-        if args is not None:
-            if not isinstance(args, (list, tuple)):
-                args = [args]  # noqa: PLW2901
-            attr(*args)
-        else:
-            attr()
+    for name, value in kwargs.items():
+        attr = getattr(reader, name)
+        if callable(attr):
+            msg = (
+                f'`{reader.__class__.__name__}.{name}` is a method, but using kwargs with '
+                f'`pyvista.read` is only\nsupported for attributes. Use `pyvista.get_reader` '
+                f'instead to call reader methods.'
+            )
+            raise TypeError(msg)
+        setattr(reader, name, value)
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -587,6 +590,9 @@ def read_exodus(  # noqa: PLR0917
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
+    .. deprecated:: 0.49
+        Use :func:`pyvista.read` or :class:`pyvista.ExodusIIReader` instead.
+
     Parameters
     ----------
     filename : str, Path
@@ -629,6 +635,15 @@ def read_exodus(  # noqa: PLR0917
 
     """
     from .helpers import wrap  # noqa: PLC0415
+
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
 
     reader = _vtk.vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -698,6 +713,23 @@ def read_grdecl(
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
     """
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function private'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_grdecl` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    return _read_grdecl(filename, elevation=elevation, other_keywords=other_keywords)
+
+
+def _read_grdecl(
+    filename: str | Path,
+    *,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
+) -> ExplicitStructuredGrid:
     property_keywords = (
         'ACTNUM',
         'COORD',

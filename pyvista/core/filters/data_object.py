@@ -235,20 +235,49 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         exclude_fields: _LiteralMeshValidationFields
         | Sequence[_LiteralMeshValidationFields]
         | None = None,
+        *,
+        name: str | None,
         **cell_validator_kwargs,
     ) -> None:
-        if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
-            validation_fields = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            validation_fields.remove('unused_points')
-
         data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
             validation_fields, exclude_fields
         )
+        # Remove or error on fields unsupported for specific mesh types
+        _unsupported: dict[
+            type[_DataSetOrMultiBlockType], tuple[_LiteralMeshValidationFields, ...]
+        ] = {}
+        if isinstance(mesh, pv.PointSet):
+            _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
+        if isinstance(mesh, pv.Grid):
+            # Avoid vtkCellValidator fields since these may crash: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+            _unsupported[type(mesh)] = (
+                'wrong_number_of_points',
+                'intersecting_edges',
+                'intersecting_faces',
+                'non_contiguous_edges',
+                'non_convex',
+                'inverted_faces',
+                'non_planar_faces',
+                'degenerate_faces',
+                'coincident_points',
+            )
+
+        for mesh_type, unsupported_field in _unsupported.items():
+            for field in unsupported_field:
+                if field in cell_fields or field in point_fields:
+                    if validation_fields is not None:
+                        # User explicitly requested this field (directly or via a group)
+                        kind = 'Point' if field in point_fields else 'Cell'
+                        msg = f'{kind} field {field!r} is not supported for {mesh_type.__name__}.'
+                        raise ValueError(msg)
+                    else:
+                        # Default case: remove unsupported fields without error
+                        cell_fields = tuple(f for f in cell_fields if f != field)
+                        point_fields = tuple(f for f in point_fields if f != field)
+
         self._validation_report = _MeshValidator._generate_report(
             mesh,
+            name=name,
             data_fields=data_fields,
             point_fields=point_fields,
             cell_fields=cell_fields,
@@ -378,6 +407,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _generate_report(
         mesh: _DataSetOrMultiBlockType,
         *,
+        name,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -392,6 +422,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if isinstance(mesh, pv.DataSet):
                 return _MeshValidator._validate_dataset(  # type: ignore[return-value]
                     mesh,
+                    name=name,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -400,6 +431,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
                     mesh,
+                    name=name,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -410,6 +442,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_dataset(
         mesh: _DataSetType,
         *,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -444,12 +477,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 else:
                     message_body.append(message)
         if message_body:
-            header = _MeshValidator._create_message_header(validated_mesh)
+            header = _MeshValidator._create_message_header(validated_mesh, name=name)
             message_structure = [header, message_body]
         else:
             message_structure = []
         dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
         return _MeshValidationReport(
+            _name=name,
             _mesh=validated_mesh,
             _message=message_structure,
             _subreports=None,
@@ -461,6 +495,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_multiblock(
         mesh: _MultiBlockType,
         *,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -477,6 +512,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 report = _MeshValidator._generate_report(
                     block,
+                    name=None,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -504,11 +540,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             dataclass_fields[field] = invalid_block_ids
 
         if message_body:
-            header = _MeshValidator._create_message_header(validated_mesh)
+            header = _MeshValidator._create_message_header(validated_mesh, name=name)
             message = [header, message_body]
         else:
             message = []
         return _MeshValidationReport(
+            _name=name,
             _mesh=validated_mesh,
             _message=message,
             _subreports=tuple(reports),
@@ -713,8 +750,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _MESH_HAS = 'Mesh has'
 
     @staticmethod
-    def _create_message_header(obj: object) -> str:
-        return f'{obj.__class__.__name__} mesh is not valid:'
+    def _create_message_header(obj: object, *, name: str | None) -> str:
+        name = f' {name!r} ' if name else ' '
+        return f'{obj.__class__.__name__} mesh{name}is not valid:'
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
@@ -788,6 +826,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     """Dataclass to report mesh validation results."""
 
     # Non-fields
+    _name: InitVar[str | None]
     _mesh: InitVar[_DataSetOrMultiBlockType]
     _message: InitVar[_NestedStrings | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
@@ -817,15 +856,21 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     def __post_init__(
         self,
+        _name: str | None,
         _mesh: _DataSetOrMultiBlockType,
         _message: _NestedStrings | None,
         _subreports: tuple[_MeshValidationReport[DataSet] | None, ...] | None,
         _report_body: _ReportBodyOptions | None,
     ) -> None:
+        object.__setattr__(self, '_name', _name)
         object.__setattr__(self, '_mesh', _mesh)
         object.__setattr__(self, '_message', _message)
         object.__setattr__(self, '_subreports', _subreports)
         object.__setattr__(self, '_report_body', _report_body)
+
+    @property
+    def name(self) -> str | None:
+        return self._name  # type: ignore[attr-defined]
 
     @property
     def mesh(self) -> _DataSetOrMultiBlockType:
@@ -957,7 +1002,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                 lines.append(f'{indent}{key:<{label_width}} : {value}')
 
         mesh = self.mesh
-        mesh_items: dict[str, str | int] = {'Type': mesh.__class__.__name__}
+        name = self.name
+        mesh_items: dict[str, str | int] = {} if name is None else {'Name': f'{name!r}'}
+        mesh_items['Type'] = mesh.__class__.__name__
         # Set report content based on mesh type
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
@@ -1021,6 +1068,7 @@ class DataObjectFilters:
         *,
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         report_body: _ReportBodyOptions = 'message',
+        name: str | None = None,
         **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
@@ -1096,6 +1144,7 @@ class DataObjectFilters:
           summary of any problems detected, and is formatted for printing to console. This is the
           message used when the ``action`` keyword is set for emitting warnings or raising errors.
           This value is ``None`` if the mesh is valid.
+        - ``name``: The name of the mesh (if provided).
 
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
@@ -1149,6 +1198,11 @@ class DataObjectFilters:
             and the message includes additional cell type-specific information.
 
             .. versionadded:: 0.48
+
+        name : str, optional
+            Name to use in the validation report and error messages.
+
+            .. versionadded:: 0.49
 
         cell_validator_kwargs
             Keyword arguments passed to :meth:`~pyvista.DataObjectFilters.cell_validator`.
@@ -1414,6 +1468,7 @@ class DataObjectFilters:
             self,
             _convert_cell_status(validation_fields),
             _convert_cell_status(exclude_fields),
+            name=name,
             **cell_validator_kwargs,
         ).validation_report
 
@@ -1628,28 +1683,37 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
-        cell_validator = _vtk.vtkCellValidator()
-        cell_validator.SetInputData(self)
-        cell_validator.SetTolerance(tol)
-        if pv.vtk_version_info >= (9, 6, 0):
-            # vtkCellValidator stores PlanarityTolerance as static class state, so we must
-            # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
-            cell_validator.SetPlanarityTolerance(
-                planarity_tolerance if planarity_tolerance is not None else 0.1
-            )
-        cell_validator.Update()
-        output = _get_output(cell_validator)
+        # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+        skip_validator = isinstance(self, pv.Grid)
+        if skip_validator:
+            output = self.copy(deep=False)
+        else:
+            cell_validator = _vtk.vtkCellValidator()
+            cell_validator.SetInputData(self)
+            cell_validator.SetTolerance(tol)
+            if pv.vtk_version_info >= (9, 6, 0):
+                # vtkCellValidator stores PlanarityTolerance as static class state, so we must
+                # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
+                cell_validator.SetPlanarityTolerance(
+                    planarity_tolerance if planarity_tolerance is not None else 0.1
+                )
+            cell_validator.Update()
+            output = _get_output(cell_validator)
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
-            validity_state = np.array(
-                mesh.cell_data['ValidityState'],
-                dtype=np.int64,
-                copy=True,
-            )
+            if skip_validator:
+                validity_state = np.zeros(shape=(self.n_cells,), dtype=np.int64)
+            else:
+                validity_state = np.array(
+                    mesh.cell_data['ValidityState'],
+                    dtype=np.int64,
+                    copy=True,
+                )
             mesh.cell_data['validity_state'] = validity_state
-            del mesh.cell_data['ValidityState']
+            if not skip_validator:
+                del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
 
             set_pyvista_validity_state(mesh)

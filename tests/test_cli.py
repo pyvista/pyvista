@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 import importlib.util
 import inspect
 from itertools import chain
@@ -17,6 +18,8 @@ from typing import get_args
 import numpy as np
 import pytest
 
+from pyvista._cli.plot import _plot as cli_plot
+
 needs_pyvista_zstd = pytest.mark.skipif(
     importlib.util.find_spec('pyvista_zstd') is None,
     reason='pyvista-zstd is not installed (registers the .pv extension)',
@@ -30,7 +33,8 @@ from pytest_cases import parametrize_with_cases
 from rich.console import Console
 
 import pyvista as pv
-from pyvista.__main__ import app
+from pyvista import examples
+from pyvista.__main__ import CLI_APP
 from pyvista.__main__ import main
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from tests.core.test_dataobject_filters import _add_vtk_array
@@ -41,33 +45,51 @@ if TYPE_CHECKING:
     from pytest_cases.case_parametrizer_new import Case
     from pytest_mock import MockerFixture
 
+COMMANDS_WITH_PATHS = [  # Commands that accept positional-only path or paths
+    'convert',
+    'validate',
+    'plot',
+]
+COMMANDS_WITHOUT_KWARGS = [  # Commands which do not have generic **kwargs in signature
+    'report',
+    'convert',
+    'validate',
+]
+
+
+def capture_out_err(capsys: pytest.CaptureFixture):
+    read = capsys.readouterr()
+    return read.out, read.err
+
 
 @pytest.fixture
 def patch_app_console(monkeypatch: pytest.MonkeyPatch):
-    console = Console(
+    Console_ = partial(
+        Console,
         width=70,
-        force_terminal=True,
+        force_terminal=False,
         highlight=False,
         color_system=None,
         legacy_windows=False,
     )
-    monkeypatch.setattr(app, 'console', console)
-    monkeypatch.setattr(app, 'error_console', console)
-    monkeypatch.setattr(app, 'help_format', 'plaintext')
+    monkeypatch.setattr(CLI_APP, 'console', Console_(stderr=False))
+    monkeypatch.setattr(CLI_APP, 'error_console', Console_(stderr=True))
+    monkeypatch.setattr(CLI_APP, 'help_format', 'plaintext')
 
 
 @pytest.fixture
 def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
-    console = Console(
+    Console_ = partial(
+        Console,
         width=70,
         highlight=True,
         force_terminal=True,
         color_system='standard',
         legacy_windows=False,
     )
-    monkeypatch.setattr(app, 'console', console)
-    monkeypatch.setattr(app, 'error_console', console)
-    monkeypatch.setattr(app, 'help_format', 'plaintext')
+    monkeypatch.setattr(CLI_APP, 'console', Console_(stderr=False))
+    monkeypatch.setattr(CLI_APP, 'error_console', Console_(stderr=True))
+    monkeypatch.setattr(CLI_APP, 'help_format', 'plaintext')
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -90,7 +112,9 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )
-    assert expected == capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == expected
+    assert err == ''
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -117,12 +141,14 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main('foo')
     assert e.value.code == 1
-    assert expected == capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert err == expected
 
 
 @pytest.mark.usefixtures('patch_app_console')
-@pytest.mark.parametrize('command', ['report', 'convert'])
-def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
+@pytest.mark.parametrize('command', COMMANDS_WITHOUT_KWARGS)
+def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
     expected = textwrap.dedent(
         """\
     ╭─ Error ────────────────────────────────────────────────────────────╮
@@ -133,7 +159,23 @@ def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
     with pytest.raises(SystemExit) as e:
         main(f'{command} --foo=1')
     assert e.value.code == 1
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[-4:])
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    actual = '\n'.join(err.split('\n')[-4:])
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize('command', COMMANDS_WITH_PATHS)
+def test_command_paths_required(capsys: pytest.CaptureFixture, command):
+    with pytest.raises(SystemExit) as e:
+        main(f'{command}')
+    assert e.value.code == 1
+    out, err = capture_out_err(capsys)
+    expected = f'Command "{command}" parameter PATHS requires an argument'
+    actual = '\n'.join(err.split('\n')[-3:])
+    assert expected in actual
+    assert out == ''
 
 
 @pytest.fixture
@@ -226,7 +268,7 @@ def tmp_example_dir(tmp_path):
 
 @pytest.fixture
 def tmp_ant_file(tmp_example_dir):
-    src = Path(pv.examples.antfile)
+    src = Path(examples.antfile)
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
     return dst
@@ -234,7 +276,7 @@ def tmp_ant_file(tmp_example_dir):
 
 @pytest.fixture
 def tmp_cow_file_invalid(tmp_example_dir):
-    src = Path(pv.examples.download_cow(load=False))
+    src = Path(examples.download_cow(load=False))
     # Need to save as vtk, not vtp, since XML reader doesn't like invalid arrays
     dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
 
@@ -274,9 +316,10 @@ def test_convert_dir_only_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert 'Output file must have a file extension.' in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert 'Output file must have a file extension.' in err, err
     assert e.value.code == 1
 
 
@@ -285,9 +328,10 @@ def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     file_in = 'missing.vtp'
     with pytest.raises(SystemExit) as e:
         main(f'convert {file_in} .ply')
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert f'1 file not found: {file_in}' in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert f'1 file not found: {file_in}' in err, err
     assert e.value.code == 1
 
 
@@ -302,10 +346,11 @@ def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(file_in)!r} .ply')
 
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert 'Failed to read input file:' in out, out
-    assert name in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert 'Path is not readable by PyVista:' in err, err
+    assert name in err, err
     assert e.value.code == 1
 
 
@@ -337,6 +382,42 @@ def test_convert_glob(tmp_example_dir, tmp_ant_file: Path):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize('command', COMMANDS_WITH_PATHS)
+@pytest.mark.parametrize('glob_style', ['shell', 'python'])
+@pytest.mark.needs_vtk_version(9, 4, reason='shell convert crashes parallel workers')
+def test_command_glob(
+    tmp_example_dir,
+    tmp_ant_file: Path,
+    capsys: pytest.CaptureFixture,
+    command: str,
+    glob_style: str,
+):
+    """Globbing should work with both shell expansion and Python expansion."""
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
+    pattern = '*.ply'
+    if glob_style == 'python':
+        # Encapsulate in a string so the shell does not expand it
+        # Instead, the CLI code will glob the string
+        pattern = f'{pattern!r}'
+    command_str = f'{command} {pattern}'
+    if command == 'convert':
+        command_str += ' .vtp'
+    if glob_style == 'shell':
+        # No string -> shell does the globbing
+        assert "'" not in command_str
+        assert '"' not in command_str
+    else:
+        # As a string -> Python does the globbing
+        assert "'" in command_str or '"' in command_str
+
+    main(shlex.split(command_str))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Error' not in err
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_convert_glob_subdir_writes_adjacent(tmp_example_dir, tmp_ant_file: Path):
     """Bare ``.ext`` output places each converted file next to its input."""
     sub = tmp_example_dir / 'sub'
@@ -356,16 +437,20 @@ def test_convert_glob_subdir_writes_adjacent(tmp_example_dir, tmp_ant_file: Path
 def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main(shlex.split("convert '*.nosuchext' .vtp"))
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert '1 file not found: *.nosuchext' in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert '1 file not found: *.nosuchext' in err, err
     assert e.value.code == 1
 
 
 @needs_pyvista_zstd
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_multiblock_drops_sidecar_children(
-    tmp_example_dir: Path, capsys: pytest.CaptureFixture
+@pytest.mark.parametrize('command', ['convert', 'plot', 'validate'])
+@pytest.mark.parametrize('n_children', [2, 6])
+@pytest.mark.needs_vtk_version(9, 4, reason='crashes parallel workers')
+def test_multiblock_drops_sidecar_children(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture, command: str, n_children: int
 ):
     """A parent ``.vtm`` paired with its sidecar children must be converted 1:1.
 
@@ -373,26 +458,37 @@ def test_convert_multiblock_drops_sidecar_children(
     holding each child block. A recursive glob would pick up the children and convert
     them individually; the converter should drop them and convert only the parent.
     """
-    inner = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    blocks = [pv.Sphere(), pv.Cube()]
+    if n_children == 6:
+        blocks.extend([pv.Cone(), pv.Arrow(), pv.Disc(), pv.Icosphere()])
+
+    inner = pv.MultiBlock(blocks)
+    assert inner.n_blocks == n_children
     inner.save(tmp_example_dir / 'm.vtm')
     sidecar = tmp_example_dir / 'm'
     assert sidecar.is_dir()
     children = sorted(sidecar.glob('*.vtp'))
-    assert len(children) == 2
+    assert len(children) == n_children
 
-    main(
-        shlex.split(
-            f'convert m.vtm {children[0].relative_to(tmp_example_dir).as_posix()!r} '
-            f'{children[1].relative_to(tmp_example_dir).as_posix()!r} .pv'
-        )
+    output_token = '.pv' if command == 'convert' else ''
+    child_tokens = ' '.join(
+        f'{child.relative_to(tmp_example_dir).as_posix()!r}' for child in children
     )
+    main(shlex.split(f'{command} m.vtm {child_tokens} {output_token}'))
 
-    out = capsys.readouterr().out
-    assert 'Skipping 2 file(s) inside MultiBlock sidecar directories' in out, out
-    # Only the parent is converted — children stay untouched
-    assert (tmp_example_dir / 'm.pv').is_file()
-    assert not (sidecar / 'm_0.pv').exists()
-    assert not (sidecar / 'm_1.pv').exists()
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert f'Skipping {n_children} files inside MultiBlock sidecar directories: ' in err, err
+    assert 'm/m_0.vtp,' in err, err
+    if n_children == 2:
+        assert 'm/m_1.vtp\n' in err, err
+    else:
+        assert 'm/m_1.vtp, m/m_2.vtp, m/m_3.vtp, m/m_4.vtp, ... (1 more)' in err, err
+    if output_token:
+        # Only the parent is converted — children stay untouched
+        assert (tmp_example_dir / 'm.pv').is_file()
+        assert not (sidecar / 'm_0.pv').exists()
+        assert not (sidecar / 'm_1.pv').exists()
 
 
 @needs_pyvista_zstd
@@ -418,9 +514,10 @@ def test_convert_multiple_inputs_named_output_error(
     shutil.copy(tmp_ant_file, second)
     with pytest.raises(SystemExit) as e:
         main(shlex.split(f'convert {tmp_ant_file.name} {second.name} out.vtp'))
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert 'Cannot write 2 inputs to a single named output' in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert 'Cannot write 2 inputs to a single named output' in err, err
     assert e.value.code == 1
 
 
@@ -428,9 +525,10 @@ def test_convert_multiple_inputs_named_output_error(
 def test_convert_too_few_args(capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main('convert only-one.ply')
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert 'convert requires at least one input file and an output spec.' in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert 'convert requires at least one input file and an output spec.' in err, err
     assert e.value.code == 1
 
 
@@ -441,15 +539,16 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(output_path)!r}')
 
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert 'Failed to save output file: ' in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert 'Failed to save output file: ' in err, err
     # Rich's 70-col box may wrap a long pytest-xdist tmp path mid-name,
     # inserting whitespace and ``│`` column separators inside the name. Flatten
     # both before the substring check so the assertion is wrap-agnostic.
-    flat = ''.join(out.split()).replace('│', '')
-    assert output_path.name in flat, out
-    assert 'Invalid file extension' in out, out
+    flat = ''.join(err.split()).replace('│', '')
+    assert output_path.name in flat, err
+    assert 'Invalid file extension' in err, err
     assert e.value.code == 1
 
 
@@ -457,8 +556,9 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 def test_convert_help(capsys: pytest.CaptureFixture):
     main('convert --help')
 
-    out = capsys.readouterr().out
-    assert 'Usage: pyvista convert FILE-IN [FILE-IN...] FILE-OUT' in out, out
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert 'Usage: pyvista convert PATH-IN [PATH-IN...] PATH-OUT' in out, out
     assert 'Convert a mesh file to another format.' in out, out
     assert 'glob patterns are expanded' in out, out
     assert 'pyvista convert foo.abc bar.xyz' in out, out
@@ -470,18 +570,61 @@ def test_convert_help(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+def test_convert_compound_extension(tmp_example_dir: Path):
+    """Compound extensions like .nii.gz are correctly stripped from the input stem
+    and replaced with the target extension."""
+    src = Path(examples.download_brain_atlas_with_sides(load=False))
+    dst = tmp_example_dir / src.name
+    shutil.copy(src, dst)
+    main(shlex.split(f'convert {str(dst)!r} .vti'))
+    # stem should be bare (no .nii residue), extension replaced
+    assert (tmp_example_dir / f'{dst.name[: -len(".nii.gz")]}.vti').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_compound_extension_collision(tmp_example_dir: Path):
+    """Collision renaming with .nii.gz inputs produces foo_1.vti, not foo.nii_1.vti."""
+    src = Path(examples.download_brain_atlas_with_sides(load=False))
+    bare = src.name[: -len('.nii.gz')]
+    # Two different input filenames that share the same bare stem -> collision on output
+    dst_gz = tmp_example_dir / f'{bare}.nii.gz'
+    dst_nii = tmp_example_dir / f'{bare}.nii'
+    shutil.copy(src, dst_gz)
+    shutil.copy(src, dst_nii)
+    main(shlex.split(f'convert {str(dst_gz)!r} {str(dst_nii)!r} out/.vti --resolve-collisions'))
+    assert (tmp_example_dir / 'out' / f'{bare}.vti').is_file()
+    assert (tmp_example_dir / 'out' / f'{bare}_1.vti').is_file()
+    assert not (tmp_example_dir / 'out' / f'{bare}.nii_1.vti').exists()
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(f'validate {str(tmp_ant_file)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
     expected = "PolyData mesh 'ant.ply' is valid!\n"
-    assert out == expected
+    assert err == expected
+
+    # Test multiple files
+    tmp_ant_file2 = tmp_ant_file.with_stem(tmp_ant_file.stem + '2')
+    shutil.copy2(tmp_ant_file, tmp_ant_file2)
+    main(f'validate {str(tmp_ant_file)!r} {str(tmp_ant_file2)!r}')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    expected = (
+        'Validating ant2.ply ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
+        'All 2 meshes are valid.\n'
+    )
+    assert err == expected
 
     main(f'validate {str(tmp_ant_file)!r} --report')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
+        "    Name           : 'ant.ply'\n"
         '    Type           : PolyData\n'
         '    N Points       : 486\n'
         '    N Cells        : 912\n'
@@ -493,15 +636,18 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     assert out == expected
 
     main(f'validate {str(tmp_ant_file)!r} --report message')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     assert out == expected
 
     main(f'validate {str(tmp_ant_file)!r} --report fields')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
+        "    Name                     : 'ant.ply'\n"
         '    Type                     : PolyData\n'
         '    N Points                 : 486\n'
         '    N Cells                  : 912\n'
@@ -541,7 +687,8 @@ def test_validate_tolerance(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
         f'--size-tolerance 1e-4 '
         f'--planarity-tolerance 0.2'
     )
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         "PolyData mesh 'ant.ply' is not valid:\n"
         ' ▪ Mesh has 20 TRIANGLE cells with zero area. Invalid cell ids: [423, \n'
@@ -557,7 +704,8 @@ def test_validate_invalid_mesh(
     capsys: pytest.CaptureFixture,
 ):
     main(f'validate {str(tmp_cow_file_invalid)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
         ' ▪ Mesh has 1 point array with incorrect length (length must be 2905).\n'
@@ -573,7 +721,8 @@ def test_validate_invalid_mesh(
     assert out == expected
 
     main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         "MultiBlock mesh 'ant.vtm' is not valid:\n"
         " ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
@@ -584,11 +733,13 @@ def test_validate_invalid_mesh(
     assert out == expected
 
     main(f'validate {str(tmp_ant_file_invalid_multiblock)!r} --report')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         'Mesh Validation Report\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
+        "    Name               : 'ant.vtm'\n"
         '    Type               : MultiBlock\n'
         '    N Blocks           : 1\n'
         'Report summary:\n'
@@ -616,7 +767,8 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     rib = '\x1b[3;91m'  # red italic bright
 
     main(f'validate {str(tmp_cow_file_invalid)!r}')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     expected = (
         f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
         f' ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
@@ -637,12 +789,14 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     assert out == expected
 
     main(f'validate {str(tmp_cow_file_invalid)!r} --report message')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
 
     expected = (
         f'{b}Mesh Validation Report{_}\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         f'{b}Mesh info:{_}\n'
+        f"    Name               : {g}'cow.vtk'{_}\n"
         f'    Type               : {m}UnstructuredGrid{_}\n'
         f'    N Points           : {cb}2905{_}\n'
         f'    N Cells            : {cb}3263{_}\n'
@@ -676,12 +830,14 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     assert out == expected
 
     main(f'validate {str(tmp_cow_file_invalid)!r} --report fields')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
 
     expected = (
         f'{b}Mesh Validation Report{_}\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         f'{b}Mesh info:{_}\n'
+        f"    Name                        : {g}'cow.vtk'{_}\n"
         f'    Type                        : {m}UnstructuredGrid{_}\n'
         f'    N Points                    : {cb}2905{_}\n'
         f'    N Cells                     : {cb}3263{_}\n'
@@ -732,70 +888,75 @@ def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture
     command = f'validate {str(tmp_ant_file)!r} --report foo'
     with pytest.raises(SystemExit) as e:
         main(command)
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
     message = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
         "│ Invalid value for --report: expected one of 'fields', 'message' or │\n"
         "│ no value. Got 'foo'.                                               │\n"
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
-    assert message in out
+    assert message in err
     assert e.value.code == 1
 
     with pytest.raises(SystemExit) as e:
         main(command + ' bar')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
     message = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
         '│ Invalid value for --report: accepts 0 or 1 arguments. Got 2.       │\n'
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
-    assert message in out
+    assert message in err
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_help(capsys: pytest.CaptureFixture):
     main('validate --help')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     usage = (
-        'Usage: pyvista validate MESH-PATH [FIELDS...] [--exclude FIELDS...]\n'
+        'Usage: pyvista validate PATH... [--fields FIELD...] [--exclude \n'
+        'FIELD...]\n'
         '\n'
         "Validate a mesh's array data, points, and cells.\n"
     )
     assert usage in out, out
 
-    assert '│ * MESH-PATH --mesh-path  -' in out, out
-    assert 'Mesh to validate.' in out, out
+    assert '│ * PATHS  -' in out, out
+    assert 'Mesh(es) to validate.' in out, out
 
-    assert '│ FIELDS --fields          -' in out, out
+    assert '│ --fields -f            -' in out, out
     assert 'Field(s) to validate.' in out, out
 
-    assert '│ --exclude -e             -' in out, out
+    assert '│ --exclude -e           -' in out, out
     assert 'Field(s) to exclude' in out, out
 
-    assert '│ --tolerance              -' in out, out
+    assert '│ --tolerance            -' in out, out
     assert 'Field(s) to exclude' in out, out
 
-    assert '│ --planarity-tolerance    -' in out, out
+    assert '│ --planarity-tolerance  -' in out, out
     assert 'Allowed relative distance' in out, out
 
-    assert '│ --size-tolerance         -' in out, out
+    assert '│ --size-tolerance       -' in out, out
     assert 'Value used for evaluating' in out, out
 
-    assert '│ --report                 -' in out, out
+    assert '│ --report               -' in out, out
     assert 'Show report.' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
-        main(f'validate {str(tmp_ant_file)!r} foo')
+        main(f'validate {str(tmp_ant_file)!r} --fields foo')
 
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
     expected = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
-        '│ Invalid value for FIELDS: unable to convert "foo" into             │\n'
+        '│ Invalid value for --fields: unable to convert "foo" into           │\n'
         '│ Literal[cell_data_wrong_length,                                    │\n'
         '│ point_data_wrong_length]|Literal[non_finite_points,                │\n'
         '│ unused_points]|Literal[coincident_points, degenerate_faces,        │\n'
@@ -805,19 +966,20 @@ def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
         '│ points, cells]|Literal[memory_safe].                               │\n'
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
-    assert expected in out, out
+    assert expected in err, err
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
-        main(f'validate {str(tmp_ant_file)!r} points -e cells')
+        main(f'validate {str(tmp_ant_file)!r} -f points -e cells')
 
-    out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out, out
-    assert '│ Failed to validate PolyData mesh read from path' in out, out
-    assert "│ Excluded field 'cells' must be a subset of the validation fields." in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert '│ Failed to validate PolyData mesh read from path' in err, err
+    assert "│ Excluded field 'cells' must be a subset of the validation fields." in err, err
     assert e.value.code == 1
 
 
@@ -827,19 +989,21 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
 )
 def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     # Test that all fields specified in the annotations work
-    main(f'validate {tmp_ant_file!s} {field}')
+    main(f'validate {tmp_ant_file!s} -f {field}')
 
-    # Discard captured output to clean up test output
-    capsys.readouterr()
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'is valid' in err
 
     # Test that all fields are documented
     main(f'validate {tmp_ant_file!s} --help')
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
     if f'• {field}:' not in out:
         pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
 
     # Discard captured output to clean up test output
-    capsys.readouterr()
+    _, _ = capture_out_err(capsys)
 
 
 @pytest.fixture
@@ -867,12 +1031,14 @@ def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
 
 
+# CLI-only parameters that have no counterpart in pv.plot
+_CLI_ONLY_PARAMS = {'skip_unreadable', 'paths'}
+
+
 @fixture
 def missing_plot_arguments():
     """Argument names in the `pv.plot` signature which are intentionally removed from the
-    `pv.cli.plot._plot` function
-    """
-
+    `pv.cli.plot._plot` function."""
     return {
         'jupyter_backend',
         'theme',
@@ -881,15 +1047,14 @@ def missing_plot_arguments():
         'cpos',
         'jupyter_kwargs',
         'notebook',
+        'var_item',  # intentionally renamed to 'paths' in the CLI
     }
 
 
 @fixture
 def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
     """Default arguments of `pv.plot`."""
-
     params = inspect.signature(pv.plot).parameters
-
     return {
         p: v.default
         for p, v in params.items()
@@ -914,11 +1079,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     """
     plot_sig = inspect.signature(pv.plot)
     plot_params = set(plot_sig.parameters.keys())
-
-    # Test the parameters names
-    from pyvista._cli.plot import _plot
-
-    cli_sig = inspect.signature(_plot)
+    cli_sig = inspect.signature(cli_plot)
     cli_params = set(cli_sig.parameters.keys())
 
     diff = plot_params - cli_params - missing_plot_arguments
@@ -926,10 +1087,15 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
         f'Found unexpected differences {diff} in the CLI plot signature arguments'
     )
 
-    # Test the parameters defaults
-    cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
-    plot_defaults = {name: plot_sig.parameters[name].default for name in cli_sig.parameters}
+    # 'var_item' is intentionally renamed to 'paths' in the CLI
+    assert 'paths' in cli_params
+    assert 'var_item' in plot_params
 
+    # Test the parameters defaults
+    cli_defaults = {
+        name: p.default for name, p in cli_sig.parameters.items() if name not in _CLI_ONLY_PARAMS
+    }
+    plot_defaults = {name: plot_sig.parameters[name].default for name in cli_defaults}
     assert cli_defaults == plot_defaults
 
     # Test the parameters annotations
@@ -944,7 +1110,10 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     from pyvista.plotting.themes import Theme  # noqa: F401
 
     plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
-    cli_annotations = inspect.get_annotations(_plot, eval_str=True)
+    cli_annotations = inspect.get_annotations(cli_plot, eval_str=True)
+
+    for param in _CLI_ONLY_PARAMS:
+        cli_annotations.pop(param, None)
 
     cli_annotations = {
         k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
@@ -956,7 +1125,6 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
     # Filter the ones which have intentionally different annotations
     excludes = {'anti_aliasing', 'background', 'border_color', 'var_item', 'screenshot'}
-
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
 
@@ -1137,8 +1305,8 @@ def test_plot_called(
     mock_plot: MagicMock,
 ):
     """Test that the pv.plot function is called with the expected arguments."""
-    file = Path(pv.examples.antfile).as_posix()
-    main(f'plot --files={file} {tokens}')
+    file = Path(examples.antfile).as_posix()
+    main(f'plot {file} {tokens}')
     mock_plot.assert_called_once_with(var_item=[pv.read(file)], **expected_kwargs)
 
 
@@ -1159,8 +1327,8 @@ def test_plot_called_kwargs(
     when supplementary kw arguments are added to the command line.
     """
 
-    file = Path(pv.examples.antfile).as_posix()
-    main(f'plot --files {file} {tokens}')
+    file = Path(examples.antfile).as_posix()
+    main(f'plot {file} {tokens}')
 
     case = current_cases['tokens']
     tags = get_case_tags(case_func=case.func)
@@ -1174,15 +1342,16 @@ def test_plot_called_kwargs(
 def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
     """Test that the plot CLI is raising expected exit errors."""
 
-    file = Path(pv.examples.antfile).as_posix()
+    file = Path(examples.antfile).as_posix()
     with pytest.raises(SystemExit) as e:
-        main(f'plot --files {file} {tokens}')
+        main(f'plot {file} {tokens}')
 
     assert e.value.code == 1
 
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
     for error in errors:
-        assert error in out, out
+        assert error in err, err
 
 
 class CasesPlotFiles:
@@ -1192,7 +1361,7 @@ class CasesPlotFiles:
     def case_single_args(self, default_plot_kwargs: dict):
         """Test when only a single positional argument is given for files."""
         kwargs = default_plot_kwargs
-        f = Path(pv.examples.antfile).as_posix()
+        f = Path(examples.antfile).as_posix()
         kwargs['var_item'] = [pv.read(f)]
         return f, kwargs
 
@@ -1200,21 +1369,18 @@ class CasesPlotFiles:
     def case_multiple_args(self, default_plot_kwargs: dict):
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
-        files = [Path(pv.examples.antfile).as_posix()] * 2
+        files = [Path(examples.antfile).as_posix()] * 2
         kwargs['var_item'] = [pv.read(f) for f in files]
         return ' '.join(files), kwargs
 
-    @parametrize(with_space=[True, False])
     @pytest.mark.usefixtures('mock_pv_read')
-    def case_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
-        """Test when multiple keyword arguments are given for files."""
+    def case_multiple_kargs(self, default_plot_kwargs: dict):
+        """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
 
-        files = [Path(pv.examples.antfile).as_posix()] * 2
+        files = [Path(examples.antfile).as_posix()] * 2
         kwargs['var_item'] = [pv.read(f) for f in files]
-
-        prefix = '--files ' if with_space else '--files='
-        return prefix + ' '.join(files), kwargs
+        return ' '.join(files), kwargs
 
     @case(tags='raises')
     def case_not_exists(self, tmp_path: Path):
@@ -1230,18 +1396,18 @@ class CasesPlotFiles:
     @case(tags='raises')
     def case_not_exists_kw(self, tmp_path: Path):
         """Test when the file does not exists as keyword."""
-        return f'--files={(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
+        return f'{(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
 
     @case(tags='raises')
     def case_empty(self):
         """Test when no files are passed"""
-        return '', ['Command "plot" parameter --files requires an argument.']
+        return '', ['Command "plot" parameter PATHS requires an argument.']
 
     @case(tags='raises')
     def case_one_exists(self, tmp_path: Path):
         """Test when one file does not exists."""
         (f1 := (tmp_path / 'f1.vtp')).touch()
-        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
+        return f'{f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
 
     @case(tags='raises')
     def case_not_readable(self, tmp_path: Path, mocker: MockerFixture):
@@ -1250,7 +1416,7 @@ class CasesPlotFiles:
         m = mocker.patch.object(pv, 'read')
         m.side_effect = Exception('Not readable')
 
-        return f'--files {f1.as_posix()}', ['1 file not readable by PyVista:']
+        return f'{f1.as_posix()}', ['Path is not readable by PyVista:']
 
 
 @parametrize_with_cases(
@@ -1270,21 +1436,63 @@ def test_plot_called_files(
 @parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
-    """Test that errors are correctly raised for the --files argument"""
+    """Test that errors are correctly raised for the paths argument"""
     with pytest.raises(SystemExit) as e:
         main(f'plot {tokens}')
 
     assert e.value.code == 1
 
-    out = capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert out == ''
     for error in errors:
-        assert error in out, out
+        assert error in err, err
+
+
+@pytest.mark.needs_vtk_version(9, 4, reason='workers crash older vtk')
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_skip_unreadable_hint(
+    tmp_ant_file, tmp_example_dir: Path, capsys: pytest.CaptureFixture
+):
+    """Test that --skip-unreadable hint is given for multiple args, but not for one arg."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')
+    assert len(list(tmp_example_dir.iterdir())) == 2
+    with pytest.raises(SystemExit) as e:
+        main('plot *.*')
+    assert e.value.code == 1
+
+    out, err = capture_out_err(capsys)
+    not_readable_msg = 'Path is not readable by PyVista:'
+    use_skip_unreadable_msg = 'Use --skip-unreadable to skip this file.'
+    assert out == ''
+    assert not_readable_msg in err, err
+    assert use_skip_unreadable_msg in err, err
+
+    # Using --skip-unreadable command should succeed
+    main('plot *.* --skip-unreadable')
+
+    # Repeat the same test, but this time there is only one file
+    # It still fails, but the hint to use --skip-unreadable is omitted
+    tmp_ant_file.unlink()
+    assert len(list(tmp_example_dir.iterdir())) == 1
+
+    with pytest.raises(SystemExit) as e:
+        main('plot *.*')
+    assert e.value.code == 1
+
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert not_readable_msg in err, err
+    assert use_skip_unreadable_msg not in err, err
+
+    # Using --skip-unreadable command should succeed
+    main('plot *.* --skip-unreadable')
 
 
 @parametrize(
     tokens_ncalls_args=[
         ('file1.ply file2.ply', 2, ['file1.ply', 'file2.ply']),
-        ('--files file1.ply file2.ply file3.ply', 3, ['file1.ply', 'file2.ply', 'file3.ply']),
+        ('file1.ply file2.ply file3.ply', 3, ['file1.ply', 'file2.ply', 'file3.ply']),
     ],
     idgen=lambda **args: args['tokens_ncalls_args'][0],
 )
@@ -1305,7 +1513,7 @@ def test_add_mesh_volume_called(
     tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
 
     for a in args:
-        shutil.copy(pv.examples.antfile, tmp_path / a)
+        shutil.copy(examples.antfile, tmp_path / a)
 
     os.chdir(tmp_path)
     main(f'plot {tokens}')
@@ -1317,9 +1525,9 @@ def test_add_mesh_volume_called(
 
 @pytest.mark.usefixtures('mock_pv_read')
 def test_plot_glob_expands_files(mock_add_mesh: MagicMock, tmp_example_dir: Path):
-    """Plot's --files argument should accept glob patterns (same path as convert)."""
+    """Plot's paths argument should accept glob patterns (same path as convert)."""
     for name in ('a.ply', 'b.ply'):
-        shutil.copy(pv.examples.antfile, tmp_example_dir / name)
+        shutil.copy(examples.antfile, tmp_example_dir / name)
     main(shlex.split("plot '*.ply'"))
     assert mock_add_mesh.call_count == 2
 
@@ -1332,9 +1540,12 @@ def test_validate_glob_expands_files(
     second = tmp_example_dir / 'ant2.ply'
     shutil.copy(tmp_ant_file, second)
     main(shlex.split("validate '*.ply'"))
-    out = capsys.readouterr().out
-    assert f"PolyData mesh '{tmp_ant_file.name}' is valid!" in out, out
-    assert f"PolyData mesh '{second.name}' is valid!" in out, out
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert (
+        'Validating ant2.ply ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
+        'All 2 meshes are valid.'
+    ) in err, err
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1348,7 +1559,9 @@ def test_report_help(capsys: pytest.CaptureFixture):
             Generate a PyVista software environment report.
        """
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert expected == '\n'.join(out.split('\n')[:4])
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1357,18 +1570,22 @@ def test_plot_help(capsys: pytest.CaptureFixture):
 
     expected = textwrap.dedent(
         """\
-        Usage: pyvista plot file (file2) [OPTIONS]
+        Usage: pyvista plot PATH... [OPTIONS]
 
         Plot one or more mesh files in an interactive window that can be 
         customized with various options.
         """  # noqa: W291
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:5])
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert expected == '\n'.join(out.split('\n')[:5])
 
 
 def test_version(capsys: pytest.CaptureFixture):
     main('--version')
-    assert capsys.readouterr().out == f'pyvista {pv.__version__}\n'
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert out == f'pyvista {pv.__version__}\n'
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1390,7 +1607,199 @@ def test_help(capsys: pytest.CaptureFixture):
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )
-    assert expected == capsys.readouterr().out
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_collision_error(ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """Two inputs with the same stem colliding on the same output raises an error by default."""
+    second = tmp_example_dir / 'ant.vtp'
+    ant.save(second)
+    with pytest.raises(SystemExit) as e:
+        main(shlex.split('convert ant.ply ant.vtp .pv'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert '1 output collision detected' in err, err
+    assert 'ant.ply + ant.vtp' in err, err
+    assert '--resolve-collisions' in err, err
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_resolve_collisions(ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """--resolve-collisions renames colliding outputs with _1/_2 suffixes, works with an
+    explicit output directory, and reports all renames after the saved summary."""
+    second = tmp_example_dir / 'ant.vtp'
+    third = tmp_example_dir / 'ant.obj'
+    ant.save(second)
+    ant.save(third)
+    main(shlex.split('convert ant.ply ant.vtp ant.obj out/.pv --resolve-collisions'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+
+    assert (tmp_example_dir / 'out' / 'ant.pv').is_file()
+    assert (tmp_example_dir / 'out' / 'ant_1.pv').is_file()
+    assert (tmp_example_dir / 'out' / 'ant_2.pv').is_file()
+
+    saved_pos = err.index('Saved 3 files')
+    renamed_pos = err.index('collisions resolved by renaming')
+    assert saved_pos < renamed_pos, err
+    assert '2 collisions resolved by renaming' in err, err
+    assert 'ant.vtp → ant_1.pv' in err, err
+    assert 'ant.obj → ant_2.pv' in err, err
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_resolve_collisions_counter_increment(
+    ant, tmp_example_dir: Path, capsys: pytest.CaptureFixture
+):
+    """The rename counter increments past _1 when _1 is itself already claimed."""
+    # ant.ply -> ant.pv  (first, claims the base)
+    # ant.vtp -> ant.pv  (collision, tries ant_1.pv, claims it)
+    # ant_1.ply exists as a real input, so it also claims ant_1.pv before the
+    # collision renamer gets there -- forcing the while loop to increment to _2
+    ant_1 = tmp_example_dir / 'ant_1.ply'
+    ant.save(ant_1)
+    second = tmp_example_dir / 'ant.vtp'
+    ant.save(second)
+
+    main(shlex.split('convert ant.ply ant_1.ply ant.vtp .pv --resolve-collisions'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+
+    assert (tmp_example_dir / 'ant.pv').is_file()  # ant.ply
+    assert (tmp_example_dir / 'ant_1.pv').is_file()  # ant_1.ply
+    assert (tmp_example_dir / 'ant_2.pv').is_file()  # ant.vtp, bumped past _1
+    assert 'ant.vtp → ant_2.pv' in err, err
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """A single unreadable file with --skip-unreadable announces the skip and does not save."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')
+    main(f'convert {str(bad)!r} .pv --skip-unreadable')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Skipping unreadable file' in err, err
+    assert not (tmp_example_dir / 'bad.pv').exists()
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
+    """Unreadable files are skipped and reported after the summary; all-skipped -> 0 saved."""
+    bad = tmp_example_dir / 'bad.vtp'
+    bad.write_text('')
+    main(shlex.split('convert ant.ply bad.vtp .pv --skip-unreadable'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+
+    assert (tmp_example_dir / 'ant.pv').is_file()
+    assert not (tmp_example_dir / 'bad.pv').exists()
+    assert err.index('Saved 1 file') < err.index('1 file skipped (unreadable)'), err
+    assert '1 file skipped (unreadable)' in err, err
+    assert 'bad.vtp' in err, err
+
+    # All skipped -> saved count is 0
+    bad2 = tmp_example_dir / 'bad2.vtp'
+    bad2.write_text('')
+    main(shlex.split('convert bad.vtp bad2.vtp .pv --skip-unreadable'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Saved 0 files' in err, err
+    assert '2 files skipped (unreadable)' in err, err
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_many_invalid(
+    tmp_ant_file: Path,
+    tmp_cow_file_invalid: Path,
+    tmp_ant_file_invalid_multiblock: Path,
+    capsys: pytest.CaptureFixture,
+):
+    """Invalid messages are deferred after the summary; all-invalid case works;
+    ordering holds across multiple invalid files; no per-file 'is valid!' noise."""
+    # One valid, one invalid -- message deferred after summary
+    main(f'validate {str(tmp_ant_file)!r} {str(tmp_cow_file_invalid)!r}')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '1 invalid meshes out of 2 meshes validated.' in err, err
+    assert err.index('invalid meshes') < err.index("'cow.vtk' is not valid"), err
+    assert 'is valid!' not in err, err
+
+    # All invalid -- both messages deferred after summary
+    main(f'validate {str(tmp_cow_file_invalid)!r} {str(tmp_ant_file_invalid_multiblock)!r}')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '2 invalid meshes out of 2 meshes validated.' in err, err
+    assert "UnstructuredGrid mesh 'cow.vtk' is not valid:" in err, err
+    assert "MultiBlock mesh 'ant.vtm' is not valid:" in err, err
+    summary_pos = err.index('invalid meshes')
+    assert err.index("'cow.vtk' is not valid") > summary_pos, err
+    assert err.index("'ant.vtm' is not valid") > summary_pos, err
+    assert 'is valid!' not in err, err
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
+def test_validate_skip_unreadable(
+    tmp_example_dir: Path,
+    capsys: pytest.CaptureFixture,
+):
+    """Single unreadable -> empty output; mixed -> skip report after summary; all
+    skipped -> no summary line, just the skip report."""
+    # Single unreadable file exits cleanly with no output
+    bad = tmp_example_dir / 'bad.foo'
+    bad.write_text('')
+    main(f'validate {str(bad)!r} --skip-unreadable')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert err == ''
+
+    # One readable, one unreadable -- skip report after summary
+    bad_vtp = tmp_example_dir / 'bad.vtp'
+    bad_vtp.write_text('')
+    main(shlex.split('validate ant.ply bad.vtp --skip-unreadable'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    expected = (
+        'Validating bad.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n'
+        '1 mesh is valid.\n'
+        '\n'
+        '1 file skipped (unreadable):\n'
+        '  bad.vtp\n'
+    )
+    assert err == expected, err
+
+    # All skipped -- no summary, just skip report
+    bad2 = tmp_example_dir / 'bad2.vtp'
+    bad2.write_text('')
+    main(shlex.split('validate bad.vtp bad2.vtp --skip-unreadable'))
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    expected = (
+        'Validating bad2.vtp ━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 • 0:00:00 < 0:00:00\n\n'
+        '2 files skipped (unreadable):\n  bad.vtp\n  bad2.vtp\n'
+    )
+    assert err == expected, err
+
+
+@pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.needs_vtk_version(9, 5, reason='needs vtkhdf read support')
+@pytest.mark.skip_windows(reason='path in error is wrapped differently by rich')
+def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
+    """A mesh type that is not a DataSet or MultiBlock exits with a clear error."""
+    path = Path(examples.download_warping_spheres(load=False))
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(path)!r}')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '╭─ PyVista Error ─' in err, err
+    assert 'Cannot validate PartitionedDataSet' in err, err
+    assert 'only DataSet and MultiBlock meshes are supported' in err, err
+    assert e.value.code == 1
 
 
 @parametrize(
@@ -1433,8 +1842,10 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
-    tokens = func if func == 'report' else f'{func} --files={Path(pv.examples.antfile).as_posix()}'
+    tokens = func if func == 'report' else f'{func} {Path(examples.antfile).as_posix()}'
     main(tokens)
 
     expected = f'{ret}\n' if ret is not None else ''
-    assert capsys.readouterr().out == expected
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert out == expected

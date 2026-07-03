@@ -14,6 +14,7 @@ import traceback
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
+import warnings
 
 import numpy as np
 from typing_extensions import Self
@@ -373,7 +374,14 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warn_external(formatted_exception)
+        # Force the warning to always be shown. Otherwise, callbacks bound to
+        # high-frequency events (e.g. ``MouseMoveEvent``) emit an identical
+        # warning at the same call site on every invocation, and Python's
+        # default filter de-duplicates it to a single message per session,
+        # making callback errors appear to be silently swallowed.
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warn_external(formatted_exception)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -458,6 +466,10 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
     """
 
     def __getattr__(cls, name: str) -> Any:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is None:  # pragma: no cover
+            return None  # type: ignore[unreachable]
+
         from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
             _resolve_pending_accessor,
         )

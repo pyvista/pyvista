@@ -95,7 +95,7 @@ repos:
         types_or: [python, rst, markdown]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.12
+    rev: v0.15.15
     hooks:
       - id: ruff-format
       - id: ruff-check
