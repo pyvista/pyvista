@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from threading import Event
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
@@ -415,6 +416,10 @@ class BasePlotter(_BoundsSizeMixin):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
+        # background thread (and its cancellation event) started by a threaded
+        # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
+        self._orbit_thread: Thread | None = None
+        self._orbit_stop_event: Event | None = None
         self.mesh: MultiBlock | DataSet | None = None
         if title is None:
             title = self._theme.title
@@ -5323,6 +5328,13 @@ class BasePlotter(_BoundsSizeMixin):
 
     def close(self) -> None:
         """Close the render window."""
+        # Stop any background `orbit_on_path(threaded=True)` thread before
+        # tearing anything else down, so it stops touching this plotter's
+        # VTK objects once they're cleared.
+        if self._orbit_thread is not None and self._orbit_thread.is_alive():
+            self._orbit_stop_event.set()
+            self._orbit_thread.join(timeout=5)
+
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)  # type: ignore[arg-type]
@@ -6801,11 +6813,17 @@ class BasePlotter(_BoundsSizeMixin):
                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
                 raise ImportError(msg)
 
+        # Lets a threaded orbit be cancelled from `close()` so the background
+        # thread stops touching this plotter's VTK objects once they're torn down.
+        stop_event = Event() if threaded else None
+
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
             points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
+                if stop_event is not None and stop_event.is_set():
+                    return
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
                 self.set_focus(focus, render=False)  # type: ignore[arg-type]
@@ -6819,12 +6837,18 @@ class BasePlotter(_BoundsSizeMixin):
                 if sleep_time > 0 and (
                     hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
-                    time.sleep(sleep_time)
+                    if stop_event is not None:
+                        if stop_event.wait(sleep_time):
+                            return
+                    else:
+                        time.sleep(sleep_time)
             if write_frames:
                 self._get_mwriter_not_none().close()
 
         if threaded:
+            self._orbit_stop_event = stop_event
             thread = Thread(target=orbit)
+            self._orbit_thread = thread
             thread.start()
         else:
             orbit()
