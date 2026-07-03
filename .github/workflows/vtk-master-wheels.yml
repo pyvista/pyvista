@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           # Depth 200 since we want to ensure we capture kwrobot's date-stamp commit
-          git clone --depth 200 --branch master https://gitlab.kitware.com/vtk/vtk.git vtk-src
+          git clone --depth 200 --branch master https://github.com/kitware/vtk vtk-src
           cd vtk-src
 
           NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' -n 1 --format=%H)"
