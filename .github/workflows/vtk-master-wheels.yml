@@ -18,11 +18,19 @@ env:
   PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
 
 jobs:
+  check-should-run:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run:
+          | # For PRs, only run this job if the 'vtk-master-testing' label is applied
+          echo "run=${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}" >> "$GITHUB_OUTPUT"
+
   build-vtk:
-    # For PRs, only run this job if the 'vtk-master-testing' label is applied
-    if: |
-      (github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'merge_group') ||
-      contains(github.event.pull_request.labels.*.name, 'vtk-master-testing')
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -188,14 +196,16 @@ jobs:
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
     name: Cache pyvista/data
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
   test-linux:
-    needs: [build-vtk, cache-github-hosted]
-    if: ${{ !cancelled() }}
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -272,8 +282,8 @@ jobs:
           path: _generated_test_images
 
   test-macOS:
-    needs: [build-vtk, cache-github-hosted]
-    if: ${{ !cancelled() }}
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -345,8 +355,8 @@ jobs:
           path: _generated_test_images
 
   test-windows:
-    needs: [build-vtk, cache-github-hosted]
-    if: ${{ !cancelled() }}
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     strategy:
       fail-fast: false
       matrix:
