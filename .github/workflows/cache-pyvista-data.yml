@@ -36,7 +36,7 @@ jobs:
 
       - name: Restore pyvista/data cache
         id: restore
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: pyvista-data-${{ env.VTK_DATA_COMMIT }}
@@ -44,7 +44,7 @@ jobs:
 
       - name: Clone pyvista/data if cache miss
         if: steps.restore.outputs.cache-hit != 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: pyvista/data
@@ -52,7 +52,7 @@ jobs:
 
       - name: Save pyvista/data cache
         if: steps.restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: pyvista-data-${{ env.VTK_DATA_COMMIT }}
