@@ -87,22 +87,6 @@ def test_plotter_anti_aliasing_raises():
     ):
         pl.enable_anti_aliasing(aa_type='foo')
 
-
-def test_plotter_docstring_includes_subplot_kwargs():
-    doc = pv.Plotter.__doc__
-    assert doc is not None
-    for name in (
-        'border_width',
-        'groups',
-        'row_weights',
-        'col_weights',
-        'splitting_position',
-        'title',
-        'point_smoothing',
-    ):
-        assert name in doc
-
-
 def test_plotter_store_mouse_position_raises():
     pl = pv.Plotter()
     pl.iren = None

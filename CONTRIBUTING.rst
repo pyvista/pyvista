@@ -302,9 +302,8 @@ PyVista follows the `Google Developer Documentation Style
 These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
 and partially enforced for Python source files.
 
-These rules are enforced through the use of
-`Vale <https://github.com/vale-cli/vale>`_ via our GitHub Actions, and you can
-run Vale locally with:
+These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
+GitHub Actions, and you can run Vale locally with:
 
 .. code-block:: bash
 
