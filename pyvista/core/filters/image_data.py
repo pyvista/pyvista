@@ -3011,7 +3011,6 @@ class ImageDataFilters(DataSetFilters):
             name='output_mesh_type',
         )
         input_ids = _validate_selection(select_inputs)
-        output_ids = _validate_selection(select_outputs)
 
         alg_input = _get_alg_input(self, scalars)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
@@ -3091,9 +3090,10 @@ class ImageDataFilters(DataSetFilters):
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
 
-        if select_outputs is not None and not all(input_ids == output_ids):
+        if select_outputs is not None:
+            output_ids = _validate_selection(select_outputs)
             ugrid = output.extract_values(
-                np.atleast_1d(select_outputs),
+                output_ids,
                 component_mode='any',
                 pass_cell_ids=False,
                 pass_point_ids=False,
