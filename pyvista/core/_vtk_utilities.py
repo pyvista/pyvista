@@ -12,7 +12,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
 
 # A wrapped VTK class' ``__module__`` is rooted at the selected backend
-# (``vtkmodules`` for stock VTK, ``fvtk`` for the fork). Accept both so the
+# (``vtkmodules`` for stock VTK, ``cvista`` for the fork). Accept both so the
 # override-stripping and snake_case guards work under either backend.
 _VTK_MODULE_PREFIXES = ('vtkmodules.', f'{_vtk._VTK_BACKEND}.')
 

@@ -187,11 +187,11 @@ jobs:
           - python-version: "3.14"
             vtk-version: "latest"
             numpy-version: "nightly"
-          # Drop-in replacement: run the suite against the fvtk fork backend
-          # (installed alongside stock vtk; PYVISTA_VTK_BACKEND=fvtk via the
-          # vtk_fvtk tox factor). fvtk ships a single abi3 wheel for Python >=3.12.
+          # Drop-in replacement: run the suite against the cvista fork backend
+          # (installed alongside stock vtk; PYVISTA_VTK_BACKEND=cvista via the
+          # vtk_cvista tox factor). cvista ships a single abi3 wheel for Python >=3.12.
           - python-version: "3.12"
-            vtk-version: "fvtk"
+            vtk-version: "cvista"
             numpy-version: "latest"
 
     env:

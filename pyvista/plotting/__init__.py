@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 # Magic vtk imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
-# Routed through the selected VTK backend (vtkmodules or fvtk); see pyvista._vtk.
+# Routed through the selected VTK backend (vtkmodules or cvista); see pyvista._vtk.
 import importlib
 
 from pyvista import _vtk

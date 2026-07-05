@@ -61,8 +61,8 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: A
             raise ValueError(msg)
 
         vtk_version = m.group(1)
-        # Non-numeric factors ("latest", "fvtk") track a recent VTK (>= 9.4).
-        recent = vtk_version in ('latest', 'fvtk') or Version(vtk_version) >= Version('9.4.0')
+        # Non-numeric factors ("latest", "cvista") track a recent VTK (>= 9.4).
+        recent = vtk_version in ('latest', 'cvista') or Version(vtk_version) >= Version('9.4.0')
         val = '-n4' if recent else ''
 
         updated = {'PARALLEL': val}

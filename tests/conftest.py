@@ -415,25 +415,25 @@ def _get_min_max_vtk_version(
     return _pad_version(_min), _pad_version(_max), bounds
 
 
-# Tests that intentionally diverge under the fvtk backend (an alternative VTK
-# build). fvtk omits the VTK 9.4+ snake_case wrapper API by design and ships a
+# Tests that intentionally diverge under the cvista backend (an alternative VTK
+# build). cvista omits the VTK 9.4+ snake_case wrapper API by design and ships a
 # trimmed module set, so a handful of behaviors differ from stock VTK. Keyed by
-# test function name; skipped only when the active backend is fvtk.
-_FVTK_DIVERGENT_TESTS = {
-    # fvtk omits the VTK snake_case wrapper API (by design)
-    'test_vtk_snake_case_api_is_disabled': 'fvtk omits the VTK snake_case wrapper API',
-    'test_dir_snake_case_visible_when_allowed': 'fvtk omits the VTK snake_case wrapper API',
-    'test_is_vtk_attribute': 'fvtk omits the VTK snake_case wrapper API',
-    'test_vtk_snake_case': 'fvtk omits the VTK snake_case wrapper API',
-    'test_vtk_class_does_not_exist': 'fvtk wraps a trimmed VTK class set',
-    'test_vtk_module_does_not_exist': 'fvtk wraps a trimmed VTK module set',
-    'test_plotting_import_loads_context_opengl2': 'module loads under the fvtk namespace',
-    # fvtk ships a trimmed module set and uses narrower container widths
-    'test_xdmf_reader': 'fvtk does not ship vtkIOXdmf2',
-    'test_download_meshio_xdmf': 'fvtk does not ship vtkIOXdmf2',
-    'test_cell_status': 'fvtk diverges on vtkCellStatus enum exposure',
-    'test_save_compression': 'fvtk stores indices as int32 (smaller, less compressible)',
-    'test_to_from_trimesh_points_faces': 'fvtk stores connectivity as int32 (no zero-copy share)',
+# test function name; skipped only when the active backend is cvista.
+_CVISTA_DIVERGENT_TESTS = {
+    # cvista omits the VTK snake_case wrapper API (by design)
+    'test_vtk_snake_case_api_is_disabled': 'cvista omits the VTK snake_case wrapper API',
+    'test_dir_snake_case_visible_when_allowed': 'cvista omits the VTK snake_case wrapper API',
+    'test_is_vtk_attribute': 'cvista omits the VTK snake_case wrapper API',
+    'test_vtk_snake_case': 'cvista omits the VTK snake_case wrapper API',
+    'test_vtk_class_does_not_exist': 'cvista wraps a trimmed VTK class set',
+    'test_vtk_module_does_not_exist': 'cvista wraps a trimmed VTK module set',
+    'test_plotting_import_loads_context_opengl2': 'module loads under the cvista namespace',
+    # cvista ships a trimmed module set and uses narrower container widths
+    'test_xdmf_reader': 'cvista does not ship vtkIOXdmf2',
+    'test_download_meshio_xdmf': 'cvista does not ship vtkIOXdmf2',
+    'test_cell_status': 'cvista diverges on vtkCellStatus enum exposure',
+    'test_save_compression': 'cvista stores indices as int32 (smaller, less compressible)',
+    'test_to_from_trimesh_points_faces': 'cvista stores connectivity as int32 (no zero-copy share)',
 }
 
 
@@ -442,10 +442,10 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
-    if pv._vtk._VTK_BACKEND == 'fvtk':
-        reason = _FVTK_DIVERGENT_TESTS.get(getattr(item, 'originalname', '') or item.name)
+    if pv._vtk._VTK_BACKEND == 'cvista':
+        reason = _CVISTA_DIVERGENT_TESTS.get(getattr(item, 'originalname', '') or item.name)
         if reason is not None:
-            pytest.skip(f'fvtk backend: {reason}')
+            pytest.skip(f'cvista backend: {reason}')
 
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
