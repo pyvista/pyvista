@@ -2948,8 +2948,7 @@ class ImageDataFilters(DataSetFilters):
             # Always output all labels for surface nets; user-selected outputs are filtered later
             ids = np.unique(array_)
             ids = ids[ids != background_value]
-            ids = ids.astype(float)
-            [alg_.SetLabel(int(val), val) for val in ids]  # type: ignore[func-returns-value]
+            [alg_.SetLabel(int(val), float(val)) for val in ids]  # type: ignore[func-returns-value]
 
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
