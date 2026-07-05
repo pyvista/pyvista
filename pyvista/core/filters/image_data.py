@@ -2912,6 +2912,12 @@ class ImageDataFilters(DataSetFilters):
         """
         temp_scalars_name = '_PYVISTA_TEMP'
 
+        def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
+            if selection is None:
+                return np.array([], dtype=int)
+            unique = np.unique(np.atleast_1d(selection))
+            return unique[unique != background_value]
+
         def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             if scalars_ is None:
                 set_default_active_scalars(image)
@@ -2924,11 +2930,8 @@ class ImageDataFilters(DataSetFilters):
                 if field == FieldAssociation.POINT
                 else image.cells_to_points(scalars=scalars_, copy=False)
             )
-            if select_inputs is not None:
-                inputs = np.atleast_1d(select_inputs)
-                inputs = inputs[inputs != background_value]
-                if inputs.size > 0:
-                    return image.select_values(inputs)
+            if input_ids.size > 0:
+                return image.select_values(input_ids)
             return image
 
         def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D):
@@ -3009,6 +3012,8 @@ class ImageDataFilters(DataSetFilters):
             must_contain=output_mesh_type,
             name='output_mesh_type',
         )
+        input_ids = _validate_selection(select_inputs)
+        output_ids = _validate_selection(select_outputs)
 
         alg_input = _get_alg_input(self, scalars)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
@@ -3024,12 +3029,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        if boundary_style == 'strict_external':
-            # Use default alg parameters
-            if select_inputs is not None or select_outputs is not None:
-                msg = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-                raise TypeError(msg)
-        else:
+        if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
                 array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
@@ -3093,10 +3093,16 @@ class ImageDataFilters(DataSetFilters):
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
 
-        if select_outputs is not None:
-            output = output.extract_values(
-                np.atleast_1d(select_outputs), component_mode='any'
-            ).extract_surface(algorithm='geometry')
+        if select_outputs is not None and not all(input_ids == output_ids):
+            ugrid = output.extract_values(
+                np.atleast_1d(select_outputs),
+                component_mode='any',
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+            output = ugrid.extract_surface(
+                algorithm='geometry', pass_cellid=False, pass_pointid=False
+            )
 
         if orient_faces and output.n_cells > 0:
             if pv.vtk_version_info >= (9, 4):
