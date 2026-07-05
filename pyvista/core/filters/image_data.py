@@ -2571,9 +2571,7 @@ class ImageDataFilters(DataSetFilters):
             The ``'strict_external'`` style can be used as a fast alternative to
             ``'external'``. This style `strictly` generates external polygons and does
             not compute or consider internal boundaries. This computation is fast, but
-            also results in jagged, non-smooth boundaries between regions. The
-            ``select_inputs`` and ``select_outputs`` options cannot be used with this
-            style.
+            also results in jagged, non-smooth boundaries between regions.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
