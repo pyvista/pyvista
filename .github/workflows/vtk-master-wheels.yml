@@ -138,8 +138,12 @@ jobs:
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)")
             -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
             -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
+            -DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES
             -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES
             -DVTK_MODULE_ENABLE_VTK_IOXdmf2=YES
+            -DVTK_MODULE_ENABLE_VTK_WebCore=YES
+            -DVTK_MODULE_ENABLE_VTK_WebGLExporter=YES
+            -DVTK_MODULE_ENABLE_VTK_WebPython=YES
             ../vtk-src
           )
 
