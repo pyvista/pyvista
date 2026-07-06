@@ -2429,6 +2429,9 @@ def test_cell_validator_invalid_tetra(
         if name in (
             pv.CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
             pv.CellStatus.ZERO_SIZE.name.lower(),
+            # Coincident-point fix: the missing-point tetra (cell 0) has two
+            # coincident points, so COINCIDENT_POINTS is now flagged on cell 0.
+            pv.CellStatus.COINCIDENT_POINTS.name.lower(),
         ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
@@ -2465,7 +2468,10 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == pv.CellStatus.ZERO_SIZE
+        # Coincident-point fix: a zero-length line also has coincident points, so
+        # both bits are now set (previously only ZERO_SIZE).
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2476,7 +2482,10 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == pv.CellStatus.ZERO_SIZE
+        # Coincident-point fix: this degenerate triangle has two coincident points,
+        # so both bits are now set (previously only ZERO_SIZE).
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2509,6 +2518,37 @@ def test_validate_mesh_degenerate_cells():
         mesh.validate_mesh(size_tolerance=1e-8, action='error')
     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
         mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [examples.cells.Quadrilateral, examples.cells.Polygon],
+    ids=['quad', 'polygon'],
+)
+def test_validate_mesh_coincident_points_2d_cells(make_mesh):
+    # Regression: a 2D cell (quad, polygon) with a collapsed edge (two coincident
+    # points) was reported VALID. VTK's face-based vtkCellValidator never flags 2D
+    # cells, and PyVista's supplementary checks only added zero_size / negative_size
+    # / invalid_point_references. A collapsed 2D cell keeps positive area, so
+    # zero_size does not rescue it. The fix adds a PyVista-side coincident-point
+    # check that sets CellStatus.COINCIDENT_POINTS for any cell with two coincident
+    # points, making 'coincident_points' the sole invalid field for these cells.
+    mesh = make_mesh()
+
+    # Negative case: the pristine cell is valid -- the check must not false-positive.
+    assert mesh.validate_mesh().is_valid
+
+    # Collapse an edge so points[0] and points[1] coincide.
+    mesh.points[1] = mesh.points[0]
+
+    report = mesh.validate_mesh()
+    assert report.is_valid is False
+    assert 'coincident_points' in report.invalid_fields
+    # Bit choice is COINCIDENT_POINTS only; 2D cells must not report DEGENERATE_FACES.
+    assert report.invalid_fields == ('coincident_points',)
+
+    state = mesh.cell_validator()['validity_state']
+    assert state[0] & pv.CellStatus.COINCIDENT_POINTS
 
 
 def test_validate_mesh_invalid_point_references():
