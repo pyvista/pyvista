@@ -425,8 +425,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(  # noqa: PLR0917
-        self,
+    def extract_subset(  # type: ignore[misc] # noqa: PLR0917
+        self: ImageData,
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
