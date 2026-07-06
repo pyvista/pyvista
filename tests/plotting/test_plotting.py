@@ -6375,13 +6375,18 @@ def test_extract_subset_rate(rate, rebase_coordinates):
     subset = image.extract_subset(
         (*extent[:4], 0, 0), rate=rate, rebase_coordinates=rebase_coordinates
     )
+    expected_bounds = pv.BoundsTuple(
+        x_min=-6.0, x_max=6.0, y_min=-6.0, y_max=6.0, z_min=0.0, z_max=0.0
+    )
+    assert np.allclose(subset.bounds, expected_bounds)
+
     # Put a hemisphere at the global and image origins for reference
-    global_origin = pv.Sphere(center=(0, 0, 0), start_theta=0, end_theta=180)
-    image_origin = pv.Sphere(center=subset.origin, start_theta=180, end_theta=360)
+    global_origin = pv.Sphere(radius=2.0, center=(0, 0, 0), start_theta=0, end_theta=180)
+    image_origin = pv.Sphere(radius=2.0, center=subset.origin, start_theta=180, end_theta=360)
 
     pl = pv.Plotter()
     pl.add_mesh(subset)
-    pl.add_mesh(global_origin, color='red')
-    pl.add_mesh(image_origin, color='green')
+    pl.add_mesh(global_origin, color='blue')
+    pl.add_mesh(image_origin, color='orange')
     pl.view_xy()
     pl.show()
