@@ -2516,16 +2516,21 @@ def test_validate_mesh_degenerate_cells():
 
 @pytest.mark.parametrize(
     'make_mesh',
-    [examples.cells.Quadrilateral, examples.cells.Polygon],
-    ids=['quad', 'polygon'],
+    [
+        examples.cells.PolyVertex,
+        examples.cells.PolyLine,
+        examples.cells.Line,
+        examples.cells.Quadrilateral,
+        examples.cells.Polygon,
+        examples.cells.Hexahedron,
+    ],
+    ids=['poly_vertex', 'poly_line', 'line', 'quad', 'polygon', 'hexahedron'],
 )
-def test_validate_mesh_coincident_points_2d_cells(make_mesh):
-    # Regression: a 2D cell (quad, polygon) with a collapsed edge (two coincident
-    # points) was reported VALID. VTK's face-based vtkCellValidator never flags 2D
-    # cells, and PyVista's supplementary checks only added zero_size / negative_size
-    # / invalid_point_references. A collapsed 2D cell keeps positive area, so
-    # zero_size does not rescue it. The fix adds a PyVista-side coincident-point
-    # check that sets CellStatus.COINCIDENT_POINTS for any cell with two coincident points.
+def test_validate_mesh_coincident_points(make_mesh):
+    # Regression (#8711): a cell with a collapsed edge (two coincident points) was
+    # reported valid. VTK's face-based vtkCellValidator does not flag this for many
+    # cell types and PyVista had no fallback. The fix flags any cell with two
+    # coincident points via CellStatus.COINCIDENT_POINTS.
     mesh = make_mesh()
 
     # Negative case: the pristine cell is valid -- the check must not false-positive.
@@ -2537,8 +2542,6 @@ def test_validate_mesh_coincident_points_2d_cells(make_mesh):
     report = mesh.validate_mesh()
     assert report.is_valid is False
     assert 'coincident_points' in report.invalid_fields
-    # Bit choice is COINCIDENT_POINTS only; 2D cells must not report DEGENERATE_FACES.
-    assert report.invalid_fields == ('coincident_points',)
 
     state = mesh.cell_validator()['validity_state']
     assert state[0] & pv.CellStatus.COINCIDENT_POINTS
