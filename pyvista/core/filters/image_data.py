@@ -2908,7 +2908,6 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
-        temp_scalars_name = '_PYVISTA_TEMP'
 
         def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
             if selection is None:
@@ -3046,11 +3045,17 @@ class ImageDataFilters(DataSetFilters):
 
         output: pv.PolyData = _get_output(alg)
 
-        (  # Clear temp scalars from input
-            alg_input.point_data.remove(temp_scalars_name)
-            if temp_scalars_name in alg_input.point_data
-            else None
-        )
+        if select_outputs is not None:
+            output_ids = _validate_selection(select_outputs)
+            ugrid = output.extract_values(
+                output_ids,
+                component_mode='any',
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+            output = ugrid.extract_surface(
+                algorithm='geometry', pass_cellid=False, pass_pointid=False
+            )
 
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
@@ -3088,18 +3093,6 @@ class ImageDataFilters(DataSetFilters):
 
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
-
-        if select_outputs is not None:
-            output_ids = _validate_selection(select_outputs)
-            ugrid = output.extract_values(
-                output_ids,
-                component_mode='any',
-                pass_cell_ids=False,
-                pass_point_ids=False,
-            )
-            output = ugrid.extract_surface(
-                algorithm='geometry', pass_cellid=False, pass_pointid=False
-            )
 
         if orient_faces and output.n_cells > 0:
             if pv.vtk_version_info >= (9, 4):
