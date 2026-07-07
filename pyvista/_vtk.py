@@ -845,6 +845,15 @@ def has_attr(name: str) -> bool:
     return True
 
 
+def import_all(*, suppress_import_errors: bool = True):
+    for name in _VTK_CLASS_TO_MODULE:
+        if suppress_import_errors:
+            # Use has_attr to suppress import errors
+            has_attr(name)
+        else:
+            __getattr__(name)
+
+
 # Specialized loading functions for irregular imports
 
 

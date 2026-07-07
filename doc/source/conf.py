@@ -43,10 +43,14 @@ import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
 
 # Manage errors
 pv.set_error_output_file('errors.txt')
