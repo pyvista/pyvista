@@ -1767,10 +1767,10 @@ class DataObjectFilters:
             # check: a cell is coincident if any two of its points are within tol. This
             # applies to all cell types (also OR-ing the bit into already-caught cases).
             coincident = np.zeros(n_cells, dtype=bool)
-            sizes = np.diff(offset)
+            n_cell_points = np.diff(offset)
             valid_conn = (conn >= 0) & (conn < n_points)
-            for size in np.unique(sizes[sizes >= 2]):
-                cells = np.nonzero(sizes == size)[0]
+            for size in np.unique(n_cell_points[n_cell_points >= 2]):
+                cells = np.nonzero(n_cell_points == size)[0]
                 # Gather this group's point ids as an (m, size) block via CSR offsets
                 entry_ids = offset[cells, np.newaxis] + np.arange(size)[np.newaxis, :]
                 pids = conn[entry_ids]
