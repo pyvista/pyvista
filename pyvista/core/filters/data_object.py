@@ -1785,7 +1785,6 @@ class DataObjectFilters:
                 coincident[cells] = any_coincident & group_valid
             state[coincident] |= CellStatus.COINCIDENT_POINTS
 
-            # INVALID_POINT_REFERENCES: map out-of-range connectivity entries to cells
             invalid_conn = ~valid_conn
             if not np.any(invalid_conn):
                 return
