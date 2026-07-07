@@ -2429,8 +2429,6 @@ def test_cell_validator_invalid_tetra(
         if name in (
             pv.CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
             pv.CellStatus.ZERO_SIZE.name.lower(),
-            # Coincident-point fix: the missing-point tetra (cell 0) has two
-            # coincident points, so COINCIDENT_POINTS is now flagged on cell 0.
             pv.CellStatus.COINCIDENT_POINTS.name.lower(),
         ):
             expected_cell_ids = [0]
@@ -2468,8 +2466,6 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        # Coincident-point fix: a zero-length line also has coincident points, so
-        # both bits are now set (previously only ZERO_SIZE).
         assert state[0] & pv.CellStatus.ZERO_SIZE
         assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
@@ -2482,8 +2478,6 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        # Coincident-point fix: this degenerate triangle has two coincident points,
-        # so both bits are now set (previously only ZERO_SIZE).
         assert state[0] & pv.CellStatus.ZERO_SIZE
         assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
@@ -2531,8 +2525,7 @@ def test_validate_mesh_coincident_points_2d_cells(make_mesh):
     # cells, and PyVista's supplementary checks only added zero_size / negative_size
     # / invalid_point_references. A collapsed 2D cell keeps positive area, so
     # zero_size does not rescue it. The fix adds a PyVista-side coincident-point
-    # check that sets CellStatus.COINCIDENT_POINTS for any cell with two coincident
-    # points, making 'coincident_points' the sole invalid field for these cells.
+    # check that sets CellStatus.COINCIDENT_POINTS for any cell with two coincident points.
     mesh = make_mesh()
 
     # Negative case: the pristine cell is valid -- the check must not false-positive.
