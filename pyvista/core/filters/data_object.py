@@ -1780,7 +1780,9 @@ class DataObjectFilters:
                 # indexing so the gather never raises on out-of-range ids.
                 group_valid = np.all(valid_conn[entry_ids], axis=1)
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
-                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                # Ignore errors caused by non-finite points
+                with np.errstate(over='ignore'):
+                    diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
                 dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
                 iu = np.triu_indices(size, k=1)
                 any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
@@ -1794,9 +1796,9 @@ class DataObjectFilters:
 
             # Map invalid connectivity indices to cell IDs
             invalid_conn_ids = np.nonzero(invalid_conn)[0]
+            cell_ids = np.searchsorted(offset, invalid_conn_ids, side='right') - 1
 
             # Build per-cell boolean mask
-            cell_ids = np.searchsorted(offset, invalid_conn_ids, side='right') - 1
             is_invalid = np.zeros(n_cells, dtype=bool)
             is_invalid[cell_ids] = True
             state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
