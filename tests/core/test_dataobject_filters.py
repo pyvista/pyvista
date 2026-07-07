@@ -2527,10 +2527,7 @@ def test_validate_mesh_degenerate_cells():
     ids=['poly_vertex', 'poly_line', 'line', 'quad', 'polygon', 'hexahedron'],
 )
 def test_validate_mesh_coincident_points(make_mesh):
-    # Regression (#8711): a cell with a collapsed edge (two coincident points) was
-    # reported valid. VTK's face-based vtkCellValidator does not flag this for many
-    # cell types and PyVista had no fallback. The fix flags any cell with two
-    # coincident points via CellStatus.COINCIDENT_POINTS.
+    """Test that a cell with a collapsed edge (two coincident points) is invalid."""
     mesh = make_mesh()
 
     # Negative case: the pristine cell is valid -- the check must not false-positive.
@@ -2545,6 +2542,50 @@ def test_validate_mesh_coincident_points(make_mesh):
 
     state = mesh.cell_validator()['validity_state']
     assert state[0] & pv.CellStatus.COINCIDENT_POINTS
+
+
+@pytest.fixture
+def degenerate_structured_grid_quad():
+    x = np.array(
+        [
+            [0.0, 1.0],
+            [0.0, 1.0],
+        ]
+    )
+    y = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ]
+    )
+    z = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 1.0],
+        ]
+    )
+
+    # Collapse the "south" edge to a single point
+    x[0, :] = 0.0
+    y[0, :] = 0.0
+    z[0, :] = 0.0
+
+    grid = pv.StructuredGrid(x, y, z)
+    assert grid.n_cells == 1
+    assert grid.n_points == 4
+    assert grid.distinct_cell_types == {pv.CellType.QUAD}
+
+    cleaned = grid.extract_surface(algorithm='geometry').clean()
+    assert cleaned.n_cells == 1
+    assert cleaned.n_points == 3
+    assert cleaned.distinct_cell_types == {pv.CellType.TRIANGLE}
+
+    return grid
+
+
+def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_grid_quad):
+    report = degenerate_structured_grid_quad.validate_mesh()
+    assert report.invalid_fields == ('coincident_points',)
 
 
 def test_validate_mesh_invalid_point_references():

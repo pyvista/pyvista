@@ -1749,9 +1749,11 @@ class DataObjectFilters:
             # ZERO_SIZE
             state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
-            # INVALID_POINT_REFERENCES
-            if hasattr(mesh, 'dimensions'):
-                return  # Cell connectivity is explicitly defined and cannot be invalid
+            # COINCIDENT_POINTS
+            # Skip remaining checks for datasets where cell connectivity cannot be invalid
+            # Do not skip types StructuredGrid where coincident points are possible
+            if isinstance(mesh, pv.Grid):
+                return
 
             ugrid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
@@ -1762,7 +1764,7 @@ class DataObjectFilters:
             n_cells = ugrid.n_cells
             n_points = ugrid.n_points
 
-            # COINCIDENT_POINTS: VTK's face-based vtkCellValidator never flags 2D cells,
+            # VTK's face-based vtkCellValidator never flags 2D cells,
             # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
             # check: a cell is coincident if any two of its points are within tol. This
             # applies to all cell types (also OR-ing the bit into already-caught cases).
@@ -1785,10 +1787,15 @@ class DataObjectFilters:
                 coincident[cells] = any_coincident & group_valid
             state[coincident] |= CellStatus.COINCIDENT_POINTS
 
+            # INVALID_POINT_REFERENCES
             invalid_conn = ~valid_conn
             if not np.any(invalid_conn):
                 return
+
+            # Map invalid connectivity indices to cell IDs
             invalid_conn_ids = np.nonzero(invalid_conn)[0]
+
+            # Build per-cell boolean mask
             cell_ids = np.searchsorted(offset, invalid_conn_ids, side='right') - 1
             is_invalid = np.zeros(n_cells, dtype=bool)
             is_invalid[cell_ids] = True
