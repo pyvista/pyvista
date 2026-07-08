@@ -102,11 +102,11 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert      Convert one or more mesh files to another format.     │
         │ plot         Plot one or more mesh files in an interactive window. │
-        │ report       Generate a PyVista software environment report.       │
+        │ convert      Convert one or more mesh files to another format.     │
         │ validate     Validate data, points, and cells for one or more mesh │
         │              files.                                                │
+        │ report       Generate a PyVista software environment report.       │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
@@ -124,17 +124,17 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
-    │ convert      Convert one or more mesh files to another format.     │
     │ plot         Plot one or more mesh files in an interactive window. │
-    │ report       Generate a PyVista software environment report.       │
+    │ convert      Convert one or more mesh files to another format.     │
     │ validate     Validate data, points, and cells for one or more mesh │
     │              files.                                                │
+    │ report       Generate a PyVista software environment report.       │
     │ --help (-h)  Display this message and exit.                        │
     │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown command "foo". Available commands: report, convert, plot,  │
-    │ validate.                                                          │
+    │ Unknown command "foo". Available commands: plot, convert,          │
+    │ validate, report.                                                  │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -1592,11 +1592,11 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert      Convert one or more mesh files to another format.     │
         │ plot         Plot one or more mesh files in an interactive window. │
-        │ report       Generate a PyVista software environment report.       │
+        │ convert      Convert one or more mesh files to another format.     │
         │ validate     Validate data, points, and cells for one or more mesh │
         │              files.                                                │
+        │ report       Generate a PyVista software environment report.       │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯

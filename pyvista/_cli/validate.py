@@ -121,6 +121,7 @@ def _converter_report(
 
 
 @CLI_APP.command(
+    sort_key=2,
     usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
 )

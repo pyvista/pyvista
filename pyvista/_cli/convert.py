@@ -45,6 +45,7 @@ _resolve_collisions_help = (
 
 
 @CLI_APP.command(
+    sort_key=1,
     usage=f'Usage: [bold]{pv.__name__} convert PATH-IN [PATH-IN...] PATH-OUT',
     help_formatter=HELP_FORMATTER,
 )

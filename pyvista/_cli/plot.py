@@ -80,6 +80,7 @@ class Groups(StrEnum):
 
 
 @CLI_APP.command(
+    sort_key=0,
     usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
 )
