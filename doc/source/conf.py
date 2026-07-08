@@ -72,7 +72,9 @@ src = HERE.parent.parent / 'pyvista' / 'examples'
 dst = HERE / '_local_examples'
 shutil.rmtree(dst, ignore_errors=True)
 shutil.copytree(src, dst)
-for py_file in dst.rglob('*.py'):  # Remove any .py files.
+for py_file in dst.rglob('*.py'):  # Remove .py files (not readable)
+    py_file.unlink()
+for py_file in dst.rglob('*.vti'):  # Remove .vti files (not needed)
     py_file.unlink()
 
 # SG warnings
