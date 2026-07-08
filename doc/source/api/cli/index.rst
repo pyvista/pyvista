@@ -61,11 +61,25 @@ Plot a single mesh file.
    :extraargs: --off-screen
    :cwd: /_local_examples
 
-Plot multiple PLY mesh files in a single window using wildcard patterns.
+.. pyvista-plot::
+   :include-source: False
 
-.. command-output:: pyvista plot *.ply
+   import pyvista as pv
+   from pathlib import Path
+   pv.plot(Path('_local_examples') / 'ant.ply')
+
+Plot multiple PLY mesh files in a single window using wildcard patterns and zoom in.
+
+.. command-output:: pyvista plot *.ply --zoom 2
    :extraargs: --off-screen
    :cwd: /_local_examples
+
+.. pyvista-plot::
+   :include-source: False
+
+   import pyvista as pv
+   from pathlib import Path
+   pv.plot(list(Path('_local_examples').glob('*.ply')), zoom=2)
 
 Plot a mesh file off-screen and save a screenshot.
 
