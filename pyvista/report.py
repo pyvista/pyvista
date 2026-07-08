@@ -192,7 +192,7 @@ class Report(scooby.Report):
     """Generate a PyVista software environment report.
 
     .. note::
-        This filter is also available via a command-line interface. See
+        This class is also available via command-line interface. See
         :ref:`pyvista report <cli_report>` for details.
 
     Parameters

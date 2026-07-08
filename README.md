@@ -107,7 +107,7 @@ pyvista convert bunny.stl *.vtp
 pyvista validate bunny.stl
 ```
 
-See the [CLI reference](https://docs.pyvista.org/cli) for the full
+See the [CLI reference](https://docs.pyvista.org/api/cli) for the full
 set of commands and options.
 
 ## Documentation

@@ -61,7 +61,7 @@ def plot(  # noqa: ANN202, PLR0917
     """Plot a PyVista, numpy, or vtk object.
 
     .. note::
-        This filter is also available via a command-line interface. See
+        This function is also available via command-line interface. See
         :ref:`pyvista plot <cli_plot>` for details.
 
     Parameters
