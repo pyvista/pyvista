@@ -3850,6 +3850,30 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         for name in self.side_set_array_names:
             self.disable_side_set_array(name)
 
+class PExodusIIReader(ExodusIIReader):
+    """PExodusIIReader for .e.N.p and .n.N.p files.
+
+    Reads parallel Exodus II files. Wraps :vtk:`vtkPExodusIIReader`.
+
+    .. versionadded:: 0.49.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_heated_plate(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()['Element Blocks']
+    >>> mesh.plot(scalars='temp')
+
+    """
+
+    _vtk_class_name = "vtkPExodusIIReader"
+
+    def _set_defaults(self):
+        # Create dummy multi-process controller
+        dummy = _vtk.vtkDummyController()
+        self.reader.SetController(dummy)
 
 class _FRDReader(BaseVTKReader):
     """VTK-style reader for CalculiX FRD files using FRDParser."""
