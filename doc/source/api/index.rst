@@ -109,10 +109,7 @@ Highlights of the API include:
    mesh files, and for generating environment reports, without needing to write
    any Python.
 
-   .. jupyter-execute::
-
-      >>> from pyvista import examples
-      >>> examples.download_bunny()
+   .. command-output:: pyvista --help
 
 
 .. _matplotlib: https://matplotlib.org/

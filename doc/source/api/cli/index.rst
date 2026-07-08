@@ -3,9 +3,9 @@
 Command Line Interface
 ======================
 
-PyVista ships a command-line interface for plotting, converting, and validating
-one or more mesh files, and for generating environment reports, without
-needing to write any Python. The CLI is available after installing PyVista, e.g.:
+PyVista ships a command-line interface (CLI) for plotting, converting, and validating
+one or more mesh files, and for generating environment reports, without needing to
+write any Python. The CLI is available after installing PyVista, e.g.:
 
 .. code-block:: bash
 
