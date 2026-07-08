@@ -244,7 +244,7 @@ Run the ``--help`` command to see all options:
     pyvista plot --help
     python -m pyvista plot --help
 
-
+See the :ref:`cli_api` for details on the command-line interface.
 
 Exporting
 ~~~~~~~~~

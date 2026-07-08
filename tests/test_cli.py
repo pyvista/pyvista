@@ -102,11 +102,11 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert      Convert a mesh file to another format.                │
-        │ plot         Plot one or more mesh files in an interactive window  │
-        │              that can be customized with various options.          │
+        │ convert      Convert one or more mesh files to another format.     │
+        │ plot         Plot one or more mesh files in an interactive window. │
         │ report       Generate a PyVista software environment report.       │
-        │ validate     Validate a mesh's array data, points, and cells.      │
+        │ validate     Validate data, points, and cells for one or more mesh │
+        │              files.                                                │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
@@ -124,11 +124,11 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
-    │ convert      Convert a mesh file to another format.                │
-    │ plot         Plot one or more mesh files in an interactive window  │
-    │              that can be customized with various options.          │
+    │ convert      Convert one or more mesh files to another format.     │
+    │ plot         Plot one or more mesh files in an interactive window. │
     │ report       Generate a PyVista software environment report.       │
-    │ validate     Validate a mesh's array data, points, and cells.      │
+    │ validate     Validate data, points, and cells for one or more mesh │
+    │              files.                                                │
     │ --help (-h)  Display this message and exit.                        │
     │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
@@ -559,7 +559,7 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     out, err = capture_out_err(capsys)
     assert err == ''
     assert 'Usage: pyvista convert PATH-IN [PATH-IN...] PATH-OUT' in out, out
-    assert 'Convert a mesh file to another format.' in out, out
+    assert 'Convert one or more mesh files to another format.' in out, out
     assert 'glob patterns are expanded' in out, out
     assert 'pyvista convert foo.abc bar.xyz' in out, out
     assert 'pyvista convert foo.abc .xyz' in out, out
@@ -921,7 +921,7 @@ def test_validate_help(capsys: pytest.CaptureFixture):
         'Usage: pyvista validate PATH... [--fields FIELD...] [--exclude \n'
         'FIELD...]\n'
         '\n'
-        "Validate a mesh's array data, points, and cells.\n"
+        'Validate data, points, and cells for one or more mesh files.\n'
     )
     assert usage in out, out
 
@@ -1572,13 +1572,12 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         """\
         Usage: pyvista plot PATH... [OPTIONS]
 
-        Plot one or more mesh files in an interactive window that can be 
-        customized with various options.
-        """  # noqa: W291
+        Plot one or more mesh files in an interactive window.
+        """
     )
     out, err = capture_out_err(capsys)
     assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:5])
+    assert expected == '\n'.join(out.split('\n')[:4])
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -1597,11 +1596,11 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert      Convert a mesh file to another format.                │
-        │ plot         Plot one or more mesh files in an interactive window  │
-        │              that can be customized with various options.          │
+        │ convert      Convert one or more mesh files to another format.     │
+        │ plot         Plot one or more mesh files in an interactive window. │
         │ report       Generate a PyVista software environment report.       │
-        │ validate     Validate a mesh's array data, points, and cells.      │
+        │ validate     Validate data, points, and cells for one or more mesh │
+        │              files.                                                │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯

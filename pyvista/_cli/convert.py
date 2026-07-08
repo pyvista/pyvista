@@ -74,7 +74,7 @@ def _convert(
     ] = False,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
-    """Convert a mesh file to another format.
+    """Convert one or more mesh files to another format.
 
     One or more inputs may be supplied, and glob patterns are expanded. When multiple
     inputs are given, the output must be an extension-only spec (``.xyz`` or

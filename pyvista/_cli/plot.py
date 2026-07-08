@@ -82,7 +82,7 @@ class Groups(StrEnum):
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
-    help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
+    help='Plot one or more mesh files in an interactive window.',
 )
 def _plot(
     paths: Annotated[

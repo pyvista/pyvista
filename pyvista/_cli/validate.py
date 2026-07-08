@@ -123,7 +123,7 @@ def _converter_report(
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
-    help="Validate a mesh's array data, points, and cells.",
+    help='Validate data, points, and cells for one or more mesh files.',
 )
 def _validate(
     paths: Annotated[

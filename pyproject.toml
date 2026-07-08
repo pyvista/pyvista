@@ -145,6 +145,7 @@ docs = [
   'sphinx-toolbox==4.2.0',
   'sphinx==8.2.3; python_version >= "3.11"',
   'sphinxcontrib-asciinema==0.4.3',
+  'sphinxcontrib-programoutput==0.20',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
