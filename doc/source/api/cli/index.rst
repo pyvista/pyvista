@@ -4,8 +4,7 @@ Command Line Interface
 ======================
 
 PyVista ships a command-line interface (CLI) for plotting, converting, and validating
-one or more mesh files, and for generating environment reports, without needing to
-write any Python. The CLI is available after installing PyVista, e.g.:
+mesh files, as well as generating environment reports, without requiring Python code.
 
 .. code-block:: bash
 
@@ -68,7 +67,8 @@ Plot a single mesh file.
    from pathlib import Path
    pv.plot(Path('_local_examples') / 'ant.ply')
 
-Plot multiple PLY mesh files in a single window using wildcard patterns and zoom in.
+Plot multiple PLY mesh files in a single window using wildcard patterns and use
+``--zoom`` to zoom in.
 
 .. command-output:: pyvista plot *.ply --zoom 2
    :extraargs: --off-screen
