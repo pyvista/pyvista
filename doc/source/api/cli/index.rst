@@ -1,7 +1,7 @@
 .. _cli_api:
 
 Command Line Interface
-=======================
+======================
 
 PyVista ships a command-line interface for plotting, converting, and validating
 one or more mesh files, and for generating environment reports, without
@@ -19,36 +19,40 @@ from ``--help``.
 
 .. _cli_convert:
 
-pyvista convert
----------------
+Convert
+-------
 
 .. command-output:: pyvista convert --help
+   :env: NO_COLOR=1
 
 .. versionadded:: 0.47
 
 .. _cli_plot:
 
-pyvista plot
-------------
+Plot
+----
 
 .. command-output:: pyvista plot --help
+   :env: NO_COLOR=1
 
 .. versionadded:: 0.47
 
 .. _cli_report:
 
-pyvista report
---------------
+Report
+------
 
 .. command-output:: pyvista report --help
+   :env: NO_COLOR=1
 
 .. versionadded:: 0.47
 
 .. _cli_validate:
 
-pyvista validate
-----------------
+Validate
+--------
 
 .. command-output:: pyvista validate --help
+   :env: NO_COLOR=1
 
 .. versionadded:: 0.48
