@@ -100,6 +100,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 # ones.
 extensions = [
     'enum_tools.autoenum',
+    'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
@@ -145,6 +146,9 @@ autodoc_type_aliases = {
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
+
+# Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
+programoutput_use_ansi = True
 
 # Needed to address a code-block parsing error by sphinx for an example
 autodoc_mock_imports = ['example']

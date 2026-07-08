@@ -23,7 +23,6 @@ Convert
 -------
 
 .. command-output:: pyvista convert --help
-   :env: NO_COLOR=1
 
 .. versionadded:: 0.47
 
@@ -33,7 +32,6 @@ Plot
 ----
 
 .. command-output:: pyvista plot --help
-   :env: NO_COLOR=1
 
 .. versionadded:: 0.47
 
@@ -43,7 +41,6 @@ Report
 ------
 
 .. command-output:: pyvista report --help
-   :env: NO_COLOR=1
 
 .. versionadded:: 0.47
 
@@ -53,6 +50,5 @@ Validate
 --------
 
 .. command-output:: pyvista validate --help
-   :env: NO_COLOR=1
 
 .. versionadded:: 0.48
