@@ -68,10 +68,9 @@ Plot a single mesh file.
 
    import pyvista as pv
    from pathlib import Path
-   pv.plot(Path('_local_examples') / 'ant.ply')
+   pv.plot(Path('source') / '_local_examples' / 'ant.ply')
 
-Plot multiple PLY mesh files in a single window using wildcard patterns and use
-``--zoom`` to zoom in.
+Plot multiple PLY mesh files in a single window using wildcard patterns and use ``--zoom``.
 
 .. command-output:: pyvista plot *.ply --zoom 2
    :extraargs: --off-screen
@@ -82,7 +81,7 @@ Plot multiple PLY mesh files in a single window using wildcard patterns and use
 
    import pyvista as pv
    from pathlib import Path
-   pv.plot(list(Path('_local_examples').glob('*.ply')), zoom=2)
+   pv.plot(list((Path('source') / '_local_examples').glob('*.ply')), zoom=2)
 
 Plot a mesh file off-screen and save a screenshot.
 
