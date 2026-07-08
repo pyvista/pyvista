@@ -846,7 +846,8 @@ def has_attr(name: str) -> bool:
 
 
 def import_all(*, suppress_import_errors: bool = True):
-    for name in _VTK_CLASS_TO_MODULE:
+    """Eagerly import all vtk classes used by PyVista."""
+    for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):
         if suppress_import_errors:
             # Use has_attr to suppress import errors
             has_attr(name)
