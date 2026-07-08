@@ -10,6 +10,9 @@ mesh files, as well as generating environment reports, without requiring Python 
 
     pip install pyvista
 
+The CLI can be invoked either with the ``pyvista`` command or as a Python module.
+For example, ``pyvista --help`` is equivalent to ``python -m pyvista --help``.
+
 Show the output from ``pyvista --help``.
 
 .. command-output:: pyvista --help
@@ -21,7 +24,7 @@ Each subcommand is documented below.
 Convert
 -------
 The ``pyvista convert`` command is similar to calling :func:`~pyvista.read` and
-:func:`~pyvista.DataObject.save` in Python.
+:func:`~pyvista.DataObject.save` together in Python.
 
 Examples
 ********
