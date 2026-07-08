@@ -17,22 +17,38 @@ installation, e.g.:
 Each subcommand is documented below. The output shown is generated directly
 from ``--help``.
 
+.. _cli_convert:
+
 pyvista convert
 ---------------
 
 .. command-output:: pyvista convert --help
+
+.. versionadded:: 0.47
+
+.. _cli_plot:
 
 pyvista plot
 ------------
 
 .. command-output:: pyvista plot --help
 
+.. versionadded:: 0.47
+
+.. _cli_report:
+
 pyvista report
 --------------
 
 .. command-output:: pyvista report --help
 
+.. versionadded:: 0.47
+
+.. _cli_validate:
+
 pyvista validate
 ----------------
 
 .. command-output:: pyvista validate --help
+
+.. versionadded:: 0.48

@@ -19,8 +19,8 @@ Report.__init__.__annotations__ = get_type_hints(Report.__init__)
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} report [ARGS]',
     help_formatter=HELP_FORMATTER,
-    help='Generate a PyVista software environment report.',
 )
 @wraps(Report)
 def _report(*args, **kwargs) -> Report:
+    """Generate a PyVista software environment report."""
     return Report(*args, **kwargs)

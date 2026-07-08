@@ -82,7 +82,6 @@ class Groups(StrEnum):
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
-    help='Plot one or more mesh files in an interactive window.',
 )
 def _plot(
     paths: Annotated[
@@ -132,6 +131,17 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
+    """Plot one or more mesh files in an interactive window.
+
+    Sample usage:
+    ```bash
+    pyvista plot <files> --screenshot output.png --off-screen
+    ```
+
+    .. note::
+        Providing multiple files renders them inside the same window.
+
+    """
     valid_paths = validate_paths(paths)
     # Inform users about --skip-unreadable option when there are multiple inputs
     on_error_if_unreadable: Literal['exit+hint', 'exit'] = (

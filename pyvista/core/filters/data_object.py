@@ -1149,6 +1149,10 @@ class DataObjectFilters:
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
 
+        .. note::
+            This filter is also available via a command-line interface. See
+            :ref:`pyvista validate <cli_validate>` for details.
+
         .. versionadded:: 0.47
 
         .. versionchanged:: 0.48
