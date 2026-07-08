@@ -28,10 +28,9 @@ Show the output from ``pyvista --help`` to show all available subcommands and ar
 
 .. command-output:: pyvista --help
 
-Each subcommand is documented below.
+The API for each subcommand is documented below.
 
 .. toctree::
-   :hidden:
 
    plot
    convert
