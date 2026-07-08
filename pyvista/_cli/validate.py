@@ -123,7 +123,6 @@ def _converter_report(
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
-    help='Validate data, points, and cells for one or more mesh files.',
 )
 def _validate(
     paths: Annotated[
@@ -194,6 +193,7 @@ def _validate(
     ] = None,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
+    """Validate data, points, and cells for one or more mesh files."""
     valid_paths = validate_paths(paths)
     report_body = report[0] if report else 'message'
     n_paths = len(valid_paths)

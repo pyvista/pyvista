@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import wraps
 from typing import get_type_hints
 
 import pyvista as pv
@@ -20,7 +19,6 @@ Report.__init__.__annotations__ = get_type_hints(Report.__init__)
     usage=f'Usage: [bold]{pv.__name__} report [ARGS]',
     help_formatter=HELP_FORMATTER,
 )
-@wraps(Report)
 def _report(*args, **kwargs) -> Report:
     """Generate a PyVista software environment report."""
     return Report(*args, **kwargs)

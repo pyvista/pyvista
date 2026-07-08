@@ -89,8 +89,9 @@ def _plot(
         Parameter(
             consume_multiple=True,
             help=(
-                'Paths(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
-                'Each match must be readable with ``pyvista.read``.'
+                'Path(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
+                'Each match must be readable with ``pyvista.read``. If multiple files are '
+                'provided, they are all rendered in a single window.'
             ),
             group=Groups.IN,
         ),
@@ -131,17 +132,7 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
-    """Plot one or more mesh files in an interactive window.
-
-    Sample usage:
-    ```bash
-    pyvista plot <files> --screenshot output.png --off-screen
-    ```
-
-    .. note::
-        Providing multiple files renders them inside the same window.
-
-    """
+    """Plot one or more mesh files in an interactive window."""
     valid_paths = validate_paths(paths)
     # Inform users about --skip-unreadable option when there are multiple inputs
     on_error_if_unreadable: Literal['exit+hint', 'exit'] = (

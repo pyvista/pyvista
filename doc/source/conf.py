@@ -8,6 +8,7 @@ import json
 import locale
 import os
 from pathlib import Path
+import shutil
 import sys
 from typing import TYPE_CHECKING
 import warnings
@@ -63,6 +64,16 @@ if not Path(pv.FIGURE_PATH).exists():
 # necessary when building the sphinx gallery
 pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+
+# Copy contents of `pyvista/examples` dir so that we have actual mesh files
+# we can run CLI commands on locally without polluting the source dir
+HERE = Path(__file__).parent
+src = HERE.parent.parent / 'pyvista' / 'examples'
+dst = HERE / '_local_examples'
+shutil.rmtree(dst, ignore_errors=True)
+shutil.copytree(src, dst)
+for py_file in dst.rglob('*.py'):  # Remove any .py files.
+    py_file.unlink()
 
 # SG warnings
 import warnings

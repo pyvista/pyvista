@@ -88,20 +88,6 @@ def _convert(
     sidecar children appear in the input list the children are dropped automatically
     to preserve the 1:1 input/output mapping.
 
-    Sample usage:
-    ```bash
-    pyvista convert foo.abc bar.xyz
-    Saved: bar.xyz
-
-    pyvista convert foo.abc .xyz
-    Saved: foo.xyz
-
-    pyvista convert sub/*.vtu .pv
-    # Writes sub/a.pv, sub/b.pv, ... next to each input
-
-    pyvista convert sub/*.vtu out/.pv
-    # Writes out/a.pv, out/b.pv, ... into the explicit out directory
-    ```
     """
     if len(paths) < 2:
         msg = 'convert requires at least one input file and an output spec.'
