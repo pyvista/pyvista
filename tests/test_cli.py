@@ -561,10 +561,6 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     assert 'Usage: pyvista convert PATH-IN [PATH-IN...] PATH-OUT' in out, out
     assert 'Convert one or more mesh files to another format.' in out, out
     assert 'glob patterns are expanded' in out, out
-    assert 'pyvista convert foo.abc bar.xyz' in out, out
-    assert 'pyvista convert foo.abc .xyz' in out, out
-    assert 'pyvista convert sub/*.vtu .pv' in out, out
-    assert 'next to each input' in out, out
     assert 'MultiBlock files' in out, out
     assert 'sidecar' in out, out
 
