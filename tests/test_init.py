@@ -162,8 +162,14 @@ def test_plotting_getattr_called_once():
     assert exec_success(exe_str)
 
 
+def _loader():
+    """Dummy special loader."""
+    return object()
+
+
 def test_vtk_import_all_suppressed(monkeypatch):
     monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo', 'B': 'vtkBar'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader, 'SpecialB': _loader})
 
     calls = []
 
@@ -175,11 +181,12 @@ def test_vtk_import_all_suppressed(monkeypatch):
 
     _vtk.import_all(suppress_import_errors=True)
 
-    assert calls == ['A', 'B']
+    assert calls == ['A', 'B', 'SpecialA', 'SpecialB']
 
 
 def test_vtk_import_all_not_suppressed(monkeypatch):
     monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo', 'B': 'vtkBar'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader, 'SpecialB': _loader})
 
     calls = []
 
@@ -191,11 +198,12 @@ def test_vtk_import_all_not_suppressed(monkeypatch):
 
     _vtk.import_all(suppress_import_errors=False)
 
-    assert calls == ['A', 'B']
+    assert calls == ['A', 'B', 'SpecialA', 'SpecialB']
 
 
 def test_vtk_import_all_not_suppressed_propagates(monkeypatch):
     monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader})
 
     def fake_getattr(name):  # noqa: ARG001
         msg = 'boom'
@@ -209,6 +217,7 @@ def test_vtk_import_all_not_suppressed_propagates(monkeypatch):
 
 def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
     monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader})
 
     calls = []
 
@@ -220,4 +229,4 @@ def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
 
     _vtk.import_all(suppress_import_errors=True)
 
-    assert calls == ['A']
+    assert calls == ['A', 'SpecialA']
