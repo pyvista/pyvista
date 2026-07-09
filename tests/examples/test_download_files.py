@@ -32,6 +32,12 @@ if 'TEST_DOWNLOADS' in os.environ:
 pytestmark = pytest.mark.needs_download
 
 
+with warnings.catch_warnings():
+    # Deprecation warning emits once on initial import, suppress it here
+    warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+    import pyvista.examples.vrml
+
+
 def _on_ci():
     return os.environ.get('CI', 'false').lower() == 'true'
 
@@ -562,18 +568,50 @@ def test_download_dicom_stack():
 
 
 def test_download_teapot_vrml():
-    filename = examples.vrml.download_teapot()
+    match = (
+        '`examples.vrml.download_teapot` is deprecated. '
+        'Use `examples.download_teapot_vrml` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_teapot()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_teapot_vrml(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_teapot_vrml()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_sextant_vrml():
-    filename = examples.vrml.download_sextant()
+    match = (
+        '`examples.vrml.download_sextant` is deprecated. Use `examples.download_sextant` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_sextant()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_sextant(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_sextant()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_grasshopper():
-    filename = examples.vrml.download_grasshopper()
+    match = (
+        '`examples.vrml.download_grasshopper` is deprecated. '
+        'Use `examples.download_grasshopper` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_grasshopper()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_grasshopper(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_grasshopper()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_iflamigm():

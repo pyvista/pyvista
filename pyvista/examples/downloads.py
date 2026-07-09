@@ -8994,3 +8994,98 @@ def download_warping_spheres(*, load=True):
 _dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
     'warping_spheres/warping_spheres.vtkhdf'
 )
+
+
+def download_teapot_vrml(*, load: bool = True):
+    """Download a 2-manifold solid version of the famous teapot example.
+
+    The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
+    originally modeled by Martin Newell at the University of Utah in
+    1975. No formal license has ever been issued for the original Newell
+    dataset; the model has been freely distributed in computer graphics
+    software for 50 years and is conventionally treated as public domain.
+
+    Returns
+    -------
+    str
+        Filename of the VRML file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.vrml.download_teapot()
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.show()
+
+    """
+    return _download_dataset(_dataset_teapot_vrml, load=load)
+
+
+_dataset_teapot_vrml = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
+
+
+def download_sextant(*, load: bool = True):
+    """Download the sextant example.
+
+    Returns
+    -------
+    str
+        Filename of the VRML file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.vrml.download_sextant()
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Sextant Dataset <sextant_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_sextant, load=load)
+
+
+_dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
+
+
+def download_grasshopper(*, load: bool = True):
+    """Download the grasshoper example.
+
+    .. versionadded:: 0.45
+
+    Returns
+    -------
+    str
+        Filename of the VRML file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.vrml.download_grasshopper()
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(25.0, 32.0, 44.0),
+    ...     focal_point=(0.0, 0.931, -6.68),
+    ...     viewup=(-0.20, 0.90, -0.44),
+    ... )
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Grasshopper Dataset <grasshopper_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_grasshopper, load=load)
+
+
+_dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grasshop.wrl')
