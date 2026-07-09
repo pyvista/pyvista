@@ -2919,7 +2919,7 @@ class ThreeDSReader(BaseReader['MultiBlock']):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.download_iflamigm()
+    >>> filename = examples.download_flamingo()
     >>> Path(filename).name
     'iflamigm.3ds'
     >>> reader = pv.get_reader(filename)
