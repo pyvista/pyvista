@@ -221,8 +221,8 @@ your use case:
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
 
-Command Line Interface
-----------------------
+Command Line
+------------
 
 Mesh files can be plotted, converted, or validated using PyVista's command
 line interface (CLI). For example, plot a PLY file.
