@@ -94,9 +94,6 @@ DATASET_GALLERY_MODULES = [
     pv.examples.examples,
     pv.examples.downloads,
     pv.examples.planets,
-    pv.examples.gltf,
-    pv.examples.download_3ds,
-    pv.examples.vrml,
 ]
 
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
@@ -3233,8 +3230,11 @@ class DownloadsCarousel(DatasetGalleryCarousel):
         # using local cached data for downloads
         with open(cls.path) as f:
             content = f.read()
-        real_url = 'https://github.com/pyvista/data/blob/master/Data/cow.vtp'
-        assert real_url in content
+        for real_url in (
+            'https://github.com/pyvista/data/blob/master/Data/cow.vtp',
+            'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
+        ):
+            assert real_url in content
 
 
 class PlanetsCarousel(DatasetGalleryCarousel):
@@ -3247,52 +3247,6 @@ class PlanetsCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
-
-
-class GltfCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards from the gltf module."""
-
-    name = 'gltf_carousel'
-    doc = 'Datasets from the :mod:`gltf <pyvista.examples.gltf>` module.'
-    badge = ModuleBadge('glTF', ref='modules_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.gltf)
-
-    @classmethod
-    def generate(cls):
-        super().generate()
-        # Sanity check to ensure proper URLs are generated due to complexity with
-        # using local cached data for downloads
-        with open(cls.path) as f:
-            content = f.read()
-        real_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf'
-        assert real_url in content
-
-
-class VRMLCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards from the vrml module."""
-
-    name = 'vrml_carousel'
-    doc = 'Datasets from the :mod:`gltf <pyvista.examples.vrml>` module.'
-    badge = ModuleBadge('VRML', ref='modules_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.vrml)
-
-
-class ThreeDSCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards from the 3ds module."""
-
-    name = '3ds_carousel'
-    doc = 'Datasets from the :mod:`gltf <pyvista.examples.download_3ds>` module.'
-    badge = ModuleBadge('3DS', ref='modules_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.download_3ds)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -3621,9 +3575,6 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
-    GltfCarousel,
-    VRMLCarousel,
-    ThreeDSCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,

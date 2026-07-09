@@ -9046,6 +9046,11 @@ def download_teapot_vrml(*, load: bool = True):
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Teapot Vrml Dataset <teapot_vrml_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_teapot_vrml, load=load)
 
