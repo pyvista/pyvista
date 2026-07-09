@@ -1,7 +1,7 @@
 .. _cli_report:
 
-Report
-------
+pyvista report
+--------------
 The ``pyvista report`` command is similar to creating a :class:`~pyvista.Report` in Python.
 
 Examples

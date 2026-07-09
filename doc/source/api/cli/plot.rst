@@ -1,7 +1,7 @@
 .. _cli_plot:
 
-Plot
-----
+pyvista plot
+------------
 The ``pyvista plot`` command is similar to calling :func:`~pyvista.plot` in Python.
 
 Examples

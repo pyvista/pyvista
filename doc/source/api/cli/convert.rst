@@ -1,7 +1,7 @@
 .. _cli_convert:
 
-Convert
--------
+pyvista convert
+---------------
 The ``pyvista convert`` command is similar to calling :func:`~pyvista.read` and
 :func:`~pyvista.DataObject.save` together in Python.
 

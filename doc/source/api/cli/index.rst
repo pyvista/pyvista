@@ -3,8 +3,10 @@
 Command Line Interface
 ======================
 
-PyVista ships a command-line interface (CLI) for plotting, converting, and validating
-mesh files, as well as generating environment reports, without requiring Python code.
+PyVista ships a command-line interface (CLI) for :ref:`plotting <cli_plot>`
+:ref:`converting <cli_convert>`, and :ref:`validating <cli_validate>`
+mesh files, as well as generating environment :ref:`reports <cli_report>` ,
+without requiring Python code.
 The CLI is enabled with a standard PyVista installation, e.g.:
 
 .. code-block:: bash
@@ -24,13 +26,14 @@ is equivalent to
 
     python -m pyvista --help
 
-Show the output from ``pyvista --help`` to show all available subcommands and arguments.
+Show the output from ``pyvista --help`` to show all available arguments and subcommands.
 
 .. command-output:: pyvista --help
 
 The API for each subcommand is documented below.
 
 .. toctree::
+   :caption: Subcommands
 
    plot
    convert

@@ -1,7 +1,7 @@
 .. _cli_validate:
 
-Validate
---------
+pyvista validate
+----------------
 The ``pyvista validate`` command is similar to calling :meth:`~pyvista.DataObjectFilters.validate_mesh`
 in Python.
 
