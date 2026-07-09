@@ -14,7 +14,7 @@ Convert a PLY file (``.ply``) into a VTK XML PolyData file (``.vtp``).
 .. command-output:: pyvista convert ant.ply ant_converted.vtp
    :cwd: /_local_examples
 
-Specify the extension only to keep the same file name.
+Keep the file name the same and specify the output extension only.
 
 .. command-output:: pyvista convert ant.ply .vtp
    :cwd: /_local_examples
