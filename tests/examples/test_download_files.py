@@ -35,7 +35,8 @@ pytestmark = pytest.mark.needs_download
 with warnings.catch_warnings():
     # Deprecation warning emits once on initial import, suppress it here
     warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
-    import pyvista.examples.vrml
+    import pyvista.examples.download_3ds
+    import pyvista.examples.vrml  # noqa: F401
 
 
 def _on_ci():
@@ -614,9 +615,20 @@ def test_download_grasshopper():
     assert isinstance(mesh, pv.MultiBlock)
 
 
-def test_download_iflamigm():
-    filename = examples.download_3ds.download_iflamigm()
+def test_download_flamingo():
+    match = (
+        '`examples.download_3ds.download_iflamigm` is deprecated. '
+        'Use `examples.download_flamingo` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.download_3ds.download_iflamigm()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_flamingo(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_flamingo()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_cavity():

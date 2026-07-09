@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import pyvista as pv
 from pyvista._warn_external import warn_external
-from pyvista.core.errors import PyVistaDeprecationWarning
-
-from . import downloads
+from pyvista.examples import downloads
 
 if pv.version_info >= (0, 52):
     msg = (
@@ -24,7 +22,7 @@ if pv.version_info >= (0, 52):
 warn_external(
     '`pyvista.examples.vrml` is deprecated and will be removed in a future '
     'version. Use `pyvista.examples.downloads` instead.',
-    PyVistaDeprecationWarning,
+    pv.PyVistaDeprecationWarning,
 )
 
 
@@ -58,11 +56,8 @@ def download_teapot():
     warn_external(
         '`examples.vrml.download_teapot` is deprecated. Use '
         '`examples.download_teapot_vrml` instead.',
-        PyVistaDeprecationWarning,
+        pv.PyVistaDeprecationWarning,
     )
-    if pv.version_info >= (0, 52):  # pragma: no cover
-        msg_0 = 'Remove this deprecated function'
-        raise RuntimeError(msg_0)
     return downloads.download_teapot_vrml(load=False)
 
 
@@ -94,11 +89,8 @@ def download_sextant():
     """
     warn_external(
         '`examples.vrml.download_sextant` is deprecated. Use `examples.download_sextant` instead.',
-        PyVistaDeprecationWarning,
+        pv.PyVistaDeprecationWarning,
     )
-    if pv.version_info >= (0, 52):  # pragma: no cover
-        msg_0 = 'Remove this deprecated function'
-        raise RuntimeError(msg_0)
     return downloads.download_sextant(load=False)
 
 
@@ -138,9 +130,6 @@ def download_grasshopper():
     warn_external(
         '`examples.vrml.download_grasshopper` is deprecated. Use '
         '`examples.download_grasshopper` instead.',
-        PyVistaDeprecationWarning,
+        pv.PyVistaDeprecationWarning,
     )
-    if pv.version_info >= (0, 52):  # pragma: no cover
-        msg_0 = 'Remove this deprecated function'
-        raise RuntimeError(msg_0)
     return downloads.download_grasshopper(load=False)

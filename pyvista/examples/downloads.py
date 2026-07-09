@@ -9007,8 +9007,8 @@ def download_teapot_vrml(*, load: bool = True):
 
     Returns
     -------
-    str
-        Filename of the VRML file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -9031,8 +9031,8 @@ def download_sextant(*, load: bool = True):
 
     Returns
     -------
-    str
-        Filename of the VRML file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -9056,14 +9056,14 @@ _dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
 
 
 def download_grasshopper(*, load: bool = True):
-    """Download the grasshoper example.
+    """Download the grasshopper example.
 
     .. versionadded:: 0.45
 
     Returns
     -------
-    str
-        Filename of the VRML file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -9089,3 +9089,34 @@ def download_grasshopper(*, load: bool = True):
 
 
 _dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grasshop.wrl')
+
+
+def download_flamingo(*, load: bool = True):
+    """Download the flamingo example.
+
+    .. versionadded:: 0.44.0
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> download_3ds_file = examples.download_3ds.download_iflamigm()
+    >>> pl = pv.Plotter()
+    >>> pl.import_3ds(download_3ds_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Flamingo Dataset <flamingo_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_flamingo, load=load)
+
+
+_dataset_flamingo = _SingleFileDownloadableDatasetLoader('iflamigm.3ds')
