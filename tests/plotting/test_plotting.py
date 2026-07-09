@@ -231,7 +231,7 @@ def test_export_vrml(tmpdir, sphere):
 
 
 def test_import_3ds():
-    filename = examples.download_3ds.download_iflamigm()
+    filename = examples.download_flamingo(load=False)
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):

@@ -9041,7 +9041,7 @@ def download_teapot_vrml(*, load: bool = True):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_teapot()
+    >>> vrml_file = examples.download_teapot_vrml(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
@@ -9070,7 +9070,7 @@ def download_sextant(*, load: bool = True):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_sextant()
+    >>> vrml_file = examples.download_sextant(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_vrml(vrml_file)
     >>> pl.show()
@@ -9101,7 +9101,7 @@ def download_grasshopper(*, load: bool = True):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_grasshopper()
+    >>> vrml_file = examples.download_grasshopper(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_vrml(vrml_file)
     >>> pl.camera_position = pv.CameraPosition(
@@ -9137,9 +9137,9 @@ def download_flamingo(*, load: bool = True):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> download_3ds_file = examples.download_3ds.download_iflamigm()
+    >>> file_3ds = examples.download_iflamigm(load=False)
     >>> pl = pv.Plotter()
-    >>> pl.import_3ds(download_3ds_file)
+    >>> pl.import_3ds(file_3ds)
     >>> pl.show()
 
     .. seealso::
@@ -9166,7 +9166,7 @@ def download_damaged_helmet(*, load: bool = True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_damaged_helmet()
+    >>> gltf_file = examples.download_damaged_helmet(load=False)
     >>> cubemap = examples.download_sky_box_cube_map()
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
@@ -9197,7 +9197,7 @@ def download_sheen_chair(*, load: bool = True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_sheen_chair()
+    >>> gltf_file = examples.download_sheen_chair(load=False)
     >>> cubemap = examples.download_sky_box_cube_map()
     >>> pl = pv.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
@@ -9228,7 +9228,7 @@ def download_gearbox(*, load: bool = True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_gearbox()
+    >>> gltf_file = examples.download_gearbox(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
@@ -9257,7 +9257,7 @@ def download_avocado(*, load: bool = True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_avocado()
+    >>> gltf_file = examples.download_avocado(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
@@ -9286,7 +9286,7 @@ def download_milk_truck(*, load: bool = True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_milk_truck()
+    >>> gltf_file = examples.download_milk_truck(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()

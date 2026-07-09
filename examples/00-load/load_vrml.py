@@ -12,7 +12,7 @@ https://en.wikipedia.org/wiki/VRML
 import pyvista as pv
 from pyvista import examples
 
-sextant_file = examples.download_sextant()
+sextant_file = examples.download_sextant(load=False)
 
 
 # %%
