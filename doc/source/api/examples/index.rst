@@ -75,24 +75,6 @@ API reference for details:
 
    examples.planets
 
-3D Scene Datasets
------------------
-Some file formats are imported directly by the :class:`pyvista.Plotter`
-instead of using :func:`pyvista.read`. These formats represent 3D geometry,
-materials, and scene structure.
-
-Examples of file formats supported by PyVista include ``VRML``
-(VirtualReality Modeling Language), ``3DS`` (3D Studio), and
-``glTF`` (Graphics Library Transmission Format).
-See the API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.vrml
-   examples.download_3ds
-   examples.gltf
-
 Cells
 -----
 Many examples of VTK :class:`cell types <pyvista.CellType>` are
