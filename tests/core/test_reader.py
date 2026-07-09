@@ -2058,14 +2058,14 @@ def test_forbid_empty_series_file(tmp_path: Path):
 
 
 def test_vrml_reader():
-    filename = examples.vrml.download_grasshopper()
+    filename = examples.download_grasshopper(load=False)
     reader = pv.get_reader(filename)
     mesh = reader.read()
     assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_threeds_reader():
-    filename = examples.download_3ds.download_iflamigm()
+    filename = examples.download_flamingo(load=False)
     reader = pv.get_reader(filename)
     mesh = reader.read()
     assert isinstance(mesh, pv.MultiBlock)

@@ -9137,7 +9137,7 @@ def download_flamingo(*, load: bool = True):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> file_3ds = examples.download_iflamigm(load=False)
+    >>> file_3ds = examples.download_flamingo(load=False)
     >>> pl = pv.Plotter()
     >>> pl.import_3ds(file_3ds)
     >>> pl.show()

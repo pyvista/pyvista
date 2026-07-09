@@ -29,7 +29,7 @@ if 'TEST_DOWNLOADS' in os.environ:
         '"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`', stacklevel=2
     )
 
-# pytestmark = pytest.mark.needs_download
+pytestmark = pytest.mark.needs_download
 
 
 with warnings.catch_warnings():
