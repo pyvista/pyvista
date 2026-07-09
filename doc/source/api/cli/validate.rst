@@ -2,8 +2,10 @@
 
 pyvista validate
 ----------------
-The ``pyvista validate`` command is similar to calling :meth:`~pyvista.DataObjectFilters.validate_mesh`
-in Python.
+Command-line interface for validating one or more mesh files.
+
+Using ``pyvista validate`` is similar to calling
+:meth:`~pyvista.DataObjectFilters.validate_mesh` in Python.
 
 Examples
 ********

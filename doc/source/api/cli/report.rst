@@ -2,7 +2,9 @@
 
 pyvista report
 --------------
-The ``pyvista report`` command is similar to creating a :class:`~pyvista.Report` in Python.
+Command-line interface for generating a PyVista software environment report.
+
+Using ``pyvista report`` is similar to creating a :class:`~pyvista.Report` in Python.
 
 Examples
 ********

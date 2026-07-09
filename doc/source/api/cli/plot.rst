@@ -2,7 +2,9 @@
 
 pyvista plot
 ------------
-The ``pyvista plot`` command is similar to calling :func:`~pyvista.plot` in Python.
+Command-line interface for plotting one or more mesh files in an interactive window.
+
+Using ``pyvista plot`` is similar to calling :func:`~pyvista.plot` in Python.
 
 Examples
 ********

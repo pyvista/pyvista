@@ -2,7 +2,9 @@
 
 pyvista convert
 ---------------
-The ``pyvista convert`` command is similar to calling :func:`~pyvista.read` and
+Command-line interface for converting one or more mesh files to another format.
+
+Using ``pyvista convert`` is similar to calling :func:`~pyvista.read` and
 :func:`~pyvista.DataObject.save` together in Python.
 
 Examples
