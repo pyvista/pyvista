@@ -3,7 +3,7 @@
 Command Line Interface
 ======================
 
-PyVista ships a command-line interface (CLI) for :ref:`plotting <cli_plot>`
+PyVista ships a command-line interface (CLI) for :ref:`plotting <cli_plot>`,
 :ref:`converting <cli_convert>`, and :ref:`validating <cli_validate>`
 mesh files, as well as generating environment :ref:`reports <cli_report>` ,
 without requiring Python code.
@@ -34,6 +34,7 @@ The API for each subcommand is documented below.
 
 .. toctree::
    :caption: Subcommands
+   :maxdepth: 1
 
    plot
    convert
