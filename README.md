@@ -101,7 +101,7 @@ and mesh validation, without writing any Python:
 pyvista plot bunny.stl
 
 # Convert a mesh file to another format
-pyvista convert bunny.stl *.vtp
+pyvista convert bunny.stl .vtp
 
 # Validate a mesh's data, points, and cells
 pyvista validate bunny.stl
