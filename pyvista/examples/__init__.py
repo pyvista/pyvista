@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import importlib
 
-from . import gltf as gltf
 from . import planets as planets
 from .cells import generate_cell_blocks as generate_cell_blocks
 from .cells import plot_cell as plot_cell
 from .downloads import *
 from .examples import *
 
-_DEPRECATED_SUBMODULES = {'vrml', 'download_3ds'}  # , 'gltf'}
+_DEPRECATED_SUBMODULES = {'vrml', 'download_3ds', 'gltf'}
 
 
 def __getattr__(name):

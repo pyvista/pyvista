@@ -29,13 +29,14 @@ if 'TEST_DOWNLOADS' in os.environ:
         '"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`', stacklevel=2
     )
 
-pytestmark = pytest.mark.needs_download
+# pytestmark = pytest.mark.needs_download
 
 
 with warnings.catch_warnings():
     # Deprecation warning emits once on initial import, suppress it here
     warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
     import pyvista.examples.download_3ds
+    import pyvista.examples.gltf  # noqa: F401
     import pyvista.examples.vrml  # noqa: F401
 
 
@@ -628,6 +629,78 @@ def test_download_flamingo():
     filename = examples.download_flamingo(load=False)
     assert Path(filename).is_file()
     mesh = examples.download_flamingo()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_milk_truck():
+    match = (
+        '`examples.gltf.download_milk_truck` is deprecated. '
+        'Use `examples.download_milk_truck` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_milk_truck()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_milk_truck(load=False)
+    assert Path(filename).is_file()
+    with pytest.warns(UserWarning, match='vtkGLTFReader'):
+        # Ignore known vtkGLTFReader errors
+        mesh = examples.download_milk_truck()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_damaged_helmet():
+    match = (
+        '`examples.gltf.download_damaged_helmet` is deprecated. '
+        'Use `examples.download_damaged_helmet` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_damaged_helmet()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_damaged_helmet(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_damaged_helmet()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_gearbox():
+    match = (
+        '`examples.gltf.download_gearbox` is deprecated. Use `examples.download_gearbox` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_gearbox()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_gearbox(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_gearbox()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_avocado():
+    match = (
+        '`examples.gltf.download_avocado` is deprecated. Use `examples.download_avocado` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_avocado()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_avocado(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_avocado()
     assert isinstance(mesh, pv.MultiBlock)
 
 

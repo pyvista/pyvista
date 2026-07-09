@@ -144,6 +144,33 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 )
 
 
+def _gltf_loader(name):
+    """Return a dataset loader for glTF files.
+
+    The glTF files are hosted in a separate repository from `pyvista/data`, so
+    a separate pooch fetcher is used.
+    """
+    paths: dict[str, str] = {
+        'damaged_helmet': 'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
+        'sheen_chair': 'SheenChair/glTF-Binary/SheenChair.glb',
+        'gearbox': 'GearboxAssy/glTF-Binary/GearboxAssy.glb',
+        'avocado': 'Avocado/glTF-Binary/Avocado.glb',
+        'milk_truck': 'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
+    }
+    base_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/'
+    fetcher = pooch.create(  # type: ignore[attr-defined]
+        path=USER_DATA_PATH,
+        base_url=base_url,
+        registry=dict.fromkeys(paths.values()),
+        retry_if_failed=3,
+    )
+    return _SingleFileDownloadableDatasetLoader(
+        paths[name],
+        base_url=base_url,
+        download_func=fetcher.fetch,
+    )
+
+
 def file_from_files(target_path, fnames):
     """Return the full path of a single file within a list of files.
 
@@ -9120,3 +9147,152 @@ def download_flamingo(*, load: bool = True):
 
 
 _dataset_flamingo = _SingleFileDownloadableDatasetLoader('iflamigm.3ds')
+
+
+def download_damaged_helmet(*, load: bool = True):  # pragma: no cover
+    """Download the damaged helmet example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_damaged_helmet()
+    >>> cubemap = examples.download_sky_box_cube_map()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.set_environment_texture(cubemap)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Damaged Helmet Dataset <damaged_helmet_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_damaged_helmet, load=load)
+
+
+_dataset_damaged_helmet = _gltf_loader('damaged_helmet')
+
+
+def download_sheen_chair(*, load: bool = True):  # pragma: no cover
+    """Download the sheen chair example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_sheen_chair()
+    >>> cubemap = examples.download_sky_box_cube_map()
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
+    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
+
+    .. seealso::
+
+        :ref:`Sheen Chair Dataset <sheen_chair_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_sheen_chair, load=load)
+
+
+_dataset_sheen_chair = _gltf_loader('sheen_chair')
+
+
+def download_gearbox(*, load: bool = True):  # pragma: no cover
+    """Download the gearbox example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_gearbox()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Gearbox Dataset <gearbox_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_gearbox, load=load)
+
+
+_dataset_gearbox = _gltf_loader('gearbox')
+
+
+def download_avocado(*, load: bool = True):  # pragma: no cover
+    """Download the avocado example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_avocado()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Avocado Dataset <avocado_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_avocado, load=load)
+
+
+_dataset_avocado = _gltf_loader('avocado')
+
+
+def download_milk_truck(*, load: bool = True):  # pragma: no cover
+    """Download the milk truck example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.gltf.download_milk_truck()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Milk Truck Dataset <milk_truck_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_milk_truck, load=load)
+
+
+_dataset_milk_truck = _gltf_loader('milk_truck')
