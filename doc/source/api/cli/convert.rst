@@ -9,6 +9,14 @@ Using ``pyvista convert`` is similar to calling :func:`~pyvista.read` and
 
 Examples
 ********
+
+.. note::
+    To run the examples yourself locally, first change directory to ``pyvista/examples``, e.g.
+
+    ``` bash
+    cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
+    ```
+
 Convert a PLY file (``.ply``) into a VTK XML PolyData file (``.vtp``).
 
 .. command-output:: pyvista convert ant.ply ant_converted.vtp

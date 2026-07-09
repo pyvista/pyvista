@@ -8,6 +8,14 @@ Using ``pyvista plot`` is similar to calling :func:`~pyvista.plot` in Python.
 
 Examples
 ********
+
+.. note::
+    To run the examples yourself locally, first change directory to ``pyvista/examples``, e.g.
+
+    ``` bash
+    cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
+    ```
+
 Plot a single mesh file.
 
 .. command-output:: pyvista plot ant.ply
@@ -21,7 +29,8 @@ Plot a single mesh file.
    from pathlib import Path
    pv.plot(Path('source') / '_local_examples' / 'ant.ply')
 
-Plot multiple PLY mesh files in a single window using wildcard patterns and use ``--zoom``.
+Plot multiple PLY mesh files in a single window using wildcard patterns and
+use ``--zoom``.
 
 .. command-output:: pyvista plot *.ply --zoom 2
    :extraargs: --off-screen

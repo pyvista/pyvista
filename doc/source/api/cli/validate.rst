@@ -9,6 +9,13 @@ Using ``pyvista validate`` is similar to calling
 
 Examples
 ********
+.. note::
+    To run the examples yourself locally, first change directory to ``pyvista/examples``, e.g.
+
+    ``` bash
+    cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
+    ```
+
 Validate a PLY mesh file.
 
 .. command-output:: pyvista validate ant.ply
@@ -20,8 +27,9 @@ Only validate its cells, and exclude the ``non_convex`` field.
    :cwd: /_local_examples
 
 Use wildcard patterns to validate all mesh files in a directory.
+Use ``--skip-unreadable`` to skip non-mesh files.
 
-.. command-output:: pyvista validate *.*
+.. command-output:: pyvista validate *.* --skip-unreadable
    :cwd: /_local_examples
 
 API Reference
