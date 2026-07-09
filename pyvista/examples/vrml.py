@@ -43,15 +43,6 @@ def download_teapot():
     str
         Filename of the VRML file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_teapot()
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
-
     """
     warn_external(
         '`examples.vrml.download_teapot` is deprecated. Use '
@@ -71,20 +62,6 @@ def download_sextant():
     -------
     str
         Filename of the VRML file.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_sextant()
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Sextant Dataset <sextant_dataset>`
-            See this dataset in the Dataset Gallery for more info.
 
     """
     warn_external(
@@ -106,25 +83,6 @@ def download_grasshopper():
     -------
     str
         Filename of the VRML file.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_grasshopper()
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(25.0, 32.0, 44.0),
-    ...     focal_point=(0.0, 0.931, -6.68),
-    ...     viewup=(-0.20, 0.90, -0.44),
-    ... )
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Grasshopper Dataset <grasshopper_dataset>`
-            See this dataset in the Dataset Gallery for more info.
 
     """
     warn_external(

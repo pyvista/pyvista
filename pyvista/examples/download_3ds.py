@@ -30,20 +30,6 @@ def download_iflamigm():
     str
         Filename of the 3DS file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> download_3ds_file = examples.download_3ds.download_iflamigm()
-    >>> pl = pv.Plotter()
-    >>> pl.import_3ds(download_3ds_file)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Iflamigm Dataset <iflamigm_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
     warn_external(
         '`examples.download_3ds.download_iflamigm` is deprecated. Use '

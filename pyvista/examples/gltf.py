@@ -30,22 +30,6 @@ def download_damaged_helmet():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_damaged_helmet()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(cubemap)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Damaged Helmet Dataset <damaged_helmet_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
     warn_external(
         '`examples.gltf.download_damaged_helmet` is deprecated. Use '
@@ -64,22 +48,6 @@ def download_sheen_chair():  # pragma: no cover
     -------
     str
         Filename of the gltf file.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_sheen_chair()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Sheen Chair Dataset <sheen_chair_dataset>`
-            See this dataset in the Dataset Gallery for more info.
 
     """
     warn_external(
@@ -100,20 +68,6 @@ def download_gearbox():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_gearbox()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Gearbox Dataset <gearbox_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
     warn_external(
         '`examples.gltf.download_gearbox` is deprecated. Use `examples.download_gearbox` instead.',
@@ -132,20 +86,6 @@ def download_avocado():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_avocado()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Avocado Dataset <avocado_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
     warn_external(
         '`examples.gltf.download_avocado` is deprecated. Use `examples.download_avocado` instead.',
@@ -163,20 +103,6 @@ def download_milk_truck():  # pragma: no cover
     -------
     str
         Filename of the gltf file.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_milk_truck()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Milk Truck Dataset <milk_truck_dataset>`
-            See this dataset in the Dataset Gallery for more info.
 
     """
     warn_external(
