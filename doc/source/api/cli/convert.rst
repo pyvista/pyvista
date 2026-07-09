@@ -13,9 +13,9 @@ Examples
 .. note::
     To run the examples yourself locally, first change directory to ``pyvista/examples``, e.g.
 
-    ``` bash
-    cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
-    ```
+    .. code-block:: bash
+
+        cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
 
 Convert a PLY file (``.ply``) into a VTK XML PolyData file (``.vtp``).
 
