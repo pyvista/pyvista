@@ -1738,6 +1738,7 @@ def test_validate_many_invalid(
     assert 'is valid!' not in err, err
 
 
+@pytest.mark.skip_windows('file path issues')
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_multiple_files_single_mesh_invalid(
     tmp_cow_file_invalid: Path,
