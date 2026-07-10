@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pooch
 
+import pyvista as pv
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples.downloads import USER_DATA_PATH
 
@@ -70,6 +73,10 @@ _dataset_damaged_helmet = _gltf_loader('damaged_helmet')
 def download_sheen_chair():  # pragma: no cover
     """Download the sheen chair example.
 
+    .. deprecated:: 0.49.0
+        This example uses the unsupported glTF extension
+        ``KHR_texture_transform`` and will be removed in v0.52.
+
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
     Returns
@@ -77,23 +84,20 @@ def download_sheen_chair():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_sheen_chair()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
     .. seealso::
 
         :ref:`Sheen Chair Dataset <sheen_chair_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
+    warn_external(
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.',
+        PyVistaDeprecationWarning,
+    )
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
     return _dataset_sheen_chair.download()
 
 
