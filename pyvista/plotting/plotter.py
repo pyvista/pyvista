@@ -6826,7 +6826,7 @@ class BasePlotter(_BoundsSizeMixin):
             points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
-                if stop_event is not None and stop_event.is_set():  # pragma: no cover
+                if stop_event is not None and stop_event.is_set():  # pragma: no branch
                     return
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
@@ -6841,10 +6841,10 @@ class BasePlotter(_BoundsSizeMixin):
                 if sleep_time > 0 and (
                     hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
-                    if stop_event is not None:  # pragma: no cover
+                    if stop_event is not None:  # pragma: no branch
                         if stop_event.wait(sleep_time):
                             return
-                    else:  # pragma: no cover
+                    else:
                         time.sleep(sleep_time)
             if write_frames:  # pragma: no cover
                 self._get_mwriter_not_none().close()
