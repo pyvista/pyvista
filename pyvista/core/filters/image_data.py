@@ -2580,9 +2580,7 @@ class ImageDataFilters(DataSetFilters):
             The ``'strict_external'`` style can be used as a fast alternative to
             ``'external'``. This style `strictly` generates external polygons and does
             not compute or consider internal boundaries. This computation is fast, but
-            also results in jagged, non-smooth boundaries between regions. The
-            ``select_inputs`` and ``select_outputs`` options cannot be used with this
-            style.
+            also results in jagged, non-smooth boundaries between regions.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -2919,13 +2917,12 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
-        temp_scalars_name = '_PYVISTA_TEMP'
 
-        def _get_unique_labels_no_background(
-            array: NumpyArray[int], background: int
-        ) -> NumpyArray[int]:
-            unique = np.unique(array)
-            return unique[unique != background]
+        def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
+            if selection is None:
+                return np.array([], dtype=int)
+            unique = np.unique(np.atleast_1d(selection))
+            return unique[unique != background_value]
 
         def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             if scalars_ is None:
@@ -2934,31 +2931,14 @@ class ImageDataFilters(DataSetFilters):
             else:
                 field = image.get_array_association(scalars_, preference='point')
 
-            return (
+            image = (
                 image
                 if field == FieldAssociation.POINT
                 else image.cells_to_points(scalars=scalars_, copy=False)
             )
-
-        def _process_select_inputs(
-            image: ImageData,
-            select_inputs_: int | VectorLike[int],
-            scalars_: pyvista_ndarray,
-        ) -> NumpyArray[int]:
-            select_inputs = np.atleast_1d(select_inputs_)
-            # Remove non-selected label ids from the input. We do this by setting
-            # non-selected ids to the background value to remove them from the input
-            temp_scalars = scalars_.copy()
-            input_ids = _get_unique_labels_no_background(temp_scalars, background_value)
-            keep_labels = [*select_inputs, background_value]
-            for label in input_ids:
-                if label not in keep_labels:
-                    temp_scalars[temp_scalars == label] = background_value
-
-            image.point_data[temp_scalars_name] = temp_scalars
-            image.set_active_scalars(temp_scalars_name, preference='point')
-
-            return input_ids
+            if input_ids.size > 0:
+                return image.select_values(input_ids)
+            return image
 
         def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D):
             if output_mesh_type is None:
@@ -2972,57 +2952,11 @@ class ImageDataFilters(DataSetFilters):
             alg_: _vtk.vtkSurfaceNets3D,
             *,
             array_: pyvista_ndarray,
-            select_inputs_: int | VectorLike[int] | None,
-            select_outputs_: int | VectorLike[int] | None,
         ):
-            # WARNING: Setting the output style to default or boundary does not really work
-            # as expected. Specifically, `SetOutputStyleToDefault` by itself will not actually
-            # produce meshes with interior faces at the boundaries between foreground regions
-            # (even though this is what is suggested by the docs). Instead, simply calling
-            # `SetLabels` below will enable internal boundaries, regardless of the value of
-            # `OutputStyle`. Also, using `SetOutputStyleToBoundary` generates jagged/rough
-            # 'lines' between two exterior regions; enabling internal boundaries fixes this.
-            input_ids = (
-                _process_select_inputs(alg_input, select_inputs_, array_)
-                if select_inputs_ is not None
-                else None
-            )
-            alg_.SetOutputStyleToSelected()
-            if select_outputs_ is not None:
-                # Use selected outputs
-                output_ids = _get_unique_labels_no_background(
-                    np.atleast_1d(select_outputs_),
-                    background_value,
-                )
-            elif input_ids is not None:
-                # Set outputs to be same as inputs
-                output_ids = input_ids
-            else:
-                # Output all labels
-                output_ids = _get_unique_labels_no_background(
-                    array_,
-                    background_value,
-                )
-            output_ids = output_ids.astype(float)
-
-            # Add selected outputs
-            [alg.AddSelectedLabel(label_id) for label_id in output_ids]  # type: ignore[func-returns-value]
-
-            # The following logic enables the generation of internal boundaries
-            if input_ids is not None:
-                # Generate internal boundaries for selected inputs only
-                internal_ids: NumpyArray[int] = input_ids
-            elif select_outputs is None:
-                # No inputs or outputs selected, so generate internal
-                # boundaries for all labels in input array
-                internal_ids = output_ids
-            else:
-                internal_ids = _get_unique_labels_no_background(
-                    array_,
-                    background_value,
-                )
-
-            [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
+            # Always output all labels for surface nets; user-selected outputs are filtered later
+            ids = np.unique(array_)
+            ids = ids[ids != background_value]
+            [alg_.SetLabel(int(val), float(val)) for val in ids]  # type: ignore[func-returns-value]
 
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
@@ -3083,6 +3017,7 @@ class ImageDataFilters(DataSetFilters):
             must_contain=output_mesh_type,
             name='output_mesh_type',
         )
+        input_ids = _validate_selection(select_inputs)
 
         alg_input = _get_alg_input(self, scalars)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
@@ -3098,17 +3033,10 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        if boundary_style == 'strict_external':
-            # Use default alg parameters
-            if select_inputs is not None or select_outputs is not None:
-                msg = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-                raise TypeError(msg)
-        else:
+        if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
                 array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
-                select_inputs_=select_inputs,
-                select_outputs_=select_outputs,
             )
         _configure_smoothing(
             alg,
@@ -3126,11 +3054,17 @@ class ImageDataFilters(DataSetFilters):
 
         output: pv.PolyData = _get_output(alg)
 
-        (  # Clear temp scalars from input
-            alg_input.point_data.remove(temp_scalars_name)
-            if temp_scalars_name in alg_input.point_data
-            else None
-        )
+        if select_outputs is not None:
+            output_ids = _validate_selection(select_outputs)
+            ugrid = output.extract_values(
+                output_ids,
+                component_mode='any',
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+            output = ugrid.extract_surface(
+                algorithm='geometry', pass_cellid=False, pass_pointid=False
+            )
 
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
@@ -3168,17 +3102,6 @@ class ImageDataFilters(DataSetFilters):
 
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
-
-        if select_outputs is not None:
-            # This option generates unused points
-            # Use clean to remove these points (without merging points)
-            output.clean(
-                point_merging=False,
-                lines_to_points=False,
-                polys_to_lines=False,
-                strips_to_polys=False,
-                inplace=True,
-            )
 
         if orient_faces and output.n_cells > 0:
             if pv.vtk_version_info >= (9, 4):

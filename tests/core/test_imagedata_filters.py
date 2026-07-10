@@ -425,11 +425,9 @@ def test_contour_labels_strict_external(channels):
     assert contours.active_scalars.ndim == 1
     assert np.all(contours.active_scalars > 0)
 
-    match = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_inputs=[0])
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_outputs=[0])
+    # Test that selecting inputs/outputs works with this mode
+    channels.contour_labels('strict_external', select_inputs=[1])
+    channels.contour_labels('strict_external', select_outputs=[2])
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)

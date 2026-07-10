@@ -182,9 +182,11 @@ class _PointSet(DataSet):
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
         target = self if inplace else self.copy()
-
-        target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        target.cell_data[array_name] = ghost_cells
         target.RemoveGhostCells()
+        with contextlib.suppress(KeyError):
+            del target.cell_data[array_name]
         return target
 
     def points_to_double(self) -> Self:
