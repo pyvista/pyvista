@@ -2575,6 +2575,12 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
+        PolyDataFilters.multi_ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
         :ref:`ray_trace_moeller_example`
             Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
 
@@ -2597,20 +2603,13 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`ray_trace_example` for more examples using this filter.
 
         """
-        points = _vtk.vtkPoints()
-        cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(list(origin), list(end_point), points, cell_ids)
+        intersection_points, intersection_cells = self.intersect_with_line(
+            origin, end_point, deduplicate_points=True
+        )
 
-        intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
         if first_point and has_intersection:
             intersection_points = intersection_points[0]
-
-        intersection_cells = []
-        if has_intersection:
-            ncells = 1 if first_point else cell_ids.GetNumberOfIds()
-            intersection_cells = [cell_ids.GetId(i) for i in range(ncells)]
-        intersection_cells = np.array(intersection_cells)  # type: ignore[assignment]
 
         if plot:
             pl = pv.Plotter(off_screen=off_screen)
@@ -2673,6 +2672,15 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
+
+        See Also
+        --------
+        PolyDataFilters.ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
