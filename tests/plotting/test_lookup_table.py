@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -10,9 +9,6 @@ import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
 from pyvista import _vtk
-
-if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -33,17 +29,12 @@ def test_cmap_values_raises():
         LookupTable(cmap='foo', values='bar')
 
 
-def test_call_raises(lut: LookupError, mocker: MockerFixture):
-    from pyvista.plotting import lookup_table
-
-    m = mocker.patch.object(lookup_table, 'np')
-    m.array.side_effect = TypeError
-
+def test_call_raises(lut: LookupTable):
     with pytest.raises(
         TypeError,
         match=re.escape('LookupTable __call__ expects a single value or an iterable.'),
     ):
-        lut('foo')
+        lut(object())
 
 
 def test_values(lut):
@@ -246,11 +237,26 @@ def test_map_value(lut):
 
 def test_call(lut):
     n_values = 10
-    arr = lut(np.linspace(0, 1, n_values))
-    assert isinstance(arr, np.ndarray)
-    assert arr.shape[0] == n_values
+    values = np.linspace(0, 1, n_values)
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
 
-    assert lut.map_value(0.5) == lut.map_value(0.5)
+    assert isinstance(arr, np.ndarray)
+    assert arr.shape == (n_values, 4)
+    assert np.allclose(arr, expected)
+
+
+def test_call_list(lut):
+    values = [0.0, 0.5, 1.0]
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (3, 4)
+    assert np.allclose(arr, expected)
+
+
+def test_call_scalar(lut):
+    assert lut(0.5) == lut.map_value(0.5)
 
 
 @pytest.mark.skip_check_gc
