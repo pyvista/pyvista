@@ -3717,9 +3717,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetIntegratorTypeToRungeKutta45()
         # set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+                alg.SetCellLocatorToStaticCellLocator()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
+
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg)
@@ -3896,7 +3903,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+                alg.SetCellLocatorToModifiedBSPTree()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
