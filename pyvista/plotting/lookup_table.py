@@ -1170,6 +1170,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             return self.map_value(value)
 
         try:
+            vtk_values: _vtk.vtkAbstractArray
             if isinstance(value, _vtk.vtkDataArray):
                 vtk_values = value
             else:
@@ -1177,8 +1178,9 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
                 if values.dtype == np.bool_:
                     values = values.astype(np.uint8)
                 vtk_values = convert_array(values)
-            if not isinstance(vtk_values, (_vtk.vtkDataArray, _vtk.vtkBitArray)):
+            if not isinstance(vtk_values, _vtk.vtkDataArray):
                 raise TypeError
+            # Use VTK_COLOR_MODE_MAP_SCALARS to preserve lookup-table mapping for uint8 arrays.
             rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
             if not isinstance(rgba, np.ndarray):
                 raise TypeError
