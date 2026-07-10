@@ -29,7 +29,7 @@ if 'TEST_DOWNLOADS' in os.environ:
         '"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`', stacklevel=2
     )
 
-pytestmark = pytest.mark.needs_download
+# pytestmark = pytest.mark.needs_download
 
 
 with warnings.catch_warnings():
@@ -633,6 +633,8 @@ def test_download_flamingo():
 
 
 def test_download_gltf_milk_truck():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
     match = (
         '`examples.gltf.download_milk_truck` is deprecated. '
         'Use `examples.download_milk_truck` instead.'
@@ -653,6 +655,8 @@ def test_download_gltf_milk_truck():
 
 
 def test_download_gltf_damaged_helmet():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
     match = (
         '`examples.gltf.download_damaged_helmet` is deprecated. '
         'Use `examples.download_damaged_helmet` instead.'
@@ -671,6 +675,8 @@ def test_download_gltf_damaged_helmet():
 
 
 def test_download_gltf_gearbox():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
     match = (
         '`examples.gltf.download_gearbox` is deprecated. Use `examples.download_gearbox` instead.'
     )
@@ -688,6 +694,8 @@ def test_download_gltf_gearbox():
 
 
 def test_download_gltf_avocado():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
     match = (
         '`examples.gltf.download_avocado` is deprecated. Use `examples.download_avocado` instead.'
     )
