@@ -6,7 +6,7 @@ import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.examples import downloads
 
-if pv.version_info >= (0, 52):
+if pv.version_info >= (0, 52):  # pragma: no cover
     msg = (
         '`pyvista.examples.download_3ds` should be removed. This module and all of its '
         'functions were deprecated in v0.49 and were scheduled for removal in v0.52.'

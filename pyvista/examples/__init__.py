@@ -14,7 +14,7 @@ _DEPRECATED_SUBMODULES = {'vrml', 'download_3ds', 'gltf'}
 
 
 def __getattr__(name):
-    if name in _DEPRECATED_SUBMODULES:
+    if name in _DEPRECATED_SUBMODULES:  # pragma: no cover
         module = importlib.import_module(f'.{name}', __name__)
         globals()[name] = module  # cache on the package so this only runs once
         return module
