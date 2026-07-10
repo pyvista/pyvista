@@ -1721,8 +1721,8 @@ def test_validate_many_invalid(
     main(f'validate {str(tmp_ant_file)!r} {str(tmp_cow_file_invalid)!r}')
     out, err = capture_out_err(capsys)
     assert out == ''
-    assert '1 invalid meshes out of 2 meshes validated.' in err, err
-    assert err.index('invalid meshes') < err.index("'cow.vtk' is not valid"), err
+    assert '1 invalid mesh out of 2 meshes validated.' in err, err
+    assert err.index('invalid mesh') < err.index("'cow.vtk' is not valid"), err
     assert 'is valid!' not in err, err
 
     # All invalid -- both messages deferred after summary
@@ -1736,6 +1736,20 @@ def test_validate_many_invalid(
     assert err.index("'cow.vtk' is not valid") > summary_pos, err
     assert err.index("'ant.vtm' is not valid") > summary_pos, err
     assert 'is valid!' not in err, err
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_multiple_files_single_mesh_invalid(
+    tmp_cow_file_invalid: Path,
+    capsys: pytest.CaptureFixture,
+):
+    # Add a second unreadable file
+    dirname = tmp_cow_file_invalid.parent
+    (dirname / 'file.txt').touch()
+    main(f'validate {dirname}{os.sep}*.* --skip-unreadable')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '1 invalid mesh out of 1 mesh validated.' in err, err
 
 
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
