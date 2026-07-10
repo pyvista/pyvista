@@ -712,6 +712,22 @@ def test_download_gltf_avocado():
     assert isinstance(mesh, pv.MultiBlock)
 
 
+def test_download_sheen_chair_deprecated(monkeypatch):
+    match = (
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.'
+    )
+
+    class MockLoader:
+        def download(self):
+            return 'SheenChair.glb'
+
+    monkeypatch.setattr(examples.gltf, '_gltf_loader', lambda _: MockLoader())
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert examples.gltf.download_sheen_chair() == 'SheenChair.glb'
+
+
 def test_download_cavity():
     filename = examples.download_cavity(load=False)
     assert Path(filename).is_file()
