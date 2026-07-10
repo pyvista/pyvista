@@ -5,6 +5,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.examples import downloads
+from pyvista.examples.downloads import _gltf_loader
 
 if pv.version_info >= (0, 52):  # pragma: no cover
     msg = (
@@ -42,6 +43,10 @@ def download_damaged_helmet():  # pragma: no cover
 def download_sheen_chair():  # pragma: no cover
     """Download the sheen chair example.
 
+    .. deprecated:: 0.49.0
+        This example uses the unsupported glTF extension
+        ``KHR_texture_transform`` and will be removed in v0.52.
+
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
     Returns
@@ -51,11 +56,17 @@ def download_sheen_chair():  # pragma: no cover
 
     """
     warn_external(
-        '`examples.gltf.download_sheen_chair` is deprecated. Use '
-        '`examples.download_sheen_chair` instead.',
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.',
         pv.PyVistaDeprecationWarning,
     )
-    return downloads.download_sheen_chair(load=False)
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = (
+            "Remove this deprecated function and remove the 'sheen_chair' "
+            'dict mapping from the `_gltf_loader`'
+        )
+        raise RuntimeError(msg)
+    return _gltf_loader('sheen_chair').download()
 
 
 def download_gearbox():  # pragma: no cover

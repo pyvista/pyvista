@@ -9185,37 +9185,6 @@ def download_damaged_helmet(*, load: bool = True):  # pragma: no cover
 _dataset_damaged_helmet = _gltf_loader('damaged_helmet')
 
 
-def download_sheen_chair(*, load: bool = True):  # pragma: no cover
-    """Download the sheen chair example.
-
-    Returns
-    -------
-    str
-        Filename of the gltf file.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.download_sheen_chair(load=False)
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Sheen Chair Dataset <sheen_chair_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-    """
-    return _download_dataset(_dataset_sheen_chair, load=load)
-
-
-_dataset_sheen_chair = _gltf_loader('sheen_chair')
-
-
 def download_gearbox(*, load: bool = True):  # pragma: no cover
     """Download the gearbox example.
 
