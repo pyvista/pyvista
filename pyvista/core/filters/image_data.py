@@ -425,8 +425,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(  # noqa: PLR0917
-        self,
+    def extract_subset(  # type: ignore[misc] # noqa: PLR0917
+        self: ImageData,
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
@@ -500,11 +500,20 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
+
+        # VTK mutates direction and origin inconsistently, so we fix it up here
+        result.direction_matrix = self.direction_matrix
+        result.origin = self.origin
         if rebase_coordinates:
             # Adjust for the confusing issue with the extents
             #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-            result.origin = result.points[0]
             result.offset = (0, 0, 0)
+            result.origin = (self.index_to_physical_matrix @ (*voi[::2], 1.0))[:3]
+        elif not np.allclose(rate, 1):
+            # Sampling affects the expected offset, so we need to re-encode the original offset
+            # based on its location in physical space, converted back to output coordinates
+            transform = self.index_to_physical_matrix @ result.physical_to_index_matrix
+            result.offset = np.floor((transform @ (*voi[::2], 1.0))[:3])
         return result
 
     @staticmethod
