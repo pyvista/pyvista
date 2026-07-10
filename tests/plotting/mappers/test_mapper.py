@@ -634,7 +634,14 @@ def test_active_scalars_algo_not_leaked_by_ghost_dict():
     # The leak was deallocation-order sensitive: plotter first, actor last.
     del pl, mesh, actor
     gc.collect()
-    leaked = [
-        obj for obj in gc.get_objects() if isinstance(obj, algorithms.ActiveScalarsAlgorithm)
-    ]
+
+    def _is_algo(obj):
+        # The heap can contain dead weakref proxies, whose isinstance check
+        # raises ReferenceError (via ABC __instancecheck__)
+        try:
+            return isinstance(obj, algorithms.ActiveScalarsAlgorithm)
+        except ReferenceError:
+            return False
+
+    leaked = [obj for obj in gc.get_objects() if _is_algo(obj)]
     assert leaked == []

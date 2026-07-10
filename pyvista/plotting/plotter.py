@@ -5332,7 +5332,8 @@ class BasePlotter(_BoundsSizeMixin):
         # tearing anything else down, so it stops touching this plotter's
         # VTK objects once they're cleared.
         if self._orbit_thread is not None:
-            if self._orbit_thread.is_alive():
+            # no branch: whether the thread already finished is timing-dependent
+            if self._orbit_thread.is_alive():  # pragma: no branch
                 # `_orbit_stop_event` is always set alongside `_orbit_thread` in
                 # `orbit_on_path`, so it can't be `None` here.
                 assert self._orbit_stop_event is not None  # noqa: S101
@@ -6826,8 +6827,10 @@ class BasePlotter(_BoundsSizeMixin):
             points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
-                if stop_event is not None and stop_event.is_set():  # pragma: no branch
-                    return
+                if stop_event is not None and stop_event.is_set():
+                    # Cancellation is usually observed in the `wait()` below
+                    # instead, so reaching this exit is timing-dependent.
+                    return  # pragma: no cover
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
                 self.set_focus(focus, render=False)  # type: ignore[arg-type]
@@ -6841,10 +6844,13 @@ class BasePlotter(_BoundsSizeMixin):
                 if sleep_time > 0 and (
                     hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
-                    if stop_event is not None:  # pragma: no branch
-                        if stop_event.wait(sleep_time):
+                    if stop_event is not None:
+                        # no branch: whether close() interrupts the wait or the
+                        # wait times out first is timing-dependent
+                        if stop_event.wait(sleep_time):  # pragma: no branch
                             return
-                    else:
+                    else:  # pragma: no cover
+                        # needs a non-threaded run with off_screen=False
                         time.sleep(sleep_time)
             if write_frames:  # pragma: no cover
                 self._get_mwriter_not_none().close()
