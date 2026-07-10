@@ -1170,10 +1170,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             return self.map_value(value)
 
         try:
-            vtk_values = value if isinstance(value, _vtk.vtkDataArray) else convert_array(value)
-            if not isinstance(vtk_values, _vtk.vtkDataArray):
+            if isinstance(value, _vtk.vtkDataArray):
+                vtk_values = value
+            else:
+                values = np.asarray(value)
+                if values.dtype == np.bool_:
+                    values = values.astype(np.uint8)
+                vtk_values = convert_array(values)
+            if not isinstance(vtk_values, (_vtk.vtkDataArray, _vtk.vtkBitArray)):
                 raise TypeError
-            rgba = convert_array(self.MapScalars(vtk_values, 0, -1))
+            rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
             if not isinstance(rgba, np.ndarray):
                 raise TypeError
         except (TypeError, ValueError) as err:

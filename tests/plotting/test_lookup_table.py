@@ -255,6 +255,15 @@ def test_call_list(lut):
     assert np.allclose(arr, expected)
 
 
+def test_call_bool_array(lut):
+    values = np.array([False, True, False, True])
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (4, 4)
+    assert np.allclose(arr, expected)
+
+
 def test_call_scalar(lut):
     assert lut(0.5) == lut.map_value(0.5)
 
