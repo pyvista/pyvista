@@ -1168,9 +1168,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)
-        else:
-            try:
-                return np.array([self.map_value(item) for item in value])
-            except (TypeError, ValueError):
-                msg = 'LookupTable __call__ expects a single value or an iterable.'
-                raise TypeError(msg)
+
+        try:
+            vtk_values = value if isinstance(value, _vtk.vtkDataArray) else convert_array(value)
+            if not isinstance(vtk_values, _vtk.vtkDataArray):
+                raise TypeError
+            rgba = convert_array(self.MapScalars(vtk_values, 0, -1))
+            if not isinstance(rgba, np.ndarray):
+                raise TypeError
+        except (TypeError, ValueError) as err:
+            msg = 'LookupTable __call__ expects a single value or an iterable.'
+            raise TypeError(msg) from err
+
+        return rgba.reshape(-1, 4) / 255.0
