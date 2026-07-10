@@ -3279,3 +3279,25 @@ def test_ply_writer(sphere, tmp_path):
     assert writer.texture == texture_name
     writer.texture = texture_name
     assert writer.texture == texture_name
+
+
+def test_try_callback_warns_every_time():
+    # A callback bound to a high-frequency event (e.g. ``MouseMoveEvent``)
+    # raises an identical exception at the same call site on every
+    # invocation. ``try_callback`` must surface it every time rather than
+    # letting Python's default filter de-duplicate it to a single message.
+    def failing_callback():
+        msg = 'callback failed'
+        raise RuntimeError(msg)
+
+    n_calls = 3
+    with warnings.catch_warnings(record=True) as log:
+        # Restore the default filter that ``catch_warnings(record=True)``
+        # overrides, so that de-duplication would apply without the fix.
+        warnings.simplefilter('default')
+        for _ in range(n_calls):
+            misc.try_callback(failing_callback)
+
+    messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
+    assert len(messages) == n_calls
+    assert 'callback failed' in str(messages[0].message)
