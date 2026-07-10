@@ -1181,7 +1181,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             if not isinstance(vtk_values, _vtk.vtkDataArray):
                 raise TypeError
             # Use VTK_COLOR_MODE_MAP_SCALARS to preserve lookup-table mapping for uint8 arrays.
-            rgba = cast('np.ndarray', convert_array(self.MapScalars(vtk_values, 1, -1)))
+            rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
         except (TypeError, ValueError) as err:
             msg = 'LookupTable __call__ expects a single value or an iterable.'
             raise TypeError(msg) from err
