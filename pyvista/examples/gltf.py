@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pooch
 
+import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
@@ -105,6 +106,9 @@ def download_sheen_chair():  # pragma: no cover
         'It uses the unsupported glTF extension `KHR_texture_transform`.',
         PyVistaDeprecationWarning,
     )
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
     return _dataset_sheen_chair.download()
 
 
