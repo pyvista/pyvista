@@ -84,17 +84,6 @@ def download_sheen_chair():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_sheen_chair()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
     .. seealso::
 
         :ref:`Sheen Chair Dataset <sheen_chair_dataset>`
