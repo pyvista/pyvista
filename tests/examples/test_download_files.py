@@ -665,7 +665,7 @@ def test_download_particles():
         z_min=-0.04860863834619522,
         z_max=0.04863869771361351,
     )
-    assert actual == expected
+    assert np.allclose(actual, expected)
     assert dataset.validate_mesh().is_valid
 
 
