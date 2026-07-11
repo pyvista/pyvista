@@ -2515,20 +2515,11 @@ def test_validate_mesh_degenerate_cells():
 
 
 @pytest.mark.parametrize(
-    'make_mesh',
-    [
-        examples.cells.PolyVertex,
-        examples.cells.PolyLine,
-        examples.cells.Line,
-        examples.cells.Quadrilateral,
-        examples.cells.Polygon,
-        examples.cells.Hexahedron,
-    ],
-    ids=['poly_vertex', 'poly_line', 'line', 'quad', 'polygon', 'hexahedron'],
+    'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
 )
-def test_validate_mesh_coincident_points(make_mesh):
+def test_validate_mesh_coincident_points(mesh_name):
     """Test that a cell with a collapsed edge (two coincident points) is invalid."""
-    mesh = make_mesh()
+    mesh = getattr(examples.cells, mesh_name)()
 
     # Negative case: the pristine cell is valid -- the check must not false-positive.
     assert mesh.validate_mesh().is_valid
