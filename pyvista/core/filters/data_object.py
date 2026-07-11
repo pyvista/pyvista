@@ -1780,9 +1780,7 @@ class DataObjectFilters:
                 # indexing so the gather never raises on out-of-range ids.
                 group_valid = np.all(valid_conn[entry_ids], axis=1)
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
-                # Ignore errors caused by non-finite points
-                with np.errstate(over='ignore'):
-                    diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
                 dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
                 iu = np.triu_indices(size, k=1)
                 any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)

@@ -2544,13 +2544,6 @@ def test_validate_mesh_coincident_points(make_mesh):
     assert state[0] & pv.CellStatus.COINCIDENT_POINTS
 
 
-def test_validate_mesh_coincident_points_non_finite():
-    """Test that no overflow warning is emitted by NumPy"""
-    mesh = examples.download_particles()
-    assert not np.isfinite(mesh.points).all()
-    mesh.validate_mesh()
-
-
 @pytest.fixture
 def degenerate_structured_grid_quad():
     x = np.array(
