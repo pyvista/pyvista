@@ -2537,18 +2537,31 @@ def test_validate_mesh_coincident_points(make_mesh):
     mesh.points[1] = mesh.points[0]
 
     report = mesh.validate_mesh()
-    assert report.is_valid is False
-    assert 'coincident_points' in report.invalid_fields
+    if mesh.distinct_cell_types == {pv.CellType.POLY_VERTEX}:
+        # Special case: POLY_VERTEX with coincident points is valid
+        # The points are redundant, yes, but they do not represent a collapsed edge
+        assert report.is_valid
+    else:
+        assert report.is_valid is False
+        assert 'coincident_points' in report.invalid_fields
 
-    state = mesh.cell_validator()['validity_state']
-    assert state[0] & pv.CellStatus.COINCIDENT_POINTS
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
 
 
-def test_validate_mesh_coincident_points_non_finite():
-    """Test that no overflow warning is emitted by NumPy"""
+def test_validate_mesh_poly_vertex_non_finite_false_positive():
     mesh = examples.download_particles()
+    assert mesh.distinct_cell_types == {pv.CellType.POLY_VERTEX}
+
+    # Points have values smaller than the default tolerance, which can trigger a false positive
+    assert np.any(mesh.points < np.finfo(np.float32).eps)
+
+    # Mesh has NaN points, which can trigger an overflow RuntimeWarning
     assert not np.isfinite(mesh.points).all()
-    mesh.validate_mesh()
+
+    # Test no overflow RuntimeWarning, no false positive for coincident points.
+    report = mesh.validate_mesh()
+    assert report.invalid_fields == ('non_finite_points',)
 
 
 @pytest.fixture
