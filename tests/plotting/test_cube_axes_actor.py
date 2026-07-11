@@ -7,9 +7,6 @@ import pytest
 
 import pyvista as pv
 
-# A large number of tests here fail gc
-pytestmark = pytest.mark.skip_check_gc
-
 
 @pytest.fixture
 def cube_axes_actor():

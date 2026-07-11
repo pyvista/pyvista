@@ -44,7 +44,7 @@ def test_leak_pv() -> None:
     )
 
     assert result.returncode != 0
-    assert 'Not all objects GCed' in result.stdout
+    assert 'new VTK object' in result.stdout
 
 
 @pytest.mark.expect_check_gc_fail

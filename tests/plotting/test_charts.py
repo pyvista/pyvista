@@ -14,8 +14,6 @@ from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
-pytestmark = pytest.mark.skip_check_gc  # A large number of tests here fail gc
-
 
 def vtk_array_to_tuple(arr):
     return tuple(arr.GetValue(i) for i in range(arr.GetNumberOfValues()))
