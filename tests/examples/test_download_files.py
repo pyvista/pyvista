@@ -654,8 +654,8 @@ def test_download_particles():
     filename = examples.download_particles(load=False)
     assert Path(filename).is_file()
 
-    dataset = examples.download_particles_lethe(load=True)
-    assert isinstance(dataset, pv.UnstructuredGrid)
+    dataset = examples.download_particles(load=True)
+    assert isinstance(dataset, pv.PolyData)
     actual = dataset.bounds
     expected = pv.BoundsTuple(
         x_min=817.33349609375,
