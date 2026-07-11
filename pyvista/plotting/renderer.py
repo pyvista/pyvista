@@ -3953,9 +3953,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.RemoveAllObservers()
         self._remove_axes_widget()
 
+        # Detach all props from the underlying vtkRenderer's actual scene graph.
+        # Just dropping our own Python-side references (below) isn't enough: VTK's
+        # own C++ reference counting keeps a prop (and everything it owns, e.g. the
+        # cube axes actor's axis label arrays) alive as long as it's still attached
+        # here, regardless of whether we still hold a Python attribute pointing to it.
+        self.RemoveAllViewProps()
+
         self._bounding_box = None
         self._box_object = None
         self._marker_actor = None
+        self._border_actor = None
+        self.cube_axes_actor = None
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)

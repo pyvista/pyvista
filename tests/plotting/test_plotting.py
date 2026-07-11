@@ -3261,6 +3261,21 @@ def test_orbit_on_path(sphere):
     pl.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_orbit_on_path_threaded_stopped_on_close(sphere):
+    # Regression test: `close()` must stop a threaded `orbit_on_path()` run before
+    # returning. Otherwise the orbit thread keeps running afterward, and while it
+    # runs, its live stack frame keeps VTK objects (e.g. the orbit path's point
+    # array) reachable past `close()` -- previously an intermittent leak
+    # ("only sometimes -- usually macOS").
+    pl = pv.Plotter(off_screen=False)
+    pl.add_mesh(sphere)
+    pl.orbit_on_path(threaded=True, step=0.05)
+    time.sleep(0.02)  # let the thread actually start before closing
+    pl.close()
+    assert not pl._orbit_thread.is_alive()
+
+
 def test_rectlinear_edge_case(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 

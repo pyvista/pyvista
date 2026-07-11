@@ -610,3 +610,38 @@ def test_add_mesh_smooth_shading_multi_component_scalars_mapper_output():
 
     pl.close()
     del point_data, mapped, actor, pl
+
+
+def test_active_scalars_algo_not_leaked_by_ghost_dict():
+    """A dead mapper wrapper must not pin its algorithm via VTK's ghost dict.
+
+    When the mapper's Python wrapper is destroyed while its C++ object is
+    still alive (here: the plotter is deleted before the actor), VTK stores
+    the wrapper's ``__dict__`` as a "ghost". If that dict held the
+    active-scalars algorithm, the algorithm's pipeline consumer references
+    would keep the mapper's C++ object (and thus the ghost) alive, closing a
+    Python<->C++ cycle that neither garbage collector can break. See the
+    ``_active_scalars_algo`` property, which exists to prevent exactly this.
+    """
+    import gc
+
+    pl = pv.Plotter(off_screen=True)
+    mesh = pv.Sphere()
+    mesh['data'] = mesh.points[:, 0]
+    actor = pl.add_mesh(mesh, scalars='data')
+    assert actor.mapper._active_scalars_algo is not None
+    pl.close()
+    # The leak was deallocation-order sensitive: plotter first, actor last.
+    del pl, mesh, actor
+    gc.collect()
+
+    def _is_algo(obj):
+        # The heap can contain dead weakref proxies, whose isinstance check
+        # raises ReferenceError (via ABC __instancecheck__)
+        try:
+            return isinstance(obj, algorithms.ActiveScalarsAlgorithm)
+        except ReferenceError:
+            return False
+
+    leaked = [obj for obj in gc.get_objects() if _is_algo(obj)]
+    assert leaked == []
