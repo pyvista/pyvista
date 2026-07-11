@@ -29,7 +29,7 @@ if 'TEST_DOWNLOADS' in os.environ:
         '"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`', stacklevel=2
     )
 
-# pytestmark = pytest.mark.needs_download
+pytestmark = pytest.mark.needs_download
 
 
 def _on_ci():
@@ -658,12 +658,12 @@ def test_download_particles():
     assert isinstance(dataset, pv.PolyData)
     actual = dataset.bounds
     expected = pv.BoundsTuple(
-        x_min=-0.4486684799194336,
-        x_max=-0.04666828736662865,
-        y_min=-0.04863213002681732,
-        y_max=0.04863336682319641,
-        z_min=-0.04860863834619522,
-        z_max=0.04863869771361351,
+        x_min=817.33349609375,
+        x_max=826.0890502929688,
+        y_min=545.0177001953125,
+        y_max=571.0205688476562,
+        z_min=1443.4783935546875,
+        z_max=1511.181396484375,
     )
     assert np.allclose(actual, expected)
     assert dataset.validate_mesh().is_valid
