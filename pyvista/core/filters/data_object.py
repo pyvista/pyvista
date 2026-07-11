@@ -1771,12 +1771,8 @@ class DataObjectFilters:
             coincident = np.zeros(n_cells, dtype=bool)
             n_cell_points = np.diff(offset)
             valid_conn = (conn >= 0) & (conn < n_points)
-            poly_vertex = ugrid.celltypes == pv.CellType.POLY_VERTEX
             for size in np.unique(n_cell_points[n_cell_points >= 2]):
-                # Skip POLY_VERTEX since these cannot have collapsed edges
-                cells = np.nonzero((n_cell_points == size) & ~poly_vertex)[0]
-                if cells.size == 0:
-                    continue
+                cells = np.nonzero(n_cell_points == size)[0]
                 # Gather this group's point ids as an (m, size) block via CSR offsets
                 entry_ids = offset[cells, np.newaxis] + np.arange(size)[np.newaxis, :]
                 pids = conn[entry_ids]
