@@ -18,8 +18,17 @@ def _offscreen_probe_render_window():
     probe. The converse mix is harmless: an EGL render window works in a
     process that already uses GLX. So prefer EGL whenever a Wayland session is
     detected, and keep the factory default everywhere else.
+
+    An explicit ``VTK_DEFAULT_OPENGL_WINDOW`` override always wins: the
+    factory honors it, and the user's choice also determines the backend the
+    rest of the process uses, so matching it keeps the probe consistent (and
+    safe) with the actual rendering backend.
     """
-    if os.environ.get('WAYLAND_DISPLAY') and _vtk.has_attr('vtkEGLRenderWindow'):
+    if (
+        not os.environ.get('VTK_DEFAULT_OPENGL_WINDOW')
+        and os.environ.get('WAYLAND_DISPLAY')
+        and _vtk.has_attr('vtkEGLRenderWindow')
+    ):
         return _vtk.vtkEGLRenderWindow()
     return _vtk.vtkRenderWindow()
 

@@ -275,12 +275,18 @@ def test_offscreen_probe_render_window(monkeypatch):
     probe window must be EGL-based. See pyvista/pyvistaqt#445.
     """
     monkeypatch.delenv('WAYLAND_DISPLAY', raising=False)
-    assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkRenderWindow)
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    default_cls = type(_offscreen_probe_render_window())
+    assert issubclass(default_cls, pv._vtk.vtkRenderWindow)
 
     monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
     if not pv._vtk.has_attr('vtkEGLRenderWindow'):
         pytest.skip('VTK build lacks vtkEGLRenderWindow')
     assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
+
+    # an explicit VTK_DEFAULT_OPENGL_WINDOW override wins over the heuristic
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', default_cls.__name__)
+    assert type(_offscreen_probe_render_window()) is default_cls
 
 
 def test_uses_egl_wayland(monkeypatch):
