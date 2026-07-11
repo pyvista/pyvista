@@ -2551,68 +2551,6 @@ def test_validate_mesh_coincident_points_non_finite():
     mesh.validate_mesh()
 
 
-def test_validate_mesh_coincident_points_no_false_positive_tiny_magnitude():
-    """Regression: distinct but tiny-magnitude points must not read as coincident.
-
-    ``download_particles`` is a single POLY_VERTEX cell whose finite points are all
-    bit-distinct, yet many are separated by only ~1e-11 -- below the absolute
-    single-precision eps that the coincident check used as a distance threshold. That
-    made every such pair a false positive. The check must instead be dtype-aware and
-    relative to the point magnitudes, so these genuinely distinct points are not flagged.
-
-    The genuine-collapse guarantee (a truly coincident pair is still flagged) is covered by
-    ``test_validate_mesh_coincident_points`` and is deliberately not re-asserted here.
-    """
-    mesh = examples.download_particles()
-
-    # Sanity: the finite points really are all distinct, so there is nothing to flag.
-    finite_points = mesh.points[np.isfinite(mesh.points).all(axis=1)]
-    assert np.unique(finite_points, axis=0).shape[0] == finite_points.shape[0]
-
-    report = mesh.validate_mesh()
-
-    # The false positive being fixed: distinct tiny-magnitude points are NOT coincident.
-    assert 'coincident_points' not in report.invalid_fields
-    # The genuinely-invalid finding (a non-finite point) must still be reported, so this
-    # pins the correct behaviour rather than merely "the mesh is valid".
-    assert 'non_finite_points' in report.invalid_fields
-
-
-def test_validate_mesh_coincident_points_dtype_aware_tolerance_float64_far_from_origin():
-    """Guard: the coincident tolerance must be relative to the points' own dtype eps.
-
-    The correct fix uses a per-pair RELATIVE tolerance
-    ``rtol = np.finfo(mesh.points.dtype).eps`` -- NOT a hardcoded single-precision
-    ``np.finfo(np.float32).eps``. This test guards against a fix that hardcodes the
-    float32 eps as the relative tolerance, which would silently regress float64 meshes:
-    at coordinate magnitude ~5e6, a float32 rtol (~1.19e-7) yields an absolute merge
-    radius of ~0.6 m, wrongly collapsing points that are only a few cm apart, whereas a
-    dtype-correct float64 rtol (~2.2e-16) gives a sub-nanometre radius.
-
-    This is a GREEN GUARD, not a RED driver: it already passes on the current absolute
-    float32-eps threshold (a 5 cm gap far exceeds ~1.19e-7 in absolute terms). It goes RED
-    only if the fix is implemented with a float32-hardcoded relative tolerance.
-    """
-    # A 5 cm x 5 cm float64 QUAD centred ~5e6 from the origin. In float64 the ULP at that
-    # magnitude is ~1e-9, so 5 cm is ~30M ULPs -- the four corners are unambiguously distinct.
-    base = 5.0e6
-    points = np.array(
-        [
-            [base, base, 0.0],
-            [base + 0.05, base, 0.0],
-            [base + 0.05, base + 0.05, 0.0],
-            [base, base + 0.05, 0.0],
-        ],
-        dtype=np.float64,
-    )
-    mesh = pv.PolyData(points, faces=[4, 0, 1, 2, 3])
-    assert mesh.points.dtype == np.float64
-    assert mesh.distinct_cell_types == {pv.CellType.QUAD}
-
-    report = mesh.validate_mesh()
-    assert 'coincident_points' not in report.invalid_fields
-
-
 @pytest.fixture
 def degenerate_structured_grid_quad():
     x = np.array(

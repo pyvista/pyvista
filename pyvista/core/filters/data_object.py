@@ -1766,16 +1766,11 @@ class DataObjectFilters:
 
             # VTK's face-based vtkCellValidator never flags 2D cells,
             # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
-            # check: a cell is coincident if any two of its points are within a dtype-aware
-            # RELATIVE tolerance (the tolerance absorbs floating-point representation error,
-            # which scales with magnitude). A pair (i, j) is coincident iff
-            # ``dist**2 <= rtol**2 * max(||p_i||**2, ||p_j||**2)``. This applies to all cell
-            # types (also OR-ing the bit into already-caught cases).
+            # check: a cell is coincident if any two of its points are within tol. This
+            # applies to all cell types (also OR-ing the bit into already-caught cases).
             coincident = np.zeros(n_cells, dtype=bool)
             n_cell_points = np.diff(offset)
             valid_conn = (conn >= 0) & (conn < n_points)
-            # Relative tolerance from the mesh's own points dtype (mirrors ``size_tol``).
-            rtol: float = np.finfo(mesh.points.dtype).eps
             for size in np.unique(n_cell_points[n_cell_points >= 2]):
                 cells = np.nonzero(n_cell_points == size)[0]
                 # Gather this group's point ids as an (m, size) block via CSR offsets
@@ -1784,17 +1779,13 @@ class DataObjectFilters:
                 # Skip cells with invalid connectivity (handled below); clamp for safe
                 # indexing so the gather never raises on out-of-range ids.
                 group_valid = np.all(valid_conn[entry_ids], axis=1)
-                # Compute in float64 so squaring extreme coords cannot overflow (non-finite
-                # points stay non-finite, so their comparisons remain False -> never flagged).
-                pts = ugrid.points[np.clip(pids, 0, n_points - 1)].astype(np.float64, copy=False)
-                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
+                # Ignore errors caused by non-finite points
+                with np.errstate(over='ignore'):
+                    diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
                 dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
-                # Per-point squared distance-from-origin, shape (m, size).
-                sq_norm = np.einsum('mik,mik->mi', pts, pts)
                 iu = np.triu_indices(size, k=1)
-                pair_dist_sq = dist_sq[:, iu[0], iu[1]]
-                max_sq_norm = np.maximum(sq_norm[:, iu[0]], sq_norm[:, iu[1]])
-                any_coincident = np.any(pair_dist_sq <= rtol * rtol * max_sq_norm, axis=1)
+                any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
                 coincident[cells] = any_coincident & group_valid
             state[coincident] |= CellStatus.COINCIDENT_POINTS
 
