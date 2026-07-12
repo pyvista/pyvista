@@ -212,6 +212,26 @@ def test_outline_with_faces(sphere_with_scalars):
     assert out.n_points == 8
 
 
+def test_set_generate_faces():
+    from pyvista import _vtk
+
+    # Present: the setter is forwarded the value.
+    class _WithSetter:
+        def __init__(self):
+            self.value = None
+
+        def SetGenerateFaces(self, value):  # noqa: N802
+            self.value = value
+
+    obj = _WithSetter()
+    _vtk.set_generate_faces(obj, value=True)
+    assert obj.value is True
+
+    # Absent: no error is raised (see the VTK 9.6 base-class-wrapping note in
+    # ``_vtk.set_generate_faces``).
+    _vtk.set_generate_faces(object(), value=True)
+
+
 def test_extract_surface():
     grid = pv.ImageData(dimensions=(5, 5, 5))
     algo = extract_surface_algorithm(grid)
