@@ -10,10 +10,138 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import importlib
+import importlib.abc
+import importlib.util
+import os
+import sys
 from typing import TYPE_CHECKING
+
+
+def _resolve_vtk_backend() -> str:
+    """Return the root package PyVista resolves VTK imports against.
+
+    Selection order:
+
+    1. The ``PYVISTA_VTK_BACKEND`` environment variable, if set, always wins
+       (e.g. ``vtkmodules`` to force stock VTK, or ``cvista`` to force the fork).
+    2. Otherwise, if the community ``cvista`` fork is installed, it is auto-selected
+       in preference to stock VTK. Installing ``pyvista[cvista]`` is therefore the
+       only action needed to opt in -- ``cvista`` imports as its own package and
+       coexists with stock ``vtk``, so this never clobbers a stock install.
+    3. Otherwise fall back to stock ``vtkmodules``.
+
+    Resolved once when this module is first imported, so ``PYVISTA_VTK_BACKEND``
+    must be set before importing :mod:`pyvista`.
+    """
+    backend = os.environ.get('PYVISTA_VTK_BACKEND')
+    if backend:
+        return backend
+    if importlib.util.find_spec('cvista') is not None:
+        return 'cvista'
+    return 'vtkmodules'
+
+
+# Root package every VTK import is resolved against (``vtkmodules`` or ``cvista``).
+_VTK_BACKEND = _resolve_vtk_backend()
+
+
+# A few classes live in a different module in cvista than in stock VTK: cvista
+# relocates them to keep some modules rendering-free and to split the wheel into
+# tiers. Consumers -- PyVista included -- still ask for them under their original
+# stock-VTK module name, so we map each relocated class to the module that now
+# hosts it and resolve from there. Keyed by the original (stock-VTK) module so
+# both PyVista's own lazy imports and the ``vtkmodules`` alias finder below can
+# consult it. Everything here is a no-op on stock VTK and on cvista builds that
+# predate a given move (the new module simply will not exist -- handled softly).
+_CVISTA_RELOCATED: dict[str, dict[str, str]] = {
+    'vtkFiltersHybrid': {
+        'vtkPolyDataSilhouette': 'vtkFiltersHybridRendering',
+        'vtkRenderLargeImage': 'vtkFiltersHybridRendering',
+        'vtkAdaptiveDataSetSurfaceFilter': 'vtkFiltersHybridRendering',
+    },
+    'vtkIOGeometry': {
+        'vtkGLTFReader': 'vtkIOImport',
+        'vtkGLTFTexture': 'vtkIOImport',
+    },
+}
+# Flattened class -> hosting module, for PyVista's own lazy resolver.
+_CVISTA_RELOCATED_CLASS: dict[str, str] = {
+    cls: module for moved in _CVISTA_RELOCATED.values() for cls, module in moved.items()
+}
+
+
+class _VtkmodulesToCvistaFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """Route ``import vtkmodules[.*]`` to ``cvista[.*]``.
+
+    When PyVista runs on the cvista backend, third-party packages that import
+    ``vtkmodules`` directly (e.g. ``trame-vtk``) must resolve to cvista as well:
+    mixing wrapped classes from two independent VTK builds in one process fails
+    (each build defines its own ``vtkObjectBase``, so cross-build subclassing
+    raises a layout conflict). This finder keeps a single VTK build in the
+    process by aliasing each requested ``vtkmodules`` name to its ``cvista``
+    counterpart in :data:`sys.modules`, and grafts any class cvista relocated
+    back onto its original module so the stock-VTK import path keeps working.
+    """
+
+    _PREFIX = 'vtkmodules'
+
+    def find_spec(
+        self,
+        fullname: str,
+        path: Sequence[str] | None = None,  # noqa: ARG002
+        target: ModuleType | None = None,  # noqa: ARG002
+    ) -> ModuleSpec | None:
+        if fullname == self._PREFIX or fullname.startswith(self._PREFIX + '.'):
+            return importlib.util.spec_from_loader(fullname, self)
+        return None
+
+    def create_module(self, spec: ModuleSpec) -> ModuleType:
+        module = importlib.import_module('cvista' + spec.name[len(self._PREFIX) :])
+        self._graft_relocated(module, spec.name[len(self._PREFIX) :].lstrip('.'))
+        sys.modules[spec.name] = module  # alias under the requested vtkmodules name
+        return module
+
+    @staticmethod
+    def _graft_relocated(module: ModuleType, bare_name: str) -> None:
+        """Re-export classes cvista moved out of *bare_name* back onto it."""
+        for cls, new_module in _CVISTA_RELOCATED.get(bare_name, {}).items():
+            if hasattr(module, cls):
+                continue
+            try:
+                src = importlib.import_module(f'cvista.{new_module}')
+            except ModuleNotFoundError:
+                continue
+            if hasattr(src, cls):
+                setattr(module, cls, getattr(src, cls))
+
+    def exec_module(self, module: ModuleType) -> None:
+        """No-op: the target module was already executed by ``import_module``."""
+
+
+if _VTK_BACKEND == 'cvista' and not any(
+    isinstance(finder, _VtkmodulesToCvistaFinder) for finder in sys.meta_path
+):
+    sys.meta_path.insert(0, _VtkmodulesToCvistaFinder())
+
+
+def _import_from(module_name: str, class_name: str) -> Any:
+    """Import ``class_name`` from the backend's ``module_name``.
+
+    Mirrors ``from {backend}.{module_name} import {class_name}`` semantics:
+    a missing module or missing attribute both raise ``ImportError``.
+    """
+    module = importlib.import_module(f'{_VTK_BACKEND}.{module_name}')
+    try:
+        return getattr(module, class_name)
+    except AttributeError as e:  # match `from m import c` (raises ImportError)
+        raise ImportError(str(e)) from e
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Sequence
+    from importlib.machinery import ModuleSpec
+    from types import ModuleType
     from typing import Any
 
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
@@ -795,7 +923,7 @@ def __getattr__(name: str):
         # Attempt to import the vtkmodule and the desired attribute
         # Convert module or attribute errors into a similar message that would otherwise be
         # seen when doing `from vtkmodules.vtkModule import vtkClass`
-        module_full_name = f'vtkmodules.{module_name}'
+        module_full_name = f'{_VTK_BACKEND}.{module_name}'
         error_msg = (
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
             'The cause is likely attributable to VTK version or a custom VTK build.'
@@ -807,7 +935,16 @@ def __getattr__(name: str):
         try:
             obj = getattr(module, name)
         except AttributeError as e:
-            raise ImportError(error_msg) from e
+            # cvista relocates a few classes into a different module than stock
+            # VTK; fall back to their new home before giving up.
+            relocated = _CVISTA_RELOCATED_CLASS.get(name) if _VTK_BACKEND == 'cvista' else None
+            if relocated is not None:
+                try:
+                    obj = getattr(importlib.import_module(f'cvista.{relocated}'), name)
+                except (ModuleNotFoundError, AttributeError):
+                    raise ImportError(error_msg) from e
+            else:
+                raise ImportError(error_msg) from e
 
     # Cache object for next access
     globals()[name] = obj
@@ -850,11 +987,11 @@ def has_attr(name: str) -> bool:
 
 def _import_vtkPythonItem():  # noqa: N802
     try:
-        from vtkmodules.vtkPythonContext2D import vtkPythonItem  # noqa: TID251
+        return _import_from('vtkPythonContext2D', 'vtkPythonItem')
     except ImportError:  # pragma: no cover
         # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
 
-        class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
+        class vtkPythonItem:  # noqa: N801
             """Empty placeholder."""
 
             def __init__(self) -> None:  # pragma: no cover
@@ -869,22 +1006,16 @@ def _import_vtkPythonItem():  # noqa: N802
 
 def _import_vtkExtractCells():  # noqa: N802
     try:  # Module changed in VTK 9.3.0
-        from vtkmodules.vtkFiltersCore import vtkExtractCells  # noqa: TID251
+        return _import_from('vtkFiltersCore', 'vtkExtractCells')
     except ImportError:
-        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef] # noqa: TID251
-            vtkExtractCells,
-        )
-    return vtkExtractCells
+        return _import_from('vtkFiltersExtraction', 'vtkExtractCells')
 
 
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
-        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities  # noqa: TID251
+        return _import_from('vtkCommonDataModel', 'vtkCellTypeUtilities')
     except ImportError:
-        from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment] # noqa: TID251
-            vtkCellTypes as vtkCellTypeUtilities,
-        )
-    return vtkCellTypeUtilities
+        return _import_from('vtkCommonDataModel', 'vtkCellTypes')
 
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {

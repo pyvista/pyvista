@@ -187,6 +187,12 @@ jobs:
           - python-version: "3.14"
             vtk-version: "latest"
             numpy-version: "nightly"
+          # Drop-in replacement: run the suite against the cvista fork backend
+          # (installed alongside stock vtk; PYVISTA_VTK_BACKEND=cvista via the
+          # vtk_cvista tox factor). cvista ships a single abi3 wheel for Python >=3.12.
+          - python-version: "3.12"
+            vtk-version: "cvista"
+            numpy-version: "latest"
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
