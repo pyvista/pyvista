@@ -51,9 +51,19 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from pyvista import ExplicitStructuredGrid
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
+    from pyvista import PointSet
     from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
+    from pyvista import Texture
+    from pyvista import UnstructuredGrid
+
 # disable pooch verbose logging
 POOCH_LOGGER = pooch.get_logger()  # type: ignore[attr-defined]
 POOCH_LOGGER.setLevel(logging.CRITICAL)
@@ -340,7 +350,7 @@ def _download_and_read(filename, *, texture=False, file_format=None, load=True):
 
 
 @_deprecate_positional_args
-def download_masonry_texture(load=True):  # noqa: FBT002
+def download_masonry_texture(load=True) -> Texture:  # noqa: FBT002
     """Download masonry texture.
 
     Parameters
@@ -383,7 +393,7 @@ _dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_usa_texture(load=True):  # noqa: FBT002
+def download_usa_texture(load=True) -> Texture:  # noqa: FBT002
     """Download USA texture.
 
     Parameters
@@ -422,7 +432,7 @@ _dataset_usa_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_puppy_texture(load=True):  # noqa: FBT002
+def download_puppy_texture(load=True) -> Texture:  # noqa: FBT002
     """Download puppy texture.
 
     Parameters
@@ -460,7 +470,7 @@ _dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_
 
 
 @_deprecate_positional_args
-def download_puppy(load=True):  # noqa: FBT002
+def download_puppy(load=True) -> ImageData:  # noqa: FBT002
     """Download puppy dataset.
 
     Parameters
@@ -500,7 +510,7 @@ _dataset_puppy = _SingleFileDownloadableDatasetLoader('puppy.jpg')
 
 
 @_deprecate_positional_args
-def download_usa(load=True):  # noqa: FBT002
+def download_usa(load=True) -> PolyData:  # noqa: FBT002
     """Download usa dataset.
 
     Parameters
@@ -535,7 +545,7 @@ _dataset_usa = _SingleFileDownloadableDatasetLoader('usa.vtk')
 
 
 @_deprecate_positional_args
-def download_st_helens(load=True):  # noqa: FBT002
+def download_st_helens(load=True) -> ImageData:  # noqa: FBT002
     """Download Saint Helens dataset.
 
     Parameters
@@ -578,7 +588,7 @@ _dataset_st_helens = _SingleFileDownloadableDatasetLoader('SainteHelens.dem')
 
 
 @_deprecate_positional_args
-def download_bunny(load=True):  # noqa: FBT002
+def download_bunny(load=True) -> PolyData:  # noqa: FBT002
     """Download bunny dataset.
 
     The Stanford Bunny from the `Stanford 3D Scanning Repository
@@ -631,7 +641,7 @@ _dataset_bunny = _SingleFileDownloadableDatasetLoader('bunny.ply')
 
 
 @_deprecate_positional_args
-def download_bunny_coarse(load=True):  # noqa: FBT002
+def download_bunny_coarse(load=True) -> PolyData:  # noqa: FBT002
     """Download coarse bunny dataset.
 
     A decimated version of the Stanford Bunny from the `Stanford 3D
@@ -689,7 +699,7 @@ _dataset_bunny_coarse = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cow(load=True):  # noqa: FBT002
+def download_cow(load=True) -> PolyData:  # noqa: FBT002
     """Download cow dataset.
 
     Parameters
@@ -732,7 +742,7 @@ _dataset_cow = _SingleFileDownloadableDatasetLoader('cow.vtp')
 
 
 @_deprecate_positional_args
-def download_cow_head(load=True):  # noqa: FBT002
+def download_cow_head(load=True) -> PolyData:  # noqa: FBT002
     """Download cow head dataset.
 
     Parameters
@@ -767,7 +777,7 @@ _dataset_cow_head = _SingleFileDownloadableDatasetLoader('cowHead.vtp')
 
 
 @_deprecate_positional_args
-def download_faults(load=True):  # noqa: FBT002
+def download_faults(load=True) -> PolyData:  # noqa: FBT002
     """Download faults dataset.
 
     Parameters
@@ -800,7 +810,7 @@ _dataset_faults = _SingleFileDownloadableDatasetLoader('faults.vtk')
 
 
 @_deprecate_positional_args
-def download_tensors(load=True):  # noqa: FBT002
+def download_tensors(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download tensors dataset.
 
     Parameters
@@ -833,7 +843,7 @@ _dataset_tensors = _SingleFileDownloadableDatasetLoader('tensors.vtk')
 
 
 @_deprecate_positional_args
-def download_head(load=True):  # noqa: FBT002
+def download_head(load=True) -> ImageData:  # noqa: FBT002
     """Download head dataset.
 
     Parameters
@@ -889,7 +899,7 @@ _dataset_head = _MultiFileDownloadableDatasetLoader(_head_files_func)
 
 
 @_deprecate_positional_args
-def download_head_2(load=True):  # noqa: FBT002
+def download_head_2(load=True) -> ImageData:  # noqa: FBT002
     """Download head dataset.
 
     Parameters
@@ -930,7 +940,7 @@ _dataset_head_2 = _SingleFileDownloadableDatasetLoader('head.vti')
 
 
 @_deprecate_positional_args
-def download_bolt_nut(load=True):  # noqa: FBT002
+def download_bolt_nut(load=True) -> MultiBlock:  # noqa: FBT002
     """Download bolt nut dataset.
 
     Parameters
@@ -989,7 +999,7 @@ _dataset_bolt_nut = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_clown(load=True):  # noqa: FBT002
+def download_clown(load=True) -> PolyData:  # noqa: FBT002
     """Download clown dataset.
 
     Parameters
@@ -1022,7 +1032,7 @@ _dataset_clown = _SingleFileDownloadableDatasetLoader('clown.facet')
 
 
 @_deprecate_positional_args
-def download_topo_global(load=True):  # noqa: FBT002
+def download_topo_global(load=True) -> PolyData:  # noqa: FBT002
     """Download topo dataset.
 
     Parameters
@@ -1063,7 +1073,7 @@ _dataset_topo_global = _SingleFileDownloadableDatasetLoader('EarthModels/ETOPO_1
 
 
 @_deprecate_positional_args
-def download_topo_land(load=True):  # noqa: FBT002
+def download_topo_land(load=True) -> PolyData:  # noqa: FBT002
     """Download topo land dataset.
 
     Parameters
@@ -1103,7 +1113,7 @@ _dataset_topo_land = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_coastlines(load=True):  # noqa: FBT002
+def download_coastlines(load=True) -> PolyData:  # noqa: FBT002
     """Download coastlines dataset.
 
     Parameters
@@ -1136,7 +1146,7 @@ _dataset_coastlines = _SingleFileDownloadableDatasetLoader('EarthModels/Coastlin
 
 
 @_deprecate_positional_args
-def download_knee(load=True):  # noqa: FBT002
+def download_knee(load=True) -> ImageData:  # noqa: FBT002
     """Download knee dataset.
 
     Parameters
@@ -1180,7 +1190,7 @@ _dataset_knee = _SingleFileDownloadableDatasetLoader('DICOM_KNEE.dcm')
 
 
 @_deprecate_positional_args
-def download_knee_full(load=True):  # noqa: FBT002
+def download_knee_full(load=True) -> ImageData:  # noqa: FBT002
     """Download full knee dataset.
 
     Parameters
@@ -1229,7 +1239,7 @@ _dataset_knee_full = _SingleFileDownloadableDatasetLoader('vw_knee.slc')
 
 
 @_deprecate_positional_args
-def download_lidar(load=True):  # noqa: FBT002
+def download_lidar(load=True) -> PolyData:  # noqa: FBT002
     """Download lidar dataset.
 
     Parameters
@@ -1270,7 +1280,7 @@ _dataset_lidar = _SingleFileDownloadableDatasetLoader('kafadar-lidar-interp.vtp'
 
 
 @_deprecate_positional_args
-def download_exodus(load=True):  # noqa: FBT002
+def download_exodus(load=True) -> MultiBlock:  # noqa: FBT002
     """Sample ExodusII data file.
 
     Parameters
@@ -1303,7 +1313,7 @@ _dataset_exodus = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
 
 
 @_deprecate_positional_args
-def download_nefertiti(load=True):  # noqa: FBT002
+def download_nefertiti(load=True) -> PolyData:  # noqa: FBT002
     """Download mesh of Queen Nefertiti.
 
     .. warning::
@@ -1474,7 +1484,7 @@ _dataset_lincoln_life_mask = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_blood_vessels(load=True):  # noqa: FBT002
+def download_blood_vessels(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download data representing the bifurcation of blood vessels.
 
     Parameters
@@ -1522,7 +1532,7 @@ _dataset_blood_vessels = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_iron_protein(load=True):  # noqa: FBT002
+def download_iron_protein(load=True) -> ImageData:  # noqa: FBT002
     """Download iron protein dataset.
 
     Parameters
@@ -1555,7 +1565,7 @@ _dataset_iron_protein = _SingleFileDownloadableDatasetLoader('ironProt.vtk')
 
 
 @_deprecate_positional_args
-def download_tetrahedron(load=True):  # noqa: FBT002
+def download_tetrahedron(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download tetrahedron dataset.
 
     Parameters
@@ -1591,7 +1601,7 @@ _dataset_tetrahedron = _SingleFileDownloadableDatasetLoader('Tetrahedron.vtu')
 
 
 @_deprecate_positional_args
-def download_saddle_surface(load=True):  # noqa: FBT002
+def download_saddle_surface(load=True) -> PolyData:  # noqa: FBT002
     """Download saddle surface dataset.
 
     Parameters
@@ -1627,7 +1637,7 @@ _dataset_saddle_surface = _SingleFileDownloadableDatasetLoader('InterpolatingOnS
 
 
 @_deprecate_positional_args
-def download_sparse_points(load=True):  # noqa: FBT002
+def download_sparse_points(load=True) -> PolyData:  # noqa: FBT002
     """Download sparse points data.
 
     Used with :func:`download_saddle_surface`.
@@ -1683,7 +1693,7 @@ _dataset_sparse_points = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_foot_bones(load=True):  # noqa: FBT002
+def download_foot_bones(load=True) -> PolyData:  # noqa: FBT002
     """Download foot bones dataset.
 
     Parameters
@@ -1723,7 +1733,7 @@ _dataset_foot_bones = _SingleFileDownloadableDatasetLoader('fsu/footbones.ply')
 
 
 @_deprecate_positional_args
-def download_guitar(load=True):  # noqa: FBT002
+def download_guitar(load=True) -> PolyData:  # noqa: FBT002
     """Download guitar dataset.
 
     Parameters
@@ -1758,7 +1768,7 @@ _dataset_guitar = _SingleFileDownloadableDatasetLoader('fsu/stratocaster.ply')
 
 
 @_deprecate_positional_args
-def download_quadratic_pyramid(load=True):  # noqa: FBT002
+def download_quadratic_pyramid(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download quadratic pyramid dataset.
 
     Parameters
@@ -1794,7 +1804,7 @@ _dataset_quadratic_pyramid = _SingleFileDownloadableDatasetLoader('QuadraticPyra
 
 
 @_deprecate_positional_args
-def download_bird(load=True):  # noqa: FBT002
+def download_bird(load=True) -> ImageData:  # noqa: FBT002
     """Download bird dataset.
 
     Parameters
@@ -1829,7 +1839,7 @@ _dataset_bird = _SingleFileDownloadableDatasetLoader('Pileated.jpg')
 
 
 @_deprecate_positional_args
-def download_bird_texture(load=True):  # noqa: FBT002
+def download_bird_texture(load=True) -> Texture:  # noqa: FBT002
     """Download bird texture.
 
     Parameters
@@ -1867,7 +1877,7 @@ _dataset_bird_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_office(load=True):  # noqa: FBT002
+def download_office(load=True) -> StructuredGrid:  # noqa: FBT002
     """Download office dataset.
 
     Parameters
@@ -1903,7 +1913,7 @@ _dataset_office = _SingleFileDownloadableDatasetLoader('office.binary.vtk')
 
 
 @_deprecate_positional_args
-def download_horse_points(load=True):  # noqa: FBT002
+def download_horse_points(load=True) -> PolyData:  # noqa: FBT002
     """Download horse points dataset.
 
     Parameters
@@ -1941,7 +1951,7 @@ _dataset_horse_points = _SingleFileDownloadableDatasetLoader('horsePoints.vtp')
 
 
 @_deprecate_positional_args
-def download_horse(load=True):  # noqa: FBT002
+def download_horse(load=True) -> PolyData:  # noqa: FBT002
     """Download horse dataset.
 
     Parameters
@@ -1979,7 +1989,7 @@ _dataset_horse = _SingleFileDownloadableDatasetLoader('horse.vtp')
 
 
 @_deprecate_positional_args
-def download_cake_easy(load=True):  # noqa: FBT002
+def download_cake_easy(load=True) -> ImageData:  # noqa: FBT002
     """Download cake dataset.
 
     Parameters
@@ -2014,7 +2024,7 @@ _dataset_cake_easy = _SingleFileDownloadableDatasetLoader('cake_easy.jpg')
 
 
 @_deprecate_positional_args
-def download_cake_easy_texture(load=True):  # noqa: FBT002
+def download_cake_easy_texture(load=True) -> Texture:  # noqa: FBT002
     """Download cake texture.
 
     Parameters
@@ -2052,7 +2062,7 @@ _dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_rectilinear_grid(load=True):  # noqa: FBT002
+def download_rectilinear_grid(load=True) -> RectilinearGrid:  # noqa: FBT002
     """Download rectilinear grid dataset.
 
     Parameters
@@ -2087,7 +2097,7 @@ _dataset_rectilinear_grid = _SingleFileDownloadableDatasetLoader('RectilinearGri
 
 
 @_deprecate_positional_args
-def download_gourds(zoom=False, load=True):  # noqa: FBT002
+def download_gourds(zoom=False, load=True) -> ImageData:  # noqa: FBT002
     """Download gourds dataset.
 
     Parameters
@@ -2135,7 +2145,7 @@ __gourds2 = _SingleFileDownloadableDatasetLoader('Gourds2.jpg')
 
 
 @_deprecate_positional_args
-def download_gourds_texture(zoom=False, load=True):  # noqa: FBT002
+def download_gourds_texture(zoom=False, load=True) -> Texture:  # noqa: FBT002
     """Download gourds texture.
 
     Parameters
@@ -2183,7 +2193,7 @@ __gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_fun
 
 
 @_deprecate_positional_args
-def download_gourds_pnm(load=True):  # noqa: FBT002
+def download_gourds_pnm(load=True) -> ImageData:  # noqa: FBT002
     """Download gourds dataset from pnm file.
 
     Parameters
@@ -2220,7 +2230,7 @@ _dataset_gourds_pnm = _SingleFileDownloadableDatasetLoader('Gourds.pnm')
 
 
 @_deprecate_positional_args
-def download_unstructured_grid(load=True):  # noqa: FBT002
+def download_unstructured_grid(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download unstructured grid dataset.
 
     Parameters
@@ -2253,7 +2263,7 @@ _dataset_unstructured_grid = _SingleFileDownloadableDatasetLoader('uGridEx.vtk')
 
 
 @_deprecate_positional_args
-def download_letter_k(load=True):  # noqa: FBT002
+def download_letter_k(load=True) -> PolyData:  # noqa: FBT002
     """Download letter k dataset.
 
     Parameters
@@ -2288,7 +2298,7 @@ _dataset_letter_k = _SingleFileDownloadableDatasetLoader('k.vtk')
 
 
 @_deprecate_positional_args
-def download_letter_a(load=True):  # noqa: FBT002
+def download_letter_a(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download letter a dataset.
 
     Parameters
@@ -2326,7 +2336,7 @@ _dataset_letter_a = _SingleFileDownloadableDatasetLoader('a_grid.vtk')
 
 
 @_deprecate_positional_args
-def download_poly_line(load=True):  # noqa: FBT002
+def download_poly_line(load=True) -> PolyData:  # noqa: FBT002
     """Download polyline dataset.
 
     Parameters
@@ -2359,7 +2369,7 @@ _dataset_poly_line = _SingleFileDownloadableDatasetLoader('polyline.vtk')
 
 
 @_deprecate_positional_args
-def download_cad_model(load=True):  # noqa: FBT002
+def download_cad_model(load=True) -> PolyData:  # noqa: FBT002
     """Download cad dataset.
 
     Parameters
@@ -2395,7 +2405,7 @@ _dataset_cad_model = _SingleFileDownloadableDatasetLoader('42400-IDGH.stl')
 
 
 @_deprecate_positional_args
-def download_frog(load=True):  # noqa: FBT002
+def download_frog(load=True) -> ImageData:  # noqa: FBT002
     """Download frog dataset.
 
     Parameters
@@ -2450,7 +2460,7 @@ _dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
 
 
 @_deprecate_positional_args
-def download_chest(load=True):  # noqa: FBT002
+def download_chest(load=True) -> ImageData:  # noqa: FBT002
     """Download chest dataset.
 
     Parameters
@@ -2489,7 +2499,7 @@ _dataset_chest = _SingleFileDownloadableDatasetLoader('MetaIO/ChestCT-SHORT.mha'
 
 
 @_deprecate_positional_args
-def download_brain_atlas_with_sides(load=True):  # noqa: FBT002
+def download_brain_atlas_with_sides(load=True) -> ImageData:  # noqa: FBT002
     """Download an image of an averaged brain with a right-left label.
 
     Parameters
@@ -2527,7 +2537,7 @@ _dataset_brain_atlas_with_sides = _SingleFileDownloadableDatasetLoader('avg152T1
 
 
 @_deprecate_positional_args
-def download_prostate(load=True):  # noqa: FBT002
+def download_prostate(load=True) -> ImageData:  # noqa: FBT002
     """Download prostate dataset.
 
     Parameters
@@ -2563,7 +2573,7 @@ _dataset_prostate = _SingleFileDownloadableDatasetLoader('prostate.img')
 
 
 @_deprecate_positional_args
-def download_filled_contours(load=True):  # noqa: FBT002
+def download_filled_contours(load=True) -> PolyData:  # noqa: FBT002
     """Download filled contours dataset.
 
     Parameters
@@ -2596,7 +2606,7 @@ _dataset_filled_contours = _SingleFileDownloadableDatasetLoader('filledContours.
 
 
 @_deprecate_positional_args
-def download_doorman(load=True):  # noqa: FBT002
+def download_doorman(load=True) -> PolyData:  # noqa: FBT002
     """Download doorman dataset.
 
     .. versionchanged:: 0.44.0
@@ -2675,7 +2685,7 @@ _dataset_doorman = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_mug(load=True):  # noqa: FBT002
+def download_mug(load=True) -> MultiBlock:  # noqa: FBT002
     """Download mug dataset.
 
     Parameters
@@ -2708,7 +2718,7 @@ _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
 @_deprecate_positional_args
-def download_oblique_cone(load=True):  # noqa: FBT002
+def download_oblique_cone(load=True) -> PolyData:  # noqa: FBT002
     """Download oblique cone dataset.
 
     Parameters
@@ -2741,7 +2751,7 @@ _dataset_oblique_cone = _SingleFileDownloadableDatasetLoader('ObliqueCone.vtp')
 
 
 @_deprecate_positional_args
-def download_emoji(load=True):  # noqa: FBT002
+def download_emoji(load=True) -> ImageData:  # noqa: FBT002
     """Download emoji dataset.
 
     Parameters
@@ -2776,7 +2786,7 @@ _dataset_emoji = _SingleFileDownloadableDatasetLoader('emote.jpg')
 
 
 @_deprecate_positional_args
-def download_emoji_texture(load=True):  # noqa: FBT002
+def download_emoji_texture(load=True) -> Texture:  # noqa: FBT002
     """Download emoji texture.
 
     Parameters
@@ -2811,7 +2821,7 @@ _dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_
 
 
 @_deprecate_positional_args
-def download_teapot(load=True):  # noqa: FBT002
+def download_teapot(load=True) -> PolyData:  # noqa: FBT002
     """Download teapot dataset.
 
     The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
@@ -2859,7 +2869,7 @@ _dataset_teapot = _SingleFileDownloadableDatasetLoader('teapot.g')
 
 
 @_deprecate_positional_args
-def download_brain(load=True):  # noqa: FBT002
+def download_brain(load=True) -> ImageData:  # noqa: FBT002
     """Download brain dataset.
 
     Parameters
@@ -2930,7 +2940,7 @@ def download_frd(*, load=True):
         :ref:`Frd Dataset <frd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`calculix_colormap_example`
+        :ref -> UnstructuredGrid:`calculix_colormap_example`
             Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
 
     """
@@ -2941,7 +2951,7 @@ _dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd')
 
 
 @_deprecate_positional_args
-def download_structured_grid(load=True):  # noqa: FBT002
+def download_structured_grid(load=True) -> StructuredGrid:  # noqa: FBT002
     """Download structured grid dataset.
 
     Parameters
@@ -2976,7 +2986,7 @@ _dataset_structured_grid = _SingleFileDownloadableDatasetLoader('StructuredGrid.
 
 
 @_deprecate_positional_args
-def download_structured_grid_two(load=True):  # noqa: FBT002
+def download_structured_grid_two(load=True) -> StructuredGrid:  # noqa: FBT002
     """Download structured grid two dataset.
 
     Parameters
@@ -3011,7 +3021,7 @@ _dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStruc
 
 
 @_deprecate_positional_args
-def download_trumpet(load=True):  # noqa: FBT002
+def download_trumpet(load=True) -> PolyData:  # noqa: FBT002
     """Download trumpet dataset.
 
     Parameters
@@ -3046,7 +3056,7 @@ _dataset_trumpet = _SingleFileDownloadableDatasetLoader('trumpet.obj')
 
 
 @_deprecate_positional_args
-def download_face(load=True):  # noqa: FBT002
+def download_face(load=True) -> PolyData:  # noqa: FBT002
     """Download face dataset.
 
     Parameters
@@ -3085,7 +3095,7 @@ _dataset_face = _SingleFileDownloadableDatasetLoader('fran_cut.vtk')
 
 
 @_deprecate_positional_args
-def download_sky_box_nz(load=True):  # noqa: FBT002
+def download_sky_box_nz(load=True) -> ImageData:  # noqa: FBT002
     """Download skybox-nz dataset.
 
     Parameters
@@ -3122,7 +3132,7 @@ _dataset_sky_box_nz = _SingleFileDownloadableDatasetLoader('skybox-nz.jpg')
 
 
 @_deprecate_positional_args
-def download_sky_box_nz_texture(load=True):  # noqa: FBT002
+def download_sky_box_nz_texture(load=True) -> Texture:  # noqa: FBT002
     """Download skybox-nz texture.
 
     Parameters
@@ -3162,7 +3172,7 @@ _dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_disc_quads(load=True):  # noqa: FBT002
+def download_disc_quads(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download disc quads dataset.
 
     Parameters
@@ -3195,7 +3205,7 @@ _dataset_disc_quads = _SingleFileDownloadableDatasetLoader('Disc_BiQuadraticQuad
 
 
 @_deprecate_positional_args
-def download_honolulu(load=True):  # noqa: FBT002
+def download_honolulu(load=True) -> PolyData:  # noqa: FBT002
     """Download honolulu dataset.
 
     Parameters
@@ -3233,7 +3243,7 @@ _dataset_honolulu = _SingleFileDownloadableDatasetLoader('honolulu.vtk')
 
 
 @_deprecate_positional_args
-def download_motor(load=True):  # noqa: FBT002
+def download_motor(load=True) -> PolyData:  # noqa: FBT002
     """Download motor dataset.
 
     Parameters
@@ -3266,7 +3276,7 @@ _dataset_motor = _SingleFileDownloadableDatasetLoader('motor.g')
 
 
 @_deprecate_positional_args
-def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
+def download_tri_quadratic_hexahedron(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download tri quadratic hexahedron dataset.
 
     Parameters
@@ -3312,7 +3322,7 @@ _dataset_tri_quadratic_hexahedron = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_human(load=True):  # noqa: FBT002
+def download_human(load=True) -> PolyData:  # noqa: FBT002
     """Download human dataset.
 
     Parameters
@@ -3345,7 +3355,7 @@ _dataset_human = _SingleFileDownloadableDatasetLoader('Human.vtp')
 
 
 @_deprecate_positional_args
-def download_vtk(load=True):  # noqa: FBT002
+def download_vtk(load=True) -> PolyData:  # noqa: FBT002
     """Download vtk dataset.
 
     Parameters
@@ -3380,7 +3390,7 @@ _dataset_vtk = _SingleFileDownloadableDatasetLoader('vtk.vtp')
 
 
 @_deprecate_positional_args
-def download_spider(load=True):  # noqa: FBT002
+def download_spider(load=True) -> PolyData:  # noqa: FBT002
     """Download spider dataset.
 
     Parameters
@@ -3413,7 +3423,7 @@ _dataset_spider = _SingleFileDownloadableDatasetLoader('spider.ply')
 
 
 @_deprecate_positional_args
-def download_carotid(load=True):  # noqa: FBT002
+def download_carotid(load=True) -> ImageData:  # noqa: FBT002
     """Download carotid dataset.
 
     Parameters
@@ -3471,7 +3481,7 @@ _dataset_carotid = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_blow(load=True):  # noqa: FBT002
+def download_blow(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download blow dataset.
 
     Parameters
@@ -3516,7 +3526,7 @@ _dataset_blow = _SingleFileDownloadableDatasetLoader('blow.vtk')
 
 
 @_deprecate_positional_args
-def download_shark(load=True):  # noqa: FBT002
+def download_shark(load=True) -> PolyData:  # noqa: FBT002
     """Download shark dataset.
 
     Parameters
@@ -3561,7 +3571,7 @@ _dataset_shark = _SingleFileDownloadableDatasetLoader('shark.ply')
 
 
 @_deprecate_positional_args
-def download_great_white_shark(load=True):  # noqa: FBT002
+def download_great_white_shark(load=True) -> PolyData:  # noqa: FBT002
     """Download great white shark dataset.
 
     .. versionadded:: 0.45
@@ -3619,7 +3629,7 @@ _dataset_great_white_shark = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_grey_nurse_shark(load=True):  # noqa: FBT002
+def download_grey_nurse_shark(load=True) -> PolyData:  # noqa: FBT002
     """Download grey nurse shark dataset.
 
     .. versionadded:: 0.45
@@ -3682,7 +3692,7 @@ _dataset_grey_nurse_shark = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_dragon(load=True):  # noqa: FBT002
+def download_dragon(load=True) -> PolyData:  # noqa: FBT002
     """Download dragon dataset.
 
     Parameters
@@ -3722,7 +3732,7 @@ _dataset_dragon = _SingleFileDownloadableDatasetLoader('dragon.ply')
 
 
 @_deprecate_positional_args
-def download_armadillo(load=True):  # noqa: FBT002
+def download_armadillo(load=True) -> PolyData:  # noqa: FBT002
     """Download armadillo dataset.
 
     Parameters
@@ -3763,7 +3773,7 @@ _dataset_armadillo = _SingleFileDownloadableDatasetLoader('Armadillo.ply')
 
 
 @_deprecate_positional_args
-def download_gears(load=True):  # noqa: FBT002
+def download_gears(load=True) -> PolyData:  # noqa: FBT002
     """Download gears dataset.
 
     Parameters
@@ -3804,7 +3814,7 @@ _dataset_gears = _SingleFileDownloadableDatasetLoader('gears.stl')
 
 
 @_deprecate_positional_args
-def download_torso(load=True):  # noqa: FBT002
+def download_torso(load=True) -> PolyData:  # noqa: FBT002
     """Download torso dataset.
 
     Parameters
@@ -3837,7 +3847,7 @@ _dataset_torso = _SingleFileDownloadableDatasetLoader('Torso.vtp')
 
 
 @_deprecate_positional_args
-def download_kitchen(split=False, load=True):  # noqa: FBT002
+def download_kitchen(split=False, load=True) -> StructuredGrid:  # noqa: FBT002
     """Download structured grid of kitchen with velocity field.
 
     Use the ``split`` argument to extract all of the furniture in the
@@ -3925,7 +3935,7 @@ __kitchen_split = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_tetra_dc_mesh(load=True):  # noqa: FBT002
+def download_tetra_dc_mesh(load=True) -> MultiBlock:  # noqa: FBT002
     """Download two meshes defining an electrical inverse problem.
 
     This contains a high resolution forward modeled mesh and a coarse
@@ -3987,7 +3997,7 @@ _dataset_tetra_dc_mesh = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_model_with_variance(load=True):  # noqa: FBT002
+def download_model_with_variance(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download model with variance dataset.
 
     Parameters
@@ -4023,7 +4033,7 @@ _dataset_model_with_variance = _SingleFileDownloadableDatasetLoader('model_with_
 
 
 @_deprecate_positional_args
-def download_thermal_probes(load=True):  # noqa: FBT002
+def download_thermal_probes(load=True) -> PolyData:  # noqa: FBT002
     """Download thermal probes dataset.
 
     Parameters
@@ -4059,7 +4069,7 @@ _dataset_thermal_probes = _SingleFileDownloadableDatasetLoader('probes.vtp')
 
 
 @_deprecate_positional_args
-def download_carburetor(load=True):  # noqa: FBT002
+def download_carburetor(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a carburetor.
 
     Parameters
@@ -4092,7 +4102,7 @@ _dataset_carburetor = _SingleFileDownloadableDatasetLoader('carburetor.ply')
 
 
 @_deprecate_positional_args
-def download_turbine_blade(load=True):  # noqa: FBT002
+def download_turbine_blade(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a turbine blade.
 
     Parameters
@@ -4125,7 +4135,7 @@ _dataset_turbine_blade = _SingleFileDownloadableDatasetLoader('turbineblade.ply'
 
 
 @_deprecate_positional_args
-def download_pine_roots(load=True):  # noqa: FBT002
+def download_pine_roots(load=True) -> PolyData:  # noqa: FBT002
     """Download pine roots dataset.
 
     Parameters
@@ -4161,7 +4171,7 @@ _dataset_pine_roots = _SingleFileDownloadableDatasetLoader('pine_root.tri')
 
 
 @_deprecate_positional_args
-def download_crater_topo(load=True):  # noqa: FBT002
+def download_crater_topo(load=True) -> ImageData:  # noqa: FBT002
     """Download crater dataset.
 
     Parameters
@@ -4202,7 +4212,7 @@ _dataset_crater_topo = _SingleFileDownloadableDatasetLoader('Ruapehu_mag_dem_15m
 
 
 @_deprecate_positional_args
-def download_crater_imagery(load=True):  # noqa: FBT002
+def download_crater_imagery(load=True) -> Texture:  # noqa: FBT002
     """Download crater texture.
 
     Parameters
@@ -4247,7 +4257,7 @@ _dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_dolfin(load=True):  # noqa: FBT002
+def download_dolfin(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download dolfin mesh.
 
     Parameters
@@ -4285,7 +4295,7 @@ _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_damavand_volcano(load=True):  # noqa: FBT002
+def download_damavand_volcano(load=True) -> ImageData:  # noqa: FBT002
     """Download damavand volcano model.
 
     Parameters
@@ -4346,7 +4356,7 @@ _dataset_damavand_volcano = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_delaunay_example(load=True):  # noqa: FBT002
+def download_delaunay_example(load=True) -> PolyData:  # noqa: FBT002
     """Download a pointset for the Delaunay example.
 
     Parameters
@@ -4379,7 +4389,7 @@ _dataset_delaunay_example = _SingleFileDownloadableDatasetLoader('250.vtk')
 
 
 @_deprecate_positional_args
-def download_embryo(load=True):  # noqa: FBT002
+def download_embryo(load=True) -> ImageData:  # noqa: FBT002
     """Download a volume of an embryo.
 
     Parameters
@@ -4428,7 +4438,7 @@ _dataset_embryo = _SingleFileDownloadableDatasetLoader('embryo.slc', load_func=_
 
 
 @_deprecate_positional_args
-def download_antarctica_velocity(load=True):  # noqa: FBT002
+def download_antarctica_velocity(load=True) -> PolyData:  # noqa: FBT002
     """Download the antarctica velocity simulation results.
 
     Parameters
@@ -4464,7 +4474,7 @@ _dataset_antarctica_velocity = _SingleFileDownloadableDatasetLoader('antarctica_
 
 
 @_deprecate_positional_args
-def download_room_surface_mesh(load=True):  # noqa: FBT002
+def download_room_surface_mesh(load=True) -> PolyData:  # noqa: FBT002
     """Download the room surface mesh.
 
     This mesh is for demonstrating the difference that depth peeling can
@@ -4505,7 +4515,7 @@ _dataset_room_surface_mesh = _SingleFileDownloadableDatasetLoader('room_surface_
 
 
 @_deprecate_positional_args
-def download_beach(load=True):  # noqa: FBT002
+def download_beach(load=True) -> ImageData:  # noqa: FBT002
     """Download the beach NRRD image.
 
     Parameters
@@ -4538,7 +4548,7 @@ _dataset_beach = _SingleFileDownloadableDatasetLoader('beach.nrrd')
 
 
 @_deprecate_positional_args
-def download_rgba_texture(load=True):  # noqa: FBT002
+def download_rgba_texture(load=True) -> Texture:  # noqa: FBT002
     """Download a texture with an alpha channel.
 
     Parameters
@@ -4577,7 +4587,7 @@ _dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_vtk_logo(load=True):  # noqa: FBT002
+def download_vtk_logo(load=True) -> Texture:  # noqa: FBT002
     """Download a texture of the VTK logo.
 
     Parameters
@@ -4612,7 +4622,7 @@ _dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=re
 
 
 @_deprecate_positional_args
-def download_sky_box_cube_map(load=True):  # noqa: FBT002
+def download_sky_box_cube_map(load=True) -> Texture:  # noqa: FBT002
     """Download a skybox cube map texture.
 
     Parameters
@@ -4673,7 +4683,7 @@ _dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cubemap_park(load=True):  # noqa: FBT002
+def download_cubemap_park(load=True) -> Texture:  # noqa: FBT002
     """Download a cubemap of a park.
 
     Downloaded from http://www.humus.name/index.php?page=Textures
@@ -4731,7 +4741,7 @@ _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cubemap_space_4k(load=True):  # noqa: FBT002
+def download_cubemap_space_4k(load=True) -> Texture:  # noqa: FBT002
     """Download the 4k space cubemap.
 
     This cubemap was generated by downloading the 4k image from: `Deep Star
@@ -4790,7 +4800,7 @@ _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cubemap_space_16k(load=True):  # noqa: FBT002
+def download_cubemap_space_16k(load=True) -> Texture:  # noqa: FBT002
     """Download the 16k space cubemap.
 
     This cubemap was generated by downloading the 16k image from: `Deep Star
@@ -4855,7 +4865,7 @@ _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_backward_facing_step(load=True):  # noqa: FBT002
+def download_backward_facing_step(load=True) -> MultiBlock:  # noqa: FBT002
     """Download an ensight gold case of a fluid simulation.
 
     Parameters
@@ -4891,7 +4901,7 @@ _dataset_backward_facing_step = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_gpr_data_array(load=True):  # noqa: FBT002
+def download_gpr_data_array(load=True) -> npt.NDArray:  # noqa: FBT002
     """Download GPR example data array.
 
     Parameters
@@ -4939,7 +4949,7 @@ _dataset_gpr_data_array = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_gpr_path(load=True):  # noqa: FBT002
+def download_gpr_path(load=True) -> PolyData:  # noqa: FBT002
     """Download GPR example path.
 
     Parameters
@@ -4981,7 +4991,7 @@ _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_woman(load=True):  # noqa: FBT002
+def download_woman(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a woman.
 
     Originally obtained from Laser Design.
@@ -5022,7 +5032,7 @@ _dataset_woman = _SingleFileDownloadableDatasetLoader('woman.stl')
 
 
 @_deprecate_positional_args
-def download_lobster(load=True):  # noqa: FBT002
+def download_lobster(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a lobster.
 
     Originally obtained from Laser Design.
@@ -5057,7 +5067,7 @@ _dataset_lobster = _SingleFileDownloadableDatasetLoader('lobster.ply')
 
 
 @_deprecate_positional_args
-def download_face2(load=True):  # noqa: FBT002
+def download_face2(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a man's face.
 
     Originally obtained from Laser Design.
@@ -5094,7 +5104,7 @@ _dataset_face2 = _SingleFileDownloadableDatasetLoader('man_face.stl')
 
 
 @_deprecate_positional_args
-def download_urn(load=True):  # noqa: FBT002
+def download_urn(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a burial urn.
 
     Originally obtained from Laser Design.
@@ -5135,7 +5145,7 @@ _dataset_urn = _SingleFileDownloadableDatasetLoader('urn.stl')
 
 
 @_deprecate_positional_args
-def download_pepper(load=True):  # noqa: FBT002
+def download_pepper(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a pepper (capsicum).
 
     Originally obtained from Laser Design.
@@ -5170,7 +5180,7 @@ _dataset_pepper = _SingleFileDownloadableDatasetLoader('pepper.ply')
 
 
 @_deprecate_positional_args
-def download_drill(load=True):  # noqa: FBT002
+def download_drill(load=True) -> PolyData:  # noqa: FBT002
     """Download scan of a power drill.
 
     Originally obtained from Laser Design.
@@ -5207,7 +5217,7 @@ _dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
 
 
 @_deprecate_positional_args
-def download_action_figure(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_action_figure(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download scan of an action figure.
 
     Originally obtained from Laser Design.
@@ -5279,7 +5289,7 @@ __dataset_action_figure_high_res = _SingleFileDownloadableDatasetLoader('tigerfi
 
 
 @_deprecate_positional_args
-def download_notch_stress(load=True):  # noqa: FBT002
+def download_notch_stress(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the FEA stress result from a notched beam.
 
     Parameters
@@ -5320,7 +5330,7 @@ _dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed
 
 
 @_deprecate_positional_args
-def download_notch_displacement(load=True):  # noqa: FBT002
+def download_notch_displacement(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the FEA displacement result from a notched beam.
 
     Parameters
@@ -5361,7 +5371,7 @@ _dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp.v
 
 
 @_deprecate_positional_args
-def download_louis_louvre(load=True):  # noqa: FBT002
+def download_louis_louvre(load=True) -> PolyData:  # noqa: FBT002
     """Download the Louis XIV de France statue at the Louvre, Paris.
 
     Statue found in the Napoléon Courtyard of Louvre Palace. It is a
@@ -5414,7 +5424,7 @@ _dataset_louis_louvre = _SingleFileDownloadableDatasetLoader('louis.ply')
 
 
 @_deprecate_positional_args
-def download_cylinder_crossflow(load=True):  # noqa: FBT002
+def download_cylinder_crossflow(load=True) -> MultiBlock:  # noqa: FBT002
     """Download CFD result for cylinder in cross flow at Re=35.
 
     Parameters
@@ -5461,7 +5471,7 @@ _dataset_cylinder_crossflow = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_naca(load=True):  # noqa: FBT002
+def download_naca(load=True) -> MultiBlock:  # noqa: FBT002
     """Download NACA airfoil dataset in EnSight format.
 
     Parameters
@@ -5514,7 +5524,7 @@ _dataset_naca = _MultiFileDownloadableDatasetLoader(files_func=_naca_files_func)
 
 
 @_deprecate_positional_args
-def download_lshape(load=True):  # noqa: FBT002
+def download_lshape(load=True) -> MultiBlock:  # noqa: FBT002
     """Download LShape dataset in EnSight format.
 
     Parameters
@@ -5563,7 +5573,7 @@ _dataset_lshape = _MultiFileDownloadableDatasetLoader(files_func=_lshape_files_f
 
 
 @_deprecate_positional_args
-def download_wavy(load=True):  # noqa: FBT002
+def download_wavy(load=True) -> MultiBlock:  # noqa: FBT002
     """Download PVD file of a 2D wave.
 
     Parameters
@@ -5599,7 +5609,7 @@ _dataset_wavy = _SingleFileDownloadableDatasetLoader('PVD/wavy.zip', target_file
 
 
 @_deprecate_positional_args
-def download_single_sphere_animation(load=True):  # noqa: FBT002
+def download_single_sphere_animation(load=True) -> MultiBlock:  # noqa: FBT002
     """Download PVD file for single sphere.
 
     Parameters
@@ -5659,7 +5669,7 @@ _dataset_single_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_dual_sphere_animation(load=True):  # noqa: FBT002
+def download_dual_sphere_animation(load=True) -> MultiBlock:  # noqa: FBT002
     """Download PVD file for double sphere.
 
     Parameters
@@ -5719,7 +5729,7 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cavity(load=True):  # noqa: FBT002
+def download_cavity(load=True) -> MultiBlock:  # noqa: FBT002
     """Download cavity OpenFOAM example.
 
     Retrieved from
@@ -5760,7 +5770,7 @@ _dataset_cavity = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_openfoam_tubes(load=True):  # noqa: FBT002
+def download_openfoam_tubes(load=True) -> MultiBlock:  # noqa: FBT002
     """Download tubes OpenFOAM example.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -5827,7 +5837,7 @@ _dataset_openfoam_tubes = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_lucy(load=True):  # noqa: FBT002
+def download_lucy(load=True) -> PolyData:  # noqa: FBT002
     """Download the lucy angel mesh.
 
     Original downloaded from the `The Stanford 3D Scanning Repository
@@ -5891,7 +5901,7 @@ _dataset_lucy = _SingleFileDownloadableDatasetLoader('lucy.ply')
 
 
 @_deprecate_positional_args
-def download_pump_bracket(load=True):  # noqa: FBT002
+def download_pump_bracket(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the pump bracket example dataset.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -5962,7 +5972,7 @@ _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_electronics_cooling(load=True):  # noqa: FBT002
+def download_electronics_cooling(load=True) -> MultiBlock:  # noqa: FBT002
     """Download the electronics cooling example datasets.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -6060,7 +6070,7 @@ _dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_can_crushed_hdf(load=True):  # noqa: FBT002
+def download_can_crushed_hdf(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the crushed can dataset.
 
     File obtained from `Kitware <https://www.kitware.com/>`_. Used
@@ -6105,7 +6115,7 @@ _dataset_can_crushed_hdf = _SingleFileDownloadableDatasetLoader('hdf/can-vtu.hdf
 
 
 @_deprecate_positional_args
-def download_can_crushed_vtu(load=True):  # noqa: FBT002
+def download_can_crushed_vtu(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the crushed can dataset.
 
     File obtained from `Kitware <https://www.kitware.com/>`_. Used
@@ -6148,7 +6158,7 @@ _dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
 
 
 @_deprecate_positional_args
-def download_cgns_structured(load=True):  # noqa: FBT002
+def download_cgns_structured(load=True) -> MultiBlock:  # noqa: FBT002
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -6191,7 +6201,7 @@ _dataset_cgns_structured = _SingleFileDownloadableDatasetLoader('cgns/sqnz_s.adf
 
 
 @_deprecate_positional_args
-def download_tecplot_ascii(load=True):  # noqa: FBT002
+def download_tecplot_ascii(load=True) -> MultiBlock:  # noqa: FBT002
     """Download the single block ASCII Tecplot dataset.
 
     Originally downloaded from Paul Bourke's
@@ -6232,7 +6242,7 @@ _dataset_tecplot_ascii = _SingleFileDownloadableDatasetLoader('tecplot_ascii.dat
 
 
 @_deprecate_positional_args
-def download_cgns_multi(load=True):  # noqa: FBT002
+def download_cgns_multi(load=True) -> MultiBlock:  # noqa: FBT002
     """Download a multielement airfoil with a cell centered solution.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -6372,7 +6382,7 @@ _dataset_dicom_stack = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_parched_canal_4k(load=True):  # noqa: FBT002
+def download_parched_canal_4k(load=True) -> Texture:  # noqa: FBT002
     """Download parched canal 4k dataset.
 
     Parameters
@@ -6424,7 +6434,7 @@ _dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cells_nd(load=True):  # noqa: FBT002
+def download_cells_nd(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download example AVS UCD dataset.
 
     Parameters
@@ -6457,7 +6467,7 @@ _dataset_cells_nd = _SingleFileDownloadableDatasetLoader('cellsnd.ascii.inp')
 
 
 @_deprecate_positional_args
-def download_moonlanding_image(load=True):  # noqa: FBT002
+def download_moonlanding_image(load=True) -> ImageData:  # noqa: FBT002
     """Download the Moon landing image.
 
     This is a noisy image originally obtained from `Scipy Lecture Notes
@@ -6506,7 +6516,7 @@ _dataset_moonlanding_image = _SingleFileDownloadableDatasetLoader('moonlanding.p
 
 
 @_deprecate_positional_args
-def download_angular_sector(load=True):  # noqa: FBT002
+def download_angular_sector(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the angular sector dataset.
 
     Parameters
@@ -6539,7 +6549,7 @@ _dataset_angular_sector = _SingleFileDownloadableDatasetLoader('AngularSector.vt
 
 
 @_deprecate_positional_args
-def download_mount_damavand(load=True):  # noqa: FBT002
+def download_mount_damavand(load=True) -> PolyData:  # noqa: FBT002
     """Download the Mount Damavand dataset.
 
     Visualize 3D models of Damavand Volcano, Alborz, Iran. This is a 2D map
@@ -6583,7 +6593,7 @@ _dataset_mount_damavand = _SingleFileDownloadableDatasetLoader('AOI.Damavand.326
 
 
 @_deprecate_positional_args
-def download_particles_lethe(load=True):  # noqa: FBT002
+def download_particles_lethe(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download a particles dataset generated by `lethe <https://github.com/lethe-cfd/lethe>`_ .
 
     See `PyVista discussions #1984
@@ -6630,7 +6640,7 @@ _dataset_particles_lethe = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_gif_simple(load=True):  # noqa: FBT002
+def download_gif_simple(load=True) -> ImageData:  # noqa: FBT002
     """Download a simple three frame GIF.
 
     Parameters
@@ -6681,7 +6691,7 @@ _dataset_gif_simple = _SingleFileDownloadableDatasetLoader('gifs/sample.gif')
 
 
 @_deprecate_positional_args
-def download_cloud_dark_matter(load=True):  # noqa: FBT002
+def download_cloud_dark_matter(load=True) -> PointSet:  # noqa: FBT002
     """Download particles from a simulated dark matter halo.
 
     This dataset contains 32,314 particles.
@@ -6747,7 +6757,7 @@ _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cloud_dark_matter_dense(load=True):  # noqa: FBT002
+def download_cloud_dark_matter_dense(load=True) -> PointSet:  # noqa: FBT002
     """Download a particles from a simulated dark matter halo.
 
     This dataset contains 2,062,256 particles.
@@ -6813,7 +6823,7 @@ _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_stars_cloud_hyg(load=True):  # noqa: FBT002
+def download_stars_cloud_hyg(load=True) -> PolyData:  # noqa: FBT002
     """Download a point cloud of stars as computed by the HYG Database.
 
     See `HYG-Database <https://github.com/astronexus/HYG-Database>`_ for more
@@ -6885,7 +6895,7 @@ _dataset_stars_cloud_hyg = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_fea_bracket(load=True):  # noqa: FBT002
+def download_fea_bracket(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the finite element solution of a bracket.
 
     Contains von-mises equivalent cell stress assuming a vertical (y-axis) load.
@@ -6938,7 +6948,7 @@ _dataset_fea_bracket = _SingleFileDownloadableDatasetLoader('fea/kiefer/dataset.
 
 
 @_deprecate_positional_args
-def download_fea_hertzian_contact_cylinder(load=True):  # noqa: FBT002
+def download_fea_hertzian_contact_cylinder(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download a hertzian contact finite element solution.
 
     Hertzian contact is referred to the frictionless contact between two
@@ -7011,7 +7021,7 @@ _dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_black_vase(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_black_vase(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download a black vase scan created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7088,7 +7098,7 @@ __dataset_black_vase_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_ivan_angel(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_ivan_angel(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7171,7 +7181,7 @@ __dataset_ivan_angel_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_bird_bath(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_bird_bath(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download a scan of a bird bath created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7246,7 +7256,7 @@ __dataset_bird_bath_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_owl(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_owl(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download a scan of an owl statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7326,7 +7336,7 @@ __dataset_owl_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_plastic_vase(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_plastic_vase(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download a scan of a plastic vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7403,7 +7413,7 @@ __dataset_plastic_vase_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_sea_vase(load=True, *, high_resolution=False):  # noqa: FBT002
+def download_sea_vase(load=True, *, high_resolution=False) -> PolyData:  # noqa: FBT002
     """Download a scan of a sea vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7478,7 +7488,7 @@ __dataset_sea_vase_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_dikhololo_night(load=True):  # noqa: FBT002
+def download_dikhololo_night(load=True) -> Texture:  # noqa: FBT002
     """Download and read the dikholo night hdr texture example.
 
     Files hosted at https://polyhaven.com/
@@ -7542,7 +7552,7 @@ _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_cad_model_case(load=True):  # noqa: FBT002
+def download_cad_model_case(load=True) -> PolyData:  # noqa: FBT002
     """Download a CAD model of a Raspberry PI 4 case.
 
     The dataset was downloaded from `Thingiverse
@@ -7597,7 +7607,7 @@ _dataset_cad_model_case = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_aero_bracket(load=True):  # noqa: FBT002
+def download_aero_bracket(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download the finite element solution of an aero bracket.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -7692,7 +7702,7 @@ _dataset_aero_bracket = _SingleFileDownloadableDatasetLoader('fea/aero_bracket/a
 
 
 @_deprecate_positional_args
-def download_coil_magnetic_field(load=True):  # noqa: FBT002
+def download_coil_magnetic_field(load=True) -> ImageData:  # noqa: FBT002
     """Download the magnetic field of a coil.
 
     These examples were generated from the following `script
@@ -7785,7 +7795,7 @@ _dataset_coil_magnetic_field = _SingleFileDownloadableDatasetLoader('magpylib/co
 
 
 @_deprecate_positional_args
-def download_meshio_xdmf(load=True):  # noqa: FBT002
+def download_meshio_xdmf(load=True) -> MultiBlock:  # noqa: FBT002
     """Download xdmf file created by meshio.
 
     The dataset was created by ``test_time_series`` test function in meshio.
@@ -7826,7 +7836,7 @@ _dataset_meshio_xdmf = _MultiFileDownloadableDatasetLoader(files_func=_meshio_xd
 
 
 @_deprecate_positional_args
-def download_victorian_goblet_face_illusion(load=True):  # noqa: FBT002
+def download_victorian_goblet_face_illusion(load=True) -> PolyData:  # noqa: FBT002
     """Download Victorian Goblet face illusion.
 
     This is a replica of a Victorian goblet with an external profile
@@ -7869,7 +7879,7 @@ _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_reservoir(load=True):  # noqa: FBT002
+def download_reservoir(load=True) -> ExplicitStructuredGrid:  # noqa: FBT002
     """Download the UNISIM-II-D reservoir model.
 
     UNISIM-II is a synthetic carbonate reservoir model created by
@@ -8381,7 +8391,7 @@ __dataset_whole_body_ct_female_high_res = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_room_cff(load=True):  # noqa: FBT002
+def download_room_cff(load=True) -> MultiBlock:  # noqa: FBT002
     """Download a room model in CFF format.
 
     Parameters
@@ -8422,7 +8432,7 @@ _dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_
 
 
 @_deprecate_positional_args
-def download_m4_total_density(load=True):  # noqa: FBT002
+def download_m4_total_density(load=True) -> ImageData:  # noqa: FBT002
     """Download a total density dataset of the chemistry.
 
     Parameters
@@ -8475,7 +8485,7 @@ _dataset_m4_total_density = _SingleFileDownloadableDatasetLoader('m4_TotalDensit
 
 
 @_deprecate_positional_args
-def download_headsq(load=True):  # noqa: FBT002
+def download_headsq(load=True) -> ImageData:  # noqa: FBT002
     """Download the headsq dataset.
 
     The headsq dataset is a 3D MRI scan of a human head.
@@ -8519,7 +8529,7 @@ _dataset_headsq = _MultiFileDownloadableDatasetLoader(_dataset_headsq_files_func
 
 
 @_deprecate_positional_args
-def download_prism(load=True):  # noqa: FBT002
+def download_prism(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download a prism model.
 
     .. versionadded:: 0.44.0
@@ -8554,7 +8564,7 @@ _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
 
 
 @_deprecate_positional_args
-def download_t3_grid_0(load=True):  # noqa: FBT002
+def download_t3_grid_0(load=True) -> ImageData:  # noqa: FBT002
     """Download a T3 grid 0 image.
 
     .. versionadded:: 0.44.0
@@ -8589,7 +8599,7 @@ _dataset_t3_grid_0 = _SingleFileDownloadableDatasetLoader('t3_grid_0.mnc')
 
 
 @_deprecate_positional_args
-def download_caffeine(load=True):  # noqa: FBT002
+def download_caffeine(load=True) -> PolyData:  # noqa: FBT002
     """Download the caffeine molecule.
 
     .. versionadded:: 0.44.0
@@ -8633,7 +8643,7 @@ _dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')
 
 
 @_deprecate_positional_args
-def download_e07733s002i009(load=True):  # paragma: no cover  # noqa: FBT002
+def download_e07733s002i009(load=True) -> ImageData:  # paragma: no cover  # noqa: FBT002
     """Download a e07733s002i009 image.
 
     .. versionadded:: 0.44.0
@@ -8668,7 +8678,7 @@ _dataset_e07733s002i009 = _SingleFileDownloadableDatasetLoader('E07733S002I009.M
 
 
 @_deprecate_positional_args
-def download_particles(load=True):  # noqa: FBT002
+def download_particles(load=True) -> PolyData:  # noqa: FBT002
     """Download a particle dataset.
 
     .. versionadded:: 0.44.0
@@ -8708,7 +8718,7 @@ _dataset_particles = _SingleFileDownloadableDatasetLoader('Particles.raw')
 
 
 @_deprecate_positional_args
-def download_prostar(load=True):  # noqa: FBT002
+def download_prostar(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download a prostar dataset.
 
     .. versionadded:: 0.44.0
@@ -8750,7 +8760,7 @@ _dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)
 
 
 @_deprecate_positional_args
-def download_3gqp(load=True):  # noqa: FBT002
+def download_3gqp(load=True) -> PolyData:  # noqa: FBT002
     """Download a 3GQP dataset.
 
     .. versionadded:: 0.44.0
@@ -8785,7 +8795,7 @@ _dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')
 
 
 @_deprecate_positional_args
-def download_full_head(load=True):  # noqa: FBT002
+def download_full_head(load=True) -> ImageData:  # noqa: FBT002
     """Download the full head image.
 
     .. versionadded:: 0.45.0
@@ -8826,7 +8836,7 @@ _dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)
 
 
 @_deprecate_positional_args
-def download_nek5000(load=True):  # noqa: FBT002
+def download_nek5000(load=True) -> UnstructuredGrid:  # noqa: FBT002
     """Download 2D nek5000 data example.
 
     .. versionadded:: 0.45.0
@@ -8870,7 +8880,7 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 
 
 @_deprecate_positional_args
-def download_biplane(load=True):  # noqa: FBT002
+def download_biplane(load=True) -> MultiBlock:  # noqa: FBT002
     """Download biplane dataset.
 
     .. warning::
@@ -8952,7 +8962,7 @@ def download_yinyang(*, load=True):
 _dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
 
 
-def download_warping_spheres(*, load=True):
+def download_warping_spheres(*, load=True) -> PartitionedDataSet:
     """Download warping spheres dataset.
 
     .. versionadded:: 0.47.0
