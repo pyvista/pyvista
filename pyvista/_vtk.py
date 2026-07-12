@@ -845,6 +845,31 @@ def has_attr(name: str) -> bool:
     return True
 
 
+def set_generate_faces(alg: Any, value: bool) -> None:  # noqa: FBT001
+    """Call ``alg.SetGenerateFaces(value)`` if the method is available.
+
+    On VTK 9.6, the object factory intermittently wraps a freshly
+    constructed :vtk:`vtkOutlineFilter` as its ``vtkPolyDataAlgorithm``
+    base class (observed in parallel documentation builds, not
+    reproducible on demand). The base class does not expose
+    ``SetGenerateFaces``, so a plain call raises ``AttributeError`` even
+    though the underlying C++ object is still an outline filter. Skip the
+    call when the method is missing: the C++ default (faces off) matches
+    this project's default ``generate_faces=False`` everywhere it is used.
+
+    Parameters
+    ----------
+    alg : vtkAlgorithm
+        The filter to configure.
+    value : bool
+        Whether the filter should generate faces.
+
+    """
+    setter = getattr(alg, 'SetGenerateFaces', None)
+    if setter is not None:
+        setter(value)
+
+
 # Specialized loading functions for irregular imports
 
 
