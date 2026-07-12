@@ -1044,6 +1044,9 @@ def test_plot_add_scalar_bar_cmap(verify_image_cache):
     ltable = pv.LookupTable()
     with pytest.raises(ValueError, match='Exactly one of'):
         pl.add_scalar_bar(cmap='jet', lookup_table=ltable)
+    match = “`cmap` must be specified when `clim` is provided.”
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pl.add_scalar_bar(clim=(0, 1), lookup_table=ltable)
 
     cmap = 'bwr'
     pl.add_scalar_bar(cmap=cmap)

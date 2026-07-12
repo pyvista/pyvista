@@ -511,6 +511,10 @@ class ScalarBars(_NoNewAttrMixin):
             mapper = pv.DataSetMapper(theme=theme)
             mapper.lookup_table = lookup_table
 
+        if cmap is None and clim is not None:
+            msg = “`cmap` must be specified when `clim` is provided.”
+            raise ValueError(msg)
+
         if interactive is None:
             interactive = theme.interactive
         if font_family is None:
