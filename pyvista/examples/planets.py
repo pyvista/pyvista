@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista as pv
@@ -11,6 +13,9 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+
+if TYPE_CHECKING:
+    from pyvista import PolyData
 
 
 def _download_dataset_texture(
@@ -24,7 +29,9 @@ def _download_dataset_texture(
     return dataset
 
 
-def load_planet(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_planet(
+    radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load a planet or celestial body as a sphere with texture coordinates.
 
     All planets are geometrically identical spheres. Textures are loaded
@@ -389,7 +396,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_planet_rings(*, inner=0.25, outer=0.5, c_res=50):
+def load_planet_rings(*, inner: float = 0.25, outer: float = 0.5, c_res: int = 50):
     """Load planetary rings as a disc with texture coordinates.
 
     Arguments are passed on to :func:`pyvista.Disc`.
