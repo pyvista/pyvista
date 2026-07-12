@@ -3960,7 +3960,10 @@ def test_oriented_bounding_box():
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation, inplace=True)
     obb = box_mesh.oriented_bounding_box()
-    assert obb.bounds == box_mesh.bounds
+    # allclose rather than == : the OBB axes come from an eigendecomposition
+    # whose values differ at ULP scale depending on the BLAS/threading, so the
+    # reconstructed world bounds are equal only to floating-point tolerance.
+    assert np.allclose(obb.bounds, box_mesh.bounds)
 
 
 @pytest.mark.parametrize('oriented', [True, False])
