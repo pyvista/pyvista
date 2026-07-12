@@ -528,6 +528,7 @@ pyvista = "pv"
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
 'pyvista/examples/_dataset_loader.py' = [
+  'ANN',
   'PTH112',
   'PTH113',
   'PTH117',
