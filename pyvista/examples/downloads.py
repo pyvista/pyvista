@@ -673,7 +673,7 @@ _dataset_bunny = _SingleFileDownloadableDatasetLoader('bunny.ply')
 
 
 @overload
-def download_bunny_coarse(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_bunny_coarse(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002  # noqa: FBT002
 @overload
 def download_bunny_coarse(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
@@ -2260,6 +2260,16 @@ def download_rectilinear_grid(load: bool = True) -> RectilinearGrid | str:  # no
 _dataset_rectilinear_grid = _SingleFileDownloadableDatasetLoader('RectilinearGrid.vtr')
 
 
+@overload
+def download_gourds(
+    zoom: bool,  # noqa: FBT001
+    load: Literal[True],
+) -> ImageData: ...
+@overload
+def download_gourds(
+    zoom: bool,  # noqa: FBT001
+    load: Literal[False],
+) -> str: ...
 @_deprecate_positional_args
 def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
     """Download gourds dataset.
@@ -2308,6 +2318,16 @@ _dataset_gourds = _SingleFileDownloadableDatasetLoader('Gourds.png')
 __gourds2 = _SingleFileDownloadableDatasetLoader('Gourds2.jpg')
 
 
+@overload
+def download_gourds_texture(
+    zoom: bool,  # noqa: FBT001
+    load: Literal[True],
+) -> Texture: ...
+@overload
+def download_gourds_texture(
+    zoom: bool,  # noqa: FBT001
+    load: Literal[False],
+) -> str: ...
 @_deprecate_positional_args
 def download_gourds_texture(zoom: bool = False, load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
     """Download gourds texture.
@@ -3176,7 +3196,7 @@ def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
         :ref:`Frd Dataset <frd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref -> UnstructuredGrid:`calculix_colormap_example`
+        :ref:`calculix_colormap_example`
             Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
 
     """
@@ -4170,6 +4190,10 @@ def download_torso(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 _dataset_torso = _SingleFileDownloadableDatasetLoader('Torso.vtp')
 
 
+@overload
+def download_kitchen(split: bool, load: Literal[True] = True) -> StructuredGrid: ...  # noqa: FBT001, FBT002
+@overload
+def download_kitchen(split: bool, load: Literal[False]) -> str: ...  # noqa: FBT001
 @_deprecate_positional_args
 def download_kitchen(split: bool = False, load: bool = True) -> StructuredGrid | str:  # noqa: FBT001, FBT002
     """Download structured grid of kitchen with velocity field.
@@ -7588,6 +7612,10 @@ _dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_black_vase(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+@overload
+def download_black_vase(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_black_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a black vase scan created by Ivan Nikolov.
@@ -7665,6 +7693,10 @@ __dataset_black_vase_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_ivan_angel(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+@overload
+def download_ivan_angel(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_ivan_angel(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of an angel statue created by Ivan Nikolov.
@@ -7748,6 +7780,10 @@ __dataset_ivan_angel_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_bird_bath(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+@overload
+def download_bird_bath(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_bird_bath(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of a bird bath created by Ivan Nikolov.
@@ -7823,6 +7859,10 @@ __dataset_bird_bath_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_owl(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+@overload
+def download_owl(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_owl(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of an owl statue created by Ivan Nikolov.
@@ -7903,6 +7943,10 @@ __dataset_owl_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_plastic_vase(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+@overload
+def download_plastic_vase(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_plastic_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of a plastic vase created by Ivan Nikolov.
@@ -7980,6 +8024,10 @@ __dataset_plastic_vase_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_sea_vase(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+@overload
+def download_sea_vase(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_sea_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of a sea vase created by Ivan Nikolov.
@@ -8555,6 +8603,18 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_whole_body_ct_male(
+    load: Literal[True],
+    *,
+    high_resolution: bool,
+) -> MultiBlock: ...
+@overload
+def download_whole_body_ct_male(
+    load: Literal[False],
+    *,
+    high_resolution: bool,
+) -> str: ...
 @_deprecate_positional_args
 def download_whole_body_ct_male(
     load: bool = True,  # noqa: FBT001, FBT002
@@ -8806,6 +8866,18 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_whole_body_ct_female(
+    load: Literal[True],
+    *,
+    high_resolution: bool,
+) -> MultiBlock: ...
+@overload
+def download_whole_body_ct_female(
+    load: Literal[False],
+    *,
+    high_resolution: bool,
+) -> str: ...
 @_deprecate_positional_args
 def download_whole_body_ct_female(
     load: bool = True,  # noqa: FBT001, FBT002
@@ -9563,6 +9635,10 @@ def download_biplane(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FB
 _dataset_biplane = _SingleFileDownloadableDatasetLoader('biplane_rms_pressure_bs.exo')
 
 
+@overload
+def download_yinyang(*, load: Literal[True] = True) -> ImageData: ...
+@overload
+def download_yinyang(*, load: Literal[False]) -> str: ...
 def download_yinyang(*, load: bool = True) -> ImageData | str:
     """Download yinyang dataset.
 
