@@ -1,5 +1,4 @@
-"""
-.. _read_parallel_example:
+""".. _read_parallel_example:
 
 Parallel Files
 ~~~~~~~~~~~~~~

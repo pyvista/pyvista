@@ -1,5 +1,4 @@
-"""
-.. _point_cloud_neighbors_example:
+""".. _point_cloud_neighbors_example:
 
 Highlight Nearest Neighbors in a Point Cloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

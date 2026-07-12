@@ -1,5 +1,4 @@
-"""
-.. _planets_example:
+""".. _planets_example:
 
 3D Earth and Celestial Bodies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _lighting_mesh_example:
+""".. _lighting_mesh_example:
 
 Lighting Properties
 ~~~~~~~~~~~~~~~~~~~

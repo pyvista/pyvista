@@ -472,22 +472,6 @@ pyvista = "pv"
 
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
-'/examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
-'/examples/*' = [
-  'B015', # https://github.com/pyvista/pyvista/pull/6014
-  'B018', # https://github.com/pyvista/pyvista/pull/6019
-  'D102',
-  'D103',
-  'D205',
-  'D212',
-  'D400',
-  'D415',
-  'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
-  'S101',
-  'SIM115',
-  'T20',
-]
-'/examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
 'doc/source/make_tables.py' = [
@@ -500,6 +484,25 @@ pyvista = "pv"
   'S101',
   'T20',
 ]
+'examples/*' = [
+  'ANN',
+  'B015', # https://github.com/pyvista/pyvista/pull/6014
+  'B018', # https://github.com/pyvista/pyvista/pull/6019
+  'D102',
+  'D103',
+  'D205',
+  'D212',
+  'D400',
+  'D415',
+  'INP',
+  'PLC0415',
+  'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
+  'S101',
+  'SIM115',
+  'T20',
+  'TID251',
+]
+'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'hooks/*' = ['INP001']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/_vtk.py' = ['ANN202', 'PLC0414', 'PLC0415']

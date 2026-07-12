@@ -1,5 +1,4 @@
-"""
-.. _ray_trace_moeller_example:
+""".. _ray_trace_moeller_example:
 
 Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _connectivity_example:
+""".. _connectivity_example:
 
 Connectivity
 ~~~~~~~~~~~~

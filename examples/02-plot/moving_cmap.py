@@ -1,5 +1,4 @@
-"""
-.. _moving_cmap_example:
+""".. _moving_cmap_example:
 
 Create a GIF Movie of a Static Object with a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

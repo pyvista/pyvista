@@ -1,5 +1,4 @@
-"""
-.. _create_multiple_lines_example:
+""".. _create_multiple_lines_example:
 
 Create Connected Lines from Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

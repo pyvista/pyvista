@@ -1,5 +1,4 @@
-"""
-.. _extract_edges_example:
+""".. _extract_edges_example:
 
 Extract Edges
 ~~~~~~~~~~~~~

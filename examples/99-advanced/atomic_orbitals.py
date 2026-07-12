@@ -1,5 +1,4 @@
-"""
-.. _atomic_orbitals_example:
+""".. _atomic_orbitals_example:
 
 Plot Atomic Orbitals
 --------------------

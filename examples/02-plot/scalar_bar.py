@@ -1,5 +1,4 @@
-"""
-.. _scalar_bar_example:
+""".. _scalar_bar_example:
 
 Customize Scalar Bars
 ~~~~~~~~~~~~~~~~~~~~~

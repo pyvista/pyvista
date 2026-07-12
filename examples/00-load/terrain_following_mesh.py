@@ -1,5 +1,4 @@
-"""
-.. _terrain_following_mesh_example:
+""".. _terrain_following_mesh_example:
 
 Terrain Following Mesh
 ~~~~~~~~~~~~~~~~~~~~~~

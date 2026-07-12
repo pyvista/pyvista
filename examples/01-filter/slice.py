@@ -1,5 +1,4 @@
-"""
-.. _slice_example:
+""".. _slice_example:
 
 Slicing
 ~~~~~~~

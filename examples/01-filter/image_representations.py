@@ -1,5 +1,4 @@
-"""
-.. _image_representations_example:
+""".. _image_representations_example:
 
 Image Data Representations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

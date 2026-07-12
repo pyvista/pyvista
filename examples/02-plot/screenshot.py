@@ -1,5 +1,4 @@
-"""
-.. _screenshot_example:
+""".. _screenshot_example:
 
 Saving Screenshots
 ~~~~~~~~~~~~~~~~~~

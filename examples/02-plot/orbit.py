@@ -1,5 +1,4 @@
-"""
-.. _orbit_example:
+""".. _orbit_example:
 
 Orbiting
 ~~~~~~~~

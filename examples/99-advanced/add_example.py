@@ -1,5 +1,4 @@
-r"""
-.. _add_example_example:
+r""".. _add_example_example:
 
 Adding a New Gallery Example
 ----------------------------

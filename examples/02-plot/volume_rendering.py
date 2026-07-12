@@ -1,5 +1,4 @@
-"""
-.. _volume_rendering_example:
+""".. _volume_rendering_example:
 
 Volume Rendering
 ~~~~~~~~~~~~~~~~

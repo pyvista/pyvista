@@ -1,5 +1,4 @@
-"""
-.. _sharing_scalar_bars_example:
+""".. _sharing_scalar_bars_example:
 
 Sharing Scalar Bars
 ~~~~~~~~~~~~~~~~~~~~~

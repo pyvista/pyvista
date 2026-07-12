@@ -1,5 +1,4 @@
-"""
-.. _plane_widget_example:
+""".. _plane_widget_example:
 
 Plane Widget
 ~~~~~~~~~~~~

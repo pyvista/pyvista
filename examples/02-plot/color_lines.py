@@ -1,5 +1,4 @@
-"""
-.. _color_lines_example:
+""".. _color_lines_example:
 
 Color Several Lines
 ~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _interpolate_example:
+""".. _interpolate_example:
 
 Detailed Interpolating Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

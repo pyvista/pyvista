@@ -1,5 +1,4 @@
-"""
-.. _spherical_example:
+""".. _spherical_example:
 
 Plot data in spherical coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -13,8 +12,7 @@ import pyvista as pv
 
 
 def _cell_bounds(points, bound_position=0.5):
-    """
-    Calculate coordinate cell boundaries.
+    """Calculate coordinate cell boundaries.
 
     Parameters
     ----------

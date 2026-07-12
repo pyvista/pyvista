@@ -1,5 +1,4 @@
-"""
-.. _gyroid_example:
+""".. _gyroid_example:
 
 Plot a Gyroid Surface
 ---------------------

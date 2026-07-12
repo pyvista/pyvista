@@ -1,5 +1,4 @@
-"""
-.. _graph_network_example:
+""".. _graph_network_example:
 
 Plot a 3D Graph Network
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _pbr_example:
+""".. _pbr_example:
 
 Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

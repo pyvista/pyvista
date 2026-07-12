@@ -1,5 +1,4 @@
-"""
-.. _compare_threshold_filters_example:
+""".. _compare_threshold_filters_example:
 
 Compare threshold filters
 ~~~~~~~~~~~~~~~~~~~~~~~~~

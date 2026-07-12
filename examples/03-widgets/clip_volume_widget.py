@@ -1,5 +1,4 @@
-"""
-.. _clip_volume_widget_example:
+""".. _clip_volume_widget_example:
 
 Clip Volume Widget
 ------------------

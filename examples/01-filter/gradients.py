@@ -1,5 +1,4 @@
-"""
-.. _gradients_example:
+""".. _gradients_example:
 
 Compute Gradients of a Field
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

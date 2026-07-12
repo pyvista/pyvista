@@ -1,5 +1,4 @@
-"""
-.. _anti_aliasing_example:
+""".. _anti_aliasing_example:
 
 Anti-Aliasing
 ~~~~~~~~~~~~~

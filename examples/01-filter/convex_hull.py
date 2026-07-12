@@ -1,5 +1,4 @@
-"""
-.. _convex_hull_example:
+""".. _convex_hull_example:
 
 Wrap a Point Cloud in a Convex Hull
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

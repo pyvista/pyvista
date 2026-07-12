@@ -1,5 +1,4 @@
-"""
-.. _plot_over_circular_arc_example:
+""".. _plot_over_circular_arc_example:
 
 Plot Scalars Over a Circular Arc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

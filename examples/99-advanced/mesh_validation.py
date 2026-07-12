@@ -1,5 +1,4 @@
-"""
-.. _mesh_validation_example:
+""".. _mesh_validation_example:
 
 Mesh Validation
 ~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _create_pixel_art_example:
+""".. _create_pixel_art_example:
 
 Pixel Art of ALIEN MONSTERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

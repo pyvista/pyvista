@@ -1,5 +1,4 @@
-"""
-.. _using_filters_example:
+""".. _using_filters_example:
 
 Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~

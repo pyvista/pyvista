@@ -1,5 +1,4 @@
-"""
-.. _rotate_example:
+""".. _rotate_example:
 
 Rotations
 ~~~~~~~~~

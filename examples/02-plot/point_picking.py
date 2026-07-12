@@ -1,5 +1,4 @@
-"""
-.. _point_picking_example:
+""".. _point_picking_example:
 
 Picking points on a mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~

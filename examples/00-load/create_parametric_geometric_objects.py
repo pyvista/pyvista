@@ -1,5 +1,4 @@
-"""
-.. _create_parametric_geometric_objects_example:
+""".. _create_parametric_geometric_objects_example:
 
 Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

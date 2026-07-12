@@ -1,5 +1,4 @@
-"""
-.. _chemistry_molecule_example:
+""".. _chemistry_molecule_example:
 
 Build a Ball-and-Stick Molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _create_text_3d_example:
+""".. _create_text_3d_example:
 
 Create 3D Text
 ~~~~~~~~~~~~~~

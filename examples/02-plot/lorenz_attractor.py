@@ -1,5 +1,4 @@
-"""
-.. _lorenz_attractor_example:
+""".. _lorenz_attractor_example:
 
 Plot a Lorenz Attractor
 ~~~~~~~~~~~~~~~~~~~~~~~

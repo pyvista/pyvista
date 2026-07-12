@@ -1,5 +1,4 @@
-"""
-.. _openfoam_tubes_example:
+""".. _openfoam_tubes_example:
 
 Plot CFD Data
 -------------

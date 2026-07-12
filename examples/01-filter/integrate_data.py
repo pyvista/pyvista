@@ -1,5 +1,4 @@
-"""
-.. _integrate_data_example:
+""".. _integrate_data_example:
 
 Integrate Data
 ~~~~~~~~~~~~~~

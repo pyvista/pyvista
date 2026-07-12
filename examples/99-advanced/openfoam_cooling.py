@@ -1,5 +1,4 @@
-"""
-.. _openfoam_cooling_example:
+""".. _openfoam_cooling_example:
 
 Electronics Cooling CFD
 -----------------------

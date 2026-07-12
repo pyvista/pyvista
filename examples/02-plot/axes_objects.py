@@ -1,5 +1,4 @@
-"""
-.. _axes_objects_example:
+""".. _axes_objects_example:
 
 Axes Objects
 ~~~~~~~~~~~~

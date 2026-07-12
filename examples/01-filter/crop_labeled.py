@@ -1,5 +1,4 @@
-"""
-.. _crop_labeled_example:
+""".. _crop_labeled_example:
 
 Crop Labeled ImageData
 ~~~~~~~~~~~~~~~~~~~~~~

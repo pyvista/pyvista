@@ -1,5 +1,4 @@
-"""
-.. _customize_trame_toolbar_example:
+""".. _customize_trame_toolbar_example:
 
 Customize Trame toolbar
 ~~~~~~~~~~~~~~~~~~~~~~~~

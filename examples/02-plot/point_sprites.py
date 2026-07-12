@@ -1,5 +1,4 @@
-"""
-.. _point_sprites_example:
+""".. _point_sprites_example:
 
 Point Sprite Shapes
 ~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _create_platonic_solids_example:
+""".. _create_platonic_solids_example:
 
 Platonic Solids
 ~~~~~~~~~~~~~~~

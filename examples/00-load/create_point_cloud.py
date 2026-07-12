@@ -1,5 +1,4 @@
-"""
-.. _create_point_cloud_example:
+""".. _create_point_cloud_example:
 
 Create Point Cloud
 ~~~~~~~~~~~~~~~~~~

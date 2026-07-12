@@ -1,5 +1,4 @@
-"""
-.. _magnetic_fields_example:
+""".. _magnetic_fields_example:
 
 Plot a Magnetic Field
 ---------------------

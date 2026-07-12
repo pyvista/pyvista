@@ -1,5 +1,4 @@
-"""
-.. _topo_map_example:
+""".. _topo_map_example:
 
 Topographic Map
 ~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _fea_hertzian_contact_pressure_example:
+""".. _fea_hertzian_contact_pressure_example:
 
 Visualize Hertzian Contact Stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

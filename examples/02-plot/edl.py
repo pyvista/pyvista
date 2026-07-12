@@ -1,5 +1,4 @@
-"""
-.. _edl_example:
+""".. _edl_example:
 
 Eye Dome Lighting
 ~~~~~~~~~~~~~~~~~
