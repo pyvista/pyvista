@@ -1,4 +1,5 @@
-""".. _linear_cells_example:
+"""
+.. _linear_cells_example:
 
 Linear Cells
 ~~~~~~~~~~~~

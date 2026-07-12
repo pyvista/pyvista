@@ -1,4 +1,5 @@
-""".. _icp_registration_example:
+"""
+.. _icp_registration_example:
 
 Register a Surface with ICP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

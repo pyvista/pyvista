@@ -1,4 +1,5 @@
-""".. _interpolate_sample_example:
+"""
+.. _interpolate_sample_example:
 
 Compare interpolation/sampling methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

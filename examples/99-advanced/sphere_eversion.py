@@ -1,4 +1,5 @@
-""".. _sphere_eversion_example:
+"""
+.. _sphere_eversion_example:
 
 Turning the sphere inside out
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,7 +53,8 @@ def sphere_to_cylinder(theta, phi):
 
 
 def cylinder_to_wormhole(h, phi, t, p, q):  # noqa: PLR0917
-    """Map from a cylinder to an open wormhole using Eq. (4).
+    """
+    Map from a cylinder to an open wormhole using Eq. (4).
 
     Input h goes from -infinity to infinity, phi goes from -phi to phi.
     Output is an (x, y, z) point embedded in 3d space.
@@ -68,7 +70,8 @@ def cylinder_to_wormhole(h, phi, t, p, q):  # noqa: PLR0917
 
 
 def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
-    """Close the wormhole using Eqs. (7)-(8).
+    """
+    Close the wormhole using Eqs. (7)-(8).
 
     Input is an (x0, y0, z0) point embedded in 3d space.
     Output is an (x2, y2, z2) == (x'', y'', z'') point embedded in 3d space.
@@ -105,7 +108,8 @@ def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
 
 
 def unfold_sphere(theta, phi, t, q, eta, lamda):  # noqa: PLR0917
-    """Unfold the sphere using Eqs. (12), (15), (10).
+    """
+    Unfold the sphere using Eqs. (12), (15), (10).
 
     Input is a (theta, phi) point in spherical coordinates.
     Output is an (x, y, z) point embedded in 3d space.

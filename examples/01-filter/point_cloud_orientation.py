@@ -1,4 +1,5 @@
-""".. _point_cloud_orientation_example:
+"""
+.. _point_cloud_orientation_example:
 
 Analyze the Orientation of a Point Cloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

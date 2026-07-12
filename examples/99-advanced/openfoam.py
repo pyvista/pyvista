@@ -1,4 +1,5 @@
-""".. _openfoam_example:
+"""
+.. _openfoam_example:
 
 Plot OpenFOAM data
 ~~~~~~~~~~~~~~~~~~

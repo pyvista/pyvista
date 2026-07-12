@@ -1,4 +1,5 @@
-""".. _anatomical_groups_example:
+"""
+.. _anatomical_groups_example:
 
 Visualize Anatomical Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

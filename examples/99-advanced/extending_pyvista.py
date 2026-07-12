@@ -1,4 +1,5 @@
-""".. _extending_pyvista_example:
+"""
+.. _extending_pyvista_example:
 
 Extending PyVista
 ~~~~~~~~~~~~~~~~~

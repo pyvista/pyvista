@@ -1,4 +1,5 @@
-""".. _clip_closed_surface_example:
+"""
+.. _clip_closed_surface_example:
 
 Clip and Cap a Closed Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

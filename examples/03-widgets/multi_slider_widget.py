@@ -1,4 +1,5 @@
-""".. _multi_slider_widget_example:
+"""
+.. _multi_slider_widget_example:
 
 Multiple Slider Widgets
 ~~~~~~~~~~~~~~~~~~~~~~~

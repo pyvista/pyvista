@@ -1,4 +1,5 @@
-""".. _create_polydata_strips_example:
+"""
+.. _create_polydata_strips_example:
 
 Triangle Strips
 ~~~~~~~~~~~~~~~

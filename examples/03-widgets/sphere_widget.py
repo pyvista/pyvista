@@ -1,4 +1,5 @@
-""".. _sphere_widget_example:
+"""
+.. _sphere_widget_example:
 
 Sphere Widget
 ~~~~~~~~~~~~~

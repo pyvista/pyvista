@@ -1,4 +1,5 @@
-""".. _plotting_algorithms_example:
+"""
+.. _plotting_algorithms_example:
 
 Plotting with VTK Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

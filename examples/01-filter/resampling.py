@@ -1,4 +1,5 @@
-""".. _resampling_example:
+"""
+.. _resampling_example:
 
 Detailed Resampling
 ~~~~~~~~~~~~~~~~~~~

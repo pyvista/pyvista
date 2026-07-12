@@ -1,4 +1,5 @@
-""".. _read_image_example:
+"""
+.. _read_image_example:
 
 Read Image Files
 ~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _silhouette_example:
+"""
+.. _silhouette_example:
 
 Silhouette Highlight
 ~~~~~~~~~~~~~~~~~~~~

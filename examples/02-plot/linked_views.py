@@ -1,4 +1,5 @@
-""".. _linked_views_example:
+"""
+.. _linked_views_example:
 
 Linked Views in Subplots
 ~~~~~~~~~~~~~~~~~~~~~~~~

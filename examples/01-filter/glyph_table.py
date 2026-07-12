@@ -1,4 +1,5 @@
-""".. _glyph_table_example:
+"""
+.. _glyph_table_example:
 
 Table of Glyphs
 ~~~~~~~~~~~~~~~

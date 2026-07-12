@@ -1,4 +1,5 @@
-""".. _maximum_intensity_projection_example:
+"""
+.. _maximum_intensity_projection_example:
 
 Maximum Intensity Projection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

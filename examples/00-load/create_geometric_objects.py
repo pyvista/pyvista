@@ -1,4 +1,5 @@
-""".. _create_geometric_objects_example:
+"""
+.. _create_geometric_objects_example:
 
 Geometric Objects
 ~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _point_cloud_distance_example:
+"""
+.. _point_cloud_distance_example:
 
 Measure Distance Between Point Clouds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

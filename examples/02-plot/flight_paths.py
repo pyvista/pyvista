@@ -1,4 +1,5 @@
-""".. _flight_paths_example:
+"""
+.. _flight_paths_example:
 
 Plot Curved Flight Paths on a Globe
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

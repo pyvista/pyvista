@@ -1,4 +1,5 @@
-""".. _ghost_cells_example:
+"""
+.. _ghost_cells_example:
 
 Hide Cells with Ghosting
 ~~~~~~~~~~~~~~~~~~~~~~~~

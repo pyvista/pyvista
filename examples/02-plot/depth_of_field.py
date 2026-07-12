@@ -1,4 +1,5 @@
-""".. _depth_of_field_example:
+"""
+.. _depth_of_field_example:
 
 Depth of Field Plotting
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _streamlines_example:
+"""
+.. _streamlines_example:
 
 Streamlines
 ~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _vertices_example:
+"""
+.. _vertices_example:
 
 Visible Vertices
 ~~~~~~~~~~~~~~~~

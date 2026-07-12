@@ -1,4 +1,5 @@
-""".. _load_gltf_example:
+"""
+.. _load_gltf_example:
 
 Working with glTF Files
 ~~~~~~~~~~~~~~~~~~~~~~~

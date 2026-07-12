@@ -1,4 +1,5 @@
-""".. _opacity_example:
+"""
+.. _opacity_example:
 
 Plot with Opacity
 ~~~~~~~~~~~~~~~~~

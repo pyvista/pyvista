@@ -1,4 +1,5 @@
-""".. _slider_bar_widget_example:
+"""
+.. _slider_bar_widget_example:
 
 Slider Bar Widget
 ~~~~~~~~~~~~~~~~~

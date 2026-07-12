@@ -1,4 +1,5 @@
-""".. _farthest_point_sampling_example:
+"""
+.. _farthest_point_sampling_example:
 
 Farthest Point Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~

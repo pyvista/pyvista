@@ -1,4 +1,5 @@
-""".. _fill_holes_example:
+"""
+.. _fill_holes_example:
 
 Repair a Surface with fill_holes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

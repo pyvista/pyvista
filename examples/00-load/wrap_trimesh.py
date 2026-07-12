@@ -1,4 +1,5 @@
-""".. _wrap_trimesh_example:
+"""
+.. _wrap_trimesh_example:
 
 Wrapping Other Objects
 ~~~~~~~~~~~~~~~~~~~~~~

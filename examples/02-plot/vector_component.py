@@ -1,4 +1,5 @@
-""".. _vector_component_example:
+"""
+.. _vector_component_example:
 
 Plot Vector Component
 ~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _load_vrml_example:
+"""
+.. _load_vrml_example:
 
 Working with VRML Files
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _point_labels_example:
+"""
+.. _point_labels_example:
 
 Label Points
 ~~~~~~~~~~~~

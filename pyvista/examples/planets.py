@@ -73,7 +73,7 @@ def load_planet(
             Example plot of the solar system.
 
     """
-    return _dataset_planet.load(
+    return _dataset_planet.load(  # type: ignore[return-value]
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
 

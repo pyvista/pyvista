@@ -1,4 +1,5 @@
-""".. _pump_bracket_example:
+"""
+.. _pump_bracket_example:
 
 Visualize Modal Analysis of a Pump Bracket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

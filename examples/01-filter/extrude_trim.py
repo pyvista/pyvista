@@ -1,4 +1,5 @@
-""".. _extrude_trim_example:
+"""
+.. _extrude_trim_example:
 
 Extrude Trim
 ~~~~~~~~~~~~

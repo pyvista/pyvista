@@ -1,4 +1,5 @@
-""".. _point_clouds_example:
+"""
+.. _point_clouds_example:
 
 Plotting Point Clouds
 ~~~~~~~~~~~~~~~~~~~~~
