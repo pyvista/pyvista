@@ -15,6 +15,7 @@ import io
 from itertools import starmap
 import os
 from pathlib import Path
+import pprint
 import re
 import textwrap
 from typing import TYPE_CHECKING
@@ -2820,6 +2821,11 @@ class DatasetCardFetcher:
                 dataset_loader = item
                 # Store module as a dynamic property for access later
                 dataset_loader._module = module
+                # Store function as a dynamic property for access later
+                try:
+                    dataset_loader._function = getattr(module, f'download_{dataset_name}')
+                except AttributeError:
+                    dataset_loader._function = getattr(module, f'load_{dataset_name}')
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
@@ -3609,6 +3615,25 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
 
     # Generate rst for all carousels
     [carousel.generate() for carousel in carousels]
+
+    # Validate function annotations
+    type_mismatches: dict[str, str] = {}
+    for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
+        if card.loader._module != pv.examples.downloads:
+            continue
+        runtime_name = type(card.loader.dataset).__name__
+        expected_annotation = f'{runtime_name} | str'
+        function = card.loader._function
+        ann = inspect.signature(function).return_annotation
+        ann_name = ann if isinstance(ann, str) else ann.__name__
+        if expected_annotation != ann_name:
+            type_mismatches[name] = (
+                f'{function.__name__!r} annotated type {ann_name!r} '
+                f'should be {expected_annotation!r}'
+            )
+    if type_mismatches:
+        msg = f'Type mismatches:\n{pprint.pformat(sorted(type_mismatches.values()), width=150)}'
+        raise RuntimeError(msg)
 
     # Clear loaded datasets from memory
     DatasetCardFetcher.clear_datasets()
