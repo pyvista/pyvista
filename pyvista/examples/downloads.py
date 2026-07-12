@@ -2261,15 +2261,9 @@ _dataset_rectilinear_grid = _SingleFileDownloadableDatasetLoader('RectilinearGri
 
 
 @overload
-def download_gourds(
-    zoom: bool,  # noqa: FBT001
-    load: Literal[True],
-) -> ImageData: ...
+def download_gourds(zoom: bool, load: Literal[True]) -> ImageData: ...  # noqa: FBT001
 @overload
-def download_gourds(
-    zoom: bool,  # noqa: FBT001
-    load: Literal[False],
-) -> str: ...
+def download_gourds(zoom: bool, load: Literal[False]) -> str: ...  # noqa: FBT001
 @_deprecate_positional_args
 def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
     """Download gourds dataset.
@@ -2319,15 +2313,9 @@ __gourds2 = _SingleFileDownloadableDatasetLoader('Gourds2.jpg')
 
 
 @overload
-def download_gourds_texture(
-    zoom: bool,  # noqa: FBT001
-    load: Literal[True],
-) -> Texture: ...
+def download_gourds_texture(zoom: bool, load: Literal[True]) -> Texture: ...  # noqa: FBT001
 @overload
-def download_gourds_texture(
-    zoom: bool,  # noqa: FBT001
-    load: Literal[False],
-) -> str: ...
+def download_gourds_texture(zoom: bool, load: Literal[False]) -> str: ...  # noqa: FBT001
 @_deprecate_positional_args
 def download_gourds_texture(zoom: bool = False, load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
     """Download gourds texture.
@@ -8604,17 +8592,9 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_whole_body_ct_male(
-    load: Literal[True],
-    *,
-    high_resolution: bool,
-) -> MultiBlock: ...
+def download_whole_body_ct_male(load: Literal[True], *, high_resolution: bool) -> MultiBlock: ...
 @overload
-def download_whole_body_ct_male(
-    load: Literal[False],
-    *,
-    high_resolution: bool,
-) -> str: ...
+def download_whole_body_ct_male(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_whole_body_ct_male(
     load: bool = True,  # noqa: FBT001, FBT002
@@ -8867,17 +8847,9 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_whole_body_ct_female(
-    load: Literal[True],
-    *,
-    high_resolution: bool,
-) -> MultiBlock: ...
+def download_whole_body_ct_female(load: Literal[True], *, high_resolution: bool) -> MultiBlock: ...
 @overload
-def download_whole_body_ct_female(
-    load: Literal[False],
-    *,
-    high_resolution: bool,
-) -> str: ...
+def download_whole_body_ct_female(load: Literal[False], *, high_resolution: bool) -> str: ...
 @_deprecate_positional_args
 def download_whole_body_ct_female(
     load: bool = True,  # noqa: FBT001, FBT002
@@ -9684,6 +9656,10 @@ def download_yinyang(*, load: bool = True) -> ImageData | str:
 _dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
 
 
+@overload
+def download_warping_spheres(*, load: Literal[True] = True) -> PartitionedDataSet: ...
+@overload
+def download_warping_spheres(*, load: Literal[False]) -> str: ...
 def download_warping_spheres(*, load: bool = True) -> PartitionedDataSet | str:
     """Download warping spheres dataset.
 
