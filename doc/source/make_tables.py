@@ -3619,11 +3619,13 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
     # Validate function annotations
     type_mismatches: dict[str, str] = {}
     for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-        if card.loader._module != pv.examples.downloads:
+        if card.loader._module not in [pv.examples.downloads, pv.examples.examples]:
             continue
         runtime_name = type(card.loader.dataset).__name__
-        expected_annotation = f'{runtime_name} | str'
         function = card.loader._function
+        expected_annotation = runtime_name
+        if function.__name__.startswith('download'):
+            expected_annotation += ' | str'
         ann = inspect.signature(function).return_annotation
         ann_name = ann if isinstance(ann, str) else ann.__name__
         if expected_annotation != ann_name:
