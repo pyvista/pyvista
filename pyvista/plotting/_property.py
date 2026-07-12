@@ -1270,7 +1270,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         if str(self.interpolation) == 'Physically based rendering':
             cubemap = examples.download_sky_box_cube_map()
-            pl.set_environment_texture(cubemap)
+            pl.set_environment_texture(cubemap)  # type: ignore[arg-type]
 
         pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
