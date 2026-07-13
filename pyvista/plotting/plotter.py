@@ -8341,9 +8341,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     else:
                         self.iren.start()  # type: ignore[union-attr]
 
-                if pv.vtk_version_info < (9, 2, 3):
-                    self.iren.initialize()  # type: ignore[union-attr]
-
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
