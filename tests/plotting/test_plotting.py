@@ -1344,15 +1344,7 @@ def test_enable_picking_gc():
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_left_button_down():
     pl = pv.Plotter()
-
-    attr = 'GetRenderFramebuffer'
-    if hasattr(renwin := pl.render_window, attr):
-        if not getattr(renwin, attr)().GetFBOIndex():
-            # This only fails for VTK<9.2.3
-            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
-                pl.left_button_down(None, None)
-    else:
-        pl.left_button_down(None, None)
+    pl.left_button_down(None, None)
     pl.close()
 
 
