@@ -1344,7 +1344,8 @@ def test_enable_picking_gc():
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_left_button_down():
     pl = pv.Plotter()
-    pl.left_button_down(None, None)
+    with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
+        pl.left_button_down(None, None)
     pl.close()
 
 
