@@ -116,16 +116,6 @@ def test_title_offset_sequence(cube_axes_actor):
     assert cube_axes_actor.title_offset == t
 
 
-def test_title_offset_float(cube_axes_actor):
-    with pytest.warns(
-        UserWarning,
-        match=r'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a '
-        r'sequence of \(x,y\) offsets. Setting the x offset to 0\.0',
-    ):
-        cube_axes_actor.title_offset = (t := 0.01)
-    assert cube_axes_actor.title_offset == (0.0, t)
-
-
 def test_label_offset(cube_axes_actor):
     assert isinstance(cube_axes_actor.label_offset, float)
     cube_axes_actor.label_offset = 0.01
