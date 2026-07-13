@@ -2121,14 +2121,6 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
 
     _vtk_class_name = 'vtkNek5000Reader'
 
-    def __init__(self, path):
-        # nek5000 reader requires vtk >= 9.3
-        if pv.vtk_version_info < (9, 3):
-            msg = 'Nek5000Reader is only available for vtk>=9.3'
-            raise pv.VTKVersionError(msg)
-
-        super().__init__(path)
-
     def _set_defaults_post(self) -> None:
         self.set_active_time_point(0)
 

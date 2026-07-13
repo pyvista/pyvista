@@ -110,32 +110,12 @@ def test_axis_minor_tick_visibility(cube_axes_actor):
     assert cube_axes_actor.z_axis_minor_tick_visibility is False
 
 
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 3, 0),
-    reason='title offset is a tuple of floats from vtk >= 9.3',
-)
-def test_title_offset(cube_axes_actor):
-    assert isinstance(cube_axes_actor.title_offset, float)
-    cube_axes_actor.title_offset = 0.01
-    assert cube_axes_actor.title_offset == 0.01
-
-    with pytest.warns(
-        UserWarning,
-        match=r'Setting title_offset with a sequence is only supported from vtk >= 9\.3. '
-        rf'Considering only the second value \(ie\. y-offset\) of {(y := 0.02)}',
-    ):
-        cube_axes_actor.title_offset = [0.01, y]
-    assert cube_axes_actor.title_offset == y
-
-
-@pytest.mark.needs_vtk_version(9, 3)
 def test_title_offset_sequence(cube_axes_actor):
     assert isinstance(cube_axes_actor.title_offset, tuple)
     cube_axes_actor.title_offset = (t := (0.01, 0.02))
     assert cube_axes_actor.title_offset == t
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_title_offset_float(cube_axes_actor):
     with pytest.warns(
         UserWarning,

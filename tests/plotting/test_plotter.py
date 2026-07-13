@@ -866,7 +866,6 @@ def test_legend_font(sphere):
     assert legend.GetEntryTextProperty().GetFontFamily() == _vtk.VTK_TIMES
 
 
-@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter()
