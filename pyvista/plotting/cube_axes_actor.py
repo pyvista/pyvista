@@ -10,7 +10,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
@@ -332,17 +331,8 @@ class CubeAxesActor(
         return self.GetTitleOffset()
 
     @title_offset.setter
-    def title_offset(self, offset: float | Sequence[float]):
-        if isinstance(offset, float):
-            msg = (
-                f'Setting title_offset with a float is deprecated from vtk >= 9.3. '
-                f'Accepts now a sequence of (x,y) offsets. '
-                f'Setting the x offset to {(x := 0.0)}'
-            )
-            warn_external(msg, UserWarning)
-            self.SetTitleOffset([x, offset])
-        else:
-            self.SetTitleOffset(offset)
+    def title_offset(self, offset: Sequence[float]):
+        self.SetTitleOffset(list(offset))
 
     @property
     def camera(self) -> pv.Camera:  # numpydoc ignore=RT01

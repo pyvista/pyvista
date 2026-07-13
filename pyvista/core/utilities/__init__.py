@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
-
 from .accessor_registry import AccessorRegistration as AccessorRegistration
 from .accessor_registry import DataSetAccessor as DataSetAccessor
 from .accessor_registry import register_dataset_accessor as register_dataset_accessor
@@ -28,6 +26,7 @@ from .arrays import set_default_active_vectors as set_default_active_vectors
 from .arrays import vtk_bit_array_to_char as vtk_bit_array_to_char
 from .arrays import vtk_id_list_to_array as vtk_id_list_to_array
 from .arrays import vtkmatrix_from_array as vtkmatrix_from_array
+from .cell_quality import cell_quality_info as cell_quality_info
 from .cells import create_mixed_cells as create_mixed_cells
 from .cells import get_mixed_cells as get_mixed_cells
 from .cells import ncells_from_cells as ncells_from_cells
@@ -109,26 +108,17 @@ from .geometric_sources import SphereSource as SphereSource
 from .geometric_sources import SuperquadricSource as SuperquadricSource
 from .geometric_sources import Text3DSource as Text3DSource
 from .geometric_sources import translate as translate
+from .helpers import axis_rotation as axis_rotation
+from .helpers import generate_plane as generate_plane
+from .helpers import is_inside_bounds as is_inside_bounds
+from .helpers import is_pyvista_dataset as is_pyvista_dataset
+from .helpers import wrap as wrap
 from .image_sources import ImageEllipsoidSource as ImageEllipsoidSource
 from .image_sources import ImageGaussianSource as ImageGaussianSource
 from .image_sources import ImageGridSource as ImageGridSource
 from .image_sources import ImageMandelbrotSource as ImageMandelbrotSource
 from .image_sources import ImageNoiseSource as ImageNoiseSource
 from .image_sources import ImageSinusoidSource as ImageSinusoidSource
-from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
-from .reader_registry import has_scheme as has_scheme
-from .reader_registry import register_reader as register_reader
-from .writer_registry import register_writer as register_writer
-
-with contextlib.suppress(ImportError):
-    from .geometric_sources import CapsuleSource as CapsuleSource
-
-from .cell_quality import cell_quality_info as cell_quality_info
-from .helpers import axis_rotation as axis_rotation
-from .helpers import generate_plane as generate_plane
-from .helpers import is_inside_bounds as is_inside_bounds
-from .helpers import is_pyvista_dataset as is_pyvista_dataset
-from .helpers import wrap as wrap
 from .misc import AnnotatedIntEnum as AnnotatedIntEnum
 from .misc import abstract_class as abstract_class
 from .misc import assert_empty_kwargs as assert_empty_kwargs
@@ -247,6 +237,9 @@ from .reader import XMLRectilinearGridReader as XMLRectilinearGridReader
 from .reader import XMLStructuredGridReader as XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader as XMLUnstructuredGridReader
 from .reader import get_reader as get_reader
+from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from .reader_registry import has_scheme as has_scheme
+from .reader_registry import register_reader as register_reader
 from .state_manager import allow_new_attributes as allow_new_attributes
 from .state_manager import vtk_snake_case as vtk_snake_case
 from .state_manager import vtk_verbosity as vtk_verbosity
@@ -277,3 +270,4 @@ from .writer import XMLPolyDataWriter as XMLPolyDataWriter
 from .writer import XMLRectilinearGridWriter as XMLRectilinearGridWriter
 from .writer import XMLStructuredGridWriter as XMLStructuredGridWriter
 from .writer import XMLUnstructuredGridWriter as XMLUnstructuredGridWriter
+from .writer_registry import register_writer as register_writer
