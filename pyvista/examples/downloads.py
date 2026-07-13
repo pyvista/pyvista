@@ -65,7 +65,7 @@ _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
-_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/mattfalcone1997/vtk-data/tree/master/Data'
 
 
 def _warn_invalid_dir_not_used(path, env_var):
@@ -2706,6 +2706,40 @@ def download_mug(load=True):  # noqa: FBT002
 
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
+@_deprecate_positional_args
+def download_can(load=True):
+    """Download can dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_can()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Can Dataset <mug_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_can, load=load)
+
+def _can_download():
+    return [_DownloadableFile(f'can.e.4.{i}') for i in range(4)]
+
+
+_dataset_can = _MultiFileDownloadableDatasetLoader(_can_download)
 
 @_deprecate_positional_args
 def download_oblique_cone(load=True):  # noqa: FBT002

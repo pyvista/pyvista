@@ -3861,10 +3861,10 @@ class PExodusIIReader(ExodusIIReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_heated_plate(load=False)
+    >>> filename = examples.download_can(load=False)
     >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()['Element Blocks']
-    >>> mesh.plot(scalars='temp')
+    >>> mesh = reader.read()
+    >>> mesh.plot()
 
     """
 
