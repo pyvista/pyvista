@@ -3621,7 +3621,6 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
         if card.loader._module not in [
             pv.examples.downloads,
             pv.examples.examples,
-            pv.examples.planets,
         ]:
             continue
         runtime_name = type(card.loader.dataset).__name__
