@@ -4307,6 +4307,95 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
+    def convex_hull(
+        self: DataSet | MultiBlock, *, dimensionality: Literal[1, 2, 3] = 3, progress_bar=False
+    ) -> PolyData:
+        """Compute the convex hull from this mesh's points.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        dimensionality : int | 'auto', optional
+            The dimensionality of the hull.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Examples
+        --------
+        Compute the convex hull of a 3D mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cow_head()
+        >>> hull = mesh.convex_hull()
+
+        Plot the hull with the original input.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(hull, opacity=0.5, show_edges=True)
+        >>> cpos = pv.CameraPosition(
+        ...     position=(9.159, 1.892, -4.015),
+        ...     focal_point=(4.500, 1.731, -0.1015),
+        ...     viewup=(0.08577, 0.9861, 0.1426),
+        ... )
+        >>> pl.camera_position = cpos
+        >>> pl.show()
+
+        Compute the convex hull of two circle meshes comprising a :class:`~pyvista.MultiBlock`.
+
+        >>> circle1 = pv.Circle(radius=0.5)
+        >>> circle2 = pv.Circle(radius=0.25).translate((1.0, 0.0, 0.0))
+        >>> mesh = pv.MultiBlock([circle1, circle2])
+        >>> hull = mesh.convex_hull(dimensionality=2)
+
+        Plot the hull with the original input.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(hull, opacity=0.5, show_edges=True)
+        >>> pl.view_xy()
+        >>> pl.show()
+
+        """
+        if isinstance(self, pv.MultiBlock):
+            points = np.vstack(
+                [
+                    block.points
+                    for block in self.recursive_iterator(skip_empty=True, skip_none=True)
+                ]
+            )
+            alg_input = pv.PointSet(points)
+        else:
+            alg_input = self
+
+        if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
+            alg = _vtk.vtkConvexHull()
+            alg.SetInputDataObject(alg_input)
+            alg.SetDimension(dimensionality)
+            _update_alg(alg, progress_bar=progress_bar)
+            output = pv.wrap(alg.GetOutput())
+        else:
+            if dimensionality != 3:
+                msg = (
+                    f'Only 3D convex hulls are supported. '
+                    f'Upgrade to vtk>=9.7 to use `dimensionality={dimensionality}`'
+                )
+                raise VTKVersionError(msg)
+            output = alg_input.delaunay_3d(progress_bar=progress_bar).extract_surface(
+                algorithm='geometry', progress_bar=progress_bar
+            )
+        output.point_data.clear()
+        output.cell_data.clear()
+        return output
+
     @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,

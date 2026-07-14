@@ -286,6 +286,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkConnectivityFilter',
         'vtkContourFilter',
         'vtkConvertToMultiBlockDataSet',
+        'vtkConvexHull',
         'vtkCutter',
         'vtkDecimatePolylineFilter',
         'vtkDecimatePro',
