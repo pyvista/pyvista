@@ -95,9 +95,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
-skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
-    9, 3, reason='Functions not implemented before 9.3.X'
-)
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
@@ -1347,14 +1344,7 @@ def test_enable_picking_gc():
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_left_button_down():
     pl = pv.Plotter()
-
-    attr = 'GetRenderFramebuffer'
-    if hasattr(renwin := pl.render_window, attr):
-        if not getattr(renwin, attr)().GetFBOIndex():
-            # This only fails for VTK<9.2.3
-            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
-                pl.left_button_down(None, None)
-    else:
+    with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
         pl.left_button_down(None, None)
     pl.close()
 
@@ -4910,7 +4900,6 @@ def test_plot_texture_flip_y(texture):
 
 
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
-@pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
     """Test plotting directly from the Texture class."""
     verify_image_cache.high_variance_test = True
@@ -5184,7 +5173,6 @@ def test_show_bounds_n_labels(verify_image_cache):
     pl.show()
 
 
-@skip_lesser_9_3_X
 def test_radial_gradient_background():
     pl = pv.Plotter()
     pl.set_background('white', right='black')
@@ -5420,13 +5408,11 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     # Remove Spline from test case (if present).
     if 'Spline' in functions.keys():
         functions.pop('Spline')
-    # Add a separate test for vtk < 9.3
-    functions['Capsule_legacy'] = functions['Capsule']
+
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
         'Capsule',
-        'Capsule_legacy',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -5490,15 +5476,6 @@ def test_direction_objects(direction_obj_test_case):
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
 
-    # Test Capsule separately based on vtk version
-    if 'Capsule' in name:
-        legacy_vtk = pv.vtk_version_info < (9, 3)
-        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
-            pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing '
-                'with wrong version.',
-            )
-
     direction_param_name = None
 
     def _create_object(_direction=None):
@@ -5556,7 +5533,6 @@ def test_direction_objects(direction_obj_test_case):
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
     if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
@@ -5594,7 +5570,6 @@ def _show_edges():
     [(None, None), (None, 2), (2, 2)],
     ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
 )
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,  # noqa: F811
     select_inputs,
@@ -5674,7 +5649,6 @@ def test_contour_labels_boundary_style(
         'dist_5-scale_1',
     ],
 )
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
@@ -5713,7 +5687,6 @@ def test_contour_labels_smoothing_constraint(
 
 @pytest.mark.usefixtures('_show_edges')
 @pytest.mark.parametrize('smoothing', [True, False])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_compare_select_inputs_select_outputs(
     labeled_image,  # noqa: F811
     smoothing,
@@ -6260,7 +6233,6 @@ def mip_test_points():
     return cloud
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_test_points):
     verify_image_cache_wrapper.high_variance_test = True
     pl = pv.Plotter()
@@ -6280,7 +6252,6 @@ def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_tes
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_points):
     verify_image_cache_wrapper.high_variance_test = True
     pl = pv.Plotter()

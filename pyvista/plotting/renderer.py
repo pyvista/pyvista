@@ -3755,17 +3755,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = (
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.'
-            )
-            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
