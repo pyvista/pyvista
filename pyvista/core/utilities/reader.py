@@ -260,7 +260,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
-        return [CLASS_READERS, CLASS_READERS_NICE]
+        return [CLASS_READERS]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.
@@ -4377,6 +4377,7 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.e': ExodusIIReader,
+    '.e.N.p' : PExodusIIReader,
     '.ex2': ExodusIIReader,
     '.exo': ExodusIIReader,
     '.exii': ExodusIIReader,
@@ -4399,6 +4400,7 @@ CLASS_READERS = {
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
     '.mr': GESignaReader,
+    '.n.N.p' : PExodusIIReader,
     '.nek5000': Nek5000Reader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
@@ -4448,8 +4450,6 @@ CLASS_READERS = {
 # influence reader selection. Parallel Exodus uses ``.e.N.P`` and ``.n.N.P``,
 # where ``N`` is the number of partitions and ``P`` is the partition index.
 CLASS_READERS_PATTERNS = ((re.compile(r'\.(?:e|n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),)
-CLASS_READERS_NICE = {'.e.N.p' : PExodusIIReader,
-                      'n.N.p' : PExodusIIReader}
 
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     """Return the forward-reference name from a ``BaseReader[X]`` base.

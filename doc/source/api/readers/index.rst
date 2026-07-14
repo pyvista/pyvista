@@ -56,6 +56,7 @@ Reader Classes
     OpenFOAMReader
     ParticleReader
     PDBReader
+    PExodusIIReader
     PLYReader
     PNGReader
     PNMReader
