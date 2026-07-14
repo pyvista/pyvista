@@ -15,7 +15,6 @@ import io
 from itertools import starmap
 import os
 from pathlib import Path
-import pprint
 import re
 import textwrap
 from typing import TYPE_CHECKING
@@ -3619,7 +3618,11 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
     # Validate function annotations
     type_mismatches: dict[str, str] = {}
     for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-        if card.loader._module not in [pv.examples.downloads, pv.examples.examples]:
+        if card.loader._module not in [
+            pv.examples.downloads,
+            pv.examples.examples,
+            pv.examples.planets,
+        ]:
             continue
         runtime_name = type(card.loader.dataset).__name__
         function = card.loader._function
@@ -3634,7 +3637,8 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
                 f'should be {expected_annotation!r}'
             )
     if type_mismatches:
-        msg = f'Type mismatches:\n{pprint.pformat(sorted(type_mismatches.values()), width=150)}'
+        mismatches = '\n'.join(sorted(type_mismatches.values()))
+        msg = f'Type mismatches:\n{mismatches}'
         raise RuntimeError(msg)
 
     # Clear loaded datasets from memory
