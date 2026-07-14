@@ -17,6 +17,7 @@ from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import CLASS_READERS_PATTERNS
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
@@ -37,7 +38,7 @@ def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
 
 
 def test_reader_output_type_defined():
-    expected = set(CLASS_READERS.values())
+    expected = set(CLASS_READERS.values()) | {reader for _, reader in CLASS_READERS_PATTERNS}
     actual = set(_CLASS_READER_RETURN_TYPE.keys())
     assert actual == expected, 'Return type must be defined for every reader'
 
@@ -229,6 +230,33 @@ def test_get_reader_fail(tmp_path):
     match = '`pyvista.get_reader` does not support reading from directory:\n\t'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(str(tmp_path))
+
+
+@pytest.mark.parametrize(
+    'filename',
+    [
+        'mesh.e.4.0',
+        'mesh.n.12.11',
+        'mesh.E.4.0',
+        'mesh.N.12.11',
+    ],
+)
+def test_get_reader_pexodus_pattern(tmp_path, filename):
+    path = tmp_path / filename
+    path.touch()
+    reader = pv.get_reader(path)
+    assert isinstance(reader, pv.PExodusIIReader)
+
+
+@pytest.mark.parametrize(
+    ('force_ext', 'reader_type'),
+    [('.e', pv.ExodusIIReader), ('.e.4.0', pv.PExodusIIReader)],
+)
+def test_get_reader_pexodus_pattern_force_ext(tmp_path, force_ext, reader_type):
+    path = tmp_path / 'mesh.e.4.0'
+    path.touch()
+    reader = pv.get_reader(path, force_ext=force_ext)
+    assert isinstance(reader, reader_type)
 
 
 def test_reader_invalid_file():
@@ -1868,6 +1896,35 @@ def test_exodus_blocks():
 
     number_method = e_reader.face_sets._construct_result_method('GetNumberOf', 's')
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
+
+
+def test_parallel_exodus_reader():
+    reader = pv.get_reader(examples.download_can(load=False))
+    assert isinstance(reader, pv.PExodusIIReader)
+
+    element_block_names = ['Unnamed block ID: 1', 'Unnamed block ID: 2']
+    side_set_names = ['Unnamed set ID: 4']
+    point_array_names = ['ACCL', 'DISPL', 'VEL']
+
+    assert reader.element_blocks.names == element_block_names
+    assert reader.element_blocks.array_names == ['EQPS']
+    assert reader.side_sets.names == side_set_names
+    assert reader.side_sets.array_names == []
+
+    mesh = reader.read()
+    element_blocks = mesh['Element Blocks']
+    side_sets = mesh['Side Sets']
+
+    assert element_blocks.keys() == element_block_names
+    assert side_sets.keys() == side_set_names
+
+    for block in element_blocks:
+        assert block.point_data.keys() == point_array_names
+        assert block.cell_data.keys() == ['EQPS', 'ObjectId']
+
+    for side_set in side_sets:
+        assert side_set.point_data.keys() == point_array_names
+        assert side_set.cell_data.keys() == ['ObjectId']
 
 
 def test_exodus_reader_animate_mode_shapes():

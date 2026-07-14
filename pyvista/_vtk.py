@@ -484,6 +484,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     ),
     'vtkIOEnSight': ('vtkGenericEnSightReader',),
     'vtkIOExodus': ('vtkExodusIIReader',),
+    'vtkIOParallelExodus': ('vtkPExodusIIReader',),
     'vtkIOExport': (
         'vtkGLTFExporter',
         'vtkOBJExporter',
@@ -588,6 +589,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkXMLUnstructuredGridWriter',
     ),
     'vtkIOXdmf2': ('vtkXdmfReader',),
+    'vtkParallelCore': ('vtkDummyController',),
 }
 
 # Rendering modules for pyvista's plotting API
