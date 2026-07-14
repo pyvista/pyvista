@@ -225,6 +225,24 @@ See other examples and demos:
 .. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#user-content-testing
 
 
+Off-Screen Rendering
+~~~~~~~~~~~~~~~~~~~~
+
+Set ``PYVISTA_OFF_SCREEN=true`` before importing PyVista to make
+:class:`pyvista.Plotter` use off-screen rendering when its ``off_screen``
+argument is omitted. For a single instance, pass ``off_screen=True`` directly.
+
+``PYVISTA_OFF_SCREEN`` does not select VTK's OpenGL render window. On Linux and
+Windows with VTK 9.4 or later, ``VTK_DEFAULT_OPENGL_WINDOW`` can override VTK's
+runtime selection of a supported render window; see `VTK's OpenGL runtime
+settings <https://docs.vtk.org/en/latest/advanced/runtime_settings.html#opengl>`_.
+
+PyVista does not support ``PYVISTA_VIRTUAL_DISPLAY``. The
+:attr:`pyvista.global_theme.interactive
+<pyvista.plotting.themes.Theme.interactive>` setting controls whether applicable
+widgets are interactive by default; it does not enable off-screen rendering.
+
+
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
 Please head over to `pyvista/setup-headless-display-action`_ for details on
