@@ -3718,12 +3718,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # set interpolator type
         if interpolator_type in ['c', 'cell']:
             if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-                alg.SetCellLocatorToStaticCellLocator()
+                alg.SetCellLocatorToStaticCellLocator()  # type:ignore[attr-defined]
             else:
                 alg.SetInterpolatorTypeToCellLocator()
         elif pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
             # This is a point locator adaptor
-            alg.SetCellLocatorToJumpAndWalkCellLocator()
+            alg.SetCellLocatorToJumpAndWalkCellLocator()  # type:ignore[attr-defined]
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
@@ -3904,12 +3904,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # Set interpolator type
         if interpolator_type in ['c', 'cell']:
             if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-                alg.SetCellLocatorToModifiedBSPTree()
+                alg.SetCellLocatorToModifiedBSPTree()  # type:ignore[attr-defined]
             else:
                 alg.SetInterpolatorTypeToCellLocator()
         elif pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
             # This is a point locator adaptor
-            alg.SetCellLocatorToJumpAndWalkCellLocator()
+            alg.SetCellLocatorToJumpAndWalkCellLocator()  # type:ignore[attr-defined]
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
