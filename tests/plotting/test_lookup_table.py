@@ -251,7 +251,9 @@ def test_call(lut):
     assert lut.map_value(0.5) == lut.map_value(0.5)
 
 
-# Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
+# apply_opacity leaves a vtkTypeUInt8Array pinned by an exported buffer
+# (array <- managedbuffer <- memoryview) whose holder is not gc-visible, so it
+# cannot be collected and there is no reference cycle here for us to break.
 @pytest.mark.skip_check_gc
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()

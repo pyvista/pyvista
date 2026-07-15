@@ -43,7 +43,6 @@ from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
-from tests.conftest import NUMPY_VERSION_INFO
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 from tests.plotting.conftest import AlgorithmExecutionTracker
@@ -5857,18 +5856,7 @@ def oblique_cone():
     'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
-def test_bounding_box(oblique_cone, box_style, verify_image_cache, request):
-    if box_style in ('outline', 'frame') and NUMPY_VERSION_INFO < (2, 0):
-        # The oriented box axes come from an eigendecomposition that varies at
-        # ULP scale under old NumPy/BLAS; for the wireframe styles that shifts
-        # every edge enough to exceed the image threshold. Canonical
-        # principal-axes signs (the real fix) are deferred to a follow-up PR.
-        request.applymarker(
-            pytest.mark.xfail(
-                reason='oriented bounding-box axes vary under old NumPy/BLAS',
-                strict=False,
-            ),
-        )
+def test_bounding_box(oblique_cone, box_style, verify_image_cache):
     if box_style == 'frame':
         verify_image_cache.warning_value = 475
 

@@ -123,18 +123,20 @@ def check_gc(request):
         yield
         return
 
-    # Snapshots so that leftovers of earlier tests that legitimately skip
+    # A snapshot, so that leftovers of earlier tests that legitimately skip
     # this check are not blamed on this test. Matching vtkObjectBase by
     # isinstance rather than by class-name prefix also covers pyvista's own
     # vtk subclasses (PolyData, ...) and the pythonic override subclasses
     # VTK >= 9.6 instantiates, whose names lack the 'vtk' prefix.
-    gc.collect()
-    objs = gc.get_objects()  # scan the heap once, share across snapshots
-    request.node.stash[_check_gc_key] = (
-        Snapshot(pv.plotting.plotter.BasePlotter, objs=objs),
-        Snapshot(_vtk.vtkObjectBase, label='VTK', objs=objs),
+    #
+    # BasePlotter is not a vtkObjectBase, so both types are needed; matching
+    # them as a single tuple keeps this to one pass over the heap (which is
+    # walked once per test at setup and once at teardown). Snapshot() collects
+    # before it records ids, so there is no gc.collect() here.
+    request.node.stash[_check_gc_key] = Snapshot(
+        (pv.plotting.plotter.BasePlotter, _vtk.vtkObjectBase),
+        label='VTK/plotter',
     )
-    del objs
     yield
 
 
@@ -143,14 +145,13 @@ def pytest_runtest_teardown(item):
     """Ensure that all VTK objects created during a test are garbage-collected.
 
     A hookwrapper so the check runs after every fixture finalizer has run
-    (see ``check_gc``, which takes the snapshots this checks against).
+    (see ``check_gc``, which takes the snapshot this checks against).
     """
     yield
-    snaps = item.stash.get(_check_gc_key, None)
-    if snaps is None:
+    snapshot = item.stash.get(_check_gc_key, None)
+    if snapshot is None:
         return
     del item.stash[_check_gc_key]
-    snap_plotter, snap_vtk = snaps
 
     pv.close_all()
 
@@ -171,22 +172,15 @@ def pytest_runtest_teardown(item):
     gc_collect_once(request)
 
     def _assert_no_new():
-        objs = gc.get_objects()
+        # No plotter and no VTK object created during a test may survive it.
         try:
-            # No plotter created during a test may survive it ...
-            snap_plotter.assert_no_new(when, request=request, objs=objs)
-            # ... and neither may any VTK object created during the test.
-            snap_vtk.assert_no_new(when, request=request, objs=objs)
+            snapshot.assert_no_new(when, request=request)
         except AssertionError:
             # A stale VTK ghost is deferred bookkeeping, not a leak: flush
             # the ghost map and re-check before reporting a failure.
-            del objs
             _flush_vtk_ghosts()
             gc.collect()
-            objs = gc.get_objects()
-            snap_plotter.assert_no_new(when, request=request, objs=objs)
-            snap_vtk.assert_no_new(when, request=request, objs=objs)
-        del objs
+            snapshot.assert_no_new(when, request=request)
 
     if item.get_closest_marker('expect_check_gc_fail'):
         with pytest.raises(AssertionError, match='Found '):

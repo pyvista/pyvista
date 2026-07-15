@@ -54,7 +54,9 @@ def test_leak_pv() -> None:
     )
 
     assert result.returncode != 0
-    assert 'new VTK object' in result.stdout
+    # Matches the singular and the plural: how many objects the planted cycle
+    # keeps alive is a VTK implementation detail.
+    assert 'new VTK/plotter object' in result.stdout
 
 
 @pytest.mark.expect_check_gc_fail
