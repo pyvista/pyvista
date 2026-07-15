@@ -1609,7 +1609,6 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth()
@@ -1622,7 +1621,6 @@ def test_smooth(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth_taubin(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth_taubin()
@@ -3088,7 +3086,6 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
@@ -4491,7 +4488,6 @@ def frog_tissues_contour(frog_tissues_image):
     return frog_tissues_image.contour_labels(smoothing=False)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask(
         reference_volume=frog_tissues_image, progress_bar=True
@@ -4504,7 +4500,6 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     assert expected_voxels.n_cells == actual_voxels.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
@@ -4635,7 +4630,6 @@ def oriented_polydata(oriented_image):
     return oriented_poly
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds

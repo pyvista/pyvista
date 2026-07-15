@@ -136,7 +136,7 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
 
     # Parse installed deps from the freeze output.
     # Relies on the fact the the freeze command outputs lines in the
-    # form of `package==version` (eg. `vtk==9.2.2`)
+    # form of `package==version` (eg. `vtk==9.4.2`)
     installed = list(_get_freezed_requirements(out.out.splitlines()))
 
     # Check that the installed requirements match the constraints file ones

@@ -1786,14 +1786,12 @@ class PolyDataFilters(DataSetFilters):
         boundary_constraints: bool, default: False
             Use the legacy weighting by boundary_edge_length instead of by
             boundary_edge_length^2 for backwards compatibility.
-            It requires vtk>=9.3.0.
 
             .. versionadded:: 0.45.0
 
         boundary_weight: float, default: 1.0
             A floating point factor to weigh the boundary quadric constraints
             by: higher factors further constrain the boundary.
-            It requires vtk>=9.3.0.
 
             .. versionadded:: 0.45.0
 
@@ -1887,12 +1885,8 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            if boundary_constraints:
-                warn_external('`boundary_constraints` requires vtk >= 9.3.')
-        else:
-            alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
-            alg.SetBoundaryWeightFactor(boundary_weight)
+        alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
+        alg.SetBoundaryWeightFactor(boundary_weight)
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')

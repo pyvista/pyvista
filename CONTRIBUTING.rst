@@ -619,8 +619,8 @@ The top-level ``Makefile`` also wraps the most common invocations — see
 
             .. code-block:: bash
 
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.4.2 and numpy==2.0
 
             By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
             To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
@@ -703,8 +703,8 @@ such that:
 
             .. code-block:: bash
 
-                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
-                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
     .. tab-item:: make
         :sync: make
