@@ -1273,7 +1273,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(self)
-        _vtk.set_generate_faces(alg, generate_faces)
+        alg.SetGenerateFaces(generate_faces)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 

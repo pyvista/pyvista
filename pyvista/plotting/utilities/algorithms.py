@@ -775,7 +775,7 @@ def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT00
     """
     alg = _vtk.vtkOutlineFilter()
     set_algorithm_input(alg, inp)
-    _vtk.set_generate_faces(alg, generate_faces)
+    alg.SetGenerateFaces(generate_faces)
     return alg
 
 
