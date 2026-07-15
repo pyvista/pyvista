@@ -456,7 +456,6 @@ def test_pickle_invalid_format(sphere):
         pickle.dumps(sphere)
 
 
-@pytest.mark.needs_vtk_version((9, 3), reason='VTK < 9.3 has limited pickle support.')
 def test_pickle_deletes_cached_locators():
     poly = pv.Cone()
 
