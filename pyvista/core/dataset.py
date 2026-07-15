@@ -2318,8 +2318,7 @@ class DataSet(DataSetFilters, DataObject):
     ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
 
-        Line is defined from ``pointa`` to ``pointb``.  This
-        method requires vtk version >=9.2.0.
+        Line is defined from ``pointa`` to ``pointb``.
 
         Parameters
         ----------

@@ -4738,22 +4738,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
         extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
-        if pv.vtk_version_info >= (9, 3, 0):
-            # We set the arrays manually earlier
-            extract.SetPassThroughCellIds(False)
+        # We set the arrays manually earlier
+        extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract)
 
         # Make active scalars match input
         info = self.active_scalars_info
         subgrid.set_active_scalars(info.name, info.association)
-
-        if pv.vtk_version_info >= (9, 3, 0):
-            return subgrid
-
-        # Process output arrays
-        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
-            del data[name]
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -6109,9 +6101,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')

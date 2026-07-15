@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -11,7 +10,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
@@ -20,6 +18,8 @@ from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core import VectorLike
 
 
@@ -323,7 +323,7 @@ class CubeAxesActor(
     @property
     def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
-        if (9, 3, 0) <= pv.vtk_version_info < (9, 5, 0):
+        if pv.vtk_version_info < (9, 5, 0):
             offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
             self.GetTitleOffset(offx, offy)  # type: ignore[call-arg]
             return offx, offy  # type: ignore[return-value]
@@ -331,32 +331,8 @@ class CubeAxesActor(
         return self.GetTitleOffset()
 
     @title_offset.setter
-    def title_offset(self, offset: float | MutableSequence[float]):
-        vtk_geq_9_3 = pv.vtk_version_info >= (9, 3)
-
-        if vtk_geq_9_3:
-            if isinstance(offset, float):
-                msg = (
-                    f'Setting title_offset with a float is deprecated from vtk >= 9.3. '
-                    f'Accepts now a sequence of (x,y) offsets. '
-                    f'Setting the x offset to {(x := 0.0)}'
-                )
-                warn_external(msg, UserWarning)
-                self.SetTitleOffset([x, offset])
-            else:
-                self.SetTitleOffset(offset)
-            return
-
-        if isinstance(offset, MutableSequence):
-            msg = (
-                f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
-                f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
-            )
-            warn_external(msg, UserWarning)
-            self.SetTitleOffset(y)  # type: ignore[arg-type]
-            return
-
-        self.SetTitleOffset(offset)  # type: ignore[arg-type]
+    def title_offset(self, offset: Sequence[float]):
+        self.SetTitleOffset(list(offset))
 
     @property
     def camera(self) -> pv.Camera:  # numpydoc ignore=RT01

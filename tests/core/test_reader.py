@@ -859,18 +859,6 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 3),
-    reason='polyhedra decomposition was removed after 9.3',
-)
-def test_openfoam_decompose_polyhedra():
-    reader = get_cavity_reader()
-    reader.decompose_polyhedra = False
-    assert reader.decompose_polyhedra is False
-    reader.decompose_polyhedra = True
-    assert reader.decompose_polyhedra is True
-
-
 def test_openfoam_skip_zero_time():
     reader = get_cavity_reader()
 
@@ -1281,9 +1269,6 @@ def test_xmlpartitioneddatasetreader(tmpdir):
         assert new_partition.n_cells == partitions[i].n_cells
 
 
-@pytest.mark.needs_vtk_version(
-    9, 3, 0, reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.'
-)
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
     reader = pv.get_reader(filename)
@@ -1488,12 +1473,6 @@ def test_erdgcl_reader_properties():
 def test_nek5000_reader():
     # load nek5000 file
     filename = examples.download_nek5000(load=False)
-
-    # this class only available for vtk versions >= 9.3
-    if pv.vtk_version_info < (9, 3):
-        with pytest.raises(pv.VTKVersionError):
-            _ = pv.get_reader(filename)
-        return
 
     # test get_reader
     nek_reader = pv.get_reader(filename)

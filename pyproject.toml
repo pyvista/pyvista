@@ -28,7 +28,7 @@ dependencies = [
   'vtk!=9.4.0',
   'vtk!=9.4.1',
   'vtk<9.7.0',
-  'vtk>=9.2.2',
+  'vtk>=9.3.1',
 ]
 description = '3D visualization and mesh analysis for science and engineering.'
 dynamic = ['version']

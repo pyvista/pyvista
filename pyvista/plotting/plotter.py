@@ -3111,7 +3111,7 @@ class BasePlotter(_BoundsSizeMixin):
         )
         self.mapper = mapper
 
-        actor, _ = self.add_actor(mapper, render=False)
+        actor, _ = self.add_actor(mapper, render=False)  # type: ignore[arg-type]
         actor = cast('Actor', actor)
         actor.force_opaque = force_opaque
 
@@ -3983,7 +3983,7 @@ class BasePlotter(_BoundsSizeMixin):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
-        if edge_opacity is None and pv.vtk_version_info >= (9, 3):
+        if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
@@ -8340,9 +8340,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                                 )
                     else:
                         self.iren.start()  # type: ignore[union-attr]
-
-                if pv.vtk_version_info < (9, 2, 3):
-                    self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')

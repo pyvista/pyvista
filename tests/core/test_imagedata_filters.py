@@ -65,7 +65,6 @@ def test_contour_labeled_deprecated():
         pv.ImageData().contour_labeled()
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled(frog_tissues):
     # Extract surface for each label
     with pytest.warns(
@@ -79,7 +78,6 @@ def test_contour_labeled(frog_tissues):
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_smoothing(frog_tissues):
     # Extract smooth surface for each label
     with pytest.warns(
@@ -93,7 +91,6 @@ def test_contour_labeled_with_smoothing(frog_tissues):
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_reduced_labels_count(frog_tissues):
     # Extract surface for each label
     with pytest.warns(
@@ -107,7 +104,6 @@ def test_contour_labeled_with_reduced_labels_count(frog_tissues):
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
     # Extract surface for each label
     with pytest.warns(
@@ -120,7 +116,6 @@ def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_boundary_output_style(frog_tissues):
     # Extract surface for each label
     with pytest.warns(
@@ -133,7 +128,6 @@ def test_contour_labeled_with_boundary_output_style(frog_tissues):
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
     # Extract surface for each label
     with pytest.warns(
@@ -144,7 +138,6 @@ def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
             frog_tissues.contour_labeled(output_mesh_type='invalid')
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_output_style(frog_tissues):
     # Extract surface for each label
     with pytest.warns(
@@ -162,7 +155,6 @@ def test_contour_labeled_with_invalid_output_style(frog_tissues):
             frog_tissues.contour_labeled(output_style='invalid')
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_scalars(frog_tissues):
     # Create a new array with reduced number of labels
     frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
@@ -178,7 +170,6 @@ def test_contour_labeled_with_scalars(frog_tissues):
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_scalars(frog_tissues):
     # Nonexistent scalar key
     with pytest.warns(
@@ -243,7 +234,6 @@ def labeled_image():
 @pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_scalars_smoothing_output_mesh_type(
     labeled_image,
     smoothing,
@@ -296,7 +286,6 @@ def _remove_duplicate_points(polydata):
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
 @pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,
     select_inputs,
@@ -373,7 +362,6 @@ ALL_LABEL_IDS = {0, 2, 5}
 
 
 @pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 
@@ -382,7 +370,6 @@ def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value not in first_component
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
@@ -391,7 +378,6 @@ def test_contour_labels_pad_background(labeled_image):
 
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
@@ -400,7 +386,6 @@ def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_o
     assert poly[BOUNDARY_LABELS].ndim == expected_ndim
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
@@ -416,7 +401,6 @@ def test_contour_labels_cell_data(channels):
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         contours = channels.contour_labels('strict_external', orient_faces=False)
@@ -432,7 +416,6 @@ def test_contour_labels_strict_external(channels):
         channels.contour_labels('strict_external', select_outputs=[0])
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
@@ -443,14 +426,6 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 3, 0))
-def test_contour_labels_raises_vtkversionerror():
-    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
-    with pytest.raises(pv.VTKVersionError, match=match):
-        pv.ImageData().contour_labels()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0

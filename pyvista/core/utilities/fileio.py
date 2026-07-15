@@ -183,9 +183,6 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
         raise ValueError(msg)
-    if format_ == 'vtk' and pv.vtk_version_info < (9, 3):
-        msg = "'vtk' pickle format requires VTK >= 9.3"
-        raise ValueError(msg)
 
     pv.PICKLE_FORMAT = format_
 

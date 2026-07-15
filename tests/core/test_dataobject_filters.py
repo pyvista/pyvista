@@ -21,7 +21,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
-from pyvista import VTKVersionError
 from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
@@ -684,11 +683,7 @@ def test_sample():
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
-    if pv.vtk_version_info >= (9, 3):
-        sample_test(snap_to_closest_point=True)
-    else:
-        with pytest.raises(VTKVersionError, match='snap_to_closest_point'):
-            sample_test(snap_to_closest_point=True)
+    sample_test(snap_to_closest_point=True)
 
 
 def test_sample_composite():
