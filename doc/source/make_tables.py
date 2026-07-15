@@ -3586,6 +3586,41 @@ def _resolve_path(cls):
     return path
 
 
+def _validate_function_annotations(
+    dataset_cards: dict[str, DatasetCard],
+) -> None:
+    """Validate that download/load function return annotations match runtime types."""
+    type_mismatches: dict[str, str] = {}
+    for name, card in dataset_cards.items():
+        if card.loader._module not in [
+            pv.examples.downloads,
+            pv.examples.examples,
+            pv.examples.planets,
+        ]:
+            continue
+        runtime_name = type(card.loader.dataset).__name__
+        function = card.loader._function
+        params = inspect.signature(function).parameters
+
+        expected_annotation = runtime_name
+        if 'texture' in params:
+            expected_annotation = f'Texture | {expected_annotation}'
+        if 'load' in params:
+            expected_annotation += ' | str'
+
+        ann = inspect.signature(function).return_annotation
+        ann_name = ann if isinstance(ann, str) else ann.__name__
+        if expected_annotation != ann_name:
+            type_mismatches[name] = (
+                f'{function.__name__!r} annotated type is {ann_name!r}, '
+                f'expected {expected_annotation!r}'
+            )
+    if type_mismatches:
+        mismatches = '\n'.join(sorted(type_mismatches.values()))
+        msg = f'Type mismatches:\n{mismatches}'
+        raise RuntimeError(msg)
+
+
 def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
     # Check if all carousel RST files already exist - if so, skip the
     # expensive dataset download/load step on incremental builds
@@ -3616,29 +3651,7 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
     [carousel.generate() for carousel in carousels]
 
     # Validate function annotations
-    type_mismatches: dict[str, str] = {}
-    for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-        if card.loader._module not in [
-            pv.examples.downloads,
-            pv.examples.examples,
-        ]:
-            continue
-        runtime_name = type(card.loader.dataset).__name__
-        function = card.loader._function
-        expected_annotation = runtime_name
-        if function.__name__.startswith('download'):
-            expected_annotation += ' | str'
-        ann = inspect.signature(function).return_annotation
-        ann_name = ann if isinstance(ann, str) else ann.__name__
-        if expected_annotation != ann_name:
-            type_mismatches[name] = (
-                f'{function.__name__!r} annotated type {ann_name!r} '
-                f'should be {expected_annotation!r}'
-            )
-    if type_mismatches:
-        mismatches = '\n'.join(sorted(type_mismatches.values()))
-        msg = f'Type mismatches:\n{mismatches}'
-        raise RuntimeError(msg)
+    _validate_function_annotations(DatasetCardFetcher.DATASET_CARDS_OBJ)
 
     # Clear loaded datasets from memory
     DatasetCardFetcher.clear_datasets()
