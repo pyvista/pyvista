@@ -2706,6 +2706,7 @@ def download_mug(load=True):  # noqa: FBT002
 
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
+
 @_deprecate_positional_args
 def download_can(load=True):
     """Download can dataset.
@@ -2735,12 +2736,15 @@ def download_can(load=True):
     """
     return _download_dataset(_dataset_can, load=load)
 
+
 def _can_download():
     can = _SingleFileDownloadableDatasetLoader('ParallelExodus/can.e.4.0')
     partitions = [_DownloadableFile(f'ParallelExodus/can.e.4.{i}') for i in range(1, 4)]
     return can, *partitions
 
+
 _dataset_can = _MultiFileDownloadableDatasetLoader(_can_download)
+
 
 @_deprecate_positional_args
 def download_oblique_cone(load=True):  # noqa: FBT002

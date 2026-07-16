@@ -4446,6 +4446,7 @@ CLASS_READERS = {
 # where ``N`` is the number of partitions and ``P`` is the partition index.
 CLASS_READERS_PATTERNS = ((re.compile(r'\.(?:e|n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),)
 
+
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     """Return the forward-reference name from a ``BaseReader[X]`` base.
 
