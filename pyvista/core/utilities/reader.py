@@ -7,7 +7,6 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 import json
-import os
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -128,38 +127,34 @@ def get_reader(filename, force_ext=None):
     >>> mesh.plot(color='lightblue')
 
     """
-    ext = _get_ext_force(filename, force_ext)
+    path = Path(filename)
+    ext = _get_ext_force(path, force_ext)
+    reader_class = CLASS_READERS.get(ext)
 
-    try:
-        Reader = CLASS_READERS[ext]
-    except KeyError:
-        pattern_target = force_ext or Path(filename).name
-        Reader = next(
+    if reader_class is None:
+        pattern_target = str(force_ext) if force_ext else path.name
+        reader_class = next(
             (
-                reader_type
-                for pattern, reader_type in CLASS_READERS_PATTERNS
+                candidate
+                for pattern, candidate in CLASS_READERS_PATTERNS
                 if pattern.search(pattern_target)
             ),
             None,
         )
 
-        if Reader is None:
-            if Path(filename).is_dir():
-                if len(files := os.listdir(filename)) > 0 and all(  # noqa: PTH208
-                    Path(f).suffix == '.dcm' for f in files
-                ):
-                    Reader = DICOMReader
-                else:
-                    msg = (
-                        '`pyvista.get_reader` does not support reading from directory:\n'
-                        f'\t{filename}'
-                    )
-                    raise ValueError(msg)
-            else:
-                msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
-                raise ValueError(msg)
+    if reader_class is not None:
+        return reader_class(filename)
 
-    return Reader(filename)
+    if path.is_dir():
+        files = list(path.iterdir())
+        if files and all(file.suffix == '.dcm' for file in files):
+            return DICOMReader(filename)
+
+        msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+        raise ValueError(msg)
+
+    msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+    raise ValueError(msg)
 
 
 class BaseVTKReader(ABC):
@@ -4377,7 +4372,7 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.e': ExodusIIReader,
-    '.e.N.p' : PExodusIIReader,
+    '.e.N.p': PExodusIIReader,
     '.ex2': ExodusIIReader,
     '.exo': ExodusIIReader,
     '.exii': ExodusIIReader,
@@ -4400,7 +4395,7 @@ CLASS_READERS = {
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
     '.mr': GESignaReader,
-    '.n.N.p' : PExodusIIReader,
+    '.n.N.p': PExodusIIReader,
     '.nek5000': Nek5000Reader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
