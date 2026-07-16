@@ -10,6 +10,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
@@ -464,6 +465,7 @@ class CubeAxesActor(
 
     @x_title.setter
     def x_title(self, value: str):
+        _validation.check_string(value, name='x_title')
         self._x_title = value
         self._update_x_labels()
 
@@ -474,6 +476,7 @@ class CubeAxesActor(
 
     @y_title.setter
     def y_title(self, value: str):
+        _validation.check_string(value, name='y_title')
         self._y_title = value
         self._update_y_labels()
 
@@ -484,6 +487,7 @@ class CubeAxesActor(
 
     @z_title.setter
     def z_title(self, value: str):
+        _validation.check_string(value, name='z_title')
         self._z_title = value
         self._update_z_labels()
 
