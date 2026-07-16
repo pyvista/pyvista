@@ -96,6 +96,12 @@ def test_titles(cube_axes_actor):
     assert cube_axes_actor.z_title == 'z foo'
 
 
+@pytest.mark.parametrize('title', ['x_title', 'y_title', 'z_title'])
+def test_title_must_be_string(cube_axes_actor, title):
+    with pytest.raises(TypeError, match=rf'{title} must be an instance of .*str'):
+        setattr(cube_axes_actor, title, None)
+
+
 def test_axis_minor_tick_visibility(cube_axes_actor):
     assert isinstance(cube_axes_actor.x_axis_minor_tick_visibility, bool)
     cube_axes_actor.x_axis_minor_tick_visibility = False
