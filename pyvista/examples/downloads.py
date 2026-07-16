@@ -2708,7 +2708,7 @@ _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
 @_deprecate_positional_args
-def download_can(load=True):
+def download_can(load=True):  # noqa: FBT002
     """Download can dataset.
 
     Parameters
