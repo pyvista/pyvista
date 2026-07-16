@@ -65,7 +65,7 @@ _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
-_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/mattfalcone1997/vtk-data/raw/parallel-exodus-nemesis/Data'
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
 
 
 def _warn_invalid_dir_not_used(path, env_var):
@@ -2729,7 +2729,7 @@ def download_can(load=True):
 
     .. seealso::
 
-        :ref:`Can Dataset <mug_dataset>`
+        :ref:`Can Dataset <can_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
