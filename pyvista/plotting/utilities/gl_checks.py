@@ -7,6 +7,7 @@ from functools import cache
 from pyvista import _vtk
 
 
+@cache
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     """Check if depth peeling is available.
 
@@ -30,13 +31,6 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
         settings.
 
     """
-    return _check_depth_peeling(number_of_peels, occlusion_ratio)
-
-
-# Use a cache wrapper so the doc checkers see check_depth_peeling as public
-@cache
-def _check_depth_peeling(number_of_peels, occlusion_ratio):
-    """Check if depth peeling is available."""
     # Try Depth Peeling with a basic scene
     source = _vtk.vtkSphereSource()
     mapper = _vtk.vtkPolyDataMapper()
