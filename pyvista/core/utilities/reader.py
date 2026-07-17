@@ -144,7 +144,7 @@ def get_reader(filename, force_ext=None):
     if reader_class is not None:
         return reader_class(filename)
 
-    if os.path.isdir(filename):
+    if Path(filename).is_dir():
         files = os.listdir(filename)
         if files and all(file.suffix == '.dcm' for file in files):
             return DICOMReader(filename)
@@ -260,10 +260,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     def _get_extension_pattern_mappings(
         cls,
     ) -> list[tuple[re.Pattern[str], type]]:
-        return [
-            (pattern, reader)
-            for _, pattern, reader in _CLASS_READER_PATTERNS
-        ]
+        return [(pattern, reader) for _, pattern, reader in _CLASS_READER_PATTERNS]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.

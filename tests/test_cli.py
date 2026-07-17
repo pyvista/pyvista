@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import partial
 import importlib.util
 import inspect
@@ -12,7 +13,6 @@ import subprocess
 import sys
 import textwrap
 from typing import TYPE_CHECKING
-from collections.abc import Callable
 from typing import Any
 from typing import get_args
 
@@ -589,7 +589,6 @@ def test_convert_compound_extension(
     main(shlex.split(f'convert {str(dst)!r} {out_ext}'))
     # stem should be bare (no .nii residue), extension replaced
     assert (tmp_example_dir / f'{dst.name[: -len(in_ext)]}{out_ext}').is_file()
-
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1585,7 +1584,7 @@ def test_plot_help(capsys: pytest.CaptureFixture):
 
         Plot one or more mesh files in an interactive window that can be
         customized with various options.
-        """  # noqa: W291
+        """
     )
     out, err = capture_out_err(capsys)
     assert err == ''

@@ -7,8 +7,8 @@ from abc import abstractmethod
 from collections.abc import Sequence
 import itertools
 import json
-import re
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal

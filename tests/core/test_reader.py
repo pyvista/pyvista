@@ -15,9 +15,9 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
-from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
