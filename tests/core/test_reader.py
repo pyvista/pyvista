@@ -17,7 +17,7 @@ from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
-from pyvista.core.utilities.reader import CLASS_READERS_PATTERNS
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
 
 
 def test_reader_output_type_defined():
-    expected = set(CLASS_READERS.values()) | {reader for _, reader in CLASS_READERS_PATTERNS}
+    expected = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
     actual = set(_CLASS_READER_RETURN_TYPE.keys())
     assert actual == expected, 'Return type must be defined for every reader'
 
@@ -1899,7 +1899,7 @@ def test_exodus_blocks():
 
 
 def test_parallel_exodus_reader():
-    reader = pv.get_reader(examples.download_can(load=False))
+    reader = pv.get_reader(examples.download_can_parallel_exodus(load=False))
     assert isinstance(reader, pv.PExodusIIReader)
 
     element_block_names = ['Unnamed block ID: 1', 'Unnamed block ID: 2']

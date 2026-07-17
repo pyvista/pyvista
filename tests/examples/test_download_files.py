@@ -280,15 +280,15 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
-def test_download_can():
-    path = Path(examples.download_can(load=False))
+def test_download_can_parallel_exodus():
+    path = Path(examples.download_can_parallel_exodus(load=False))
     assert path.name == 'can.e.4.0'
     assert all(path.with_name(f'can.e.4.{partition}').is_file() for partition in range(4))
 
     reader = pv.get_reader(path)
     assert isinstance(reader, pv.PExodusIIReader)
 
-    dataset = examples.download_can()
+    dataset = examples.download_can_parallel_exodus()
     assert isinstance(dataset, pv.MultiBlock)
     assert dataset.n_blocks
 

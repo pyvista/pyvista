@@ -12,6 +12,7 @@ import subprocess
 import sys
 import textwrap
 from typing import TYPE_CHECKING
+from collections.abc import Callable
 from typing import Any
 from typing import get_args
 
@@ -570,15 +571,25 @@ def test_convert_help(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_compound_extension(tmp_example_dir: Path):
+@pytest.mark.parametrize(
+    ('download', 'in_ext', 'out_ext'),
+    [
+        (examples.download_brain_atlas_with_sides, '.nii.gz', '.vti'),
+        (examples.download_can_parallel_exodus, '.e.4.0', '.vtm'),
+    ],
+)
+def test_convert_compound_extension(
+    tmp_example_dir: Path, download: Callable, in_ext: str, out_ext: str
+):
     """Compound extensions like .nii.gz are correctly stripped from the input stem
     and replaced with the target extension."""
-    src = Path(examples.download_brain_atlas_with_sides(load=False))
+    src = Path(download(load=False))
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
-    main(shlex.split(f'convert {str(dst)!r} .vti'))
+    main(shlex.split(f'convert {str(dst)!r} {out_ext}'))
     # stem should be bare (no .nii residue), extension replaced
-    assert (tmp_example_dir / f'{dst.name[: -len(".nii.gz")]}.vti').is_file()
+    assert (tmp_example_dir / f'{dst.name[: -len(in_ext)]}{out_ext}').is_file()
+
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1572,7 +1583,7 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         """\
         Usage: pyvista plot PATH... [OPTIONS]
 
-        Plot one or more mesh files in an interactive window that can be 
+        Plot one or more mesh files in an interactive window that can be
         customized with various options.
         """  # noqa: W291
     )

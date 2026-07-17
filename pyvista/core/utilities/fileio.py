@@ -7,6 +7,7 @@ from abc import abstractmethod
 from collections.abc import Sequence
 import itertools
 import json
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -101,6 +102,12 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @abstractmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
 
+    @classmethod
+    def _get_extension_pattern_mappings(
+        cls,
+    ) -> list[tuple[re.Pattern[str], type]]:
+        return []
+
     @_classproperty
     def extensions(cls) -> tuple[str, ...]:  # noqa: N805
         """Return the file extension(s) associated with this class.
@@ -115,6 +122,19 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
                 if typ is cls:  # type: ignore[comparison-overlap]
                     extensions.add(ext)  # type: ignore[unreachable]
         return tuple(sorted(extensions))
+
+    @_classproperty
+    def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805
+        """Return mapping from regex pattern matching associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
+        patterns = {
+            pattern for pattern, typ in cls._get_extension_pattern_mappings() if typ is cls
+        }
+        return tuple(sorted(patterns, key=lambda pattern: pattern.pattern))
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
@@ -194,6 +214,12 @@ def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
         return get_ext(filename)
 
 
+_PARALLEL_EXODUS_EXT = re.compile(
+    r'(\.(?:e|n)\.\d+\.\d+)$',
+    re.IGNORECASE,
+)
+
+
 def get_ext(filename: str | Path) -> str:
     """Extract the extension of the filename.
 
@@ -213,6 +239,10 @@ def get_ext(filename: str | Path) -> str:
 
     """
     path = Path(filename)
+
+    if match := _PARALLEL_EXODUS_EXT.search(path.name):
+        return match.group(1).lower()
+
     base = str(path.parent / path.stem)
     ext = path.suffix
     ext = ext.lower()

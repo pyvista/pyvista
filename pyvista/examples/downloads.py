@@ -2707,9 +2707,8 @@ def download_mug(load=True):  # noqa: FBT002
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
-@_deprecate_positional_args
-def download_can(load=True):  # noqa: FBT002
-    """Download can dataset.
+def download_can_parallel_exodus(load=True):
+    """Download can parallel Exodus dataset.
 
     Parameters
     ----------
@@ -2725,12 +2724,12 @@ def download_can(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_can()
+    >>> dataset = examples.download_can_parallel_exodus()
     >>> dataset.plot()
 
     .. seealso::
 
-        :ref:`Can Dataset <can_dataset>`
+        :ref:`Can Parallel Exodus Dataset <can_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """

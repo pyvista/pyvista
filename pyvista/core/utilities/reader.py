@@ -63,7 +63,7 @@ if TYPE_CHECKING:
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
-CLASS_READERS_PATTERNS: tuple[tuple[re.Pattern[str], type[BaseReader[Any]]], ...] = ()
+_CLASS_READER_PATTERNS: tuple[str, tuple[re.Pattern[str], type[BaseReader[Any]]]] = ()
 
 # Covariant TypeVar for :class:`BaseReader`'s output type. Covariant is
 # correct because ``BaseReader`` only *produces* values of ``T_Output``
@@ -132,12 +132,11 @@ def get_reader(filename, force_ext=None):
     reader_class = CLASS_READERS.get(ext)
 
     if reader_class is None:
-        pattern_target = str(force_ext) if force_ext else path.name
         reader_class = next(
             (
                 candidate
-                for pattern, candidate in CLASS_READERS_PATTERNS
-                if pattern.search(pattern_target)
+                for _, pattern, candidate in _CLASS_READER_PATTERNS
+                if pattern.fullmatch(ext)
             ),
             None,
         )
@@ -256,6 +255,15 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
         return [CLASS_READERS]
+
+    @classmethod
+    def _get_extension_pattern_mappings(
+        cls,
+    ) -> list[tuple[re.Pattern[str], type]]:
+        return [
+            (pattern, reader)
+            for _, pattern, reader in _CLASS_READER_PATTERNS
+        ]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.
@@ -3871,7 +3879,7 @@ class PExodusIIReader(ExodusIIReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_can(load=False)
+    >>> filename = examples.download_can_parallel_exodus(load=False)
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -4372,7 +4380,6 @@ CLASS_READERS = {
     '.dcm': DICOMReader,
     '.dem': DEMReader,
     '.e': ExodusIIReader,
-    '.e.N.p': PExodusIIReader,
     '.ex2': ExodusIIReader,
     '.exo': ExodusIIReader,
     '.exii': ExodusIIReader,
@@ -4395,7 +4402,6 @@ CLASS_READERS = {
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
     '.mr': GESignaReader,
-    '.n.N.p': PExodusIIReader,
     '.nek5000': Nek5000Reader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
@@ -4444,7 +4450,10 @@ CLASS_READERS = {
 # Match these against the filename only so dots in parent directories cannot
 # influence reader selection. Parallel Exodus uses ``.e.N.P`` and ``.n.N.P``,
 # where ``N`` is the number of partitions and ``P`` is the partition index.
-CLASS_READERS_PATTERNS = ((re.compile(r'\.(?:e|n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),)
+_CLASS_READER_PATTERNS = (
+    ('.e.N.p', re.compile(r'\.(?:e)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
+    ('.n.N.p', re.compile(r'\.(?:n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
+)
 
 
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
@@ -4500,9 +4509,9 @@ def _derive_reader_output_types(
 # The mapping is derived from each reader's ``BaseReader[X]`` parameterization
 # (with a per-class ``_output_types`` attribute on multi-output readers), so
 # adding a new reader automatically produces the right entry here. We seed the
-# iteration from :data:`CLASS_READERS` and :data:`CLASS_READERS_PATTERNS`
+# iteration from :data:`CLASS_READERS` and :data:`_CLASS_READER_PATTERNS`
 # (every reader registered to a file extension or filename pattern).
 _CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
     cls: _derive_reader_output_types(cls)
-    for cls in set(CLASS_READERS.values()) | {reader for _, reader in CLASS_READERS_PATTERNS}
+    for cls in set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
 }
