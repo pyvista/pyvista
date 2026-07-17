@@ -484,7 +484,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     ),
     'vtkIOEnSight': ('vtkGenericEnSightReader',),
     'vtkIOExodus': ('vtkExodusIIReader',),
-    'vtkIOParallelExodus': ('vtkPExodusIIReader',),
     'vtkIOExport': (
         'vtkGLTFExporter',
         'vtkOBJExporter',
@@ -562,6 +561,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPlot3DMetaReader',
         'vtkPOpenFOAMReader',
     ),
+    'vtkIOParallelExodus': ('vtkPExodusIIReader',),
     'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),
     'vtkIOPLY': (
         'vtkPLYReader',

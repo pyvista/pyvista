@@ -7,6 +7,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 import json
+import os
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -127,8 +128,7 @@ def get_reader(filename, force_ext=None):
     >>> mesh.plot(color='lightblue')
 
     """
-    path = Path(filename)
-    ext = _get_ext_force(path, force_ext)
+    ext = _get_ext_force(filename, force_ext)
     reader_class = CLASS_READERS.get(ext)
 
     if reader_class is None:
@@ -144,8 +144,8 @@ def get_reader(filename, force_ext=None):
     if reader_class is not None:
         return reader_class(filename)
 
-    if path.is_dir():
-        files = list(path.iterdir())
+    if os.path.isdir(filename):
+        files = os.listdir(filename)
         if files and all(file.suffix == '.dcm' for file in files):
             return DICOMReader(filename)
 

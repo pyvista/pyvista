@@ -2719,7 +2719,7 @@ def download_can_parallel_exodus(load=True):
     Returns
     -------
     output : pyvista.MultiBlock | str
-        DataSet or filename depending on ``load``.
+        Mesh or filename depending on ``load``.
 
     Examples
     --------
