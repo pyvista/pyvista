@@ -6,6 +6,8 @@ import sys
 
 import pytest
 
+from pyvista import _vtk
+
 CORE_VTKMODULES = {
     'vtkmodules.numpy_interface',
     'vtkmodules.numpy_interface.dataset_adapter',
@@ -158,3 +160,73 @@ def test_plotting_getattr_called_once():
         "assert counter['count'] == 1\n"
     )
     assert exec_success(exe_str)
+
+
+def _loader():
+    """Dummy special loader."""
+    return object()
+
+
+def test_vtk_import_all_suppressed(monkeypatch):
+    monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo', 'B': 'vtkBar'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader, 'SpecialB': _loader})
+
+    calls = []
+
+    def fake_has_attr(name):
+        calls.append(name)
+        return True
+
+    monkeypatch.setattr(_vtk, 'has_attr', fake_has_attr)
+
+    _vtk.import_all(suppress_import_errors=True)
+
+    assert calls == ['A', 'B', 'SpecialA', 'SpecialB']
+
+
+def test_vtk_import_all_not_suppressed(monkeypatch):
+    monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo', 'B': 'vtkBar'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader, 'SpecialB': _loader})
+
+    calls = []
+
+    def fake_getattr(name):
+        calls.append(name)
+        return object()
+
+    monkeypatch.setattr(_vtk, '__getattr__', fake_getattr)
+
+    _vtk.import_all(suppress_import_errors=False)
+
+    assert calls == ['A', 'B', 'SpecialA', 'SpecialB']
+
+
+def test_vtk_import_all_not_suppressed_propagates(monkeypatch):
+    monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader})
+
+    def fake_getattr(name):  # noqa: ARG001
+        msg = 'boom'
+        raise ImportError(msg)
+
+    monkeypatch.setattr(_vtk, '__getattr__', fake_getattr)
+
+    with pytest.raises(ImportError, match='boom'):
+        _vtk.import_all(suppress_import_errors=False)
+
+
+def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
+    monkeypatch.setattr(_vtk, '_VTK_CLASS_TO_MODULE', {'A': 'vtkFoo'})
+    monkeypatch.setattr(_vtk, '_SPECIAL_LOADERS', {'SpecialA': _loader})
+
+    calls = []
+
+    def fake_has_attr(name):
+        calls.append(name)
+        return False
+
+    monkeypatch.setattr(_vtk, 'has_attr', fake_has_attr)
+
+    _vtk.import_all(suppress_import_errors=True)
+
+    assert calls == ['A', 'SpecialA']
