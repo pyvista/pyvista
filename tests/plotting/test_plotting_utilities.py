@@ -14,6 +14,8 @@ from pyvista import examples
 from pyvista.plotting._plotting import _resolve_scalars_field
 from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.helpers import view_vectors
+from pyvista.plotting.utilities.gl_checks import _offscreen_probe_render_window
+from pyvista.plotting.utilities.gl_checks import uses_egl
 from pyvista.report import GPUInfo
 from pyvista.report import _get_render_window_class
 from tests.conftest import PILLOW_VERSION_INFO
@@ -263,3 +265,42 @@ def test_add_mesh_raw_numpy_mismatched_length_raises():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Number of scalars'):
         pl.add_mesh(sphere, scalars=np.zeros(42, dtype=np.float32))
+
+
+def test_offscreen_probe_render_window(monkeypatch):
+    """GL probes must not create GLX windows inside a Wayland session.
+
+    Making a GLX context current in a process already using EGL (e.g. Qt on
+    the native wayland platform) aborts the process, so under Wayland the
+    probe window must be EGL-based. See pyvista/pyvistaqt#445.
+    """
+    monkeypatch.delenv('WAYLAND_DISPLAY', raising=False)
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    default_cls = type(_offscreen_probe_render_window())
+    assert issubclass(default_cls, pv._vtk.vtkRenderWindow)
+
+    monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    if not pv._vtk.has_attr('vtkEGLRenderWindow'):
+        pytest.skip('VTK build lacks vtkEGLRenderWindow')
+    assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
+
+    # an explicit VTK_DEFAULT_OPENGL_WINDOW override wins over the heuristic
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', default_cls.__name__)
+    assert type(_offscreen_probe_render_window()) is default_cls
+
+
+def test_uses_egl_wayland(monkeypatch):
+    """uses_egl must not instantiate the factory render window under Wayland.
+
+    Construction (and destruction) of the default GLX window aborts a process
+    already using EGL. See pyvista/pyvistaqt#445.
+    """
+    monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    has_x = pv._vtk.has_attr('vtkXOpenGLRenderWindow')
+    assert uses_egl() is not has_x
+
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', 'vtkEGLRenderWindow')
+    assert uses_egl() is True
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', 'vtkXOpenGLRenderWindow')
+    assert uses_egl() is False
