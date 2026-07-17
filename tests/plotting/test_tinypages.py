@@ -26,7 +26,6 @@ ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
-@pytest.mark.skip_check_gc
 def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # sanitise the environment namespace
     for hook in ENVIRONMENT_HOOKS:
@@ -140,7 +139,6 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
 
 @flaky_test(exceptions=(AssertionError,))
 @pytest.mark.skip_windows('path issues, e.g. image file not readable')
-@pytest.mark.skip_check_gc
 def test_parallel(tmp_path: Path) -> None:
     """Ensure that labeling image serial fails."""
     html_dir = tmp_path / 'html'

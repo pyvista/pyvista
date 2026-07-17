@@ -61,7 +61,6 @@ def test_values(lut):
         lut.n_values = 10
 
 
-@pytest.mark.skip_check_gc
 def test_apply_cmap(lut):
     n_values = 5
     lut.cmap = 'reds'
@@ -227,7 +226,6 @@ def test_table_cmap_list(lut):
     assert lut.n_values == 3
 
 
-@pytest.mark.skip_check_gc
 def test_table_values_update(lut):
     lut.cmap = 'Greens'
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
@@ -253,6 +251,9 @@ def test_call(lut):
     assert lut.map_value(0.5) == lut.map_value(0.5)
 
 
+# apply_opacity leaves a vtkTypeUInt8Array pinned by an exported buffer
+# (array <- managedbuffer <- memoryview) whose holder is not gc-visible, so it
+# cannot be collected and there is no reference cycle here for us to break.
 @pytest.mark.skip_check_gc
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
