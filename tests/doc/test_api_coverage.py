@@ -56,6 +56,7 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'BasePlotter',  # abstract base; Plotter subclass is documented
         'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
+        'has_module',  # internal helper for testing only - should be moved into conftest.py
         'PointGrid',  # abstract base; concrete subclasses are documented
         'QtDeprecationError',  # deprecated and moved to pyvistaqt
         'QtInteractor',  # deprecated and moved to pyvistaqt
@@ -112,7 +113,8 @@ def _collect_public_symbols() -> set[str]:
         obj = getattr(pv, name, None)
         if obj is None:
             continue
-        if not (inspect.isclass(obj) or inspect.isfunction(obj)):
+        # Use `isroutine` instead of `isfunction` so that we also catch @cache decorated functions
+        if not (inspect.isclass(obj) or inspect.isroutine(obj)):
             continue
         if not _is_pyvista_owned(obj):
             continue

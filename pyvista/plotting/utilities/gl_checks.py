@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import cache
 import os
 
 from pyvista import _vtk
@@ -33,6 +34,7 @@ def _offscreen_probe_render_window():
     return _vtk.vtkRenderWindow()
 
 
+@cache
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     """Check if depth peeling is available.
 
