@@ -145,7 +145,7 @@ def get_reader(filename, force_ext=None):
         return reader_class(filename)
 
     if Path(filename).is_dir():
-        files = os.listdir(filename)
+        files = Path(filename).iterdir()
         if files and all(file.suffix == '.dcm' for file in files):
             return DICOMReader(filename)
 

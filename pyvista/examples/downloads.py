@@ -2707,7 +2707,7 @@ def download_mug(load=True):  # noqa: FBT002
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
-def download_can_parallel_exodus(load=True):
+def download_can_parallel_exodus(*, load=True) -> MultiBlock | str:
     """Download can parallel Exodus dataset.
 
     Parameters
