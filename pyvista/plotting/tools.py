@@ -49,7 +49,7 @@ def _hide_macos_dock_icon():
         NSApplication.sharedApplication().setActivationPolicy_(
             NSApplicationActivationPolicyProhibited,
         )
-    except ImportError:  # pragma: no cover
+    except ImportError:
         pass
 
 
