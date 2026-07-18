@@ -948,6 +948,10 @@ def test_off_screen_background_thread_rendering():
     assert not errors, f'Background thread rendering failed: {errors[0]}'
 
 
+def test_supports_open_gl():
+    assert pv.supports_open_gl()
+
+
 def _make_fake_render_window():
     """MagicMock whose Get/Set for NSView context stay in sync."""
     fake = MagicMock()
