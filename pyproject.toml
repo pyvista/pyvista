@@ -23,6 +23,7 @@ dependencies = [
   'numpy>=1.21.0',
   'pillow',
   'pooch',
+  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
@@ -51,7 +52,7 @@ pinned = [ # Pinned versions of core dependencies
   'numpy<2.5.0',
   'pillow<12.3.0',
   'pooch<1.10.0',
-  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
+  'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
   'scooby<0.12.0',
   'typing-extensions<4.16.0',
 ]
