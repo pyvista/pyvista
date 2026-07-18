@@ -1004,8 +1004,7 @@ _MACOS_FIX_CASES = [
 ]
 
 
-@pytest.mark.skip_windows(reason='macOS-specific test')
-@pytest.mark.skip_linux(reason='macOS-specific test')
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 @pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
 def test_macos_offscreen_render_window_configured(case):
     """Test no macOS phantom window is generated for off-screen plotting."""

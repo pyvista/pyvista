@@ -55,10 +55,8 @@ def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow |
         if sys.platform != 'darwin':
             return
         try:  # type:ignore[unreachable]
-            from AppKit import NSApplication  # type: ignore[attr-defined]  # noqa: PLC0415
-            from AppKit import (  # type: ignore[attr-defined]  # noqa: PLC0415
-                NSApplicationActivationPolicyProhibited,
-            )
+            from AppKit import NSApplication  # noqa: PLC0415
+            from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
 
             NSApplication.sharedApplication().setActivationPolicy_(
                 NSApplicationActivationPolicyProhibited,
