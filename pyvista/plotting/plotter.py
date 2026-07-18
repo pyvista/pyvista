@@ -8601,7 +8601,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Restores the Dock-icon-free state once no on-screen windows
         remain open across any ``Plotter`` instance.
         """
-        if sys.platform != 'darwin' or not self._macos_window_registered:
+        if sys.platform != 'darwin' or not self._macos_window_registered:  # pragma: no branch
             return
         self._macos_window_registered = False  # type: ignore[unreachable]
         with Plotter._macos_onscreen_window_lock:
