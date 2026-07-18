@@ -32,7 +32,7 @@ SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
 
 
-def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow):
+def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow | None):
     """Configure ``render_window`` for quiet, off-screen use on macOS.
 
     Two independent fixes for ``vtkCocoaRenderWindow`` behavior, both
@@ -55,8 +55,10 @@ def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow):
         if sys.platform != 'darwin':
             return
         try:
-            from AppKit import NSApplication  # noqa: PLC0415
-            from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
+            from AppKit import NSApplication  # type:ignore[attr-defined]  # noqa: PLC0415
+            from AppKit import (  # type: ignore[attr-defined]  # noqa: PLC0415
+                NSApplicationActivationPolicyProhibited,
+            )
 
             NSApplication.sharedApplication().setActivationPolicy_(
                 NSApplicationActivationPolicyProhibited,
@@ -66,8 +68,10 @@ def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow):
 
     def _disable_cocoa_nsview_context():
         if hasattr(render_window, 'SetConnectContextToNSView'):
-            render_window.SetConnectContextToNSView(False)
+            render_window.SetConnectContextToNSView(False)  # type:ignore[union-attr]
 
+    if render_window is None:
+        return
     _suppress_dock_icon()
     _disable_cocoa_nsview_context()
 
