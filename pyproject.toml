@@ -51,6 +51,7 @@ pinned = [ # Pinned versions of core dependencies
   'numpy<2.5.0',
   'pillow<12.3.0',
   'pooch<1.10.0',
+  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'scooby<0.12.0',
   'typing-extensions<4.16.0',
 ]
@@ -81,7 +82,6 @@ test = [
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
   'pyarrow<25.0.0',
-  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
