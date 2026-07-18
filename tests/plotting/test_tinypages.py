@@ -34,8 +34,8 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # configure the plot-directive environment variable hook for conf.py
     os.environ[ename] = str(evalue)
 
-    skip = False if ename != 'PLOT_SKIP' else evalue
-    skip_optional = False if ename != 'PLOT_SKIP_OPTIONAL' else evalue
+    skip = False if ename != 'PYVISTA_PLOT_SKIP' else evalue
+    skip_optional = False if ename != 'PYVISTA_PLOT_SKIP_OPTIONAL' else evalue
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
@@ -89,7 +89,7 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # verify only one figure is generated when there are two plotters,
     # but show is only called on one
     assert not plot_file(26, 0, 0).exists()
-    assert plot_file(26, 0, 1).exists()
+    assert plot_file(26, 0, 1).exists() == expected
 
     # test skip directive
     assert not plot_file(10, 0, 0).exists()
