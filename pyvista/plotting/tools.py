@@ -54,8 +54,8 @@ def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow |
     def _suppress_dock_icon():
         if sys.platform != 'darwin':
             return
-        try:
-            from AppKit import NSApplication  # type:ignore[attr-defined]  # noqa: PLC0415
+        try:  # type:ignore[unreachable]
+            from AppKit import NSApplication  # type: ignore[attr-defined]  # noqa: PLC0415
             from AppKit import (  # type: ignore[attr-defined]  # noqa: PLC0415
                 NSApplicationActivationPolicyProhibited,
             )
