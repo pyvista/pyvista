@@ -7895,34 +7895,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     last_update_time = 0.0
 
-    _macos_onscreen_window_count = 0
-    _macos_onscreen_window_lock = threading.Lock()
-
-    def _register_macos_window(self) -> None:
-        """Track that this plotter has created a real on-screen NSWindow."""
-        if sys.platform != 'darwin' or self._macos_window_registered:
-            return
-        self._macos_window_registered = True  # type: ignore[unreachable]
-        with Plotter._macos_onscreen_window_lock:
-            Plotter._macos_onscreen_window_count += 1
-
-    def _unregister_macos_window(self) -> None:
-        """Call when this plotter's on-screen window closes.
-
-        Restores the Dock-icon-free state once no on-screen windows
-        remain open across any ``Plotter`` instance.
-        """
-        if sys.platform != 'darwin' or not self._macos_window_registered:
-            return
-        self._macos_window_registered = False  # type: ignore[unreachable]
-        with Plotter._macos_onscreen_window_lock:
-            Plotter._macos_onscreen_window_count = max(
-                0,
-                Plotter._macos_onscreen_window_count - 1,
-            )
-            if Plotter._macos_onscreen_window_count == 0:
-                _hide_macos_dock_icon()
-
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
         self,
@@ -8611,6 +8583,34 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 _append_actor_dataset(leaf)
 
         return meshes
+
+    _macos_onscreen_window_count = 0
+    _macos_onscreen_window_lock = threading.Lock()
+
+    def _register_macos_window(self) -> None:
+        """Track that this plotter has created a real on-screen NSWindow."""
+        if sys.platform != 'darwin' or self._macos_window_registered:
+            return
+        self._macos_window_registered = True  # type: ignore[unreachable]
+        with Plotter._macos_onscreen_window_lock:
+            Plotter._macos_onscreen_window_count += 1
+
+    def _unregister_macos_window(self) -> None:
+        """Call when this plotter's on-screen window closes.
+
+        Restores the Dock-icon-free state once no on-screen windows
+        remain open across any ``Plotter`` instance.
+        """
+        if sys.platform != 'darwin' or not self._macos_window_registered:
+            return
+        self._macos_window_registered = False  # type: ignore[unreachable]
+        with Plotter._macos_onscreen_window_lock:
+            Plotter._macos_onscreen_window_count = max(
+                0,
+                Plotter._macos_onscreen_window_count - 1,
+            )
+            if Plotter._macos_onscreen_window_count == 0:
+                _hide_macos_dock_icon()
 
 
 # Tracks created plotters.  This is the end of the module as we need to
