@@ -12,13 +12,13 @@ import scooby
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 _cmd_render_window_info = """
+from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
 from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
 import vtkmodules.vtkRenderingOpenGL2
 ren = vtkRenderer()
 win = vtkRenderWindow()
 win.OffScreenRenderingOn()
-if hasattr(win, 'SetConnectContextToNSView'):
-    win.SetConnectContextToNSView(False)
+_prepare_offscreen_macos_render_window(win)
 win.AddRenderer(ren)
 win.Render()
 print(win.ReportCapabilities())

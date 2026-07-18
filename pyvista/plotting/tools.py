@@ -8,6 +8,7 @@ import platform
 from subprocess import PIPE
 from subprocess import Popen
 from subprocess import TimeoutExpired
+import sys
 
 import numpy as np
 
@@ -31,6 +32,46 @@ SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
 
 
+def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow):
+    """Configure ``render_window`` for quiet, off-screen use on macOS.
+
+    Two independent fixes for ``vtkCocoaRenderWindow`` behavior, both
+    needed because VTK's off-screen path doesn't fully suppress its
+    on-screen side effects:
+
+    1. Merely instantiating ``NSApplication``, which VTK does internally
+       in ``CreateAWindow()`` unconditionally, even for off-screen use,
+       is enough for an unbundled Python process to get a Dock icon. VTK
+       never reverses this, so we demote the activation policy via PyObjC.
+    2. ``SetConnectContextToNSView(False)`` stops this particular render
+       window from creating a real NSWindow.
+
+    Safe to call unconditionally on any platform or render window type;
+    each step no-ops where it doesn't apply (non-macOS, missing PyObjC,
+    non-Cocoa render windows).
+    """
+
+    def _suppress_dock_icon():
+        if sys.platform != 'darwin':
+            return
+        try:
+            from AppKit import NSApplication  # noqa: PLC0415
+            from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
+
+            NSApplication.sharedApplication().setActivationPolicy_(
+                NSApplicationActivationPolicyProhibited,
+            )
+        except ImportError:
+            pass
+
+    def _disable_cocoa_nsview_context():
+        if hasattr(render_window, 'SetConnectContextToNSView'):
+            render_window.SetConnectContextToNSView(False)
+
+    _suppress_dock_icon()
+    _disable_cocoa_nsview_context()
+
+
 def supports_open_gl():
     """Return if the system supports OpenGL.
 
@@ -47,8 +88,7 @@ def supports_open_gl():
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
         ren_win.SetOffScreenRendering(True)
-        if hasattr(ren_win, 'SetConnectContextToNSView'):
-            ren_win.SetConnectContextToNSView(False)
+        _prepare_offscreen_macos_render_window(ren_win)
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 

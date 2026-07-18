@@ -6,6 +6,7 @@ from functools import cache
 import os
 
 from pyvista import _vtk
+from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
 
 
 def _offscreen_probe_render_window():
@@ -69,8 +70,7 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     renderer = _vtk.vtkRenderer()
     renderWindow = _offscreen_probe_render_window()
     renderWindow.SetOffScreenRendering(True)
-    if hasattr(renderWindow, 'SetConnectContextToNSView'):
-        renderWindow.SetConnectContextToNSView(False)
+    _prepare_offscreen_macos_render_window(renderWindow)
     renderWindow.AddRenderer(renderer)
     renderWindow.SetAlphaBitPlanes(True)
     renderWindow.SetMultiSamples(0)
