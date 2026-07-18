@@ -42,13 +42,22 @@ def _hide_macos_dock_icon():
     """
     if sys.platform != 'darwin':
         return
-    try:  # type:ignore[unreachable]
+    try:
+        # Uses NSApplicationActivationPolicyAccessory rather than ...Prohibited:
+        # Accessory apps have no Dock icon (same effect we want), but unlike
+        # Prohibited, Accessory apps can still be activated and brought to the
+        # foreground — which VTK needs to do for each newly created on-screen
+        # window. Prohibited apps cannot be activated at all per Apple's docs,
+        # which caused new windows to open behind existing ones after the first
+        # window closed and this process dropped out of Regular.
+
         from AppKit import NSApplication  # noqa: PLC0415
-        from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
+        from AppKit import NSApplicationActivationPolicyAccessory  # noqa: PLC0415
 
         NSApplication.sharedApplication().setActivationPolicy_(
-            NSApplicationActivationPolicyProhibited,
+            NSApplicationActivationPolicyAccessory,
         )
+        NSApplication.sharedApplication().activateIgnoringOtherApps_(True)
     except ImportError:  # pragma: no cover
         pass
 
