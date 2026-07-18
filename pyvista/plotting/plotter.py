@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+import threading
 from threading import Event
 from threading import Thread
 import time
@@ -92,6 +93,7 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .tools import _hide_macos_dock_icon
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -5325,6 +5327,7 @@ class BasePlotter(_BoundsSizeMixin):
                 # is removed from NSApp.windows() but the window server
                 # still draws it as a frozen "zombie" window.
                 self.iren.interactor.ProcessEvents()
+                self._unregister_macos_window()
             self.ren_win = None
 
     def close(self) -> None:
@@ -7892,6 +7895,34 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     last_update_time = 0.0
 
+    _macos_onscreen_window_count = 0
+    _macos_onscreen_window_lock = threading.Lock()
+
+    def _register_macos_window(self) -> None:
+        """Track that this plotter has created a real on-screen NSWindow."""
+        if sys.platform != 'darwin' or getattr(self, '_macos_window_registered', False):
+            return
+        self._macos_window_registered = True  # type: ignore[unreachable]
+        with Plotter._macos_onscreen_window_lock:
+            Plotter._macos_onscreen_window_count += 1
+
+    def _unregister_macos_window(self) -> None:
+        """Call when this plotter's on-screen window closes.
+
+        Restores the Dock-icon-free state once no on-screen windows
+        remain open across any ``Plotter`` instance.
+        """
+        if sys.platform != 'darwin' or not getattr(self, '_macos_window_registered', False):
+            return
+        self._macos_window_registered = False  # type: ignore[unreachable]
+        with Plotter._macos_onscreen_window_lock:
+            Plotter._macos_onscreen_window_count = max(
+                0,
+                Plotter._macos_onscreen_window_count - 1,
+            )
+            if Plotter._macos_onscreen_window_count == 0:
+                _hide_macos_dock_icon()
+
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
         self,
@@ -8227,6 +8258,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         """
         self._show_called = True
+
+        if not self.off_screen:
+            self._register_macos_window()
 
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)

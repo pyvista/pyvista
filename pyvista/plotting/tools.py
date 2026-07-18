@@ -32,6 +32,27 @@ SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
 
 
+def _hide_macos_dock_icon():
+    """Hide the process's Dock icon on macOS.
+
+    Used both to keep off-screen render windows from ever showing a Dock
+    icon in the first place, and to restore this state once no on-screen
+    ``Plotter`` windows remain open (see
+    ``Plotter._register_macos_window``/``_unregister_macos_window``).
+    """
+    if sys.platform != 'darwin':
+        return
+    try:  # type:ignore[unreachable]
+        from AppKit import NSApplication  # noqa: PLC0415
+        from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
+
+        NSApplication.sharedApplication().setActivationPolicy_(
+            NSApplicationActivationPolicyProhibited,
+        )
+    except ImportError:
+        pass
+
+
 def _prepare_offscreen_macos_render_window(  # pragma: no cover
     render_window: _vtk.vtkRenderWindow | None,
 ):
@@ -53,26 +74,13 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
     non-Cocoa render windows).
     """
 
-    def _suppress_dock_icon():
-        if sys.platform != 'darwin':
-            return
-        try:  # type:ignore[unreachable]
-            from AppKit import NSApplication  # noqa: PLC0415
-            from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
-
-            NSApplication.sharedApplication().setActivationPolicy_(
-                NSApplicationActivationPolicyProhibited,
-            )
-        except ImportError:
-            pass
-
     def _disable_cocoa_nsview_context():
         if hasattr(render_window, 'SetConnectContextToNSView'):
             render_window.SetConnectContextToNSView(False)  # type:ignore[union-attr]
 
     if render_window is None:
         return
-    _suppress_dock_icon()
+    _hide_macos_dock_icon()
     _disable_cocoa_nsview_context()
 
 
