@@ -949,7 +949,7 @@ def test_off_screen_background_thread_rendering():
 
 
 def test_supports_open_gl():
-    assert pv.supports_open_gl()
+    assert supports_open_gl()
 
 
 def _make_fake_render_window():
