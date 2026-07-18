@@ -8589,7 +8589,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     def _register_macos_window(self) -> None:
         """Track that this plotter has created a real on-screen NSWindow."""
-        if sys.platform != 'darwin' or self._macos_window_registered:  # pragma: no branch
+        if sys.platform != 'darwin' or self._macos_window_registered:
             return
         self._macos_window_registered = True  # type: ignore[unreachable]
         with Plotter._macos_onscreen_window_lock:
