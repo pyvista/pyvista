@@ -32,7 +32,9 @@ SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
 
 
-def _prepare_offscreen_macos_render_window(render_window: _vtk.vtkRenderWindow | None):
+def _prepare_offscreen_macos_render_window(  # pragma: no cover
+    render_window: _vtk.vtkRenderWindow | None,
+):
     """Configure ``render_window`` for quiet, off-screen use on macOS.
 
     Two independent fixes for ``vtkCocoaRenderWindow`` behavior, both
