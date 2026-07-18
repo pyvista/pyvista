@@ -1020,3 +1020,50 @@ def test_macos_offscreen_render_window_configured(case):
     appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
         appkit_mock.NSApplicationActivationPolicyProhibited,
     )
+
+
+def test_macos_dock_icon_persists_until_last_window_closes():
+    appkit_mock = MagicMock()
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        pl1 = pv.Plotter(off_screen=True)  # off_screen=True: CI-safe construction
+        pl2 = pv.Plotter(off_screen=True)
+
+        # Construction itself calls setActivationPolicy_ once per plotter (the off-screen
+        # Dock-suppression fix), so we clear that noise before testing the on-screen
+        # register/unregister counter logic below.
+        appkit_mock.reset_mock()
+
+        pl1._register_macos_window()
+        assert pv.Plotter._macos_onscreen_window_count == 1
+
+        pl2._register_macos_window()
+        assert pv.Plotter._macos_onscreen_window_count == 2
+
+        pl1._unregister_macos_window()
+        assert pv.Plotter._macos_onscreen_window_count == 1
+        appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_not_called()
+
+        pl2._unregister_macos_window()
+        assert pv.Plotter._macos_onscreen_window_count == 0
+        appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once()
+
+        pl1.close()
+        pl2.close()
+
+
+def test_show_does_not_register_macos_window_when_off_screen():
+    """Test that show() does not register a Dock-icon window when off_screen=True."""
+    with patch.object(pv.Plotter, '_register_macos_window') as mock_register:
+        pl = pv.Plotter(off_screen=True)
+        pl.show()
+        mock_register.assert_not_called()
+        pl.close()
+
+
+def test_show_registers_macos_window_when_not_off_screen():
+    with patch.object(pv.Plotter, '_register_macos_window') as mock_register:
+        pl = pv.Plotter(off_screen=True)  # safe, headless construction
+        pl.off_screen = False  # flip only the Python-level branch flag
+        pl.show(interactive=False)  # skip the blocking interactor loop
+        mock_register.assert_called_once()
+        pl.close()

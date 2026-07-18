@@ -7900,7 +7900,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     def _register_macos_window(self) -> None:
         """Track that this plotter has created a real on-screen NSWindow."""
-        if sys.platform != 'darwin' or getattr(self, '_macos_window_registered', False):
+        if sys.platform != 'darwin' or self._macos_window_registered:
             return
         self._macos_window_registered = True  # type: ignore[unreachable]
         with Plotter._macos_onscreen_window_lock:
@@ -7912,7 +7912,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Restores the Dock-icon-free state once no on-screen windows
         remain open across any ``Plotter`` instance.
         """
-        if sys.platform != 'darwin' or not getattr(self, '_macos_window_registered', False):
+        if sys.platform != 'darwin' or not self._macos_window_registered:
             return
         self._macos_window_registered = False  # type: ignore[unreachable]
         with Plotter._macos_onscreen_window_lock:
@@ -8065,6 +8065,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             self._enable_stereo_rendering(stereo)
         elif stereo:
             self._enable_stereo_rendering()
+
+        # Tracks whether this plotter has registered an on-screen NSWindow
+        # for macOS Dock icon bookkeeping — see `_register_macos_window`.
+        self._macos_window_registered: bool = False
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
