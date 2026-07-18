@@ -8235,6 +8235,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         """
         self._show_called = True
 
+        if not self.off_screen:
+            self._register_macos_window()
+
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
@@ -8295,10 +8298,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         self.render()
-
-        # Register the window has been created
-        if not self.off_screen:
-            self._register_macos_window()
 
         # initial double render needed for certain passes when offscreen
         if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
