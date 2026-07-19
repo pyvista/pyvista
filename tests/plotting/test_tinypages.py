@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import re
 from subprocess import PIPE
 from subprocess import Popen
 import sys
@@ -113,40 +114,6 @@ PLOTS_OPTIONAL = frozenset(
 
 MATPLOTLIB_FILES = frozenset({'some_plots-19.png'})
 
-PARALLEL_IMAGES = {
-    'plot_cone_00_00.png',
-    'plot_polygon_00_00.png',
-    'plot_polygon_00_00.vtksz',
-    'some_autodocs-e52f03c2c2ffaa1c_00_00.png',
-    'some_autodocs-e52f03c2c2ffaa1c_00_00.vtksz',
-    'some_plots-1.png',
-    'some_plots-14c4044831c60ffd_00_00.png',
-    'some_plots-14c4044831c60ffd_00_00.vtksz',
-    'some_plots-174974120ecedd6c_00_00.png',
-    'some_plots-174974120ecedd6c_00_00.vtksz',
-    'some_plots-20cfc06bd259c838_00_00.png',
-    'some_plots-20cfc06bd259c838_00_00.vtksz',
-    'some_plots-3afe6bf6426295e1_00_00.png',
-    'some_plots-3afe6bf6426295e1_00_00.vtksz',
-    'some_plots-7ad3e6918a43db3f_00_00.png',
-    'some_plots-7ad3e6918a43db3f_00_00.vtksz',
-    'some_plots-7fc6e5a3627f84fa_00_00.png',
-    'some_plots-7fc6e5a3627f84fa_00_00.vtksz',
-    'some_plots-8dc162c98f3a4e7e_00_00.png',
-    'some_plots-8dc162c98f3a4e7e_00_00.vtksz',
-    'some_plots-8dc162c98f3a4e7e_01_00.png',
-    'some_plots-8dc162c98f3a4e7e_01_00.vtksz',
-    'some_plots-a0da58d327144b49_00_00.png',
-    'some_plots-a0da58d327144b49_01_00.png',
-    'some_plots-a2221791fdc1a8f6_00_00.gif',
-    'some_plots-a9e7a9568ee7353a_00_00.png',
-    'some_plots-a9e7a9568ee7353a_00_00.vtksz',
-    'some_plots-b5a0cc1b085bd550_00_00.png',
-    'some_plots-b5a0cc1b085bd550_00_00.vtksz',
-    'some_plots-d9da419279a7f8bd_00_01.png',
-    'some_plots-d9da419279a7f8bd_00_01.vtksz',
-}
-
 PY_FILES = frozenset(
     filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith('.py')
 )
@@ -156,6 +123,34 @@ PNG_FILES = frozenset(
 VTKSZ_FILES = frozenset(
     filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith('.vtksz')
 )
+
+# Regex for counter names ``<stem>-<counter><ext>`` to hash names  ``<stem>-<16-hex-hash><ext>``.
+# File-arg and matplotlib outputs match literally.
+_COUNTER_SUFFIX_RE = re.compile(r'^(?P<stem>[a-zA-Z_]+)-(?P<counter>\d+)(?P<rest>.*)$')
+_HASH_PATTERN = r'[0-9a-f]{16}'
+
+
+def _counter_name_to_hash_pattern(filename: str) -> str:
+    """Convert a counter-based fixture filename into a hash-pattern regex."""
+    match = _COUNTER_SUFFIX_RE.match(filename)
+    if match is None:
+        return re.escape(filename)
+    stem, rest = match.group('stem'), match.group('rest')
+    return re.escape(f'{stem}-') + _HASH_PATTERN + re.escape(rest)
+
+
+# Expected files for a parallel build, derived from the serial-build sets
+PARALLEL_DIRECTIVE_PATTERNS = [
+    _counter_name_to_hash_pattern(filename) for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT
+]
+
+# Kept as a list, not a set: multiple files can share the same pattern
+# (e.g. some_plots-1.py and some_plots-2.py both become
+# some_plots-[0-9a-f]{16}.py), and each still needs to claim its own file.
+PARALLEL_IMAGE_PATTERNS = [
+    _counter_name_to_hash_pattern(filename)
+    for filename in (PYVISTA_PLOT_DIRECTIVE_OUTPUT - PY_FILES) | MATPLOTLIB_FILES
+]
 
 
 @dataclass(frozen=True)
@@ -310,8 +305,34 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase):
     assert b'This is a matplotlib plot.' in html_contents
 
 
+def _assert_files_match_patterns(actual_files: set[str], patterns: list[str]) -> None:
+    """Assert a 1:1 correspondence between actual filenames and expected patterns.
+
+    Each pattern must match exactly one (as-yet-unclaimed) file; any pattern
+    left without a match, or any file left unclaimed by a pattern, fails the
+    assertion. Filenames are matched by pattern rather than compared exactly
+    since some patterns contain a content-derived hash that isn't pinned to
+    a specific value.
+    """
+    unmatched_files = set(actual_files)
+    unmatched_patterns = []
+    for pattern in patterns:
+        regex = re.compile(pattern)
+        matches = [name for name in unmatched_files if regex.fullmatch(name)]
+        if not matches:
+            unmatched_patterns.append(pattern)
+            continue
+        # a pattern should correspond to exactly one file; if several files
+        # match (shouldn't normally happen), just claim the first
+        unmatched_files.discard(matches[0])
+
+    assert not unmatched_patterns, (
+        f'No generated file matched these expected patterns: {unmatched_patterns}'
+    )
+    assert not unmatched_files, f'Unexpected files with no matching pattern: {unmatched_files}'
+
+
 @flaky_test(exceptions=(AssertionError,))
-@pytest.mark.skip_windows('path issues, e.g. image file not readable')
 def test_parallel(tmp_path: Path) -> None:
     """Ensure that labeling image serial fails."""
     html_dir = tmp_path / 'html'
@@ -328,12 +349,19 @@ def test_parallel(tmp_path: Path) -> None:
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
+    if sys.platform == 'win32':
+        # see the matching note in test_tinypages: matplotlib's own
+        # ``.. plot::`` directive fails to render on Windows in CI, which
+        # would otherwise turn Sphinx's resulting warnings into fatal
+        # errors under ``-W``.
+        cmd += ['-D', 'suppress_warnings=image.not_readable,download.not_readable']
+
     proc = Popen(
         cmd,
         stdout=PIPE,
         stderr=PIPE,
         universal_newlines=True,
-        env={**os.environ, 'MPLBACKEND': ''},
+        env={**os.environ, 'MPLBACKEND': 'Agg'},
         encoding='utf8',
     )
     out, err = proc.communicate()
@@ -346,14 +374,37 @@ def test_parallel(tmp_path: Path) -> None:
         stdout=PIPE,
         stderr=PIPE,
         universal_newlines=True,
-        env={**os.environ, 'MPLBACKEND': '', 'PYVISTA_PLOT_USE_COUNTER': 'false'},
+        env={**os.environ, 'MPLBACKEND': 'Agg', 'PYVISTA_PLOT_USE_COUNTER': 'false'},
         encoding='utf8',
     )
     out, err = proc.communicate()
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
-    actual_images = {p.name for p in (html_dir / '_images').rglob('*') if p.is_file()}
-    assert actual_images == PARALLEL_IMAGES
+    assert html_dir.is_dir()
+
+    # All files are saved to the pyvista plot dir, same as the serial test
+    pyvista_plot_directive_dir = html_dir.parent / 'pyvista_plot_directive'
+    pyvista_plot_directive_files = {path.name for path in pyvista_plot_directive_dir.iterdir()}
+    _assert_files_match_patterns(pyvista_plot_directive_files, PARALLEL_DIRECTIVE_PATTERNS)
+
+    # Sphinx auto-copies to `_images`. Expect matplotlib's directive output
+    # to exist as well, same as the serial test
+    images_dir = html_dir / '_images'
+    actual_images = {p.name for p in images_dir.rglob('*') if p.is_file()}
+
+    if sys.platform == 'win32':
+        # same Windows-only matplotlib rendering bug worked around in
+        # test_tinypages: assert the gap explicitly, then patch it so the
+        # rest of the pyvista-vs-matplotlib file set is still exercised.
+        assert not (MATPLOTLIB_FILES & actual_images), (
+            "matplotlib's plot unexpectedly rendered on Windows, "
+            'the workaround below can likely be removed.'
+        )
+        for missing in MATPLOTLIB_FILES:
+            (images_dir / missing).touch()
+        actual_images = {p.name for p in images_dir.rglob('*') if p.is_file()}
+
+    _assert_files_match_patterns(actual_images, PARALLEL_IMAGE_PATTERNS)
 
 
 @pytest.mark.needs_playwright
