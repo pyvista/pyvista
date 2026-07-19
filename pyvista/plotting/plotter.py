@@ -376,6 +376,7 @@ class BasePlotter(_BoundsSizeMixin):
         lighting: LightingOptions | None = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
+        camera_distortion_coefficients: Sequence[float]|None = None,
         **kwargs,
     ) -> None:
         """Initialize base plotter."""
@@ -483,6 +484,8 @@ class BasePlotter(_BoundsSizeMixin):
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
+
+        self._distortion_coeffs: Sequence[float]|None = camera_distortion_coefficients
 
         self._initialized = True
         self._suppress_rendering = False
@@ -1665,6 +1668,69 @@ class BasePlotter(_BoundsSizeMixin):
     def remove_blurring(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
+
+    def _add_camera_distortion_to_actor(self, actor: Actor) -> None:
+        if not self._distortion_coeffs:
+            return
+
+        actor.add_shader_replacement(
+            'vertex',
+            '//VTK::PositionVC::Impl',
+            """
+            // The default vtk assignments for gl_Position and
+            // vertexVCVSOutput will be inserted below this line:
+            //VTK::PositionVC::Impl
+
+            // MCVCMatrix: (mat4) Model coordinates -> View coordinates
+            //      - -z is in front of the camera
+            //      - vertexVCVSOutput is a vec4 in view coordinates.
+            // MCDCMatrix: (mat4) Model coordinates -> Device coordinates
+            //      - gl_Position expects device coordinates
+            //      - This is the combined extrinsic and intrinsic matrix.
+
+            float z_depth = -vertexVCVSOutput.z;
+            float x = vertexVCVSOutput.x / z_depth;
+            float y = vertexVCVSOutput.y / z_depth;
+            float rSquared = x * x + y * y;
+            float k1 = u_distortion_coeffs[0];
+            float k2 = u_distortion_coeffs[1];
+            float p1 = u_distortion_coeffs[2];
+            float p2 = u_distortion_coeffs[3];
+            float radial = 1.0 + k1*rSquared + k2*rSquared*rSquared;
+            float new_x = x * radial + 2*p1*x*y + p2*(rSquared + 2*x*x);
+            float new_y = y * radial + 2*p2*x*y + p1*(rSquared + 2*y*y);
+
+            // We need to take our view coordinates, and convert them into
+            // device coordinates to assign to gl_Position. We are given
+            // uniforms for MC --> VC and MC --> DC, but not VC --> DC, so
+            // we must solve for it:
+            //      MCDCMatrix = VCDCMatrix * MCVCMatrix
+            //   => MCDCMatrix * inverse(MCVCMatrix) = VCDCMatrix *
+            //      MCVCMatrix inverse(MCVCMatrix)
+            //   => MCDCMatrix * inverse(MCVCMatrix) = VCDCMatrix * identity
+
+            mat4 VCDCMatrix = MCDCMatrix * inverse(MCVCMatrix);
+            gl_Position = VCDCMatrix * vec4(
+                new_x * z_depth, new_y * z_depth, vertexVCVSOutput.zw
+            );
+            """,
+            replace_first=True,
+            replace_all=False,
+            _feature_name='camera_distortion',
+        )
+        actor.add_shader_replacement(
+            'vertex',
+            '//VTK::CustomUniforms::Dec',
+            """
+            uniform vec4 u_distortion_coeffs;
+            """,
+            replace_first=True,
+            replace_all=False,
+            _feature_name='camera_distortion',
+        )
+
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        uniforms.SetUniform4f('u_distortion_coeffs', self._distortion_coeffs)
 
     @wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -3217,6 +3283,8 @@ class BasePlotter(_BoundsSizeMixin):
             remove_existing_actor=remove_existing_actor,
         )
 
+        self._add_camera_distortion_to_actor(actor)
+
         return actor, mapper
 
     @_deprecate_positional_args(allowed=['mesh'])
@@ -4289,6 +4357,7 @@ class BasePlotter(_BoundsSizeMixin):
             render=render,
             remove_existing_actor=remove_existing_actor,
         )
+        self._add_camera_distortion_to_actor(actor)
 
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':
@@ -7913,6 +7982,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         theme: Theme | None = None,
         image_scale: int | None = None,
         stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
+        camera_distortion_coefficients: Sequence[float] | None = None
     ) -> None:
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -7928,6 +7998,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             lighting=lighting,
             theme=theme,
             image_scale=image_scale,
+            camera_distortion_coefficients=camera_distortion_coefficients
         )
         # reset partial initialization flag
         self._initialized = False
