@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 from pathlib import Path
 from subprocess import PIPE
@@ -19,23 +20,82 @@ pytest.importorskip('sphinx')
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
-ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
+
+ENVIRONMENT_HOOKS = ('PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL')
+DEFAULT_OUTPUT_FILES = frozenset(
+    {
+        'plot_cone_00_00.png',
+        'some_autodocs-1_00_00.vtksz',
+        'some_autodocs-2_00_00.vtksz',
+        'some_plots-1_00_00.vtksz',
+        'some_plots-2_00_00.vtksz',
+        'some_plots-4_00_00.vtksz',
+        'some_plots-8_00_00.png',
+        'some_plots-9_00_00.png',
+        'some_plots-9_01_00.png',
+        'some_plots-13_00_00.vtksz',
+        'some_plots-13_01_00.vtksz',
+        'some_plots-14_00_00.png',
+        'some_plots-14_01_00.png',
+        'some_plots-15_00_00.vtksz',
+        'some_plots-16_00_00.vtksz',
+        'some_plots-18_00_00.vtksz',
+        'some_plots-21_00_00.vtksz',
+        'some_plots-22_00_00.vtksz',
+        'some_plots-23_00_00.gif',
+        'some_plots-24_00_00.vtksz',
+        'some_plots-25_00_00.vtksz',
+        'some_plots-26_00_01.vtksz',
+    }
+)
+
+
+@dataclass(frozen=True)
+class TinyPagesCase:
+    id: str
+    env: dict[str, str]
+    missing_files: frozenset[str]
+
+    @property
+    def expected_files(self) -> frozenset[str]:
+        return DEFAULT_OUTPUT_FILES - self.missing_files
+
+
+CASES = (
+    TinyPagesCase(
+        id='default',
+        env={},
+        missing_files=frozenset(),
+    ),
+    TinyPagesCase(
+        id='plot_skip_false',
+        env={'PYVISTA_PLOT_SKIP': 'false'},
+        missing_files=frozenset(),
+    ),
+    TinyPagesCase(
+        id='plot_skip_true',
+        env={'PYVISTA_PLOT_SKIP': 'true'},
+        missing_files=DEFAULT_OUTPUT_FILES - frozenset({'some_plots-16_00_00.vtksz'}),
+    ),
+    TinyPagesCase(
+        id='plot_skip_optional_true',
+        env={'PYVISTA_PLOT_SKIP_OPTIONAL': 'true'},
+        missing_files=frozenset({'some_plots-18_00_00.vtksz'}),
+    ),
+)
 
 
 @flaky_test(exceptions=(AssertionError,))
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
-@pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
-@pytest.mark.parametrize('evalue', [False, True])
-def test_tinypages(tmp_path: Path, ename: str, evalue: str):
-    # sanitise the environment namespace
+@pytest.mark.parametrize('case', CASES, ids=lambda case: case.id)
+def test_tinypages(tmp_path: Path, case: TinyPagesCase):
+    """Test tinypages build using pyvista's plot_directive extension."""
     for hook in ENVIRONMENT_HOOKS:
         os.environ.pop(hook, None)
+    os.environ.update(case.env)
 
-    # configure the plot-directive environment variable hook for conf.py
-    os.environ[ename] = str(evalue)
-
-    skip = False if ename != 'PYVISTA_PLOT_SKIP' else evalue
-    skip_optional = False if ename != 'PYVISTA_PLOT_SKIP_OPTIONAL' else evalue
+    skip = case.env.get('PYVISTA_PLOT_SKIP', 'false').lower() == 'true'
+    skip_optional = case.env.get('PYVISTA_PLOT_SKIP_OPTIONAL', 'false').lower() == 'true'
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
@@ -67,38 +127,13 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
 
     assert html_dir.is_dir()
 
-    def plot_file(plt, num, subnum, extension='vtksz'):
-        return html_dir / f'some_plots-{plt}_{num:02d}_{subnum:02d}.{extension}'
-
-    # verify directives generating a figure generated figures
-    assert plot_file(1, 0, 0).exists() == expected
-    assert plot_file(2, 0, 0).exists() == expected
-    assert plot_file(4, 0, 0).exists() == expected
-    assert plot_file(21, 0, 0).exists() == expected
-    assert plot_file(22, 0, 0).exists() == expected
-    assert plot_file(24, 0, 0).exists() == expected
-    assert plot_file(25, 0, 0).exists() == expected
-    assert plot_file(8, 0, 0, 'png').exists() == expected
-    assert plot_file(9, 0, 0, 'png').exists() == expected
-    assert plot_file(9, 1, 0, 'png').exists() == expected
-    assert plot_file(23, 0, 0, 'gif').exists() == expected
-
-    # verify a figure is *not* generated when show isn't called
-    assert not plot_file(20, 0, 0).exists()
-
-    # verify only one figure is generated when there are two plotters,
-    # but show is only called on one
-    assert not plot_file(26, 0, 0).exists()
-    assert plot_file(26, 0, 1).exists() == expected
-
-    # test skip directive
-    assert not plot_file(10, 0, 0).exists()
-
-    # verify external file generated figure
-    cone_file = html_dir / 'plot_cone_00_00.png'
-    assert cone_file.exists() == expected
+    actual_files = {
+        path.name for pattern in ('*.png', '*.gif', '*.vtksz') for path in html_dir.glob(pattern)
+    }
+    assert actual_files == case.expected_files
 
     html_contents = (html_dir / 'some_plots.html').read_bytes()
+
     assert b'# Only a comment' in html_contents
 
     # check if figure caption made it into html file
@@ -120,20 +155,14 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
 
     # check that no skip always exists
     assert b'Plot 16 will never be skipped' in html_contents
-    assert plot_file(16, 0, 0).exists()
 
     # check that enforced skip caption doesn't exist
     assert b'This plot will always be skipped with no caption' not in html_contents
 
     # check conditional execution
     assert (b'This plot may be skipped with no caption' in html_contents) == expected_optional
-    assert plot_file(18, 0, 0).exists() == expected_optional
 
     # check matplotlib plot exists
-    # we're using the same counter, but mpl doesn't add num and subnum
-    plt_num = 19
-    mpl_figure_file = html_dir / f'some_plots-{plt_num}.png'
-    assert mpl_figure_file.exists
     assert b'This is a matplotlib plot.' in html_contents
 
 
