@@ -216,6 +216,16 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
+    if sys.platform == 'win32':
+        # matplotlib's bundled ``plot_directive`` builds its image/download
+        # link paths with ``relpath(...).replace(os.path.sep, '/')``. On
+        # Windows that can leave paths without their separators, which trips
+        # Sphinx's ``image.not_readable`` / ``download.not_readable``
+        # warnings. This is upstream matplotlib behavior in its own
+        # ``.. plot::`` directive, unrelated to pyvista's ``pyvista-plot``
+        # directive, so it's suppressed here rather than letting ``-W`` turn
+        # it into a fatal error.
+        cmd += ['-D', 'suppress_warnings=image.not_readable,download.not_readable']
 
     proc = Popen(
         cmd,
