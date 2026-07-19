@@ -5306,6 +5306,163 @@ def test_enable_custom_trackball_style():
     pl.close()
 
 
+def _make_checkerboard_texture():
+    checkerboard = np.indices((16, 16)).sum(axis=0) % 2
+    image = np.repeat((checkerboard * 255).astype(np.uint8)[:, :, np.newaxis], 3, axis=2)
+    return numpy_to_texture(image)
+
+
+def _add_camera_distortion_scene(pl):
+    floor = pv.Plane(
+        center=(0.0, 0.0, -0.25),
+        direction=(0.0, 0.0, 1.0),
+        i_size=3.0,
+        j_size=3.0,
+        i_resolution=24,
+        j_resolution=24,
+    )
+    actors = [
+        pl.add_mesh(floor, texture=_make_checkerboard_texture()),
+    ]
+
+    meshes = [
+        (pv.ParametricTorus(), (-0.9, -0.65, 0.35), (0.22, 0.22, 0.22), 'orange'),
+        (pv.ParametricKlein(), (0.0, -0.7, 0.45), (0.16, 0.16, 0.16), 'lightskyblue'),
+        (pv.ParametricBoy(), (0.85, -0.55, 0.45), (0.18, 0.18, 0.18), 'gold'),
+        (
+            pv.Sphere(theta_resolution=48, phi_resolution=24),
+            (-0.75, 0.4, 0.35),
+            (0.28, 0.28, 0.28),
+            'tomato',
+        ),
+        (
+            pv.Cone(direction=(0, 0, 1), height=1.0, radius=0.35, resolution=48),
+            (0.15, 0.35, 0.25),
+            (0.55, 0.55, 0.55),
+            'seagreen',
+        ),
+        (
+            pv.Cube(x_length=0.55, y_length=0.55, z_length=0.55),
+            (0.85, 0.45, 0.2),
+            (0.7, 0.7, 0.7),
+            'mediumpurple',
+        ),
+    ]
+    for mesh, position, scale, color in meshes:
+        mesh = mesh.scale(scale, inplace=False).translate(position, inplace=False)
+        actors.append(pl.add_mesh(mesh, color=color, smooth_shading=True))
+
+    pl.add_light(pv.Light(position=(3, -4, 5), focal_point=(0, 0, 0), intensity=0.9))
+    pl.add_light(pv.Light(position=(-4, 3, 2), focal_point=(0, 0, 0), intensity=0.35))
+    pl.camera_position = [(2.7, -3.2, 2.2), (0.0, 0.0, 0.25), (0.0, 0.0, 1.0)]
+    pl.camera.zoom(1.35)
+    return actors
+
+
+def _add_checkerboard_grid_scene(pl):
+    grid = pv.Plane(
+        center=(0.0, 0.0, 0.0),
+        direction=(0.0, 0.0, 1.0),
+        i_size=3.0,
+        j_size=3.0,
+        i_resolution=32,
+        j_resolution=32,
+    )
+    actor = pl.add_mesh(grid, texture=_make_checkerboard_texture())
+    pl.camera_position = [
+        (0, 0, 3.0),
+        (0, 0, 0.0),
+        (0.0, 1.0, 0.0),
+    ]
+    return [actor]
+
+
+def _add_mesh_lattice_scene(pl: pv.Plotter):
+    actors: list[pv.Actor] = []
+    coordinates = np.linspace(-0.9, 0.9, 5)
+    for x_index, x_coord in enumerate(coordinates):
+        for y_index, y_coord in enumerate(coordinates):
+            for z_index, z_coord in enumerate(coordinates):
+                index = x_index + y_index + z_index
+                center = (x_coord, y_coord, z_coord)
+                if index % 3 == 0:
+                    mesh = pv.Sphere(
+                        radius=0.12,
+                        center=center,
+                        theta_resolution=16,
+                        phi_resolution=8,
+                    )
+                    color = 'tomato'
+                elif index % 3 == 1:
+                    mesh = pv.Cube(center=center, x_length=0.22, y_length=0.22, z_length=0.22)
+                    color = 'seagreen'
+                else:
+                    mesh = pv.ParametricTorus(
+                        ringradius=0.12,
+                        crosssectionradius=0.04,
+                        u_res=12,
+                        v_res=8,
+                    ).translate(center, inplace=False)
+                    color = 'gold'
+                actors.append(pl.add_mesh(mesh, color=color, smooth_shading=True, pbr=True, metallic=0.8, roughness=0.5, diffuse=0.4))
+    pl.add_light(pv.Light(position=(0, -4, 3), focal_point=(0, 0, 0), intensity=0.8))
+    pl.add_light(pv.Light(position=(3, -2, 3), focal_point=(0, 0, 0), intensity=0.35))
+    pl.camera_position = [(0.0, -2.4, 0.25), (0.0, 0.0, 0.0), (0.0, 0.0, 1.0)]
+    pl.camera.view_angle = 70.0
+    return actors
+
+
+@pytest.mark.parametrize(
+    'distortion_coeffs',
+    [
+        pytest.param((3.8, 2.1, 0.004, -0.003), id='strong_barrel'),
+        pytest.param((0.18, 0.06, 0.004, -0.003), id='barrel'),
+        pytest.param((-0.22, 0.08, 0.006, -0.005), id='pincushion'),
+        pytest.param((0.08, -0.06, 0.05, -0.07), id='mixed_tangential'),
+    ],
+)
+@pytest.mark.parametrize(
+    'scene_builder',
+    [
+        pytest.param(_add_camera_distortion_scene, id='full_scene'),
+        pytest.param(_add_checkerboard_grid_scene, id='checkerboard_centered'),
+        pytest.param(_add_mesh_lattice_scene, id='mesh_lattice_front'),
+    ],
+)
+def test_camera_distortion(scene_builder, distortion_coeffs, verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    pl = pv.Plotter(window_size=[400, 400], camera_distortion_coefficients=distortion_coeffs)
+    actors = scene_builder(pl)
+    for actor in actors:
+        assert 'camera_distortion' in actor._shader_replacements
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        values = [0.0, 0.0, 0.0, 0.0]
+        assert uniforms.GetUniform4f('u_distortion_coeffs', values)
+        assert values == pytest.approx(distortion_coeffs)
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_zero_matches_default():
+    pl = pv.Plotter(window_size=[400, 400])
+    actors = _add_camera_distortion_scene(pl)
+    default_image = pl.screenshot()
+    for actor in actors:
+        assert 'camera_distortion' not in actor._shader_replacements
+    pl.close()
+
+    pl = pv.Plotter(window_size=[400, 400], camera_distortion_coefficients=(0.0, 0.0, 0.0, 0.0))
+    actors = _add_camera_distortion_scene(pl)
+    zero_image = pl.screenshot()
+    for actor in actors:
+        assert 'camera_distortion' in actor._shader_replacements
+    pl.close()
+
+    difference = np.abs(zero_image.astype(int) - default_image.astype(int))
+    assert difference.mean() < 0.01
+    assert np.count_nonzero(difference > 1) < 20
+
+
 def test_create_axes_orientation_box(verify_image_cache):
     verify_image_cache.warning_value = 250
 
