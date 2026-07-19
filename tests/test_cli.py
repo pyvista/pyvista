@@ -587,7 +587,7 @@ def test_convert_compound_extension(
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
     main(shlex.split(f'convert {str(dst)!r} {out_ext}'))
-    # stem should be bare (no .nii residue), extension replaced
+    # stem should be bare, extension replaced
     assert (tmp_example_dir / f'{dst.name[: -len(in_ext)]}{out_ext}').is_file()
 
 
@@ -1582,9 +1582,9 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         """\
         Usage: pyvista plot PATH... [OPTIONS]
 
-        Plot one or more mesh files in an interactive window that can be
+        Plot one or more mesh files in an interactive window that can be 
         customized with various options.
-        """
+        """  # noqa: W291
     )
     out, err = capture_out_err(capsys)
     assert err == ''
