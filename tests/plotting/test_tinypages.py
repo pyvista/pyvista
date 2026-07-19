@@ -22,45 +22,77 @@ if not system_supports_plotting():
 
 
 ENVIRONMENT_HOOKS = ('PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL')
-DEFAULT_OUTPUT_FILES = frozenset(
+MATPLOTLIB_PLOT_DIRECTIVE_OUTPUT = frozenset()
+PYVISTA_PLOT_DIRECTIVE_OUTPUT = frozenset(
     {
+        'plot_cone.py',
         'plot_cone_00_00.png',
+        'plot_polygon.py',
         'plot_polygon_00_00.png',
         'plot_polygon_00_00.vtksz',
+        'some_autodocs-1.rst',
         'some_autodocs-1_00_00.png',
         'some_autodocs-1_00_00.vtksz',
+        'some_autodocs-2.rst',
         'some_autodocs-2_00_00.png',
         'some_autodocs-2_00_00.vtksz',
+        'some_autodocs-3.rst',
+        'some_autodocs-4.rst',
+        'some_plots-1.rst',
         'some_plots-1_00_00.png',
         'some_plots-1_00_00.vtksz',
+        'some_plots-2.rst',
         'some_plots-2_00_00.png',
         'some_plots-2_00_00.vtksz',
+        'some_plots-3.rst',
+        'some_plots-4.rst',
         'some_plots-4_00_00.png',
         'some_plots-4_00_00.vtksz',
+        'some_plots-5.rst',
+        'some_plots-6.rst',
+        'some_plots-7.rst',
+        'some_plots-8.rst',
         'some_plots-8_00_00.png',
+        'some_plots-9.rst',
         'some_plots-9_00_00.png',
         'some_plots-9_01_00.png',
+        'some_plots-10.rst',
+        'some_plots-11.rst',
+        'some_plots-12.rst',
+        'some_plots-13.rst',
         'some_plots-13_00_00.png',
         'some_plots-13_00_00.vtksz',
         'some_plots-13_01_00.png',
         'some_plots-13_01_00.vtksz',
+        'some_plots-14.rst',
         'some_plots-14_00_00.png',
         'some_plots-14_01_00.png',
+        'some_plots-15.rst',
         'some_plots-15_00_00.png',
         'some_plots-15_00_00.vtksz',
+        'some_plots-16.rst',
         'some_plots-16_00_00.png',
         'some_plots-16_00_00.vtksz',
+        'some_plots-17.rst',
+        'some_plots-18.rst',
         'some_plots-18_00_00.png',
         'some_plots-18_00_00.vtksz',
+        'some_plots-20.rst',
+        'some_plots-21.rst',
         'some_plots-21_00_00.png',
         'some_plots-21_00_00.vtksz',
+        'some_plots-22.rst',
         'some_plots-22_00_00.png',
         'some_plots-22_00_00.vtksz',
+        'some_plots-23.rst',
         'some_plots-23_00_00.gif',
+        'some_plots-24.rst',
         'some_plots-24_00_00.png',
         'some_plots-24_00_00.vtksz',
+        'some_plots-25.rst',
         'some_plots-25_00_00.png',
         'some_plots-25_00_00.vtksz',
+        'some_plots-26.rst',
         'some_plots-26_00_01.png',
         'some_plots-26_00_01.vtksz',
     }
@@ -79,6 +111,15 @@ PLOTS_OPTIONAL = frozenset(
     }
 )
 
+MATPLOTLIB_FILES = frozenset({'some_plots-19.png'})
+
+RST_AND_PY_FILES = frozenset(
+    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith(('.rst', '.py'))
+)
+PNG_AND_VTKSZ_FILES = frozenset(
+    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith(('.png', '.vtksz'))
+)
+
 
 @dataclass(frozen=True)
 class TinyPagesCase:
@@ -91,22 +132,22 @@ CASES = (
     TinyPagesCase(
         id='default',
         env={},
-        expected_files=DEFAULT_OUTPUT_FILES,
+        expected_files=PYVISTA_PLOT_DIRECTIVE_OUTPUT,
     ),
     TinyPagesCase(
         id='plot_skip_false',
         env={'PYVISTA_PLOT_SKIP': 'false'},
-        expected_files=DEFAULT_OUTPUT_FILES,
+        expected_files=PYVISTA_PLOT_DIRECTIVE_OUTPUT,
     ),
     TinyPagesCase(
         id='plot_skip_true',
         env={'PYVISTA_PLOT_SKIP': 'true'},
-        expected_files=PLOTS_NEVER_SKIPPED,
+        expected_files=PLOTS_NEVER_SKIPPED | RST_AND_PY_FILES,
     ),
     TinyPagesCase(
         id='plot_skip_optional_true',
         env={'PYVISTA_PLOT_SKIP_OPTIONAL': 'true'},
-        expected_files=frozenset(DEFAULT_OUTPUT_FILES - PLOTS_OPTIONAL),
+        expected_files=frozenset(PYVISTA_PLOT_DIRECTIVE_OUTPUT - PLOTS_OPTIONAL),
     ),
 )
 
@@ -152,10 +193,21 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase):
 
     assert html_dir.is_dir()
 
-    actual_files = {
-        path.name for pattern in ('*.png', '*.gif', '*.vtksz') for path in html_dir.glob(pattern)
-    }
-    assert actual_files == case.expected_files
+    # All files are saved to the pyvista plot dir
+    pyvista_plot_directive_dir = html_dir.parent / 'pyvista_plot_directive'
+    pyvista_plot_directive_files = {path.name for path in pyvista_plot_directive_dir.iterdir()}
+    assert pyvista_plot_directive_files == case.expected_files
+
+    # Ensure no copies are saved to the html dir itself
+    unexpected_files = [
+        path for ext in ('py', 'rst', 'png', 'vtksz') for path in html_dir.glob(f'*.{ext}')
+    ]
+    assert not unexpected_files, f'Unexpected files in html dir: {unexpected_files}'
+
+    # Sphinx auto-copies to `_images`. Expect matplotlib's directive output to exist as well
+    expected_html_images = (case.expected_files - RST_AND_PY_FILES) | MATPLOTLIB_FILES
+    actual_html_images = {p.name for p in (html_dir / '_images').rglob('*') if p.is_file()}
+    assert actual_html_images == expected_html_images
 
     html_contents = (html_dir / 'some_plots.html').read_bytes()
 
@@ -175,7 +227,7 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase):
 
     # check that caption with tabs works
     assert (
-        html_contents.count(b'Plot 15 uses the caption option with tabbed UI.') == 2
+        html_contents.count(b'Plot 15 uses the caption option with tabbed UI.') == 1
     ) == expected
 
     # check that no skip always exists

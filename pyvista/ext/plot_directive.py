@@ -478,7 +478,6 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
         if pv.PLOT_DIRECTIVE_THEME is not None:
             pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)  # noqa: S102
-
         if function_name is not None:
             ns[function_name]()
     except (Exception, SystemExit) as err:  # pragma: no cover
@@ -564,11 +563,11 @@ def render_figures(
                     if force_static or (plotter.last_vtksz is None):
                         images.append(image_file)
                         continue
-                    vtksz_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
-                    with Path(vtksz_file.filename).open('wb') as f:
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
+                    with Path(image_file.filename).open('wb') as f:
                         f.write(plotter.last_vtksz)
 
-                    images.extend([image_file, vtksz_file])
+                    images.append(image_file)
 
             pv.close_all()  # close and clear all plotters
 
@@ -691,7 +690,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
+    build_dir = str(Path(setup.app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -793,17 +792,8 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     if total_lines:
         state_machine.insert_input(total_lines, source=source_file_name)
 
-    # copy image files to builder's output directory, if necessary
-    Path(dest_dir).mkdir(parents=True, exist_ok=True)
-
-    for _, images in results:
-        for image in images:
-            destimg = str(Path(dest_dir) / image.basename)
-            if image.filename != destimg:
-                shutil.copyfile(image.filename, destimg)
-
     # copy script (if necessary)
-    Path(dest_dir, output_base + source_ext).write_text(
+    Path(build_dir, output_base + source_ext).write_text(
         doctest.script_from_examples(code)
         if source_file_name == rst_file and is_doctest
         else code,
