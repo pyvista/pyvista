@@ -552,26 +552,23 @@ def render_figures(
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                         images.append(image_file)
                         shutil.move(plotter._gif_filename, image_file.filename)
-                    else:
-                        if not plotter._show_called:
-                            continue
-                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
-                        try:
-                            plotter.screenshot(image_file.filename)
-                        except RuntimeError:  # pragma no cover
-                            # ignore closed, unrendered plotters
-                            continue
-                        if force_static or (plotter.last_vtksz is None):
-                            images.append(image_file)
-                            continue
-                        else:
-                            vtksz_file = ImageFile(
-                                output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz'
-                            )
-                            with Path(vtksz_file.filename).open('wb') as f:
-                                f.write(plotter.last_vtksz)
+                        continue
+                    if not plotter._show_called:
+                        continue
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
+                    try:
+                        plotter.screenshot(image_file.filename)
+                    except RuntimeError:  # pragma no cover
+                        # ignore closed, unrendered plotters
+                        continue
+                    if force_static or (plotter.last_vtksz is None):
+                        images.append(image_file)
+                        continue
+                    vtksz_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
+                    with Path(vtksz_file.filename).open('wb') as f:
+                        f.write(plotter.last_vtksz)
 
-                            images.extend([image_file, vtksz_file])
+                    images.extend([image_file, vtksz_file])
 
             pv.close_all()  # close and clear all plotters
 
