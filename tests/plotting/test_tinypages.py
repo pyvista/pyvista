@@ -113,6 +113,40 @@ PLOTS_OPTIONAL = frozenset(
 
 MATPLOTLIB_FILES = frozenset({'some_plots-19.png'})
 
+PARALLEL_IMAGES = {
+    'plot_cone_00_00.png',
+    'plot_polygon_00_00.png',
+    'plot_polygon_00_00.vtksz',
+    'some_autodocs-e52f03c2c2ffaa1c_00_00.png',
+    'some_autodocs-e52f03c2c2ffaa1c_00_00.vtksz',
+    'some_plots-1.png',
+    'some_plots-14c4044831c60ffd_00_00.png',
+    'some_plots-14c4044831c60ffd_00_00.vtksz',
+    'some_plots-174974120ecedd6c_00_00.png',
+    'some_plots-174974120ecedd6c_00_00.vtksz',
+    'some_plots-20cfc06bd259c838_00_00.png',
+    'some_plots-20cfc06bd259c838_00_00.vtksz',
+    'some_plots-3afe6bf6426295e1_00_00.png',
+    'some_plots-3afe6bf6426295e1_00_00.vtksz',
+    'some_plots-7ad3e6918a43db3f_00_00.png',
+    'some_plots-7ad3e6918a43db3f_00_00.vtksz',
+    'some_plots-7fc6e5a3627f84fa_00_00.png',
+    'some_plots-7fc6e5a3627f84fa_00_00.vtksz',
+    'some_plots-8dc162c98f3a4e7e_00_00.png',
+    'some_plots-8dc162c98f3a4e7e_00_00.vtksz',
+    'some_plots-8dc162c98f3a4e7e_01_00.png',
+    'some_plots-8dc162c98f3a4e7e_01_00.vtksz',
+    'some_plots-a0da58d327144b49_00_00.png',
+    'some_plots-a0da58d327144b49_01_00.png',
+    'some_plots-a2221791fdc1a8f6_00_00.gif',
+    'some_plots-a9e7a9568ee7353a_00_00.png',
+    'some_plots-a9e7a9568ee7353a_00_00.vtksz',
+    'some_plots-b5a0cc1b085bd550_00_00.png',
+    'some_plots-b5a0cc1b085bd550_00_00.vtksz',
+    'some_plots-d9da419279a7f8bd_00_01.png',
+    'some_plots-d9da419279a7f8bd_00_01.vtksz',
+}
+
 PY_FILES = frozenset(
     filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith('.py')
 )
@@ -300,10 +334,8 @@ def test_parallel(tmp_path: Path) -> None:
     out, err = proc.communicate()
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
-    # Sphinx auto-copies to `_images`. Expect matplotlib's directive output to exist as well
-    expected = (PYVISTA_PLOT_DIRECTIVE_OUTPUT - PY_FILES) | MATPLOTLIB_FILES
-    actual = {p.name for p in (html_dir / '_images').rglob('*') if p.is_file()}
-    assert actual == expected
+    actual_images = {p.name for p in (html_dir / '_images').rglob('*') if p.is_file()}
+    assert actual_images == PARALLEL_IMAGES
 
 
 @pytest.mark.needs_playwright
