@@ -2707,8 +2707,8 @@ def download_mug(load=True):  # noqa: FBT002
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
-def download_can_parallel_exodus(*, load=True) -> MultiBlock | str:
-    """Download can parallel Exodus dataset.
+def download_parallel_exodus(*, load=True) -> MultiBlock | str:
+    """Download parallel Exodus dataset.
 
     Parameters
     ----------
@@ -2724,25 +2724,25 @@ def download_can_parallel_exodus(*, load=True) -> MultiBlock | str:
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_can_parallel_exodus()
+    >>> dataset = examples.download_parallel_exodus()
     >>> dataset.plot()
 
     .. seealso::
 
-        :ref:`Can Parallel Exodus Dataset <can_dataset>`
+        :ref:`Parallel Exodus Dataset <parallel_exodus_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_can, load=load)
+    return _download_dataset(_dataset_parallel_exodus, load=load)
 
 
-def _can_download():
+def _parallel_exodus_download():
     can = _SingleFileDownloadableDatasetLoader('ParallelExodus/can.e.4.0')
     partitions = [_DownloadableFile(f'ParallelExodus/can.e.4.{i}') for i in range(1, 4)]
     return can, *partitions
 
 
-_dataset_can = _MultiFileDownloadableDatasetLoader(_can_download)
+_dataset_parallel_exodus = _MultiFileDownloadableDatasetLoader(_parallel_exodus_download)
 
 
 @_deprecate_positional_args

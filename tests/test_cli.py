@@ -575,7 +575,7 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     ('download', 'in_ext', 'out_ext'),
     [
         (examples.download_brain_atlas_with_sides, '.nii.gz', '.vti'),
-        (examples.download_can_parallel_exodus, '.e.4.0', '.vtm'),
+        (examples.download_parallel_exodus, '.e.4.0', '.vtm'),
     ],
 )
 def test_convert_compound_extension(

@@ -3865,9 +3865,10 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
 
 class PExodusIIReader(ExodusIIReader):
-    """PExodusIIReader for .e.N.p and .n.N.p files.
+    """PExodusIIReader reads parallel Exodus II and Nemesis files.
 
-    Reads parallel Exodus II files. Wraps :vtk:`vtkPExodusIIReader`.
+    These files have extension .e.N.p and .n.N.p files where N is the number of partitions
+    and p is the partition index. Wraps :vtk:`vtkPExodusIIReader`.
 
     .. versionadded:: 0.49.0
 
@@ -3875,7 +3876,7 @@ class PExodusIIReader(ExodusIIReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_can_parallel_exodus(load=False)
+    >>> filename = examples.download_parallel_exodus(load=False)
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()

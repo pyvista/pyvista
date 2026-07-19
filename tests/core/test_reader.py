@@ -1899,7 +1899,7 @@ def test_exodus_blocks():
 
 
 def test_parallel_exodus_reader():
-    reader = pv.get_reader(examples.download_can_parallel_exodus(load=False))
+    reader = pv.get_reader(examples.download_parallel_exodus(load=False))
     assert isinstance(reader, pv.PExodusIIReader)
 
     element_block_names = ['Unnamed block ID: 1', 'Unnamed block ID: 2']

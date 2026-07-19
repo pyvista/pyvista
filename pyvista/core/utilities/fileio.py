@@ -8,7 +8,6 @@ from collections.abc import Sequence
 import itertools
 import json
 from pathlib import Path
-import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -34,6 +33,7 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    import re
 
     import imageio
     import meshio
@@ -214,12 +214,6 @@ def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
         return get_ext(filename)
 
 
-_PARALLEL_EXODUS_EXT = re.compile(
-    r'(\.(?:e|n)\.\d+\.\d+)$',
-    re.IGNORECASE,
-)
-
-
 def get_ext(filename: str | Path) -> str:
     """Extract the extension of the filename.
 
@@ -240,8 +234,11 @@ def get_ext(filename: str | Path) -> str:
     """
     path = Path(filename)
 
-    if match := _PARALLEL_EXODUS_EXT.search(path.name):
-        return match.group(1).lower()
+    from .reader import PExodusIIReader  # noqa: PLC0415
+
+    for pattern in PExodusIIReader.extension_patterns:
+        if match := pattern.search(path.name):
+            return match.group().lower()
 
     base = str(path.parent / path.stem)
     ext = path.suffix
