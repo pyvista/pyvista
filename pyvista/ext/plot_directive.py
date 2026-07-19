@@ -703,17 +703,14 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.join(  # noqa: PTH118
-        relpath(setup.confdir, rst_dir),
-        source_rel_dir,
-    ).replace(os.path.sep, '/')
+    dest_dir_link = Path(relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
     try:
-        build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
+        build_dir_link = relpath(build_dir, rst_dir)
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
         build_dir_link = build_dir
-    _ = dest_dir_link + '/' + output_base + ext_out
+    build_dir_link = Path(build_dir_link).as_posix()
 
     # make figures
     errors = []
