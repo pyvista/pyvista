@@ -25,27 +25,57 @@ ENVIRONMENT_HOOKS = ('PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL')
 DEFAULT_OUTPUT_FILES = frozenset(
     {
         'plot_cone_00_00.png',
+        'plot_polygon_00_00.png',
+        'plot_polygon_00_00.vtksz',
+        'some_autodocs-1_00_00.png',
         'some_autodocs-1_00_00.vtksz',
+        'some_autodocs-2_00_00.png',
         'some_autodocs-2_00_00.vtksz',
+        'some_plots-1_00_00.png',
         'some_plots-1_00_00.vtksz',
+        'some_plots-2_00_00.png',
         'some_plots-2_00_00.vtksz',
+        'some_plots-4_00_00.png',
         'some_plots-4_00_00.vtksz',
         'some_plots-8_00_00.png',
         'some_plots-9_00_00.png',
         'some_plots-9_01_00.png',
+        'some_plots-13_00_00.png',
         'some_plots-13_00_00.vtksz',
+        'some_plots-13_01_00.png',
         'some_plots-13_01_00.vtksz',
         'some_plots-14_00_00.png',
         'some_plots-14_01_00.png',
+        'some_plots-15_00_00.png',
         'some_plots-15_00_00.vtksz',
+        'some_plots-16_00_00.png',
         'some_plots-16_00_00.vtksz',
+        'some_plots-18_00_00.png',
         'some_plots-18_00_00.vtksz',
+        'some_plots-21_00_00.png',
         'some_plots-21_00_00.vtksz',
+        'some_plots-22_00_00.png',
         'some_plots-22_00_00.vtksz',
         'some_plots-23_00_00.gif',
+        'some_plots-24_00_00.png',
         'some_plots-24_00_00.vtksz',
+        'some_plots-25_00_00.png',
         'some_plots-25_00_00.vtksz',
+        'some_plots-26_00_01.png',
         'some_plots-26_00_01.vtksz',
+    }
+)
+PLOTS_NEVER_SKIPPED = frozenset(
+    {
+        'some_plots-16_00_00.png',
+        'some_plots-16_00_00.vtksz',
+    }
+)
+
+PLOTS_OPTIONAL = frozenset(
+    {
+        'some_plots-18_00_00.png',
+        'some_plots-18_00_00.vtksz',
     }
 )
 
@@ -54,33 +84,29 @@ DEFAULT_OUTPUT_FILES = frozenset(
 class TinyPagesCase:
     id: str
     env: dict[str, str]
-    missing_files: frozenset[str]
-
-    @property
-    def expected_files(self) -> frozenset[str]:
-        return DEFAULT_OUTPUT_FILES - self.missing_files
+    expected_files: frozenset[str]
 
 
 CASES = (
     TinyPagesCase(
         id='default',
         env={},
-        missing_files=frozenset(),
+        expected_files=DEFAULT_OUTPUT_FILES,
     ),
     TinyPagesCase(
         id='plot_skip_false',
         env={'PYVISTA_PLOT_SKIP': 'false'},
-        missing_files=frozenset(),
+        expected_files=DEFAULT_OUTPUT_FILES,
     ),
     TinyPagesCase(
         id='plot_skip_true',
         env={'PYVISTA_PLOT_SKIP': 'true'},
-        missing_files=DEFAULT_OUTPUT_FILES - frozenset({'some_plots-16_00_00.vtksz'}),
+        expected_files=PLOTS_NEVER_SKIPPED,
     ),
     TinyPagesCase(
         id='plot_skip_optional_true',
         env={'PYVISTA_PLOT_SKIP_OPTIONAL': 'true'},
-        missing_files=frozenset({'some_plots-18_00_00.vtksz'}),
+        expected_files=frozenset(DEFAULT_OUTPUT_FILES - PLOTS_OPTIONAL),
     ),
 )
 
@@ -150,7 +176,7 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase):
 
     # check that caption with tabs works
     assert (
-        html_contents.count(b'Plot 15 uses the caption option with tabbed UI.') == 1
+        html_contents.count(b'Plot 15 uses the caption option with tabbed UI.') == 2
     ) == expected
 
     # check that no skip always exists

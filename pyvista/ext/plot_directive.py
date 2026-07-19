@@ -71,13 +71,13 @@ The ``pyvista-plot`` directive supports the following options:
     skip : bool, default: True
         Whether to skip execution of this directive. If no argument is provided
         i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
-        behaviour is controlled by the ``plot_skip`` boolean variable in
+        behaviour is controlled by the ``pyvista_plot_skip`` boolean variable in
         :file:`conf.py`.  Note that, if specified, this option overrides the
-        ``plot_skip`` configuration.
+        ``pyvista_plot_skip`` configuration.
 
     optional : None
         This flag marks the directive for *conditional* execution. Whether the
-        directive is executed is controlled by the ``plot_skip_optional``
+        directive is executed is controlled by the ``pyvista_plot_skip_optional``
         boolean variable in :file:`conf.py`.
 
 Additionally, this directive supports all the options of the `image`
@@ -456,7 +456,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
+def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a
@@ -478,6 +478,9 @@ def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
         if pv.PLOT_DIRECTIVE_THEME is not None:
             pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)  # noqa: S102
+
+        if function_name is not None:
+            ns[function_name]()
     except (Exception, SystemExit) as err:  # pragma: no cover
         # Annotate traceback with source file and line
         tb = traceback.format_exc()
@@ -547,6 +550,7 @@ def render_figures(
                 for j, (_, plotter) in enumerate(figures.items()):
                     if plotter._gif_filename is not None:
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
+                        images.append(image_file)
                         shutil.move(plotter._gif_filename, image_file.filename)
                     else:
                         if not plotter._show_called:
@@ -561,12 +565,13 @@ def render_figures(
                             images.append(image_file)
                             continue
                         else:
-                            image_file = ImageFile(
+                            vtksz_file = ImageFile(
                                 output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz'
                             )
-                            with Path(image_file.filename).open('wb') as f:
+                            with Path(vtksz_file.filename).open('wb') as f:
                                 f.write(plotter.last_vtksz)
-                    images.append(image_file)
+
+                            images.extend([image_file, vtksz_file])
 
             pv.close_all()  # close and clear all plotters
 
