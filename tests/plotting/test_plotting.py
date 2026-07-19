@@ -5404,7 +5404,17 @@ def _add_mesh_lattice_scene(pl: pv.Plotter):
                         v_res=8,
                     ).translate(center, inplace=False)
                     color = 'gold'
-                actors.append(pl.add_mesh(mesh, color=color, smooth_shading=True, pbr=True, metallic=0.8, roughness=0.5, diffuse=0.4))
+                actors.append(
+                    pl.add_mesh(
+                        mesh,
+                        color=color,
+                        smooth_shading=True,
+                        pbr=True,
+                        metallic=0.8,
+                        roughness=0.5,
+                        diffuse=0.4,
+                    )
+                )
     pl.add_light(pv.Light(position=(0, -4, 3), focal_point=(0, 0, 0), intensity=0.8))
     pl.add_light(pv.Light(position=(3, -2, 3), focal_point=(0, 0, 0), intensity=0.35))
     pl.camera_position = [(0.0, -2.4, 0.25), (0.0, 0.0, 0.0), (0.0, 0.0, 1.0)]

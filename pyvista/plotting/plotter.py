@@ -376,7 +376,7 @@ class BasePlotter(_BoundsSizeMixin):
         lighting: LightingOptions | None = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
-        camera_distortion_coefficients: Sequence[float]|None = None,
+        camera_distortion_coefficients: Sequence[float] | None = None,
         **kwargs,
     ) -> None:
         """Initialize base plotter."""
@@ -485,7 +485,7 @@ class BasePlotter(_BoundsSizeMixin):
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
 
-        self._distortion_coeffs: Sequence[float]|None = camera_distortion_coefficients
+        self._distortion_coeffs: Sequence[float] | None = camera_distortion_coefficients
 
         self._initialized = True
         self._suppress_rendering = False
@@ -7982,7 +7982,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         theme: Theme | None = None,
         image_scale: int | None = None,
         stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
-        camera_distortion_coefficients: Sequence[float] | None = None
+        camera_distortion_coefficients: Sequence[float] | None = None,
     ) -> None:
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -7998,7 +7998,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             lighting=lighting,
             theme=theme,
             image_scale=image_scale,
-            camera_distortion_coefficients=camera_distortion_coefficients
+            camera_distortion_coefficients=camera_distortion_coefficients,
         )
         # reset partial initialization flag
         self._initialized = False
