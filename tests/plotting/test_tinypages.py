@@ -301,9 +301,9 @@ def test_parallel(tmp_path: Path) -> None:
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     # Sphinx auto-copies to `_images`. Expect matplotlib's directive output to exist as well
-    n_expected = len((PYVISTA_PLOT_DIRECTIVE_OUTPUT - PY_FILES) | MATPLOTLIB_FILES)
-    n_actual = len({p.name for p in (html_dir / '_images').rglob('*') if p.is_file()})
-    assert n_actual == n_expected
+    expected = (PYVISTA_PLOT_DIRECTIVE_OUTPUT - PY_FILES) | MATPLOTLIB_FILES
+    actual = {p.name for p in (html_dir / '_images').rglob('*') if p.is_file()}
+    assert actual == expected
 
 
 @pytest.mark.needs_playwright
