@@ -113,11 +113,14 @@ PLOTS_OPTIONAL = frozenset(
 
 MATPLOTLIB_FILES = frozenset({'some_plots-19.png'})
 
-RST_AND_PY_FILES = frozenset(
-    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith(('.rst', '.py'))
+PY_FILES = frozenset(
+    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith('.py')
 )
-PNG_AND_VTKSZ_FILES = frozenset(
-    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith(('.png', '.vtksz'))
+PNG_FILES = frozenset(
+    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith('.png')
+)
+VTKSZ_FILES = frozenset(
+    filename for filename in PYVISTA_PLOT_DIRECTIVE_OUTPUT if filename.endswith('.vtksz')
 )
 
 
@@ -142,7 +145,7 @@ CASES = (
     TinyPagesCase(
         id='plot_skip_true',
         env={'PYVISTA_PLOT_SKIP': 'true'},
-        expected_files=PLOTS_NEVER_SKIPPED | RST_AND_PY_FILES,
+        expected_files=PLOTS_NEVER_SKIPPED | PY_FILES,
     ),
     TinyPagesCase(
         id='plot_skip_optional_true',
@@ -217,7 +220,7 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase):
     assert not unexpected_files, f'Unexpected files in html dir: {unexpected_files}'
 
     # Sphinx auto-copies to `_images`. Expect matplotlib's directive output to exist as well
-    expected_html_images = (case.expected_files - RST_AND_PY_FILES) | MATPLOTLIB_FILES
+    expected_html_images = (case.expected_files - PY_FILES) | MATPLOTLIB_FILES
     actual_html_images = {p.name for p in (html_dir / '_images').rglob('*') if p.is_file()}
     assert actual_html_images == expected_html_images
 
@@ -297,7 +300,10 @@ def test_parallel(tmp_path: Path) -> None:
     out, err = proc.communicate()
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
-    assert len(list(html_dir.glob('**/*.png'))) == 39
+    # Sphinx auto-copies to `_images`. Expect matplotlib's directive output to exist as well
+    n_expected = len((PYVISTA_PLOT_DIRECTIVE_OUTPUT - PY_FILES) | MATPLOTLIB_FILES)
+    n_actual = len({p.name for p in (html_dir / '_images').rglob('*') if p.is_file()})
+    assert n_actual == n_expected
 
 
 @pytest.mark.needs_playwright
