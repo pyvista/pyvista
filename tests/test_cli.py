@@ -17,13 +17,6 @@ from typing import get_args
 
 import numpy as np
 import pytest
-
-from pyvista._cli.plot import _plot as cli_plot
-
-needs_pyvista_zstd = pytest.mark.skipif(
-    importlib.util.find_spec('pyvista_zstd') is None,
-    reason='pyvista-zstd is not installed (registers the .pv extension)',
-)
 from pytest_cases import case
 from pytest_cases import filters
 from pytest_cases import fixture
@@ -36,6 +29,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.__main__ import CLI_APP
 from pyvista.__main__ import main
+from pyvista._cli.plot import _plot as cli_plot
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from tests.core.test_dataobject_filters import _add_vtk_array
 
@@ -44,6 +38,11 @@ if TYPE_CHECKING:
 
     from pytest_cases.case_parametrizer_new import Case
     from pytest_mock import MockerFixture
+
+needs_pyvista_zstd = pytest.mark.skipif(
+    importlib.util.find_spec('pyvista_zstd') is None,
+    reason='pyvista-zstd is not installed (registers the .pv extension)',
+)
 
 COMMANDS_WITH_PATHS = [  # Commands that accept positional-only path or paths
     'convert',

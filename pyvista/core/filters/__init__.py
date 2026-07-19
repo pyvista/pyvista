@@ -33,6 +33,15 @@ import pyvista as pv
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
+from .composite import CompositeFilters as CompositeFilters
+from .data_object import DataObjectFilters as DataObjectFilters
+from .data_set import DataSetFilters as DataSetFilters
+from .image_data import ImageDataFilters as ImageDataFilters
+from .poly_data import PolyDataFilters as PolyDataFilters
+from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters
+from .structured_grid import StructuredGridFilters as StructuredGridFilters
+from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters
+
 if TYPE_CHECKING:
     from pyvista import _vtk
 
@@ -88,29 +97,3 @@ def _get_output(
     if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
-
-
-from .composite import CompositeFilters
-from .data_object import DataObjectFilters
-
-# Re-export submodules to maintain the same import paths
-# before filters.py was split into submodules
-from .data_set import DataSetFilters
-from .image_data import ImageDataFilters
-from .poly_data import PolyDataFilters
-from .rectilinear_grid import RectilinearGridFilters
-from .structured_grid import StructuredGridFilters
-from .unstructured_grid import UnstructuredGridFilters
-
-__all__ = [
-    'CompositeFilters',
-    'DataObjectFilters',
-    'DataSetFilters',
-    'ImageDataFilters',
-    'PolyDataFilters',
-    'RectilinearGridFilters',
-    'StructuredGridFilters',
-    'UnstructuredGridFilters',
-    '_get_output',
-    '_update_alg',
-]
