@@ -234,7 +234,7 @@ def test_parallel(tmp_path: Path) -> None:
     out, err = proc.communicate()
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
-    assert len(list(html_dir.glob('**/*.png'))) == 28
+    assert len(list(html_dir.glob('**/*.png'))) == 39
 
 
 @pytest.mark.needs_playwright
