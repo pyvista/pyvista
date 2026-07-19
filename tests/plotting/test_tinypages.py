@@ -112,7 +112,6 @@ CASES = (
 
 
 @flaky_test(exceptions=(AssertionError,))
-@pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('case', CASES, ids=lambda case: case.id)
 def test_tinypages(tmp_path: Path, case: TinyPagesCase):
     """Test tinypages build using pyvista's plot_directive extension."""
