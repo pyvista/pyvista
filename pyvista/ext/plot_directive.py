@@ -671,7 +671,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
             output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
-    if Path(output_base).suffix in ('.py', '.rst', '.txt'):
+    if Path(output_base).suffix in ('.py', '.rst', '.txt'):  # pragma: no branch
         # Python code is extracted from these inputs
         ext_out = '.py'
         output_base = base
