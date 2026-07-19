@@ -671,11 +671,12 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
             output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
-    source_ext = Path(output_base).suffix
-    if source_ext in ('.py', '.rst', '.txt'):
+    if Path(output_base).suffix in ('.py', '.rst', '.txt'):
+        # Python code is extracted from these inputs
+        ext_out = '.py'
         output_base = base
     else:
-        source_ext = ''
+        ext_out = ''
 
     # ensure that LaTeX includegraphics doesn't choke in foo.bar.pdf filenames
     output_base = output_base.replace('.', '-')
@@ -712,7 +713,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
         build_dir_link = build_dir
-    _ = dest_dir_link + '/' + output_base + source_ext
+    _ = dest_dir_link + '/' + output_base + ext_out
 
     # make figures
     errors = []
@@ -793,7 +794,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         state_machine.insert_input(total_lines, source=source_file_name)
 
     # copy script (if necessary)
-    Path(build_dir, output_base + source_ext).write_text(
+    Path(build_dir, output_base + ext_out).write_text(
         doctest.script_from_examples(code)
         if source_file_name == rst_file and is_doctest
         else code,
