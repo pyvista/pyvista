@@ -33,15 +33,6 @@ import pyvista as pv
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
-from .composite import CompositeFilters as CompositeFilters
-from .data_object import DataObjectFilters as DataObjectFilters
-from .data_set import DataSetFilters as DataSetFilters
-from .image_data import ImageDataFilters as ImageDataFilters
-from .poly_data import PolyDataFilters as PolyDataFilters
-from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters
-from .structured_grid import StructuredGridFilters as StructuredGridFilters
-from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters
-
 if TYPE_CHECKING:
     from pyvista import _vtk
 
@@ -97,3 +88,13 @@ def _get_output(
     if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
+
+
+from .composite import CompositeFilters as CompositeFilters  # noqa: E402
+from .data_object import DataObjectFilters as DataObjectFilters  # noqa: E402
+from .data_set import DataSetFilters as DataSetFilters  # noqa: E402
+from .image_data import ImageDataFilters as ImageDataFilters  # noqa: E402
+from .poly_data import PolyDataFilters as PolyDataFilters  # noqa: E402
+from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters  # noqa: E402
+from .structured_grid import StructuredGridFilters as StructuredGridFilters  # noqa: E402
+from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters  # noqa: E402
