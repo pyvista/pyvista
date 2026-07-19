@@ -105,7 +105,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @classmethod
     def _get_extension_pattern_mappings(
         cls,
-    ) -> list[tuple[re.Pattern[str], type]]:
+    ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
         return []
 
     @_classproperty
@@ -132,7 +132,9 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         """
         patterns = {
-            pattern for pattern, typ in cls._get_extension_pattern_mappings() if typ is cls
+            pattern
+            for pattern, typ in cls._get_extension_pattern_mappings()
+            if typ is cls  # type: ignore[comparison-overlap, redundant-expr]
         }
         return tuple(sorted(patterns, key=lambda pattern: pattern.pattern))
 

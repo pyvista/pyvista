@@ -63,7 +63,7 @@ if TYPE_CHECKING:
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
-_CLASS_READER_PATTERNS: tuple[str, tuple[re.Pattern[str], type[BaseReader[Any]]]] = ()
+_CLASS_READER_PATTERNS: list[tuple[str, re.Pattern[str], type[BaseReader[Any]]]] = []
 
 # Covariant TypeVar for :class:`BaseReader`'s output type. Covariant is
 # correct because ``BaseReader`` only *produces* values of ``T_Output``
@@ -144,7 +144,7 @@ def get_reader(filename, force_ext=None):
         return reader_class(filename)
 
     if Path(filename).is_dir():
-        files = Path(filename).iterdir()
+        files = list(Path(filename).iterdir())
         if files and all(file.suffix == '.dcm' for file in files):
             return DICOMReader(filename)
 
@@ -258,7 +258,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     @classmethod
     def _get_extension_pattern_mappings(
         cls,
-    ) -> list[tuple[re.Pattern[str], type]]:
+    ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
         return [(pattern, reader) for _, pattern, reader in _CLASS_READER_PATTERNS]
 
     def show_progress(self, msg=None) -> None:
@@ -4447,10 +4447,10 @@ CLASS_READERS = {
 # Match these against the filename only so dots in parent directories cannot
 # influence reader selection. Parallel Exodus uses ``.e.N.P`` and ``.n.N.P``,
 # where ``N`` is the number of partitions and ``P`` is the partition index.
-_CLASS_READER_PATTERNS = (
+_CLASS_READER_PATTERNS = [
     ('.e.N.p', re.compile(r'\.(?:e)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
     ('.n.N.p', re.compile(r'\.(?:n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
-)
+]
 
 
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
