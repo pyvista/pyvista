@@ -5,11 +5,13 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
+from functools import cached_property
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -18,12 +20,14 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
 from .formatting_html import _data_array_section
@@ -1985,6 +1989,11 @@ class DataSet(DataSetFilters, DataObject):
 
         See: https://github.com/pyvista/pyvista-support/issues/107
 
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkPointLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
         Parameters
         ----------
         point : sequence[float]
@@ -2005,6 +2014,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
         :ref:`point_cloud_distance_example`
         :ref:`point_cloud_neighbors_example`
 
@@ -2034,9 +2045,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = '`n` must be a positive integer.'
             raise ValueError(msg)
 
-        locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
+        locator = self._point_locator
         if n > 1:
             id_list = _vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)  # type: ignore[arg-type]
@@ -2050,6 +2059,11 @@ class DataSet(DataSetFilters, DataObject):
         return_closest_point: bool = False,  # noqa: FBT001, FBT002
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
         """Find index of closest cell in this mesh to the given point.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2092,6 +2106,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
         :ref:`distance_between_surfaces_example`
 
         Examples
@@ -2149,11 +2165,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
-
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
-
+        locator = self._static_cell_locator
         cell = _vtk.vtkGenericCell()
 
         closest_cells: list[int] = []
@@ -2184,6 +2196,11 @@ class DataSet(DataSetFilters, DataObject):
     ) -> int | NumpyArray[int]:
         """Find index of a cell that contains the given point.
 
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
         Parameters
         ----------
         point : VectorLike[float] | MatrixLike[float],
@@ -2206,6 +2223,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2235,10 +2254,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
-
+        locator = self._static_cell_locator
         containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if singular else np.array(containing_cells)
 
@@ -2246,11 +2262,16 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
     ) -> NumpyArray[int]:
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2260,8 +2281,10 @@ class DataSet(DataSetFilters, DataObject):
         pointb : VectorLike
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            :attr:`numpy.finfo`.
 
         Returns
         -------
@@ -2283,13 +2306,16 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
         DataSet.find_cells_intersecting_line
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
-        array([  86,   87, 1652, 1653])
+        >>> cell_ids = mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> sorted(cell_ids.tolist())
+        [86, 87, 1652, 1653]
 
         """
         if np.array(pointa).size != 3:
@@ -2298,11 +2324,11 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
+        if tolerance is None:
+            tolerance = np.finfo(np.float32).eps
+
         id_list = _vtk.vtkIdList()
-        locator.FindCellsAlongLine(
+        self._static_cell_locator.FindCellsAlongLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
@@ -2314,11 +2340,16 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
     ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2328,8 +2359,10 @@ class DataSet(DataSetFilters, DataObject):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            :attr:`numpy.finfo`.
 
         Returns
         -------
@@ -2344,39 +2377,177 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
         DataSet.find_cells_along_line
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
-        array([  86, 1653])
+        >>> cell_ids = mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> sorted(cell_ids.tolist())
+        [86, 1653]
 
         """
-        if np.array(pointa).size != 3:
+        return self.intersect_with_line(pointa, pointb, tolerance=tolerance)[1]
+
+    def intersect_with_line(
+        self: Self,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        *,
+        tolerance: float | None = None,
+        deduplicate_points: bool = False,
+    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+        """Locate points and cell ids that intersect a line.
+
+        .. versionadded:: 0.49
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Length 3 coordinate of the start of the line.
+
+        pointb : sequence[float]
+            Length 3 coordinate of the end of the line.
+
+        tolerance : float, optional
+            The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            :attr:`numpy.finfo`.
+
+        deduplicate_points : bool, default: False
+            By default, duplicate intersection points may be returned if an intersection point
+            is shared by multiple cells; in this case, the same point is returned for each cell.
+            Set this to ``True`` to only return a set of unique intersection points.
+
+        Returns
+        -------
+        numpy.ndarray, numpy.ndarray
+            Tuple of arrays. The first is a 2D float array of intersection points, the second is
+            a 1D int array with indices of the cell IDs corresponding to the intersection points.
+            The number of intersection points always matches the number of intersection cell ids.
+
+        See Also
+        --------
+        PolyDataFilters.ray_trace
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
+        DataSet.find_cells_along_line
+
+        Examples
+        --------
+        Intersect a line with a surface mesh.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> points, cell_ids = mesh.intersect_with_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> points
+        array([[0.4992667, 0.       , 0.       ],
+               [0.4992667, 0.       , 0.       ]], dtype=float32)
+
+        >>> cell_ids  # doctest:+SKIP
+        array([   86, 1653])
+
+        Observe that `two` identical points are returned since two adjacent cells were intersected.
+        Use ``deduplicate_points`` to return unique intersection points only.
+
+        >>> points, cell_ids = mesh.intersect_with_line(
+        ...     [0.0, 0, 0], [1.0, 0, 0], deduplicate_points=True
+        ... )
+        >>> points
+        array([[0.4992667, 0.       , 0.       ]], dtype=float32)
+
+        >>> cell_ids  # doctest:+SKIP
+        array([86])
+
+        Intersect a line with a 3D cell. Here we create a single
+        :attr:`~pyvista.CellType.HEXAHEDRON` from :class:`~pyvista.ImageData`.
+
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 2)).to_hexahedra()
+
+        Intersecting the cell returns a single intersection point where the line first "hits" the
+        cell.
+
+        >>> pointa, pointb = (-1.0, 0.5, 0.5), (1.0, 0.5, 0.5)
+        >>> mesh.intersect_with_line(pointa, pointb)
+        (array([[0. , 0.5, 0.5]]), array([0]))
+
+        Reversing the point order returns a `different` intersection point on the opposide side
+        of the cell.
+
+        >>> mesh.intersect_with_line(pointb, pointa)
+        (array([[1. , 0.5, 0.5]]), array([0]))
+
+        Converting the cell to a surface mesh will yield `both` intersections since each face
+        is now a separate cell.
+
+        >>> mesh.extract_surface(algorithm=None).intersect_with_line(pointa, pointb)
+        (array([[0. , 0.5, 0.5],
+               [1. , 0.5, 0.5]]), array([2, 3]))
+
+        An intersection is still found if the line coincides with one of the cell's edges.
+
+        >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
+        (array([[0., 0., 0.]]), array([0]))
+
+        Similarly, intersections are found when the line is coincident with planar cells.
+
+        >>> mesh = pv.Plane(i_resolution=2, j_resolution=2)
+        >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
+        (array([[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]], dtype=float32), array([0, 1, 2, 3]))
+
+        """
+        if (pointa := np.asarray(pointa)).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)
-        if np.array(pointb).size != 3:
+        if (pointb := np.asarray(pointb)).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
-        locator.BuildLocator()
+        if tolerance is None:
+            tolerance = np.finfo(np.float32).eps
+
+        # Init output
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
-        cell = _vtk.vtkGenericCell()
-        locator.IntersectWithLine(
+        dtype = self.points.dtype
+        if dtype == np.float64:
+            points.SetDataTypeToDouble()
+        else:
+            points.SetDataTypeToFloat()
+
+        self._static_cell_locator.IntersectWithLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
             points,
             id_list,
-            cell,
         )
-        return vtk_id_list_to_array(id_list)
+        intersection_points = _vtk.vtk_to_numpy(points.GetData())
+        intersection_cells = vtk_id_list_to_array(id_list)
+        if intersection_points.size and deduplicate_points:
+            _, idx = np.unique(intersection_points, return_index=True, axis=0)
+            intersection_points = intersection_points[idx][::-1]
+            intersection_cells = intersection_cells[idx][::-1]
+        return intersection_points, intersection_cells
 
     def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkCellTreeLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2395,6 +2566,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2406,11 +2579,8 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(bounds).size != 6:
             msg = 'Bounds must be a length six tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellTreeLocator()
-        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
-        locator.BuildLocator()
         id_list = _vtk.vtkIdList()
-        locator.FindCellsWithinBounds(list(bounds), id_list)
+        self._cell_tree_locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
     def get_cell(self: Self, index: int) -> Cell:
@@ -3545,3 +3715,49 @@ class DataSet(DataSetFilters, DataObject):
         center = [0.0, 0.0, 0.0]
         r2 = grid.GetCell(0).ComputeBoundingSphere(center)
         return float(r2**0.5), (center[0], center[1], center[2])
+
+    @cached_property
+    def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkStaticCellLocator)
+
+    @cached_property
+    def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkCellTreeLocator)
+
+    @cached_property
+    def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkPointLocator)
+
+    @cached_property
+    def _obb_tree(self) -> _vtk.vtkOBBTree:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        msg = (
+            'The obbTree property is deprecated. This property is primarily for internal use only,'
+            '\nand the vtkOBBTree locator does not reliably find intersections in some cases.'
+        )
+        warn_external(msg, PyVistaDeprecationWarning)
+        # Deprecated in 0.49, remove in 0.52
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Remove PolyData.obbTree and DataSet._obb_tree properties.'
+            raise RuntimeError(msg)
+        return _build_locator(self, _vtk.vtkOBBTree)
+
+
+_LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)
+
+
+def _build_locator(mesh: DataSet, locator: type[_LocatorType]) -> _LocatorType:
+    if issubclass(locator, _vtk.vtkAbstractPointLocator):
+        if mesh.n_points < 1:
+            msg = f'Building {locator.__name__} requires a dataset with points.'
+            raise ValueError(msg)
+    elif mesh.n_points < 1 or mesh.n_cells < 1:
+        msg = f'Building {locator.__name__} requires a dataset with points and cells.'
+        raise ValueError(msg)
+    instance = locator()
+    instance.SetDataSet(mesh)
+    instance.BuildLocator()
+    return instance

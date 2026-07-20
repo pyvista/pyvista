@@ -891,7 +891,12 @@ class DataObject(
 
         # Add this object's data to the state dictionary
         state_dict = serialized[1][0]
-        state_dict['_PYVISTA_STATE_DICT'] = self.__dict__.copy()
+        data_dict = self.__dict__.copy()
+        # Any cached vtk objects (e.g. vtkLocator objects) must be removed since
+        # these cannot be serialized
+        _clear_vtk_objects_from_dict(data_dict)
+
+        state_dict['_PYVISTA_STATE_DICT'] = data_dict
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
@@ -1077,3 +1082,14 @@ class DataObject(
         alg.SetInputDataObject(self)
         alg.Update()
         return wrap(alg.GetOutput())  # type:ignore[return-value]
+
+    def __del__(self) -> None:
+        """Delete the object."""
+        # Delete any cached vtk objects (locators, glyph geom, etc.)
+        _clear_vtk_objects_from_dict(self.__dict__)
+
+
+def _clear_vtk_objects_from_dict(dict_: dict[str, Any]) -> None:
+    for attr, value in tuple(dict_.items()):
+        if isinstance(value, _vtk.vtkObjectBase):
+            del dict_[attr]
