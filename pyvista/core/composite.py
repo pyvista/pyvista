@@ -2310,10 +2310,7 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-            self.CompositeShallowCopy(to_copy)
-        else:
-            self.ShallowCopy(to_copy)
+        self.CompositeShallowCopy(to_copy)
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks

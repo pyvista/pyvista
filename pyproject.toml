@@ -28,7 +28,7 @@ dependencies = [
   'vtk!=9.4.0',
   'vtk!=9.4.1',
   'vtk<9.7.0',
-  'vtk>=9.2.2',
+  'vtk>=9.3.1',
 ]
 description = '3D visualization and mesh analysis for science and engineering.'
 dynamic = ['version']
@@ -90,6 +90,7 @@ test = [
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-zstd>=0.2.3,<0.3.0',
+  'refleak>=0.2.1,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',

@@ -458,6 +458,59 @@ def test_actors_after_close():
     pl.increment_point_size_and_line_width(1)
 
 
+def _add_self_referencing_observer(pl, vtk_obj):
+    """Add an observer whose callback closes over ``pl``.
+
+    VTK's observer/command storage holds the callback (and anything it closes
+    over) in a way that isn't visible to Python's cyclic garbage collector.
+    Without that, plain refcounting already collects an unreferenced ``pl`` --
+    an observer like this is what makes a *missing* ``close()`` cleanup step
+    actually manifest as a real, unreachable leak instead of getting silently
+    swept up anyway.
+    """
+
+    def _cb(*_args):
+        return pl
+
+    vtk_obj.AddObserver('ModifiedEvent', _cb)
+
+
+def test_border_actor_gc_after_close():
+    # Regression test: `Renderer.close()` must clear `_border_actor` (in addition
+    # to `_bounding_box`/`_box_object`/`_marker_actor`, which it already cleared)
+    # so the border actor can be garbage-collected instead of lingering after close.
+    pl = pv.Plotter(border=True)
+    _add_self_referencing_observer(pl, pl.renderer._border_actor)
+    pl.close()
+
+
+def test_render_passes_gc_after_close():
+    # Regression test: `Renderer.close()` must clean up render passes (e.g. the
+    # EDL pass enabled below) the same way `deep_clean()` already does, so their
+    # VTK objects don't linger after close.
+    pl = pv.Plotter()
+    pl.enable_eye_dome_lighting()
+    _add_self_referencing_observer(pl, pl.renderer._render_passes._edl_pass)
+    pl.close()
+
+
+def test_actors_removed_from_scene_on_close():
+    # Regression test: `Renderer.close()` must detach all props from the
+    # underlying vtkRenderer's actual scene graph (e.g. via `RemoveAllViewProps()`),
+    # not just drop pyvista's own Python-side references to them. VTK's own C++
+    # reference counting otherwise keeps a still-attached prop -- and everything
+    # it owns, like the cube axes actor's axis label arrays below -- alive
+    # regardless of whether pyvista still holds a Python attribute pointing to it.
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    cube_axes_actor = pl.show_bounds()
+    _add_self_referencing_observer(pl, cube_axes_actor)
+
+    assert pl.renderer.GetViewProps().GetNumberOfItems() > 0
+    pl.close()
+    assert pl.renderer.GetViewProps().GetNumberOfItems() == 0
+
+
 def test_background_renderer_resize_after_close():
     # Regression test for #8419: a background renderer can be closed (its `_actors`
     # reset to None) while the parent plotter and its render window are still alive,
