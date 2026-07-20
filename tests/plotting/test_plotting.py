@@ -1419,7 +1419,6 @@ def test_axes():
     pl.show()
 
 
-@pytest.mark.skip_check_gc
 def test_box_axes_removed(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -1724,8 +1723,6 @@ def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
     return dataset
 
 
-# check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 def test_plot_rgb(composite, dtype):
@@ -1738,8 +1735,6 @@ def test_plot_rgb(composite, dtype):
     pl.show()
 
 
-# check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 def test_plot_rgb_implicit(composite, scalars):
@@ -2169,7 +2164,6 @@ def test_image_properties() -> None:
     pl.close()
 
 
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('enable_parallel_projection', [True, False])
 def test_image_depth_parallel_projection(enable_parallel_projection):
     # Create depth image
@@ -4016,7 +4010,6 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14")
 def test_plotter_volume_lookup_table(uniform):
     uniform.set_active_scalars('Spatial Point Data')
 
@@ -4031,7 +4024,6 @@ def test_plotter_volume_lookup_table(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc
 def test_plotter_volume_lookup_table_reactive(uniform):
     """Ensure that changes to the underlying lookup table are reflected by the volume property."""
     uniform.set_active_scalars('Spatial Point Data')
@@ -5720,7 +5712,6 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.skip_check_gc  # gc fails, suspected memory leak with merge
 @pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_push(distance):
     source = pv.OrthogonalPlanesSource()
@@ -6029,7 +6020,6 @@ def test_hide_cells_no_scalars(verify_image_cache):
     grid.plot(color='w', show_edges=True, show_grid=True)
 
 
-@pytest.mark.skip_check_gc
 def test_connectivity_cmap():
     # Test case described in https://github.com/pyvista/pyvista/issues/8252
     large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
