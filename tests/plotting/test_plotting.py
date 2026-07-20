@@ -5579,6 +5579,8 @@ def test_contour_labels_boundary_style(
                 **test_kwargs,
                 **fixed_kwargs,
             )
+        if mesh.n_cells > 0:
+            assert mesh.array_names == ['boundary_labels']
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
