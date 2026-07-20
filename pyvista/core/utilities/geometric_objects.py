@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
 from itertools import product
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
 
@@ -30,12 +30,6 @@ from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
 from .geometric_sources import translate
-
-with contextlib.suppress(ImportError):
-    from .geometric_sources import CapsuleSource
-
-from typing import TYPE_CHECKING
-
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -106,25 +100,15 @@ def Capsule(  # noqa: PLR0917
     >>> capsule.plot(show_edges=True)
 
     """
-    if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-        algo = CylinderSource(
-            center=center,
-            direction=direction,
-            radius=radius,
-            height=cylinder_length,
-            capping=True,
-            resolution=resolution,
-        )
-        algo.capsule_cap = True
-    else:
-        algo = CapsuleSource(
-            center=(0, 0, 0),
-            direction=(1, 0, 0),
-            radius=radius,
-            cylinder_length=cylinder_length,
-            theta_resolution=resolution,
-            phi_resolution=resolution,
-        )
+    algo = CylinderSource(
+        center=center,
+        direction=direction,
+        radius=radius,
+        height=cylinder_length,
+        capping=True,
+        resolution=resolution,
+    )
+    algo.capsule_cap = True
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)

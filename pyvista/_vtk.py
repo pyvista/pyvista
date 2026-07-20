@@ -293,6 +293,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkDelaunay3D',
         'vtkElevationFilter',
         'vtkExplicitStructuredGridToUnstructuredGrid',
+        'vtkExtractCells',
         'vtkExtractEdges',
         'vtkFeatureEdges',
         'vtkFlyingEdges3D',
@@ -747,6 +748,7 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
         'vtkDepthOfFieldPass',
         'vtkEDLShading',
+        'vtkEGLRenderWindow',  # optional (Linux EGL builds)
         'vtkGaussianBlurPass',
         'vtkOpenGLFXAAPass',
         'vtkOpenGLHardwareSelector',
@@ -760,6 +762,7 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkShadowMapPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
+        'vtkXOpenGLRenderWindow',  # optional (Linux X11 builds)
     ),
     'vtkRenderingVolumeOpenGL2': (
         'vtkOpenGLGPUVolumeRayCastMapper',
@@ -867,16 +870,6 @@ def _import_vtkPythonItem():  # noqa: N802
     return vtkPythonItem
 
 
-def _import_vtkExtractCells():  # noqa: N802
-    try:  # Module changed in VTK 9.3.0
-        from vtkmodules.vtkFiltersCore import vtkExtractCells  # noqa: TID251
-    except ImportError:
-        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef] # noqa: TID251
-            vtkExtractCells,
-        )
-    return vtkExtractCells
-
-
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
         from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities  # noqa: TID251
@@ -889,6 +882,5 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
-    'vtkExtractCells': _import_vtkExtractCells,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
 }

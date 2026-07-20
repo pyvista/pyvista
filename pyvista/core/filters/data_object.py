@@ -1749,24 +1749,52 @@ class DataObjectFilters:
             # ZERO_SIZE
             state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
-            # INVALID_POINT_REFERENCES
-            if hasattr(mesh, 'dimensions'):
-                return  # Cell connectivity is explicitly defined and cannot be invalid
+            # COINCIDENT_POINTS
+            # Skip remaining checks for datasets where cell connectivity cannot be invalid
+            # Do not skip types StructuredGrid where coincident points are possible
+            if isinstance(mesh, pv.Grid):
+                return
 
             ugrid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
 
-            # Find invalid connectivity entries
             conn = ugrid.cell_connectivity
+            offset = ugrid.offset
             n_cells = ugrid.n_cells
-            invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
+            n_points = ugrid.n_points
+
+            # VTK's face-based vtkCellValidator never flags 2D cells,
+            # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
+            # check: a cell is coincident if any two of its points are within tol. This
+            # applies to all cell types (also OR-ing the bit into already-caught cases).
+            coincident = np.zeros(n_cells, dtype=bool)
+            n_cell_points = np.diff(offset)
+            valid_conn = (conn >= 0) & (conn < n_points)
+            for size in np.unique(n_cell_points[n_cell_points >= 2]):
+                cells = np.nonzero(n_cell_points == size)[0]
+                # Gather this group's point ids as an (m, size) block via CSR offsets
+                entry_ids = offset[cells, np.newaxis] + np.arange(size)[np.newaxis, :]
+                pids = conn[entry_ids]
+                # Skip cells with invalid connectivity (handled below); clamp for safe
+                # indexing so the gather never raises on out-of-range ids.
+                group_valid = np.all(valid_conn[entry_ids], axis=1)
+                pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
+                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                iu = np.triu_indices(size, k=1)
+                any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
+                coincident[cells] = any_coincident & group_valid
+            state[coincident] |= CellStatus.COINCIDENT_POINTS
+
+            # INVALID_POINT_REFERENCES
+            invalid_conn = ~valid_conn
             if not np.any(invalid_conn):
                 return
 
             # Map invalid connectivity indices to cell IDs
             invalid_conn_ids = np.nonzero(invalid_conn)[0]
-            cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
+            cell_ids = np.searchsorted(offset, invalid_conn_ids, side='right') - 1
 
             # Build per-cell boolean mask
             is_invalid = np.zeros(n_cells, dtype=bool)

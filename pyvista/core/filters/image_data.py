@@ -2374,10 +2374,6 @@ class ImageDataFilters(DataSetFilters):
         only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
 
-        .. note::
-
-            This filter requires VTK version ``9.3.0`` or greater.
-
         .. versionadded:: 0.45
 
         Parameters
@@ -2873,12 +2869,6 @@ class ImageDataFilters(DataSetFilters):
                 alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
             else:
                 alg_.SmoothingOff()
-
-        if not _vtk.has_attr('vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
-            raise VTKVersionError(msg)
 
         if orient_faces is None:
             orient_faces = bool(pv.vtk_version_info < (9, 6, 0))

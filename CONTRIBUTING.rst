@@ -619,8 +619,8 @@ The top-level ``Makefile`` also wraps the most common invocations — see
 
             .. code-block:: bash
 
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.4.2 and numpy==2.0
 
             By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
             To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
@@ -703,8 +703,8 @@ such that:
 
             .. code-block:: bash
 
-                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
-                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
     .. tab-item:: make
         :sync: make
@@ -779,6 +779,31 @@ the VTK dev wheels. The tests only run when the label is applied.
 
     The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
+
+Garbage Collection Checks
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Every test under ``tests/plotting`` is automatically checked for reference leaks by
+the autouse ``check_gc`` fixture in ``tests/plotting/conftest.py``: no plotter or VTK
+object created by a test may outlive it. A leaking test fails at teardown with a
+rendered chain of what still holds a reference; see the
+`refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
+The cause is usually a reference cycle, and fixing it (e.g. with :mod:`weakref`) is
+preferred over silencing the check with either of these markers:
+
+.. code-block:: python
+
+    @pytest.mark.skip_check_gc
+    def test():
+        """Do not check this test for leaks.
+
+        Use sparingly, with a comment saying why the leak is not fixable here,
+        e.g. an upstream VTK issue or a module-level cache pinning the object.
+        """
+
+
+    @pytest.mark.expect_check_gc_fail
+    def test():
+        """This test is expected to leak; fail if it does *not*."""
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
