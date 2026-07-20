@@ -3867,8 +3867,10 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 class PExodusIIReader(ExodusIIReader):
     """PExodusIIReader reads parallel Exodus II and Nemesis files.
 
-    These files have extension .e.N.p and .n.N.p files where N is the number of partitions
-    and p is the partition index. Wraps :vtk:`vtkPExodusIIReader`.
+    Parallel files use the extensions ``.e.N.p`` and ``.n.N.p``, where ``N`` is
+    the number of partitions and ``p`` is the partition index. Passing any single
+    file from a series to this reader automatically reads every file in the
+    series and loads the complete dataset. Wraps :vtk:`vtkPExodusIIReader`.
 
     .. versionadded:: 0.49.0
 
