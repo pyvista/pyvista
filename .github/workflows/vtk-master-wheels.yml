@@ -1,0 +1,446 @@
+name: Build/Test VTK Master Wheels
+
+permissions:
+  actions: read
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+  pull_request:
+
+env:
+  ALLOW_PLOTTING: true
+  SHELLOPTS: "errexit:pipefail"
+  TOX_COLORED: "yes"
+  CACHE_FOLDER_NAME: pyvista-data
+  PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+
+jobs:
+  check-should-run:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run:
+          | # For PRs, only run this job if the 'vtk-master-testing' label is applied
+          echo "run=${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}" >> "$GITHUB_OUTPUT"
+
+  build-vtk:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.14"]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout VTK master (pinned to nightly date-stamp commit)
+        shell: bash
+        run: |
+          # Depth 200 since we want to ensure we capture kwrobot's date-stamp commit
+          git clone --depth 200 --branch master https://github.com/kitware/vtk vtk-src
+          cd vtk-src
+
+          NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' -n 1 --format=%H)"
+          if [ -z "$NIGHTLY_SHA" ]; then
+            echo "No 'VTK Nightly Date Stamp' commit found in the last 200 commits on master"
+            exit 1
+          fi
+
+          echo "Pinning build to VTK's nightly date-stamp commit: $NIGHTLY_SHA"
+          git checkout "$NIGHTLY_SHA"
+          echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ccache \
+            libx11-dev \
+            libxt-dev \
+            libgl1-mesa-dev \
+            libxcursor-dev
+
+      - name: Install macOS build dependencies
+        if: runner.os == 'macOS'
+        run: brew install ccache
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install ninja matplotlib
+          if [ "$RUNNER_OS" = "Linux" ]; then pip install auditwheel; fi
+          if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
+          if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
+
+      - name: Set compiler launcher
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          else
+            echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure ccache (Linux & macOS)
+        if: runner.os != 'Windows'
+        run: echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+
+      - name: Restore ccache (Linux & macOS)
+        if: runner.os != 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: vtk-nightly-ccache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            vtk-nightly-ccache-${{ runner.os }}-
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Set up sccache (Windows)
+        if: runner.os == 'Windows'
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696
+
+      - name: Enable sccache GHA backend (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+
+      - name: Configure
+        shell: bash
+        run: |
+          mkdir vtk-build && cd vtk-build
+
+          cmake_args=(
+            -GNinja
+            -DCMAKE_BUILD_TYPE=Release
+            -DVTK_WHEEL_BUILD=ON
+            -DVTK_WRAP_PYTHON=ON
+            -DVTK_BUILD_TESTING=OFF
+            -DVTK_BUILD_DOCUMENTATION=OFF
+            -DVTK_BUILD_EXAMPLES=OFF
+            -DVTK_VERSION_SUFFIX=dev0+g${VTK_NIGHTLY_SHA:0:8}
+            -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)")
+            -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
+            -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
+            -DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES
+            -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES
+            -DVTK_MODULE_ENABLE_VTK_IOXdmf2=YES
+            -DVTK_MODULE_ENABLE_VTK_WebCore=YES
+            -DVTK_MODULE_ENABLE_VTK_WebGLExporter=YES
+            -DVTK_MODULE_ENABLE_VTK_WebPython=YES
+            ../vtk-src
+          )
+
+          cmake "${cmake_args[@]}"
+
+      - name: Build
+        run: cmake --build vtk-build --parallel
+
+      - name: Show compiler cache statistics
+        shell: bash
+        run: $COMPILER_LAUNCHER --show-stats
+
+      - name: Build wheel
+        shell: bash
+        run: |
+          cd vtk-build
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            export _PYTHON_HOST_PLATFORM="macosx-11.0-arm64"
+            export ARCHFLAGS="-arch arm64"
+          fi
+          python setup.py bdist_wheel
+
+      - name: Locate macOS VTK dylibs
+        if: runner.os == 'macOS'
+        run: |
+          cd vtk-build
+          LIBDIR="$(dirname "$(find . -name 'libvtksys*.dylib' -print -quit)")"
+          if [ -z "$LIBDIR" ]; then
+            echo "::error::could not locate libvtksys*.dylib anywhere under vtk-build"
+            exit 1
+          fi
+          echo "Found VTK dylibs in: $LIBDIR"
+          echo "VTK_DYLIB_DIR=$LIBDIR" >> "$GITHUB_ENV"
+
+      - name: Repair wheel
+        shell: bash
+        run: |
+          cd vtk-build
+          mkdir -p wheelhouse
+          case "$RUNNER_OS" in
+            Linux)   auditwheel repair dist/*.whl -w wheelhouse/ ;;
+            macOS)   DYLD_LIBRARY_PATH="$PWD/$VTK_DYLIB_DIR" delocate-wheel --require-archs arm64 -w wheelhouse -v dist/*.whl ;;
+            Windows) delvewheel repair --add-path bin -w wheelhouse dist/*.whl ;;
+          esac
+
+      - name: Upload VTK wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-build/wheelhouse/*.whl
+
+  # Cache pyvista/data for each runner separately
+  # Runner labels should match the actual runners used by the different jobs in this file
+
+  # GitHub-hosted runners can re-use the cache across OS's.
+  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
+  cache-github-hosted:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
+
+  test-linux:
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.14"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+
+    steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        run: |
+          echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
+          exit 1
+
+      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
+      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
+
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+        with:
+          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          version: 3.0
+
+      - name: Restore pyvista/data cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_local
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+  test-macOS:
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        python-version: ["3.14"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+
+    steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        run: |
+          echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
+          exit 1
+
+      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
+      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
+
+      - name: Restore pyvista/data cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_local
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+  test-windows:
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        python-version: ["3.14"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+
+    steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        run: |
+          echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
+          exit 1
+
+      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
+      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
+
+      - name: Restore pyvista/data cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Core Testing (no GL)
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 12
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-core-vtk_local
+
+      - name: Plotting Testing (uses GL)
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        if: ${{ !cancelled() }}
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
