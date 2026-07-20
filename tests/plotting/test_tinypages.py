@@ -25,6 +25,50 @@ def _filter_suffix(files: set[str], suffix) -> set[str]:
     return {file for file in files if file.endswith(suffix)}
 
 
+def _sphinx_build_cmd(
+    source_dir: Path,
+    html_dir: Path,
+    doctree_dir: Path | None = None,
+    sphinx_args: tuple[str, ...] = (),
+) -> list[str]:
+    """Create a sphinx-build command."""
+    cmd = [
+        sys.executable,
+        '-msphinx',
+        '-W',
+        '-b',
+        'html',
+        *sphinx_args,
+    ]
+
+    if doctree_dir is not None:
+        cmd.extend(['-d', str(doctree_dir)])
+
+    cmd.extend([str(source_dir), str(html_dir)])
+
+    if sys.platform == 'win32':
+        # matplotlib's plot directive fails to render images on Windows CI, resulting in Sphinx
+        # warnings that are fatal errors under ``-W``. Seems like a genuine bug with matplotlib
+        # and not PyVista, so we ignore the warnings.
+        cmd += ['-D', 'suppress_warnings=image.not_readable,download.not_readable']
+
+    return cmd
+
+
+def _run_sphinx_build(cmd: list[str]) -> tuple[int, str, str]:
+    """Run sphinx-build and return returncode, stdout, and stderr."""
+    proc = Popen(
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, 'MPLBACKEND': ''},
+        encoding='utf8',
+    )
+    out, err = proc.communicate()
+    return proc.returncode, out, err
+
+
 ENVIRONMENT_HOOKS = ('PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL')
 
 
@@ -188,37 +232,19 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
+    source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
-    # Build the pages with warnings turned into errors
-    cmd = [
-        sys.executable,
-        '-msphinx',
-        '-W',
-        '-b',
-        'html',
-        *case.sphinx_args,
-        '-d',
-        str(doctree_dir),
-        str(Path(__file__).parent / 'tinypages'),
-        str(html_dir),
-    ]
-    if sys.platform == 'win32':
-        # matplotlib's plot directive fails to render images on Windows CI, resulting in Sphinx
-        # warnings that are fatal errors under ``-W``. Seems like a genuine bug with matplotlib
-        # and not PyVista, so we ignore the warnings
-        cmd += ['-D', 'suppress_warnings=image.not_readable,download.not_readable']
 
-    proc = Popen(
-        cmd,
-        stdout=PIPE,
-        stderr=PIPE,
-        universal_newlines=True,
-        env={**os.environ, 'MPLBACKEND': ''},
-        encoding='utf8',
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(
+            source_dir,
+            html_dir,
+            doctree_dir,
+            case.sphinx_args,
+        ),
     )
-    out, err = proc.communicate()
-    assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     assert html_dir.is_dir()
 
@@ -300,30 +326,20 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
 @flaky_test(exceptions=(AssertionError,))
 def test_parallel_error(tmp_path: Path) -> None:
     """Ensure that labeling image serial fails."""
+    source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
-    cmd = [
-        sys.executable,
-        '-msphinx',
-        '-W',
-        '-b',
-        'html',
-        '-j2',
-        '-d',
-        str(doctree_dir),
-        str(Path(__file__).parent / 'tinypages'),
-        str(html_dir),
-    ]
-    proc = Popen(
-        cmd,
-        stdout=PIPE,
-        stderr=PIPE,
-        universal_newlines=True,
-        env={**os.environ, 'MPLBACKEND': ''},
-        encoding='utf8',
-    )
-    _, err = proc.communicate()
 
+    returncode, _, err = _run_sphinx_build(
+        _sphinx_build_cmd(
+            source_dir,
+            html_dir,
+            doctree_dir,
+            ('-j2',),
+        ),
+    )
+
+    assert returncode != 0
     assert 'pyvista_plot_use_counter' in err
     assert 'cannot be enabled for parallel builds' in err
 
@@ -332,7 +348,6 @@ def test_parallel_error(tmp_path: Path) -> None:
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
     from http.server import ThreadingHTTPServer
-    import subprocess
     from threading import Thread
 
     from playwright.sync_api import sync_playwright
@@ -340,20 +355,10 @@ def test_interactive_plot_moves(tmp_path: Path):
     source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / '_build'
 
-    result = subprocess.run(
-        [
-            'sphinx-build',
-            '-b',
-            'html',
-            str(source_dir),
-            str(html_dir),
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir),
     )
-
-    assert result.returncode == 0, result.stderr
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     old_cwd = Path.cwd()
     os.chdir(html_dir)
