@@ -16,7 +16,7 @@ Some Plots
     :format: doctest
 
     >>> import pyvista as pv
-    >>> pv.Cube().plot()
+    >>> pv.Cube().plot(text='Plot 2')
 
 
 **Plot 3** Shows that a new block with context does not see the variable defined
@@ -35,7 +35,7 @@ in the no-context block:
 
     a = 10
     import pyvista as pv
-    pv.Plane().plot()
+    pv.Plane().plot(text='Plot 4')
 
 
 **Plot 5** Shows that a block with context sees the new variable. It also uses
@@ -83,7 +83,7 @@ Plot _ Uses a specific function in a file with plot commands:
    :caption: Plot 8 uses the caption option.
 
    import pyvista as pv
-   pv.Disc().plot()
+   pv.Disc().plot(text='Plot 8')
 
 
 Plot __ Uses an external file with the plot commands and a caption
@@ -102,9 +102,10 @@ scenario:
    :caption: This caption applies to both plots.
 
    import pyvista as pv
-   pv.Text3D('hello').plot()
 
-   pv.Text3D('world').plot()
+   pv.Text3D('hello').plot(text='Plot 9 hello')
+
+   pv.Text3D('world').plot(text='Plot 9 world')
 
 
 **Plot 10** Uses the skip directive and should not generate a plot:
@@ -112,7 +113,7 @@ scenario:
 .. pyvista-plot::
 
    import pyvista as pv
-   pv.Sphere().plot()  # doctest:+SKIP
+   pv.ParametricEnneper().plot(text='Plot 10')  # doctest:+SKIP
 
 
 **Plot 11** Uses ``:include-source: False``:
@@ -137,9 +138,13 @@ lines, even in two sections:
 .. pyvista-plot::
 
     >>> import pyvista as pv
-    >>> pv.Sphere().plot(color='blue', cpos='xy')
+    >>> pv.ParametricMobius().plot(
+    ...     color='blue', cpos='xy', text='Plot 13 blue'
+    ... )
 
-    >>> pv.Sphere().plot(color='red', cpos='xy')
+    >>> pv.ParametricMobius().plot(
+    ...     color='red', cpos='xy', text='Plot 13 red'
+    ... )
 
 
 **Plot 14** Forces two static images instead of interactive scenes:
@@ -148,9 +153,13 @@ lines, even in two sections:
    :force_static:
 
    >>> import pyvista as pv
-   >>> pv.Sphere().plot(color='blue', cpos='xy')
+   >>> pv.ParametricRandomHills().plot(
+   ...     color='blue', cpos='xy', text='Plot 14 blue'
+   ... )
 
-   >>> pv.Sphere().plot(color='red', cpos='xy')
+   >>> pv.ParametricRandomHills().plot(
+   ...     color='red', cpos='xy', text='Plot 14 red'
+   ... )
 
 
 **Plot 15** Uses caption with tabbed UI:
@@ -159,7 +168,7 @@ lines, even in two sections:
    :caption: Plot 15 uses the caption option with tabbed UI.
 
    import pyvista as pv
-   pv.Disc().plot()
+   pv.Disc().plot(text='Plot 15')
 
 
 **Plot 16** Should never be skipped, using the ``:skip: no`` option:
@@ -169,7 +178,7 @@ lines, even in two sections:
    :caption: Plot 16 will never be skipped
 
    import pyvista as pv
-   pv.Cube().plot()
+   pv.ParametricKlein().plot(text='Plot 16')
 
 
 This plot will always be skipped, using the ``:skip: yes`` option,
@@ -190,7 +199,7 @@ but the source will always be included with a conditional caption:
    :caption: This plot may be skipped with no caption
 
    import pyvista as pv
-   pv.Cube().plot()
+   pv.ParametricDini().plot(text='Plot 18')
 
 **Plot 19** Shows a ``matplotlib`` plot to to show that both plot directives
  can coexist.
@@ -228,7 +237,7 @@ but the source will always be included with a conditional caption:
    >>> from pyvista import examples
 
    >>> mesh = examples.download_tecplot_ascii()
-   >>> mesh.plot()
+   >>> mesh.plot(text='Plot 22')
 
 **Plot 23** Create a gif.
 
@@ -275,5 +284,7 @@ but the source will always be included with a conditional caption:
 
     >>> import pyvista as pv
     >>> pl1 = pv.Plotter()
+    >>> pl1.add_mesh(pv.ParametricCrossCap())
     >>> pl2 = pv.Plotter()
+    >>> pl2.add_mesh(pv.ParametricTorus())
     >>> pl2.show()
