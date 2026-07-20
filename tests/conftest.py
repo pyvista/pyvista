@@ -7,7 +7,6 @@ from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
-from pathlib import Path
 import platform
 import re
 
@@ -50,8 +49,6 @@ from pyvista.plotting.theme_registry import (
 )
 from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
 from pyvista.plotting.utilities.gl_checks import uses_egl
-
-tinypages_images_key = pytest.StashKey[dict[str, Path]]()
 
 pv.OFF_SCREEN = True
 

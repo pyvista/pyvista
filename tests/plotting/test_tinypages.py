@@ -178,7 +178,7 @@ class TinyPagesCase:
         )
 
     @property
-    def expected_py(self) -> set[str]:
+    def expected_py_files(self) -> set[str]:
         return _filter_suffix(self.expected_files, '.py')
 
 
@@ -255,13 +255,12 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
 
     # Ensure all generated Python files can be compiled
     non_compilable_files = set()
-    for file in case.expected_files:
+    for file in case.expected_py_files:
         path = pyvista_plot_directive_dir / file
-        if path.suffix == '.py':
-            try:
-                compile(path.read_text(encoding='utf-8'), str(path), 'exec')
-            except SyntaxError:
-                non_compilable_files.add(file)
+        try:
+            compile(path.read_text(encoding='utf-8'), str(path), 'exec')
+        except SyntaxError:
+            non_compilable_files.add(file)
     non_compilable = '\n'.join(sorted(non_compilable_files))
     assert not non_compilable_files, f'Non-compilable Python files: \n{non_compilable}'
 
