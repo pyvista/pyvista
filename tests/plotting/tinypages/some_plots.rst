@@ -53,6 +53,7 @@ in the no-context block:
 .. pyvista-plot::
 
     assert 'a' not in globals()
+    assert 'a' not in globals()
 
 
 **Plot 7** Uses ``include-source``:
