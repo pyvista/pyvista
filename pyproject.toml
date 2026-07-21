@@ -438,7 +438,6 @@ ignore = [
   'D213', # Incompatible with D212
   'D402', # First line should not be the function's signature
   'D416', # Section name ends in colon
-  'E402', # module level import not at top of file
   'E731', # do not assign a lambda expression, use a def
   'E741', # ambiguous variable name
   'F403', # 'from module import *' used; unable to detect undefined names
@@ -475,6 +474,7 @@ pyvista = "pv"
 # TODO: Add annotations to any files with 'ANN' ignores listed below
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+'doc/source/conf.py' = ['E402']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -495,6 +495,7 @@ pyvista = "pv"
   'D212',
   'D400',
   'D415',
+  'E402',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
   'S101',
   'SIM115',
@@ -591,6 +592,7 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
+'tests/plotting/tinypages/conf.py' = ['E402']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3
