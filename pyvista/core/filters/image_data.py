@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
+import contextlib
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -2869,6 +2870,10 @@ class ImageDataFilters(DataSetFilters):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
         output: pv.PolyData = _get_output(alg)
+
+        # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
+        with contextlib.suppress(KeyError):
+            del output.cell_data['NonManifoldTableIndices']
 
         if select_outputs is not None:
             output_ids = _validate_selection(select_outputs)
