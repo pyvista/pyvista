@@ -4500,30 +4500,33 @@ class DataObjectFilters:
         """
 
         def ensure_arrays_if_empty(dataset: DataSet):
-            dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
-            dataset.cell_data['Area'] = np.empty(shape=(0,))
-            dataset.cell_data['Length'] = np.empty(shape=(0,))
-            dataset.cell_data['Volume'] = np.empty(shape=(0,))
+            if vertex_count:
+                dataset.cell_data['VertexCount'] = np.zeros(shape=(0,))
+            if area:
+                dataset.cell_data['Area'] = np.empty(shape=(0,))
+            if length:
+                dataset.cell_data['Length'] = np.empty(shape=(0,))
+            if volume:
+                dataset.cell_data['Volume'] = np.empty(shape=(0,))
 
-        # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
-        vert_count = vertex_count and getattr(self, 'n_cells', True)
+        if self.is_empty:
+            # Ensure outputs have arrays so things like `mesh.area` and `mesh.volume` still work
+            # Also guard against seg fault https://gitlab.kitware.com/vtk/vtk/-/issues/19978
+            out = self.copy()
+            if isinstance(out, pv.MultiBlock):
+                out.generic_filter(ensure_arrays_if_empty)
+            else:
+                ensure_arrays_if_empty(out)
+            return out
 
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
-        alg.SetComputeVertexCount(vert_count)
+        alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        out = _get_output(alg)
-
-        # Ensure we have arrays for empty outputs
-        if out.n_cells == 0:
-            if isinstance(out, pv.MultiBlock):
-                out.generic_filter(ensure_arrays_if_empty)
-            else:
-                ensure_arrays_if_empty(out)
-        return out
+        return _get_output(alg)
 
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
