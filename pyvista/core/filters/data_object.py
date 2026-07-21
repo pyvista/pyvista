@@ -5000,6 +5000,12 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
+        else:
+            locator = _vtk.vtkStaticCellLocator()
+
+        if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+            alg.SetCellLocator(locator)
+        else:
             alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
