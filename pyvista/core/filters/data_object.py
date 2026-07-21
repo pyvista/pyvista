@@ -4499,9 +4499,11 @@ class DataObjectFilters:
 
         """
 
-        def ensure_vertex_count_array(dataset: DataSet):
-            if dataset.n_cells == 0:
-                dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
+        def ensure_arrays_if_empty(dataset: DataSet):
+            dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
+            dataset.cell_data['Area'] = np.empty(shape=(0,))
+            dataset.cell_data['Length'] = np.empty(shape=(0,))
+            dataset.cell_data['Volume'] = np.empty(shape=(0,))
 
         # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
         vert_count = vertex_count and getattr(self, 'n_cells', True)
@@ -4514,11 +4516,13 @@ class DataObjectFilters:
         alg.SetComputeVertexCount(vert_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
         out = _get_output(alg)
-        if vertex_count:
+
+        # Ensure we have arrays for empty outputs
+        if out.n_cells == 0:
             if isinstance(out, pv.MultiBlock):
-                out.generic_filter(ensure_vertex_count_array)
+                out.generic_filter(ensure_arrays_if_empty)
             else:
-                ensure_vertex_count_array(out)
+                ensure_arrays_if_empty(out)
         return out
 
     @_deprecate_positional_args
