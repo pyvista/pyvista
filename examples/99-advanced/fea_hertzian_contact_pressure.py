@@ -71,7 +71,7 @@ line
 # <https://en.wikipedia.org/wiki/Contact_mechanics>`_
 
 # Sample the stress
-sampled = line.sample(mesh, tolerance=1e-3)
+sampled = line.sample(mesh)
 x_coord = 0.1 - sampled.points[:, 0]
 samp_z_stress = -sampled['Stress'][:, 2]
 
