@@ -2873,7 +2873,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
         with contextlib.suppress(KeyError):
-            del output.cell_data['NonManifoldTableIndices']
+            del output.point_data['NonManifoldTableIndices']
 
         if select_outputs is not None:
             output_ids = _validate_selection(select_outputs)
