@@ -650,6 +650,25 @@ def test_download_cubemap_space_16k():
     assert isinstance(dataset, pv.Texture)
 
 
+def test_download_particles():
+    filename = examples.download_particles(load=False)
+    assert Path(filename).is_file()
+
+    dataset = examples.download_particles(load=True)
+    assert isinstance(dataset, pv.PolyData)
+    actual = dataset.bounds
+    expected = pv.BoundsTuple(
+        x_min=817.33349609375,
+        x_max=826.0890502929688,
+        y_min=545.0177001953125,
+        y_max=571.0205688476562,
+        z_min=1443.4783935546875,
+        z_max=1511.181396484375,
+    )
+    assert np.allclose(actual, expected)
+    assert dataset.validate_mesh().is_valid
+
+
 def test_download_particles_lethe():
     filename = examples.download_particles_lethe(load=False)
     assert Path(filename).is_file()

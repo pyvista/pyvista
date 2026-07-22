@@ -497,6 +497,19 @@ def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> N
         f'must match either the number of points ({dataset.n_points}) '
         f'or the number of cells ({dataset.n_cells}).'
     )
+    if scalars.size == dataset.n_points:
+        matching_association = f'the number of points ({dataset.n_points})'
+    elif scalars.size == dataset.n_cells:
+        matching_association = f'the number of cells ({dataset.n_cells})'
+    else:
+        matching_association = None
+
+    if matching_association is not None:
+        msg += (
+            f' The scalars have shape {scalars.shape}, and their total size '
+            f'({scalars.size}) matches {matching_association}. Consider flattening '
+            "the scalars with `scalars.ravel(order='F')` before assigning them."
+        )
     raise ValueError(msg)
 
 
