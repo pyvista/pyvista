@@ -516,6 +516,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPOpenFOAMReader',
         'vtkPlot3DMetaReader',
     ),
+    'vtkIOParallelExodus': ('vtkPExodusIIReader',),
     'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),
     'vtkIOSegY': ('vtkSegYReader',),
     'vtkIOXML': (
@@ -590,6 +591,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageStencil',
         'vtkPolyDataToImageStencil',
     ),
+    'vtkParallelCore': ('vtkDummyController',),
 }
 
 # Rendering modules for pyvista's plotting API

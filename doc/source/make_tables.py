@@ -42,6 +42,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
@@ -204,13 +205,14 @@ def _sort_by_class_name(mapping: dict[Any, Any]):
 
 def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
     # Create dict for reader info: extension(s) and output type(s)
-    reader_info: dict[pv.BaseReader, tuple[set[str], set[str]]] = {
-        reader: (set(), set()) for reader in set(CLASS_READERS.values())
-    }
-    # Store extensions
+    readers = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
+    reader_info = {reader: (set(), set()) for reader in readers}
+
     for reader, extensions in _swap_extension_mapping(CLASS_READERS):
-        info_extensions, _ = reader_info[reader]
-        info_extensions.update(extensions)
+        reader_info[reader][0].update(extensions)
+
+    for display, _, reader in _CLASS_READER_PATTERNS:
+        reader_info[reader][0].add(display)
 
     # Store output type(s)
     for reader, types in _CLASS_READER_RETURN_TYPE.items():

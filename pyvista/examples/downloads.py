@@ -30,7 +30,9 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import cast
+from typing import overload
 
 import numpy as np
 import pooch
@@ -2705,6 +2707,48 @@ def download_mug(load=True):  # noqa: FBT002
 
 
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
+
+
+@overload
+def download_parallel_exodus(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_parallel_exodus(*, load: Literal[False]) -> str: ...
+def download_parallel_exodus(*, load: bool = True) -> MultiBlock | str:
+    """Download parallel Exodus dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        Mesh or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_parallel_exodus()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Parallel Exodus Dataset <parallel_exodus_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_parallel_exodus, load=load)
+
+
+def _parallel_exodus_download():
+    can = _SingleFileDownloadableDatasetLoader('ParallelExodus/can.e.4.0')
+    partitions = [_DownloadableFile(f'ParallelExodus/can.e.4.{i}') for i in range(1, 4)]
+    return can, *partitions
+
+
+_dataset_parallel_exodus = _MultiFileDownloadableDatasetLoader(_parallel_exodus_download)
 
 
 @_deprecate_positional_args
