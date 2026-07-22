@@ -40,22 +40,29 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout VTK master (pinned to nightly date-stamp commit)
+      #      - name: Checkout VTK master (pinned to nightly date-stamp commit)
+      #        shell: bash
+      #        run: |
+      #          # Depth 200 since we want to ensure we capture kwrobot's date-stamp commit
+      #          git clone --depth 200 --branch master https://github.com/kitware/vtk vtk-src
+      #          cd vtk-src
+      #
+      #          NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' -n 1 --format=%H)"
+      #          if [ -z "$NIGHTLY_SHA" ]; then
+      #            echo "No 'VTK Nightly Date Stamp' commit found in the last 200 commits on master"
+      #            exit 1
+      #          fi
+      #
+      #          echo "Pinning build to VTK's nightly date-stamp commit: $NIGHTLY_SHA"
+      #          git checkout "$NIGHTLY_SHA"
+      #          echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
+
+      - name: Checkout VTK release branch
         shell: bash
         run: |
-          # Depth 200 since we want to ensure we capture kwrobot's date-stamp commit
-          git clone --depth 200 --branch master https://github.com/kitware/vtk vtk-src
+          git clone --depth 1 --branch release https://github.com/kitware/vtk vtk-src
           cd vtk-src
-
-          NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' -n 1 --format=%H)"
-          if [ -z "$NIGHTLY_SHA" ]; then
-            echo "No 'VTK Nightly Date Stamp' commit found in the last 200 commits on master"
-            exit 1
-          fi
-
-          echo "Pinning build to VTK's nightly date-stamp commit: $NIGHTLY_SHA"
-          git checkout "$NIGHTLY_SHA"
-          echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
+          echo "VTK_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -140,6 +147,7 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
             -DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES
             -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES
+            -DVTK_MODULE_ENABLE_VTK_IOImport=YES
             -DVTK_MODULE_ENABLE_VTK_IOXdmf2=YES
             -DVTK_MODULE_ENABLE_VTK_WebCore=YES
             -DVTK_MODULE_ENABLE_VTK_WebGLExporter=YES

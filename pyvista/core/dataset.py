@@ -3319,7 +3319,7 @@ class DataSet(DataSetFilters, DataObject):
         False
 
         """
-        return self.n_points == 0
+        return self.n_points == 0 and self.n_cells == 0
 
     @property
     def dimensionality(self) -> _Dimensionality:
