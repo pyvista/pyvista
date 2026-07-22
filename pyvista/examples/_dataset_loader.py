@@ -172,9 +172,9 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
             for i, base in enumerate(base_url_iter):
                 new_base = _DEFAULT_VTK_DATA_SOURCE if _FILE_CACHE and (base == SOURCE) else base
-                assert new_base.startswith('http')
+                assert new_base.startswith('http'), new_base
                 new_base = new_base.replace('/raw/', '/blob/')
-                assert '/blob/' in new_base
+                assert '/blob/' in new_base, new_base
                 base_url_iter[i] = new_base
 
         name = self.source_name

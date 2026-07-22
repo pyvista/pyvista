@@ -1045,6 +1045,86 @@ def test_cast_rectilinear_grid():
         assert np.allclose(structured.cell_data[k], v)
 
 
+def _polydata(dtype):
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(dtype)
+    return mesh
+
+
+def _structured_grid(dtype):
+    coords = np.mgrid[0:3, 0:3, 0:3].astype(dtype)
+    return pv.StructuredGrid(*coords)
+
+
+def _unstructured_grid(dtype):
+    mesh = examples.cells.Hexahedron()
+    mesh.points = mesh.points.astype(dtype)
+    return mesh
+
+
+def _point_set(dtype):
+    return pv.PointSet(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype))
+
+
+def _rectilinear_grid(dtype):
+    grid = pv.RectilinearGrid()
+    grid.x = np.array([0.1, 0.2, 0.3], dtype=dtype)
+    grid.y = np.array([0.0, 1.0], dtype=dtype)
+    grid.z = np.array([0.0], dtype=dtype)
+    return grid
+
+
+@pytest.mark.parametrize(
+    'builder',
+    [_polydata, _structured_grid, _unstructured_grid, _point_set, _rectilinear_grid],
+)
+@pytest.mark.parametrize('dtype', [np.float64, np.float32])
+def test_cast_to_unstructured_grid_preserves_point_precision(builder, dtype):
+    mesh = builder(dtype)
+
+    ugrid = mesh.cast_to_unstructured_grid()
+
+    assert ugrid.points.dtype == dtype
+    assert ugrid.n_points == mesh.n_points
+    assert np.allclose(ugrid.bounds, mesh.bounds)
+
+
+def test_cast_image_data_to_unstructured_grid_is_double():
+    # ImageData stores no points, so its always-double origin and spacing are
+    # the only source of precision; the cast must not downcast them (#7931).
+    image = pv.ImageData(dimensions=(3, 3, 3), spacing=(0.1, 0.2, 0.3))
+
+    ugrid = image.cast_to_unstructured_grid()
+
+    assert ugrid.points.dtype == np.float64
+    assert ugrid.n_points == image.n_points
+    assert ugrid.n_cells == image.n_cells
+    assert np.allclose(ugrid.bounds, image.bounds)
+
+
+def test_vtk_append_filter_implicit_geometry_precision_bug():
+    # vtkAppendFilter falls back to float32 for RectilinearGrid/ImageData
+    # because it infers precision via vtkPointSet.GetPoints(), which returns
+    # None for implicit-geometry datasets. This test asserts the bug exists so
+    # that when it is patched upstream (see
+    # https://gitlab.kitware.com/vtk/vtk/-/work_items/19965), the workaround
+    # in cast_to_unstructured_grid can be removed.
+    alg = pv._vtk.vtkAppendFilter()
+
+    grid = pv.RectilinearGrid()
+    grid.x = np.array([0.1, 0.2, 0.3], dtype=np.float64)
+    grid.y = np.array([0.0, 1.0], dtype=np.float64)
+    grid.z = np.array([0.0], dtype=np.float64)
+
+    alg.AddInputData(grid)
+    alg.Update()
+
+    # Without the workaround, vtkAppendFilter downcasts float64 → float32.
+    # If this assertion fails, the VTK bug has been fixed and the workaround
+    # in cast_to_unstructured_grid() can be removed.
+    assert alg.GetOutput().GetPoints().GetDataType() != 11  # 11 == VTK_DOUBLE
+
+
 @pytest.mark.parametrize('as_rectilinear', [True, False])
 def test_cast_grid_scalars_and_cell_type(as_rectilinear):
     """Test cell type and scalars after casting to structured or unstructured grid."""

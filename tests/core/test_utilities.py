@@ -299,6 +299,8 @@ def test_createvectorpolydata():
         ('/data/mesh.stl', '.stl'),
         ('/data/image.nii.gz', '.nii.gz'),
         ('/data/other.gz', '.gz'),
+        ('/data/can.e.4.0', '.e.4.0'),
+        ('/data/can.n.16.15', '.n.16.15'),
     ],
 )
 def test_get_ext(path, target_ext):
@@ -3275,7 +3277,7 @@ def test_fileio_extensions(cls):
     if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
         # These classes are not associated with any extensions
         pytest.xfail()
-    assert len(cls.extensions) > 0
+    assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
 def test_ply_writer(sphere, tmp_path):

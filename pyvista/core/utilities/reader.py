@@ -7,8 +7,8 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 import json
-import os
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -63,6 +63,7 @@ if TYPE_CHECKING:
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
+_CLASS_READER_PATTERNS: list[tuple[str, re.Pattern[str], type[BaseReader[Any]]]] = []
 
 # Covariant TypeVar for :class:`BaseReader`'s output type. Covariant is
 # correct because ``BaseReader`` only *produces* values of ``T_Output``
@@ -127,25 +128,31 @@ def get_reader(filename, force_ext=None):
 
     """
     ext = _get_ext_force(filename, force_ext)
+    reader_class = CLASS_READERS.get(ext)
 
-    try:
-        Reader = CLASS_READERS[ext]
-    except KeyError:
-        if Path(filename).is_dir():
-            if len(files := os.listdir(filename)) > 0 and all(  # noqa: PTH208
-                Path(f).suffix == '.dcm' for f in files
-            ):
-                Reader = DICOMReader
-            else:
-                msg = (
-                    f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
-                )
-                raise ValueError(msg)
-        else:
-            msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
-            raise ValueError(msg)
+    if reader_class is None:
+        reader_class = next(
+            (
+                candidate
+                for _, pattern, candidate in _CLASS_READER_PATTERNS
+                if pattern.fullmatch(ext)
+            ),
+            None,
+        )
 
-    return Reader(filename)
+    if reader_class is not None:
+        return reader_class(filename)
+
+    if Path(filename).is_dir():
+        files = list(Path(filename).iterdir())
+        if files and all(file.suffix == '.dcm' for file in files):
+            return DICOMReader(filename)
+
+        msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+        raise ValueError(msg)
+
+    msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+    raise ValueError(msg)
 
 
 class BaseVTKReader(ABC):
@@ -247,6 +254,12 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
         return [CLASS_READERS]
+
+    @classmethod
+    def _get_extension_pattern_mappings(
+        cls,
+    ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
+        return [(pattern, reader) for _, pattern, reader in _CLASS_READER_PATTERNS]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.
@@ -3851,6 +3864,35 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             self.disable_side_set_array(name)
 
 
+class PExodusIIReader(ExodusIIReader):
+    """PExodusIIReader reads parallel Exodus II and Nemesis files.
+
+    Parallel files use the extensions ``.e.N.p`` and ``.n.N.p``, where ``N`` is
+    the number of partitions and ``p`` is the partition index. Passing any single
+    file from a series to this reader automatically reads every file in the
+    series and loads the complete dataset. Wraps :vtk:`vtkPExodusIIReader`.
+
+    .. versionadded:: 0.49.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_parallel_exodus(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_class_name = 'vtkPExodusIIReader'
+
+    def _set_defaults(self):
+        # Create dummy multi-process controller
+        dummy = _vtk.vtkDummyController()
+        self.reader.SetController(dummy)
+
+
 class _FRDReader(BaseVTKReader):
     """VTK-style reader for CalculiX FRD files using FRDParser."""
 
@@ -4403,6 +4445,15 @@ CLASS_READERS = {
     '.xdmf': XdmfReader,
 }
 
+# Some formats encode partition metadata after the conventional file extension.
+# Match these against the filename only so dots in parent directories cannot
+# influence reader selection. Parallel Exodus uses ``.e.N.P`` and ``.n.N.P``,
+# where ``N`` is the number of partitions and ``P`` is the partition index.
+_CLASS_READER_PATTERNS = [
+    ('.e.N.p', re.compile(r'\.(?:e)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
+    ('.n.N.p', re.compile(r'\.(?:n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
+]
+
 
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     """Return the forward-reference name from a ``BaseReader[X]`` base.
@@ -4457,8 +4508,9 @@ def _derive_reader_output_types(
 # The mapping is derived from each reader's ``BaseReader[X]`` parameterization
 # (with a per-class ``_output_types`` attribute on multi-output readers), so
 # adding a new reader automatically produces the right entry here. We seed the
-# iteration from :data:`CLASS_READERS` (every reader registered to a file
-# extension) — readers not registered to an extension stay out by design.
+# iteration from :data:`CLASS_READERS` and :data:`_CLASS_READER_PATTERNS`
+# (every reader registered to a file extension or filename pattern).
 _CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
-    cls: _derive_reader_output_types(cls) for cls in set(CLASS_READERS.values())
+    cls: _derive_reader_output_types(cls)
+    for cls in set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
 }
