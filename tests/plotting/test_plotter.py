@@ -7,11 +7,15 @@ All other tests requiring rendering should to in
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
+import sys
 import threading
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -20,8 +24,13 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
+import pyvista.plotting.tools as tools_mod
+from pyvista.plotting.tools import supports_open_gl
+from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
 
@@ -866,7 +875,6 @@ def test_legend_font(sphere):
     assert legend.GetEntryTextProperty().GetFontFamily() == _vtk.VTK_TIMES
 
 
-@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter()
@@ -938,3 +946,77 @@ def test_off_screen_background_thread_rendering():
     t.join(timeout=10)
 
     assert not errors, f'Background thread rendering failed: {errors[0]}'
+
+
+def test_supports_open_gl():
+    assert supports_open_gl()
+
+
+def _make_fake_render_window():
+    """MagicMock whose Get/Set for NSView context stay in sync."""
+    fake = MagicMock()
+    fake.GetConnectContextToNSView.return_value = True  # VTK's real default
+
+    def _set_connect(value):
+        fake.GetConnectContextToNSView.return_value = value
+
+    fake.SetConnectContextToNSView.side_effect = _set_connect
+    return fake
+
+
+def _invoke_check_depth_peeling():
+    fake_render_window = _make_fake_render_window()
+    with patch(
+        'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
+        return_value=fake_render_window,
+    ):
+        check_depth_peeling()
+    return fake_render_window
+
+
+def _invoke_supports_open_gl():
+    fake_render_window = _make_fake_render_window()
+    tools_mod.SUPPORTS_OPENGL = None  # bypass the module-level cache
+    with patch(
+        'pyvista.plotting.tools._vtk.vtkRenderWindow',
+        return_value=fake_render_window,
+    ):
+        supports_open_gl()
+    return fake_render_window
+
+
+def _invoke_plotter_offscreen():
+    pl = pv.Plotter(off_screen=True)
+    ren_win = pl.ren_win
+    pl.close()
+    return ren_win
+
+
+@dataclass
+class _MacOSFixCase:
+    id: str
+    invoke: Callable[[], MagicMock]
+
+
+# Test cases for functions that create off-screen render windows.
+# These functions all call `_prepare_offscreen_macos_render_window` internally.
+# NOTE: report.py has a script that creates an off-screen renderer but is not covered here
+_MACOS_FIX_CASES = [
+    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling),
+    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl),
+    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen),
+]
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+@pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
+def test_macos_offscreen_render_window_configured(case):
+    """Test no macOS phantom window is generated for off-screen plotting."""
+    appkit_mock = MagicMock()
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        render_window = case.invoke()
+
+    assert render_window.GetConnectContextToNSView() is False
+    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
+        appkit_mock.NSApplicationActivationPolicyProhibited,
+    )

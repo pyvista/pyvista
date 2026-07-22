@@ -155,8 +155,6 @@ class AffineWidget3D(_NoNewAttrMixin):
     dataset. Use this matrix in conjunction with
     :func:`pyvista.DataObjectFilters.transform` to transform the dataset.
 
-    Requires VTK >= v9.2
-
     Examples
     --------
     Create the affine widget outside of the plotter and add it.

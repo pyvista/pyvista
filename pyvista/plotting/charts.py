@@ -4271,12 +4271,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized boxplot chart centered in the middle of the
@@ -4303,12 +4297,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------
@@ -4563,12 +4551,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized pie chart centered in the middle of the
@@ -4595,12 +4577,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------

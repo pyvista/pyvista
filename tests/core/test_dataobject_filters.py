@@ -21,7 +21,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
-from pyvista import VTKVersionError
 from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
@@ -684,11 +683,7 @@ def test_sample():
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
-    if pv.vtk_version_info >= (9, 3):
-        sample_test(snap_to_closest_point=True)
-    else:
-        with pytest.raises(VTKVersionError, match='snap_to_closest_point'):
-            sample_test(snap_to_closest_point=True)
+    sample_test(snap_to_closest_point=True)
 
 
 def test_sample_composite():
@@ -2429,6 +2424,7 @@ def test_cell_validator_invalid_tetra(
         if name in (
             pv.CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
             pv.CellStatus.ZERO_SIZE.name.lower(),
+            pv.CellStatus.COINCIDENT_POINTS.name.lower(),
         ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
@@ -2465,7 +2461,8 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2476,7 +2473,8 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2509,6 +2507,71 @@ def test_validate_mesh_degenerate_cells():
         mesh.validate_mesh(size_tolerance=1e-8, action='error')
     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
         mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
+
+
+@pytest.mark.parametrize(
+    'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
+)
+def test_validate_mesh_coincident_points(mesh_name):
+    """Test that a cell with a collapsed edge (two coincident points) is invalid."""
+    mesh = getattr(examples.cells, mesh_name)()
+
+    # Negative case: the pristine cell is valid -- the check must not false-positive.
+    assert mesh.validate_mesh().is_valid
+
+    # Collapse an edge so points[0] and points[1] coincide.
+    mesh.points[1] = mesh.points[0]
+
+    report = mesh.validate_mesh()
+    assert report.is_valid is False
+    assert 'coincident_points' in report.invalid_fields
+
+    state = mesh.cell_validator()['validity_state']
+    assert state[0] & pv.CellStatus.COINCIDENT_POINTS
+
+
+@pytest.fixture
+def degenerate_structured_grid_quad():
+    x = np.array(
+        [
+            [0.0, 1.0],
+            [0.0, 1.0],
+        ]
+    )
+    y = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ]
+    )
+    z = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 1.0],
+        ]
+    )
+
+    # Collapse the "south" edge to a single point
+    x[0, :] = 0.0
+    y[0, :] = 0.0
+    z[0, :] = 0.0
+
+    grid = pv.StructuredGrid(x, y, z)
+    assert grid.n_cells == 1
+    assert grid.n_points == 4
+    assert grid.distinct_cell_types == {pv.CellType.QUAD}
+
+    cleaned = grid.extract_surface(algorithm='geometry').clean()
+    assert cleaned.n_cells == 1
+    assert cleaned.n_points == 3
+    assert cleaned.distinct_cell_types == {pv.CellType.TRIANGLE}
+
+    return grid
+
+
+def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_grid_quad):
+    report = degenerate_structured_grid_quad.validate_mesh()
+    assert report.invalid_fields == ('coincident_points',)
 
 
 def test_validate_mesh_invalid_point_references():

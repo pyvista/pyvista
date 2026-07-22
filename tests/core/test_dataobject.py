@@ -179,7 +179,6 @@ def test_metadata_save(hexbeam, tmpdir):
     assert not hexbeam_in.field_data
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 @pytest.mark.parametrize('file_ext', ['.vtm'])
 def test_save_nested_multiblock_field_data(tmp_path, file_ext):
     filename = 'mesh' + file_ext
@@ -357,7 +356,7 @@ def test_user_dict_persists_with_cells_to_points(uniform):
 
 
 def test_default_pickle_format():
-    assert pv.PICKLE_FORMAT == 'vtk' if pv.vtk_version_info >= (9, 3) else 'xml'
+    assert pv.PICKLE_FORMAT == 'vtk'
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
@@ -368,9 +367,6 @@ def test_pickle_serialize_deserialize(datasets, pickle_format):
     pickle protocol via ``__getstate__``/``__setstate__`` is tested
     here. File-format refusal is covered in ``test_reader.py``.
     """
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
@@ -405,9 +401,6 @@ def n_points(dataset):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
@@ -418,9 +411,6 @@ def test_pickle_multiprocessing(datasets, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     multiblock = multiblock_all_with_nested_and_none
 
@@ -440,9 +430,6 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_user_dict(sphere, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     user_dict = {'custom_attribute': 42}
     sphere.user_dict = user_dict
@@ -455,13 +442,8 @@ def test_pickle_user_dict(sphere, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_set_pickle_format(pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        match = 'requires VTK >= 9.3'
-        with pytest.raises(ValueError, match=match):
-            pv.set_pickle_format(pickle_format)
-    else:
-        pv.set_pickle_format(pickle_format)
-        assert pickle_format == pv.PICKLE_FORMAT
+    pv.set_pickle_format(pickle_format)
+    assert pickle_format == pv.PICKLE_FORMAT
 
 
 def test_pickle_invalid_format(sphere):
@@ -472,6 +454,16 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
+
+
+def test_pickle_deletes_cached_locators():
+    poly = pv.Cone()
+
+    for attr in ['_static_cell_locator', '_cell_tree_locator', '_point_locator']:
+        # Access each locator to trigger the caching
+        _ = getattr(poly, attr)
+
+    pickle.loads(pickle.dumps(poly))
 
 
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):

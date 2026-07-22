@@ -67,16 +67,10 @@ def _get_render_window_class() -> str:  # numpydoc ignore=RT01
 def check_matplotlib_vtk_compatibility() -> bool:
     """Check if VTK and Matplotlib versions are compatible for MathText rendering.
 
-    This function is primarily geared towards checking if MathText rendering is
-    supported with the given versions of VTK and Matplotlib. It follows the
-    version constraints:
+    MathText rendering is only supported with Matplotlib >= 3.6
 
-    * VTK <= 9.2.2 requires Matplotlib < 3.6
-    * VTK > 9.2.2 requires Matplotlib >= 3.6
-
-    Other version combinations of VTK and Matplotlib will work without
-    errors, but some features (like MathText/LaTeX rendering) may
-    silently fail.
+    Other versions of Matplotlib will work without errors, but some features
+    (like MathText/LaTeX rendering) may silently fail.
 
     Returns
     -------
@@ -92,15 +86,8 @@ def check_matplotlib_vtk_compatibility() -> bool:
     """
     import matplotlib as mpl  # noqa: PLC0415
 
-    from pyvista import vtk_version_info  # noqa: PLC0415
-
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
-    if vtk_version_info <= (9, 2, 2):
-        return not mpl_vers >= (3, 6)
-    elif vtk_version_info > (9, 2, 2):
-        return mpl_vers >= (3, 6)
-    msg = 'Uncheckable versions.'  # pragma: no cover
-    raise RuntimeError(msg)  # pragma: no cover
+    return mpl_vers >= (3, 6)
 
 
 def check_math_text_support() -> bool:
@@ -292,6 +279,7 @@ class Report(scooby.Report):
         # Optional packages.
         optional = [
             # Misc.
+            'pyobjc-framework-Cocoa',
             'pytest-pyvista',
             'pyvistaqt',
             'PyQt5',

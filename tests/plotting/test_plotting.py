@@ -95,9 +95,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
-skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
-    9, 3, reason='Functions not implemented before 9.3.X'
-)
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
@@ -1347,14 +1344,7 @@ def test_enable_picking_gc():
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_left_button_down():
     pl = pv.Plotter()
-
-    attr = 'GetRenderFramebuffer'
-    if hasattr(renwin := pl.render_window, attr):
-        if not getattr(renwin, attr)().GetFBOIndex():
-            # This only fails for VTK<9.2.3
-            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
-                pl.left_button_down(None, None)
-    else:
+    with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
         pl.left_button_down(None, None)
     pl.close()
 
@@ -1429,7 +1419,6 @@ def test_axes():
     pl.show()
 
 
-@pytest.mark.skip_check_gc
 def test_box_axes_removed(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -1734,8 +1723,6 @@ def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
     return dataset
 
 
-# check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 def test_plot_rgb(composite, dtype):
@@ -1748,8 +1735,6 @@ def test_plot_rgb(composite, dtype):
     pl.show()
 
 
-# check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 def test_plot_rgb_implicit(composite, scalars):
@@ -2179,7 +2164,6 @@ def test_image_properties() -> None:
     pl.close()
 
 
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('enable_parallel_projection', [True, False])
 def test_image_depth_parallel_projection(enable_parallel_projection):
     # Create depth image
@@ -3778,14 +3762,12 @@ def test_tight_square(noise_2d):
     )
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 def test_plot_cell():
     grid = examples.cells.Tetrahedron()
     examples.plot_cell(grid)
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize(
     ('line_width', 'point_size', 'font_size', 'normals_scale', 'cls'),
     [
@@ -3816,7 +3798,6 @@ def test_plot_cell_kwargs(
     )
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 @pytest.mark.parametrize('wrong_orientation', [True, False])
 def test_plot_cell_polyhedron(wrong_orientation):
@@ -3832,7 +3813,6 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
 def test_plot_cell_multiple_cell_types(verify_image_cache):
     verify_image_cache.high_variance_test = True
@@ -4030,7 +4010,6 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14")
 def test_plotter_volume_lookup_table(uniform):
     uniform.set_active_scalars('Spatial Point Data')
 
@@ -4045,7 +4024,6 @@ def test_plotter_volume_lookup_table(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc
 def test_plotter_volume_lookup_table_reactive(uniform):
     """Ensure that changes to the underlying lookup table are reflected by the volume property."""
     uniform.set_active_scalars('Spatial Point Data')
@@ -4305,7 +4283,6 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_plot_individual_cell(hexbeam):
     hexbeam.get_cell(0).plot(color='b')
 
@@ -4910,7 +4887,6 @@ def test_plot_texture_flip_y(texture):
 
 
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
-@pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
     """Test plotting directly from the Texture class."""
     verify_image_cache.high_variance_test = True
@@ -4989,7 +4965,6 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
 def test_axes_geometry_shaft_type_tip_type(geometry_type):
     if geometry_type == 'custom':
@@ -5184,7 +5159,6 @@ def test_show_bounds_n_labels(verify_image_cache):
     pl.show()
 
 
-@skip_lesser_9_3_X
 def test_radial_gradient_background():
     pl = pv.Plotter()
     pl.set_background('white', right='black')
@@ -5420,13 +5394,11 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     # Remove Spline from test case (if present).
     if 'Spline' in functions.keys():
         functions.pop('Spline')
-    # Add a separate test for vtk < 9.3
-    functions['Capsule_legacy'] = functions['Capsule']
+
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
         'Capsule',
-        'Capsule_legacy',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -5478,7 +5450,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
     positive_dir = direction == 'pos'
@@ -5489,15 +5460,6 @@ def test_direction_objects(direction_obj_test_case):
         kwargs['center'] = (0, 0, 0)
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
-
-    # Test Capsule separately based on vtk version
-    if 'Capsule' in name:
-        legacy_vtk = pv.vtk_version_info < (9, 3)
-        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
-            pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing '
-                'with wrong version.',
-            )
 
     direction_param_name = None
 
@@ -5556,7 +5518,6 @@ def test_direction_objects(direction_obj_test_case):
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
     if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
@@ -5594,7 +5555,6 @@ def _show_edges():
     [(None, None), (None, 2), (2, 2)],
     ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
 )
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,  # noqa: F811
     select_inputs,
@@ -5619,6 +5579,8 @@ def test_contour_labels_boundary_style(
                 **test_kwargs,
                 **fixed_kwargs,
             )
+        if mesh.n_cells > 0:
+            assert mesh.array_names == ['boundary_labels']
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -5674,7 +5636,6 @@ def test_contour_labels_boundary_style(
         'dist_5-scale_1',
     ],
 )
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
@@ -5713,7 +5674,6 @@ def test_contour_labels_smoothing_constraint(
 
 @pytest.mark.usefixtures('_show_edges')
 @pytest.mark.parametrize('smoothing', [True, False])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_compare_select_inputs_select_outputs(
     labeled_image,  # noqa: F811
     smoothing,
@@ -5752,7 +5712,6 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.skip_check_gc  # gc fails, suspected memory leak with merge
 @pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_push(distance):
     source = pv.OrthogonalPlanesSource()
@@ -6005,7 +5964,6 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(
     (9, 6, 99),  # >= 9,7,0
     reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
@@ -6062,7 +6020,6 @@ def test_hide_cells_no_scalars(verify_image_cache):
     grid.plot(color='w', show_edges=True, show_grid=True)
 
 
-@pytest.mark.skip_check_gc
 def test_connectivity_cmap():
     # Test case described in https://github.com/pyvista/pyvista/issues/8252
     large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
@@ -6260,7 +6217,6 @@ def mip_test_points():
     return cloud
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_test_points):
     verify_image_cache_wrapper.high_variance_test = True
     pl = pv.Plotter()
@@ -6280,7 +6236,6 @@ def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_tes
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_points):
     verify_image_cache_wrapper.high_variance_test = True
     pl = pv.Plotter()
@@ -6378,3 +6333,30 @@ def test_sphere_texture_seam(tessellation):
         link=False,
         camera_position='yz',
     )
+
+
+@pytest.mark.parametrize('rate', [(1, 1, 1), (3, 6, 1)])
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset_rate(rate, rebase_coordinates):
+    extent = (-6, 6, -6, 6, -6, 6)
+    image = pv.ImageData()
+    image.extent = extent
+    image.cell_data['data'] = np.arange(image.n_cells)
+    subset = image.extract_subset(
+        (*extent[:4], 0, 0), rate=rate, rebase_coordinates=rebase_coordinates
+    )
+    expected_bounds = pv.BoundsTuple(
+        x_min=-6.0, x_max=6.0, y_min=-6.0, y_max=6.0, z_min=0.0, z_max=0.0
+    )
+    assert np.allclose(subset.bounds, expected_bounds)
+
+    # Put a hemisphere at the global and image origins for reference
+    global_origin = pv.Sphere(radius=2.0, center=(0, 0, 0), start_theta=0, end_theta=180)
+    image_origin = pv.Sphere(radius=2.0, center=subset.origin, start_theta=180, end_theta=360)
+
+    pl = pv.Plotter()
+    pl.add_mesh(subset)
+    pl.add_mesh(global_origin, color='blue')
+    pl.add_mesh(image_origin, color='orange')
+    pl.view_xy()
+    pl.show()
