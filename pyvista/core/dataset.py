@@ -282,6 +282,26 @@ class DataSet(DataSetFilters, DataObject):
             Active tensor's field and name: [field, name].
 
         """
+        field, name = self._active_tensors_info
+
+        # verify this field is still valid
+        if name is not None:
+            if field is FieldAssociation.POINT:
+                if self.point_data.active_tensors_name != name:
+                    name = None
+            if field is FieldAssociation.CELL:
+                if self.cell_data.active_tensors_name != name:
+                    name = None
+
+        if name is None:
+            # check for the active tensors in point or cell arrays
+            self._active_tensors_info = ActiveArrayInfoTuple(field, None)
+            for attr in [self.point_data, self.cell_data]:
+                name = attr.active_tensors_name
+                if name is not None:
+                    self._active_tensors_info = ActiveArrayInfoTuple(attr.association, name)
+                    break
+
         return self._active_tensors_info
 
     @property

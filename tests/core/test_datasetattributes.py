@@ -678,6 +678,31 @@ def test_active_vectors_name_setter():
         mesh.point_data.active_vectors_name = 'my-scalars'
 
 
+def test_active_tensors_name_setter():
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
+    mesh.point_data.set_array(range(4), 'my-scalars')
+    mesh.point_data['tensors9'] = np.zeros((4, 9))
+    mesh.point_data['tensors6'] = np.zeros((4, 6))
+
+    mesh.point_data.active_tensors_name = 'tensors9'
+    assert mesh.point_data.active_tensors_name == 'tensors9'
+    # VTK also accepts 6-component (symmetric) tensors
+    mesh.point_data.active_tensors_name = 'tensors6'
+    assert mesh.point_data.active_tensors_name == 'tensors6'
+
+    mesh.point_data.active_tensors_name = None
+    assert mesh.point_data.active_tensors_name is None
+
+    with pytest.raises(KeyError, match='does not contain'):
+        mesh.point_data.active_tensors_name = 'not a valid key'
+
+    with pytest.raises(ValueError, match='needs 9 or 6 components'):
+        mesh.point_data.active_tensors_name = 'my-scalars'
+
+    with pytest.raises(AttributeError):
+        _ = mesh.field_data.active_tensors_name
+
+
 def test_active_vectors_eq():
     mesh = pv.Plane(i_resolution=1, j_resolution=1)
     vectors0 = np.random.default_rng().random((4, 3))
