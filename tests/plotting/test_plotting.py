@@ -2326,6 +2326,65 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     pl.show()
 
 
+@pytest.mark.skip_windows('No testing on windows for EDL')
+def test_plot_eye_dome_lighting_subplot_right(airplane):
+    # https://github.com/pyvista/pyvista/issues/256: vtkEDLShading whites out
+    # other viewports rendered before it. Verify EDL on the right subplot
+    # leaves the left viewport intact.
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(airplane)
+    pl.subplot(0, 1)
+    pl.add_mesh(airplane)
+    pl.enable_eye_dome_lighting()
+    collection = pl.render_window.GetRenderers()
+    collection.InitTraversal()
+    assert collection.GetNextItem() is pl.renderers[1]
+    pl.show()
+
+
+@pytest.mark.skip_windows('No testing on windows for EDL')
+def test_plot_eye_dome_lighting_subplot_left(airplane):
+    # EDL on the (0, 0) subplot is the case that already worked; lock it in.
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(airplane)
+    pl.enable_eye_dome_lighting()
+    pl.subplot(0, 1)
+    pl.add_mesh(airplane)
+    pl.show()
+
+
+@pytest.mark.skip_windows('No testing on windows for EDL')
+def test_plot_eye_dome_lighting_subplot_grid(airplane):
+    # 2x2 grid with EDL on the bottom-right subplot — the worst-case
+    # position before the fix.
+    pl = pv.Plotter(shape=(2, 2))
+    for i in range(2):
+        for j in range(2):
+            pl.subplot(i, j)
+            pl.add_mesh(airplane)
+    pl.subplot(1, 1)
+    pl.enable_eye_dome_lighting()
+    collection = pl.render_window.GetRenderers()
+    collection.InitTraversal()
+    assert collection.GetNextItem() is pl.renderers[3]
+    pl.show()
+
+
+@pytest.mark.skip_windows('No testing on windows for EDL')
+def test_plot_eye_dome_lighting_subplot_disable(airplane):
+    # Toggling EDL off should not leave a broken renderer ordering behind.
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(airplane)
+    pl.subplot(0, 1)
+    pl.add_mesh(airplane)
+    pl.enable_eye_dome_lighting()
+    pl.disable_eye_dome_lighting()
+    pl.show()
+
+
 @pytest.mark.skip_windows
 def test_opacity_by_array_direct(plane):
     # test with opacity parm as an array, both cell and point sized
