@@ -487,8 +487,8 @@ pyvista = "pv"
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
 'examples/*' = [
+  'ANN',
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
   'D102',
@@ -498,10 +498,13 @@ pyvista = "pv"
   'D400',
   'D415',
   'E402',
+  'INP',
+  'PLC0415',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
   'S101',
   'SIM115',
   'T20',
+  'TID251',
 ]
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'hooks/*' = ['INP001']
@@ -531,8 +534,8 @@ pyvista = "pv"
 'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
-'pyvista/examples*' = ['ANN']
 'pyvista/examples/_dataset_loader.py' = [
+  'ANN',
   'PTH112',
   'PTH113',
   'PTH117',
@@ -541,6 +544,12 @@ pyvista = "pv"
   'S101',
 ]
 'pyvista/examples/cells.py' = ['N802']
+'pyvista/examples/download_3ds.py' = ['ANN']
+'pyvista/examples/downloads.py' = ['ANN202']
+'pyvista/examples/examples.py' = ['ANN202']
+'pyvista/examples/gltf.py' = ['ANN']
+'pyvista/examples/planets.py' = ['ANN']
+'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
 'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
