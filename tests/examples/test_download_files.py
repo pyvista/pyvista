@@ -32,6 +32,14 @@ if 'TEST_DOWNLOADS' in os.environ:
 pytestmark = pytest.mark.needs_download
 
 
+with warnings.catch_warnings():
+    # Deprecation warning emits once on initial import, suppress it here
+    warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+    import pyvista.examples.download_3ds
+    import pyvista.examples.gltf  # noqa: F401
+    import pyvista.examples.vrml  # noqa: F401
+
+
 def _on_ci():
     return os.environ.get('CI', 'false').lower() == 'true'
 
@@ -562,23 +570,162 @@ def test_download_dicom_stack():
 
 
 def test_download_teapot_vrml():
-    filename = examples.vrml.download_teapot()
+    match = (
+        '`examples.vrml.download_teapot` is deprecated. '
+        'Use `examples.download_teapot_vrml` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_teapot()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_teapot_vrml(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_teapot_vrml()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_sextant_vrml():
-    filename = examples.vrml.download_sextant()
+    match = (
+        '`examples.vrml.download_sextant` is deprecated. Use `examples.download_sextant` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_sextant()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_sextant(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_sextant()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_grasshopper():
-    filename = examples.vrml.download_grasshopper()
+    match = (
+        '`examples.vrml.download_grasshopper` is deprecated. '
+        'Use `examples.download_grasshopper` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_grasshopper()
     assert Path(filename).is_file()
 
-
-def test_download_iflamigm():
-    filename = examples.download_3ds.download_iflamigm()
+    # Moved to downloads module
+    filename = examples.download_grasshopper(load=False)
     assert Path(filename).is_file()
+    mesh = examples.download_grasshopper()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_flamingo():
+    match = (
+        '`examples.download_3ds.download_iflamigm` is deprecated. '
+        'Use `examples.download_flamingo` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.download_3ds.download_iflamigm()
+    assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_flamingo(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_flamingo()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_milk_truck():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_milk_truck` is deprecated. '
+        'Use `examples.download_milk_truck` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_milk_truck()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_milk_truck(load=False)
+    assert Path(filename).is_file()
+    with pytest.warns(UserWarning, match='vtkGLTFReader'):
+        # Ignore known vtkGLTFReader errors
+        mesh = examples.download_milk_truck()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_damaged_helmet():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_damaged_helmet` is deprecated. '
+        'Use `examples.download_damaged_helmet` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_damaged_helmet()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_damaged_helmet(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_damaged_helmet()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_gearbox():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_gearbox` is deprecated. Use `examples.download_gearbox` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_gearbox()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_gearbox(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_gearbox()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_avocado():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_avocado` is deprecated. Use `examples.download_avocado` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_avocado()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_avocado(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_avocado()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_sheen_chair_deprecated(monkeypatch):
+    match = (
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.'
+    )
+
+    class MockLoader:
+        def download(self):
+            return 'SheenChair.glb'
+
+    monkeypatch.setattr(examples.gltf, '_gltf_loader', lambda _: MockLoader())
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert examples.gltf.download_sheen_chair() == 'SheenChair.glb'
 
 
 def test_download_cavity():

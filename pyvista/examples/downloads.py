@@ -144,6 +144,33 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 )
 
 
+def _gltf_loader(name):
+    """Return a dataset loader for glTF files.
+
+    The glTF files are hosted in a separate repository from `pyvista/data`, so
+    a separate pooch fetcher is used.
+    """
+    paths: dict[str, str] = {
+        'damaged_helmet': 'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
+        'sheen_chair': 'SheenChair/glTF-Binary/SheenChair.glb',
+        'gearbox': 'GearboxAssy/glTF-Binary/GearboxAssy.glb',
+        'avocado': 'Avocado/glTF-Binary/Avocado.glb',
+        'milk_truck': 'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
+    }
+    base_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/'
+    fetcher = pooch.create(  # type: ignore[attr-defined]
+        path=USER_DATA_PATH,
+        base_url=base_url,
+        registry=dict.fromkeys(paths.values()),
+        retry_if_failed=3,
+    )
+    return _SingleFileDownloadableDatasetLoader(
+        paths[name],
+        base_url=base_url,
+        download_func=fetcher.fetch,
+    )
+
+
 def file_from_files(target_path, fnames):
     """Return the full path of a single file within a list of files.
 
@@ -8994,3 +9021,252 @@ def download_warping_spheres(*, load=True):
 _dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
     'warping_spheres/warping_spheres.vtkhdf'
 )
+
+
+def download_teapot_vrml(*, load: bool = True):
+    """Download a 2-manifold solid version of the famous teapot example.
+
+    The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
+    originally modeled by Martin Newell at the University of Utah in
+    1975. No formal license has ever been issued for the original Newell
+    dataset; the model has been freely distributed in computer graphics
+    software for 50 years and is conventionally treated as public domain.
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.download_teapot_vrml(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Teapot Vrml Dataset <teapot_vrml_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_teapot_vrml, load=load)
+
+
+_dataset_teapot_vrml = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
+
+
+def download_sextant(*, load: bool = True):
+    """Download the sextant example.
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.download_sextant(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Sextant Dataset <sextant_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_sextant, load=load)
+
+
+_dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
+
+
+def download_grasshopper(*, load: bool = True):
+    """Download the grasshopper example.
+
+    .. versionadded:: 0.45
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.download_grasshopper(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(25.0, 32.0, 44.0),
+    ...     focal_point=(0.0, 0.931, -6.68),
+    ...     viewup=(-0.20, 0.90, -0.44),
+    ... )
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Grasshopper Dataset <grasshopper_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_grasshopper, load=load)
+
+
+_dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grasshop.wrl')
+
+
+def download_flamingo(*, load: bool = True):
+    """Download the flamingo example.
+
+    .. versionadded:: 0.44.0
+
+    Returns
+    -------
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> file_3ds = examples.download_flamingo(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_3ds(file_3ds)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Flamingo Dataset <flamingo_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_flamingo, load=load)
+
+
+_dataset_flamingo = _SingleFileDownloadableDatasetLoader('iflamigm.3ds')
+
+
+def download_damaged_helmet(*, load: bool = True):  # pragma: no cover
+    """Download the damaged helmet example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.download_damaged_helmet(load=False)
+    >>> cubemap = examples.download_sky_box_cube_map()
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.set_environment_texture(cubemap)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Damaged Helmet Dataset <damaged_helmet_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_damaged_helmet, load=load)
+
+
+_dataset_damaged_helmet = _gltf_loader('damaged_helmet')
+
+
+def download_gearbox(*, load: bool = True):  # pragma: no cover
+    """Download the gearbox example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.download_gearbox(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Gearbox Dataset <gearbox_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_gearbox, load=load)
+
+
+_dataset_gearbox = _gltf_loader('gearbox')
+
+
+def download_avocado(*, load: bool = True):  # pragma: no cover
+    """Download the avocado example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.download_avocado(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Avocado Dataset <avocado_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_avocado, load=load)
+
+
+_dataset_avocado = _gltf_loader('avocado')
+
+
+def download_milk_truck(*, load: bool = True):  # pragma: no cover
+    """Download the milk truck example.
+
+    Returns
+    -------
+    str
+        Filename of the gltf file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> gltf_file = examples.download_milk_truck(load=False)
+    >>> pl = pv.Plotter()
+    >>> pl.import_gltf(gltf_file)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Milk Truck Dataset <milk_truck_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_milk_truck, load=load)
+
+
+_dataset_milk_truck = _gltf_loader('milk_truck')

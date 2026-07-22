@@ -2864,7 +2864,7 @@ class VRMLReader(BaseReader['MultiBlock']):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.vrml.download_grasshopper()
+    >>> filename = examples.download_grasshopper(load=False)
     >>> Path(filename).name
     'grasshop.wrl'
     >>> reader = pv.get_reader(filename)
@@ -2911,7 +2911,7 @@ class ThreeDSReader(BaseReader['MultiBlock']):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.download_3ds.download_iflamigm()
+    >>> filename = examples.download_flamingo(load=False)
     >>> Path(filename).name
     'iflamigm.3ds'
     >>> reader = pv.get_reader(filename)

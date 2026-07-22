@@ -9,6 +9,12 @@ import pytest
 
 import pyvista as pv
 
+collect_ignore = [  # Avoid importing deprecated modules
+    'examples/download_3ds.py',
+    'examples/gltf.py',
+    'examples/vrml.py',
+]
+
 
 @pytest.fixture(autouse=True, scope='session')
 def matplotlib_headless():

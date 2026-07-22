@@ -1,8 +1,29 @@
-"""Contains vrml examples."""
+"""Contains vrml examples.
+
+.. deprecated:: 0.49
+    This module is deprecated and will be removed in a future version.
+    Use :mod:`pyvista.examples.downloads` instead.
+
+"""
 
 from __future__ import annotations
 
-from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+import pyvista as pv
+from pyvista._warn_external import warn_external
+from pyvista.examples import downloads
+
+if pv.version_info >= (0, 52):  # pragma: no cover
+    msg = (
+        '`pyvista.examples.vrml` should be removed. This module and all of its '
+        'functions were deprecated in v0.49 and were scheduled for removal in v0.52.'
+    )
+    raise RuntimeError(msg)
+
+warn_external(
+    '`pyvista.examples.vrml` is deprecated and will be removed in a future '
+    'version. Use `pyvista.examples.downloads` instead.',
+    pv.PyVistaDeprecationWarning,
+)
 
 
 def download_teapot():
@@ -14,54 +35,40 @@ def download_teapot():
     dataset; the model has been freely distributed in computer graphics
     software for 50 years and is conventionally treated as public domain.
 
+    .. deprecated:: 0.49
+        Use :func:`pyvista.examples.downloads.download_teapot_vrml` instead.
+
     Returns
     -------
     str
         Filename of the VRML file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_teapot()
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
-
     """
-    # _dataset_teapot should be moved outside of this function, but we cannot due to
-    # the teapot name being used already, see https://github.com/pyvista/pyvista/issues/8773
-    _dataset_teapot = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
-    return _dataset_teapot.download()
+    warn_external(
+        '`examples.vrml.download_teapot` is deprecated. Use '
+        '`examples.download_teapot_vrml` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_teapot_vrml(load=False)
 
 
 def download_sextant():
     """Download the sextant example.
 
+    .. deprecated:: 0.49
+        Use :func:`pyvista.examples.downloads.download_sextant` instead.
+
     Returns
     -------
     str
         Filename of the VRML file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_sextant()
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Sextant Dataset <sextant_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
-    return _dataset_sextant.download()
-
-
-_dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
+    warn_external(
+        '`examples.vrml.download_sextant` is deprecated. Use `examples.download_sextant` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_sextant(load=False)
 
 
 def download_grasshopper():
@@ -69,32 +76,18 @@ def download_grasshopper():
 
     .. versionadded:: 0.45
 
+    .. deprecated:: 0.49
+        Use :func:`pyvista.examples.downloads.download_grasshopper` instead.
+
     Returns
     -------
     str
         Filename of the VRML file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.vrml.download_grasshopper()
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(25.0, 32.0, 44.0),
-    ...     focal_point=(0.0, 0.931, -6.68),
-    ...     viewup=(-0.20, 0.90, -0.44),
-    ... )
-    >>> pl.show()
-
-    .. seealso::
-
-        :ref:`Grasshopper Dataset <grasshopper_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
     """
-    return _dataset_grasshopper.download()
-
-
-_dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grasshop.wrl')
+    warn_external(
+        '`examples.vrml.download_grasshopper` is deprecated. Use '
+        '`examples.download_grasshopper` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_grasshopper(load=False)
