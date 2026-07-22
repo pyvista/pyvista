@@ -9384,7 +9384,7 @@ def download_particles(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
     return _download_dataset(_dataset_particles, load=load)
 
 
-def _particles_read_func(filename):
+def _particles_read_func(filename: str):
     reader = pv.get_reader(filename)
     reader.reader.SetDataByteOrderToBigEndian()
     reader.reader.Update()
