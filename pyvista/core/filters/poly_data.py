@@ -19,6 +19,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -2265,6 +2266,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         absolute: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Clean the mesh.
@@ -2274,8 +2276,11 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        point_merging : bool, optional
-            Enables point merging.  ``True`` by default.
+        point_merging : bool, default: True
+            Enable point merging. Must be ``True`` when ``static=True``
+            since :vtk:`vtkStaticCleanPolyData` always merges points;
+            passing ``static=True`` with ``point_merging=False`` raises
+            a :class:`ValueError`.
 
         tolerance : float, optional
             Set merging tolerance.  When enabled merging is set to
@@ -2304,6 +2309,17 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        static : bool, default: False
+            Use the threaded :vtk:`vtkStaticCleanPolyData` filter instead of
+            the serial :vtk:`vtkCleanPolyData`. The static variant is
+            multithreaded and typically 1.4x to 2.2x faster on meshes above
+            a few thousand triangles, returning the same set of points and
+            cells but in a different order. Requires ``point_merging=True``
+            since the static filter always merges points, and requires
+            VTK >= 9.6.
+
+            .. versionadded:: 0.49
 
         **kwargs : dict, optional
             Accepts for ``merge_tol`` to replace the ``tolerance``
@@ -2340,14 +2356,36 @@ class PolyDataFilters(DataSetFilters):
         if tolerance is None:
             tolerance = kwargs.pop('merge_tol', None)
         assert_empty_kwargs(**kwargs)
-        alg = _vtk.vtkCleanPolyData()
-        alg.SetPointMerging(point_merging)
+        # vtkStaticCleanPolyData always merges points and has no
+        # SetPointMerging option, so disabling merging with it is invalid.
+        if static and not point_merging:
+            msg = (
+                '`static=True` requires `point_merging=True` because '
+                '`vtkStaticCleanPolyData` always merges points. Use '
+                '`static=False` to disable point merging.'
+            )
+            raise ValueError(msg)
+        # vtkStaticCleanPolyData is unreliable on VTK < 9.6 (segfaults, e.g.
+        # on cell-less input and under threaded load). Raise rather than
+        # silently falling back to the serial filter: the two filters emit
+        # the same set of points and cells but in a different order, so a
+        # silent downgrade would change the point and cell ordering of the
+        # output depending on the installed VTK version.
+        if static and pv.vtk_version_info < (9, 6):
+            msg = '`static=True` requires VTK >= 9.6.'
+            raise VTKVersionError(msg)
+        alg: _vtk.vtkStaticCleanPolyData | _vtk.vtkCleanPolyData
+        if static:
+            alg = _vtk.vtkStaticCleanPolyData()
+        else:
+            alg = _vtk.vtkCleanPolyData()
+            alg.SetPointMerging(point_merging)
         alg.SetConvertLinesToPoints(lines_to_points)
         alg.SetConvertPolysToLines(polys_to_lines)
         alg.SetConvertStripsToPolys(strips_to_polys)
         if isinstance(tolerance, (int, float)):
             if absolute:
-                alg.ToleranceIsAbsoluteOn()
+                alg.SetToleranceIsAbsolute(True)
                 alg.SetAbsoluteTolerance(tolerance)
             else:
                 alg.SetTolerance(tolerance)
