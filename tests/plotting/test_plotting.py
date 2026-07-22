@@ -5579,6 +5579,8 @@ def test_contour_labels_boundary_style(
                 **test_kwargs,
                 **fixed_kwargs,
             )
+        if mesh.n_cells > 0:
+            assert mesh.array_names == ['boundary_labels']
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -6331,3 +6333,30 @@ def test_sphere_texture_seam(tessellation):
         link=False,
         camera_position='yz',
     )
+
+
+@pytest.mark.parametrize('rate', [(1, 1, 1), (3, 6, 1)])
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset_rate(rate, rebase_coordinates):
+    extent = (-6, 6, -6, 6, -6, 6)
+    image = pv.ImageData()
+    image.extent = extent
+    image.cell_data['data'] = np.arange(image.n_cells)
+    subset = image.extract_subset(
+        (*extent[:4], 0, 0), rate=rate, rebase_coordinates=rebase_coordinates
+    )
+    expected_bounds = pv.BoundsTuple(
+        x_min=-6.0, x_max=6.0, y_min=-6.0, y_max=6.0, z_min=0.0, z_max=0.0
+    )
+    assert np.allclose(subset.bounds, expected_bounds)
+
+    # Put a hemisphere at the global and image origins for reference
+    global_origin = pv.Sphere(radius=2.0, center=(0, 0, 0), start_theta=0, end_theta=180)
+    image_origin = pv.Sphere(radius=2.0, center=subset.origin, start_theta=180, end_theta=360)
+
+    pl = pv.Plotter()
+    pl.add_mesh(subset)
+    pl.add_mesh(global_origin, color='blue')
+    pl.add_mesh(image_origin, color='orange')
+    pl.view_xy()
+    pl.show()

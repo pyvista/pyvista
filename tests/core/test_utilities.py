@@ -187,6 +187,26 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
+@pytest.mark.parametrize(
+    ('shape', 'association'),
+    [
+        ((2, 3, 4), 'points'),
+        ((1, 2, 3), 'cells'),
+    ],
+)
+def test_raise_not_matching_suggests_flattening(shape, association):
+    grid = pv.ImageData(dimensions=(2, 3, 4))
+    scalars = np.zeros(shape)
+
+    with pytest.raises(ValueError, match='Number of scalars') as exc_info:
+        grid['scalars'] = scalars
+
+    message = str(exc_info.value)
+    assert f'shape {shape}' in message
+    assert f'matches the number of {association}' in message
+    assert "scalars.ravel(order='F')" in message
+
+
 def test_vtk_version_info():
     ver = _vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
@@ -553,7 +573,9 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
-    assert package in REPORT
+    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+        pytest.xfail('package only available on macOS')
+    assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 
 def test_report_downloads():

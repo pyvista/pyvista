@@ -14,7 +14,7 @@ def make_sphere():
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
     >>> from samples import make_sphere
     >>> sphere = make_sphere()
-    >>> sphere.plot()
+    >>> sphere.plot(text='make_sphere')
 
     """
     return pv.Sphere()
@@ -33,7 +33,7 @@ def make_sphere_second():
       >>> import pyvista as pv  # must import pyvista for the plotting directive to work
       >>> from samples import make_sphere
       >>> sphere = make_sphere()
-      >>> sphere.plot()
+      >>> sphere.plot(text='make_sphere2')
 
     """
     return pv.Sphere()
