@@ -17,6 +17,7 @@ Report.__init__.__annotations__ = get_type_hints(Report.__init__)
 
 
 @CLI_APP.command(
+    sort_key=3,
     usage=f'Usage: [bold]{pv.__name__} report [ARGS]',
     help_formatter=HELP_FORMATTER,
     help='Generate a PyVista software environment report.',

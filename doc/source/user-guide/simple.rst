@@ -224,27 +224,15 @@ your use case:
 Command Line
 ------------
 
-Starting from version ``0.47``, meshes can be plotted from one (or more)
-files using a command line tool such that:
+Mesh files can be plotted, converted, or validated using PyVista's command
+line interface (CLI). For example, plot a PLY file.
 
-.. code-block:: shell
-
-    pyvista plot <files> [OPTIONS]
-    python -m pyvista plot <files> [OPTIONS]
-
-.. note::
-    Providing multiple files renders them inside the same window.
+.. command-output:: pyvista plot ant.ply
+   :extraargs: --off-screen
+   :cwd: /_local_examples
 
 Most options available in :func:`pyvista.plot` are exposed by the command line.
-Run the ``--help`` command to see all options:
-
-
-.. code-block:: shell
-
-    pyvista plot --help
-    python -m pyvista plot --help
-
-
+See :ref:`cli_api` for details.
 
 Exporting
 ~~~~~~~~~

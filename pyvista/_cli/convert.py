@@ -45,6 +45,7 @@ _resolve_collisions_help = (
 
 
 @CLI_APP.command(
+    sort_key=1,
     usage=f'Usage: [bold]{pv.__name__} convert PATH-IN [PATH-IN...] PATH-OUT',
     help_formatter=HELP_FORMATTER,
 )
@@ -74,7 +75,7 @@ def _convert(
     ] = False,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
-    """Convert a mesh file to another format.
+    """Convert one or more mesh files to another format.
 
     One or more inputs may be supplied, and glob patterns are expanded. When multiple
     inputs are given, the output must be an extension-only spec (``.xyz`` or
@@ -88,20 +89,6 @@ def _convert(
     sidecar children appear in the input list the children are dropped automatically
     to preserve the 1:1 input/output mapping.
 
-    Sample usage:
-    ```bash
-    pyvista convert foo.abc bar.xyz
-    Saved: bar.xyz
-
-    pyvista convert foo.abc .xyz
-    Saved: foo.xyz
-
-    pyvista convert sub/*.vtu .pv
-    # Writes sub/a.pv, sub/b.pv, ... next to each input
-
-    pyvista convert sub/*.vtu out/.pv
-    # Writes out/a.pv, out/b.pv, ... into the explicit out directory
-    ```
     """
     if len(paths) < 2:
         msg = 'convert requires at least one input file and an output spec.'

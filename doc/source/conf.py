@@ -8,6 +8,7 @@ import json
 import locale
 import os
 from pathlib import Path
+import shutil
 import sys
 from typing import TYPE_CHECKING
 import warnings
@@ -64,6 +65,14 @@ if not Path(pv.FIGURE_PATH).exists():
 pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
+# Copy contents of `pyvista/examples` dir so that we have actual mesh files
+# we can run CLI commands on locally without polluting the source dir
+HERE = Path(__file__).parent
+src = HERE.parent.parent / 'pyvista' / 'examples'
+dst = HERE / '_local_examples'
+shutil.rmtree(dst, ignore_errors=True)
+shutil.copytree(src, dst)
+
 # SG warnings
 import warnings
 
@@ -100,6 +109,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 # ones.
 extensions = [
     'enum_tools.autoenum',
+    'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
@@ -115,6 +125,7 @@ extensions = [
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
+    'sphinxcontrib.programoutput',
     'sphinx_togglebutton',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -144,6 +155,9 @@ autodoc_type_aliases = {
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
+
+# Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
+programoutput_use_ansi = True
 
 # Needed to address a code-block parsing error by sphinx for an example
 autodoc_mock_imports = ['example']

@@ -121,9 +121,9 @@ def _converter_report(
 
 
 @CLI_APP.command(
+    sort_key=2,
     usage=f'Usage: [bold]{pv.__name__} validate PATH... [--fields FIELD...] [--exclude FIELD...]',
     help_formatter=HELP_FORMATTER,
-    help="Validate a mesh's array data, points, and cells.",
 )
 def _validate(
     paths: Annotated[
@@ -194,6 +194,7 @@ def _validate(
     ] = None,
     skip_unreadable: skip_unreadable = False,
 ) -> None:
+    """Validate data, points, and cells for one or more mesh files."""
     valid_paths = validate_paths(paths)
     report_body = report[0] if report else 'message'
     n_paths = len(valid_paths)
@@ -360,7 +361,9 @@ def _validate_many(
 
     n_total = n_valid + n_invalid
     if n_invalid:
-        msg = f'[red]{n_invalid} invalid[/red] meshes out of {n_total} meshes validated.'
+        es1 = 'es' if n_invalid > 1 else ''
+        es2 = 'es' if n_total > 1 else ''
+        msg = f'[red]{n_invalid} invalid[/red] mesh{es1} out of {n_total} mesh{es2} validated.'
         CLI_APP.error_console.print(msg)
         CLI_APP.error_console.print('\n'.join(invalid_output))
     elif n_total:
