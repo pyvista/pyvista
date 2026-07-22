@@ -497,9 +497,9 @@ pyvista = "pv"
   'D212',
   'D400',
   'D415',
+  'E402',
   'INP',
   'PLC0415',
-  'E402',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
   'S101',
   'SIM115',
