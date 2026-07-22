@@ -30,7 +30,9 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import cast
+from typing import overload
 
 import numpy as np
 import pooch
@@ -2707,7 +2709,11 @@ def download_mug(load=True):  # noqa: FBT002
 _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
-def download_parallel_exodus(*, load=True) -> MultiBlock | str:
+@overload
+def download_parallel_exodus(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_parallel_exodus(*, load: Literal[False]) -> str: ...
+def download_parallel_exodus(*, load: bool = True) -> MultiBlock | str:
     """Download parallel Exodus dataset.
 
     Parameters
