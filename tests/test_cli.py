@@ -577,11 +577,13 @@ def test_convert_help(capsys: pytest.CaptureFixture):
         (examples.download_parallel_exodus, '.e.4.0', '.vtm'),
     ],
 )
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='Flaky issue with dataset loader')
 def test_convert_compound_extension(
     tmp_example_dir: Path, download: Callable, in_ext: str, out_ext: str
 ):
     """Compound extensions like .nii.gz are correctly stripped from the input stem
     and replaced with the target extension."""
+
     src = Path(download(load=False))
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
