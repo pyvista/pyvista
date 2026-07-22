@@ -113,6 +113,7 @@ extensions = [
     'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx_download_examples',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
     'sphinx_togglebutton',

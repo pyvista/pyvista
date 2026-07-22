@@ -217,7 +217,7 @@ def _make_download_node(rel_path: str) -> nodes.paragraph:
     """Build a working download link node for a file already in the downloads dir."""
     reference = addnodes.download_reference('', reftarget=rel_path)
     reference['filename'] = rel_path
-    reference += nodes.Text('Download this example as a Python script')
+    reference += nodes.Text('Download examples as a Python script')
 
     paragraph = nodes.paragraph()
     paragraph += reference
