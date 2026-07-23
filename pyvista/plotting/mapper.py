@@ -476,6 +476,11 @@ class _DataSetMapper(_BaseMapper):
             set_algorithm_input(self, self._active_scalars_algo)
         else:
             set_algorithm_input(self, obj)
+        # Static mappers skip input-pipeline updates during rendering. An
+        # explicit input replacement must therefore update the newly connected
+        # pipeline once before rendering resumes.
+        if self.GetStatic():
+            self.update()
         self._maybe_set_default_scalar_range()
 
     @property
