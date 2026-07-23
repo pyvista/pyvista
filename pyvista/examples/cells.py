@@ -57,7 +57,7 @@ _NOT_SUPPORTED_PARAMETRIC = [
 ]
 
 
-def plot_cell(  # noqa: ANN201
+def plot_cell(
     grid: DataSet | MultiBlock,
     cpos: CameraPositionOptions | None = None,
     *,
@@ -151,7 +151,7 @@ def plot_cell(  # noqa: ANN201
     font_size_ = config._font_size if font_size is None else font_size
     normals_scale_ = config._normals_scale if normals_scale is None else normals_scale
 
-    def _extract_surface(cell_):  # noqa: ANN001, ANN202
+    def _extract_surface(cell_):
         if cell_.type == pv.CellType.POLYHEDRON:
             # For Polyhedron, we don't use ``extract_surface`` directly because that may alter
             # the face orientation, so we iterate over each face directly to create separate

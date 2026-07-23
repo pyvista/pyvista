@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Literal
-from typing import overload
-
 import numpy as np
 
 import pyvista as pv
@@ -15,11 +11,6 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
-
-if TYPE_CHECKING:
-    from pyvista import ImageData
-    from pyvista import PolyData
-    from pyvista import Texture
 
 
 def _download_dataset_texture(
@@ -33,9 +24,7 @@ def _download_dataset_texture(
     return dataset
 
 
-def load_planet(
-    radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
-) -> PolyData:
+def load_planet(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load a planet or celestial body as a sphere with texture coordinates.
 
     All planets are geometrically identical spheres. Textures are loaded
@@ -77,7 +66,7 @@ def load_planet(
             Example plot of the solar system.
 
     """
-    return _dataset_planet.load(  # type: ignore[return-value]
+    return _dataset_planet.load(
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
     )
 
@@ -400,7 +389,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_planet_rings(*, inner: float = 0.25, outer: float = 0.5, c_res: int = 50) -> PolyData:
+def load_planet_rings(*, inner=0.25, outer=0.5, c_res=50):
     """Load planetary rings as a disc with texture coordinates.
 
     Arguments are passed on to :func:`pyvista.Disc`.
@@ -450,7 +439,7 @@ def load_planet_rings(*, inner: float = 0.25, outer: float = 0.5, c_res: int = 5
             Example plot of the solar system.
 
     """
-    return _dataset_planet_rings.load(inner=inner, outer=outer, c_res=c_res)  # type: ignore[return-value]
+    return _dataset_planet_rings.load(inner=inner, outer=outer, c_res=c_res)
 
 
 def _planet_rings_load_func(*, inner=0.25, outer=0.5, c_res=50):
@@ -629,21 +618,8 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@overload
-def download_sun_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_sun_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_sun_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_sun_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_sun_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_sun_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the Sun.
 
     Textures obtained from `Solar Textures
@@ -693,21 +669,8 @@ _dataset_sun_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_moon_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_moon_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_moon_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_moon_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_moon_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_moon_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the Earth's Moon.
 
     Textures obtained from `Solar Textures
@@ -757,21 +720,8 @@ _dataset_moon_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_mercury_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_mercury_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_mercury_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_mercury_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_mercury_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_mercury_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of planet Mercury.
 
     Textures obtained from `Solar Textures
@@ -821,36 +771,12 @@ _dataset_mercury_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[False] = ...,
-    load: Literal[True] = ...,
-) -> ImageData: ...
-@overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[False] = ...,
-    load: Literal[False] = ...,
-) -> str: ...
-@overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[True] = ...,
-    load: Literal[True] = ...,
-) -> Texture: ...
-@overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[True] = ...,
-    load: Literal[False] = ...,
-) -> str: ...
 @_deprecate_positional_args
 def download_venus_surface(
-    atmosphere: bool = True,  # noqa: FBT001, FBT002
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:  # pragma: no cover
+    atmosphere=True,  # noqa: FBT002
+    texture=False,  # noqa: FBT002
+    load=True,  # noqa: FBT002
+):  # pragma: no cover
     """Download the surface or atmosphere of Planet Venus.
 
     Textures obtained from `Solar Textures
@@ -869,7 +795,7 @@ def download_venus_surface(
 
     Returns
     -------
-    output : pyvista.Texture | pyvista.ImageData | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -910,21 +836,8 @@ __dataset_venus_surface_no_atmosphere = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_mars_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_mars_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_mars_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_mars_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_mars_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_mars_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the planet Mars.
 
     Textures obtained from `Solar Textures
@@ -974,21 +887,8 @@ _dataset_mars_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_jupiter_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_jupiter_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_jupiter_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_jupiter_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_jupiter_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_jupiter_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the planet Jupiter.
 
     Textures obtained from `Solar Textures
@@ -1038,21 +938,8 @@ _dataset_jupiter_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_saturn_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_saturn_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_saturn_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_saturn_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_saturn_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_saturn_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the planet Saturn.
 
     Textures obtained from `Solar Textures
@@ -1108,21 +995,8 @@ _dataset_saturn_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_saturn_rings(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_saturn_rings(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_saturn_rings(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_saturn_rings(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_saturn_rings(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_saturn_rings(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the texture of Saturn's rings.
 
     Textures obtained from `Solar Textures
@@ -1177,21 +1051,8 @@ _dataset_saturn_rings = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_uranus_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_uranus_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_uranus_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_uranus_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_uranus_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_uranus_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download and the texture of the surface of planet Uranus.
 
     Textures obtained from `Solar Textures
@@ -1207,7 +1068,7 @@ def download_uranus_surface(
 
     Returns
     -------
-    output : pyvista.Texture | pyvista.ImageData | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1241,21 +1102,8 @@ _dataset_uranus_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_neptune_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_neptune_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_neptune_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_neptune_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_neptune_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_neptune_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the texture of the surface of planet Neptune.
 
     Textures obtained from `Solar Textures
@@ -1305,21 +1153,8 @@ _dataset_neptune_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_pluto_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_pluto_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_pluto_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_pluto_surface(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_pluto_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_pluto_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the texture of the surface of the dwarf planet Pluto.
 
     Textures obtained from `Solar Textures
@@ -1369,25 +1204,8 @@ _dataset_pluto_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_stars_sky_background(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_stars_sky_background(
-    texture: Literal[False] = ..., load: Literal[False] = ...
-) -> str: ...
-@overload
-def download_stars_sky_background(
-    texture: Literal[True], load: Literal[True] = ...
-) -> Texture: ...
-@overload
-def download_stars_sky_background(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_stars_sky_background(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_stars_sky_background(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the night sky stars texture.
 
     Textures obtained from `tamaskis/planet3D-MATLAB
@@ -1442,25 +1260,8 @@ _dataset_stars_sky_background = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@overload
-def download_milkyway_sky_background(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_milkyway_sky_background(
-    texture: Literal[False] = ..., load: Literal[False] = ...
-) -> str: ...
-@overload
-def download_milkyway_sky_background(
-    texture: Literal[True], load: Literal[True] = ...
-) -> Texture: ...
-@overload
-def download_milkyway_sky_background(texture: Literal[True], load: Literal[False]) -> str: ...
 @_deprecate_positional_args
-def download_milkyway_sky_background(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
-) -> Texture | ImageData | str:
+def download_milkyway_sky_background(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the sky texture of the Milky Way galaxy.
 
     Textures obtained from `tamaskis/planet3D-MATLAB

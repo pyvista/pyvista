@@ -458,7 +458,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         else:
             # Relative path, use vars from downloads.py
             self._base_url = base_url or SOURCE
-            self._download_func = download_func or download_file  # type: ignore[assignment]
+            self._download_func = download_func or download_file
             self._source_name = Path(path).name if Path(path).is_absolute() else path
 
         target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
@@ -475,7 +475,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             if os.path.isfile(self.path):
                 try:
                     # Get file path
-                    fullpath = file_from_files(target_file, self.path)  # type:ignore[arg-type]
+                    fullpath = file_from_files(target_file, self.path)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
                     fullpath = os.path.join(USER_DATA_PATH, path + '.unzip', target_file)
