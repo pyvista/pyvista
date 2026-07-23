@@ -343,6 +343,40 @@ def test_parallel_error(tmp_path: Path) -> None:
     assert 'cannot be enabled for parallel builds' in err
 
 
+@flaky_test(exceptions=(AssertionError,))
+def test_tinypages_download_examples_integration(tmp_path: Path):
+    """Check that the ``download_examples`` extension is wired into the real docs build."""
+    source_dir = Path(__file__).parent / 'tinypages'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    downloads_dir = html_dir / '_downloads'
+    assert downloads_dir.is_dir(), 'expected examples_download to produce a _downloads dir'
+
+    generated_names = {p.name for p in downloads_dir.rglob('*.py')}
+    samples_names = {name for name in generated_names if name.startswith('samples_')}
+
+    # samples includes four functions with Examples docstrings, so we should expect four
+    # downloads, but make_sphere_second uses ``:include-source: False``, so a download is
+    # not generated
+    expected_names = {
+        'samples_make_sphere.py',
+        'samples_example_with_empty_plotter.py',
+        'samples_example_with_closed_plotter.py',
+    }
+    assert samples_names == expected_names, (
+        f'expected downloads for {expected_names}, got {samples_names}'
+    )
+
+    some_autodocs_html = (html_dir / 'some_autodocs.html').read_text(encoding='utf-8')
+    assert some_autodocs_html.count('reference download') == len(expected_names)
+
+
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
