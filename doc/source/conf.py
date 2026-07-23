@@ -296,7 +296,6 @@ nitpick_ignore_regex = [
     (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
-    (r'py:.*', 'ndarray'),
     #
     # pyarrow does not register a py:module entry in its intersphinx
     # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
