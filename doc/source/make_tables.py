@@ -136,7 +136,7 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
-        logger.info('generating tables... %s', cls.__name__)
+        print(f'generating tables... {cls.__name__}', flush=True)
         assert cls.path is not None, f'Subclass {cls} should specify a path.'
         if isinstance(cls.path, property):
             cls.path = cls.path.fget(cls)
@@ -2835,7 +2835,7 @@ class DatasetCardFetcher:
 
                 # Load data
                 module_name = module.__name__.removeprefix('pyvista.')
-                logger.info('loading datasets from %s... %s', module_name, dataset_name)
+                print(f'loading datasets from {module_name}... {dataset_name}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
@@ -3632,7 +3632,7 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
     carousel_paths = [_resolve_path(carousel) for carousel in carousels]
     all_exist = all(Path(p).exists() for p in carousel_paths)
     if all_exist:
-        logger.info('All carousel RST files already exist, skipping dataset loading')
+        print('All carousel RST files already exist, skipping dataset loading', flush=True)
         return carousel_paths
 
     # Load datasets and create card objects
@@ -3772,11 +3772,23 @@ def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
         if actual_file is not None:
             return str(Path(node_image['uri']).parent / actual_file.name)
 
-        logger.warning(
-            'Could not resolve gallery image placeholder %r. Using "not available" image instead.',
-            filename_with_placeholder,
-            location=node_image,
+        # File not found, generate a helpful warning message
+        filename_stem = Path(filename_with_placeholder).stem
+        is_dataset_image = 'load_' in filename_stem or 'download_' in filename_stem
+
+        message = (
+            f'Could not resolve gallery image placeholder '
+            f'{filename_with_placeholder!r}. Using "not available" image instead.'
         )
+
+        if is_dataset_image:
+            dataset_name = filename_stem.split('load_', 1)[1].split(f'-{PLACEHOLDER}', 1)[0]
+            message += (
+                f' If this dataset intentionally has no generated image, add '
+                f'`{dataset_name!r}: None` to DATASET_GALLERY_IMAGE_EXT_DICT.'
+            )
+
+        logger.warning(message, location=node_image)
 
         return str(
             Path(node_image['uri']).parent / Path(DATASET_GALLERY_IMAGE_NOT_AVAILABLE_PATH).name
@@ -3795,4 +3807,5 @@ def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname:
 
 if __name__ == '__main__':
     new_rsts = make_all_tables()
-    logger.info('Generated rsts:\n%s', '\n'.join(new_rsts))
+    print('Generated rsts:', flush=True)
+    print('\n'.join(new_rsts), flush=True)
