@@ -89,6 +89,7 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/pyvista_plot_directive/api/examples/_auto
 DATASET_GALLERY_IMAGE_EXT_DICT = {
     'cavity': None,
     'gpr_data_array': None,
+    'sheen_chair': None,
     'sphere_vectors': None,
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
