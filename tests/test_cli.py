@@ -1042,8 +1042,8 @@ def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
 
 
-# CLI-only parameters that have no counterpart in pv.plot
-_CLI_ONLY_PARAMS = {'skip_unreadable', 'paths'}
+# CLI-only parameters that have no explicit counterpart in pv.plot
+_CLI_ONLY_PARAMS = {'skip_unreadable', 'paths', 'static'}
 
 
 @fixture
@@ -1218,6 +1218,7 @@ class CasesPlot:
             ('--color=[0.1,1,0]', dict(color=[0.1, 1, 0])),
             ('--clim [0.1,1]', dict(clim=[0.1, 1])),
             ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
+            ('--static', dict(static=True)),
         ]
     )
     @case(tags=['kwargs', 'add_mesh'])

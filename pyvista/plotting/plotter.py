@@ -2720,6 +2720,7 @@ class BasePlotter(_BoundsSizeMixin):
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         component: int | None = None,
         color_missing_with_nan: bool = False,  # noqa: FBT001, FBT002
         copy_mesh: bool = False,  # noqa: FBT001, FBT002
@@ -2966,6 +2967,15 @@ class BasePlotter(_BoundsSizeMixin):
         render : bool, default: True
             Force a render when ``True``.
 
+        static : bool, default: False
+            If ``True``, the mapper assumes the input data is static and skips
+            checking its input pipeline for updates when rendering. The mapper's
+            input may still be replaced explicitly. Keeping the topology unchanged
+            between replacements may allow the rendering backend to reuse index
+            buffers while updating vertex attributes.
+
+            .. versionadded:: 0.49
+
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
@@ -3189,6 +3199,10 @@ class BasePlotter(_BoundsSizeMixin):
         if show_scalar_bar and scalars is not None and isinstance(scalar_bar_args, Mapping):
             self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
+        if static:
+            mapper.update()
+        mapper.static = static
+
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
@@ -3206,6 +3220,7 @@ class BasePlotter(_BoundsSizeMixin):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                static=static,
                 show_vertices=False,
             )
 
@@ -3271,6 +3286,7 @@ class BasePlotter(_BoundsSizeMixin):
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         user_matrix: TransformLike | None = None,
         component: int | None = None,
         emissive: bool | None = None,  # noqa: FBT001
@@ -3465,7 +3481,7 @@ class BasePlotter(_BoundsSizeMixin):
             ``render_points_as_spheres`` is ``True`` (explicitly or via
             theme), it will be automatically disabled with a warning.
 
-            .. versionadded:: 0.48
+            .. versionadded:: 0.49
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -3593,6 +3609,15 @@ class BasePlotter(_BoundsSizeMixin):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        static : bool, default: False
+            If ``True``, the mapper assumes the input data is static and skips
+            checking its input pipeline for updates when rendering. The mapper's
+            input may still be replaced explicitly. Keeping the topology unchanged
+            between replacements may allow the rendering backend to reuse index
+            buffers while updating vertex attributes.
+
+            .. versionadded:: 0.48
 
         user_matrix : TransformLike, default: np.eye(4)
             Matrix passed to the Actor class before rendering. This affects the
@@ -3922,6 +3947,7 @@ class BasePlotter(_BoundsSizeMixin):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                static=static,
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
                 remove_existing_actor=remove_existing_actor,
@@ -4198,6 +4224,10 @@ class BasePlotter(_BoundsSizeMixin):
         else:
             mapper.scalar_visibility = False
 
+        if static:
+            mapper.update()
+        mapper.static = static
+
         # Set actor properties ================================================
         prop_kwargs = dict(
             theme=self._theme,
@@ -4279,6 +4309,7 @@ class BasePlotter(_BoundsSizeMixin):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                static=static,
                 show_vertices=False,
             )
 

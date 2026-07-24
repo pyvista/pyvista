@@ -67,6 +67,12 @@ def test_interpolate_before_map(dataset_mapper):
     assert dataset_mapper.interpolate_before_map is True
 
 
+def test_static(dataset_mapper):
+    assert dataset_mapper.static is False
+    dataset_mapper.static = True
+    assert dataset_mapper.static is True
+
+
 def test_color_mode(dataset_mapper):
     assert isinstance(dataset_mapper.color_mode, str)
 

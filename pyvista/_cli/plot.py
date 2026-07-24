@@ -127,6 +127,7 @@ def _plot(
     border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
     border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
@@ -141,6 +142,8 @@ def _plot(
         read_mesh(path, on_error='suppress' if skip_unreadable else on_error_if_unreadable)
         for path in valid_paths
     ]
+    if static:
+        kwargs['static'] = True
     try:
         res = pv.plot(
             var_item=[mesh for mesh in meshes if mesh is not None],  # type: ignore [arg-type]
