@@ -176,7 +176,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     ----------
     text : str, optional
         Text string to be displayed.
-        "\n" is recognized as a carriage return/linefeed (line separator).
+        ``\n`` is recognized as a carriage return/linefeed (line separator).
         The characters must be in the UTF-8 encoding.
 
     position : Sequence[float], optional
@@ -222,7 +222,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         -------
         str
             Text string to be displayed.
-            "\n" is recognized as a carriage return/linefeed (line separator).
+            ``\n`` is recognized as a carriage return/linefeed (line separator).
             The characters must be in the UTF-8 encoding.
 
         """
