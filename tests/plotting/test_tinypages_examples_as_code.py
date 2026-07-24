@@ -1,9 +1,9 @@
-"""Tests for the ``download_examples`` Sphinx extension.
+"""Tests for the ``examples_as_code`` Sphinx extension.
 
 This extension is deliberately independent of ``plot_directive.py`` (it
 doesn't import anything from it, and works whether or not that extension is
 even installed), so its tests get their own small, self-contained fixture
-directory (``tinypages_download_examples/``) with its own ``conf.py``,
+directory (``tinypages_examples_as_code/``) with its own ``conf.py``,
 rather than living inside the main ``tinypages/`` used by
 ``test_tinypages.py``. That fixture's ``pyvista_plot_directive/`` output is
 checked against exact, hash-locked file sets for both serial and parallel
@@ -11,7 +11,7 @@ builds; a separate fixture avoids needing to update those for a feature
 that has nothing to do with them.
 
 The one thing worth checking for *integration* with the real docs build --
-that ``pyvista.ext.download_examples`` is wired into the real ``tinypages/``
+that ``pyvista.ext.examples_as_code`` is wired into the real ``tinypages/``
 ``conf.py`` and produces a download for at least one real docstring -- lives
 in ``test_tinypages.py`` instead, alongside the rest of that build's checks.
 """
@@ -35,7 +35,7 @@ pytest.importorskip('sphinx')
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
-SRCDIR = Path(__file__).parent / 'tinypages_download_examples'
+SRCDIR = Path(__file__).parent / 'tinypages_examples_as_code'
 
 
 def _read(paths: list[Path], name_contains: str) -> str:
@@ -49,7 +49,7 @@ def _read(paths: list[Path], name_contains: str) -> str:
 @pytest.fixture(scope='module')
 def built(tmp_path_factory) -> tuple[Path, list[Path]]:
     """Build the fixture once and share it (and its generated files) across this module."""
-    tmp_path = tmp_path_factory.mktemp('download_examples_build')
+    tmp_path = tmp_path_factory.mktemp('examples_as_code_build')
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 
@@ -64,7 +64,7 @@ def built(tmp_path_factory) -> tuple[Path, list[Path]]:
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_download_examples_execute(built: tuple[Path, list[Path]]):
+def test_examples_as_code_execute(built: tuple[Path, list[Path]]):
     """Every generated example script should run standalone without error.
 
     This is the key correctness check: a script that merely *looks*

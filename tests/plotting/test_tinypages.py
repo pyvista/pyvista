@@ -344,8 +344,8 @@ def test_parallel_error(tmp_path: Path) -> None:
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_tinypages_download_examples_integration(tmp_path: Path):
-    """Check that the ``download_examples`` extension is wired into the real docs build."""
+def test_tinypages_examples_as_code_integration(tmp_path: Path):
+    """Check that the ``examples_as_code`` extension is wired into the real docs build."""
     source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'

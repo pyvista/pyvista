@@ -13,13 +13,13 @@ extensions = [
     'numpydoc',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
-    'pyvista.ext.download_examples',
+    'pyvista.ext.examples_as_code',
     'sphinx.ext.autodoc',
     'sphinx_design',
 ]
 
 root_doc = 'index'
-project = 'tinypages_download_examples'
+project = 'tinypages_examples_as_code'
 exclude_patterns = ['_build']
 
 pv.BUILDING_GALLERY = True
