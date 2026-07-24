@@ -202,7 +202,7 @@ def test_header_format(built: tuple[Path, list[Path]]):
     """Every generated file should start with a title header and matching underline."""
     src = _read(built[1], 'case_note')
     lines = src.splitlines()
-    assert lines[0] == '# docstring_cases.case_note examples'
+    assert lines[0] == '# Examples from docstring_cases.case_note'
     title = lines[0].removeprefix('# ')
     assert lines[1] == '# ' + '-' * len(title)
     assert len(lines[0]) == len(lines[1])

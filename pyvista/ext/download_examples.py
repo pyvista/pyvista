@@ -353,7 +353,7 @@ def _qualified_name_for(node: nodes.Node, docname: str, counter: int) -> str:
 
 def _header_segment(qualified_name: str) -> Segment:
     """Build the title-header segment, e.g. ``# pyvista.read examples`` + underline."""
-    title = f'{qualified_name} examples'
+    title = f'Examples from {qualified_name}'
     underline = '-' * len(title)
     return ('directive', [f'# {title}', f'# {underline}'])
 
@@ -388,7 +388,7 @@ def _make_download_node(rel_path: str) -> nodes.paragraph:
     """Build a working download link node for a file already in the downloads dir."""
     reference = addnodes.download_reference('', reftarget=rel_path)
     reference['filename'] = rel_path
-    reference += nodes.Text('Download this example as a Python script')
+    reference += nodes.Text('Download examples as a Python script')
 
     paragraph = nodes.paragraph()
     paragraph += reference
