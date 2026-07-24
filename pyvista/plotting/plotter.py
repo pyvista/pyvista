@@ -2974,7 +2974,7 @@ class BasePlotter(_BoundsSizeMixin):
             between replacements may allow the rendering backend to reuse index
             buffers while updating vertex attributes.
 
-            .. versionadded:: 0.48
+            .. versionadded:: 0.49
 
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
@@ -3201,7 +3201,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         if static:
             mapper.update()
-        mapper.SetStatic(static)
+        mapper.static = static
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3481,7 +3481,7 @@ class BasePlotter(_BoundsSizeMixin):
             ``render_points_as_spheres`` is ``True`` (explicitly or via
             theme), it will be automatically disabled with a warning.
 
-            .. versionadded:: 0.48
+            .. versionadded:: 0.49
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -4226,7 +4226,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         if static:
             mapper.update()
-        mapper.SetStatic(static)
+        mapper.static = static
 
         # Set actor properties ================================================
         prop_kwargs = dict(

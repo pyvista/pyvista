@@ -376,6 +376,22 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def scalar_visibility(self, value: bool) -> None:
         self.SetScalarVisibility(value)
 
+    @property
+    def static(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether the mapper treats its input as static.
+
+        A static mapper skips checking its input pipeline for updates when
+        rendering.
+
+        .. versionadded:: 0.49
+
+        """
+        return bool(self.GetStatic())
+
+    @static.setter
+    def static(self, value: bool) -> None:
+        self.SetStatic(value)
+
     def update(self) -> None:
         """Update this mapper."""
         self.Update()
@@ -479,7 +495,7 @@ class _DataSetMapper(_BaseMapper):
         # Static mappers skip input-pipeline updates during rendering. An
         # explicit input replacement must therefore update the newly connected
         # pipeline once before rendering resumes.
-        if self.GetStatic():
+        if self.static:
             self.update()
         self._maybe_set_default_scalar_range()
 
