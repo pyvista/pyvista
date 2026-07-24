@@ -1,5 +1,7 @@
 .. title:: PyVista
 
+.. py:module:: pyvista
+
 .. raw:: html
 
     <div class="banner">

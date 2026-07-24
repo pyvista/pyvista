@@ -24,6 +24,12 @@ test_cases = [dict(case.attrib) for case in xml_root.iterfind('testcase')]
 test_ids = [case['classname'] for case in test_cases]
 
 
+def test_top_level_module_target():
+    index_html = (Path(HTML_DIR) / 'index.html').read_text(encoding='utf-8')
+
+    assert 'id="module-pyvista"' in index_html
+
+
 @pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
 def test_sphinx_gallery_execution_times(testcase):
     if float(testcase['time']) > SPHINX_GALLERY_EXAMPLE_MAX_TIME:
