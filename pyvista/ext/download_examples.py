@@ -27,9 +27,10 @@ resolved doctree.
 
 Conversion rules applied to the nodes within an Examples section:
 
-- doctest blocks (``>>> ...`` / ``... ...``) keep their code, with the
-  prompts stripped, as real Python source; non-prompted lines (expected
-  doctest output) become comments
+- doctest blocks (``>>> ...`` / ``... ...``) keep their input lines, with
+  the prompts stripped, as real Python source; doctest *output* lines
+  (expected results, with no prompt) are dropped entirely -- we only care
+  about the input code, not what running it once produced
 - ``.. code-block:: python`` (or ``py``) blocks -- as used by
   ``plot_directive.py`` for non-doctest-format examples -- are kept as-is
 - ``.. note::``/``.. warning::`` (and the rest of the docutils admonition
@@ -45,6 +46,16 @@ Conversion rules applied to the nodes within an Examples section:
 - figures/images, raw HTML, and sphinx-design dropdowns/tab-sets (as used
   by ``plot_directive.py`` for its vtksz interactive-scene tabs) are
   dropped entirely -- not even as a comment
+
+Generated files start with a title header (the documented object's fully
+qualified name, e.g. ``# pyvista.read examples`` followed by a matching
+``-----`` underline), and follow a few whitespace conventions so the result
+reads like normal, human-written Python rather than a flat dump: prose
+immediately preceding a code block stays directly above it with no blank
+line, but a code block is always followed by a blank line before whatever
+comes next (comment or more code), and a converted directive (the title
+header itself, or a ``# NOTE:``-style block) always gets a blank line both
+before and after it. The file always ends with a trailing blank line.
 
 If the resulting script contains at least one real executable statement, a
 download link for it is inserted at the bottom of the Examples section.
@@ -121,6 +132,15 @@ _ADMONITION_LABELS = {
 
 _PYTHON_LANGUAGES = ('python', 'py', 'python3')
 
+# A chunk of generated lines tagged with how it should be spaced relative to
+# its neighbors when segments are joined (see ``_join_segments``):
+#   'code'      real Python source
+#   'text'      a plain comment (prose, a paragraph, ...)
+#   'directive' a comment block that must be visually set off with a blank
+#               line both before and after it (the title header; a
+#               ``# NOTE:``-style admonition block)
+Segment = tuple[str, list[str]]
+
 
 def _has_class(node: nodes.Node, css_class: str) -> bool:
     getter = getattr(node, 'get', None)
@@ -166,11 +186,38 @@ def _render_inline(node: nodes.Node) -> str:
     return node.astext()
 
 
-def _convert_doctest_block(node: nodes.doctest_block, lines: list[str]) -> bool:
+def _join_segments(segments: list[Segment]) -> list[str]:
+    """Flatten segments into lines, applying inter-segment spacing rules.
+
+    - a blank line always follows a ``code`` segment, whatever comes next
+    - a ``directive`` segment always gets a blank line both before and
+      after it
+    - otherwise (e.g. prose directly above a code block, or two prose
+      segments back to back), no blank line is forced
+    """
+    lines: list[str] = []
+    prev_kind: str | None = None
+    for kind, seg_lines in segments:
+        if not seg_lines:
+            continue
+        need_blank = prev_kind is not None and (
+            prev_kind == 'code' or kind == 'directive' or prev_kind == 'directive'
+        )
+        if need_blank:
+            lines.append('')
+        lines.extend(seg_lines)
+        prev_kind = kind
+    return lines
+
+
+def _convert_doctest_block(node: nodes.doctest_block) -> list[Segment]:
     """Convert a doctest block, stripping ``>>> ``/``... `` prompts.
 
-    Non-prompted lines (expected doctest output) become comments.
+    Non-prompted, non-blank lines are expected doctest *output* -- we only
+    care about the input code, so those are dropped entirely rather than
+    kept as comments.
     """
+    lines: list[str] = []
     has_code = False
     for line in node.astext().splitlines():
         if line.startswith('>>> ') or line == '>>>':
@@ -178,68 +225,76 @@ def _convert_doctest_block(node: nodes.doctest_block, lines: list[str]) -> bool:
             has_code = True
         elif line.startswith('... ') or line == '...':
             lines.append(line[4:])
-        elif line.strip():
-            _add_comment(lines, line)
-        else:
+        elif not line.strip():
             lines.append('')
-    return has_code
+        # else: doctest output line - dropped
+    if not has_code:
+        return []
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return [('code', lines)]
 
 
-def _convert_literal_block(node: nodes.literal_block, lines: list[str]) -> bool:
+def _convert_literal_block(node: nodes.literal_block) -> list[Segment]:
     """Convert a ``.. code-block::``. Python blocks stay code, others become comments."""
     language = node.get('language', '')
     if language in _PYTHON_LANGUAGES:
-        lines.extend(node.astext().splitlines())
-        return True
-    _add_comment(lines, node.astext())
-    return False
+        lines = node.astext().splitlines()
+        while lines and not lines[-1].strip():
+            lines.pop()
+        return [('code', lines)] if lines else []
+    text = node.astext().strip()
+    if not text:
+        return []
+    comment_lines: list[str] = []
+    _add_comment(comment_lines, text)
+    return [('text', comment_lines)]
 
 
 def _convert_admonition(
-    node: nodes.Element, lines: list[str], label: str, *, skip_first_title: bool = False
-) -> bool:
-    """Convert an admonition-like container to a ``# LABEL:`` comment block."""
-    lines.append(f'# {label}:')
-    has_code = False
+    node: nodes.Element, label: str, *, skip_first_title: bool = False
+) -> list[Segment]:
+    """Convert an admonition-like container to a ``# LABEL:`` directive segment."""
+    inner: list[Segment] = [('text', [f'# {label}:'])]
     for child in node.children:
         if skip_first_title and isinstance(child, nodes.title):
             continue
-        has_code = _convert_node(child, lines) or has_code
-    return has_code
+        inner.extend(_convert_node(child))
+    inner_lines = _join_segments(inner)
+    return [('directive', inner_lines)] if inner_lines else []
 
 
-def _convert_node(node: nodes.Node, lines: list[str]) -> bool:  # noqa: PLR0911
-    """Append ``node``'s contribution to ``lines``.
-
-    Returns whether any real executable code was added.
-    """
+def _convert_node(node: nodes.Node) -> list[Segment]:  # noqa: PLR0911
+    """Convert ``node`` into zero or more segments."""
     if any(_has_class(node, css_class) for css_class in _SKIP_SUBTREE_CLASSES):
-        return False
+        return []
     if isinstance(node, _IGNORED_TYPES):
-        return False
+        return []
     if isinstance(node, nodes.doctest_block):
-        return _convert_doctest_block(node, lines)
+        return _convert_doctest_block(node)
     if isinstance(node, nodes.literal_block):
-        return _convert_literal_block(node, lines)
+        return _convert_literal_block(node)
     if type(node) in _ADMONITION_LABELS:
-        return _convert_admonition(node, lines, _ADMONITION_LABELS[type(node)])
+        return _convert_admonition(node, _ADMONITION_LABELS[type(node)])
     if isinstance(node, nodes.admonition):
         # generic ``.. admonition:: Custom Title`` - use its own title as the label
         title_node = node.next_node(nodes.title)
         label = title_node.astext().strip() if title_node is not None else 'NOTE'
-        return _convert_admonition(node, lines, label, skip_first_title=True)
+        return _convert_admonition(node, label, skip_first_title=True)
     if isinstance(node, _CONTAINER_TYPES):
-        has_code = False
+        segments: list[Segment] = []
         for child in node.children:
-            has_code = _convert_node(child, lines) or has_code
-        return has_code
+            segments.extend(_convert_node(child))
+        return segments
 
     # Plain text-bearing nodes (paragraphs, etc.) - render inline content,
     # backticking code-like cross-references/literals along the way.
     text = _render_inline(node).strip()
-    if text:
-        _add_comment(lines, text)
-    return False
+    if not text:
+        return []
+    comment_lines: list[str] = []
+    _add_comment(comment_lines, text)
+    return [('text', comment_lines)]
 
 
 def _has_real_code(source: str) -> bool:
@@ -284,7 +339,7 @@ def _examples_spans(doctree: nodes.document) -> list[tuple[nodes.Element, int, i
 
 
 def _qualified_name_for(node: nodes.Node, docname: str, counter: int) -> str:
-    """Best-effort identifier used to name the generated file."""
+    """Best-effort identifier used to name the generated file and its title header."""
     ancestor: nodes.Node | None = node.parent
     while ancestor is not None:
         if isinstance(ancestor, addnodes.desc):
@@ -294,6 +349,13 @@ def _qualified_name_for(node: nodes.Node, docname: str, counter: int) -> str:
         ancestor = ancestor.parent
     base = Path(docname).name or docname
     return f'{base}-example-{counter}'
+
+
+def _header_segment(qualified_name: str) -> Segment:
+    """Build the title-header segment, e.g. ``# pyvista.read examples`` + underline."""
+    title = f'{qualified_name} examples'
+    underline = '-' * len(title)
+    return ('directive', [f'# {title}', f'# {underline}'])
 
 
 def _write_source(app: Sphinx, name: str, source: str) -> str:
@@ -310,7 +372,9 @@ def _write_source(app: Sphinx, name: str, source: str) -> str:
     ``doctree-resolved`` handler (this one included) gets a chance to run.
     Registering through ``env.dlfiles`` here would silently be too late.
     """
-    digest = hashlib.sha256(source.encode()).hexdigest()[:16]
+    # 32 hex characters, matching the digest length Sphinx's own native
+    # download-file handling uses for its ``_downloads/<digest>/...`` layout.
+    digest = hashlib.sha256(source.encode()).hexdigest()[:32]
     safe_name = name.replace('.', '_') if name else 'example'
     rel_path = f'{digest}/{safe_name}.py'
 
@@ -341,19 +405,20 @@ def _process_span(  # noqa: PLR0917
     counter: int,
 ) -> None:
     """Convert one Examples span and insert a download link if it has real code."""
-    lines: list[str] = []
-    has_code = False
+    segments: list[Segment] = []
     for node in parent.children[start:end]:
-        has_code = _convert_node(node, lines) or has_code
+        segments.extend(_convert_node(node))
 
-    if not has_code:
-        return
-
-    source = '\n'.join(lines).strip() + '\n'
-    if not _has_real_code(source):
+    if not any(kind == 'code' for kind, _lines in segments):
         return
 
     name = _qualified_name_for(heading, docname, counter)
+    lines = _join_segments([_header_segment(name), *segments])
+    source = '\n'.join(lines).rstrip() + '\n\n'
+
+    if not _has_real_code(source):
+        return
+
     rel_path = _write_source(app, name, source)
     download_node = _make_download_node(rel_path)
 

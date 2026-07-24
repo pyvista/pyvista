@@ -215,6 +215,18 @@ def case_combined():
     """
 
 
+def case_doctest_with_output():
+    """Docstring whose Examples section has unambiguous doctest output.
+
+    Examples
+    --------
+    >>> 6 * 7
+    42
+    >>> 'hello ' + 'world'
+    'hello world'
+    """
+
+
 def case_no_examples():
     """Docstring with no Examples section at all.
 

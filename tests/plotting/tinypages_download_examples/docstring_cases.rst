@@ -39,6 +39,8 @@ resolve to.
 
 .. autofunction:: docstring_cases.case_combined
 
+.. autofunction:: docstring_cases.case_doctest_with_output
+
 .. autofunction:: docstring_cases.case_no_examples
 
 .. autofunction:: docstring_cases.case_prose_only

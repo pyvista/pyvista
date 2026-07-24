@@ -169,4 +169,82 @@ def test_docstring_examples_conversion(built: tuple[Path, list[Path]]):
     assert '`some_variable = True`' in combined_src
     assert '# NOTE:' in combined_src
     assert 'More details' not in combined_src  # dropped dropdown
-    assert '# 3' in combined_src  # doctest output line becomes a comment
+    assert '3' not in combined_src  # doctest output line dropped entirely, not commented
+
+
+def test_no_doctest_output_included(built: tuple[Path, list[Path]]):
+    """Doctest output lines should never appear anywhere -- only the input code."""
+    src = _read(built[1], 'case_doctest_with_output')
+    assert '6 * 7' in src
+    assert "'hello ' + 'world'" in src
+    # the expected results of running that code should not appear at all,
+    # in any form (not as code, not as a comment)
+    assert '42' not in src
+    assert 'hello world' not in src
+
+
+def test_download_uses_32_char_hash(built: tuple[Path, list[Path]]):
+    """The digest directory under ``_downloads/`` should be a 32-character hash.
+
+    Matches the digest length Sphinx's own native download-file handling
+    uses (e.g. matplotlib's built-in plot-directive download links), rather
+    than some other arbitrary truncation.
+    """
+    _html_dir, examples = built
+    assert examples
+    for path in examples:
+        digest_dir = path.parent.name
+        assert len(digest_dir) == 32, f'{path}: expected a 32-char digest dir, got {digest_dir!r}'
+        assert all(c in '0123456789abcdef' for c in digest_dir)
+
+
+def test_header_format(built: tuple[Path, list[Path]]):
+    """Every generated file should start with a title header and matching underline."""
+    src = _read(built[1], 'case_note')
+    lines = src.splitlines()
+    assert lines[0] == '# docstring_cases.case_note examples'
+    title = lines[0].removeprefix('# ')
+    assert lines[1] == '# ' + '-' * len(title)
+    assert len(lines[0]) == len(lines[1])
+    # blank line between the header and the rest of the content
+    assert lines[2] == ''
+
+
+def test_whitespace_conventions(built: tuple[Path, list[Path]]):
+    """Check the spacing rules: text-directly-above-code, blank-after-code,
+    directives get blank lines on both sides, and the file ends with a
+    trailing blank line.
+    """
+    # case_combined: prose -> note (directive) -> code -> dropdown (dropped)
+    combined_src = _read(built[1], 'case_combined')
+    lines = combined_src.splitlines()
+
+    # header (directive) is followed by a blank line
+    assert lines[2] == ''
+    # the note block (directive) has a blank line before AND after it
+    note_idx = next(i for i, line in enumerate(lines) if line == '# NOTE:')
+    assert lines[note_idx - 1] == ''
+    note_end = next(
+        i for i in range(note_idx + 1, len(lines)) if not lines[i].startswith('#') and lines[i]
+    )
+    assert lines[note_end - 1] == ''  # blank line right after the note, before code
+
+    # a code block is always followed by a blank line
+    code_idx = next(i for i, line in enumerate(lines) if line == 'import sys')
+    # find where this run of code ends
+    end_of_code = code_idx
+    while end_of_code + 1 < len(lines) and lines[end_of_code + 1].strip():
+        end_of_code += 1
+    assert lines[end_of_code + 1] == ''
+
+    # file ends with exactly one trailing blank line
+    assert combined_src.endswith('\n\n')
+    assert not combined_src.endswith('\n\n\n')
+
+    # case_xref_plain: prose sits directly above its doctest code, no blank
+    # line in between, since the source docstring has none either
+    xref_src = _read(built[1], 'case_xref_plain')
+    xref_lines = xref_src.splitlines()
+    code_start = next(i for i, line in enumerate(xref_lines) if line == 'import sys')
+    assert xref_lines[code_start - 1] != ''
+    assert xref_lines[code_start - 1].startswith('#')
