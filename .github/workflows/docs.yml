@@ -117,6 +117,13 @@ jobs:
       # Translated (i18n) docs are built in a dedicated pipeline in
       # pyvista/pyvista-doc-translations. See issue #8626.
 
+      - name: Upload HTML downloads
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-downloads
+          path: doc/_build/html/_downloads
+
       - name: Upload HTML documentation
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

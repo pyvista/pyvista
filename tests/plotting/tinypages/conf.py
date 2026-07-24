@@ -37,6 +37,7 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'pyvista.ext.examples_as_code',
     'sphinx.ext.autosummary',
     'sphinx_design',
 ]

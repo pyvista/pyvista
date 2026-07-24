@@ -104,6 +104,7 @@ extensions = [
     'notfound.extension',
     'numpydoc',
     'pyvista.ext.plot_directive',
+    'pyvista.ext.examples_as_code',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
