@@ -159,7 +159,7 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
-  'trame-vtk==2.11.8',
+  'trame-vtk==2.11.12',
   { include-group = 'pinned' },
 ]
 
