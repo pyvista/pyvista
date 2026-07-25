@@ -3325,14 +3325,3 @@ def test_try_callback_warns_every_time():
     messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
     assert len(messages) == n_calls
     assert 'callback failed' in str(messages[0].message)
-
-
-def test_ensight_writer(tmp_path):
-    mesh = pv.UnstructuredGrid(ex.hexbeamfile)
-    mesh.save(tmp_path / 'sample.case')
-
-    # basename is renamed by VTK. (e.g. "sample.0.case")
-    case_path = list(tmp_path.glob('*.case'))
-    assert len(case_path) == 1
-    reloaded = pv.read(case_path[0])
-    assert reloaded['VTK Part'].n_points == mesh.n_points

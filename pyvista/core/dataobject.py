@@ -292,8 +292,8 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext == '.vtkhdf' and binary is False:
-                msg = '.vtkhdf files can only be written in binary format.'
+            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+                msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
             # Save using the writer
