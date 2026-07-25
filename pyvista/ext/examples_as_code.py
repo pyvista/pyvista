@@ -149,6 +149,16 @@ _PYTHON_LANGUAGES = ('python', 'py', 'python3')
 #               ``# NOTE:``-style admonition block)
 Segment = tuple[str, list[str]]
 
+# Replacements for non-ASCII chars
+ASCII_REPLACEMENTS = str.maketrans(
+    {
+        '\u2018': "'",  # LEFT SINGLE QUOTATION MARK
+        '\u2019': "'",  # RIGHT SINGLE QUOTATION MARK
+        '\u201c': '"',  # LEFT DOUBLE QUOTATION MARK
+        '\u201d': '"',  # RIGHT DOUBLE QUOTATION MARK
+    }
+)
+
 
 def _has_class(node: nodes.Node, css_class: str) -> bool:
     getter = getattr(node, 'get', None)
@@ -189,8 +199,11 @@ def _clean_stray_rst_markup(text: str) -> str:
 
 
 def _clean_code_comment(line: str) -> str:
-    """Apply stray-markup cleanup only to a comment line, never to real code."""
-    return _clean_stray_rst_markup(line) if line.lstrip().startswith('#') else line
+    """Apply stray-markup cleanup and ASCII replacements to comment lines."""
+    if line.lstrip().startswith('#'):
+        line = _clean_stray_rst_markup(line)
+        line = line.translate(ASCII_REPLACEMENTS)
+    return line
 
 
 def _render_inline(node: nodes.Node) -> str:

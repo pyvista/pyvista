@@ -246,6 +246,12 @@ def test_clean_code_comment_cleans_comment_lines():
     assert eac._clean_code_comment(line) == '# see target'
 
 
+@pytest.mark.parametrize(('unicode_char', 'ascii_char'), eac.ASCII_REPLACEMENTS.items())
+def test_clean_code_comment_replaces_non_ascii_chars(unicode_char: int, ascii_char: str):
+    line = f'# comment {chr(unicode_char)} text'
+    assert eac._clean_code_comment(line) == f'# comment {ascii_char} text'
+
+
 # ---------------------------------------------------------------------------
 # _convert_admonition / _convert_node dispatch
 # ---------------------------------------------------------------------------
