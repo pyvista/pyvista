@@ -439,9 +439,11 @@ def test_write_source_empty_name_fallback(tmp_path: Path):
 def test_make_download_node_structure():
     node = eac._make_download_node('abc123/foo.py')
     assert isinstance(node, nodes.paragraph)
+
     reference = node.children[0]
     assert isinstance(reference, addnodes.download_reference)
     assert reference['filename'] == 'abc123/foo.py'
+    assert reference.astext() == 'Download Python source code'
 
 
 # ---------------------------------------------------------------------------
