@@ -3775,14 +3775,14 @@ def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
 
         # File not found, generate a helpful warning message
         filename_stem = Path(filename_with_placeholder).stem
-        is_dataset_image = 'load_' in filename_stem or 'download_' in filename_stem
 
         message = (
             f'Could not resolve gallery image placeholder '
             f'{filename_with_placeholder!r}. Using "not available" image instead.'
         )
 
-        if is_dataset_image:
+        # Likely a dataset image if it contains 'load_' (this covers the 'download' case too)
+        if 'load_' in filename_stem:
             dataset_name = filename_stem.split('load_', 1)[1].split(f'-{PLACEHOLDER}', 1)[0]
             message += (
                 f' If this dataset intentionally has no generated image, add '
