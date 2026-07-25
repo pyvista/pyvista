@@ -1,7 +1,7 @@
-"""Individual docstring-conversion edge cases for examples_download.py.
+"""Individual docstring-conversion edge cases for examples_as_code.py.
 
 Each function's "Examples" section exercises exactly one RST construct that
-the examples_download extension needs to handle, with trivial dummy code
+the examples_as_code extension needs to handle, with trivial dummy code
 (``import sys``) so the generated download is easy to eyeball.
 """
 
@@ -261,6 +261,51 @@ def case_pyvista_plot_wrapped():
     --------
     >>> import pyvista as pv
     >>> pv.Sphere().plot()
+    """
+
+
+def case_seealso():
+    """Docstring with a seealso block containing two separate paragraphs.
+
+    Mirrors the structure used by pyvista's dataset downloader docstrings:
+    a reference on its own line followed by a separate descriptive
+    paragraph. Without ``seealso`` in the admonition-label table, these
+    would run together onto a single line with no space between them.
+
+    Examples
+    --------
+    >>> import sys
+
+    .. seealso::
+
+        :ref:`Some Target <some-target>`
+
+        See this in the gallery for more info.
+    """
+
+
+def case_stray_hyperlink_in_doctest_comment():
+    """Docstring with RST hyperlink syntax written inside a doctest comment.
+
+    Docutils never resolves inline markup inside doctest content, so this
+    exercises the raw-text cleanup path rather than ``_render_inline``.
+
+    Examples
+    --------
+    >>> # See `Extension <https://example.com/ext>`_.
+    >>> # See `some_target`_ for more.
+    >>> import sys
+    """
+
+
+def case_stray_xref_in_doctest_comment():
+    """Docstring with an RST cross-reference role written inside a doctest comment.
+
+    Examples
+    --------
+    >>> # Uses :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>`.
+    >>> # Uses :func:`pyvista.read`.
+    >>> import sys
     """
 
 

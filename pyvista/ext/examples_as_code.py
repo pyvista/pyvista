@@ -4,26 +4,29 @@ This Sphinx extension looks, on every page, for numpydoc-style "Examples"
 headings -- rendered as ``.. rubric:: Examples`` for docstrings, or as a
 regular section title on hand-written pages that happen to reuse that
 heading -- and turns the content of each one into a small, self-contained,
-runnable Python script, with a download link inserted immediately below it.
+runnable Python script, with a download link inserted into the section.
 
 Everything outside of an Examples section is left completely alone: pages
 or docstrings without one produce no file and no link. Enabling this
 extension (adding it to ``conf.py``'s ``extensions``) is itself the on/off
-switch; there is no separate configuration value.
+switch.
+
+Configuration (set in ``conf.py``):
+
+- ``examples_as_code_link_position``: ``'bottom'`` (default) or ``'top'``,
+  controlling where the download link lands within the Examples section.
 
 This extension is intentionally independent of ``plot_directive.py``: it
 doesn't import anything from it, and works the same whether or not that
 extension is even installed. The one thing they informally share is a CSS
 class, ``pyvista-plot-source`` (see ``plot_directive.py``'s ``TEMPLATE``),
-which marks generated plot-directive code as a distinct node -- but this
+marking generated plot-directive code as a distinct node -- but this
 extension doesn't need to treat it specially, since a plain
 ``.. container::`` node is already handled like any other generic
-container (its doctest block / code block content is picked up the same
-way either way). It only matters in that a numpydoc "Examples" section that
+container. It matters only in that a numpydoc "Examples" section that
 imports pyvista typically gets auto-wrapped in a ``.. pyvista-plot::`` call
 (see the ``_str_examples`` monkeypatch in this project's ``conf.py``), and
-this extension needs to handle whatever that directive leaves behind in the
-resolved doctree.
+this extension needs to handle whatever that directive leaves behind.
 
 Conversion rules applied to the nodes within an Examples section:
 
@@ -33,9 +36,9 @@ Conversion rules applied to the nodes within an Examples section:
   about the input code, not what running it once produced
 - ``.. code-block:: python`` (or ``py``) blocks -- as used by
   ``plot_directive.py`` for non-doctest-format examples -- are kept as-is
-- ``.. note::``/``.. warning::`` (and the rest of the docutils admonition
-  family) become a ``# LABEL:`` comment followed by their content as
-  comments
+- ``.. note::``/``.. warning::``/``.. seealso::`` (and the rest of the
+  admonition family) become a ``# LABEL:`` comment followed by their
+  content as comments
 - cross-references and inline code (``:class:``, ``:meth:``, ``:func:``,
   ``:attr:``, double-backtick literals, ...) keep just their display text,
   wrapped in backticks, e.g. :class:`pyvista.Plotter` -> `` `pyvista.Plotter` ``
@@ -46,19 +49,21 @@ Conversion rules applied to the nodes within an Examples section:
 - figures/images, raw HTML, and sphinx-design dropdowns/tab-sets (as used
   by ``plot_directive.py`` for its vtksz interactive-scene tabs) are
   dropped entirely -- not even as a comment
+- RST markup that leaked in unparsed (e.g. a hyperlink or cross-reference
+  written inside a doctest-code comment, which docutils never resolves) is
+  cleaned up rather than reproduced verbatim
 
-Generated files start with a title header (the documented object's fully
-qualified name, e.g. ``# pyvista.read examples`` followed by a matching
-``-----`` underline), and follow a few whitespace conventions so the result
-reads like normal, human-written Python rather than a flat dump: prose
+Generated files start with a title header (``# Examples from <qualified
+name>`` followed by a matching underline), and follow a few whitespace
+conventions so the result reads like normal, human-written Python: prose
 immediately preceding a code block stays directly above it with no blank
 line, but a code block is always followed by a blank line before whatever
-comes next (comment or more code), and a converted directive (the title
-header itself, or a ``# NOTE:``-style block) always gets a blank line both
-before and after it. The file always ends with a trailing blank line.
+comes next, and a converted directive (the header, or a ``# NOTE:``-style
+block) always gets a blank line both before and after it. The file always
+ends with a trailing blank line.
 
 If the resulting script contains at least one real executable statement, a
-download link for it is inserted at the bottom of the Examples section.
+download link for it is added to the Examples section.
 """
 
 from __future__ import annotations
@@ -66,6 +71,7 @@ from __future__ import annotations
 import ast
 import hashlib
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 
 from docutils import nodes
@@ -115,9 +121,10 @@ _CONTAINER_TYPES = (
     addnodes.versionmodified,
 )
 
-# The standard docutils admonition family (``.. note::``, ``.. warning::``,
-# etc, all no-title fixed-label admonitions -- as opposed to the generic
-# ``.. admonition:: Custom Title`` directive, handled separately below).
+# The docutils/Sphinx admonition family (``.. note::``, ``.. warning::``,
+# ``.. seealso::``, etc, all no-title fixed-label admonitions -- as opposed
+# to the generic ``.. admonition:: Custom Title`` directive, handled
+# separately below).
 _ADMONITION_LABELS = {
     nodes.attention: 'ATTENTION',
     nodes.caution: 'CAUTION',
@@ -126,6 +133,7 @@ _ADMONITION_LABELS = {
     nodes.hint: 'HINT',
     nodes.important: 'IMPORTANT',
     nodes.note: 'NOTE',
+    addnodes.seealso: 'SEE ALSO',
     nodes.tip: 'TIP',
     nodes.warning: 'WARNING',
 }
@@ -160,6 +168,29 @@ def _add_comment(lines: list[str], text: str) -> None:
     for line in text.splitlines():
         line_ = line.rstrip()
         lines.append(f'# {line_}' if line_ else '#')
+
+
+# Docutils never interprets inline markup inside doctest/code-block content
+# (it's preformatted), so RST written in a Python comment there -- a
+# cross-reference role or a hyperlink -- passes straight through as raw
+# text instead of being resolved, unlike the same syntax in ordinary prose
+# (handled by ``_render_inline``). These clean up that raw text when found
+# in a comment line, without ever touching real code.
+_STRAY_XREF_RE = re.compile(r':(?:py:)?\w+:`([^`<>]+?)\s*(?:<[^<>]+>)?`')
+_STRAY_HYPERLINK_RE = re.compile(r'`([^`<>]+?)\s*(?:<([^`<>]+)>)?`_+')
+
+
+def _clean_stray_rst_markup(text: str) -> str:
+    """Strip unparsed cross-reference/hyperlink RST syntax from a comment line."""
+    text = _STRAY_XREF_RE.sub(r'\1', text)
+    return _STRAY_HYPERLINK_RE.sub(
+        lambda m: f'{m.group(1)} <{m.group(2)}>' if m.group(2) else m.group(1), text
+    )
+
+
+def _clean_code_comment(line: str) -> str:
+    """Apply stray-markup cleanup only to a comment line, never to real code."""
+    return _clean_stray_rst_markup(line) if line.lstrip().startswith('#') else line
 
 
 def _render_inline(node: nodes.Node) -> str:
@@ -221,10 +252,10 @@ def _convert_doctest_block(node: nodes.doctest_block) -> list[Segment]:
     has_code = False
     for line in node.astext().splitlines():
         if line.startswith('>>> ') or line == '>>>':
-            lines.append(line[4:])
+            lines.append(_clean_code_comment(line[4:]))
             has_code = True
         elif line.startswith('... ') or line == '...':
-            lines.append(line[4:])
+            lines.append(_clean_code_comment(line[4:]))
         elif not line.strip():
             lines.append('')
         # else: doctest output line - dropped
@@ -239,7 +270,7 @@ def _convert_literal_block(node: nodes.literal_block) -> list[Segment]:
     """Convert a ``.. code-block::``. Python blocks stay code, others become comments."""
     language = node.get('language', '')
     if language in _PYTHON_LANGUAGES:
-        lines = node.astext().splitlines()
+        lines = [_clean_code_comment(line) for line in node.astext().splitlines()]
         while lines and not lines[-1].strip():
             lines.pop()
         return [('code', lines)] if lines else []
@@ -260,8 +291,7 @@ def _convert_admonition(
         if skip_first_title and isinstance(child, nodes.title):
             continue
         inner.extend(_convert_node(child))
-    inner_lines = _join_segments(inner)
-    return [('directive', inner_lines)] if inner_lines else []
+    return [('directive', _join_segments(inner))]
 
 
 def _convert_node(node: nodes.Node) -> list[Segment]:  # noqa: PLR0911
@@ -403,6 +433,7 @@ def _process_span(  # noqa: PLR0917
     end: int,
     heading: nodes.Node,
     counter: int,
+    position: str,
 ) -> None:
     """Convert one Examples span and insert a download link if it has real code."""
     segments: list[Segment] = []
@@ -422,33 +453,36 @@ def _process_span(  # noqa: PLR0917
     rel_path = _write_source(app, name, source)
     download_node = _make_download_node(rel_path)
 
-    parent.insert(end, download_node)
+    parent.insert(start if position == 'top' else end, download_node)
 
 
 def _process_doctree(app: Sphinx, doctree: nodes.document, docname: str) -> None:
-    """Add a download link below every "Examples" section found on this page."""
+    """Add a download link to every "Examples" section found on this page."""
     if not getattr(app.builder, 'download_support', False):
         # Only HTML-family builders (html, dirhtml, singlehtml, ...) know how
         # to serve a ``_downloads/`` directory. Skip everything else (latex,
         # text, man, epub, ...) rather than writing files nobody can reach.
         return
 
+    position = app.config.examples_as_code_link_position
+
     # Process spans, per shared parent, from last to first: inserting a
     # download-link node shifts every later sibling index by one, so a
     # page with more than one Examples heading under the same parent (an
-    # unusual but possible structure) stays correct if later spans are
-    # inserted before earlier ones are processed.
+    # unusual but possible structure) stays correct regardless of whether
+    # each link lands at the start or the end of its own span.
     spans = _examples_spans(doctree)
     numbered_spans = [(*span, i + 1) for i, span in enumerate(spans)]
     for parent, start, end, heading, counter in sorted(
         numbered_spans, key=lambda s: (id(s[0]), -s[1])
     ):
-        _process_span(app, docname, parent, start, end, heading, counter)
+        _process_span(app, docname, parent, start, end, heading, counter, position)
 
 
 def setup(app: Sphinx) -> dict:  # numpydoc ignore=RT01
     """Register the extension."""
     app.connect('doctree-resolved', _process_doctree)
+    app.add_config_value('examples_as_code_link_position', 'bottom', 'env')
 
     return {
         'version': '0.1',

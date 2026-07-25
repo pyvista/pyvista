@@ -47,5 +47,11 @@ resolve to.
 
 .. autofunction:: docstring_cases.case_pyvista_plot_wrapped
 
+.. autofunction:: docstring_cases.case_seealso
+
+.. autofunction:: docstring_cases.case_stray_hyperlink_in_doctest_comment
+
+.. autofunction:: docstring_cases.case_stray_xref_in_doctest_comment
+
 .. autoclass:: docstring_cases.Sample
    :members:

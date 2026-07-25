@@ -248,3 +248,64 @@ def test_whitespace_conventions(built: tuple[Path, list[Path]]):
     code_start = next(i for i, line in enumerate(xref_lines) if line == 'import sys')
     assert xref_lines[code_start - 1] != ''
     assert xref_lines[code_start - 1].startswith('#')
+
+
+def test_seealso_admonition(built: tuple[Path, list[Path]]):
+    """A ``.. seealso::`` block's separate paragraphs must not run together.
+
+    Mirrors pyvista's dataset downloader docstrings, which follow their
+    doctest with a ``.. seealso::`` linking to the Dataset Gallery.
+    """
+    src = _read(built[1], 'case_seealso')
+    assert '# SEE ALSO:' in src
+    assert '# Some Target' in src
+    assert '# See this in the gallery for more info.' in src
+    # each paragraph must be its own line -- not concatenated together
+    assert 'Some Target\n# See' in src or 'Some TargetSee' not in src
+
+
+def test_stray_markup_in_doctest_comment_cleaned(built: tuple[Path, list[Path]]):
+    """RST written inside a doctest comment is never resolved by docutils.
+
+    Since it's preformatted, that raw text would otherwise leak through
+    verbatim (backticks, role prefixes and all) instead of being cleaned up
+    the way the same syntax in ordinary prose already is.
+    """
+    hyperlink_src = _read(built[1], 'case_stray_hyperlink_in_doctest_comment')
+    assert '# See Extension <https://example.com/ext>.' in hyperlink_src
+    assert '# See some_target for more.' in hyperlink_src
+    assert '`' not in hyperlink_src
+    assert '`_' not in hyperlink_src
+
+    xref_src = _read(built[1], 'case_stray_xref_in_doctest_comment')
+    assert '# Uses cell_centers.' in xref_src
+    assert '# Uses pyvista.read.' in xref_src
+    assert ':func:' not in xref_src
+    assert '`' not in xref_src
+
+
+@flaky_test(exceptions=(AssertionError,))
+def test_link_position_config(tmp_path: Path):
+    """``examples_as_code_link_position`` moves the link within its section.
+
+    Default is ``'bottom'`` (already covered by every other test in this
+    module, where the link always follows the code); this checks ``'top'``.
+    """
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(
+            SRCDIR, html_dir, doctree_dir, ('-D', 'examples_as_code_link_position=top')
+        ),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'docstring_cases.html').read_text(encoding='utf-8')
+    section_start = html.find('id="docstring_cases.case_note"')
+    assert section_start != -1
+    link_pos = html.find('reference download', section_start)
+    doctest_pos = html.find('highlight-default', section_start)
+    note_pos = html.find('admonition note', section_start)
+    assert link_pos != -1
+    assert link_pos < doctest_pos
+    assert link_pos < note_pos
