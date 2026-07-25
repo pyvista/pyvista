@@ -19,7 +19,7 @@ extensions = [
 ]
 
 root_doc = 'index'
-project = 'tinypages_examples_as_code'
+project = 'tinypages'
 exclude_patterns = ['_build']
 
 pv.BUILDING_GALLERY = True

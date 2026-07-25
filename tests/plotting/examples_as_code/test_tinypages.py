@@ -3,7 +3,7 @@
 This extension is deliberately independent of ``plot_directive.py`` (it
 doesn't import anything from it, and works whether or not that extension is
 even installed), so its tests get their own small, self-contained fixture
-directory (``tinypages_examples_as_code/``) with its own ``conf.py``,
+directory (``tinypages/``) with its own ``conf.py``,
 rather than living inside the main ``tinypages/`` used by
 ``test_tinypages.py``. That fixture's ``pyvista_plot_directive/`` output is
 checked against exact, hash-locked file sets for both serial and parallel
@@ -35,7 +35,7 @@ pytest.importorskip('sphinx')
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
-SRCDIR = Path(__file__).parent / 'tinypages_examples_as_code'
+SRCDIR = Path(__file__).parent / 'tinypages'
 
 
 def _read(paths: list[Path], name_contains: str) -> str:

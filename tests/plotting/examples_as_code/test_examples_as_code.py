@@ -1,6 +1,6 @@
 """Unit tests for individual ``examples_as_code.py`` functions.
 
-Complements ``test_tinypages_examples_as_code.py``'s full Sphinx-build
+Complements ``test_tinypages.py``'s full Sphinx-build
 tests with fast, direct tests of branches that are impractical to reach
 through a full build (mocked Sphinx app, hand-built doctree fragments).
 """
