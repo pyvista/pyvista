@@ -515,6 +515,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPDataSetReader',
         'vtkPOpenFOAMReader',
         'vtkPlot3DMetaReader',
+        'vtkEnSightWriter',
     ),
     'vtkIOParallelExodus': ('vtkPExodusIIReader',),
     'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),

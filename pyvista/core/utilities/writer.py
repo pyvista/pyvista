@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 import contextlib
+import pathlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
@@ -92,6 +93,7 @@ class BaseWriter(_FileIOBase):
         super().__init__()
         self.path = path
         self.data_object = data_object
+        self.formatted_path = path
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
@@ -140,6 +142,22 @@ class BaseWriter(_FileIOBase):
     def data_object(self, data_object: DataObject) -> None:
         self._data_object = data_object
         self.writer.SetInputData(data_object)
+
+    @property
+    def formatted_path(self) -> pathlib.Path:
+        """Return the formatted path of the written files.
+
+        Returns
+        -------
+        str
+            The formatted path of the written files.
+
+        """
+        return self._formatted_path
+
+    @formatted_path.setter
+    def formatted_path(self, path: str | Path) -> None:
+        self._formatted_path = pathlib.Path(path)
 
     def _execute_before_write(self) -> None:
         """Execute code before calling `write()`.
@@ -454,6 +472,24 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkUnstructuredGridWriter'
+
+
+class EnSightWriter(BaseWriter):
+    """EnSightWriter for `.case` files.
+
+    Wraps :vtk:`vtkEnSightWriter`.
+
+    .. versionadded:: 0.49.0
+
+    """
+
+    _vtk_class_name = 'vtkEnSightWriter'
+
+    def _execute_before_write(self) -> None:
+        raw_path = pathlib.Path(self.path)
+        process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
+        basename = raw_path.stem
+        self.formatted_path = raw_path.parent / f'{basename}.{process_number}.case'
 
 
 @abstract_class
