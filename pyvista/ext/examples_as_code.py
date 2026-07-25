@@ -13,7 +13,7 @@ switch.
 
 Configuration (set in ``conf.py``):
 
-- ``examples_as_code_link_position``: ``'bottom'`` (default) or ``'top'``,
+- ``examples_as_code_link_position``: ``'top'`` (default) or ``'bottom'``,
   controlling where the download link lands within the Examples section.
 
 This extension is intentionally independent of ``plot_directive.py``: it
@@ -482,7 +482,7 @@ def _process_doctree(app: Sphinx, doctree: nodes.document, docname: str) -> None
 def setup(app: Sphinx) -> dict:  # numpydoc ignore=RT01
     """Register the extension."""
     app.connect('doctree-resolved', _process_doctree)
-    app.add_config_value('examples_as_code_link_position', 'bottom', 'env')
+    app.add_config_value('examples_as_code_link_position', 'top', 'env')
 
     return {
         'version': '0.1',

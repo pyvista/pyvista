@@ -12,6 +12,7 @@ from unittest.mock import Mock
 
 from docutils import nodes
 from docutils.core import publish_doctree
+import pytest
 from sphinx import addnodes
 
 from pyvista.ext import examples_as_code as eac
@@ -315,6 +316,13 @@ def test_convert_node_empty_paragraph_returns_empty():
     assert eac._convert_node(nodes.paragraph()) == []
 
 
+def test_convert_node_literal_block_dispatch():
+    node = nodes.literal_block('', 'x = 1')
+    node['language'] = 'python'
+
+    assert eac._convert_node(node) == [('code', ['x = 1'])]
+
+
 # ---------------------------------------------------------------------------
 # _has_real_code
 # ---------------------------------------------------------------------------
@@ -499,19 +507,27 @@ def test_process_doctree_skips_when_no_download_support():
     assert doctree.pformat() == original
 
 
-def test_process_doctree_processes_spans(tmp_path: Path):
+@pytest.mark.parametrize(
+    ('position', 'expected_index'),
+    [('top', 1), ('bottom', 2)],
+)
+def test_process_doctree_processes_spans(tmp_path: Path, position: str, expected_index: int):
     app = Mock(outdir=str(tmp_path))
     app.builder.download_support = True
-    app.config.examples_as_code_link_position = 'bottom'
+    app.config.examples_as_code_link_position = position
+
     doctree = _parse('.. rubric:: Examples\n\n>>> x = 1')
+
     eac._process_doctree(app, doctree, 'page')
-    assert any(isinstance(n, addnodes.download_reference) for n in doctree.findall())
+
+    assert isinstance(doctree[expected_index], nodes.paragraph)
+    assert isinstance(doctree[expected_index][0], addnodes.download_reference)
 
 
 def test_setup_registers_connect_and_config():
     app = Mock()
     result = eac.setup(app)
     app.connect.assert_called_once_with('doctree-resolved', eac._process_doctree)
-    app.add_config_value.assert_called_once_with('examples_as_code_link_position', 'bottom', 'env')
+    app.add_config_value.assert_called_once_with('examples_as_code_link_position', 'top', 'env')
     assert result['parallel_read_safe'] is True
     assert result['parallel_write_safe'] is True
