@@ -1,20 +1,4 @@
-"""Tests for the ``sphinx_examples_as_code`` Sphinx extension.
-
-This extension is deliberately independent of ``plot_directive.py`` (it
-doesn't import anything from it, and works whether or not that extension is
-even installed), so its tests get their own small, self-contained fixture
-directory (``tinypages/``) with its own ``conf.py``,
-rather than living inside the main ``tinypages/`` used by
-``test_tinypages.py``. That fixture's ``pyvista_plot_directive/`` output is
-checked against exact, hash-locked file sets for both serial and parallel
-builds; a separate fixture avoids needing to update those for a feature
-that has nothing to do with them.
-
-The one thing worth checking for *integration* with the real docs build --
-that ``pyvista.ext.sphinx_examples_as_code`` is wired into the real ``tinypages/``
-``conf.py`` and produces a download for at least one real docstring -- lives
-in ``test_tinypages.py`` instead, alongside the rest of that build's checks.
-"""
+"""Tests for the ``sphinx_examples_as_code`` Sphinx extension."""
 
 from __future__ import annotations
 

@@ -4,8 +4,8 @@ This Sphinx extension looks, on every page, for numpydoc-style "Examples"
 headings -- rendered as ``.. rubric:: Examples`` for docstrings, or as a
 regular section title on hand-written pages that happen to reuse that
 heading -- and turns the content of each one into a small, self-contained,
-runnable example, with a download link (or two -- see below) inserted into
-the section.
+runnable example, with a download link for `.py` and/or `.ipynb` file(s)
+inserted into the section.
 
 Everything outside of an Examples section is left completely alone: pages
 or docstrings without one produce no file and no link. Enabling this
@@ -14,23 +14,12 @@ switch.
 
 Configuration (set in ``conf.py``):
 
-- ``sphinx_examples_as_code_link_position``: ``'top'`` (default) or ``'bottom'``,
-  controlling where the download link(s) land within the Examples section.
-- ``sphinx_examples_as_code_formats``: which downloads to generate, as a list
-  containing ``'py'``, ``'ipynb'``, or both (default). Downloads are always
-  offered in that order regardless of how the list is written.
-
-This extension is intentionally independent of ``plot_directive.py``: it
-doesn't import anything from it, and works the same whether or not that
-extension is even installed. The one thing they informally share is a CSS
-class, ``pyvista-plot-source`` (see ``plot_directive.py``'s ``TEMPLATE``),
-marking generated plot-directive code as a distinct node -- but this
-extension doesn't need to treat it specially, since a plain
-``.. container::`` node is already handled like any other generic
-container. It matters only in that a numpydoc "Examples" section that
-imports pyvista typically gets auto-wrapped in a ``.. pyvista-plot::`` call
-(see the ``_str_examples`` monkeypatch in this project's ``conf.py``), and
-this extension needs to handle whatever that directive leaves behind.
+- ``sphinx_examples_as_code_link_position``: control where the download
+  link(s) land within the Examples section.``'top'`` (default) or ``'bottom'``.
+- ``sphinx_examples_as_code_formats``: control which downloads to generate.
+  Set this as a list containing `'py'``, ``'ipynb'``, or both (default).
+  Downloads are always offered in that order regardless of how the list is
+  written.
 
 Conversion rules applied to the nodes within an Examples section:
 
@@ -38,29 +27,25 @@ Conversion rules applied to the nodes within an Examples section:
   the prompts stripped, as real Python source; doctest *output* lines
   (expected results, with no prompt) are dropped entirely -- we only care
   about the input code, not what running it once produced
-- ``.. code-block:: python`` (or ``py``) blocks -- as used by
-  ``plot_directive.py`` for non-doctest-format examples -- are kept as-is
-- ``.. note::``/``.. warning::``/``.. seealso::`` (and the rest of the
-  admonition family) become a ``# LABEL:`` comment followed by their
-  content as comments
+- ``.. code-block:: python`` (or ``py``) blocks are kept as-is
+- admonitions such as ``.. note::``/``.. warning::``/``.. seealso::`` become
+  a ``# LABEL:`` comment followed by their content as comments
 - cross-references and inline code (``:class:``, ``:meth:``, ``:func:``,
-  ``:attr:``, double-backtick literals, ...) keep just their display text,
-  wrapped in backticks, e.g. :class:`pyvista.Plotter` -> `` `pyvista.Plotter` ``
+  ``:attr:``, double-backtick literals, ...) keep their display text,
+  wrapped in backticks, e.g. :class:`pyvista.Plotter` -> `pyvista.Plotter`
 - plain prose-style references (``:ref:``, ``:doc:``) become their display
   text with no backticks
 - everything else text-bearing (prose, captions, other non-python code) is
   turned into a plain ``#`` comment
-- figures/images, raw HTML, and sphinx-design dropdowns/tab-sets (as used
-  by ``plot_directive.py`` for its vtksz interactive-scene tabs) are
+- figures/images, raw HTML, and sphinx-design dropdowns/tab-sets are
   dropped entirely -- not even as a comment
-- RST markup that leaked in unparsed (e.g. a hyperlink or cross-reference
-  written inside a doctest-code comment, which docutils never resolves) is
-  cleaned up rather than reproduced verbatim
+- RST markup that leaks in unparsed sections such as doctest comments
+  (which docutils never resolves) is cleaned up rather than reproduced verbatim
 
 Generated ``.py`` files start with a title header (``# Examples from
 <qualified name>`` followed by a matching underline), and follow a few
 whitespace conventions so the result reads like normal, human-written
-Python: prose immediately preceding a code block stays directly above it
+Python. Prose immediately preceding a code block stays directly above it
 with no blank line, but a code block is always followed by a blank line
 before whatever comes next, and a converted directive (the header, or a
 ``# NOTE:``-style block) always gets a blank line both before and after
@@ -69,11 +54,11 @@ it. The file always ends with a trailing blank line.
 Generated ``.ipynb`` notebooks use the same underlying content, split into
 alternating cells instead of one flat file: each run of ``code`` segments
 becomes a code cell, and each run of prose/directive segments becomes a
-markdown cell (with the ``#`` comment prefix stripped, so the header's
-underline renders as an actual markdown heading).
+markdown cell.
 
 If the resulting code contains at least one real executable statement, a
 download link for it is added to the Examples section.
+
 """
 
 from __future__ import annotations

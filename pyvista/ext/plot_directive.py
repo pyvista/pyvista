@@ -139,12 +139,12 @@ that indexed is incompatible with parallel builds due to race conditions.
 .. versionchanged:: 0.47
     Hash-based image naming is now used by default.
 
-.. note::
-    Generated source code is wrapped in a ``.. container:: pyvista-plot-source``
-    node. This has no effect on rendering by itself; it exists so that other,
-    independent tooling (e.g. the ``examples_download`` Sphinx extension) can
-    reliably locate this directive's generated code within a page without
-    depending on this module directly.
+.. versionchanged:: 0.49
+    Generated source code is now wrapped in a ``.. container:: pyvista-plot-source``
+    node. This has no effect on rendering, but allows other independent tooling
+    (e.g. the https://github.com/pyvista/sphinx-examples-as-code Sphinx extension)
+    to reliably locate this directive's generated code within a page.
+
 """
 
 from __future__ import annotations
@@ -180,8 +180,7 @@ if TYPE_CHECKING:
 pv.BUILDING_GALLERY = True
 pv.OFF_SCREEN = True
 
-# CSS class marking the ``.. container::`` node that wraps this directive's generated source code.
-# It allows other extensions to recognize this directive's code without importing from this module.
+# CSS class marking the ``.. container::`` node that wraps this directive's generated source code
 _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
 
 # -----------------------------------------------------------------------------
