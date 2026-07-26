@@ -4,7 +4,8 @@ This Sphinx extension looks, on every page, for numpydoc-style "Examples"
 headings -- rendered as ``.. rubric:: Examples`` for docstrings, or as a
 regular section title on hand-written pages that happen to reuse that
 heading -- and turns the content of each one into a small, self-contained,
-runnable Python script, with a download link inserted into the section.
+runnable example, with a download link (or two -- see below) inserted into
+the section.
 
 Everything outside of an Examples section is left completely alone: pages
 or docstrings without one produce no file and no link. Enabling this
@@ -14,7 +15,10 @@ switch.
 Configuration (set in ``conf.py``):
 
 - ``examples_as_code_link_position``: ``'top'`` (default) or ``'bottom'``,
-  controlling where the download link lands within the Examples section.
+  controlling where the download link(s) land within the Examples section.
+- ``examples_as_code_formats``: which downloads to generate, as a list
+  containing ``'py'``, ``'ipynb'``, or both (default). Downloads are always
+  offered in that order regardless of how the list is written.
 
 This extension is intentionally independent of ``plot_directive.py``: it
 doesn't import anything from it, and works the same whether or not that
@@ -53,16 +57,22 @@ Conversion rules applied to the nodes within an Examples section:
   written inside a doctest-code comment, which docutils never resolves) is
   cleaned up rather than reproduced verbatim
 
-Generated files start with a title header (``# Examples from <qualified
-name>`` followed by a matching underline), and follow a few whitespace
-conventions so the result reads like normal, human-written Python: prose
-immediately preceding a code block stays directly above it with no blank
-line, but a code block is always followed by a blank line before whatever
-comes next, and a converted directive (the header, or a ``# NOTE:``-style
-block) always gets a blank line both before and after it. The file always
-ends with a trailing blank line.
+Generated ``.py`` files start with a title header (``# Examples from
+<qualified name>`` followed by a matching underline), and follow a few
+whitespace conventions so the result reads like normal, human-written
+Python: prose immediately preceding a code block stays directly above it
+with no blank line, but a code block is always followed by a blank line
+before whatever comes next, and a converted directive (the header, or a
+``# NOTE:``-style block) always gets a blank line both before and after
+it. The file always ends with a trailing blank line.
 
-If the resulting script contains at least one real executable statement, a
+Generated ``.ipynb`` notebooks use the same underlying content, split into
+alternating cells instead of one flat file: each run of ``code`` segments
+becomes a code cell, and each run of prose/directive segments becomes a
+markdown cell (with the ``#`` comment prefix stripped, so the header's
+underline renders as an actual markdown heading).
+
+If the resulting code contains at least one real executable statement, a
 download link for it is added to the Examples section.
 """
 
@@ -70,6 +80,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import json
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -176,7 +187,7 @@ def _is_examples_heading(node: nodes.Node) -> bool:
 def _add_comment(lines: list[str], text: str) -> None:
     """Append ``text`` to ``lines`` as one or more Python comment lines."""
     for line in text.splitlines():
-        line_ = line.rstrip()
+        line_ = line.rstrip().translate(ASCII_REPLACEMENTS)
         lines.append(f'# {line_}' if line_ else '#')
 
 
@@ -401,8 +412,90 @@ def _header_segment(qualified_name: str) -> Segment:
     return ('directive', [f'# {title}', f'# {underline}'])
 
 
-def _write_source(app: Sphinx, name: str, source: str) -> str:
-    """Write generated Python source directly into the builder's downloads dir.
+def _strip_comment_prefix(line: str) -> str:
+    """Remove the leading ``# `` (or bare ``#``) from a generated comment line."""
+    if line == '#':
+        return ''
+    return line.removeprefix('# ') if line.startswith('# ') else line.removeprefix('#')
+
+
+def _segments_to_cells(segments: list[Segment]) -> list[tuple[str, list[str]]]:
+    """Group segments into notebook cells: consecutive runs of ``('code' | 'markdown', lines)``.
+
+    A run of ``code`` segments becomes one code cell; a run of ``text``/
+    ``directive`` segments becomes one markdown cell, joined with the same
+    blank-line rules as ``_join_segments`` (so a directive still gets blank
+    lines around it) and with the ``#`` comment prefix stripped from each
+    line, since markdown needs no such marker.
+    """
+    cells: list[tuple[str, list[str]]] = []
+    run: list[Segment] = []
+    run_kind: str | None = None
+
+    def _flush() -> None:
+        if not run:
+            return
+        joined = _join_segments(run)
+        cells.append(
+            (
+                run_kind,
+                [_strip_comment_prefix(line) for line in joined]
+                if run_kind == 'markdown'
+                else joined,
+            )
+        )
+
+    for kind, lines in segments:
+        if not lines:
+            continue
+        cell_kind = 'code' if kind == 'code' else 'markdown'
+        if cell_kind != run_kind:
+            _flush()
+            run, run_kind = [], cell_kind
+        run.append((kind, lines))
+    _flush()
+    return cells
+
+
+def _cell_source(lines: list[str]) -> list[str]:
+    r"""Format lines the way nbformat expects: each ending in ``\\n`` but the last."""
+    if not lines:
+        return []
+    return [f'{line}\n' for line in lines[:-1]] + [lines[-1]]
+
+
+def _build_notebook(cells: list[tuple[str, list[str]]]) -> dict:
+    """Build a minimal, valid nbformat-4.5 notebook dict from grouped cells."""
+    nb_cells = []
+    for i, (kind, lines) in enumerate(cells):
+        cell: dict = {
+            'cell_type': kind,
+            'metadata': {},
+            'source': _cell_source(lines),
+            'id': f'cell-{i}',
+        }
+        if kind == 'code':
+            cell['execution_count'] = None
+            cell['outputs'] = []
+        nb_cells.append(cell)
+
+    return {
+        'cells': nb_cells,
+        'metadata': {
+            'kernelspec': {
+                'display_name': 'Python 3',
+                'language': 'python',
+                'name': 'python3',
+            },
+            'language_info': {'name': 'python', 'pygments_lexer': 'ipython3'},
+        },
+        'nbformat': 4,
+        'nbformat_minor': 5,
+    }
+
+
+def _write_download_file(app: Sphinx, name: str, extension: str, content: str) -> str:  # noqa: PLR0917
+    """Write generated content directly into the builder's downloads dir.
 
     Returns the path of the written file, relative to the downloads
     directory (i.e. the value to use as a ``download_reference``'s
@@ -417,24 +510,46 @@ def _write_source(app: Sphinx, name: str, source: str) -> str:
     """
     # 32 hex characters, matching the digest length Sphinx's own native
     # download-file handling uses for its ``_downloads/<digest>/...`` layout.
-    digest = hashlib.sha256(source.encode()).hexdigest()[:32]
+    digest = hashlib.sha256(content.encode()).hexdigest()[:32]
     safe_name = name.replace('.', '_') if name else 'example'
-    rel_path = f'{digest}/{safe_name}.py'
+    filename = f'{safe_name}.{extension}'
+    rel_path = f'{digest}/{filename}'
 
-    out_path = Path(app.outdir) / '_downloads' / digest / f'{safe_name}.py'
+    out_path = Path(app.outdir) / '_downloads' / digest / filename
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(source, encoding='utf-8')
+    out_path.write_text(content, encoding='utf-8')
     return rel_path
 
 
-def _make_download_node(rel_path: str) -> nodes.paragraph:
-    """Build a working download link node for a file already in the downloads dir."""
-    reference = addnodes.download_reference('', reftarget=rel_path)
-    reference['filename'] = rel_path
-    reference += nodes.Text('Download Python source code')
+def _write_source(app: Sphinx, name: str, source: str) -> str:
+    """Write a generated ``.py`` file; see ``_write_download_file``."""
+    return _write_download_file(app, name, 'py', source)
 
+
+def _write_notebook(app: Sphinx, name: str, notebook: dict) -> str:
+    """Write a generated ``.ipynb`` file; see ``_write_download_file``."""
+    return _write_download_file(app, name, 'ipynb', json.dumps(notebook, indent=1))
+
+
+#: Download link text per format, and the fixed order they're offered in
+#: regardless of how ``examples_as_code_formats`` lists them.
+_FORMAT_LABELS = {
+    'py': 'Download Python source code',
+    'ipynb': 'Download Jupyter notebook',
+}
+_FORMAT_ORDER = ('py', 'ipynb')
+
+
+def _make_download_node(entries: list[tuple[str, str]]) -> nodes.paragraph:
+    """Build one paragraph holding a download link for each ``(label, rel_path)`` entry."""
     paragraph = nodes.paragraph()
-    paragraph += reference
+    for i, (label, rel_path) in enumerate(entries):
+        if i > 0:
+            paragraph += nodes.Text(' | ')
+        reference = addnodes.download_reference('', reftarget=rel_path)
+        reference['filename'] = rel_path
+        reference += nodes.Text(label)
+        paragraph += reference
     return paragraph
 
 
@@ -447,8 +562,9 @@ def _process_span(  # noqa: PLR0917
     heading: nodes.Node,
     counter: int,
     position: str,
+    formats: list[str],
 ) -> None:
-    """Convert one Examples span and insert a download link if it has real code."""
+    """Convert one Examples span and insert download link(s) if it has real code."""
     segments: list[Segment] = []
     for node in parent.children[start:end]:
         segments.extend(_convert_node(node))
@@ -457,15 +573,28 @@ def _process_span(  # noqa: PLR0917
         return
 
     name = _qualified_name_for(heading, docname, counter)
-    lines = _join_segments([_header_segment(name), *segments])
-    source = '\n'.join(lines).rstrip() + '\n\n'
+    all_segments = [_header_segment(name), *segments]
+    source = '\n'.join(_join_segments(all_segments)).rstrip() + '\n\n'
 
     if not _has_real_code(source):
         return
 
-    rel_path = _write_source(app, name, source)
-    download_node = _make_download_node(rel_path)
+    entries = []
+    for fmt in _FORMAT_ORDER:
+        if fmt not in formats:
+            continue
+        label = _FORMAT_LABELS[fmt]
+        if fmt == 'ipynb':
+            notebook = _build_notebook(_segments_to_cells(all_segments))
+            rel_path = _write_notebook(app, name, notebook)
+        else:
+            rel_path = _write_source(app, name, source)
+        entries.append((label, rel_path))
 
+    if not entries:
+        return
+
+    download_node = _make_download_node(entries)
     parent.insert(start if position == 'top' else end, download_node)
 
 
@@ -478,6 +607,7 @@ def _process_doctree(app: Sphinx, doctree: nodes.document, docname: str) -> None
         return
 
     position = app.config.examples_as_code_link_position
+    formats = app.config.examples_as_code_formats
 
     # Process spans, per shared parent, from last to first: inserting a
     # download-link node shifts every later sibling index by one, so a
@@ -489,13 +619,14 @@ def _process_doctree(app: Sphinx, doctree: nodes.document, docname: str) -> None
     for parent, start, end, heading, counter in sorted(
         numbered_spans, key=lambda s: (id(s[0]), -s[1])
     ):
-        _process_span(app, docname, parent, start, end, heading, counter, position)
+        _process_span(app, docname, parent, start, end, heading, counter, position, formats)
 
 
 def setup(app: Sphinx) -> dict:  # numpydoc ignore=RT01
     """Register the extension."""
     app.connect('doctree-resolved', _process_doctree)
     app.add_config_value('examples_as_code_link_position', 'top', 'env')
+    app.add_config_value('examples_as_code_formats', ['py', 'ipynb'], 'env')
 
     return {
         'version': '0.1',

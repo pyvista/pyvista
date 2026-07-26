@@ -7,6 +7,7 @@ through a full build (mocked Sphinx app, hand-built doctree fragments).
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -442,14 +443,110 @@ def test_write_source_empty_name_fallback(tmp_path: Path):
     assert rel_path.endswith('/example.py')
 
 
-def test_make_download_node_structure():
-    node = eac._make_download_node('abc123/foo.py')
+def test_make_download_node_single_entry():
+    node = eac._make_download_node([('Download Python source code', 'abc123/foo.py')])
     assert isinstance(node, nodes.paragraph)
 
     reference = node.children[0]
     assert isinstance(reference, addnodes.download_reference)
     assert reference['filename'] == 'abc123/foo.py'
     assert reference.astext() == 'Download Python source code'
+
+
+def test_make_download_node_multiple_entries_separated():
+    node = eac._make_download_node(
+        [
+            ('Download Python source code', 'abc123/foo.py'),
+            ('Download Jupyter notebook', 'def456/foo.ipynb'),
+        ]
+    )
+    assert len(node.children) == 3  # reference, separator text, reference
+    assert isinstance(node.children[0], addnodes.download_reference)
+    assert node.children[1].astext() == ' | '
+    assert isinstance(node.children[2], addnodes.download_reference)
+    assert node.children[2]['filename'] == 'def456/foo.ipynb'
+
+
+# ---------------------------------------------------------------------------
+# _strip_comment_prefix / _segments_to_cells / _cell_source / _build_notebook
+# ---------------------------------------------------------------------------
+
+
+def test_strip_comment_prefix_with_space():
+    assert eac._strip_comment_prefix('# hello') == 'hello'
+
+
+def test_strip_comment_prefix_bare_hash():
+    assert eac._strip_comment_prefix('#') == ''
+
+
+def test_strip_comment_prefix_no_space_after_hash():
+    assert eac._strip_comment_prefix('#hello') == 'hello'
+
+
+def test_segments_to_cells_groups_by_kind():
+    segments = [
+        ('directive', ['# Examples from x', '# --------------']),
+        ('text', ['# prose here']),
+        ('code', ['import sys']),
+        ('code', ['x = 1']),
+    ]
+    cells = eac._segments_to_cells(segments)
+    assert cells == [
+        ('markdown', ['Examples from x', '--------------', '', 'prose here']),
+        ('code', ['import sys', '', 'x = 1']),
+    ]
+
+
+def test_segments_to_cells_empty_input():
+    assert eac._segments_to_cells([]) == []
+
+
+def test_cell_source_trailing_newlines_except_last():
+    assert eac._cell_source(['a', 'b', 'c']) == ['a\n', 'b\n', 'c']
+
+
+def test_cell_source_empty():
+    assert eac._cell_source([]) == []
+
+
+def test_build_notebook_structure():
+    cells = [('markdown', ['# Title']), ('code', ['x = 1'])]
+    notebook = eac._build_notebook(cells)
+    assert notebook['nbformat'] == 4
+    assert notebook['nbformat_minor'] == 5
+    assert len(notebook['cells']) == 2
+    assert notebook['cells'][0]['cell_type'] == 'markdown'
+    assert notebook['cells'][0]['id'] == 'cell-0'
+    assert 'execution_count' not in notebook['cells'][0]
+    assert notebook['cells'][1]['cell_type'] == 'code'
+    assert notebook['cells'][1]['execution_count'] is None
+    assert notebook['cells'][1]['outputs'] == []
+    assert notebook['cells'][1]['id'] == 'cell-1'
+
+
+def test_build_notebook_valid_nbformat():
+    nbformat = pytest.importorskip('nbformat')
+    cells = [('markdown', ['# Title']), ('code', ['import sys'])]
+    notebook = eac._build_notebook(cells)
+    node = nbformat.from_dict(notebook)
+    nbformat.validate(node)  # raises if invalid
+
+
+# ---------------------------------------------------------------------------
+# _write_notebook
+# ---------------------------------------------------------------------------
+
+
+def test_write_notebook_writes_valid_json(tmp_path: Path):
+    app = Mock(outdir=str(tmp_path))
+    notebook = eac._build_notebook([('code', ['x = 1'])])
+    rel_path = eac._write_notebook(app, 'pkg.func', notebook)
+    digest, filename = rel_path.split('/')
+    assert len(digest) == 32
+    assert filename == 'pkg_func.ipynb'
+    written = (tmp_path / '_downloads' / digest / filename).read_text()
+    assert json.loads(written) == notebook
 
 
 # ---------------------------------------------------------------------------
@@ -472,7 +569,7 @@ def test_process_span_no_code_no_download(tmp_path: Path):
         '.. rubric:: Examples\n\njust prose, no code'
     )
     original_len = len(parent.children)
-    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom')
+    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom', ['py', 'ipynb'])
     assert len(parent.children) == original_len
 
 
@@ -484,7 +581,7 @@ def test_process_span_code_segment_but_not_real_code(tmp_path: Path):
         '.. rubric:: Examples\n\n>>> # just a comment'
     )
     original_len = len(parent.children)
-    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom')
+    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom', ['py', 'ipynb'])
     assert len(parent.children) == original_len
 
 
@@ -493,7 +590,7 @@ def test_process_span_inserts_at_bottom(tmp_path: Path):
     _doctree, parent, start, end, heading = _build_examples_doctree(
         '.. rubric:: Examples\n\n>>> x = 1'
     )
-    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom')
+    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom', ['py', 'ipynb'])
     assert isinstance(parent.children[end], nodes.paragraph)
 
 
@@ -502,8 +599,41 @@ def test_process_span_inserts_at_top(tmp_path: Path):
     _doctree, parent, start, end, heading = _build_examples_doctree(
         '.. rubric:: Examples\n\n>>> x = 1'
     )
-    eac._process_span(app, 'page', parent, start, end, heading, 1, 'top')
+    eac._process_span(app, 'page', parent, start, end, heading, 1, 'top', ['py', 'ipynb'])
     assert isinstance(parent.children[start], nodes.paragraph)
+
+
+@pytest.mark.parametrize(
+    ('formats', 'expected_extensions'),
+    [
+        (['py'], ['.py']),
+        (['ipynb'], ['.ipynb']),
+        (['py', 'ipynb'], ['.py', '.ipynb']),
+        (['ipynb', 'py'], ['.py', '.ipynb']),  # canonical order regardless of config order
+        ([], []),
+    ],
+)
+def test_process_span_respects_formats_config(
+    tmp_path: Path, formats: list[str], expected_extensions: list[str]
+):
+    app = Mock(outdir=str(tmp_path))
+    _doctree, parent, start, end, heading = _build_examples_doctree(
+        '.. rubric:: Examples\n\n>>> x = 1'
+    )
+    original_len = len(parent.children)
+    eac._process_span(app, 'page', parent, start, end, heading, 1, 'bottom', formats)
+
+    if not expected_extensions:
+        assert len(parent.children) == original_len
+        return
+
+    download_paragraph = parent.children[end]
+    references = [
+        c for c in download_paragraph.children if isinstance(c, addnodes.download_reference)
+    ]
+    assert len(references) == len(expected_extensions)
+    for reference, ext in zip(references, expected_extensions, strict=True):
+        assert reference['filename'].endswith(ext)
 
 
 def test_process_doctree_skips_when_no_download_support():
@@ -523,6 +653,7 @@ def test_process_doctree_processes_spans(tmp_path: Path, position: str, expected
     app = Mock(outdir=str(tmp_path))
     app.builder.download_support = True
     app.config.examples_as_code_link_position = position
+    app.config.examples_as_code_formats = ['py', 'ipynb']
 
     doctree = _parse('.. rubric:: Examples\n\n>>> x = 1')
 
@@ -536,6 +667,27 @@ def test_setup_registers_connect_and_config():
     app = Mock()
     result = eac.setup(app)
     app.connect.assert_called_once_with('doctree-resolved', eac._process_doctree)
-    app.add_config_value.assert_called_once_with('examples_as_code_link_position', 'top', 'env')
+    assert app.add_config_value.call_count == 2
+    app.add_config_value.assert_any_call('examples_as_code_link_position', 'top', 'env')
+    app.add_config_value.assert_any_call('examples_as_code_formats', ['py', 'ipynb'], 'env')
     assert result['parallel_read_safe'] is True
     assert result['parallel_write_safe'] is True
+
+
+# ---------------------------------------------------------------------------
+# ASCII_REPLACEMENTS (smart quotes -> ASCII)
+# ---------------------------------------------------------------------------
+
+
+def test_add_comment_normalizes_smart_quotes():
+    # _add_comment is what prose (via _render_inline) goes through; without
+    # this, only doctest-code-comment lines (via _clean_code_comment) were
+    # normalized, leaving ordinary prose comments with curly quotes.
+    lines: list[str] = []
+    eac._add_comment(lines, 'an array\u2019s \u201cvalues\u201d')
+    assert lines == ['# an array\'s "values"']
+
+
+def test_convert_node_paragraph_normalizes_smart_quotes():
+    doctree = _parse('an array\u2019s \u201cvalues\u201d')
+    assert eac._convert_node(doctree[0]) == [('text', ['# an array\'s "values"'])]
