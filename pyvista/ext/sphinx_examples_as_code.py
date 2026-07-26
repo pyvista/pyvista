@@ -14,9 +14,9 @@ switch.
 
 Configuration (set in ``conf.py``):
 
-- ``examples_as_code_link_position``: ``'top'`` (default) or ``'bottom'``,
+- ``sphinx_examples_as_code_link_position``: ``'top'`` (default) or ``'bottom'``,
   controlling where the download link(s) land within the Examples section.
-- ``examples_as_code_formats``: which downloads to generate, as a list
+- ``sphinx_examples_as_code_formats``: which downloads to generate, as a list
   containing ``'py'``, ``'ipynb'``, or both (default). Downloads are always
   offered in that order regardless of how the list is written.
 
@@ -532,7 +532,7 @@ def _write_notebook(app: Sphinx, name: str, notebook: dict) -> str:
 
 
 #: Download link text per format, and the fixed order they're offered in
-#: regardless of how ``examples_as_code_formats`` lists them.
+#: regardless of how ``sphinx_examples_as_code_formats`` lists them.
 _FORMAT_LABELS = {
     'py': 'Download Python source code',
     'ipynb': 'Download Jupyter notebook',
@@ -606,8 +606,8 @@ def _process_doctree(app: Sphinx, doctree: nodes.document, docname: str) -> None
         # text, man, epub, ...) rather than writing files nobody can reach.
         return
 
-    position = app.config.examples_as_code_link_position
-    formats = app.config.examples_as_code_formats
+    position = app.config.sphinx_examples_as_code_link_position
+    formats = app.config.sphinx_examples_as_code_formats
 
     # Process spans, per shared parent, from last to first: inserting a
     # download-link node shifts every later sibling index by one, so a
@@ -625,8 +625,8 @@ def _process_doctree(app: Sphinx, doctree: nodes.document, docname: str) -> None
 def setup(app: Sphinx) -> dict:  # numpydoc ignore=RT01
     """Register the extension."""
     app.connect('doctree-resolved', _process_doctree)
-    app.add_config_value('examples_as_code_link_position', 'top', 'env')
-    app.add_config_value('examples_as_code_formats', ['py', 'ipynb'], 'env')
+    app.add_config_value('sphinx_examples_as_code_link_position', 'top', 'env')
+    app.add_config_value('sphinx_examples_as_code_formats', ['py', 'ipynb'], 'env')
 
     return {
         'version': '0.1',

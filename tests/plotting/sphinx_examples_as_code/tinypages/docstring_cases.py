@@ -1,7 +1,7 @@
-"""Individual docstring-conversion edge cases for examples_as_code.py.
+"""Individual docstring-conversion edge cases for sphinx_examples_as_code.py.
 
 Each function's "Examples" section exercises exactly one RST construct that
-the examples_as_code extension needs to handle, with trivial dummy code
+the sphinx_examples_as_code extension needs to handle, with trivial dummy code
 (``import sys``) so the generated download is easy to eyeball.
 """
 

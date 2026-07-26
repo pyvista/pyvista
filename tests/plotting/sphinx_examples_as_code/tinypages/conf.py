@@ -13,7 +13,7 @@ extensions = [
     'numpydoc',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
-    'pyvista.ext.examples_as_code',
+    'pyvista.ext.sphinx_examples_as_code',
     'sphinx.ext.autodoc',
     'sphinx_design',
 ]

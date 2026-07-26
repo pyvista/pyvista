@@ -1,4 +1,4 @@
-"""Unit tests for individual ``examples_as_code.py`` functions.
+"""Unit tests for individual ``sphinx_examples_as_code.py`` functions.
 
 Complements ``test_tinypages.py``'s full Sphinx-build
 tests with fast, direct tests of branches that are impractical to reach
@@ -16,7 +16,7 @@ from docutils.core import publish_doctree
 import pytest
 from sphinx import addnodes
 
-from pyvista.ext import examples_as_code as eac
+from pyvista.ext import sphinx_examples_as_code as eac
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -652,8 +652,8 @@ def test_process_doctree_skips_when_no_download_support():
 def test_process_doctree_processes_spans(tmp_path: Path, position: str, expected_index: int):
     app = Mock(outdir=str(tmp_path))
     app.builder.download_support = True
-    app.config.examples_as_code_link_position = position
-    app.config.examples_as_code_formats = ['py', 'ipynb']
+    app.config.sphinx_examples_as_code_link_position = position
+    app.config.sphinx_examples_as_code_formats = ['py', 'ipynb']
 
     doctree = _parse('.. rubric:: Examples\n\n>>> x = 1')
 
@@ -668,8 +668,8 @@ def test_setup_registers_connect_and_config():
     result = eac.setup(app)
     app.connect.assert_called_once_with('doctree-resolved', eac._process_doctree)
     assert app.add_config_value.call_count == 2
-    app.add_config_value.assert_any_call('examples_as_code_link_position', 'top', 'env')
-    app.add_config_value.assert_any_call('examples_as_code_formats', ['py', 'ipynb'], 'env')
+    app.add_config_value.assert_any_call('sphinx_examples_as_code_link_position', 'top', 'env')
+    app.add_config_value.assert_any_call('sphinx_examples_as_code_formats', ['py', 'ipynb'], 'env')
     assert result['parallel_read_safe'] is True
     assert result['parallel_write_safe'] is True
 

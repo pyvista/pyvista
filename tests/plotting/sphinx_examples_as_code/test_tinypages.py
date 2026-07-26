@@ -1,4 +1,4 @@
-"""Tests for the ``examples_as_code`` Sphinx extension.
+"""Tests for the ``sphinx_examples_as_code`` Sphinx extension.
 
 This extension is deliberately independent of ``plot_directive.py`` (it
 doesn't import anything from it, and works whether or not that extension is
@@ -11,7 +11,7 @@ builds; a separate fixture avoids needing to update those for a feature
 that has nothing to do with them.
 
 The one thing worth checking for *integration* with the real docs build --
-that ``pyvista.ext.examples_as_code`` is wired into the real ``tinypages/``
+that ``pyvista.ext.sphinx_examples_as_code`` is wired into the real ``tinypages/``
 ``conf.py`` and produces a download for at least one real docstring -- lives
 in ``test_tinypages.py`` instead, alongside the rest of that build's checks.
 """
@@ -50,7 +50,7 @@ def _read(paths: list[Path], name_contains: str) -> str:
 @pytest.fixture(scope='module')
 def built(tmp_path_factory) -> tuple[Path, list[Path]]:
     """Build the fixture once and share it (and its generated files) across this module."""
-    tmp_path = tmp_path_factory.mktemp('examples_as_code_build')
+    tmp_path = tmp_path_factory.mktemp('sphinx_examples_as_code_build')
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 
@@ -72,7 +72,7 @@ def built_notebooks(built: tuple[Path, list[Path]]) -> list[Path]:
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_examples_as_code_execute(built: tuple[Path, list[Path]]):
+def test_sphinx_examples_as_code_execute(built: tuple[Path, list[Path]]):
     """Every generated example script should run standalone without error.
 
     This is the key correctness check: a script that merely *looks*
@@ -294,7 +294,7 @@ def test_stray_markup_in_doctest_comment_cleaned(built: tuple[Path, list[Path]])
 
 @flaky_test(exceptions=(AssertionError,))
 def test_link_position_config(tmp_path: Path):
-    """``examples_as_code_link_position`` moves the link within its section.
+    """``sphinx_examples_as_code_link_position`` moves the link within its section.
 
     Default is ``'top'`` (already covered by every other test in this
     module, where the link always precedes the code); this checks ``'bottom'``.
@@ -303,7 +303,7 @@ def test_link_position_config(tmp_path: Path):
     doctree_dir = tmp_path / 'doctrees'
     returncode, out, err = _run_sphinx_build(
         _sphinx_build_cmd(
-            SRCDIR, html_dir, doctree_dir, ('-D', 'examples_as_code_link_position=bottom')
+            SRCDIR, html_dir, doctree_dir, ('-D', 'sphinx_examples_as_code_link_position=bottom')
         ),
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
@@ -320,7 +320,7 @@ def test_link_position_config(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
-# .ipynb notebook generation and the examples_as_code_formats config option
+# .ipynb notebook generation and the sphinx_examples_as_code_formats config option
 # ---------------------------------------------------------------------------
 
 
@@ -394,12 +394,12 @@ def test_formats_config_selection(
     expect_py: bool,
     expect_ipynb: bool,
 ):
-    """``examples_as_code_formats`` controls which download(s) get generated."""
+    """``sphinx_examples_as_code_formats`` controls which download(s) get generated."""
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
     returncode, out, err = _run_sphinx_build(
         _sphinx_build_cmd(
-            SRCDIR, html_dir, doctree_dir, ('-D', f'examples_as_code_formats={formats}')
+            SRCDIR, html_dir, doctree_dir, ('-D', f'sphinx_examples_as_code_formats={formats}')
         ),
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
