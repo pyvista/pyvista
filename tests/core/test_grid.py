@@ -512,7 +512,10 @@ def test_ensight_save(extension, binary, tmpdir, hexbeam):
     hexbeam.save(filename, binary=binary)
 
     output_filename = list(pathlib.Path(filename).parent.glob('*.case'))
+    expected_pattern = re.compile(r'^hexbeam\.[0-9]+\.case$')
+
     assert len(output_filename) == 1
+    assert expected_pattern.match(output_filename[0].name)
     output_filename = str(output_filename[0])
 
     grid = pv.MultiBlock(output_filename)['VTK Part']
