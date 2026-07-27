@@ -309,7 +309,7 @@ class DataObject(
 
             writer.write()
 
-            if not writer.formatted_path.exists():
+            if not writer.written_path.exists():
                 msg = f'VTK writer failed to write file: {file_path}'
                 raise OSError(msg)
 

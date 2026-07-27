@@ -93,7 +93,7 @@ class BaseWriter(_FileIOBase):
         super().__init__()
         self.path = path
         self.data_object = data_object
-        self.formatted_path = path
+        self.written_path = path
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
@@ -144,7 +144,7 @@ class BaseWriter(_FileIOBase):
         self.writer.SetInputData(data_object)
 
     @property
-    def formatted_path(self) -> pathlib.Path:
+    def written_path(self) -> pathlib.Path:
         """Return the formatted path of the written files.
 
         Returns
@@ -153,11 +153,11 @@ class BaseWriter(_FileIOBase):
             The formatted path of the written files.
 
         """
-        return self._formatted_path
+        return self._written_path
 
-    @formatted_path.setter
-    def formatted_path(self, path: str | Path) -> None:
-        self._formatted_path = pathlib.Path(path)
+    @written_path.setter
+    def written_path(self, path: str | Path) -> None:
+        self._written_path = pathlib.Path(path)
 
     def _execute_before_write(self) -> None:
         """Execute code before calling `write()`.
@@ -489,7 +489,7 @@ class EnSightWriter(BaseWriter):
         raw_path = pathlib.Path(self.path)
         process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
         basename = raw_path.stem
-        self.formatted_path = raw_path.parent / f'{basename}.{process_number}.case'
+        self.written_path = raw_path.parent / f'{basename}.{process_number}.case'
 
 
 @abstract_class
