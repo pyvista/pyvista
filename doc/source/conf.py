@@ -161,6 +161,8 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
+sphinx_examples_as_code_base_url = 'https://docs.pyvista.org/'
+
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
