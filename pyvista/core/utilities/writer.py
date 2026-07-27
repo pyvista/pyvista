@@ -126,7 +126,19 @@ class BaseWriter(_FileIOBase):
 
     @property
     def path(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the filename or directory of the writer."""
+        """Return or set the filename or directory of the writer.
+
+        This is the path that will be passed to the underlying VTK writer.
+        For most writers, this is the actual path of the written file.
+        For writers that write multiple files (e.g., EnSightWriter),
+        this path can be renamed. See :attr:`written_path` for the actual path of the written file.
+
+        Returns
+        -------
+        str
+            The path of the file to write to.
+
+        """
         return self.writer.GetFileName()  # type: ignore[attr-defined]
 
     @path.setter
@@ -147,10 +159,15 @@ class BaseWriter(_FileIOBase):
     def written_path(self) -> pathlib.Path:
         """Return the formatted path of the written files.
 
+        Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
+        For most readers, ``path`` and ``written_path`` are identical. In cases where
+        multiple files are written (e.g. :class:`vtkEnSightWriter`), this path corresponds
+        to the "main" output file that would be used for reading the mesh again.
+
         Returns
         -------
-        str
-            The formatted path of the written files.
+        pathlib.Path
+            The path of the written file.
 
         """
         return self._written_path
@@ -478,6 +495,11 @@ class EnSightWriter(BaseWriter):
     """EnSightWriter for `.case` files.
 
     Wraps :vtk:`vtkEnSightWriter`.
+
+    .. note::
+        This is a parallel writer that prepends a process number to the ``.case`` extension,
+        e.g. ``<filename>.0.case``. Use :attr:`written_path` to get the saved file after calling
+        :meth:`write`.
 
     .. versionadded:: 0.49.0
 
