@@ -202,6 +202,7 @@ from .reader import OBJReader as OBJReader
 from .reader import OpenFOAMReader as OpenFOAMReader
 from .reader import ParticleReader as ParticleReader
 from .reader import PDBReader as PDBReader
+from .reader import PExodusIIReader as PExodusIIReader
 from .reader import Plot3DFunctionEnum as Plot3DFunctionEnum
 from .reader import Plot3DMetaReader as Plot3DMetaReader
 from .reader import PLYReader as PLYReader

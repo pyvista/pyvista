@@ -279,6 +279,7 @@ class Report(scooby.Report):
         # Optional packages.
         optional = [
             # Misc.
+            'pyobjc-framework-Cocoa',
             'pytest-pyvista',
             'pyvistaqt',
             'PyQt5',

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 import pyvista as pv
-
-pytest_plugins = 'pytester'
-
-from typing import TYPE_CHECKING
-
 from tests.test_conftest import PytesterStdoutParser
 from tests.test_conftest import RunResultsReport
 from tests.test_conftest import results_parser  # noqa: F401
@@ -16,6 +13,8 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
+
+pytest_plugins = 'pytester'
 
 
 @pytest.fixture(autouse=True)
