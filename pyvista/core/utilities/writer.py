@@ -501,6 +501,11 @@ class EnSightWriter(BaseWriter):
         e.g. ``<filename>.0.case``. Use :attr:`written_path` to get the saved file after calling
         :meth:`write`.
 
+    .. note::
+        This writer saves the mesh as a multi-block dataset.
+        Even if the input mesh is a single block, the output will be a multi-block dataset
+        and the default block name will be ``VTK Part``.
+
     .. versionadded:: 0.49.0
 
     """
