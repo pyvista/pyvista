@@ -491,8 +491,8 @@ def test_skip_windows(
         [
             r'.*Marker `skip_windows` called with incorrect arguments\.',
             (
-                r'.*Signature should be: @pytest\.mark\.skip_windows',
-                r"\(reason: str = 'Test fails on Windows'\)",
+                r'.*Signature should be: @pytest\.mark\.skip_windows'
+                r"\(reason: str = 'Test fails on Windows'\)"
             ),
         ]
     )
