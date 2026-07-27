@@ -510,12 +510,12 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPLYWriter',
     ),
     'vtkIOParallel': (
+        'vtkEnSightWriter',
         'vtkMultiBlockPLOT3DReader',
         'vtkNek5000Reader',
         'vtkPDataSetReader',
         'vtkPOpenFOAMReader',
         'vtkPlot3DMetaReader',
-        'vtkEnSightWriter',
     ),
     'vtkIOParallelExodus': ('vtkPExodusIIReader',),
     'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),
