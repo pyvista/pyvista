@@ -96,6 +96,7 @@ test = [
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
   'sphinx-design<0.7.0',
+  'sphinx-examples-as-code @ git+https://github.com/pyvista/sphinx-examples-as-code.git@main',
   'sphinx-gallery<0.22.0',
   'sphinx<8.3.0',
   'sympy<1.15.0',
