@@ -1140,8 +1140,10 @@ def test_validate_dimensionality(dimensionality, reshape, expected_dimensionalit
         ),
         (
             'invalid',
-            '`invalid` is not a valid dimensionality. '
-            'Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D"].',
+            (
+                '`invalid` is not a valid dimensionality. '
+                'Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D"].'
+            ),
         ),
     ],
 )
