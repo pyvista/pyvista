@@ -128,6 +128,10 @@ class BaseWriter(_FileIOBase):
     def path(self) -> str:  # numpydoc ignore=RT01
         """Return or set the filename or directory of the writer.
 
+        Notes
+        -----
+        :attr:`path`:
+
         This is the path that will be passed to the underlying VTK writer.
         For most writers, this is the actual path of the written file.
         For writers that write multiple files (e.g., EnSightWriter),
@@ -158,6 +162,10 @@ class BaseWriter(_FileIOBase):
     @property
     def written_path(self) -> pathlib.Path:
         """Return the formatted path of the written files.
+
+        Notes
+        -----
+        :attr:`written_path`:
 
         Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
         For most readers, ``path`` and ``written_path`` are identical. In cases where

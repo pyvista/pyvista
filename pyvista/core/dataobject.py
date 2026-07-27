@@ -310,7 +310,7 @@ class DataObject(
             writer.write()
 
             if not writer.written_path.exists():
-                msg = f'VTK writer failed to write file: {file_path}'
+                msg = f'VTK writer failed to write file: {writer.written_path}'
                 raise OSError(msg)
 
         elif file_ext in _PICKLE_FILE_EXT:
