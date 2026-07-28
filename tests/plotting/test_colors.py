@@ -346,7 +346,7 @@ def _vtk_named_color_as_hex(name: str) -> str:
     return pv.Color(int_rgb).hex_rgb
 
 
-@pytest.mark.needs_vtk_version(9, 6, 99)  # >= 9.7.0
+@pytest.mark.needs_vtk_version(9, 7)
 def test_paraview_colors(paraview_color):
     name, value = paraview_color
 

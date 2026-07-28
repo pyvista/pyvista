@@ -871,11 +871,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
         item = self.reader.GetTimeSets().GetItem(self.active_time_set)
         if item is None:
             return 0
-        return (
-            item.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else item.GetCapacity()
-        )
+        return item.GetSize() if pv.vtk_version_info < (9, 7) else item.GetCapacity()
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)

@@ -1020,7 +1020,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 _index(ir + 1, 0, itheta),
                 _index(ir + 1, 0, itheta + 1),
             ]
-            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+            if pv.vtk_version_info < (9, 7):
                 raw_points = _reorder_wedge(raw_points)
 
             cells.append(6)
@@ -1041,7 +1041,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 _index(ir + 1, nphi - 1, itheta + 1),
                 _index(ir + 1, nphi - 1, itheta),
             ]
-            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+            if pv.vtk_version_info < (9, 7):
                 raw_points = _reorder_wedge(raw_points)
 
             cells.append(6)

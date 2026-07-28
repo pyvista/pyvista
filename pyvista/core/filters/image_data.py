@@ -1943,9 +1943,7 @@ class ImageDataFilters(DataSetFilters):
             return _get_output(alg)
 
         threshold_filter = (
-            _binary_image_threshold
-            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
-            else _image_threshold
+            _binary_image_threshold if pv.vtk_version_info >= (9, 7) else _image_threshold
         )
         output = threshold_filter(
             threshold_val=threshold_val,

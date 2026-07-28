@@ -22,7 +22,7 @@ cell_example_functions = [
 
 
 @pytest.mark.needs_vtk_version(
-    (9, 6, 99),  # >= 9,7,0
+    (9, 7),
     reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
 )
 @parametrize('cell_example', cell_example_functions)
@@ -47,7 +47,7 @@ def test_area_and_volume(cell_example):
 
 
 @pytest.mark.needs_vtk_version(
-    (9, 6, 99),  # >= 9,7,0
+    (9, 7),
     reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
 )
 @parametrize('cell_example', cell_example_functions)
