@@ -5011,7 +5011,7 @@ class DataObjectFilters:
             locator = _vtk.vtkStaticCellLocator()
 
         if pv.vtk_version_info >= (9, 7):
-            alg.SetCellLocator(locator)  # type: ignore[attr-defined]
+            alg.SetCellLocator(locator)
         else:
             alg.SetCellLocatorPrototype(locator)
 

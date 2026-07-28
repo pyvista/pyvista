@@ -203,7 +203,7 @@ def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkA
     if deep:
         new_array.DeepCopy(array)
     else:
-        new_array.ShallowCopy(array)  # type: ignore[attr-defined]
+        new_array.ShallowCopy(array)
 
     return new_array
 
