@@ -152,7 +152,7 @@ docs = [
   'sympy==1.14.0',
   'trame-pyvista==0.1.3',
   'trimesh==4.12.2',
-  'vtk-xref==0.1.2',
+  'sphinx-vtk-xref==0.2.1',
   { include-group = 'pinned' },
 ]
 

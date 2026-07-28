@@ -122,7 +122,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
-    'vtk_xref',
+    'sphinx_vtk_xref',
 ]
 
 
