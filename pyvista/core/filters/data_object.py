@@ -4513,9 +4513,7 @@ class DataObjectFilters:
             # Ensure outputs have arrays so things like `mesh.area` and `mesh.volume` still work
             # Also guard against seg fault https://gitlab.kitware.com/vtk/vtk/-/issues/19978
             out = self.copy()
-            if isinstance(out, pv.MultiBlock):
-                out.generic_filter(ensure_arrays_if_empty)
-            else:
+            if not isinstance(out, pv.MultiBlock):
                 ensure_arrays_if_empty(out)
             return out
 
@@ -5007,13 +5005,11 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
-        else:
-            locator = _vtk.vtkStaticCellLocator()
 
-        if pv.vtk_version_info >= (9, 7):
-            alg.SetCellLocator(locator)
-        else:
-            alg.SetCellLocatorPrototype(locator)
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocator(locator)
+            else:
+                alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:
