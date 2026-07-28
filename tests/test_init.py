@@ -6,14 +6,40 @@ import sys
 
 import pytest
 
+# These sets are allow-lists, not requirements: a module may be listed but not
+# actually loaded (e.g. on older VTK, or on a VTK built without a given module).
 CORE_VTKMODULES = {
     'vtkmodules.numpy_interface',
+    # VTK >= 9.7 eagerly imports these pure-Python helpers from vtkCommonCore,
+    # vtkCommonDataModel and vtkCommonExecutionModel.
+    'vtkmodules.numpy_interface._vtk_array_mixin',
+    'vtkmodules.numpy_interface.array_overrides',
     'vtkmodules.numpy_interface.dataset_adapter',
+    'vtkmodules.numpy_interface.utils',
+    'vtkmodules.numpy_interface.vtk_affine_array',
+    'vtkmodules.numpy_interface.vtk_aos_array',
+    'vtkmodules.numpy_interface.vtk_composite_array',
+    'vtkmodules.numpy_interface.vtk_constant_array',
+    'vtkmodules.numpy_interface.vtk_implicit_array',
+    'vtkmodules.numpy_interface.vtk_indexed_array',
+    'vtkmodules.numpy_interface.vtk_none_array',
+    'vtkmodules.numpy_interface.vtk_partitioned_array',
+    'vtkmodules.numpy_interface.vtk_soa_array',
+    'vtkmodules.numpy_interface.vtk_strided_array',
+    'vtkmodules.numpy_interface.vtk_structured_point_array',
     'vtkmodules.util',
+    'vtkmodules.util.data_array_selection',
     'vtkmodules.util.data_model',
     'vtkmodules.util.execution_model',
+    'vtkmodules.util.graph',
+    'vtkmodules.util.implicit_functions',
+    'vtkmodules.util.information',
+    'vtkmodules.util.matrix',
     'vtkmodules.util.numpy_support',
     'vtkmodules.util.pickle_support',
+    'vtkmodules.util.selection',
+    'vtkmodules.util.string_array',
+    'vtkmodules.util.variant_array',
     'vtkmodules.util.vtkConstants',
     'vtkmodules.vtkCommonCore',
     'vtkmodules.vtkCommonDataModel',
@@ -45,6 +71,8 @@ PLOTTING_VTKMODULES = CORE_VTKMODULES | {
     'vtkmodules.vtkRenderingCore',
     'vtkmodules.vtkRenderingFreeType',
     'vtkmodules.vtkRenderingHyperTreeGrid',
+    # Pulled in by vtkRenderingContextOpenGL2 on VTK >= 9.7
+    'vtkmodules.vtkRenderingLabel',
     'vtkmodules.vtkRenderingMatplotlib',
     'vtkmodules.vtkRenderingOpenGL2',
     'vtkmodules.vtkRenderingUI',
