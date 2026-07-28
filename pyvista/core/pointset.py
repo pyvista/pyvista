@@ -939,7 +939,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> points = rng.random((5, 3))
         >>> pdata = pv.PolyData(points)
         >>> pdata.verts
-        array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4], dtype=int64)
+        array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4]...)
 
         Set vertex cells.  Note how the mesh plots both the surface
         mesh and the additional vertices in a single plot.
@@ -1013,7 +1013,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> points = np.random.default_rng().random((3, 3))
         >>> spline = pv.Spline(points, 10)
         >>> spline.lines
-        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9], dtype=int64)
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
         """
         self.GetLines().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
@@ -1074,8 +1074,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> import pyvista as pv
         >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
         >>> plane.faces
-        array([4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7],
-              dtype=int64)
+        array([4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]...)
 
         Note how the faces contain a "padding" indicating the number
         of points per face:
@@ -1084,7 +1083,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([[4, 0, 1, 4, 3],
                [4, 1, 2, 5, 4],
                [4, 3, 4, 7, 6],
-               [4, 4, 5, 8, 7]], dtype=int64)
+               [4, 4, 5, 8, 7]]...)
 
         Set the faces directly. The following example creates a simple plane
         with a single square faces and modifies it to have two triangles
@@ -1093,7 +1092,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
         >>> mesh.faces = [3, 0, 1, 2, 3, 3, 2, 1]
         >>> mesh.faces
-        array([3, 0, 1, 2, 3, 3, 2, 1], dtype=int64)
+        array([3, 0, 1, 2, 3, 3, 2, 1]...)
 
         """
         self.GetPolys().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
@@ -1139,7 +1138,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([[0, 1, 4, 3],
                [1, 2, 5, 4],
                [3, 4, 7, 6],
-               [4, 5, 8, 7]], dtype=int64)
+               [4, 5, 8, 7]]...)
 
         """
         regular_faces = _get_regular_cells(self.GetPolys())
@@ -1320,8 +1319,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> polygon = pv.Rectangle()
         >>> extruded = polygon.extrude((0, 0, 1), capping=False)
         >>> extruded.strips
-        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4],
-              dtype=int64)
+        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4]...)
         >>> extruded.n_strips
         4
 
@@ -2201,7 +2199,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> grid = examples.load_hexbeam()
         >>> grid.cells[:18]
         array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,  8, 36, 18, 54,
-               90], dtype=int64)
+               90]...)
 
         While you cannot change the array inplace, you can overwrite it. For example:
 
@@ -2432,8 +2430,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> from pyvista import examples
         >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.cell_connectivity[:16]
-        array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90],
-              dtype=int64)
+        array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90]...)
 
         """
         carr = self._get_cells()
@@ -2590,7 +2587,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
                104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
                208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
-               312, 320], dtype=int64)
+               312, 320]...)
 
         """
         carr = self._get_cells()

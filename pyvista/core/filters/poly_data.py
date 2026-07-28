@@ -3131,11 +3131,11 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere.regular_faces[0]
-        array([ 2, 30,  0], dtype=int64)
+        array([ 2, 30,  0]...)
 
         >>> sphere_flipped = sphere.flip_faces()
         >>> sphere_flipped.regular_faces[0]
-        array([ 0, 30,  2], dtype=int64)
+        array([ 0, 30,  2]...)
 
         Note that the sphere also has pre-computed normals which have not been
         affected by this filter.
@@ -3219,10 +3219,10 @@ class PolyDataFilters(DataSetFilters):
         Note that the sphere's cell ordering has not been affected by this filter.
 
         >>> sphere.regular_faces[0]
-        array([ 2, 30,  0], dtype=int64)
+        array([ 2, 30,  0]...)
 
         >>> sphere_flipped.regular_faces[0]
-        array([ 2, 30,  0], dtype=int64)
+        array([ 2, 30,  0]...)
 
         """
         return self._reverse_sense(
@@ -4140,8 +4140,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh_b = pv.Cube(center=(0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23],
-                        dtype=int64)
+        pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23]...)
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data.  Cells with a collision are
