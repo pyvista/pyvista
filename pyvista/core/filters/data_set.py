@@ -2292,7 +2292,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> conn = mesh.connectivity('all')
         >>> np.unique(conn['RegionId'])
-        pyvista_ndarray([0, 1, 2])
+        pyvista_ndarray([0, 1, 2], dtype=int64)
 
         Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
 
@@ -4968,7 +4968,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> image = examples.load_channels()
         >>> np.unique(image.active_scalars)
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4], dtype=int64)
 
         Split the image into its separate regions. Here, we also remove the first
         region for visualization.
@@ -5747,7 +5747,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
         >>> ind[:10]
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=int64)
 
         """
         surf = DataObjectFilters.extract_surface(
@@ -7486,7 +7486,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(image_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4], dtype=int64)
 
         Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
@@ -7515,7 +7515,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(subset_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([1, 2, 3])
+        pyvista_ndarray([1, 2, 3], dtype=int64)
 
         Despite the changes to the dataset, the regions have the same coloring
         as before.
@@ -7553,7 +7553,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> scalars = image_labels.active_scalars
         >>> scalars[scalars > 2] *= -1
         >>> np.unique(scalars)
-        pyvista_ndarray([-4, -3,  0,  1,  2])
+        pyvista_ndarray([-4, -3,  0,  1,  2], dtype=int64)
 
         Color the mesh and enable ``negative_indexing``. With this option enabled,
         the ``'index'`` coloring mode is used by default, and therefore the positive
@@ -7584,7 +7584,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> labeled_data = dataset.connectivity()
         >>> np.unique(labeled_data.active_scalars)
         pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
-                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+                        dtype=int64)
 
         Color the dataset with default arguments. Despite having 26 separately colored
         regions, the colors from the default glasbey-style colormap are all relatively

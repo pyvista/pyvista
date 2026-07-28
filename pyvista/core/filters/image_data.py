@@ -2602,7 +2602,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image = examples.load_channels()
         >>> label_ids = np.unique(image.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4], dtype=int64)
         >>> image.dimensions
         (251, 251, 101)
 
@@ -2639,7 +2639,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([1, 2, 3, 4])
+        pyvista_ndarray([1, 2, 3, 4], dtype=int64)
 
         Set ``simplify_output`` to ``False`` to generate a two-component
         array instead showing the two boundary regions associated with each polygon.
@@ -2656,7 +2656,7 @@ class ImageDataFilters(DataSetFilters):
         array([[1, 0],
                [2, 0],
                [3, 0],
-               [4, 0]])
+               [4, 0]], dtype=int64)
 
         Repeat the example but this time generate internal contours only. The generated
         array is 2D by default.
@@ -2675,7 +2675,7 @@ class ImageDataFilters(DataSetFilters):
                [1, 4],
                [2, 3],
                [2, 4],
-               [3, 4]])
+               [3, 4]], dtype=int64)
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
@@ -2686,7 +2686,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([-5, -4, -3, -2, -1])
+        pyvista_ndarray([-5, -4, -3, -2, -1], dtype=int64)
 
         >>> labels_plotter(contours, zoom=1.5).show()
 
