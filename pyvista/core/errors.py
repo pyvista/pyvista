@@ -262,7 +262,7 @@ class VTKExecutionWarning(RuntimeWarning):
 class ObsoleteVTKVersionWarning(Warning):
     """Warning when a VTK version is compared against or required needlessly.
 
-    This warning is emitted whenever :attr:`~pyvista.vtk_version_info` is compared
+    This warning is emitted whenever ``pyvista.vtk_version_info`` is compared
     against a version which is no longer supported by PyVista, or whenever
     :func:`~pyvista.require_vtk_version` is given such a version. In both cases the
     comparison has a fixed outcome and the code guarded by it is obsolete.

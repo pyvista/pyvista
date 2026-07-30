@@ -262,7 +262,7 @@ def require_vtk_version(
 
     Raises
     ------
-    pyvista.VTKVersionError
+    pyvista.core.errors.VTKVersionError
         If the installed VTK version does not satisfy the constraint.
 
     Warns
