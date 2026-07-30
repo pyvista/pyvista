@@ -576,6 +576,21 @@ def _str_examples(self):
 SphinxDocString._str_examples = _str_examples
 
 
+# -- headings instead of rubrics for docstring sections -----------------------
+# numpydoc renders section headers (Notes, References, Examples) as
+# `.. rubric::` by default. Rubrics aren't real docutils sections, so they're
+# invisible to the "on this page" navbar, which is built from actual heading
+# structure. Since pyvista generates one dedicated page per function/method/
+# class (see doc/source/_templates/autosummary/*.rst), each page has at most
+# one docstring, so promoting these to real headings doesn't create the
+# duplicate-heading clutter it would on a page combining many docstrings.
+def _str_header(self, name):  # noqa: ARG001
+    return [name, '-' * len(name), '']
+
+
+SphinxDocString._str_header = _str_header
+
+
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
