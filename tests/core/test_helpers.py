@@ -231,7 +231,11 @@ def test_wrap_raises_unable():
     [
         (np.float64, _vtk.vtkDoubleArray),
         (np.float32, _vtk.vtkFloatArray),
-        (np.int64, _vtk.vtkTypeInt64Array),
+        # Pair with ``np.longlong``, not ``np.int64``: since VTK 9.7 the numpy-to-VTK
+        # mapping follows the underlying C type, so ``vtkTypeInt64Array`` (C ``long
+        # long``) corresponds to ``np.longlong`` on every platform, whereas ``np.int64``
+        # is C ``long`` on LP64 and maps to ``vtkLongArray`` there.
+        (np.longlong, _vtk.vtkTypeInt64Array),
         (np.int32, _vtk.vtkTypeInt32Array),
         (np.int8, _vtk.vtkSignedCharArray),
         (np.uint8, _vtk.vtkUnsignedCharArray),

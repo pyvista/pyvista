@@ -3806,7 +3806,7 @@ class BasePlotter(_BoundsSizeMixin):
 
                 # Create degenerate triangles at each point
                 n_points = points.shape[0]
-                cells = np.empty(n_points * 4, dtype=np.int64)
+                cells = np.empty(n_points * 4, dtype=pv.ID_TYPE)
                 celltypes = np.full(n_points, pv.CellType.TRIANGLE, dtype=np.uint8)
                 for i in range(n_points):
                     off = 4 * i

@@ -454,7 +454,7 @@ class _FRDParser:
             types.append(ctype)
 
         grid = pv.UnstructuredGrid(
-            np.array(cells, dtype=np.int64),
+            np.array(cells, dtype=pv.ID_TYPE),
             np.array(types, dtype=np.uint8),
             points,
         )
