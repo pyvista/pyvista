@@ -3714,7 +3714,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def cell_coords(
         self,
         ind: int | VectorLike[int],
-    ) -> None | MatrixLike[int]:
+    ) -> MatrixLike[int] | None:
         """Return the cell structured coordinates.
 
         The cell structured coordinates are the ``(i, j, k)`` index of a cell

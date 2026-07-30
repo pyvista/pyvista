@@ -637,14 +637,16 @@ def validate_transform4x4(
                 )
             except TypeError:
                 msg = (
-                    'Input transform must be one of:\n'
-                    '\tvtkMatrix4x4\n'
-                    '\tvtkMatrix3x3\n'
-                    '\tvtkTransform\n'
-                    '\t4x4 np.ndarray\n'
-                    '\t3x3 np.ndarray\n'
-                    '\tscipy.spatial.transform.Rotation\n'
-                    f'Got {reprlib.repr(transform)} with type {type(transform)} instead.',
+                    (
+                        'Input transform must be one of:\n'
+                        '\tvtkMatrix4x4\n'
+                        '\tvtkMatrix3x3\n'
+                        '\tvtkTransform\n'
+                        '\t4x4 np.ndarray\n'
+                        '\t3x3 np.ndarray\n'
+                        '\tscipy.spatial.transform.Rotation\n'
+                        f'Got {reprlib.repr(transform)} with type {type(transform)} instead.'
+                    ),
                 )
                 raise TypeError(msg)
 

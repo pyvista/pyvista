@@ -4868,18 +4868,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
-        values: None
-        | (
+        values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        ) = None,
+        )
+        | None = None,
         *,
-        ranges: None
-        | (
+        ranges: (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
             | dict[tuple[float, float], str]
-        ) = None,
+        )
+        | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
