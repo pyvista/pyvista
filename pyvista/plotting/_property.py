@@ -1207,20 +1207,10 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
-            raise VTKVersionError(msg)
         return self.GetAnisotropy()
 
     @anisotropy.setter
     def anisotropy(self, value: float):
-        if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
-            raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
 

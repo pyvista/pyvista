@@ -215,19 +215,18 @@ class HDFWriter(BaseWriter):
         if not isinstance(mesh := self.data_object, pv.MultiBlock):
             return
         # Check multiblock block types
-        if pv.vtk_version_info < (9, 5, 0):
-            if mesh.is_nested:
-                msg = (
-                    'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
-                    '\nUpgrade to VTK>=9.5 for this functionality.'
-                )
-                raise TypeError(msg)
-            if type(None) in mesh.block_types:
-                msg = (
-                    'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
-                    '\nUpgrade to VTK>=9.5 for this functionality.'
-                )
-                raise TypeError(msg)
+        if mesh.is_nested:
+            msg = (
+                'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                '\nUpgrade to VTK>=9.5 for this functionality.'
+            )
+            pv.require_vtk_version(9, 5, reason=msg)
+        if type(None) in mesh.block_types:
+            msg = (
+                'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                '\nUpgrade to VTK>=9.5 for this functionality.'
+            )
+            pv.require_vtk_version(9, 5, reason=msg)
 
         supported_block_types: list[type] = [
             pv.PolyData,

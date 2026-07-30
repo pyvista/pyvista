@@ -469,7 +469,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
         'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(pv.VTKVersionError, match=match):
         multi.save(filename)
 
     multi = pv.MultiBlock([None])
@@ -477,7 +477,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
         'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(pv.VTKVersionError, match=match):
         multi.save(filename)
 
 

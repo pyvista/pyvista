@@ -693,22 +693,10 @@ class Texture(DataObject, _vtk.vtkTexture):
         >>> pl.show()
 
         """
-        if not hasattr(self, 'GetWrap'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = '`wrap` requires VTK v9.1.0 or newer.'
-            raise VTKVersionError(msg)
-
         return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
     def wrap(self, value: Texture.WrapType | int):
-        if not hasattr(self, 'SetWrap'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = '`wrap` requires VTK v9.1.0 or newer.'
-            raise VTKVersionError(msg)
-
         self.SetWrap(value)
 
     def to_grayscale(self) -> Texture:

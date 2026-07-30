@@ -34,7 +34,6 @@ from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
@@ -1679,9 +1678,8 @@ class DataObjectFilters:
         # Use single-precision eps by default (even if points have double precision)
         tol: float = tolerance if tolerance is not None else np.finfo(np.float32).eps
 
-        if planarity_tolerance is not None and pv.vtk_version_info < (9, 6, 0):
-            msg = 'Planarity tolerance requires VTK 9.6 or later.'
-            raise pv.VTKVersionError(msg)
+        if planarity_tolerance is not None:
+            pv.require_vtk_version(9, 6, reason='Planarity tolerance requires VTK 9.6 or later.')
 
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
         skip_validator = isinstance(self, pv.Grid)
@@ -5003,11 +5001,7 @@ class DataObjectFilters:
             alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
-            try:
-                alg.SnapToCellWithClosestPointOn()
-            except AttributeError:  # pragma: no cover
-                msg = '`snap_to_closest_point=True` requires vtk 9.3.0 or newer'
-                raise VTKVersionError(msg)
+            alg.SnapToCellWithClosestPointOn()
         _update_alg(
             alg,
             progress_bar=progress_bar,

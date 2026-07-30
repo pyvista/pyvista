@@ -1095,9 +1095,8 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
-        if window_function is not None and pv.vtk_version_info < (9, 4, 0):
-            msg = '`window_function` requires VTK 9.4.0 or later.'
-            raise pv.VTKVersionError(msg)
+        if window_function is not None:
+            pv.require_vtk_version(9, 4, reason='`window_function` requires VTK 9.4.0 or later.')
 
         if pv.vtk_version_info >= (9, 4, 0):
             window_functions = {

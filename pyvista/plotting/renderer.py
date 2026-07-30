@@ -18,7 +18,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
-from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
@@ -3901,11 +3900,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetEnvironmentTexture(texture, is_srgb)
 
         if rotation is not None:
-            if vtk_version_info < (9, 6):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
-                msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
-                raise VTKVersionError(msg)
+            pv.require_vtk_version(
+                9, 6, reason='`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
+            )
             rotation_matrix = _validation.validate_rotation(
                 rotation,
                 must_have_handedness='right',
