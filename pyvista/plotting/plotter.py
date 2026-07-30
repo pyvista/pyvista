@@ -3861,7 +3861,10 @@ class BasePlotter(_BoundsSizeMixin):
             if not is_pyvista_dataset(mesh):
                 msg = f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 raise TypeError(msg)
-        if isinstance(mesh, pv.PointSet):
+        preserve_blanked_structured_grid = (
+            algo is None and isinstance(mesh, pv.StructuredGrid) and mesh.HasAnyBlankPoints()
+        )
+        if isinstance(mesh, pv.PointSet) and not preserve_blanked_structured_grid:
             # cast to PointSet to PolyData
             if algo is not None:
                 algo = pointset_to_polydata_algorithm(algo)

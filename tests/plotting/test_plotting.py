@@ -6020,6 +6020,57 @@ def test_hide_cells_no_scalars(verify_image_cache):
     grid.plot(color='w', show_edges=True, show_grid=True)
 
 
+def test_hide_points_structured_grid():
+    x = np.arange(-10, 10, 0.25)
+    y = np.arange(-10, 10, 0.25)
+    z = 0
+    x, y, z = np.meshgrid(x, y, z)
+    grid = pv.StructuredGrid(x, y, z)
+    grid.hide_points(range(80 * 30, 80 * 50))
+    original_n_arrays = grid.n_arrays
+
+    plotter = pv.Plotter(off_screen=True)
+    actor = plotter.add_mesh(grid, color='w', show_edges=True)
+    plotted = actor.mapper.dataset
+    plotter.close()
+
+    assert isinstance(plotted, pv.StructuredGrid)
+    assert plotted.HasAnyBlankPoints()
+    assert plotted.n_points == grid.n_points
+    assert plotted.n_cells == grid.n_cells
+
+    plotter = pv.Plotter(off_screen=True)
+    actor = plotter.add_mesh(grid, scalars=np.arange(grid.n_points), copy_mesh=True)
+    plotted = actor.mapper.dataset
+    scalars_name = actor.mapper.array_name
+    plotter.close()
+
+    assert isinstance(plotted, pv.StructuredGrid)
+    assert plotted.HasAnyBlankPoints()
+    assert plotted.n_points == grid.n_points
+    assert plotted.n_cells == grid.n_cells
+    assert grid.n_arrays == original_n_arrays
+    point_scalars = np.asarray(plotted.point_data[scalars_name])
+    assert point_scalars.shape == (plotted.n_points,)
+    assert np.array_equal(point_scalars, np.arange(grid.n_points))
+
+    original_cell_scalars = np.arange(grid.n_cells)
+    plotter = pv.Plotter(off_screen=True)
+    actor = plotter.add_mesh(grid, scalars=original_cell_scalars, copy_mesh=True)
+    plotted = actor.mapper.dataset
+    scalars_name = actor.mapper.array_name
+    plotter.close()
+
+    assert isinstance(plotted, pv.StructuredGrid)
+    assert plotted.HasAnyBlankPoints()
+    assert plotted.n_points == grid.n_points
+    assert plotted.n_cells == grid.n_cells
+    assert grid.n_arrays == original_n_arrays
+    cell_scalars = np.asarray(plotted.cell_data[scalars_name])
+    assert cell_scalars.shape == (plotted.n_cells,)
+    assert np.array_equal(cell_scalars, original_cell_scalars)
+
+
 def test_connectivity_cmap():
     # Test case described in https://github.com/pyvista/pyvista/issues/8252
     large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
