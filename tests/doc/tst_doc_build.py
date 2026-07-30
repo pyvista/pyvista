@@ -60,6 +60,9 @@ def test_sphinx_gallery_execution_times(testcase):
 # silent regression can't slip through.
 MIN_PAGES_WITH_HOISTED_SECTIONS = 100
 
+# A generated page for a single object whose docstring has Notes and Examples.
+API_PAGE = 'pyvista.PolyDataFilters.decimate.html'
+
 _PAGE_TOC_RE = re.compile(r'<nav class="bd-toc-nav page-toc">(.*?)</nav>', re.DOTALL)
 _HREF_RE = re.compile(r'href="#([^"]+)"')
 
@@ -85,8 +88,7 @@ def find_api_page(filename: str) -> Path:
 
 
 def test_docstring_sections_are_hoisted_into_page_toc():
-    # `PolyData.decimate` has both a Notes and an Examples section.
-    html = find_api_page('pyvista.PolyData.decimate.html').read_text()
+    html = find_api_page(API_PAGE).read_text()
     anchors = page_toc_anchors(html)
 
     assert 'notes' in anchors
@@ -94,7 +96,7 @@ def test_docstring_sections_are_hoisted_into_page_toc():
 
 
 def test_hoisted_sections_are_not_rubrics():
-    html = find_api_page('pyvista.PolyData.decimate.html').read_text()
+    html = find_api_page(API_PAGE).read_text()
 
     # A rubric would render as <p class="rubric">Examples</p> and never reach
     # the navbar. Real headings carry an id so they can be linked.
@@ -117,7 +119,7 @@ def test_multi_object_page_does_not_hoist_sections():
 
 
 def test_page_toc_anchors_resolve():
-    html = find_api_page('pyvista.PolyData.decimate.html').read_text()
+    html = find_api_page(API_PAGE).read_text()
 
     for anchor in page_toc_anchors(html):
         assert f'id="{anchor}"' in html, f'navbar links to #{anchor} but no such id exists'
