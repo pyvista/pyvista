@@ -17,12 +17,26 @@ HTML_DIR = str(Path(BUILD_DIR) / 'html')
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
 SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds
 XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
-assert XML_FILE.is_file()
 
 
-xml_root = parse(XML_FILE).getroot()
-test_cases = [dict(case.attrib) for case in xml_root.iterfind('testcase')]
+def load_test_cases() -> list[dict[str, str]]:
+    """Return the sphinx-gallery junit test cases, or none if the docs aren't built.
+
+    Parametrization happens at collection time, so this can't raise on a missing
+    file without failing every test in the module.
+    ``test_sphinx_gallery_junit_results_exist`` reports that instead.
+    """
+    if not XML_FILE.is_file():
+        return []
+    return [dict(case.attrib) for case in parse(XML_FILE).getroot().iterfind('testcase')]
+
+
+test_cases = load_test_cases()
 test_ids = [case['classname'] for case in test_cases]
+
+
+def test_sphinx_gallery_junit_results_exist():
+    assert XML_FILE.is_file(), f'{XML_FILE} not found. Build the documentation first.'
 
 
 @pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
@@ -57,10 +71,16 @@ def page_toc_anchors(html: str) -> list[str]:
 
 
 def find_api_page(filename: str) -> Path:
-    """Return a generated single-object API page, skipping if docs moved."""
+    """Return a generated single-object API page.
+
+    Fails rather than skips when the page is missing: skipping would silently
+    stop testing the feature, and nobody would know to update the test.
+    """
     page = next(Path(HTML_DIR).rglob(filename), None)
-    if page is None:
-        pytest.skip(f'{filename} not found; the API doc layout may have changed')
+    assert page is not None, (
+        f'{filename} not found under {HTML_DIR}. If the API doc layout changed, point '
+        f'this test at another single-object page with Notes and Examples sections.'
+    )
     return page
 
 
@@ -86,8 +106,10 @@ def test_multi_object_page_does_not_hoist_sections():
     # `helpers.rst` documents several objects on one page via `:members:`, so
     # hoisting is skipped there to avoid colliding sections at page level.
     page = Path(HTML_DIR) / 'api' / 'core' / 'helpers.html'
-    if not page.is_file():
-        pytest.skip('helpers.html not found; the API doc layout may have changed')
+    assert page.is_file(), (
+        f'{page} not found. If the API doc layout changed, point this test at another '
+        f'page that documents several objects via `:members:`.'
+    )
     anchors = page_toc_anchors(page.read_text())
 
     assert 'notes' not in anchors
@@ -102,9 +124,15 @@ def test_page_toc_anchors_resolve():
 
 
 def test_docstring_sections_hoisted_across_api_pages():
+    api_pages = list(Path(HTML_DIR).rglob('_autosummary/*.html'))
+    assert api_pages, (
+        f'no generated API pages found under {HTML_DIR}. If autosummary no longer '
+        f'writes to `_autosummary`, update this glob.'
+    )
+
     pages_with_sections = [
         path
-        for path in Path(HTML_DIR).rglob('_autosummary/*.html')
+        for path in api_pages
         if {'notes', 'examples'} & set(page_toc_anchors(path.read_text()))
     ]
 
