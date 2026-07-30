@@ -4,20 +4,37 @@ from __future__ import annotations
 
 import pooch
 
-from .downloads import USER_DATA_PATH
+import pyvista as pv
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+from pyvista.examples.downloads import USER_DATA_PATH
+
+_GLTF_PATHS: dict[str, str] = {
+    'damaged_helmet': 'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
+    'sheen_chair': 'SheenChair/glTF-Binary/SheenChair.glb',
+    'gearbox': 'GearboxAssy/glTF-Binary/GearboxAssy.glb',
+    'avocado': 'Avocado/glTF-Binary/Avocado.glb',
+    'milk_truck': 'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
+}
+
+_GLTF_BASE_URL = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/'
+
 
 GLTF_FETCHER = pooch.create(  # type: ignore[attr-defined]
     path=USER_DATA_PATH,
-    base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
-    registry={
-        'Avocado/glTF-Binary/Avocado.glb': None,
-        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
-        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
-        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
-        'SheenChair/glTF-Binary/SheenChair.glb': None,
-    },
+    base_url=_GLTF_BASE_URL,
+    registry=dict.fromkeys(_GLTF_PATHS.values()),
     retry_if_failed=3,
 )
+
+
+def _gltf_loader(name):
+    return _SingleFileDownloadableDatasetLoader(
+        _GLTF_PATHS[name],
+        base_url=_GLTF_BASE_URL,
+        download_func=GLTF_FETCHER.fetch,
+    )
 
 
 def download_damaged_helmet():  # pragma: no cover
@@ -41,12 +58,24 @@ def download_damaged_helmet():  # pragma: no cover
     >>> pl.set_environment_texture(cubemap)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Damaged Helmet Dataset <damaged_helmet_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
+    return _dataset_damaged_helmet.download()
+
+
+_dataset_damaged_helmet = _gltf_loader('damaged_helmet')
 
 
 def download_sheen_chair():  # pragma: no cover
     """Download the sheen chair example.
+
+    .. deprecated:: 0.49.0
+        This example uses the unsupported glTF extension
+        ``KHR_texture_transform`` and will be removed in v0.52.
 
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -55,19 +84,24 @@ def download_sheen_chair():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_sheen_chair()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
+    .. seealso::
+
+        :ref:`Sheen Chair Dataset <sheen_chair_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
-    return GLTF_FETCHER.fetch('SheenChair/glTF-Binary/SheenChair.glb')
+    warn_external(
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.',
+        PyVistaDeprecationWarning,
+    )
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
+    return _dataset_sheen_chair.download()
+
+
+_dataset_sheen_chair = _gltf_loader('sheen_chair')
 
 
 def download_gearbox():  # pragma: no cover
@@ -89,8 +123,16 @@ def download_gearbox():  # pragma: no cover
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Gearbox Dataset <gearbox_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return GLTF_FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
+    return _dataset_gearbox.download()
+
+
+_dataset_gearbox = _gltf_loader('gearbox')
 
 
 def download_avocado():  # pragma: no cover
@@ -112,8 +154,16 @@ def download_avocado():  # pragma: no cover
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Avocado Dataset <avocado_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return GLTF_FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
+    return _dataset_avocado.download()
+
+
+_dataset_avocado = _gltf_loader('avocado')
 
 
 def download_milk_truck():  # pragma: no cover
@@ -135,5 +185,13 @@ def download_milk_truck():  # pragma: no cover
     >>> pl.import_gltf(gltf_file)
     >>> pl.show()
 
+    .. seealso::
+
+        :ref:`Milk Truck Dataset <milk_truck_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
-    return GLTF_FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
+    return _dataset_milk_truck.download()
+
+
+_dataset_milk_truck = _gltf_loader('milk_truck')

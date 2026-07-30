@@ -4029,6 +4029,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         tolerance: float | None = None,
         fname: str | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        component: int | None = None,
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
@@ -4077,6 +4078,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        component : int, optional
+            Set component of vector-valued scalars to plot. Must be
+            nonnegative and less than the number of components. If ``None``,
+            all components are plotted.
+
         Examples
         --------
         See the :ref:`plot_over_line_example` example.
@@ -4098,6 +4104,21 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
+        if component is not None:
+            try:
+                component_index = operator.index(component)
+            except TypeError:
+                msg = 'component must be None or an integer.'
+                raise TypeError(msg) from None
+            n_components = values.shape[1] if values.ndim > 1 else 1
+            if not 0 <= component_index < n_components:
+                msg = (
+                    'component must be nonnegative and less than the '
+                    f'dimensionality of the scalars array: {n_components}'
+                )
+                raise ValueError(msg)
+            if values.ndim > 1:
+                values = values[:, component_index]
 
         # Remainder is plotting
         if figure:
@@ -4717,22 +4738,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
         extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
-        if pv.vtk_version_info >= (9, 3, 0):
-            # We set the arrays manually earlier
-            extract.SetPassThroughCellIds(False)
+        # We set the arrays manually earlier
+        extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract)
 
         # Make active scalars match input
         info = self.active_scalars_info
         subgrid.set_active_scalars(info.name, info.association)
-
-        if pv.vtk_version_info >= (9, 3, 0):
-            return subgrid
-
-        # Process output arrays
-        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
-            del data[name]
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -4842,18 +4855,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
-        values: None
-        | (
+        values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        ) = None,
+        )
+        | None = None,
         *,
-        ranges: None
-        | (
+        ranges: (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
             | dict[tuple[float, float], str]
-        ) = None,
+        )
+        | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -6088,9 +6101,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')

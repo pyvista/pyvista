@@ -6,6 +6,7 @@ from enum import EnumMeta
 from enum import IntEnum
 import textwrap
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
@@ -13,8 +14,12 @@ from typing import cast
 from typing import get_args
 
 from pyvista import _vtk
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.errors import PyVistaDeprecationWarning
 
+if TYPE_CHECKING:
+    from typing import Any
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
@@ -41,6 +46,20 @@ _ABSTRACT_DIMENSIONS: dict[int, _Dimension] = {
     _vtk.VTK_HIGHER_ORDER_HEXAHEDRON: 3,
     _vtk.VTK_LAGRANGE_PYRAMID: 3,
     _vtk.VTK_BEZIER_PYRAMID: 3,
+}
+
+_DEPRECATED_CELL_TYPES = {
+    'PARAMETRIC_CURVE',
+    'PARAMETRIC_SURFACE',
+    'PARAMETRIC_TRI_SURFACE',
+    'PARAMETRIC_QUAD_SURFACE',
+    'PARAMETRIC_TETRA_REGION',
+    'PARAMETRIC_HEX_REGION',
+    'HIGHER_ORDER_POLYGON',
+}
+_RENAMED_CELL_TYPES = {
+    'HIGHER_ORDER_QUAD': 'HIGHER_ORDER_QUADRILATERAL',
+    'HIGHER_ORDER_EDGE': 'HIGHER_ORDER_CURVE',
 }
 
 _GRID_TEMPLATE_NO_IMAGE = """
@@ -514,8 +533,14 @@ _CELL_TYPE_INFO = dict(
     PARAMETRIC_HEX_REGION=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_HEX_REGION),
     ####################################################################################
     # Higher order cells
+    # The name EDGE is deprecated in VTK 9.7, replaced with CURVE, but same value
+    # Update the value to VTK_HIGHER_ORDER_CURVE once 9.7 is the minimum supported version
+    HIGHER_ORDER_CURVE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
     HIGHER_ORDER_EDGE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
     HIGHER_ORDER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TRIANGLE),
+    # The name QUAD is deprecated in VTK 9.7, replaced with QUADRILATERAL, but same value
+    # Update the value to VTK_HIGHER_ORDER_QUADRILATERAL once 9.7 is the minimum supported version
+    HIGHER_ORDER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
     HIGHER_ORDER_QUAD=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
     HIGHER_ORDER_POLYGON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_POLYGON),
     HIGHER_ORDER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TETRAHEDRON),
@@ -637,6 +662,19 @@ _CELL_TYPE_INFO = dict(
 )
 
 
+def _warn_deprecated_removed(member: CellType) -> None:
+    msg = f'{member!r} is deprecated and will be removed in a future version.'
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+def _warn_deprecated_renamed(name: str) -> None:
+    msg = (
+        f'CellType.{name} is deprecated and has been renamed. '
+        f'Use {_RENAMED_CELL_TYPES[name]} instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
 class _CellTypeMeta(EnumMeta):
     """Metaclass to enable class property definitions for CellType."""
 
@@ -644,6 +682,21 @@ class _CellTypeMeta(EnumMeta):
     _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
         MappingProxyType(_dimension_map)
     )
+
+    def __getattribute__(cls, name: str) -> Any:
+        member = super().__getattribute__(name)
+        if name in _DEPRECATED_CELL_TYPES:
+            _warn_deprecated_removed(member)
+        elif name in _RENAMED_CELL_TYPES:
+            _warn_deprecated_renamed(name)
+        return member
+
+    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]  # noqa: ANN
+        member = super().__call__(value, *args, **kwargs)  # type: ignore[var-annotated]
+        name = member.name
+        if name in _DEPRECATED_CELL_TYPES:
+            _warn_deprecated_removed(member)
+        return member
 
     @property
     def dimension_map(cls) -> MappingProxyType[_Dimension, frozenset[CellType]]:
@@ -700,7 +753,7 @@ class _CellTypeMeta(EnumMeta):
          <CellType.QUADRATIC_EDGE: 21>,
          <CellType.CUBIC_LINE: 35>,
          <CellType.PARAMETRIC_CURVE: 51>,
-         <CellType.HIGHER_ORDER_EDGE: 60>,
+         <CellType.HIGHER_ORDER_CURVE: 60>,
          <CellType.LAGRANGE_CURVE: 68>,
          <CellType.BEZIER_CURVE: 75>]
 
@@ -722,7 +775,7 @@ class _CellTypeMeta(EnumMeta):
          <CellType.PARAMETRIC_TRI_SURFACE: 53>,
          <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
          <CellType.HIGHER_ORDER_TRIANGLE: 61>,
-         <CellType.HIGHER_ORDER_QUAD: 62>,
+         <CellType.HIGHER_ORDER_QUADRILATERAL: 62>,
          <CellType.HIGHER_ORDER_POLYGON: 63>,
          <CellType.LAGRANGE_TRIANGLE: 69>,
          <CellType.LAGRANGE_QUADRILATERAL: 70>,
@@ -1331,8 +1384,10 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     PARAMETRIC_QUAD_SURFACE = _CELL_TYPE_INFO['PARAMETRIC_QUAD_SURFACE']
     PARAMETRIC_TETRA_REGION = _CELL_TYPE_INFO['PARAMETRIC_TETRA_REGION']
     PARAMETRIC_HEX_REGION = _CELL_TYPE_INFO['PARAMETRIC_HEX_REGION']
+    HIGHER_ORDER_CURVE = _CELL_TYPE_INFO['HIGHER_ORDER_CURVE']
     HIGHER_ORDER_EDGE = _CELL_TYPE_INFO['HIGHER_ORDER_EDGE']
     HIGHER_ORDER_TRIANGLE = _CELL_TYPE_INFO['HIGHER_ORDER_TRIANGLE']
+    HIGHER_ORDER_QUADRILATERAL = _CELL_TYPE_INFO['HIGHER_ORDER_QUADRILATERAL']
     HIGHER_ORDER_QUAD = _CELL_TYPE_INFO['HIGHER_ORDER_QUAD']
     HIGHER_ORDER_POLYGON = _CELL_TYPE_INFO['HIGHER_ORDER_POLYGON']
     HIGHER_ORDER_TETRAHEDRON = _CELL_TYPE_INFO['HIGHER_ORDER_TETRAHEDRON']

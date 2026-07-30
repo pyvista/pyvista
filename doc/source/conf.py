@@ -70,8 +70,11 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
 # Prevent deprecated features from being used in examples
@@ -293,6 +296,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
+    (r'py:.*', 'ndarray'),
     #
     # pyarrow does not register a py:module entry in its intersphinx
     # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
@@ -454,6 +458,13 @@ def _filter_sphinx_gallery_warnings():
         'ignore',
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
+    )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
     )
 
     # Treat all remaining warnings as errors
@@ -670,6 +681,7 @@ html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
+    'codimensional.css',  # pin partner card to bottom of right sidebar
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -783,6 +795,13 @@ html_sidebars = {
         'sbt-sidebar-nav.html',
     ],
 }
+
+# Pin the CoDimensional PBC partner card to the bottom of the right
+# (secondary) sidebar, below the page table of contents, on every page.
+html_theme_options['secondary_sidebar_items'] = [
+    'page-toc.html',
+    'codimensional.html',
+]
 
 
 class PlaceHolderImage(Image):

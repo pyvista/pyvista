@@ -18,11 +18,12 @@ from rich.text import Text
 import pyvista as pv
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
-from .app import app
+from .app import CLI_APP
 from .utils import HELP_FORMATTER
-from .utils import _console_error
-from .utils import _converter_files
-from .utils import _MeshAndPath
+from .utils import print_error_and_exit
+from .utils import read_mesh
+from .utils import skip_unreadable
+from .utils import validate_paths
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -39,7 +40,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):
             msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
-            app.console.print(
+            CLI_APP.error_console.print(
                 Panel(
                     msg,
                     style='magenta',
@@ -78,27 +79,26 @@ class Groups(StrEnum):
     RETURN = 'Return'
 
 
-@app.command(
-    usage=f'Usage: [bold]{pv.__name__} plot file (file2) [OPTIONS]',
+@CLI_APP.command(
+    usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
     help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
 )
 def _plot(
-    var_item: Annotated[
+    paths: Annotated[
         list[str],
         Parameter(
-            name='files',
             consume_multiple=True,
             help=(
-                'File(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
+                'Paths(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
                 'Each match must be readable with ``pyvista.read``.'
             ),
-            converter=_converter_files,
             group=Groups.IN,
-            negative='',
         ),
     ],
+    /,
     *,
+    skip_unreadable: skip_unreadable = False,
     off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
     full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     screenshot: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
@@ -132,10 +132,18 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
-    items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
+    valid_paths = validate_paths(paths)
+    # Inform users about --skip-unreadable option when there are multiple inputs
+    on_error_if_unreadable: Literal['exit+hint', 'exit'] = (
+        'exit+hint' if len(valid_paths) > 1 else 'exit'
+    )
+    meshes = [
+        read_mesh(path, on_error='suppress' if skip_unreadable else on_error_if_unreadable)
+        for path in valid_paths
+    ]
     try:
         res = pv.plot(
-            var_item=[m.mesh for m in items],  # type: ignore [arg-type]
+            var_item=[mesh for mesh in meshes if mesh is not None],  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,
@@ -160,7 +168,7 @@ def _plot(
 
     except Exception as ex:  # noqa: BLE001
         # Prevent traceback and output error along with help message
-        app.help_print(tokens='plot')
+        CLI_APP.help_print(tokens='plot', console=CLI_APP.error_console)
 
         msg = Group(
             ':warning: The following exception has been raised when calling [u]pv.plot[/u]:',
@@ -171,6 +179,6 @@ def _plot(
             NewLine(),
             Text('Please check the provided arguments.'),
         )
-        _console_error(app=app, message=msg)
+        print_error_and_exit(message=msg)
     else:
         return res

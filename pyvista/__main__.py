@@ -6,7 +6,7 @@ import warnings
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-from ._cli import app
+from ._cli import CLI_APP
 
 
 def main(argv: list[str] | str | None = None) -> None:
@@ -16,7 +16,7 @@ def main(argv: list[str] | str | None = None) -> None:
     # and https://github.com/BrianPugh/cyclopts/issues/567
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=PyVistaDeprecationWarning)
-        result = app(tokens=argv)
+        result = CLI_APP(tokens=argv)
 
     if result is not None:
         print(result)  # noqa: T201

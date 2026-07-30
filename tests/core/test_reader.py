@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pickle
 import re
 import textwrap
 from typing import TYPE_CHECKING
@@ -16,6 +15,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples.downloads import download_file
@@ -38,7 +38,7 @@ def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
 
 
 def test_reader_output_type_defined():
-    expected = set(CLASS_READERS.values())
+    expected = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
     actual = set(_CLASS_READER_RETURN_TYPE.keys())
     assert actual == expected, 'Return type must be defined for every reader'
 
@@ -212,11 +212,16 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
-    with pytest.raises(
-        TypeError,
-        match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
-    ):
-        pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
+    match = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
+        ):
+            pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
 
 
 def test_get_reader_fail(tmp_path):
@@ -225,6 +230,33 @@ def test_get_reader_fail(tmp_path):
     match = '`pyvista.get_reader` does not support reading from directory:\n\t'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(str(tmp_path))
+
+
+@pytest.mark.parametrize(
+    'filename',
+    [
+        'mesh.e.4.0',
+        'mesh.n.12.11',
+        'mesh.E.4.0',
+        'mesh.N.12.11',
+    ],
+)
+def test_get_reader_pexodus_pattern(tmp_path, filename):
+    path = tmp_path / filename
+    path.touch()
+    reader = pv.get_reader(path)
+    assert isinstance(reader, pv.PExodusIIReader)
+
+
+@pytest.mark.parametrize(
+    ('force_ext', 'reader_type'),
+    [('.e', pv.ExodusIIReader), ('.e.4.0', pv.PExodusIIReader)],
+)
+def test_get_reader_pexodus_pattern_force_ext(tmp_path, force_ext, reader_type):
+    path = tmp_path / 'mesh.e.4.0'
+    path.touch()
+    reader = pv.get_reader(path, force_ext=force_ext)
+    assert isinstance(reader, reader_type)
 
 
 def test_reader_invalid_file():
@@ -855,18 +887,6 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 3),
-    reason='polyhedra decomposition was removed after 9.3',
-)
-def test_openfoam_decompose_polyhedra():
-    reader = get_cavity_reader()
-    reader.decompose_polyhedra = False
-    assert reader.decompose_polyhedra is False
-    reader.decompose_polyhedra = True
-    assert reader.decompose_polyhedra is True
-
-
 def test_openfoam_skip_zero_time():
     reader = get_cavity_reader()
 
@@ -1277,9 +1297,6 @@ def test_xmlpartitioneddatasetreader(tmpdir):
         assert new_partition.n_cells == partitions[i].n_cells
 
 
-@pytest.mark.needs_vtk_version(
-    9, 3, 0, reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.'
-)
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
     reader = pv.get_reader(filename)
@@ -1378,7 +1395,8 @@ def test_prostar_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_grdecl_reader(tmp_path):
+@pytest.mark.parametrize('as_reader', [True, False])
+def test_grdecl_reader(tmp_path, as_reader):
     def read(content, include_content, **kwargs):
         path = tmp_path
 
@@ -1388,9 +1406,24 @@ def test_grdecl_reader(tmp_path):
         with Path.open(path / '3x3x3_include.grdecl', 'w') as f:
             f.write(''.join(include_content))
 
-        return pv.core.utilities.fileio.read_grdecl(path / '3x3x3.grdecl', **kwargs)
+        filepath = path / '3x3x3.grdecl'
+        if as_reader:
+            reader = pv.GRDECLReader(filepath)
+            for key, value in kwargs.items():
+                setattr(reader, key, value)
+            return reader.read()
+        else:
+            match = (
+                '`read_grdecl` is deprecated and will be removed in a future version. '
+                'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+            )
+            with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+                return pv.core.utilities.fileio.read_grdecl(filepath, **kwargs)
 
     path = Path(__file__).parent.parent / 'example_files'
+
+    mesh = pv.read(path / '3x3x3.grdecl')
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
 
     with Path.open(path / '3x3x3.grdecl') as f:
         content = list(f)
@@ -1449,15 +1482,25 @@ def test_grdecl_reader(tmp_path):
         _ = read(content, include_content_copy)
 
 
+def test_erdgcl_reader_properties():
+    path = Path(__file__).parent.parent / 'example_files' / '3x3x3.grdecl'
+
+    reader = pv.GRDECLReader(path)
+    assert reader.elevation is True
+    reader.elevation = False
+    assert reader.elevation is False
+
+    assert reader.other_keywords is None
+    reader.other_keywords = ['KEYWORD']
+    assert reader.other_keywords == ['KEYWORD']
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
+
+
 def test_nek5000_reader():
     # load nek5000 file
     filename = examples.download_nek5000(load=False)
-
-    # this class only available for vtk versions >= 9.3
-    if pv.vtk_version_info < (9, 3):
-        with pytest.raises(pv.VTKVersionError):
-            _ = pv.get_reader(filename)
-        return
 
     # test get_reader
     nek_reader = pv.get_reader(filename)
@@ -1588,38 +1631,47 @@ def test_nek5000_reader():
     assert 'spectral element id' in nek_data.cell_data
 
 
-@pytest.mark.parametrize(
-    ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
-)
-@pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext):
-    filepath = tmp_path / ('data_object' + ext)
-    data_object.save(filepath)
-    new_data_object = pv.read(filepath)
-    assert data_object == new_data_object
+_PICKLE_REFUSAL_MATCH = 'pickle is a Python serialization protocol, not a mesh'
 
-    # Test raises
-    with open(str(filepath), 'wb') as f:  # noqa: PTH123
-        # Create non-mesh pickle file
-        pickle.dump([1, 2, 3], f)
-    match = (
-        "Pickled object must be an instance of <class 'pyvista.core.dataobject.DataObject'>. "
-        "Got <class 'list'> instead."
-    )
-    with pytest.raises(TypeError, match=match):
-        pv.read(filepath)
 
-    match = "Filename must be a file path with extension ('.pkl', '.pickle'). Got {} instead."
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.read_pickle({})
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_pv_read_refuses_pickle_extension(tmp_path, ext):
+    """``pv.read`` must refuse ``.pkl`` / ``.pickle`` — not a mesh format (CWE-502)."""
+    p = tmp_path / f'x{ext}'
+    p.write_bytes(b'\x80\x04N.')  # valid pickle of ``None``
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(p)
 
-    match = (
-        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
-        "Got <class 'dict'> instead."
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.save_pickle('filename', {})
+
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_dataobject_save_refuses_pickle_extension(sphere, tmp_path, ext):
+    """``DataObject.save`` must refuse ``.pkl`` / ``.pickle``."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        sphere.save(tmp_path / f'x{ext}')
+
+
+def test_top_level_read_pickle_stub_raises(sphere):
+    """``pv.read_pickle`` / ``pv.save_pickle`` remain importable but refuse."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read_pickle('anything.pkl')
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.save_pickle('anything.pkl', sphere)
+
+
+def test_force_ext_pickle_refused(tmp_path):
+    """``force_ext='.pkl'`` must not bypass the refusal."""
+    p = tmp_path / 'x.vtp'
+    p.write_bytes(b'\x80\x04N.')
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(p, force_ext='.pkl')
+
+
+@pytest.mark.parametrize('scheme', ['https', 's3'])
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_remote_pickle_uri_refused(scheme, ext):
+    """Remote ``.pkl`` URIs must refuse before any download attempt (P-1a)."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(f'{scheme}://attacker.example/x{ext}')
 
 
 def test_exodus_reader_ext():
@@ -1846,6 +1898,106 @@ def test_exodus_blocks():
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
 
 
+def test_parallel_exodus_reader():
+    reader = pv.get_reader(examples.download_parallel_exodus(load=False))
+    assert isinstance(reader, pv.PExodusIIReader)
+
+    element_block_names = ['Unnamed block ID: 1', 'Unnamed block ID: 2']
+    side_set_names = ['Unnamed set ID: 4']
+    point_array_names = ['ACCL', 'DISPL', 'VEL']
+
+    assert reader.element_blocks.names == element_block_names
+    assert reader.element_blocks.array_names == ['EQPS']
+    assert reader.side_sets.names == side_set_names
+    assert reader.side_sets.array_names == []
+
+    mesh = reader.read()
+    element_blocks = mesh['Element Blocks']
+    side_sets = mesh['Side Sets']
+
+    assert element_blocks.keys() == element_block_names
+    assert side_sets.keys() == side_set_names
+
+    for block in element_blocks:
+        assert block.point_data.keys() == point_array_names
+        assert block.cell_data.keys() == ['EQPS', 'ObjectId']
+
+    for side_set in side_sets:
+        assert side_set.point_data.keys() == point_array_names
+        assert side_set.cell_data.keys() == ['ObjectId']
+
+
+def test_exodus_reader_animate_mode_shapes():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    # check default value matches vtkExodusIIReader default
+    default = bool(e_reader.reader.GetAnimateModeShapes())
+    assert e_reader.animate_mode_shapes == default
+
+    # check setter
+    e_reader.animate_mode_shapes = True
+    assert e_reader.reader.GetAnimateModeShapes() == 1
+
+    e_reader.animate_mode_shapes = False
+    assert e_reader.reader.GetAnimateModeShapes() == 0
+
+
+def test_exodus_reader_side_set_arrays():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    expected_names = ['bottom', 'top']
+
+    # check count and names
+    assert e_reader.number_side_set_arrays == len(expected_names)
+    assert e_reader.side_set_array_names == expected_names
+
+    # check all enabled by default (matching read_exodus default behavior)
+    for name in expected_names:
+        assert e_reader.side_set_array_status(name)
+
+    # check disable/enable by name
+    for name in expected_names:
+        e_reader.disable_side_set_array(name)
+        assert not e_reader.side_set_array_status(name)
+
+        e_reader.enable_side_set_array(name)
+        assert e_reader.side_set_array_status(name)
+
+    # check disable/enable by index
+    for i, _ in enumerate(expected_names):
+        e_reader.disable_side_set_array(i)
+        assert not e_reader.side_set_array_status(i)
+
+        e_reader.enable_side_set_array(i)
+        assert e_reader.side_set_array_status(i)
+
+    # check enable_all / disable_all
+    e_reader.disable_all_side_set_arrays()
+    for name in expected_names:
+        assert not e_reader.side_set_array_status(name)
+
+    e_reader.enable_all_side_set_arrays()
+    for name in expected_names:
+        assert e_reader.side_set_array_status(name)
+
+
+@pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+def test_exodus_reader_side_set_array_raises(sideset):
+    e_reader = pv.get_reader(examples.download_mug(load=False))
+    match = re.escape(f'Could not parse sideset ID/name: {sideset}')
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.enable_side_set_array(sideset)
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.disable_side_set_array(sideset)
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.side_set_array_status(sideset)
+
+
 def test_vtu_series_reader():
     filename = examples.download_file('vtu_series/wavy.zip')
     reader = pv.get_reader(filename[0])
@@ -1939,3 +2091,30 @@ def test_forbid_empty_series_file(tmp_path: Path):
 
     with pytest.raises(ValueError, match='No datasets found in series file'):
         pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_vrml_reader():
+    filename = examples.vrml.download_grasshopper()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_threeds_reader():
+    filename = examples.download_3ds.download_iflamigm()
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+    # Necessary to check bounds since these will be uninitialized if Update()
+    # wasn't called when reading
+    expected_bounds = pv.BoundsTuple(
+        x_min=-5.379246234893799,
+        x_max=5.364696979522705,
+        y_min=-1.9769330024719238,
+        y_max=2.731842041015625,
+        z_min=-7.883847236633301,
+        z_max=5.437096118927002,
+    )
+
+    assert np.allclose(mesh.bounds, expected_bounds)

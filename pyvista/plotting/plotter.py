@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from threading import Event
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
@@ -79,6 +80,7 @@ from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .opts import StereoType
 from .picking import PickingComponent
+from .prop_collection import _PropCollection
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
 from .renderer import Renderer
@@ -90,6 +92,7 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import callback_algorithm
@@ -380,6 +383,7 @@ class BasePlotter(_BoundsSizeMixin):
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._initialized = False
+        self._show_called = False
 
         # Tracks plotter components (see
         # ``pyvista.plotting.component_registry``) that have been
@@ -413,6 +417,10 @@ class BasePlotter(_BoundsSizeMixin):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
+        # background thread (and its cancellation event) started by a threaded
+        # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
+        self._orbit_thread: Thread | None = None
+        self._orbit_stop_event: Event | None = None
         self.mesh: MultiBlock | DataSet | None = None
         if title is None:
             title = self._theme.title
@@ -609,6 +617,11 @@ class BasePlotter(_BoundsSizeMixin):
             Set the camera viewing angle to one compatible with the
             default three.js perspective (``'xy'``).
 
+        See Also
+        --------
+        pyvista.GLTFReader
+            Read GLTF file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -646,6 +659,11 @@ class BasePlotter(_BoundsSizeMixin):
         filename : str | Path
             Path to the VRML file.
 
+        See Also
+        --------
+        pyvista.VRMLReader
+            Read VRML file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -677,6 +695,11 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         filename : str | Path
             Path to the 3DS file.
+
+        See Also
+        --------
+        pyvista.ThreeDSReader
+            Read 3DS file as a mesh.
 
         Examples
         --------
@@ -710,6 +733,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         filename_mtl : str | Path, optional
             Path to the .mtl file.
+
+        See Also
+        --------
+        pyvista.OBJReader
+            Read OBJ file as a mesh.
 
         Examples
         --------
@@ -2392,6 +2420,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         """
         for renderer in self.renderers:
+            if renderer._actors is None:  # the renderer has been closed
+                continue
             for actor in renderer._actors:
                 if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
@@ -3082,7 +3112,7 @@ class BasePlotter(_BoundsSizeMixin):
         )
         self.mapper = mapper
 
-        actor, _ = self.add_actor(mapper, render=False)
+        actor, _ = self.add_actor(mapper, render=False)  # type: ignore[arg-type]
         actor = cast('Actor', actor)
         actor.force_opaque = force_opaque
 
@@ -3954,7 +3984,7 @@ class BasePlotter(_BoundsSizeMixin):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
-        if edge_opacity is None and pv.vtk_version_info >= (9, 3):
+        if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
@@ -5299,6 +5329,18 @@ class BasePlotter(_BoundsSizeMixin):
 
     def close(self) -> None:
         """Close the render window."""
+        # Stop any background `orbit_on_path(threaded=True)` thread before
+        # tearing anything else down, so it stops touching this plotter's
+        # VTK objects once they're cleared.
+        if self._orbit_thread is not None:
+            # no branch: whether the thread already finished is timing-dependent
+            if self._orbit_thread.is_alive():  # pragma: no branch
+                # `_orbit_stop_event` is always set alongside `_orbit_thread` in
+                # `orbit_on_path`, so it can't be `None` here.
+                assert self._orbit_stop_event is not None  # noqa: S101
+                self._orbit_stop_event.set()
+                self._orbit_thread.join(timeout=5)
+
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)  # type: ignore[arg-type]
@@ -6777,11 +6819,19 @@ class BasePlotter(_BoundsSizeMixin):
                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
                 raise ImportError(msg)
 
+        # Lets a threaded orbit be cancelled from `close()` so the background
+        # thread stops touching this plotter's VTK objects once they're torn down.
+        stop_event = Event() if threaded else None
+
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
             points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
+                if stop_event is not None and stop_event.is_set():
+                    # Cancellation is usually observed in the `wait()` below
+                    # instead, so reaching this exit is timing-dependent.
+                    return  # pragma: no cover
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
                 self.set_focus(focus, render=False)  # type: ignore[arg-type]
@@ -6795,12 +6845,21 @@ class BasePlotter(_BoundsSizeMixin):
                 if sleep_time > 0 and (
                     hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
-                    time.sleep(sleep_time)
-            if write_frames:
+                    if stop_event is not None:
+                        # no branch: whether close() interrupts the wait or the
+                        # wait times out first is timing-dependent
+                        if stop_event.wait(sleep_time):  # pragma: no branch
+                            return
+                    else:  # pragma: no cover
+                        # needs a non-threaded run with off_screen=False
+                        time.sleep(sleep_time)
+            if write_frames:  # pragma: no cover
                 self._get_mwriter_not_none().close()
 
         if threaded:
+            self._orbit_stop_event = stop_event
             thread = Thread(target=orbit)
+            self._orbit_thread = thread
             thread.start()
         else:
             orbit()
@@ -6950,7 +7009,20 @@ class BasePlotter(_BoundsSizeMixin):
             self._first_time = False
 
     def reset_camera_clipping_range(self) -> None:
-        """Reset camera clipping planes."""
+        """Reset camera clipping planes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Sphere()
+        >>> _ = pl.add_mesh(mesh)
+        >>> pl.camera.clipping_range = (1.0, 10.0)
+        >>> pl.reset_camera_clipping_range()
+        >>> pl.camera.clipping_range != (1.0, 10.0)
+        True
+
+        """
         self.renderer.ResetCameraClippingRange()
 
     @_deprecate_positional_args(allowed=['light'])
@@ -7052,7 +7124,8 @@ class BasePlotter(_BoundsSizeMixin):
         return [
             tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
-            if name in self.renderers[index]._actors.keys()
+            if self.renderers[index]._actors is not None
+            and name in self.renderers[index]._actors.keys()
         ]
 
     # =======================================================================
@@ -7910,8 +7983,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # the main thread.  Disconnecting from NSView creates a
             # standalone CGL context instead — no dock icon, no
             # main-thread requirement, and enables background-thread rendering.
-            if hasattr(self.render_window, 'SetConnectContextToNSView'):
-                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
+            _prepare_offscreen_macos_render_window(self.render_window)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
@@ -8154,6 +8226,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                        viewup=(0.0, 0.0, 1.0))
 
         """
+        self._show_called = True
+
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
@@ -8266,9 +8340,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                                 )
                     else:
                         self.iren.start()  # type: ignore[union-attr]
-
-                if pv.vtk_version_info < (9, 2, 3):
-                    self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
@@ -8475,11 +8546,33 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [
-            actor.mapper.dataset
-            for actor in self.actors.values()
-            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
-        ]
+
+        def _iter_leaf_props(prop: _vtk.vtkProp) -> Iterator[_vtk.vtkProp]:
+            if hasattr(prop, 'GetParts'):
+                for part in _PropCollection(prop.GetParts()):
+                    yield from _iter_leaf_props(part)
+            else:
+                yield prop
+
+        def _append_actor_dataset(prop: _vtk.vtkProp) -> None:
+            try:
+                mapper = prop.GetMapper()  # type: ignore[attr-defined]
+                dataset = _mapper_get_data_set_input(mapper)
+            except AttributeError:
+                return
+            else:
+                if isinstance(dataset, _vtk.vtkDataObject):
+                    # Need to update any input connections to ensure a mesh is generated
+                    if input_alg := mapper.GetInputAlgorithm():
+                        input_alg.Update()
+                    meshes.append(pv.wrap(dataset))
+
+        meshes: list[pv.DataSet | pv.MultiBlock] = []
+        for actor in self.actors.values():
+            for leaf in _iter_leaf_props(actor):
+                _append_actor_dataset(leaf)
+
+        return meshes
 
 
 # Tracks created plotters.  This is the end of the module as we need to

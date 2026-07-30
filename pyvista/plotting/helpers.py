@@ -159,7 +159,8 @@ def plot_compare_four(  # noqa: PLR0917
         pl.link_views()
         # when linked, camera must be reset such that the view range
         # of all subrender windows matches
-        pl.reset_camera()
+        if camera_position is None:
+            pl.reset_camera()
 
     return pl.show(screenshot=screenshot, **show_kwargs)
 

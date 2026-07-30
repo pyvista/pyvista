@@ -18,7 +18,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -1166,14 +1165,6 @@ class _Chart(DocSubs):
     _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
-        try:
-            # Necessary for displaying charts, otherwise crashes on rendering
-            # Import lazily on init to delay import until it's needed
-            from vtkmodules import vtkRenderingContextOpenGL2  # noqa: F401, PLC0415, TID251
-        except ImportError:
-            msg = 'Unable to import `vtkRenderingContextOpenGL2`. Charts may not render.'
-            warn_external(msg)
-
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()
@@ -4280,12 +4271,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized boxplot chart centered in the middle of the
@@ -4312,12 +4297,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------
@@ -4572,12 +4551,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized pie chart centered in the middle of the
@@ -4604,12 +4577,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------

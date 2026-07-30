@@ -77,7 +77,7 @@ def validate_array(
     strict_upper_bound: bool = False,
     reshape_to: int | tuple[int, ...] | None = None,
     broadcast_to: int | tuple[int, ...] | None = None,
-    dtype_out: npt.DTypeLike = None,
+    dtype_out: npt.DTypeLike | None = None,
     as_any: bool = True,
     copy: bool = False,
     to_list: bool = False,
@@ -637,14 +637,16 @@ def validate_transform4x4(
                 )
             except TypeError:
                 msg = (
-                    'Input transform must be one of:\n'
-                    '\tvtkMatrix4x4\n'
-                    '\tvtkMatrix3x3\n'
-                    '\tvtkTransform\n'
-                    '\t4x4 np.ndarray\n'
-                    '\t3x3 np.ndarray\n'
-                    '\tscipy.spatial.transform.Rotation\n'
-                    f'Got {reprlib.repr(transform)} with type {type(transform)} instead.',
+                    (
+                        'Input transform must be one of:\n'
+                        '\tvtkMatrix4x4\n'
+                        '\tvtkMatrix3x3\n'
+                        '\tvtkTransform\n'
+                        '\t4x4 np.ndarray\n'
+                        '\t3x3 np.ndarray\n'
+                        '\tscipy.spatial.transform.Rotation\n'
+                        f'Got {reprlib.repr(transform)} with type {type(transform)} instead.'
+                    ),
                 )
                 raise TypeError(msg)
 

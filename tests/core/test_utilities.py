@@ -187,6 +187,26 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
+@pytest.mark.parametrize(
+    ('shape', 'association'),
+    [
+        ((2, 3, 4), 'points'),
+        ((1, 2, 3), 'cells'),
+    ],
+)
+def test_raise_not_matching_suggests_flattening(shape, association):
+    grid = pv.ImageData(dimensions=(2, 3, 4))
+    scalars = np.zeros(shape)
+
+    with pytest.raises(ValueError, match='Number of scalars') as exc_info:
+        grid['scalars'] = scalars
+
+    message = str(exc_info.value)
+    assert f'shape {shape}' in message
+    assert f'matches the number of {association}' in message
+    assert "scalars.ravel(order='F')" in message
+
+
 def test_vtk_version_info():
     ver = _vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
@@ -279,6 +299,8 @@ def test_createvectorpolydata():
         ('/data/mesh.stl', '.stl'),
         ('/data/image.nii.gz', '.nii.gz'),
         ('/data/other.gz', '.gz'),
+        ('/data/can.e.4.0', '.e.4.0'),
+        ('/data/can.n.16.15', '.n.16.15'),
     ],
 )
 def test_get_ext(path, target_ext):
@@ -370,6 +392,23 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
+def test_read_reader_kwargs():
+    file = ex.download_openfoam_tubes(load=False)
+
+    no_kwargs = pv.read(file)
+    with_kwargs = pv.read(file, skip_zero_time=True)
+
+    # Meshes should be different due to zero time skip
+    assert no_kwargs != with_kwargs
+
+    match = (
+        '`POpenFOAMReader.enable_patch_array` is a method, but using kwargs with `pyvista.read` is'
+        ' only\nsupported for attributes. Use `pyvista.get_reader` instead to call reader methods.'
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(file, enable_patch_array=True)
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -403,16 +442,6 @@ def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
     fname.write_bytes(b'not a real mesh file')
     with pytest.raises(OSError, match='not able to be automatically read'):
         fileio.read(fname)
-
-
-@mock.patch('pyvista.core.utilities.fileio.read_exodus')
-def test_pyvista_read_exodus(read_exodus_mock):
-    # check that reading a file with extension .e calls `read_exodus`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pv.read(ex.globefile, force_ext='.e')
-    args, _kwargs = read_exodus_mock.call_args
-    filename = args[0]
-    assert filename == Path(ex.globefile)
 
 
 def test_get_array_cell(hexbeam):
@@ -544,7 +573,9 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
-    assert package in REPORT
+    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+        pytest.xfail('package only available on macOS')
+    assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 
 def test_report_downloads():
@@ -2571,6 +2602,15 @@ def test_vtk_verbosity_set_get():
         pv.vtk_verbosity()
 
 
+def test_vtk_verbosity_logging_disabled():
+    # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
+    # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
+    mock_logger = mock.MagicMock()
+    mock_logger.GetCurrentVerbosityCutoff.return_value = -10
+    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+        assert pv.vtk_verbosity() == 'off'
+
+
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
     match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
@@ -3237,7 +3277,7 @@ def test_fileio_extensions(cls):
     if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
         # These classes are not associated with any extensions
         pytest.xfail()
-    assert len(cls.extensions) > 0
+    assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
 def test_ply_writer(sphere, tmp_path):
@@ -3263,3 +3303,25 @@ def test_ply_writer(sphere, tmp_path):
     assert writer.texture == texture_name
     writer.texture = texture_name
     assert writer.texture == texture_name
+
+
+def test_try_callback_warns_every_time():
+    # A callback bound to a high-frequency event (e.g. ``MouseMoveEvent``)
+    # raises an identical exception at the same call site on every
+    # invocation. ``try_callback`` must surface it every time rather than
+    # letting Python's default filter de-duplicate it to a single message.
+    def failing_callback():
+        msg = 'callback failed'
+        raise RuntimeError(msg)
+
+    n_calls = 3
+    with warnings.catch_warnings(record=True) as log:
+        # Restore the default filter that ``catch_warnings(record=True)``
+        # overrides, so that de-duplication would apply without the fix.
+        warnings.simplefilter('default')
+        for _ in range(n_calls):
+            misc.try_callback(failing_callback)
+
+    messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
+    assert len(messages) == n_calls
+    assert 'callback failed' in str(messages[0].message)

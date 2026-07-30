@@ -2522,7 +2522,7 @@ class Theme(_ConfigBase):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.line_width = 10.0
+        >>> pv.global_theme.point_size = 10.0
 
         """
         return self._point_size

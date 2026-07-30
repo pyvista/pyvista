@@ -41,6 +41,7 @@ PLOTTING_VTKMODULES = CORE_VTKMODULES | {
     'vtkmodules.vtkPythonContext2D',
     'vtkmodules.vtkRenderingAnnotation',
     'vtkmodules.vtkRenderingContext2D',
+    'vtkmodules.vtkRenderingContextOpenGL2',
     'vtkmodules.vtkRenderingCore',
     'vtkmodules.vtkRenderingFreeType',
     'vtkmodules.vtkRenderingHyperTreeGrid',
@@ -114,6 +115,15 @@ def test_pyvista_oo_flag():
     command = [sys.executable, '-OO', '-c', code]
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     assert result.returncode == 0, f'PyVista failed with -OO flag. stderr: {result.stderr}'
+
+
+def test_plotting_import_loads_context_opengl2():
+    code = (
+        'import pyvista.plotting\n'
+        'import sys\n'
+        "assert 'vtkmodules.vtkRenderingContextOpenGL2' in sys.modules"
+    )
+    assert exec_success(code)
 
 
 def test_plotting_attribute_cached():
