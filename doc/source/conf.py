@@ -12,9 +12,12 @@ import sys
 from typing import TYPE_CHECKING
 import warnings
 
+from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
+from sphinx import addnodes
 
 if TYPE_CHECKING:
+    from docutils.nodes import Element
     from sphinx.application import Sphinx
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
@@ -591,6 +594,41 @@ def _str_header(self, name):  # noqa: ARG001
 SphinxDocString._str_header = _str_header
 
 
+# Making the sections above real headings isn't enough on its own: autodoc wraps
+# the whole docstring in a `desc` node, and Sphinx's TocTreeCollector explicitly
+# skips any section it finds inside one. Lift them out to page level so they show
+# up in the navbar.
+def _is_nested_desc(node: Element) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, addnodes.desc):
+            return True
+        parent = parent.parent
+    return False
+
+
+def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Move docstring sections out of their ``desc`` node to page level."""
+    for desc in list(doctree.findall(addnodes.desc)):
+        if _is_nested_desc(desc):
+            continue
+        parent = desc.parent
+        if parent is None:
+            continue
+        # Only hoist when this object owns the page, otherwise sections from
+        # several objects would collide at page level.
+        if len([node for node in parent if isinstance(node, addnodes.desc)]) != 1:
+            continue
+        content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
+        if content is None:
+            continue
+        sections = [node for node in content if isinstance(node, nodes.section)]
+        index = parent.index(desc)
+        for offset, section in enumerate(sections):
+            content.remove(section)
+            parent.insert(index + 1 + offset, section)
+
+
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -861,6 +899,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
     app.connect('html-page-context', pv_html_page_context)
+
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
