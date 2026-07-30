@@ -259,6 +259,19 @@ class VTKExecutionWarning(RuntimeWarning):
     """
 
 
+class ObsoleteVTKVersionWarning(Warning):
+    """Warning when a VTK version is compared against or required needlessly.
+
+    This warning is emitted whenever :attr:`~pyvista.vtk_version_info` is compared
+    against a version which is no longer supported by PyVista, or whenever
+    :func:`~pyvista.require_vtk_version` is given such a version. In both cases the
+    comparison has a fixed outcome and the code guarded by it is obsolete.
+
+    .. versionadded:: 0.49
+
+    """
+
+
 class InvalidMeshWarning(Warning):
     """Warning for invalid mesh properties.
 

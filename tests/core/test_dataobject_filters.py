@@ -1906,14 +1906,14 @@ def test_validate_mesh_imagedata_pyvista_fields(image150, field):
     image150.validate_mesh(field)
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
+@pytest.mark.require_vtk_version(less_than=(9, 6, 0))
 def test_validate_mesh_planarity_tolerance():
     match = 'Planarity tolerance requires VTK 9.6 or later.'
     with pytest.raises(pv.VTKVersionError, match=match):
         pv.UnstructuredGrid().validate_mesh(planarity_tolerance=0.2)
 
 
-@pytest.mark.needs_vtk_version(9, 6, 0)
+@pytest.mark.require_vtk_version(9, 6, 0)
 def test_validate_mesh_planarity_tolerance_polyhedron():
     # Build a hex-shaped polyhedron whose top face is non-planar (one vertex
     # pushed up out of the plane). With a strict planarity tolerance the
@@ -2342,7 +2342,7 @@ def test_cell_validator():
         assert array.shape == (0,)
 
 
-@pytest.mark.needs_vtk_version(9, 6, 0)
+@pytest.mark.require_vtk_version(9, 6, 0)
 def test_cell_status():
     expected_pyvista_values = list(pv.CellStatus)
     expected_vtk_values = list(vars(_vtk.vtkCellStatus).values())
@@ -2628,7 +2628,7 @@ def mixed_dimension_cells_invalid_point_references():
     return pv.PolyData([0.0, 0.0, 0.0], faces=[3, 0, 1, 1], verts=[2, 0, -1])
 
 
-@pytest.mark.needs_vtk_version(9, 6, 0)
+@pytest.mark.require_vtk_version(9, 6, 0)
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
     expected_cell_ids = [0]
@@ -2653,7 +2653,7 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     assert report.inverted_faces is None
 
 
-@pytest.mark.needs_vtk_version(9, 6, 0)
+@pytest.mark.require_vtk_version(9, 6, 0)
 @pytest.mark.skipif(sys.platform == 'Darwin', reason='Results differ for macOS and older vtk')
 def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
     def _format_composite(match):
@@ -2709,7 +2709,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
 
 
-@pytest.mark.needs_vtk_version((9, 5, 0), reason='Suspected issue with fixtures for older VTK')
+@pytest.mark.require_vtk_version((9, 5, 0), reason='Suspected issue with fixtures for older VTK')
 def test_validate_mesh_distinct_cell_types(
     single_cell_invalid_point_references,
     mixed_2d_cells_invalid_point_references,

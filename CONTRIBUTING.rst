@@ -729,39 +729,64 @@ if no simple alternative solution has been found.
 
 The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
 If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
-custom pytest marker ``needs_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
+custom pytest marker ``require_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
 
 .. code-block:: python
 
-    @pytest.mark.needs_vtk_version(9, 1)
+    @pytest.mark.require_vtk_version(9, 1)
     def test():
         """Test is skipped if pv.vtk_version_info < (9,1)"""
 
 
-    @pytest.mark.needs_vtk_version((9, 1))
+    @pytest.mark.require_vtk_version((9, 1))
     def test():
         """Test is skipped if pv.vtk_version_info < (9,1)"""
 
 
-    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    @pytest.mark.require_vtk_version(less_than=(9, 1))
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1)"""
 
 
-    @pytest.mark.needs_vtk_version(at_least=(8, 2), less_than=(9, 1))
+    @pytest.mark.require_vtk_version(at_least=(8, 2), less_than=(9, 1))
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
 
 
-    @pytest.mark.needs_vtk_version(less_than=(9, 1))
-    @pytest.mark.needs_vtk_version(8, 2)
+    @pytest.mark.require_vtk_version(less_than=(9, 1))
+    @pytest.mark.require_vtk_version(8, 2)
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
 
 
-    @pytest.mark.needs_vtk_version(9, 1, reason='custom reason')
+    @pytest.mark.require_vtk_version(9, 1, reason='custom reason')
     def test():
         """Test is skipped with a custom message"""
+
+The marker accepts the same arguments as the public :func:`pyvista.require_vtk_version` function,
+which it uses internally: instead of raising :class:`~pyvista.core.errors.VTKVersionError`, the marker turns
+the error into a skip. Use the function itself, or its ``require_vtk_version.decorator`` form, to
+guard library code which requires a specific vtk version:
+
+.. code-block:: python
+
+    class DataObjectFilters:
+        @pv.require_vtk_version.decorator(9, 6)
+        def some_filter(self):
+            """Raise VTKVersionError when called with vtk < 9.6"""
+
+        def another_filter(self, planarity_tolerance=None):
+            """Raise VTKVersionError only when the new keyword is used"""
+            if planarity_tolerance is not None:
+                pv.require_vtk_version(
+                    9,
+                    6,
+                    reason='`planarity_tolerance` requires VTK 9.6 or greater.',
+                )
+
+Since PyVista requires a minimum vtk version, a constraint which is at or below that minimum is
+obsolete and emits an :class:`~pyvista.core.errors.ObsoleteVTKVersionWarning`. Warnings are errors
+in the test suite, so an obsolete marker fails the test it decorates instead of skipping it.
 
 Testing Against VTK master
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

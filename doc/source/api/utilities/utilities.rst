@@ -165,6 +165,7 @@ Miscellaneous
    set_default_active_vectors
    vtk_verbosity
    vtk_snake_case
+   require_vtk_version
 
 Errors and Warnings
 ~~~~~~~~~~~~~~~~~~~~
@@ -178,6 +179,7 @@ Errors and Warnings
    core.errors.InvalidMeshWarning
    core.errors.MissingDataError
    core.errors.NotAllTrianglesError
+   core.errors.ObsoleteVTKVersionWarning
    core.errors.PointSetCellOperationError
    core.errors.PointSetDimensionReductionError
    core.errors.PointSetNotSupported

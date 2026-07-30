@@ -1211,7 +1211,7 @@ def test_dataset_to_arrow_schema_names_cell(hexbeam):
 
 
 @skip_no_pandas
-@pytest.mark.needs_vtk_version(9, 6, 99)  # >= (9, 7, 0)
+@pytest.mark.require_vtk_version(9, 6, 99)  # >= (9, 7, 0)
 def test_to_pandas_matches_vtk_native(hexbeam):
     """PyVista's ``to_pandas`` lines up with VTK's native ``to_pandas``.
 

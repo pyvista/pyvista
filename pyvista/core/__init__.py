@@ -17,6 +17,7 @@ from .errors import InvalidMeshError as InvalidMeshError
 from .errors import InvalidMeshWarning as InvalidMeshWarning
 from .errors import MissingDataError as MissingDataError
 from .errors import NotAllTrianglesError as NotAllTrianglesError
+from .errors import ObsoleteVTKVersionWarning as ObsoleteVTKVersionWarning
 from .errors import PointSetCellOperationError as PointSetCellOperationError
 from .errors import PointSetDimensionReductionError as PointSetDimensionReductionError
 from .errors import PointSetNotSupported as PointSetNotSupported

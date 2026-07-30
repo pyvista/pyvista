@@ -384,7 +384,7 @@ def test_convert_glob(tmp_example_dir, tmp_ant_file: Path):
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize('command', COMMANDS_WITH_PATHS)
 @pytest.mark.parametrize('glob_style', ['shell', 'python'])
-@pytest.mark.needs_vtk_version(9, 4, reason='shell convert crashes parallel workers')
+@pytest.mark.require_vtk_version(9, 4, reason='shell convert crashes parallel workers')
 def test_command_glob(
     tmp_example_dir,
     tmp_ant_file: Path,
@@ -448,7 +448,7 @@ def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize('command', ['convert', 'plot', 'validate'])
 @pytest.mark.parametrize('n_children', [2, 6])
-@pytest.mark.needs_vtk_version(9, 4, reason='crashes parallel workers')
+@pytest.mark.require_vtk_version(9, 4, reason='crashes parallel workers')
 def test_multiblock_drops_sidecar_children(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, command: str, n_children: int
 ):
@@ -689,7 +689,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     assert out == expected
 
 
-@pytest.mark.needs_vtk_version(9, 6, 0, reason='planarity tol is new to 9.6')
+@pytest.mark.require_vtk_version(9, 6, 0, reason='planarity tol is new to 9.6')
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_tolerance(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(
@@ -1459,7 +1459,7 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
         assert error in err, err
 
 
-@pytest.mark.needs_vtk_version(9, 4, reason='workers crash older vtk')
+@pytest.mark.require_vtk_version(9, 4, reason='workers crash older vtk')
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_skip_unreadable_hint(
     tmp_ant_file, tmp_example_dir: Path, capsys: pytest.CaptureFixture
@@ -1798,7 +1798,7 @@ def test_validate_skip_unreadable(
 
 
 @pytest.mark.usefixtures('patch_app_console')
-@pytest.mark.needs_vtk_version(9, 5, reason='needs vtkhdf read support')
+@pytest.mark.require_vtk_version(9, 5, reason='needs vtkhdf read support')
 @pytest.mark.skip_windows(reason='path in error is wrapped differently by rich')
 def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
     """A mesh type that is not a DataSet or MultiBlock exits with a clear error."""

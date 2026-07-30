@@ -95,10 +95,10 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
-skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
+skip_lesser_9_4_X = pytest.mark.require_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
-skip_lesser_9_4_X_depth_peeling = pytest.mark.needs_vtk_version(  # noqa: N816
+skip_lesser_9_4_X_depth_peeling = pytest.mark.require_vtk_version(  # noqa: N816
     9, 4, reason='Depth peeling unstable on CI before 9.4.X'
 )
 
@@ -334,7 +334,7 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.close()
 
 
-@pytest.mark.needs_vtk_version(at_least=(9, 6))
+@pytest.mark.require_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""
     verify_image_cache.windows_skip_image_cache = True
@@ -3404,7 +3404,7 @@ def test_add_text():
 
 
 @pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
-@pytest.mark.needs_vtk_version(9, 4, 0)
+@pytest.mark.require_vtk_version(9, 4, 0)
 def test_add_text_latex():
     """Test LaTeX symbols."""
     pl = pv.Plotter()
@@ -3813,7 +3813,7 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
-@pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
+@pytest.mark.require_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
 def test_plot_cell_multiple_cell_types(verify_image_cache):
     verify_image_cache.high_variance_test = True
     cell3d = examples.cells.Polyhedron()
@@ -5964,7 +5964,7 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
-@pytest.mark.needs_vtk_version(
+@pytest.mark.require_vtk_version(
     (9, 6, 99),  # >= 9,7,0
     reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
 )

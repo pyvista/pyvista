@@ -761,7 +761,7 @@ def test_delaunay_2d_unstructured():
         'contour',
         pytest.param(
             'marching_cubes',
-            marks=pytest.mark.needs_vtk_version(
+            marks=pytest.mark.require_vtk_version(
                 (9, 4),
                 reason='vtkMarchingCubes does not preserve the input scalar name on vtk<9.4',
             ),
@@ -1636,7 +1636,7 @@ def test_smooth_taubin(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
-@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.require_vtk_version(9, 4)
 @pytest.mark.parametrize('window_function', ['blackman', 'hamming', 'hanning', 'nuttall'])
 def test_smooth_taubin_window_function(ant, window_function):
     smoothed = ant.smooth_taubin(window_function=window_function)
@@ -1645,7 +1645,7 @@ def test_smooth_taubin_window_function(ant, window_function):
     assert smoothed.n_cells == ant.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.require_vtk_version(9, 4)
 def test_smooth_taubin_window_function_default(ant):
     smoothed_default = ant.smooth_taubin()
     smoothed_nuttall = ant.smooth_taubin(window_function='nuttall')
@@ -1653,7 +1653,7 @@ def test_smooth_taubin_window_function_default(ant):
     assert np.allclose(smoothed_default.points, smoothed_nuttall.points)
 
 
-@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.require_vtk_version(9, 4)
 def test_smooth_taubin_invalid_window_function(ant):
     match = re.escape(
         "Invalid window_function 'invalid'. Expected one of: blackman, hamming, hanning, nuttall."
@@ -1662,7 +1662,7 @@ def test_smooth_taubin_invalid_window_function(ant):
         ant.smooth_taubin(window_function='invalid')
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 4))
+@pytest.mark.require_vtk_version(less_than=(9, 4))
 def test_smooth_taubin_window_function_vtk_version(ant):
     match = '`window_function` requires VTK 9.4.0 or later.'
     with pytest.raises(pv.VTKVersionError, match=match):

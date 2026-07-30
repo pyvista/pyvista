@@ -20,8 +20,9 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
-from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
+from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION as _MIN_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core._vtk_utilities import require_vtk_version as require_vtk_version
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields

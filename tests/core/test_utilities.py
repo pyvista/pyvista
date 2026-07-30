@@ -223,11 +223,226 @@ def test_vtk_version_info():
 
 
 @pytest.mark.parametrize('operation', [operator.le, operator.lt, operator.gt, operator.ge])
-def test_vtk_version_info_raises(operation):
+def test_vtk_version_info_warns(operation):
     version_str = '.'.join(map(str, pv._MIN_SUPPORTED_VTK_VERSION))
     match = f'Comparing against unsupported VTK version 1.2.3. Minimum supported is {version_str}'
-    with pytest.raises(pv.VTKVersionError, match=match):
+    with pytest.warns(pv.ObsoleteVTKVersionWarning, match=match):
         operation(pv.vtk_version_info, (1, 2, 3))
+
+
+@pytest.fixture
+def _mock_vtk_version(monkeypatch: pytest.MonkeyPatch):
+    """Pin the installed and minimum supported VTK versions.
+
+    The installed version is set to ``(9, 2, 0)`` and the minimum supported version is
+    lowered to ``(8, 0, 0)`` so that version constraints used by the tests are neither
+    obsolete nor dependent on the VTK version actually installed.
+    """
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 2, 0))
+    monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
+
+
+# Equivalent ways of specifying a minimum version
+_MIN_VERSION_ARGS = [
+    ((9, 4), {}),
+    (((9, 4),), {}),
+    (((9, 4, 0),), {}),
+    ((), dict(at_least=(9, 4))),
+]
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize(('args', 'kwargs'), _MIN_VERSION_ARGS)
+def test_require_vtk_version_at_least(args, kwargs):
+    match = 'This feature requires VTK version 9.4.0 or greater. The installed version is 9.2.0.'
+    with pytest.raises(pv.VTKVersionError, match=re.escape(match)):
+        pv.require_vtk_version(*args, **kwargs)
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize('version', [(9, 1), (9, 2), (9, 2, 0)])
+def test_require_vtk_version_at_least_satisfied(version):
+    assert pv.require_vtk_version(*version) is None
+    assert pv.require_vtk_version(at_least=version) is None
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize(('version', 'expected'), [((9, 1), '9.1.0'), ((9, 2, 0), '9.2.0')])
+def test_require_vtk_version_less_than(version, expected):
+    # The maximum version is exclusive, so the installed version 9.2.0 fails both of these
+    match = (
+        f'This feature requires a VTK version less than {expected}. '
+        f'The installed version is 9.2.0.'
+    )
+    with pytest.raises(pv.VTKVersionError, match=re.escape(match)):
+        pv.require_vtk_version(less_than=version)
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize('version', [(9, 3), (9, 2, 1), (10,)])
+def test_require_vtk_version_less_than_satisfied(version):
+    assert pv.require_vtk_version(less_than=version) is None
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize(
+    ('args', 'kwargs'), [((9, 0), {}), (((9, 0),), {}), ((), {'at_least': (9, 0)})]
+)
+def test_require_vtk_version_at_least_and_less_than(args, kwargs):
+    # Installed version 9.2.0 is inside this range
+    assert pv.require_vtk_version(*args, less_than=(9, 4), **kwargs) is None
+
+    # But not inside this one, since the maximum is exclusive
+    match = (
+        'This feature requires a VTK version of at least 9.0.0 and less than 9.2.0. '
+        'The installed version is 9.2.0.'
+    )
+    with pytest.raises(pv.VTKVersionError, match=re.escape(match)):
+        pv.require_vtk_version(*args, less_than=(9, 2), **kwargs)
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_reason():
+    with pytest.raises(pv.VTKVersionError, match=r'^foo$'):
+        pv.require_vtk_version(9, 4, reason='foo')
+
+    with pytest.raises(pv.VTKVersionError, match=r'^foo$'):
+        pv.require_vtk_version(less_than=(9, 1), reason='foo')
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize(
+    ('args', 'kwargs', 'match'),
+    [
+        ((9, 4), dict(at_least=(9, 4)), 'Cannot specify both positional versions and the'),
+        (((9, 4),), dict(at_least=(9, 4)), 'Cannot specify both positional versions and the'),
+        ((), {}, re.escape('Need to specify either `at_least` or `less_than`.')),
+        ((9, 4, 1, 2), {}, r'Version tuple incorrect length \(needs <= 3\)'),
+        ((), dict(less_than=(9, 4, 1, 2)), r'Version tuple incorrect length \(needs <= 3\)'),
+        (
+            (9, 4),
+            dict(less_than=(9, 1)),
+            'Cannot specify a minimum version greater than the maximum one',
+        ),
+    ],
+)
+def test_require_vtk_version_raises_value_error(args, kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        pv.require_vtk_version(*args, **kwargs)
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize(
+    ('args', 'kwargs'),
+    [(('9', '4'), {}), (((9, 4), (9, 5)), {}), ((), dict(less_than=(9.4,)))],
+)
+def test_require_vtk_version_raises_type_error(args, kwargs):
+    with pytest.raises(TypeError, match='Version must be a tuple of integers'):
+        pv.require_vtk_version(*args, **kwargs)
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+@pytest.mark.parametrize('keyword', ['at_least', 'less_than'])
+@pytest.mark.parametrize('version', [(7, 9, 9), (8, 0), (8, 0, 0)])
+def test_require_vtk_version_obsolete_warns(keyword, version):
+    # The minimum supported version is mocked as (8, 0, 0)
+    padded = (*version, *(0,) * (3 - len(version)))
+    match = (
+        f'The VTK version constraint `{keyword}={padded}` is obsolete and can be removed. '
+        f'The minimum supported VTK version is 8.0.0.'
+    )
+    with pytest.warns(pv.ObsoleteVTKVersionWarning, match=re.escape(match)):
+        with contextlib.suppress(pv.VTKVersionError):
+            pv.require_vtk_version(**{keyword: version})
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_obsolete_still_checks():
+    # An obsolete minimum is always satisfied, but an obsolete maximum never is
+    with pytest.warns(pv.ObsoleteVTKVersionWarning):
+        assert pv.require_vtk_version(at_least=(8, 0)) is None
+
+    match = re.escape('requires a VTK version less than 8.0.0')
+    with (
+        pytest.warns(pv.ObsoleteVTKVersionWarning),
+        pytest.raises(pv.VTKVersionError, match=match),
+    ):
+        pv.require_vtk_version(less_than=(8, 0))
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_decorator():
+    @pv.require_vtk_version.decorator(9, 4)
+    def func(value, *, keyword=None):
+        """Do nothing."""
+        return value, keyword
+
+    assert func.__name__ == 'func'
+    assert func.__doc__ == 'Do nothing.'
+
+    match = 'func requires VTK version 9.4.0 or greater. The installed version is 9.2.0.'
+    with pytest.raises(pv.VTKVersionError, match=re.escape(match)):
+        func(42)
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_decorator_satisfied():
+    @pv.require_vtk_version.decorator(at_least=(9, 1), less_than=(9, 4))
+    def func(value, *, keyword=None):
+        return value, keyword
+
+    assert func(42, keyword='foo') == (42, 'foo')
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_decorator_method():
+    class Filters:
+        @pv.require_vtk_version.decorator(9, 4)
+        def filter_(self):
+            return 'filtered'  # pragma: no cover
+
+    match = (
+        'Filters.filter_ requires VTK version 9.4.0 or greater. The installed version is 9.2.0.'
+    )
+    with pytest.raises(pv.VTKVersionError, match=re.escape(match)):
+        Filters().filter_()
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_decorator_reason():
+    @pv.require_vtk_version.decorator(9, 4, reason='foo')
+    def func():
+        return None  # pragma: no cover
+
+    with pytest.raises(pv.VTKVersionError, match=r'^foo$'):
+        func()
+
+
+@pytest.mark.usefixtures('_mock_vtk_version')
+def test_require_vtk_version_decorator_defers_check():
+    # Decorating must not raise or warn, even when the constraint cannot be satisfied,
+    # since decorators are applied at import time
+    @pv.require_vtk_version.decorator(9, 4)
+    def unsatisfied():
+        return None  # pragma: no cover
+
+    @pv.require_vtk_version.decorator(at_least=(8, 0))
+    def obsolete():
+        return 'called'
+
+    with pytest.warns(pv.ObsoleteVTKVersionWarning):
+        assert obsolete() == 'called'
+
+
+def test_require_vtk_version_decorator_validates_constraint():
+    # Unlike the version check, an invalid constraint is reported when decorating
+    with pytest.raises(
+        ValueError, match=re.escape('Need to specify either `at_least` or `less_than`.')
+    ):
+
+        @pv.require_vtk_version.decorator()
+        def func():
+            return None  # pragma: no cover
 
 
 @pytest.mark.skipif(
@@ -2619,7 +2834,7 @@ def test_vtk_verbosity_invalid_input(value):
             ...
 
 
-@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.require_vtk_version(9, 4)
 def test_vtk_snake_case():
     assert pv.vtk_snake_case() == 'error'
     match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
@@ -3000,7 +3215,7 @@ def test_cell_quality_info_raises():
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
 
 
-@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.require_vtk_version(9, 4)
 def test_is_vtk_attribute():
     assert is_vtk_attribute(pv.ImageData(), 'GetCells')
     assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
@@ -3012,7 +3227,7 @@ def test_is_vtk_attribute():
 
 
 @pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
-@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.require_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
     assert is_vtk_attribute(obj, 'GetDimensions')
 

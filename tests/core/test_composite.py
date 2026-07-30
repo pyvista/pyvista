@@ -460,7 +460,7 @@ def test_multi_block_io(
     assert foo.n_blocks == multi.n_blocks
 
 
-@pytest.mark.needs_vtk_version(at_least=(9, 4, 0), less_than=(9, 5))
+@pytest.mark.require_vtk_version(at_least=(9, 4, 0), less_than=(9, 5))
 def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
     filename = tmpdir / 'multi.vtkhdf'
 
@@ -481,7 +481,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
         multi.save(filename)
 
 
-@pytest.mark.needs_vtk_version(at_least=(9, 4, 0))
+@pytest.mark.require_vtk_version(at_least=(9, 4, 0))
 def test_multi_block_hdf_invalid_block_type(tmpdir):
     filename = tmpdir / 'multi.vtkhdf'
 
@@ -495,7 +495,7 @@ def test_multi_block_hdf_invalid_block_type(tmpdir):
         multi.save(filename)
 
 
-@pytest.mark.needs_vtk_version(at_least=(9, 5, 0))
+@pytest.mark.require_vtk_version(at_least=(9, 5, 0))
 def test_multi_block_hdf_invalid_nested_block(tmpdir):
     filename = tmpdir / 'multi.vtkhdf'
 
