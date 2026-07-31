@@ -10,6 +10,7 @@ from typing import NamedTuple
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
+from pyvista.core.errors import VTKVersionError
 
 
 class VersionInfo(NamedTuple):
@@ -54,8 +55,6 @@ def _get_vtk_version():
 class VTKVersionInfo(VersionInfo):
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = (
                 f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
                 f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
