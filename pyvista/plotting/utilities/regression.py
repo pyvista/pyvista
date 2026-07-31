@@ -165,8 +165,20 @@ def image_from_window(  # noqa: PLR0917
         imfilter.SetInputBufferTypeToRGB()
     else:
         imfilter.SetInputBufferTypeToRGBA()
-    imfilter.ReadFrontBufferOn()
-    data = run_image_filter(imfilter)
+    # Read the back buffer: the front buffer is the on-screen one, so it only holds
+    # the scene once the window has been composited -- a screenshot taken before
+    # that comes back as screen garbage.  What is left in the back buffer after a
+    # swap is undefined by the OpenGL spec, so render with swapping off and restore
+    # it afterwards.  This is what VTK's own regression tests and ParaView do:
+    # https://github.com/Kitware/VTK/blob/master/Testing/Rendering/vtkTesting.cxx
+    # https://gitlab.kitware.com/paraview/paraview/-/blob/master/Remoting/Views/vtkSMViewProxy.cxx
+    swap_buffers = render_window.GetSwapBuffers()
+    render_window.SwapBuffersOff()
+    render_window.Render()
+    try:
+        data = run_image_filter(imfilter)
+    finally:
+        render_window.SetSwapBuffers(swap_buffers)
     if off:
         # Critical for Trame and other offscreen tools
         render_window.GetInteractor().EnableRenderOff()
