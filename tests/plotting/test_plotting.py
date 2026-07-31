@@ -2304,6 +2304,14 @@ def test_plot_compare_labels_none(compare_datasets):
     pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
 
 
+def test_plot_compare_text_kwargs(compare_datasets):
+    pv.plot_compare(
+        compare_datasets,
+        text_kwargs={'font_size': 24, 'color': 'red'},
+        display_kwargs={'color': 'w'},
+    )
+
+
 def test_plot_compare_dict(compare_datasets):
     datasets = dict(
         zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)

@@ -157,6 +157,7 @@ def plot_compare(
     display_kwargs: dict[str, Any] | None = None,
     plotter_kwargs: dict[str, Any] | None = None,
     show_kwargs: dict[str, Any] | None = None,
+    text_kwargs: dict[str, Any] | None = None,
     screenshot: str | bool | None = None,
     camera_position: CameraPositionOptions | None = None,
     outline: pv.DataSet | None = None,
@@ -189,6 +190,11 @@ def plot_compare(
 
     show_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``show`` method.
+
+    text_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``add_text`` method used to
+        show the ``labels``, e.g. ``{'font_size': 24}``. Has no effect when
+        ``labels`` is ``None``.
 
     screenshot : str | bool, default: None
         File name or path to save screenshot of the plot, or ``True`` to return
@@ -276,6 +282,7 @@ def plot_compare(
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
     display_kwargs = {} if display_kwargs is None else display_kwargs
     show_kwargs = {} if show_kwargs is None else show_kwargs
+    text_kwargs = {} if text_kwargs is None else text_kwargs
 
     plotter_kwargs['notebook'] = notebook
 
@@ -285,7 +292,7 @@ def plot_compare(
         pl.subplot(index // n_cols, index % n_cols)
         pl.add_mesh(dataset, **display_kwargs)
         if labels is not None:
-            pl.add_text(labels[index])
+            pl.add_text(labels[index], **text_kwargs)
         if is_pyvista_dataset(outline):
             pl.add_mesh(outline, color=outline_color)
         if camera_position is not None:
