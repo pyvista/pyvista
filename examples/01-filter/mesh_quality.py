@@ -34,28 +34,26 @@ measures = ['area', 'shape', 'min_angle', 'max_angle']
 qual = mesh.cell_quality(measures)
 
 # %%
-# Plot the meshes in subplots for comparison. We define a custom method
-# for adding each mesh to each subplot.
+# Plot the meshes in subplots for comparison with :func:`~pyvista.plot_compare`.
+# Every subplot is drawn with the same arguments, so we make each measure active
+# on its own copy of the mesh instead of passing ``scalars`` for each one.
 
 
-def add_mesh(plotter, mesh, *, scalars=None, cmap='bwr', show_edges=True):
+def with_active_scalars(mesh, scalars):
     # Create a copy to avoid reusing the same mesh in different plots
     copied = mesh.copy(deep=False)
-    plotter.add_mesh(copied, scalars=scalars, cmap=cmap, show_edges=show_edges)
-    plotter.view_xy()
+    copied.set_active_scalars(scalars)
+    return copied
 
 
-pl = pv.Plotter(shape=(2, 2))
-pl.link_views()
-pl.subplot(0, 0)
-add_mesh(pl, qual, scalars=measures[0])
-pl.subplot(0, 1)
-add_mesh(pl, qual, scalars=measures[1])
-pl.subplot(1, 0)
-add_mesh(pl, qual, scalars=measures[2])
-pl.subplot(1, 1)
-add_mesh(pl, qual, scalars=measures[3])
-pl.show()
+display_kwargs = dict(cmap='bwr', show_edges=True)
+
+pv.plot_compare(
+    [with_active_scalars(qual, measure) for measure in measures],
+    display_kwargs=display_kwargs,
+    camera_position='xy',
+    labels=None,
+)
 
 
 # %%
@@ -117,17 +115,12 @@ mesh = examples.download_letter_a()
 measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
 qual = mesh.cell_quality(measures)
 
-pl = pv.Plotter(shape=(2, 2))
-pl.link_views()
-pl.subplot(0, 0)
-add_mesh(pl, qual, scalars=measures[0])
-pl.subplot(0, 1)
-add_mesh(pl, qual, scalars=measures[1])
-pl.subplot(1, 0)
-add_mesh(pl, qual, scalars=measures[2])
-pl.subplot(1, 1)
-add_mesh(pl, qual, scalars=measures[3])
-pl.show()
+pv.plot_compare(
+    [with_active_scalars(qual, measure) for measure in measures],
+    display_kwargs=display_kwargs,
+    camera_position='xy',
+    labels=None,
+)
 
 # %%
 # .. tags:: filter

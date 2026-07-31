@@ -28,40 +28,34 @@ cpos = pv.CameraPosition(
 
 # %%
 # Now, lets do a few subdivisions with the mesh and compare the results.
-# Below is a helper function to make a comparison plot of thee different
-# subdivisions.
+# Below is a helper function which collects the meshes and labels for the
+# comparison plot of the three different subdivisions.
 
 
-def plot_subdivisions(mesh, a, b):
-    display_args = dict(show_edges=True, color=True)
-    pl = pv.Plotter(shape=(3, 3))
-
-    for i in range(3):
-        pl.subplot(i, 0)
-        pl.add_mesh(mesh, **display_args)
-        pl.add_text('Original Mesh')
-
-    def row_plot(row, subfilter):
-        subs = [a, b]
-        for i in range(2):
-            pl.subplot(row, i + 1)
-            pl.add_mesh(mesh.subdivide(subs[i], subfilter=subfilter), **display_args)
-            pl.add_text(f'{subfilter} subdivision of {subs[i]}')
-
-    row_plot(0, 'linear')
-    row_plot(1, 'butterfly')
-    row_plot(2, 'loop')
-
-    pl.link_views()
-    pl.view_isometric()
-    return pl
+def subdivisions(mesh, a, b):
+    """Return the original mesh and its subdivisions, one row per subfilter."""
+    datasets = []
+    labels = []
+    for subfilter in ['linear', 'butterfly', 'loop']:
+        datasets.append(mesh)
+        labels.append('Original Mesh')
+        for n_subdivisions in [a, b]:
+            datasets.append(mesh.subdivide(n_subdivisions, subfilter=subfilter))
+            labels.append(f'{subfilter} subdivision of {n_subdivisions}')
+    return datasets, labels
 
 
 # %%
-# Run the subdivisions for 1 and 3 levels.
+# Run the subdivisions for 1 and 3 levels and compare them with
+# :func:`~pyvista.plot_compare`.
 
-pl = plot_subdivisions(mesh, 1, 3)
-pl.camera_position = cpos
-pl.show()
+datasets, labels = subdivisions(mesh, 1, 3)
+pv.plot_compare(
+    datasets,
+    labels=labels,
+    shape=(3, 3),
+    display_kwargs=dict(show_edges=True, color=True),
+    camera_position=cpos,
+)
 # %%
 # .. tags:: filter

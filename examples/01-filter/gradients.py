@@ -61,14 +61,22 @@ mesh_g
 
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
-pl = pv.Plotter(shape=keys.shape)
-for (i, j), name in np.ndenumerate(keys):
-    pl.subplot(i, j)
-    pl.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    pl.add_mesh(mesh_g.outline(), color='k')
-pl.link_views()
-pl.view_isometric()
-pl.show()
+
+def contour_by_gradient(mesh, name):
+    """Contour the mesh by a gradient component and make it the active scalars."""
+    contour = mesh.contour(scalars=name)
+    contour.set_active_scalars(name)
+    return contour
+
+
+pv.plot_compare(
+    [contour_by_gradient(mesh_g, name) for name in keys.ravel()],
+    display_kwargs={'opacity': 0.75},
+    outline=mesh_g.outline(),
+    shape=keys.shape,
+    camera_position='iso',
+    labels=None,
+)
 
 
 # %%
@@ -85,14 +93,13 @@ mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
-pl = pv.Plotter(shape=keys.shape)
-
-for (i, j), name in np.ndenumerate(keys):
-    pl.subplot(i, j)
-    pl.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    pl.add_mesh(mesh_g.outline(), color='k')
-pl.link_views()
-pl.view_isometric()
-pl.show()
+pv.plot_compare(
+    [contour_by_gradient(mesh_g, name) for name in keys.ravel()],
+    display_kwargs={'opacity': 0.75},
+    outline=mesh_g.outline(),
+    shape=keys.shape,
+    camera_position='iso',
+    labels=None,
+)
 # %%
 # .. tags:: filter

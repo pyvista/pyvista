@@ -61,29 +61,15 @@ contours = dataset.contour()
 slices = dataset.slice_orthogonal()
 glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
 
-pl = pv.Plotter(shape=(2, 2))
-# Show the threshold
-pl.add_mesh(outline, color='k')
-pl.add_mesh(threshed, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-# Show the contour
-pl.subplot(0, 1)
-pl.add_mesh(outline, color='k')
-pl.add_mesh(contours, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-# Show the slices
-pl.subplot(1, 0)
-pl.add_mesh(outline, color='k')
-pl.add_mesh(slices, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-# Show the glyphs
-pl.subplot(1, 1)
-pl.add_mesh(outline, color='k')
-pl.add_mesh(glyphs, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-
-pl.link_views()
-pl.show()
+# Use `plot_compare` to show each result in its own linked subplot with an
+# outline of the original dataset.
+pv.plot_compare(
+    [threshed, contours, slices, glyphs],
+    display_kwargs={'show_scalar_bar': False},
+    outline=outline,
+    camera_position=[-2, 5, 3],
+    labels=None,
+)
 
 # %%
 # Filter Pipeline
