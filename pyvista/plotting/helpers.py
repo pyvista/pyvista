@@ -133,15 +133,39 @@ def _validate_reference_mesh(reference_mesh: Any) -> None:
         raise TypeError(msg)
 
 
-def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int]:
-    """Return the ``(n_rows, n_cols)`` subplot layout to use for the datasets."""
-    if shape is None:
+def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int] | str:
+    """Return the subplot layout to use for the datasets.
+
+    This is either a ``(n_rows, n_cols)`` grid or one of the ``Plotter`` string
+    descriptors, e.g. ``'3|1'``.
+    """
+    if shape is None or (isinstance(shape, str) and shape == 'auto'):
         # Use as few rows as the square root allows so that the grid is never
         # taller than it is wide, e.g. (1, 3) for three datasets, (2, 2) for four
         n_rows = math.isqrt(n_datasets)
         return n_rows, math.ceil(n_datasets / n_rows)
 
-    if isinstance(shape, str) or not isinstance(shape, Iterable):
+    if isinstance(shape, str):
+        # Plotter's string descriptors, e.g. '3|1' is three subplots on the left
+        # and one on the right, '4/2' is four on top and two on the bottom
+        separator = '|' if '|' in shape else '/'
+        groups = shape.split(separator)
+        if len(groups) != 2 or not all(group.isdigit() for group in groups):
+            msg = (
+                f"Shape must be a length-2 sequence of integers, 'auto', or a string "
+                f"descriptor such as '3|1' or '4/2', got {shape!r} instead."
+            )
+            raise ValueError(msg)
+        n_subplots = sum(int(group) for group in groups)
+        if n_subplots < n_datasets:
+            msg = (
+                f'Shape {shape!r} defines {n_subplots} subplot(s) which is not enough '
+                f'for {n_datasets} datasets.'
+            )
+            raise ValueError(msg)
+        return shape
+
+    if not isinstance(shape, Iterable):
         msg = f'Shape must be a length-2 sequence of integers, got {shape!r} instead.'
         raise TypeError(msg)
     shape = tuple(shape)
@@ -161,6 +185,12 @@ def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int]:
     return n_rows, n_cols
 
 
+def _subplot_args(shape: tuple[int, int] | str, index: int) -> tuple[int, ...]:
+    """Return the ``subplot`` arguments for the index within the layout."""
+    # String descriptors index their subplots with a single index
+    return (index,) if isinstance(shape, str) else divmod(index, shape[1])
+
+
 def plot_compare(
     datasets: Sequence[PlottableType] | Mapping[str, PlottableType] | MultiBlock,
     *,
@@ -173,7 +203,7 @@ def plot_compare(
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | Literal['auto'] | None = 'auto',
-    shape: Sequence[int] | None = None,
+    shape: Sequence[int] | str | None = None,
     link: bool = True,
     notebook: bool | None = None,
 ):
@@ -232,10 +262,13 @@ def plot_compare(
         labels. A string other than ``'auto'`` is not a valid sequence of labels
         and raises an error.
 
-    shape : Sequence[int], default: None
-        The ``(n_rows, n_cols)`` shape of the subplot grid. Must define at least
-        as many subplots as there are datasets. By default, the compact grid
-        described above is used.
+    shape : Sequence[int] | str, default: None
+        The shape of the subplot layout, in any form accepted by
+        :class:`~pyvista.Plotter`. Either a ``(n_rows, n_cols)`` sequence, or a
+        string descriptor such as ``'3|1'`` for three subplots on the left and
+        one on the right, or ``'4/2'`` for four on top and two on the bottom.
+        Must define at least as many subplots as there are datasets. By default,
+        or with ``'auto'``, the compact grid described above is used.
 
     link : bool, default: True
         If ``True``, link the views of the subplots.
@@ -301,7 +334,7 @@ def plot_compare(
         raise ValueError(msg)
 
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
-    n_rows, n_cols = _validate_shape(shape, n_datasets=n_datasets)
+    shape = _validate_shape(shape, n_datasets=n_datasets)
 
     _validate_reference_mesh(reference_mesh)
 
@@ -313,10 +346,10 @@ def plot_compare(
 
     plotter_kwargs['notebook'] = notebook
 
-    pl = pv.Plotter(shape=(n_rows, n_cols), **plotter_kwargs)
+    pl = pv.Plotter(shape=shape, **plotter_kwargs)
 
     for index, dataset in enumerate(datasets):
-        pl.subplot(index // n_cols, index % n_cols)
+        pl.subplot(*_subplot_args(shape, index))
         pl.add_mesh(dataset, **display_kwargs)
         if labels is not None:
             pl.add_text(labels[index], **text_kwargs)

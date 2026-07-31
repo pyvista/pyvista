@@ -2290,8 +2290,20 @@ def test_plot_compare_n_datasets(compare_datasets, n_datasets):
     pv.plot_compare(datasets, display_kwargs={'color': 'w'})
 
 
-def test_plot_compare_shape(compare_datasets):
-    pv.plot_compare(compare_datasets, shape=(4, 1), display_kwargs={'color': 'w'})
+@pytest.mark.parametrize(
+    ('shape', 'n_datasets'),
+    [
+        ((4, 1), 4),
+        ('auto', 4),
+        ('3|1', 4),  # three subplots on the left, one on the right
+        ('4/2', 6),  # four subplots on top, two on the bottom
+    ],
+    # Give the string descriptors file-safe ids since they are used as image names
+    ids=['grid', 'auto', 'left_right', 'top_bottom'],
+)
+def test_plot_compare_shape(compare_datasets, shape, n_datasets):
+    datasets = [compare_datasets[i % len(compare_datasets)] for i in range(n_datasets)]
+    pv.plot_compare(datasets, shape=shape, display_kwargs={'color': 'w'})
 
 
 def test_plot_compare_labels(compare_datasets):
@@ -2387,9 +2399,16 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], labels=['A'])
 
-    match = "Shape must be a length-2 sequence of integers, got '2|1' instead."
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare([mesh, mesh], shape='2|1')
+    match = (
+        "Shape must be a length-2 sequence of integers, 'auto', or a string "
+        "descriptor such as '3|1' or '4/2', got 'not a shape' instead."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape='not a shape')
+
+    match = "Shape '1|1' defines 2 subplot(s) which is not enough for 3 datasets."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh, mesh], shape='1|1')
 
     match = 'Shape must be a length-2 sequence of integers, got 2 instead.'
     with pytest.raises(TypeError, match=re.escape(match)):
