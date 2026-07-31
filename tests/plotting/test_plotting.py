@@ -2268,6 +2268,105 @@ def test_array_volume_rendering(uniform, verify_image_cache):
     pv.plot(arr, volume=True, opacity='linear')
 
 
+@pytest.fixture
+def compare_datasets():
+    mesh = examples.load_uniform()
+    return [
+        mesh.contour(),
+        mesh.threshold_percent(0.5),
+        mesh.decimate_boundary(0.5),
+        mesh.glyph(scale=False, orient=False),
+    ]
+
+
+def test_plot_compare(compare_datasets):
+    # Really just making sure no errors are thrown
+    pv.plot_compare(compare_datasets, display_kwargs={'color': 'w'})
+
+
+@pytest.mark.parametrize('n_datasets', [2, 3, 5])
+def test_plot_compare_n_datasets(compare_datasets, n_datasets):
+    datasets = [compare_datasets[i % len(compare_datasets)] for i in range(n_datasets)]
+    pv.plot_compare(datasets, display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_shape(compare_datasets):
+    pv.plot_compare(compare_datasets, shape=(4, 1), display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_labels(compare_datasets):
+    pv.plot_compare(
+        compare_datasets, labels=['one', 'two', 'three', 'four'], display_kwargs={'color': 'w'}
+    )
+
+
+def test_plot_compare_labels_none(compare_datasets):
+    pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_dict(compare_datasets):
+    datasets = dict(
+        zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
+    )
+    pv.plot_compare(datasets, display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_multiblock(compare_datasets):
+    datasets = pv.MultiBlock(
+        dict(zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True))
+    )
+    pv.plot_compare(datasets, display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_camera_position():
+    mesh = examples.download_foot_bones()
+    cpos = pv.CameraPosition(
+        position=(-0.7780, -12.74, -2.019),
+        focal_point=(1.257, -1.716, -0.2136),
+        viewup=(-0.2696, -0.1070, 0.9570),
+    )
+    pv.plot_compare([mesh] * 4, camera_position=cpos)
+
+
+def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
+    mesh = pv.Sphere()
+    match = 'Expected a sequence of datasets, got a single PolyData instead.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(mesh)
+
+    match = 'Expected a sequence of datasets, got int instead.'
+    with pytest.raises(TypeError, match=match):
+        pv.plot_compare(42)
+
+    match = 'At least two datasets are required for comparison, got 0 instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.plot_compare([])
+
+    match = 'At least two datasets are required for comparison, got 1 instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.plot_compare([mesh])
+
+    match = "Labels must be a sequence of strings, 'auto', or None, got 'AB' instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], labels='AB')
+
+    match = 'Number of labels (1) must match the number of datasets (2).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], labels=['A'])
+
+    match = 'Shape must be a length-2 sequence of integers, got (1, 2, 3) instead.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(1, 2, 3))
+
+    match = 'Shape must have positive values, got (0, 2) instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(0, 2))
+
+    match = 'Shape (1, 1) defines 1 subplot(s) which is not enough for 2 datasets.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(1, 1))
+
+
 def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()

@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Mapping
+import math
+import string
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
 
 import numpy as np
 
@@ -11,7 +17,12 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting._typing import CameraPositionOptions
+    from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import PlottableType
 
 
 def plot_arrows(cent, direction, **kwargs):
@@ -59,6 +70,233 @@ def plot_arrows(cent, direction, **kwargs):
 
     """
     return pv.plot([cent, direction], **kwargs)
+
+
+def _generate_labels(n_labels: int) -> list[str]:
+    """Generate labels ``'A'``, ``'B'``, ..., ``'Z'``, ``'AA'``, ``'AB'``, ... ."""
+    labels = []
+    for index in range(n_labels):
+        label = ''
+        value = index
+        while value >= 0:
+            label = string.ascii_uppercase[value % 26] + label
+            value = value // 26 - 1
+        labels.append(label)
+    return labels
+
+
+def _unpack_datasets(datasets: Any) -> tuple[list[Any], list[str] | None]:
+    """Return the datasets to compare along with any labels defined by the input."""
+    if isinstance(datasets, Mapping):
+        return list(datasets.values()), [str(key) for key in datasets]
+    if isinstance(datasets, pv.MultiBlock):
+        return list(datasets), datasets.keys()
+    if is_pyvista_dataset(datasets):
+        msg = (
+            f'Expected a sequence of datasets, got a single {type(datasets).__name__} instead.\n'
+            'Use a sequence, e.g. `[dataset_a, dataset_b]`, to compare multiple datasets.'
+        )
+        raise TypeError(msg)
+    if isinstance(datasets, str) or not isinstance(datasets, Iterable):
+        msg = f'Expected a sequence of datasets, got {type(datasets).__name__} instead.'
+        raise TypeError(msg)
+    return list(datasets), None
+
+
+def _validate_labels(labels: Any, *, names: list[str] | None, n_datasets: int) -> list[str] | None:
+    """Return one label per dataset, or ``None`` if no labels should be shown."""
+    if labels is None:
+        return None
+    if isinstance(labels, str):
+        if labels != 'auto':
+            msg = (
+                f"Labels must be a sequence of strings, 'auto', or None, got {labels!r} instead.\n"
+                'A single string is not a valid sequence of labels.'
+            )
+            raise TypeError(msg)
+        return _generate_labels(n_datasets) if names is None else names
+    labels = list(labels)
+    if len(labels) != n_datasets:
+        msg = f'Number of labels ({len(labels)}) must match the number of datasets ({n_datasets}).'
+        raise ValueError(msg)
+    return labels
+
+
+def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int]:
+    """Return the ``(n_rows, n_cols)`` subplot layout to use for the datasets."""
+    if shape is None:
+        # Use the layout closest to a square, e.g. (2, 2) for four datasets
+        n_rows = math.isqrt(n_datasets)
+        return n_rows, math.ceil(n_datasets / n_rows)
+
+    if isinstance(shape, str) or not isinstance(shape, Iterable):
+        msg = f'Shape must be a length-2 sequence of integers, got {shape!r} instead.'
+        raise TypeError(msg)
+    shape = tuple(shape)
+    if len(shape) != 2 or not all(isinstance(dim, (int, np.integer)) for dim in shape):
+        msg = f'Shape must be a length-2 sequence of integers, got {shape!r} instead.'
+        raise TypeError(msg)
+    n_rows, n_cols = (int(dim) for dim in shape)
+    if n_rows < 1 or n_cols < 1:
+        msg = f'Shape must have positive values, got {shape!r} instead.'
+        raise ValueError(msg)
+    if n_rows * n_cols < n_datasets:
+        msg = (
+            f'Shape {shape!r} defines {n_rows * n_cols} subplot(s) which is not enough '
+            f'for {n_datasets} datasets.'
+        )
+        raise ValueError(msg)
+    return n_rows, n_cols
+
+
+def plot_compare(
+    datasets: Sequence[PlottableType] | Mapping[str, PlottableType] | pv.MultiBlock,
+    *,
+    display_kwargs: dict[str, Any] | None = None,
+    plotter_kwargs: dict[str, Any] | None = None,
+    show_kwargs: dict[str, Any] | None = None,
+    screenshot: str | bool | None = None,
+    camera_position: CameraPositionOptions | None = None,
+    outline: pv.DataSet | None = None,
+    outline_color: ColorLike = 'k',
+    labels: Sequence[str] | Literal['auto'] | None = 'auto',
+    shape: Sequence[int] | None = None,
+    link: bool = True,
+    notebook: bool | None = None,
+):
+    """Plot a grid comparison of any number of data objects.
+
+    Each data object is shown in its own subplot. The subplots are arranged in a
+    grid which is as close to square as possible, e.g. a ``(2, 2)`` grid is used
+    for four datasets. Use ``shape`` to control the layout explicitly.
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    datasets : Sequence[pyvista.DataSet] | Mapping[str, pyvista.DataSet] | pyvista.MultiBlock
+        The data objects to compare. At least two datasets are required. If a
+        mapping or a :class:`~pyvista.MultiBlock` is given, its keys are used as
+        the default ``labels``.
+
+    display_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``add_mesh`` method.
+
+    plotter_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``Plotter`` constructor.
+
+    show_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``show`` method.
+
+    screenshot : str | bool, default: None
+        File name or path to save screenshot of the plot, or ``True`` to return
+        a screenshot array.
+
+    camera_position : list, default: None
+        The camera position to use in the plot.
+
+    outline : pyvista.DataSet, default: None
+        An outline to plot around the data objects.
+
+    outline_color : str, default: 'k'
+        The color of the outline.
+
+    labels : Sequence[str] | 'auto' | None, default: 'auto'
+        The labels to display for each data object. Must have the same length as
+        ``datasets``. If ``'auto'``, the keys of ``datasets`` are used when it is
+        a mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
+        ``'B'``, ``'C'``, ... are generated otherwise. Set to ``None`` to disable
+        labels. A string other than ``'auto'`` is not a valid sequence of labels
+        and raises an error.
+
+    shape : Sequence[int], default: None
+        The ``(n_rows, n_cols)`` shape of the subplot grid. Must define at least
+        as many subplots as there are datasets. By default, a grid which is as
+        close to square as possible is used.
+
+    link : bool, default: True
+        If ``True``, link the views of the subplots.
+
+    notebook : bool, default: None
+        If ``True``, display the plot in a Jupyter notebook.
+
+    Returns
+    -------
+    cpos : CameraPosition
+        See the returns of :meth:`pyvista.Plotter.show`.
+
+    See Also
+    --------
+    pyvista.Plotter.subplot
+
+    Examples
+    --------
+    Compare three filtered versions of a dataset.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.load_uniform()
+    >>> pv.plot_compare(
+    ...     [mesh.contour(), mesh.threshold_percent(0.5), mesh.outline()],
+    ...     display_kwargs={'color': 'w'},
+    ... )
+
+    Use a dictionary to label each dataset.
+
+    >>> pv.plot_compare(
+    ...     {
+    ...         'contour': mesh.contour(),
+    ...         'threshold': mesh.threshold_percent(0.5),
+    ...         'outline': mesh.outline(),
+    ...     },
+    ...     display_kwargs={'color': 'w'},
+    ... )
+
+    A :class:`~pyvista.MultiBlock` is compared block-by-block, and its block
+    names are used as labels.
+
+    >>> blocks = pv.MultiBlock(
+    ...     {'sphere': pv.Sphere(), 'cube': pv.Cube(), 'cone': pv.Cone()}
+    ... )
+    >>> pv.plot_compare(blocks)
+
+    """
+    datasets, names = _unpack_datasets(datasets)
+
+    n_datasets = len(datasets)
+    if n_datasets < 2:
+        msg = f'At least two datasets are required for comparison, got {n_datasets} instead.'
+        raise ValueError(msg)
+
+    labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
+    n_rows, n_cols = _validate_shape(shape, n_datasets=n_datasets)
+
+    plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
+    display_kwargs = {} if display_kwargs is None else display_kwargs
+    show_kwargs = {} if show_kwargs is None else show_kwargs
+
+    plotter_kwargs['notebook'] = notebook
+
+    pl = pv.Plotter(shape=(n_rows, n_cols), **plotter_kwargs)
+
+    for index, dataset in enumerate(datasets):
+        pl.subplot(index // n_cols, index % n_cols)
+        pl.add_mesh(dataset, **display_kwargs)
+        if labels is not None:
+            pl.add_text(labels[index])
+        if is_pyvista_dataset(outline):
+            pl.add_mesh(outline, color=outline_color)
+        if camera_position is not None:
+            pl.camera_position = camera_position
+
+    if link:
+        pl.link_views()
+        # when linked, camera must be reset such that the view range
+        # of all subrender windows matches
+        if camera_position is None:
+            pl.reset_camera()
+
+    return pl.show(screenshot=screenshot, **show_kwargs)
 
 
 @_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
