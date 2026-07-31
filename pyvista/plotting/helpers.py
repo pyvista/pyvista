@@ -325,6 +325,10 @@ def plot_compare(
 
     >>> pv.plot_compare(blocks, shape=(2, 2))
 
+    Use a string descriptor to plot one on top, two on the bottom.
+
+    >>> pv.plot_compare(blocks, shape='2/1')
+
     """
     datasets, names = _unpack_datasets(datasets)
 
