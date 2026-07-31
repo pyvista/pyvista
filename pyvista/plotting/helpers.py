@@ -52,6 +52,8 @@ def plot_arrows(cent, direction, **kwargs):
     See Also
     --------
     pyvista.plot
+    pyvista.plot_compare
+    pyvista.Plotter
 
     Examples
     --------
@@ -239,6 +241,9 @@ def plot_compare(
 
     See Also
     --------
+    pyvista.plot
+    pyvista.plot_arrows
+    pyvista.Plotter
     pyvista.Plotter.subplot
 
     Examples
@@ -413,6 +418,12 @@ def plot_compare_four(  # noqa: PLR0917
     -------
     pyvista.Plotter
         The plotter object.
+
+    See Also
+    --------
+    pyvista.plot_compare
+    pyvista.plot
+    pyvista.Plotter
 
     """
     # Deprecated on 0.49.0, estimated removal on 0.52.0

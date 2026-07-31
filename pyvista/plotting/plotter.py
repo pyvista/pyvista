@@ -7878,6 +7878,12 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     stereo : StereoType | bool, optional
         Enable stereo rendering. If True, defaults to Anaglyph.
 
+    See Also
+    --------
+    pyvista.plot
+    pyvista.plot_compare
+    pyvista.plot_arrows
+
     Examples
     --------
     >>> import pyvista as pv
