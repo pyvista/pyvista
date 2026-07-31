@@ -19,8 +19,7 @@ sphere = examples.load_sphere_vectors()
 warped = sphere.warp_by_vector()
 
 datasets = {'Before warp': sphere, 'After warp': warped}
-
-pv.plot_compare(datasets, display_kwargs={'color': 'white'}, link=False)
+pv.plot_compare(datasets, display_kwargs={'color': 'white'})
 
 # %%
 # We then use several values for the scale factor applied to the warp
@@ -32,6 +31,6 @@ datasets = {
     f'factor={factor}': sphere.warp_by_vector(factor=factor) for factor in warp_factors
 }
 
-pv.plot_compare(datasets, link=False)
+pv.plot_compare(datasets)
 # %%
 # .. tags:: filter

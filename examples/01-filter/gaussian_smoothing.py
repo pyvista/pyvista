@@ -43,12 +43,9 @@ pv.plot_compare(
     display_kwargs={'rgb': True},
     text_kwargs={'font_size': 14},
     camera_position=cp,
-    link=False,
 )
 
 # %%
-# |
-#
 # Volume Rendering
 # ~~~~~~~~~~~~~~~~
 # Now let's see an example on a 3D dataset with volume rendering:

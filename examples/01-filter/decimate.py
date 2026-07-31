@@ -52,9 +52,9 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 datasets = {
-    'Input mesh': mesh,
-    'Decimated mesh': decimated,
-    'Pro Decimated mesh': pro_decimated,
+    'Input': mesh,
+    'Decimated': decimated,
+    'Pro Decimated': pro_decimated,
 }
 
 pv.plot_compare(
