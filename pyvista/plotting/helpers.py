@@ -377,13 +377,13 @@ def plot_compare_four(  # noqa: PLR0917
         The plotter object.
 
     """
-    # Deprecated on 0.49.0, estimated removal on 0.51.0
+    # Deprecated on 0.49.0, estimated removal on 0.52.0
     warn_external(
         '`plot_compare_four` is deprecated. Use `plot_compare` instead, '
         'which supports any number of data objects.',
         PyVistaDeprecationWarning,
     )
-    if pv.version_info >= (0, 51):  # pragma: no cover
+    if pv.version_info >= (0, 52):  # pragma: no cover
         msg = 'Remove this deprecated function.'
         raise RuntimeError(msg)
 
