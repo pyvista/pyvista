@@ -133,62 +133,18 @@ def _validate_reference_mesh(reference_mesh: Any) -> None:
         raise TypeError(msg)
 
 
-def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int] | str:
-    """Return the subplot layout to use for the datasets.
-
-    This is either a ``(n_rows, n_cols)`` grid or one of the ``Plotter`` string
-    descriptors, e.g. ``'3|1'``.
-    """
-    if shape is None or (isinstance(shape, str) and shape == 'auto'):
-        # Use as few rows as the square root allows so that the grid is never
-        # taller than it is wide, e.g. (1, 3) for three datasets, (2, 2) for four
-        n_rows = math.isqrt(n_datasets)
-        return n_rows, math.ceil(n_datasets / n_rows)
-
-    if isinstance(shape, str):
-        # Plotter's string descriptors, e.g. '3|1' is three subplots on the left
-        # and one on the right, '4/2' is four on top and two on the bottom
-        separator = '|' if '|' in shape else '/'
-        groups = shape.split(separator)
-        if len(groups) != 2 or not all(group.isdigit() for group in groups):
-            msg = (
-                f"Shape must be a length-2 sequence of integers, 'auto', or a string "
-                f"descriptor such as '3|1' or '4/2', got {shape!r} instead."
-            )
-            raise ValueError(msg)
-        n_subplots = sum(int(group) for group in groups)
-        if n_subplots < n_datasets:
-            msg = (
-                f'Shape {shape!r} defines {n_subplots} subplot(s) which is not enough '
-                f'for {n_datasets} datasets.'
-            )
-            raise ValueError(msg)
-        return shape
-
-    if not isinstance(shape, Iterable):
-        msg = f'Shape must be a length-2 sequence of integers, got {shape!r} instead.'
-        raise TypeError(msg)
-    shape = tuple(shape)
-    if len(shape) != 2 or not all(isinstance(dim, (int, np.integer)) for dim in shape):
-        msg = f'Shape must be a length-2 sequence of integers, got {shape!r} instead.'
-        raise TypeError(msg)
-    n_rows, n_cols = (int(dim) for dim in shape)
-    if n_rows < 1 or n_cols < 1:
-        msg = f'Shape must have positive values, got {shape!r} instead.'
-        raise ValueError(msg)
-    if n_rows * n_cols < n_datasets:
-        msg = (
-            f'Shape {shape!r} defines {n_rows * n_cols} subplot(s) which is not enough '
-            f'for {n_datasets} datasets.'
-        )
-        raise ValueError(msg)
-    return n_rows, n_cols
+def _auto_shape(n_datasets: int) -> tuple[int, int]:
+    """Return the ``(n_rows, n_cols)`` grid to use when no shape is given."""
+    # Use as few rows as the square root allows so that the grid is never
+    # taller than it is wide, e.g. (1, 3) for three datasets, (2, 2) for four
+    n_rows = math.isqrt(n_datasets)
+    return n_rows, math.ceil(n_datasets / n_rows)
 
 
-def _subplot_args(shape: tuple[int, int] | str, index: int) -> tuple[int, ...]:
+def _subplot_args(shape: tuple[int, ...], index: int) -> tuple[int, ...]:
     """Return the ``subplot`` arguments for the index within the layout."""
-    # String descriptors index their subplots with a single index
-    return (index,) if isinstance(shape, str) else divmod(index, shape[1])
+    # Layouts defined by a string descriptor are 1D and take a single index
+    return (index,) if len(shape) == 1 else divmod(index, shape[1])
 
 
 def plot_compare(
@@ -338,7 +294,8 @@ def plot_compare(
         raise ValueError(msg)
 
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
-    shape = _validate_shape(shape, n_datasets=n_datasets)
+    if shape is None or (isinstance(shape, str) and shape == 'auto'):
+        shape = _auto_shape(n_datasets)
 
     _validate_reference_mesh(reference_mesh)
 
@@ -350,10 +307,20 @@ def plot_compare(
 
     plotter_kwargs['notebook'] = notebook
 
+    # The shape itself is validated by the plotter
     pl = pv.Plotter(shape=shape, **plotter_kwargs)
 
+    n_subplots = len(pl.renderers)
+    if n_subplots < n_datasets:
+        pl.close()
+        msg = (
+            f'Shape {shape!r} defines {n_subplots} subplot(s) which is not enough '
+            f'for {n_datasets} datasets.'
+        )
+        raise ValueError(msg)
+
     for index, dataset in enumerate(datasets):
-        pl.subplot(*_subplot_args(shape, index))
+        pl.subplot(*_subplot_args(pl.renderers.shape, index))
         pl.add_mesh(dataset, **display_kwargs)
         if labels is not None:
             pl.add_text(labels[index], **text_kwargs)

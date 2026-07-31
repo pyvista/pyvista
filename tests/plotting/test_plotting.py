@@ -2399,28 +2399,30 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], labels=['A'])
 
+    # The shape itself is validated by the plotter
     match = (
-        "Shape must be a length-2 sequence of integers, 'auto', or a string "
-        "descriptor such as '3|1' or '4/2', got 'not a shape' instead."
+        '"shape" string descriptor must be two integers separated by "|" or "/", '
+        'for example "3|1" or "4/2". Got \'not a shape\'.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape='not a shape')
 
-    match = "Shape '1|1' defines 2 subplot(s) which is not enough for 3 datasets."
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.plot_compare([mesh, mesh, mesh], shape='1|1')
-
-    match = 'Shape must be a length-2 sequence of integers, got 2 instead.'
+    match = '"shape" should be a list, tuple or string descriptor'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=2)
 
-    match = 'Shape must be a length-2 sequence of integers, got (1, 2, 3) instead.'
-    with pytest.raises(TypeError, match=re.escape(match)):
+    match = '"shape" must have length 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=(1, 2, 3))
 
-    match = 'Shape must have positive values, got (0, 2) instead.'
+    match = '"shape" must contain only positive integers.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=(0, 2))
+
+    # Whether the layout is big enough is validated by `plot_compare`
+    match = "Shape '1|1' defines 2 subplot(s) which is not enough for 3 datasets."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh, mesh], shape='1|1')
 
     match = 'Shape (1, 1) defines 1 subplot(s) which is not enough for 2 datasets.'
     with pytest.raises(ValueError, match=re.escape(match)):
