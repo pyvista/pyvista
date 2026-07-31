@@ -34,26 +34,25 @@ cpos = pv.CameraPosition(
 
 def subdivisions(mesh, a, b):
     """Return the original mesh and its subdivisions, one row per subfilter."""
-    datasets = []
-    labels = []
+    datasets = pv.MultiBlock()
     for subfilter in ['linear', 'butterfly', 'loop']:
-        datasets.append(mesh)
-        labels.append('Original Mesh')
+        datasets.append(mesh, 'Original Mesh')
         for n_subdivisions in [a, b]:
-            datasets.append(mesh.subdivide(n_subdivisions, subfilter=subfilter))
-            labels.append(f'{subfilter} subdivision of {n_subdivisions}')
-    return datasets, labels
+            datasets.append(
+                mesh.subdivide(n_subdivisions, subfilter=subfilter),
+                f'{subfilter} subdivision of {n_subdivisions}',
+            )
+    return datasets
 
 
 # %%
 # Run the subdivisions for 1 and 3 levels and compare them with
-# :func:`~pyvista.plot_compare`.
+# :func:`~pyvista.plot_compare`. The block names are used as labels.
 
-datasets, labels = subdivisions(mesh, 1, 3)
+datasets = subdivisions(mesh, 1, 3)
 
 pv.plot_compare(
     datasets,
-    labels=labels,
     shape=(3, 3),
     display_kwargs=dict(show_edges=True, color=True),
     camera_position=cpos,
