@@ -245,21 +245,22 @@ def plot_compare(
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = examples.load_uniform()
+    >>> mesh = examples.load_airplane()
     >>> pv.plot_compare(
-    ...     [mesh.contour(), mesh.threshold_percent(0.5), mesh.outline()],
+    ...     [mesh.clip('x'), mesh.clip('y'), mesh.clip('z')],
     ...     display_kwargs={'color': 'w'},
     ... )
 
-    Use a dictionary to label each dataset.
+    Use a dictionary to label each dataset and set the camera position explicitly.
 
     >>> pv.plot_compare(
     ...     {
-    ...         'contour': mesh.contour(),
-    ...         'threshold': mesh.threshold_percent(0.5),
-    ...         'outline': mesh.outline(),
+    ...         'clip x': mesh.clip('x'),
+    ...         'clip y': mesh.clip('y'),
+    ...         'clip z': mesh.clip('z'),
     ...     },
     ...     display_kwargs={'color': 'w'},
+    ...     camera_position='xy',
     ... )
 
     A :class:`~pyvista.MultiBlock` is compared block-by-block, and its block
@@ -269,6 +270,14 @@ def plot_compare(
     ...     {'sphere': pv.Sphere(), 'cube': pv.Cube(), 'cone': pv.Cone()}
     ... )
     >>> pv.plot_compare(blocks)
+
+    Control the shape of the plot explicitly.
+
+    >>> pv.plot_compare(blocks, shape=(3, 1))
+
+    A shape with more subplots than datasets shows blank plots.
+
+    >>> pv.plot_compare(blocks, shape=(2, 2))
 
     """
     datasets, names = _unpack_datasets(datasets)
@@ -302,9 +311,9 @@ def plot_compare(
 
     if link:
         pl.link_views()
-        # when linked, camera must be reset such that the view range
-        # of all subrender windows matches
-        if camera_position is None:
+        # When linked, camera must be reset such that the view range of all subplots match.
+        # Do not reset when a fully-specific cpos is provided.
+        if camera_position is None or isinstance(camera_position, str):
             pl.reset_camera()
 
     return pl.show(screenshot=screenshot, **show_kwargs)
