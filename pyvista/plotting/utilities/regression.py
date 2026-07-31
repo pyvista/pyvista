@@ -12,14 +12,12 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.grid import ImageData
 from pyvista.core.utilities.arrays import point_array
-from pyvista.core.utilities.fileio import read
-from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
+    from pyvista import ImageData
+    from pyvista import Plotter
     from pyvista.core._typing_core import NumpyArray
-    from pyvista.plotting import Plotter
 
     ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
@@ -108,7 +106,7 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = cast('ImageData | None', wrap(imfilter.GetOutput()))
+    image = cast('ImageData | None', pv.wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
@@ -234,12 +232,12 @@ def compare_images(  # noqa: PLR0917
     """
 
     def to_img(img: ImageCompareType) -> ImageData:
-        if isinstance(img, ImageData):
+        if isinstance(img, pv.ImageData):
             return img
         elif isinstance(img, _vtk.vtkImageData):  # pragma: no cover
-            return wrap(img)
+            return pv.wrap(img)
         elif isinstance(img, (str, Path)):
-            return read(img, cls=ImageData)
+            return pv.read(img, cls=pv.ImageData)
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
         elif isinstance(img, pv.Plotter):
