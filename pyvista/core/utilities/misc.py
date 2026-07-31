@@ -502,12 +502,18 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     def _check_new_attribute(self, key: str) -> None:
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is not None:
-            # Get mode for setting new attributes
-            try:
-                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-            except ImportError:
-                # Circular import, set to False to disallow new attributes during initial import
-                _ALLOW_NEW_ATTRIBUTES_MODE = False
+            # Get mode for setting new attributes. Read straight out of the module
+            # dict: this runs on every __setattr__, and going through the import
+            # machinery (or getattr, which would hit pyvista's module-level
+            # __getattr__) is needless overhead. ``pyvista.core`` is imported
+            # before ``_ALLOW_NEW_ATTRIBUTES_MODE`` is defined, so a missing key
+            # means we are still mid-import: disallow new attributes, as before.
+            pyvista_module = sys.modules.get('pyvista')
+            _ALLOW_NEW_ATTRIBUTES_MODE = (
+                False
+                if pyvista_module is None
+                else pyvista_module.__dict__.get('_ALLOW_NEW_ATTRIBUTES_MODE', False)
+            )
 
             # Check if setting a new attribute is allowed
             if not (
