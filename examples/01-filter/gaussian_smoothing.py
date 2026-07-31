@@ -32,12 +32,14 @@ cp = pv.CameraPosition(
 # %%
 # Let's apply the Gaussian smoothing with different values of standard
 # deviation.
-images = {'Original Image': data}
+datasets = {'Original Image': data}
 for std_dev in [2.0, 4.0, 8.0]:
-    images[f'Gaussian smoothing, std={std_dev:g}'] = data.gaussian_smooth(std_dev=std_dev)
+    datasets[f'Gaussian smoothing, std={std_dev:g}'] = data.gaussian_smooth(
+        std_dev=std_dev
+    )
 
 pv.plot_compare(
-    images,
+    datasets,
     display_kwargs={'rgb': True},
     text_kwargs={'font_size': 14},
     camera_position=cp,

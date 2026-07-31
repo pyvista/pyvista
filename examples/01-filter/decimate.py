@@ -51,12 +51,14 @@ pro_decimated.plot(cpos=cpos, **dargs)
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
+datasets = {
+    'Input mesh': mesh,
+    'Decimated mesh': decimated,
+    'Pro Decimated mesh': pro_decimated,
+}
+
 pv.plot_compare(
-    {
-        'Input mesh': mesh,
-        'Decimated mesh': decimated,
-        'Pro Decimated mesh': pro_decimated,
-    },
+    datasets,
     display_kwargs=dargs,
     text_kwargs={'font_size': 24},
     camera_position=cpos,

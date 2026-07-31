@@ -48,11 +48,9 @@ def with_active_scalars(mesh, scalars):
 
 display_kwargs = dict(cmap='bwr', show_edges=True)
 
-pv.plot_compare(
-    {measure: with_active_scalars(qual, measure) for measure in measures},
-    display_kwargs=display_kwargs,
-    camera_position='xy',
-)
+datasets = {measure: with_active_scalars(qual, measure) for measure in measures}
+
+pv.plot_compare(datasets, display_kwargs=display_kwargs, camera_position='xy')
 
 
 # %%
@@ -114,11 +112,9 @@ mesh = examples.download_letter_a()
 measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
 qual = mesh.cell_quality(measures)
 
-pv.plot_compare(
-    {measure: with_active_scalars(qual, measure) for measure in measures},
-    display_kwargs=display_kwargs,
-    camera_position='xy',
-)
+datasets = {measure: with_active_scalars(qual, measure) for measure in measures}
+
+pv.plot_compare(datasets, display_kwargs=display_kwargs, camera_position='xy')
 
 # %%
 # .. tags:: filter

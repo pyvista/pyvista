@@ -63,13 +63,15 @@ glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
 
 # Use `plot_compare` to show each result in its own linked subplot with an
 # outline of the original dataset.
+datasets = {
+    'Threshold': threshed,
+    'Contour': contours,
+    'Slices': slices,
+    'Glyphs': glyphs,
+}
+
 pv.plot_compare(
-    {
-        'Threshold': threshed,
-        'Contour': contours,
-        'Slices': slices,
-        'Glyphs': glyphs,
-    },
+    datasets,
     display_kwargs={'show_scalar_bar': False},
     outline=outline,
     camera_position=[-2, 5, 3],

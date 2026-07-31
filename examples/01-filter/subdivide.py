@@ -50,6 +50,7 @@ def subdivisions(mesh, a, b):
 # :func:`~pyvista.plot_compare`.
 
 datasets, labels = subdivisions(mesh, 1, 3)
+
 pv.plot_compare(
     datasets,
     labels=labels,

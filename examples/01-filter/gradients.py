@@ -69,8 +69,10 @@ def contour_by_gradient(mesh, name):
     return contour
 
 
+datasets = {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()}
+
 pv.plot_compare(
-    {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()},
+    datasets,
     display_kwargs={'opacity': 0.75},
     outline=mesh_g.outline(),
     shape=keys.shape,
@@ -92,8 +94,10 @@ mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
+datasets = {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()}
+
 pv.plot_compare(
-    {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()},
+    datasets,
     display_kwargs={'opacity': 0.75},
     outline=mesh_g.outline(),
     shape=keys.shape,
