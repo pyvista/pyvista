@@ -129,7 +129,8 @@ def _validate_labels(labels: Any, *, names: list[str] | None, n_datasets: int) -
 def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int]:
     """Return the ``(n_rows, n_cols)`` subplot layout to use for the datasets."""
     if shape is None:
-        # Use the layout closest to a square, e.g. (2, 2) for four datasets
+        # Use as few rows as the square root allows so that the grid is never
+        # taller than it is wide, e.g. (1, 3) for three datasets, (2, 2) for four
         n_rows = math.isqrt(n_datasets)
         return n_rows, math.ceil(n_datasets / n_rows)
 
@@ -171,9 +172,10 @@ def plot_compare(
 ):
     """Plot a grid comparison of any number of data objects.
 
-    Each data object is shown in its own subplot. The subplots are arranged in a
-    grid which is as close to square as possible, e.g. a ``(2, 2)`` grid is used
-    for four datasets. Use ``shape`` to control the layout explicitly.
+    Each data object is shown in its own subplot. By default, the subplots are arranged
+    in a compact grid which is never taller than it is wide, e.g. ``(1, 2)`` for two
+    datasets, ``(1, 3)`` for three, ``(2, 2)`` for four, and ``(2, 3)`` for five or six.
+    Any leftover subplots are left empty. Use ``shape`` to control the layout explicitly.
 
     .. versionadded:: 0.49
 
@@ -221,8 +223,8 @@ def plot_compare(
 
     shape : Sequence[int], default: None
         The ``(n_rows, n_cols)`` shape of the subplot grid. Must define at least
-        as many subplots as there are datasets. By default, a grid which is as
-        close to square as possible is used.
+        as many subplots as there are datasets. By default, the compact grid
+        described above is used.
 
     link : bool, default: True
         If ``True``, link the views of the subplots.
