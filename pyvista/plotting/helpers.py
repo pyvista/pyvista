@@ -14,6 +14,8 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 if TYPE_CHECKING:
@@ -318,6 +320,12 @@ def plot_compare_four(  # noqa: PLR0917
 ):
     """Plot a 2 by 2 comparison of data objects.
 
+    .. deprecated:: 0.49
+        Use :func:`~pyvista.plot_compare` instead, which supports any number of
+        data objects::
+
+            plot_compare([data_a, data_b, data_c, data_d])
+
     Parameters
     ----------
     data_a : pyvista.DataSet
@@ -369,38 +377,29 @@ def plot_compare_four(  # noqa: PLR0917
         The plotter object.
 
     """
-    datasets = [[data_a, data_b], [data_c, data_d]]
-    labels = [labels[0:2], labels[2:4]]
+    # Deprecated on 0.49.0, estimated removal on 0.51.0
+    warn_external(
+        '`plot_compare_four` is deprecated. Use `plot_compare` instead, '
+        'which supports any number of data objects.',
+        PyVistaDeprecationWarning,
+    )
+    if pv.version_info >= (0, 51):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
-    if plotter_kwargs is None:
-        plotter_kwargs = {}
-    if display_kwargs is None:
-        display_kwargs = {}
-    if show_kwargs is None:
-        show_kwargs = {}
-
-    plotter_kwargs['notebook'] = notebook
-
-    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
-
-    for i in range(2):
-        for j in range(2):
-            pl.subplot(i, j)
-            pl.add_mesh(datasets[i][j], **display_kwargs)
-            pl.add_text(labels[i][j])
-            if is_pyvista_dataset(outline):
-                pl.add_mesh(outline, color=outline_color)
-            if camera_position is not None:
-                pl.camera_position = camera_position
-
-    if link:
-        pl.link_views()
-        # when linked, camera must be reset such that the view range
-        # of all subrender windows matches
-        if camera_position is None:
-            pl.reset_camera()
-
-    return pl.show(screenshot=screenshot, **show_kwargs)
+    return plot_compare(
+        [data_a, data_b, data_c, data_d],
+        display_kwargs=display_kwargs,
+        plotter_kwargs=plotter_kwargs,
+        show_kwargs=show_kwargs,
+        screenshot=screenshot,
+        camera_position=camera_position,
+        outline=outline,
+        outline_color=outline_color,
+        labels=labels,
+        link=link,
+        notebook=notebook,
+    )
 
 
 @_deprecate_positional_args(allowed=['view'])

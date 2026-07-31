@@ -1059,8 +1059,8 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_text('Smoothed Mesh')
         >>> pl.show()
 
-        Use :func:`~pyvista.plot_compare_four` to show differences between
-        window functions.
+        Use :func:`~pyvista.plot_compare` to show differences between
+        window functions. The block names are used as labels.
 
         >>> mesh = examples.download_foot_bones()
         >>> multi_compare = pv.MultiBlock()
@@ -1075,10 +1075,9 @@ class PolyDataFilters(DataSetFilters):
         ...     viewup=(-0.2696, -0.1070, 0.9570),
         ... )
         >>>
-        >>> pv.plot_compare_four(
-        ...     *multi_compare,
+        >>> pv.plot_compare(
+        ...     multi_compare,
         ...     display_kwargs={'show_edges': True},
-        ...     labels=multi_compare.keys(),
         ...     camera_position=cpos,
         ... )
 

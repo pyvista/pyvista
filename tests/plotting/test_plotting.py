@@ -2367,30 +2367,11 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
         pv.plot_compare([mesh, mesh], shape=(1, 1))
 
 
-def test_plot_compare_four():
-    # Really just making sure no errors are thrown
-    mesh = examples.load_uniform()
-    data_a = mesh.contour()
-    data_b = mesh.threshold_percent(0.5)
-    data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph(scale=False, orient=False)
-    pv.plot_compare_four(
-        data_a,
-        data_b,
-        data_c,
-        data_d,
-        display_kwargs={'color': 'w'},
-    )
-
-
-def test_plot_compare_four_camera_position():
-    mesh = examples.download_foot_bones()
-    cpos = pv.CameraPosition(
-        position=(-0.7780, -12.74, -2.019),
-        focal_point=(1.257, -1.716, -0.2136),
-        viewup=(-0.2696, -0.1070, 0.9570),
-    )
-    pv.plot_compare_four(mesh, mesh, mesh, mesh, camera_position=cpos)
+def test_plot_compare_four_deprecated(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+    match = '`plot_compare_four` is deprecated. Use `plot_compare` instead'
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        pv.plot_compare_four(*compare_datasets, display_kwargs={'color': 'w'})
 
 
 @skip_lesser_9_4_X_depth_peeling
@@ -6376,10 +6357,9 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         data[f'Sphere {phi_res} {theta_res}'] = pv.Sphere(**kwargs)
         data[f'Solid {phi_res} {theta_res}'] = pv.SolidSphere(**kwargs)
 
-    pv.plot_compare_four(
-        *data.values(),
+    pv.plot_compare(
+        data,
         display_kwargs={'show_edges': True},
-        labels=list(data),
         link=False,
         camera_position=pv.CameraPosition(
             position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
@@ -6425,10 +6405,9 @@ def test_sphere_texture_seam(tessellation):
         )
     texture = examples.load_globe_texture()
 
-    pv.plot_compare_four(
-        *data.values(),
+    pv.plot_compare(
+        data,
         display_kwargs={'texture': texture, 'smooth_shading': True},
-        labels=list(data.keys()),
         link=False,
         camera_position='yz',
     )
