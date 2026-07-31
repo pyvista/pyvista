@@ -8,9 +8,12 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
+from pyvista.core.errors import ObsoleteVTKVersionWarning
+from pyvista.core.errors import VTKVersionError
 
 
 class VersionInfo(NamedTuple):
@@ -55,8 +58,6 @@ def _get_vtk_version():
 class VTKVersionInfo(VersionInfo):
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
-            from pyvista.core.errors import ObsoleteVTKVersionWarning  # noqa: PLC0415
-
             msg = (
                 f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
                 f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
@@ -144,9 +145,6 @@ def _warn_if_obsolete_constraint(
     minimum: tuple[int, int, int] | None, maximum: tuple[int, int, int] | None
 ) -> None:
     """Warn if a version constraint is always or never satisfied by supported VTK versions."""
-    import pyvista as pv  # noqa: PLC0415
-    from pyvista.core.errors import ObsoleteVTKVersionWarning  # noqa: PLC0415
-
     min_supported = pv._MIN_SUPPORTED_VTK_VERSION
     for keyword, version in (('at_least', minimum), ('less_than', maximum)):
         if version is not None and version <= min_supported:
@@ -276,9 +274,6 @@ def require_vtk_version(
     This feature requires a VTK version of at least 99.0.0 and less than 99.1.0. ...
 
     """
-    import pyvista as pv  # noqa: PLC0415
-    from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
     minimum, maximum = _parse_vtk_version_constraint(versions, at_least, less_than)
     _warn_if_obsolete_constraint(minimum, maximum)
 
