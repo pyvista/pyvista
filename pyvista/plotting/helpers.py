@@ -21,6 +21,8 @@ from pyvista.core.utilities.helpers import is_pyvista_dataset
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from pyvista import DataSet
+    from pyvista import MultiBlock
     from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
@@ -152,7 +154,7 @@ def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int]:
 
 
 def plot_compare(
-    datasets: Sequence[PlottableType] | Mapping[str, PlottableType] | pv.MultiBlock,
+    datasets: Sequence[PlottableType] | Mapping[str, PlottableType] | MultiBlock,
     *,
     display_kwargs: dict[str, Any] | None = None,
     plotter_kwargs: dict[str, Any] | None = None,
@@ -160,7 +162,7 @@ def plot_compare(
     text_kwargs: dict[str, Any] | None = None,
     screenshot: str | bool | None = None,
     camera_position: CameraPositionOptions | None = None,
-    outline: pv.DataSet | None = None,
+    outline: DataSet | None = None,
     outline_color: ColorLike = 'k',
     labels: Sequence[str] | Literal['auto'] | None = 'auto',
     shape: Sequence[int] | None = None,
@@ -177,7 +179,7 @@ def plot_compare(
 
     Parameters
     ----------
-    datasets : Sequence[pyvista.DataSet] | Mapping[str, pyvista.DataSet] | pyvista.MultiBlock
+    datasets : Sequence[DataSet] | Mapping[str, DataSet] | MultiBlock
         The data objects to compare. At least two datasets are required. If a
         mapping or a :class:`~pyvista.MultiBlock` is given, its keys are used as
         the default ``labels``.
