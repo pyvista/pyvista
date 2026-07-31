@@ -51,23 +51,16 @@ pro_decimated.plot(cpos=cpos, **dargs)
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-pl = pv.Plotter(shape=(1, 3))
-pl.add_mesh(mesh, **dargs)
-pl.add_text('Input mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.subplot(0, 1)
-pl.add_mesh(decimated, **dargs)
-pl.add_text('Decimated mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.subplot(0, 2)
-pl.add_mesh(pro_decimated, **dargs)
-pl.add_text('Pro Decimated mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.link_views()
-pl.show()
+pv.plot_compare(
+    {
+        'Input mesh': mesh,
+        'Decimated mesh': decimated,
+        'Pro Decimated mesh': pro_decimated,
+    },
+    display_kwargs=dargs,
+    text_kwargs={'font_size': 24},
+    camera_position=cpos,
+)
 
 # %%
 # Decimate Polyline Mesh
