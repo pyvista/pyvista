@@ -70,12 +70,11 @@ def contour_by_gradient(mesh, name):
 
 
 pv.plot_compare(
-    [contour_by_gradient(mesh_g, name) for name in keys.ravel()],
+    {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()},
     display_kwargs={'opacity': 0.75},
     outline=mesh_g.outline(),
     shape=keys.shape,
     camera_position='iso',
-    labels=None,
 )
 
 
@@ -94,12 +93,11 @@ mesh_g.point_data.update(gradients)
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
 pv.plot_compare(
-    [contour_by_gradient(mesh_g, name) for name in keys.ravel()],
+    {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()},
     display_kwargs={'opacity': 0.75},
     outline=mesh_g.outline(),
     shape=keys.shape,
     camera_position='iso',
-    labels=None,
 )
 # %%
 # .. tags:: filter
