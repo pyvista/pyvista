@@ -2316,12 +2316,58 @@ def test_plot_compare_labels_none(compare_datasets):
     pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
 
 
-def test_plot_compare_link_false(compare_datasets):
-    pv.plot_compare(compare_datasets, link=False, display_kwargs={'color': 'w'})
+@pytest.mark.parametrize('link', [True, False], ids=['linked', 'unlinked'])
+@pytest.mark.parametrize(
+    'camera_position',
+    [
+        None,
+        'xy',
+        pv.CameraPosition(
+            position=(20.0, 20.0, 20.0), focal_point=(4.5, 4.5, 4.5), viewup=(0.0, 0.0, 1.0)
+        ),
+    ],
+    # A fully specified camera position is used as given, the others are fit to the data
+    ids=['cpos_none', 'cpos_str', 'cpos_full'],
+)
+def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_position):
+    pv.plot_compare(
+        compare_datasets,
+        link=link,
+        camera_position=camera_position,
+        display_kwargs={'color': 'w'},
+    )
 
 
-def test_plot_compare_camera_position_str(compare_datasets):
-    pv.plot_compare(compare_datasets, camera_position='xy', display_kwargs={'color': 'w'})
+def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # Linked views share one camera, so it is fit to the bounds of every dataset
+    # rather than to whichever dataset happens to be drawn last
+    def distances(datasets, *, link):
+        # Do not keep a reference to the plotter itself, it must be free to be collected
+        captured: list[float] = []
+
+        def capture(plotter):
+            captured.extend(round(ren.camera.GetDistance(), 2) for ren in plotter.renderers)
+
+        pv.plot_compare(
+            datasets,
+            link=link,
+            display_kwargs={'color': 'w'},
+            show_kwargs={'before_close_callback': capture},
+        )
+        return captured
+
+    forwards = distances(compare_datasets, link=True)
+    backwards = distances(compare_datasets[::-1], link=True)
+    assert forwards == backwards
+    assert len(set(forwards)) == 1
+
+    # Each subplot keeps its own camera when unlinked, so reversing the datasets
+    # reverses the per-subplot framing
+    forwards = distances(compare_datasets, link=False)
+    backwards = distances(compare_datasets[::-1], link=False)
+    assert forwards == backwards[::-1]
 
 
 def test_plot_compare_reference_mesh(compare_datasets):

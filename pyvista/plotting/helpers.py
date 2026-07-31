@@ -143,6 +143,19 @@ def _auto_shape(n_datasets: int) -> tuple[int, int]:
     return n_rows, math.ceil(n_datasets / n_rows)
 
 
+def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
+    """Return the bounds enclosing all of the renderers."""
+    bounds = np.array([renderer.bounds for renderer in renderers])
+    return (
+        bounds[:, 0].min(),
+        bounds[:, 1].max(),
+        bounds[:, 2].min(),
+        bounds[:, 3].max(),
+        bounds[:, 4].min(),
+        bounds[:, 5].max(),
+    )
+
+
 def _subplot_args(shape: tuple[int, ...], index: int) -> tuple[int, ...]:
     """Return the ``subplot`` arguments for the index within the layout."""
     # Layouts defined by a string descriptor are 1D and take a single index
@@ -229,7 +242,13 @@ def plot_compare(
         or with ``'auto'``, the compact grid described above is used.
 
     link : bool, default: True
-        If ``True``, link the views of the subplots.
+        If ``True``, link the views of the subplots so that they share a single
+        camera. The shared camera is fit to the bounds of every dataset, so the
+        datasets are shown at a common scale and the framing does not depend on
+        the order they are given in. If ``False``, each subplot keeps its own
+        camera and is fit to its own dataset. In both cases the camera is only
+        fit when ``camera_position`` is ``None`` or a string, since a
+        fully-specified camera position is used as given.
 
     notebook : bool, default: None
         If ``True``, display the plot in a Jupyter notebook.
@@ -336,10 +355,25 @@ def plot_compare(
 
     if link:
         pl.link_views()
-        # When linked, camera must be reset such that the view range of all subplots match.
-        # Do not reset when a fully-specific cpos is provided.
-        if camera_position is None or isinstance(camera_position, str):
-            pl.reset_camera()
+
+    # Do not reset when a fully-specified cpos is provided.
+    if camera_position is None or isinstance(camera_position, str):
+        # Linked views share a single camera, so it is fit to the bounds of every
+        # dataset at once. This shows the datasets at a common scale and keeps the
+        # framing from depending on the order the datasets are given in. Each subplot
+        # has its own camera otherwise, and is fit to its own dataset. Empty subplots
+        # are skipped since they report default bounds rather than no bounds at all.
+        renderers = list(pl.renderers)[:n_datasets]
+        if link:
+            if camera_position is None:
+                # Apply the default view direction now. It is otherwise applied lazily,
+                # which would both override the fit below and leave the camera pointing
+                # down an axis instead. Setting it also marks the camera as set.
+                pl.camera_position = pl.get_default_cam_pos()
+            pl.renderer.reset_camera(bounds=_union_bounds(renderers))
+        else:
+            for renderer in renderers:
+                renderer.reset_camera()
 
     return pl.show(screenshot=screenshot, **show_kwargs)
 
