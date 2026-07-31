@@ -61,15 +61,9 @@ mesh_g
 
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
-
-def contour_by_gradient(mesh, name):
-    """Contour the mesh by a gradient component and make it the active scalars."""
-    contour = mesh.contour(scalars=name)
-    contour.set_active_scalars(name)
-    return contour
-
-
-datasets = {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()}
+# `contour` makes the scalars it contours by the active scalars, so each mesh is
+# colored by its own gradient component.
+datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
 
 pv.plot_compare(
     datasets,
@@ -94,7 +88,7 @@ mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
-datasets = {name: contour_by_gradient(mesh_g, name) for name in keys.ravel()}
+datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
 
 pv.plot_compare(
     datasets,

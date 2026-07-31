@@ -35,20 +35,13 @@ qual = mesh.cell_quality(measures)
 
 # %%
 # Plot the meshes in subplots for comparison with :func:`~pyvista.plot_compare`.
-# Every subplot is drawn with the same arguments, so we make each measure active
-# on its own copy of the mesh instead of passing ``scalars`` for each one.
-
-
-def with_active_scalars(mesh, scalars):
-    # Create a copy to avoid reusing the same mesh in different plots
-    copied = mesh.copy(deep=False)
-    copied.set_active_scalars(scalars)
-    return copied
-
+# Every subplot is drawn with the same arguments, so we compute each measure
+# separately: :func:`~pyvista.DataObjectFilters.cell_quality` makes the measure
+# it computes the active scalars.
 
 display_kwargs = dict(cmap='bwr', show_edges=True)
 
-datasets = {measure: with_active_scalars(qual, measure) for measure in measures}
+datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
 pv.plot_compare(datasets, display_kwargs=display_kwargs, camera_position='xy')
 
@@ -110,9 +103,8 @@ mesh = examples.download_letter_a()
 # Plot some valid quality measures for tetrahedral cells.
 
 measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
-qual = mesh.cell_quality(measures)
 
-datasets = {measure: with_active_scalars(qual, measure) for measure in measures}
+datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
 pv.plot_compare(datasets, display_kwargs=display_kwargs, camera_position='xy')
 
