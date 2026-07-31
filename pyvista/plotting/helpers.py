@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
     from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting._typing import CameraPositionOptions
-    from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
 
 
@@ -126,6 +126,13 @@ def _validate_labels(labels: Any, *, names: list[str] | None, n_datasets: int) -
     return labels
 
 
+def _validate_reference_mesh(reference_mesh: Any) -> None:
+    """Raise if the reference mesh is not a dataset."""
+    if reference_mesh is not None and not is_pyvista_dataset(reference_mesh):
+        msg = f'Reference mesh must be a dataset, got {type(reference_mesh).__name__} instead.'
+        raise TypeError(msg)
+
+
 def _validate_shape(shape: Any, *, n_datasets: int) -> tuple[int, int]:
     """Return the ``(n_rows, n_cols)`` subplot layout to use for the datasets."""
     if shape is None:
@@ -163,8 +170,8 @@ def plot_compare(
     text_kwargs: dict[str, Any] | None = None,
     screenshot: str | bool | None = None,
     camera_position: CameraPositionOptions | None = None,
-    outline: DataSet | None = None,
-    outline_color: ColorLike = 'k',
+    reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
+    reference_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | Literal['auto'] | None = 'auto',
     shape: Sequence[int] | None = None,
     link: bool = True,
@@ -207,11 +214,15 @@ def plot_compare(
     camera_position : list, default: None
         The camera position to use in the plot.
 
-    outline : pyvista.DataSet, default: None
-        An outline to plot around the data objects.
+    reference_mesh : DataSet | MultiBlock, default: None
+        A mesh to draw in every subplot to give the comparison a common frame of
+        reference, e.g. an outline of the dataset the compared results are
+        derived from. The same mesh is drawn in each subplot, so it does not
+        follow the bounds of the individual datasets.
 
-    outline_color : str, default: 'k'
-        The color of the outline.
+    reference_kwargs : dict, default: None
+        Additional keyword arguments to pass to the ``add_mesh`` method used to
+        show the ``reference_mesh``. Defaults to ``{'color': 'k'}``.
 
     labels : Sequence[str] | 'auto' | None, default: 'auto'
         The labels to display for each data object. Must have the same length as
@@ -292,10 +303,13 @@ def plot_compare(
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
     n_rows, n_cols = _validate_shape(shape, n_datasets=n_datasets)
 
+    _validate_reference_mesh(reference_mesh)
+
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
     display_kwargs = {} if display_kwargs is None else display_kwargs
     show_kwargs = {} if show_kwargs is None else show_kwargs
     text_kwargs = {} if text_kwargs is None else text_kwargs
+    reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
 
     plotter_kwargs['notebook'] = notebook
 
@@ -306,8 +320,8 @@ def plot_compare(
         pl.add_mesh(dataset, **display_kwargs)
         if labels is not None:
             pl.add_text(labels[index], **text_kwargs)
-        if is_pyvista_dataset(outline):
-            pl.add_mesh(outline, color=outline_color)
+        if reference_mesh is not None:
+            pl.add_mesh(reference_mesh, **reference_kwargs)
         if camera_position is not None:
             pl.camera_position = camera_position
 
@@ -414,8 +428,10 @@ def plot_compare_four(  # noqa: PLR0917
         show_kwargs=show_kwargs,
         screenshot=screenshot,
         camera_position=camera_position,
-        outline=outline,
-        outline_color=outline_color,
+        # Non-dataset outlines were silently ignored by this function, so keep
+        # ignoring them here rather than raising as `plot_compare` now does
+        reference_mesh=outline if is_pyvista_dataset(outline) else None,
+        reference_kwargs={'color': outline_color},
         labels=labels,
         link=link,
         notebook=notebook,

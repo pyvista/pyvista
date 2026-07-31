@@ -73,7 +73,7 @@ datasets = {
 pv.plot_compare(
     datasets,
     display_kwargs={'show_scalar_bar': False},
-    outline=outline,
+    reference_mesh=outline,
     camera_position=[-2, 5, 3],
 )
 

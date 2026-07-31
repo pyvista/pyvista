@@ -2304,6 +2304,31 @@ def test_plot_compare_labels_none(compare_datasets):
     pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
 
 
+def test_plot_compare_link_false(compare_datasets):
+    pv.plot_compare(compare_datasets, link=False, display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_camera_position_str(compare_datasets):
+    pv.plot_compare(compare_datasets, camera_position='xy', display_kwargs={'color': 'w'})
+
+
+def test_plot_compare_reference_mesh(compare_datasets):
+    pv.plot_compare(
+        compare_datasets,
+        reference_mesh=examples.load_uniform().outline(),
+        reference_kwargs={'color': 'red', 'line_width': 3},
+        display_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_reference_mesh_default_color(compare_datasets):
+    pv.plot_compare(
+        compare_datasets,
+        reference_mesh=examples.load_uniform().outline(),
+        display_kwargs={'color': 'w'},
+    )
+
+
 def test_plot_compare_text_kwargs(compare_datasets):
     pv.plot_compare(
         compare_datasets,
@@ -2362,6 +2387,14 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], labels=['A'])
 
+    match = "Shape must be a length-2 sequence of integers, got '2|1' instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape='2|1')
+
+    match = 'Shape must be a length-2 sequence of integers, got 2 instead.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=2)
+
     match = 'Shape must be a length-2 sequence of integers, got (1, 2, 3) instead.'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=(1, 2, 3))
@@ -2373,6 +2406,10 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     match = 'Shape (1, 1) defines 1 subplot(s) which is not enough for 2 datasets.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=(1, 1))
+
+    match = 'Reference mesh must be a dataset, got bool instead.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], reference_mesh=True)
 
 
 def test_plot_compare_four_deprecated(compare_datasets, verify_image_cache):
