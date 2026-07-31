@@ -108,6 +108,13 @@ class vtkPyVistaOverride:  # noqa: N801
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
+# VTK only exposes the snake_case API from 9.4 on, so below that there is nothing
+# to check for. The result is invariant, but `vtk_version_info` is a NamedTuple
+# subclass whose comparison operators run `_check_min_supported`, so evaluating it
+# per call costs ~155 ns against ~18 ns for a plain bool. `check_attribute` runs on
+# every attribute access, so bind it once here.
+_VTK_SNAKE_CASE_MIN_VERSION_MET = vtk_version_info >= (9, 4)
+
 
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
@@ -116,11 +123,11 @@ class DisableVtkSnakeCase:
     def check_attribute(target, attr):
         # Skip check and exit early if possible
         if (
-            _VTK_SNAKE_CASE_STATE == 'allow'
+            not _VTK_SNAKE_CASE_MIN_VERSION_MET
+            or _VTK_SNAKE_CASE_STATE == 'allow'
             or not attr
             or not attr[0].islower()
             or attr in ('__class__', '__init__')
-            or vtk_version_info < (9, 4)
         ):
             return
 
