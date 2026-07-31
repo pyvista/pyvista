@@ -765,15 +765,15 @@ custom pytest marker ``require_vtk_version``, enabling the following usage (note
 
 The marker accepts the same arguments as the public :func:`pyvista.require_vtk_version` function,
 which it uses internally: instead of raising :class:`~pyvista.core.errors.VTKVersionError`, the marker turns
-the error into a skip. Use the function itself, or its ``require_vtk_version.decorator`` form, to
-guard library code which requires a specific vtk version:
+the error into a skip. Use the function itself to guard library code which requires a specific
+vtk version, either for a whole method or for a single keyword:
 
 .. code-block:: python
 
     class DataObjectFilters:
-        @pv.require_vtk_version.decorator(9, 6)
         def some_filter(self):
             """Raise VTKVersionError when called with vtk < 9.6"""
+            pv.require_vtk_version(9, 6)
 
         def another_filter(self, planarity_tolerance=None):
             """Raise VTKVersionError only when the new keyword is used"""

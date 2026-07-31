@@ -3,26 +3,14 @@
 from __future__ import annotations
 
 from functools import cache
-from functools import wraps
 import sys
-from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
-from typing import TypeVar
 from typing import cast
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from typing_extensions import ParamSpec
-
-    _P = ParamSpec('_P')
-
-_T = TypeVar('_T')
 
 
 class VersionInfo(NamedTuple):
@@ -174,8 +162,6 @@ def _default_reason(
     minimum: tuple[int, int, int] | None,
     maximum: tuple[int, int, int] | None,
     current: tuple[int, ...],
-    *,
-    subject: str,
 ) -> str:
     """Generate a message describing an unsatisfied version constraint."""
     if maximum is None:
@@ -188,34 +174,9 @@ def _default_reason(
             f'{VersionInfo._format(maximum)}'
         )
     return (
-        f'{subject} requires {requirement}. '
+        f'This feature requires {requirement}. '
         f'The installed version is {VersionInfo._format(current)}.'  # type: ignore[arg-type]
     )
-
-
-def _require_vtk_version(
-    minimum: tuple[int, int, int] | None,
-    maximum: tuple[int, int, int] | None,
-    *,
-    reason: str | None,
-    subject: str,
-) -> None:
-    """Raise ``VTKVersionError`` if the installed VTK version is out of bounds."""
-    import pyvista as pv  # noqa: PLC0415
-    from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-    _warn_if_obsolete_constraint(minimum, maximum)
-
-    # Compare plain tuples since comparing `vtk_version_info` against an obsolete
-    # version emits its own warning, which is already handled above
-    current = tuple(pv.vtk_version_info)
-
-    if (minimum is not None and current < minimum) or (maximum is not None and current >= maximum):
-        raise VTKVersionError(
-            reason
-            if reason is not None
-            else _default_reason(minimum, maximum, current, subject=subject)
-        )
 
 
 def require_vtk_version(
@@ -228,8 +189,7 @@ def require_vtk_version(
 
     Use this function to guard code which requires a specific range of VTK versions,
     e.g. a keyword argument which is only supported by newer versions of VTK. To guard
-    an entire function or method instead, use ``require_vtk_version.decorator`` with
-    the same arguments; see the examples below.
+    an entire function or method, call it as the first statement of that callable.
 
     The minimum version may be specified positionally, either as separate integers or
     as a single tuple, or with the ``at_least`` keyword. All three forms below are
@@ -315,52 +275,21 @@ def require_vtk_version(
     ...     print(error)
     This feature requires a VTK version of at least 99.0.0 and less than 99.1.0. ...
 
-    Use ``require_vtk_version.decorator`` to guard a whole function or method. The
-    version is checked when the decorated callable is called, not when it is decorated.
-
-    >>> class MyFilters:
-    ...     @pv.require_vtk_version.decorator(99, 0)
-    ...     def my_filter(self):
-    ...         return 'filtered'
-
-    >>> try:
-    ...     MyFilters().my_filter()
-    ... except pv.VTKVersionError as error:
-    ...     print(error)
-    MyFilters.my_filter requires VTK version 99.0.0 or greater. ...
-
     """
+    import pyvista as pv  # noqa: PLC0415
+    from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+
     minimum, maximum = _parse_vtk_version_constraint(versions, at_least, less_than)
-    _require_vtk_version(minimum, maximum, reason=reason, subject='This feature')
+    _warn_if_obsolete_constraint(minimum, maximum)
 
+    # Compare plain tuples since comparing `vtk_version_info` against an obsolete
+    # version emits its own warning, which is already handled above
+    current = tuple(pv.vtk_version_info)
 
-def _require_vtk_version_decorator(
-    *versions: int | tuple[int, ...],
-    at_least: tuple[int, ...] | None = None,
-    less_than: tuple[int, ...] | None = None,
-    reason: str | None = None,
-) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
-    """Decorate a function or method which requires a specific VTK version.
-
-    Implements ``require_vtk_version.decorator``. Takes the same arguments as
-    :func:`~pyvista.require_vtk_version`, which documents this decorator, except that
-    the default message names the decorated callable. The version is checked when the
-    decorated callable is called, not when it is decorated.
-    """
-    minimum, maximum = _parse_vtk_version_constraint(versions, at_least, less_than)
-
-    def decorator(func: Callable[_P, _T]) -> Callable[_P, _T]:
-        @wraps(func)
-        def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _T:
-            _require_vtk_version(minimum, maximum, reason=reason, subject=func.__qualname__)
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-require_vtk_version.decorator = _require_vtk_version_decorator  # type: ignore[attr-defined]
+    if (minimum is not None and current < minimum) or (maximum is not None and current >= maximum):
+        raise VTKVersionError(
+            reason if reason is not None else _default_reason(minimum, maximum, current)
+        )
 
 
 class vtkPyVistaOverride:  # noqa: N801
