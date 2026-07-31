@@ -232,8 +232,6 @@ def compare_images(  # noqa: PLR0917
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    # ``Plotter`` stays lazy: ``pyvista.plotting.plotter`` imports this module.
-    from pyvista import Plotter  # noqa: PLC0415
 
     def to_img(img: ImageCompareType) -> ImageData:
         if isinstance(img, ImageData):
@@ -244,7 +242,7 @@ def compare_images(  # noqa: PLR0917
             return read(img, cls=ImageData)
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
-        elif isinstance(img, Plotter):
+        elif isinstance(img, pv.Plotter):
             if img._first_time:  # must be rendered first else segfault
                 img._on_first_render_request()
                 img.render()
