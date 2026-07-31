@@ -6,6 +6,7 @@ import importlib
 import inspect
 
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 # Places to look for the utility
 _MODULES = [
@@ -72,8 +73,6 @@ def __getattr__(name):
         f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported '
         f'as: `{import_path}`.'
     )
-
-    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
     warn_external(message, PyVistaDeprecationWarning)
 

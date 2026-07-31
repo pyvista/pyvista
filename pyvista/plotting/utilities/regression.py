@@ -12,11 +12,12 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.grid import ImageData
 from pyvista.core.utilities.arrays import point_array
+from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
-    from pyvista import ImageData
     from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting import Plotter
 
@@ -231,10 +232,8 @@ def compare_images(  # noqa: PLR0917
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData  # noqa: PLC0415
+    # ``Plotter`` stays lazy: ``pyvista.plotting.plotter`` imports this module.
     from pyvista import Plotter  # noqa: PLC0415
-    from pyvista import read  # noqa: PLC0415
-    from pyvista import wrap  # noqa: PLC0415
 
     def to_img(img: ImageCompareType) -> ImageData:
         if isinstance(img, ImageData):

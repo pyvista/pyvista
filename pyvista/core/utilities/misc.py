@@ -21,6 +21,7 @@ from typing_extensions import Self
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
     from typing import Any
@@ -469,10 +470,6 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is None:  # pragma: no cover
             return None  # type: ignore[unreachable]
-
-        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
-            _resolve_pending_accessor,
-        )
 
         if _resolve_pending_accessor(name):
             return getattr(cls, name)

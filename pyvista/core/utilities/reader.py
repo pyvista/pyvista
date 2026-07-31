@@ -9,6 +9,7 @@ import enum
 import json
 from pathlib import Path
 import re
+import typing as _typing
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -4463,8 +4464,6 @@ def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     class's ``__name__``). Returns ``None`` when the class is not a
     parameterized :class:`BaseReader` subclass.
     """
-    import typing as _typing  # noqa: PLC0415
-
     for base in getattr(cls, '__orig_bases__', ()):
         origin = _typing.get_origin(base)
         if origin is None or not (isinstance(origin, type) and issubclass(origin, BaseReader)):
