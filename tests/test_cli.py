@@ -1889,11 +1889,24 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
     assert len(kwargs['datasets']) == 2
     # The file names are used as the labels by default
     assert kwargs['labels'] == ['sphere', 'cube']
-    assert kwargs['link'] is True
+    assert kwargs['link'] is None
     assert kwargs['shape'] is None
     assert kwargs['display_kwargs'] == {}
     assert kwargs['plotter_kwargs']['off_screen'] is None
     assert kwargs['show_kwargs'] == {'full_screen': None, 'interactive': True}
+
+
+@pytest.mark.parametrize(
+    ('tokens', 'expected'), [('', None), ('--link', True), ('--no-link', False)]
+)
+def test_compare_called_link(
+    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected
+):
+    """Test that the cameras are shared only when asked to, or automatically."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} {tokens}'.strip())
+
+    assert mock_plot_compare.call_args.kwargs['link'] is expected
 
 
 def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):

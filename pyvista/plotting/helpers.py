@@ -163,19 +163,27 @@ def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
 # the subplots share a camera fit to all of them
 _MIN_RELATIVE_SIZE = 0.05
 
+# Datasets which are each at least half the size of all of them together occupy the
+# same space at a comparable scale, so a camera fit to all of them suits each one
+_LINK_RELATIVE_SIZE = 0.5
 
-def _diagonal(bounds: Sequence[float]) -> float:
-    """Return the length of the diagonal of the bounds."""
+
+def _bounds_length(bounds: Sequence[float]) -> float:
+    """Return the diagonal length of the bounds, as :attr:`~pyvista.DataSet.length` does."""
     return float(
         np.linalg.norm([bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4]])
     )
 
 
-def _warn_if_dataset_is_too_small(renderers: Sequence[Any]) -> None:
+def _relative_size(renderers: Sequence[Any]) -> float:
+    """Return the size of the smallest dataset relative to all of them together."""
+    union = _bounds_length(_union_bounds(renderers))
+    return min(renderer.length for renderer in renderers) / union if union > 0 else 1.0
+
+
+def _warn_if_dataset_is_too_small(relative_size: float) -> None:
     """Warn when sharing a camera leaves one of the datasets too small to make out."""
-    union = _diagonal(_union_bounds(renderers))
-    smallest = min(_diagonal(renderer.bounds) for renderer in renderers)
-    if union > 0 and (relative_size := smallest / union) < _MIN_RELATIVE_SIZE:
+    if relative_size < _MIN_RELATIVE_SIZE:
         msg = (
             f'The smallest dataset is {relative_size:.1%} of the size of all of the datasets '
             f'together, so it may be too small to make out when the subplots share a camera. '
@@ -220,7 +228,7 @@ def plot_compare(
     reference_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
     shape: Sequence[int] | str | None = None,
-    link: bool = True,
+    link: bool | None = None,
     show_axes: bool | None = None,
     show_bounds: bool = False,
     zoom: float | str | None = None,
@@ -242,36 +250,36 @@ def plot_compare(
         mapping or a :class:`~pyvista.MultiBlock` is given, its keys are used as
         the default ``labels``.
 
-    display_kwargs : dict, default: None
+    display_kwargs : dict, optional
         Additional keyword arguments to pass to the ``add_mesh`` method.
 
-    plotter_kwargs : dict, default: None
+    plotter_kwargs : dict, optional
         Additional keyword arguments to pass to the ``Plotter`` constructor. A
         ``'shape'`` or ``'notebook'`` given here is used as the argument of the
         same name below, and it is an error to give either in both places.
 
-    show_kwargs : dict, default: None
+    show_kwargs : dict, optional
         Additional keyword arguments to pass to the ``show`` method.
 
-    text_kwargs : dict, default: None
+    text_kwargs : dict, optional
         Additional keyword arguments to pass to the ``add_text`` method used to
         show the ``labels``, e.g. ``{'font_size': 24}``. Has no effect when
         ``labels`` is ``None``.
 
-    screenshot : str | bool, default: None
+    screenshot : str | bool, optional
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
 
-    cpos : list, default: None
+    cpos : list, optional
         The camera position to use in the plot.
 
-    reference_mesh : DataSet | MultiBlock, default: None
+    reference_mesh : DataSet | MultiBlock, optional
         A mesh to draw in every subplot to give the comparison a common frame of
         reference, e.g. an outline of the dataset the compared results are
         derived from. The same mesh is drawn in each subplot, so it does not
         follow the bounds of the individual datasets.
 
-    reference_kwargs : dict, default: None
+    reference_kwargs : dict, optional
         Additional keyword arguments to pass to the ``add_mesh`` method used to
         show the ``reference_mesh``. Defaults to ``{'color': 'k'}``.
 
@@ -283,7 +291,7 @@ def plot_compare(
         labels. A single string is not a valid sequence of labels and raises an
         error.
 
-    shape : Sequence[int] | str, default: None
+    shape : Sequence[int] | str, optional
         The shape of the subplot layout, in any form accepted by
         :class:`~pyvista.Plotter`. Either a ``(n_rows, n_cols)`` sequence, or a
         string descriptor such as ``'3|1'`` for three subplots on the left and
@@ -291,16 +299,23 @@ def plot_compare(
         Must define at least as many subplots as there are datasets. By default,
         the compact grid described above is used.
 
-    link : bool, default: True
+    link : bool, optional
         If ``True``, link the views of the subplots so that they share a single
         camera. The shared camera is fit to the bounds of every dataset, so the
         datasets are shown at a common scale and the framing does not depend on
         the order they are given in. If ``False``, each subplot keeps its own
-        camera and is fit to its own dataset. In both cases the camera is only
-        fit when ``cpos`` is ``None`` or a string, since a fully-specified
-        camera position is used as given.
+        camera and is fit to its own dataset.
 
-    show_axes : bool, default: None
+        By default, the views are linked when every dataset is at least half the
+        size of all of them together, which means they occupy the same space at a
+        comparable scale and one camera suits them all. Datasets which are much
+        smaller than the rest, or which are far apart, are not linked, since a
+        shared camera would leave some of them too small to make out.
+
+        In every case the camera is only fit when ``cpos`` is ``None`` or a
+        string, since a fully-specified camera position is used as given.
+
+    show_axes : bool, optional
         Show the axes orientation widget in every subplot. By default, the
         :attr:`~pyvista.plotting.themes.Theme.axes` setting of the theme is
         used, as it is by :func:`pyvista.plot`.
@@ -308,11 +323,11 @@ def plot_compare(
     show_bounds : bool, default: False
         Show the bounds axes in every subplot.
 
-    zoom : float | str, default: None
+    zoom : float | str, optional
         Camera zoom, applied after the camera is fit to the datasets. Either
         ``'tight'`` or a float, where a value greater than 1 is a zoom-in.
 
-    notebook : bool, default: None
+    notebook : bool, optional
         If ``True``, display the plot in a Jupyter notebook.
 
     Returns
@@ -418,15 +433,17 @@ def plot_compare(
         if cpos is not None:
             pl.camera_position = cpos
 
-    if link:
-        pl.link_views()
-
     # Empty subplots are skipped throughout, since an empty renderer reports default
     # bounds rather than no bounds at all, and has nothing to decorate
     renderers = list(pl.renderers)[:n_datasets]
+    relative_size = _relative_size(renderers)
+
+    if link is None:
+        link = relative_size >= _LINK_RELATIVE_SIZE
 
     if link:
-        _warn_if_dataset_is_too_small(renderers)
+        pl.link_views()
+        _warn_if_dataset_is_too_small(relative_size)
 
     # Do not reset when a fully-specified cpos is provided.
     if cpos is None or isinstance(cpos, str):
@@ -505,23 +522,23 @@ def plot_compare_four(  # noqa: PLR0917
     data_d : pyvista.DataSet
         The data object to display in the bottom-right corner.
 
-    display_kwargs : dict, default: None
+    display_kwargs : dict, optional
         Additional keyword arguments to pass to the ``add_mesh`` method.
 
-    plotter_kwargs : dict, default: None
+    plotter_kwargs : dict, optional
         Additional keyword arguments to pass to the ``Plotter`` constructor.
 
-    show_kwargs : dict, default: None
+    show_kwargs : dict, optional
         Additional keyword arguments to pass to the ``show`` method.
 
-    screenshot : str | bool, default: None
+    screenshot : str | bool, optional
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
 
-    camera_position : list, default: None
+    camera_position : list, optional
         The camera position to use in the plot.
 
-    outline : pyvista.DataSet, default: None
+    outline : pyvista.DataSet, optional
         An outline to plot around the data objects.
 
     outline_color : str, default: 'k'
@@ -533,7 +550,7 @@ def plot_compare_four(  # noqa: PLR0917
     link : bool, default: True
         If ``True``, link the views of the subplots.
 
-    notebook : bool, default: None
+    notebook : bool, optional
         If ``True``, display the plot in a Jupyter notebook.
 
     Returns

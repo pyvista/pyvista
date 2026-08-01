@@ -34,6 +34,12 @@ Labels to show in each subplot. Must be given once per path. By default, the fil
 name of each path is used.
 """
 
+_HELP_LINK = """\
+Share a single camera between the subplots, so that the meshes are shown at a common
+scale. By default, the cameras are shared only when every mesh is at least half the
+size of all of them together.
+"""
+
 
 def _parse_shape(shape: str) -> list[int] | str:
     """Return a ``Plotter`` shape from its command line spelling.
@@ -84,7 +90,7 @@ def _compare(
         list[str] | None,
         Parameter(consume_multiple=True, help=_HELP_LABELS, group=Groups.RENDERING),
     ] = None,
-    link: Annotated[bool, Parameter(group=Groups.RENDERING)] = True,
+    link: Annotated[bool | None, Parameter(help=_HELP_LINK, group=Groups.RENDERING)] = None,
     show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,

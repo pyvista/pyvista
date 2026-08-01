@@ -2371,14 +2371,43 @@ def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_po
 def test_plot_compare_link_warns_when_a_dataset_is_too_small(verify_image_cache):
     verify_image_cache.skip = True
 
-    # A shared camera has to fit every dataset, so a much smaller one is barely visible
+    # A shared camera has to fit every dataset, so a much smaller one is barely visible.
+    # Only linking on purpose is warned about, since `'auto'` does not link these at all
     datasets = [pv.Sphere(radius=0.02), pv.Cone(height=5.0)]
     match = 'The smallest dataset is 1.3% of the size of all of the datasets together'
     with pytest.warns(UserWarning, match=re.escape(match)):
-        pv.plot_compare(datasets)
+        pv.plot_compare(datasets, link=True)
 
     # Each subplot is fit to its own dataset when unlinked, so the size does not matter
     pv.plot_compare(datasets, link=False)
+    pv.plot_compare(datasets)
+
+
+@pytest.mark.parametrize(
+    ('datasets', 'expected'),
+    [
+        # Variants of one dataset occupy the same space at the same scale
+        ([pv.Sphere(), pv.Sphere().decimate(0.9), pv.Sphere().clip('x')], True),
+        # A dataset much smaller than the rest would be left too small to make out
+        ([pv.Sphere(radius=0.1), pv.Cube(), pv.Cone(height=5.0)], False),
+        # Datasets of the same size which are far apart span more than any one of them
+        ([pv.Sphere(), pv.Sphere(center=(20.0, 0.0, 0.0))], False),
+    ],
+    ids=['variants', 'different_sizes', 'far_apart'],
+)
+def test_plot_compare_link_auto(datasets, expected, verify_image_cache):
+    verify_image_cache.skip = True
+
+    shared = []
+    pv.plot_compare(
+        datasets,
+        show_kwargs={
+            'before_close_callback': lambda pl: shared.append(
+                len({id(renderer.camera) for renderer in pl.renderers}) == 1
+            )
+        },
+    )
+    assert shared == [expected]
 
 
 def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify_image_cache):
