@@ -2342,6 +2342,35 @@ def test_plot_compare_labels_none(compare_datasets):
     pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
 
 
+@pytest.mark.parametrize('multiblock', [False, True], ids=['dict', 'multiblock'])
+def test_plot_compare_labels_take_precedence_over_keys(multiblock, verify_image_cache):
+    verify_image_cache.skip = True
+
+    datasets = {'sphere': pv.Sphere(), 'cube': pv.Cube()}
+    if multiblock:
+        datasets = pv.MultiBlock(datasets)
+
+    def drawn(**kwargs):
+        """Return the text which is actually drawn in each subplot."""
+        texts: list[str] = []
+
+        def capture(plotter):
+            for renderer in plotter.renderers:
+                annotations = [
+                    actor
+                    for actor in renderer.actors.values()
+                    if isinstance(actor, pv.CornerAnnotation)
+                ]
+                # `add_text` draws in the upper left corner, which is index 2
+                texts.append(annotations[0].get_text(2))
+
+        pv.plot_compare(datasets, show_kwargs={'before_close_callback': capture}, **kwargs)
+        return texts
+
+    assert drawn() == ['sphere', 'cube']
+    assert drawn(labels=['one', 'two']) == ['one', 'two']
+
+
 @pytest.mark.parametrize(
     ('link', 'camera_position'),
     [

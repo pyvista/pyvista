@@ -291,6 +291,9 @@ def plot_compare(
         labels. A single string is not a valid sequence of labels and raises an
         error.
 
+        If the input has keys `and` ``labels`` are provided, the provided
+        ``labels`` take precedence and are used instead of its keys.
+
     shape : Sequence[int] | str, optional
         The shape of the subplot layout, in any form accepted by
         :class:`~pyvista.Plotter`. Either a ``(n_rows, n_cols)`` sequence, or a
