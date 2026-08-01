@@ -20,9 +20,10 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import CellType
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -754,7 +755,20 @@ def test_delaunay_2d_unstructured():
     assert len(mesh.point_data.keys()) > 0
 
 
-@pytest.mark.parametrize('method', ['contour', 'marching_cubes', 'flying_edges'])
+@pytest.mark.parametrize(
+    'method',
+    [
+        'contour',
+        pytest.param(
+            'marching_cubes',
+            marks=pytest.mark.needs_vtk_version(
+                (9, 4),
+                reason='vtkMarchingCubes does not preserve the input scalar name on vtk<9.4',
+            ),
+        ),
+        'flying_edges',
+    ],
+)
 def test_contour(uniform, method):
     iso = uniform.contour(method=method, progress_bar=True)
     assert iso is not None
@@ -1595,7 +1609,6 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth()
@@ -1608,7 +1621,6 @@ def test_smooth(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth_taubin(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth_taubin()
@@ -1622,6 +1634,39 @@ def test_smooth_taubin(uniform):
     smooth_inplace = surf.smooth_taubin(inplace=True)
     assert np.allclose(surf.points, smoothed.points)
     assert np.allclose(smooth_inplace.points, smoothed.points)
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.parametrize('window_function', ['blackman', 'hamming', 'hanning', 'nuttall'])
+def test_smooth_taubin_window_function(ant, window_function):
+    smoothed = ant.smooth_taubin(window_function=window_function)
+
+    assert smoothed.n_points == ant.n_points
+    assert smoothed.n_cells == ant.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_smooth_taubin_window_function_default(ant):
+    smoothed_default = ant.smooth_taubin()
+    smoothed_nuttall = ant.smooth_taubin(window_function='nuttall')
+
+    assert np.allclose(smoothed_default.points, smoothed_nuttall.points)
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_smooth_taubin_invalid_window_function(ant):
+    match = re.escape(
+        "Invalid window_function 'invalid'. Expected one of: blackman, hamming, hanning, nuttall."
+    )
+    with pytest.raises(ValueError, match=match):
+        ant.smooth_taubin(window_function='invalid')
+
+
+@pytest.mark.needs_vtk_version(less_than=(9, 4))
+def test_smooth_taubin_window_function_vtk_version(ant):
+    match = '`window_function` requires VTK 9.4.0 or later.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        ant.smooth_taubin(window_function='nuttall')
 
 
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
@@ -1700,38 +1745,23 @@ def test_streamlines_max_length():
         )
         assert np.isclose(stream.length, 1)
 
-    def check_deprecation():
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 49):
-            msg = 'Remove ``max_time`` parameter in ``streamlines_from_source``'
-            raise RuntimeError(msg)
-
-    with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
-        stream = mesh.streamlines(
+    with pytest.raises(DeprecationError, match='``max_time`` parameter is deprecated'):
+        mesh.streamlines(
             vectors='vel',
             start_position=(0, 0, 0),
             integration_direction='forward',
             max_time=1,
             max_step_length=0.1,
         )
-    check_deprecation()
-    assert np.isclose(stream.length, 1)
 
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
-    ):
-        stream = mesh.streamlines(
+    with pytest.raises(DeprecationError, match='``max_time`` parameter is deprecated'):
+        mesh.streamlines(
             vectors='vel',
             start_position=(0, 0, 0),
             integration_direction='forward',
             max_time=5,
             max_length=1,
         )
-    check_deprecation()
-    assert np.isclose(stream.length, 1)
 
 
 def test_streamlines_errors(uniform_vec):
@@ -1891,6 +1921,30 @@ def test_plot_over_line(tmpdir):
         progress_bar=True,
     )
     assert Path(filename).is_file()
+    mesh.plot_over_line(
+        a,
+        b,
+        resolution=None,
+        scalars='foo',
+        title='My Stuff',
+        ylabel='Component 1',
+        component=1,
+        show=False,
+        progress_bar=True,
+    )
+    # Test single-component scalars with a component selected
+    mesh['bar'] = np.arange(mesh.n_cells)
+    mesh.plot_over_line(
+        a,
+        b,
+        resolution=None,
+        scalars='bar',
+        title='My Stuff',
+        ylabel='Component 0',
+        component=0,
+        show=False,
+        progress_bar=True,
+    )
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(
@@ -1902,6 +1956,23 @@ def test_plot_over_line(tmpdir):
             ylabel='3 Values',
             show=False,
         )
+
+
+def test_plot_over_line_component_errors():
+    mesh = examples.load_uniform()
+    mesh['foo'] = np.arange(mesh.n_cells * 3).reshape(mesh.n_cells, 3)
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+    b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
+
+    with pytest.raises(TypeError, match='component must be None or an integer'):
+        mesh.plot_over_line(a, b, scalars='foo', component=1.0, show=False)
+
+    match = (
+        'component must be nonnegative and less than the dimensionality of the scalars array: 3'
+    )
+    for component in [-1, 3]:
+        with pytest.raises(ValueError, match=match):
+            mesh.plot_over_line(a, b, scalars='foo', component=component, show=False)
 
 
 def test_sample_over_multiple_lines():
@@ -3015,7 +3086,6 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
@@ -3113,9 +3183,11 @@ def test_extract_subset(uniform, rebase_coordinates):
     offset = (1, 2, 3)
     dict_ = {'foo': 'bar'}
     origin = (1.1, 2.2, 3.3)
+    direction_matrix = pv.Transform().rotate_x(30.0, point=(3.0, 4.0, 5.0)).matrix[:3, :3]
     uniform.user_dict = dict_
     uniform.offset = offset
     uniform.origin = origin
+    uniform.direction_matrix = direction_matrix
 
     new_offset = (2, 4, 6)
     new_dims = 4, 3, 2
@@ -3132,7 +3204,11 @@ def test_extract_subset(uniform, rebase_coordinates):
         # Test that we fix the confusing issue from extents in
         #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
         assert voi.origin != origin
-        assert voi.origin == voi.bounds[::2]
+        assert np.allclose(voi.origin, voi.points[0])
+        relative_offset = tuple(new_offset[i] - offset[i] for i in range(3))
+        dims = uniform.dimensions
+        start_idx = np.arange(np.prod(dims)).reshape(dims, order='F')[relative_offset]
+        assert np.allclose(voi.points[0], uniform.points[start_idx])
         assert voi.offset != new_offset
         assert voi.offset == (0, 0, 0)
     else:
@@ -3684,7 +3760,7 @@ def test_extrude_trim_inplace():
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
-    orig_n_faces = sphere.n_faces_strict
+    orig_n_faces = sphere.n_faces
     sub = sphere.subdivide_adaptive(
         max_edge_len=0.01,
         max_tri_area=0.001,
@@ -3693,9 +3769,9 @@ def test_subdivide_adaptive(sphere, inplace):
         inplace=inplace,
         progress_bar=True,
     )
-    assert sub.n_faces_strict > orig_n_faces
+    assert sub.n_faces > orig_n_faces
     if inplace:
-        assert sphere.n_faces_strict == sub.n_faces_strict
+        assert sphere.n_faces == sub.n_faces
 
 
 def test_invalid_subdivide_adaptive(cube):
@@ -3799,6 +3875,59 @@ def test_align_xyz():
     assert np.allclose(aligned.center, mesh.center)
 
 
+def test_align_xyz_merge_points():
+    xyz_axes = np.eye(3)
+    points = np.vstack([xyz_axes, -xyz_axes])
+    # Add a bunch of duplicate points at +Z
+    biased_axis = xyz_axes[2]
+    points_with_duplicates = np.vstack([points, [biased_axis.tolist()] * 100])
+
+    _, matrix_no_duplicates = pv.PolyData(points).align_xyz(return_matrix=True)
+    _, matrix_with_duplicates_merged = pv.PolyData(points_with_duplicates).align_xyz(
+        merge_points=True, return_matrix=True
+    )
+    _, matrix_with_duplicates_not_merged = pv.PolyData(points_with_duplicates).align_xyz(
+        merge_points=False, return_matrix=True
+    )
+
+    axes_no_duplicates = matrix_no_duplicates[:3, :3]
+    axes_with_duplicates_merged = matrix_with_duplicates_merged[:3, :3]
+    axes_with_duplicates_not_merged = matrix_with_duplicates_not_merged[:3, :3]
+
+    # Duplicates removed - expect same result
+    assert np.array_equal(axes_no_duplicates, xyz_axes)
+    assert np.array_equal(axes_with_duplicates_merged, xyz_axes)
+    assert not np.array_equal(axes_with_duplicates_not_merged, xyz_axes)
+
+    # Duplicates not removed - expect principal axis is the biased axis
+    assert np.array_equal(axes_with_duplicates_not_merged[0], biased_axis)
+
+
+def test_align_xyz_cell_centers():
+    ellipse = pv.ParametricEllipsoid(1, 2, 3)
+    _, matrix = ellipse.align_xyz(cell_centers=False, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(ellipse.points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+    _, matrix = ellipse.align_xyz(cell_centers=True, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(ellipse.cell_centers().points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+
+def test_align_xyz_cell_centers_and_merge_points():
+    # Build an ellipsoid surface and duplicate every point so the raw point
+    # cloud is biased, but the cell centers are not.
+    ellipse = pv.ParametricEllipsoid(1, 2, 3)
+    duplicated = ellipse + ellipse
+
+    _, matrix = duplicated.align_xyz(cell_centers=True, merge_points=True, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(duplicated.cell_centers().merge_points().points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+
 def test_align_xyz_return_matrix():
     mesh = examples.download_oblique_cone()
     initial_bounds = mesh.bounds
@@ -3828,7 +3957,7 @@ def test_oriented_bounding_box():
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation, inplace=True)
     obb = box_mesh.oriented_bounding_box()
-    assert obb.bounds == box_mesh.bounds
+    np.testing.assert_allclose(obb.bounds, box_mesh.bounds)
 
 
 @pytest.mark.parametrize('oriented', [True, False])
@@ -4359,7 +4488,6 @@ def frog_tissues_contour(frog_tissues_image):
     return frog_tissues_image.contour_labels(smoothing=False)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask(
         reference_volume=frog_tissues_image, progress_bar=True
@@ -4372,7 +4500,6 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     assert expected_voxels.n_cells == actual_voxels.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
@@ -4489,6 +4616,8 @@ def oriented_image():
     image = pv.ImageData()
     image.spacing = (1.1, 1.2, 1.3)
     image.dimensions = (10, 11, 12)
+    image.offset = (4, 5, 6)
+    image.origin = (3.1, 2.1, 1.1)
     image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
     image['scalars'] = np.ones((image.n_points,))
     return image
@@ -4501,7 +4630,6 @@ def oriented_polydata(oriented_image):
     return oriented_poly
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds

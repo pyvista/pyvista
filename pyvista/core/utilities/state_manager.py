@@ -14,7 +14,7 @@ from typing import final
 from typing import get_args
 from typing import overload
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
@@ -213,6 +213,9 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
     @property
     def _state(self) -> _VerbosityOptions:
         int_to_string: dict[int, _VerbosityOptions] = {
+            # -10 is returned when VTK is built with VTK_ENABLE_LOGGING=OFF
+            # (loguru's Verbosity_OFF sentinel); treat it the same as 'off'.
+            -10: 'off',
             -9: 'off',
             -2: 'error',
             -1: 'warning',

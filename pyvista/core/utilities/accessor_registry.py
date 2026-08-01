@@ -432,6 +432,20 @@ def _attach_accessor(
     """
     accessor_owner = _find_accessor_on_mro(target_cls, name)
     if accessor_owner is not None:
+        existing = accessor_owner.__dict__.get(name)
+        if (
+            accessor_owner is target_cls
+            and isinstance(existing, _CachedAccessor)
+            and existing._accessor_cls is accessor_cls
+        ):
+            # Idempotent re-registration: the exact same accessor class is
+            # already bound directly on this target under this name. This
+            # happens when a module that registers an accessor is imported
+            # twice (e.g. ``pytest --cov`` re-executes it). It is a true
+            # no-op, not a plugin collision, so do not warn or re-bind --
+            # warning here would be fatal for downstream packages running
+            # under ``filterwarnings=error``.
+            return
         # Accessor-vs-accessor collision — warn and replace (pandas style).
         if accessor_owner is target_cls:
             location = target_cls.__qualname__

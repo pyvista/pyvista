@@ -21,12 +21,12 @@ import pytest
 
 import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
-from pyvista import VTKVersionError
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
+from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -683,11 +683,7 @@ def test_sample():
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
-    if pv.vtk_version_info >= (9, 3):
-        sample_test(snap_to_closest_point=True)
-    else:
-        with pytest.raises(VTKVersionError, match='snap_to_closest_point'):
-            sample_test(snap_to_closest_point=True)
+    sample_test(snap_to_closest_point=True)
 
 
 def test_sample_composite():
@@ -798,10 +794,9 @@ def test_slice_generate_triangles_false_default_preserves_polygons():
     assert pv.CellType.QUAD in types or pv.CellType.POLYGON in types
 
 
-def test_compute_cell_quality():
+def test_compute_cell_quality_removed():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    match_str = re.escape('This filter is deprecated. Use `cell_quality` instead')
-    with pytest.raises(DeprecationError, match=match_str):
+    with pytest.raises(AttributeError):
         _ = mesh.compute_cell_quality(progress_bar=True)
 
 
@@ -1733,7 +1728,7 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays, as_composite):
 
 
 def test_validate_mesh_default_fields():
-    mesh = pv.ImageData()
+    mesh = pv.UnstructuredGrid()
     report1 = str(mesh.validate_mesh())
     report2 = str(mesh.validate_mesh(['data', 'cells', 'points']))
     assert report1 == report2
@@ -1882,6 +1877,35 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+@pytest.fixture
+def image150():
+    # Dims must be large enough to replicate VTK bug: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+    return pv.ImageData(dimensions=(150, 150, 150))
+
+
+def test_validate_mesh_imagedata(image150):
+    image150.cell_validator()
+    image150.validate_mesh(action='error')
+
+    match = "Cell field 'wrong_number_of_points' is not supported for ImageData."
+    with pytest.raises(ValueError, match=match):
+        image150.validate_mesh('cells')
+
+
+@pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
+def test_validate_mesh_imagedata_vtk_fields(image150, field):
+    # Ensure vtk fields raise error
+    match = f'Cell field {field!r} is not supported for ImageData.'
+    with pytest.raises(ValueError, match=match):
+        image150.validate_mesh([field])
+
+
+@pytest.mark.parametrize('field', [f.lower() for f in _PYVISTA_CELL_STATUS_INFO if f != 'VALID'])
+def test_validate_mesh_imagedata_pyvista_fields(image150, field):
+    # Ensure pyvista fields DO NOT raise error
+    image150.validate_mesh(field)
+
+
 @pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
 def test_validate_mesh_planarity_tolerance():
     match = 'Planarity tolerance requires VTK 9.6 or later.'
@@ -1946,13 +1970,20 @@ def invalid_random_polydata():
     return pv.PolyData(points, faces=faces)
 
 
+def test_validate_mesh_name():
+    name = 'poly'
+    report = pv.PolyData().validate_mesh(name=name)
+    assert report.name == name
+
+
 def test_validate_mesh_report_str():
-    report = pv.Sphere().validate_mesh(report_body='fields')
+    report = pv.Sphere().validate_mesh(report_body='fields', name='Sphere')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh info:\n'
+        "    Name                     : 'Sphere'\n"
         '    Type                     : PolyData\n'
         '    N Points                 : 842\n'
         '    N Cells                  : 1680\n'
@@ -1985,12 +2016,13 @@ def test_validate_mesh_report_str():
 
 def test_validate_mesh_composite_report_str():
     multi = pv.Sphere().cast_to_multiblock()
-    report = multi.validate_mesh(report_body='fields')
+    report = multi.validate_mesh(report_body='fields', name='Sphere')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh info:\n'
+        "    Name                     : 'Sphere'\n"
         '    Type                     : MultiBlock\n'
         '    N Blocks                 : 1\n'
         'Report summary:\n'
@@ -2064,6 +2096,7 @@ def invalid_nested_multiblock(invalid_random_polydata):
             none=None,
             poly_root=invalid_random_polydata,
             nested=pv.MultiBlock(dict(poly_nested=invalid_random_polydata.copy())),
+            nested_valid=pv.MultiBlock(dict(valid=pv.PolyData())),
         )
     )
 
@@ -2078,7 +2111,7 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '----------------------\n'
         'Mesh info:\n'
         '    Type                         : MultiBlock\n'
-        '    N Blocks                     : 3\n'
+        '    N Blocks                     : 4\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
         "    Invalid fields (3)           : ('non_finite_points', 'unused_points', "
@@ -2311,23 +2344,21 @@ def test_cell_validator():
 
 @pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_status():
-    from vtkmodules.vtkCommonDataModel import vtkCellStatus
-
     expected_pyvista_values = list(pv.CellStatus)
-    expected_vtk_values = list(vars(vtkCellStatus).values())
+    expected_vtk_values = list(vars(_vtk.vtkCellStatus).values())
 
     # Map VTK enum members PyVista enum members
     VTK_TO_CELL_STATUS = {
-        vtkCellStatus.Valid: pv.CellStatus.VALID,
-        vtkCellStatus.WrongNumberOfPoints: pv.CellStatus.WRONG_NUMBER_OF_POINTS,
-        vtkCellStatus.IntersectingEdges: pv.CellStatus.INTERSECTING_EDGES,
-        vtkCellStatus.IntersectingFaces: pv.CellStatus.INTERSECTING_FACES,
-        vtkCellStatus.NoncontiguousEdges: pv.CellStatus.NON_CONTIGUOUS_EDGES,
-        vtkCellStatus.Nonconvex: pv.CellStatus.NON_CONVEX,
-        vtkCellStatus.FacesAreOrientedIncorrectly: pv.CellStatus.INVERTED_FACES,
-        vtkCellStatus.NonPlanarFaces: pv.CellStatus.NON_PLANAR_FACES,
-        vtkCellStatus.DegenerateFaces: pv.CellStatus.DEGENERATE_FACES,
-        vtkCellStatus.CoincidentPoints: pv.CellStatus.COINCIDENT_POINTS,
+        _vtk.vtkCellStatus.Valid: pv.CellStatus.VALID,
+        _vtk.vtkCellStatus.WrongNumberOfPoints: pv.CellStatus.WRONG_NUMBER_OF_POINTS,
+        _vtk.vtkCellStatus.IntersectingEdges: pv.CellStatus.INTERSECTING_EDGES,
+        _vtk.vtkCellStatus.IntersectingFaces: pv.CellStatus.INTERSECTING_FACES,
+        _vtk.vtkCellStatus.NoncontiguousEdges: pv.CellStatus.NON_CONTIGUOUS_EDGES,
+        _vtk.vtkCellStatus.Nonconvex: pv.CellStatus.NON_CONVEX,
+        _vtk.vtkCellStatus.FacesAreOrientedIncorrectly: pv.CellStatus.INVERTED_FACES,
+        _vtk.vtkCellStatus.NonPlanarFaces: pv.CellStatus.NON_PLANAR_FACES,
+        _vtk.vtkCellStatus.DegenerateFaces: pv.CellStatus.DEGENERATE_FACES,
+        _vtk.vtkCellStatus.CoincidentPoints: pv.CellStatus.COINCIDENT_POINTS,
     }
 
     for vtk_val, pyvista_val in VTK_TO_CELL_STATUS.items():
@@ -2393,6 +2424,7 @@ def test_cell_validator_invalid_tetra(
         if name in (
             pv.CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
             pv.CellStatus.ZERO_SIZE.name.lower(),
+            pv.CellStatus.COINCIDENT_POINTS.name.lower(),
         ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
@@ -2429,7 +2461,8 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2440,7 +2473,8 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.COINCIDENT_POINTS
     match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2473,6 +2507,71 @@ def test_validate_mesh_degenerate_cells():
         mesh.validate_mesh(size_tolerance=1e-8, action='error')
     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
         mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
+
+
+@pytest.mark.parametrize(
+    'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
+)
+def test_validate_mesh_coincident_points(mesh_name):
+    """Test that a cell with a collapsed edge (two coincident points) is invalid."""
+    mesh = getattr(examples.cells, mesh_name)()
+
+    # Negative case: the pristine cell is valid -- the check must not false-positive.
+    assert mesh.validate_mesh().is_valid
+
+    # Collapse an edge so points[0] and points[1] coincide.
+    mesh.points[1] = mesh.points[0]
+
+    report = mesh.validate_mesh()
+    assert report.is_valid is False
+    assert 'coincident_points' in report.invalid_fields
+
+    state = mesh.cell_validator()['validity_state']
+    assert state[0] & pv.CellStatus.COINCIDENT_POINTS
+
+
+@pytest.fixture
+def degenerate_structured_grid_quad():
+    x = np.array(
+        [
+            [0.0, 1.0],
+            [0.0, 1.0],
+        ]
+    )
+    y = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ]
+    )
+    z = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 1.0],
+        ]
+    )
+
+    # Collapse the "south" edge to a single point
+    x[0, :] = 0.0
+    y[0, :] = 0.0
+    z[0, :] = 0.0
+
+    grid = pv.StructuredGrid(x, y, z)
+    assert grid.n_cells == 1
+    assert grid.n_points == 4
+    assert grid.distinct_cell_types == {pv.CellType.QUAD}
+
+    cleaned = grid.extract_surface(algorithm='geometry').clean()
+    assert cleaned.n_cells == 1
+    assert cleaned.n_points == 3
+    assert cleaned.distinct_cell_types == {pv.CellType.TRIANGLE}
+
+    return grid
+
+
+def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_grid_quad):
+    report = degenerate_structured_grid_quad.validate_mesh()
+    assert report.invalid_fields == ('coincident_points',)
 
 
 def test_validate_mesh_invalid_point_references():
@@ -2795,15 +2894,15 @@ def test_extract_surface_nonlinear(as_multiblock):
 
     # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface(algorithm=None, progress_bar=True)
-    assert surf.n_faces_strict == 36
+    assert surf.n_faces == 36
     surf = grid.extract_surface(algorithm='dataset_surface', progress_bar=True)
-    assert surf.n_faces_strict == 36
+    assert surf.n_faces == 36
 
     # expect each face to be divided several more times than the linear extraction
     surf_subdivided = grid.extract_surface(
         algorithm=None, nonlinear_subdivision=5, progress_bar=True
     )
-    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
+    assert surf_subdivided.n_faces > surf.n_faces
     match = (
         'geometry algorithm cannot process non-linear cells and therefore '
         'cannot be used to control non-linear subdivision.'
@@ -2826,4 +2925,4 @@ def test_extract_surface_nonlinear(as_multiblock):
     surf_no_subdivide = grid.extract_surface(
         algorithm=None, nonlinear_subdivision=0, progress_bar=True
     )
-    assert surf_no_subdivide.n_faces_strict == 6
+    assert surf_no_subdivide.n_faces == 6

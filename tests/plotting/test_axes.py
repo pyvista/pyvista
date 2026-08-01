@@ -6,12 +6,9 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
-
-# A large number of tests here fail gc
-pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture

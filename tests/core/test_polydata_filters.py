@@ -7,8 +7,6 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import MissingDataError
-from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -78,16 +76,11 @@ def test_clean_raises(mocker: MockerFixture):
         sp.clean()
 
 
-def test_flip_normals_raises():
+def test_flip_normals_removed():
     plane = pv.Plane()
-    with (
-        pytest.raises(
-            NotAllTrianglesError, match=r'Can only flip normals on an all triangle mesh.'
-        ),
-        pytest.warns(
-            PyVistaDeprecationWarning,
-            match='`flip_normals` is deprecated. Use `flip_faces` instead',
-        ),
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'`flip_normals` is deprecated\. Use `flip_faces` instead',
     ):
         plane.flip_normals()
 

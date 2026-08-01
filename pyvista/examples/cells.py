@@ -20,9 +20,9 @@ import numpy as np
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from pyvista import DataSet
@@ -57,7 +57,7 @@ _NOT_SUPPORTED_PARAMETRIC = [
 ]
 
 
-def plot_cell(
+def plot_cell(  # noqa: ANN201
     grid: DataSet | MultiBlock,
     cpos: CameraPositionOptions | None = None,
     *,
@@ -151,7 +151,7 @@ def plot_cell(
     font_size_ = config._font_size if font_size is None else font_size
     normals_scale_ = config._normals_scale if normals_scale is None else normals_scale
 
-    def _extract_surface(cell_):
+    def _extract_surface(cell_):  # noqa: ANN001, ANN202
         if cell_.type == pv.CellType.POLYHEDRON:
             # For Polyhedron, we don't use ``extract_surface`` directly because that may alter
             # the face orientation, so we iterate over each face directly to create separate
@@ -2904,9 +2904,13 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     ... )
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
+    Generate a 5x5x5 grid comprised of all 3D concrete cell types with no gaps.
 
-    >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
+    >>> cell_types = [
+    ...     ctype
+    ...     for ctype in pv.CellType
+    ...     if ctype.dimension == 3 and ctype.vtk_class is not None
+    ... ]
     >>> cell_blocks = generate_cell_blocks(
     ...     cell_types,
     ...     'source',

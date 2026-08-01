@@ -48,18 +48,17 @@ jobs:
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
-      runs-on: "ubuntu-24.04-self-hosted-gpu"
+      runs-on: "blacksmith-8vcpu-ubuntu-2204"
 
   doc:
     name: Build Documentation
-    runs-on: ubuntu-24.04-self-hosted-gpu
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     needs: cache-pyvista-data
     env:
-      PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -68,19 +67,13 @@ jobs:
           python-version: 3.14
           cache: "pip"
 
-      - name: Set environment for self-hosted
-        if: runner.environment == 'self-hosted'
-        run: |
-          echo "PARALLEL=-j8" >> $GITHUB_ENV
-
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
-        if: runner.environment != 'self-hosted'
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime xvfb
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
@@ -90,7 +83,20 @@ jobs:
         run: pip install tox-uv
 
       - name: Build Documentation
-        run: timeout 3600 tox run -e docs-build
+        run: timeout 3600 xvfb-run -a tox run -e docs-build
+
+      # Build a development wheel and bundle a PEP 503 simple index into the
+      # docs output. Once the docs deploy to dev.pyvista.org, users can
+      # install with:
+      #   pip install --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+      # The wheel version is <base>+g<shortsha>, so every commit produces a
+      # uniquely-named wheel that pip's resolver picks up via --pre -U.
+      # Built on every docs run so PR Netlify previews exercise the wheel
+      # tree end-to-end; only the main-branch deploy lands on dev.pyvista.org.
+      - name: Build development wheel and simple index
+        run: |
+          python -m pip install --upgrade build
+          python doc/make_dev_wheel.py --html-dir doc/_build/html
 
       - name: Dump Sphinx Build Warnings and Errors
         if: always()
@@ -108,39 +114,15 @@ jobs:
             cat "$f"
           done
 
-      # Only build the translations for release builds since they take over 3 hours to build
-      - uses: actions/checkout@v6
-        if: startsWith(github.ref, 'refs/tags/v')
-        with:
-          repository: pyvista/pyvista-doc-translations
-          path: pyvista-doc-translations
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Build I18N Documentation
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          tox run -e docs-build -- mini18n-html
-          find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
-          rm -rf doc/_build/mini18n-html
-
-      - name: Dump Sphinx Build Warnings and Errors
-        if: always()
-        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+      # Translated (i18n) docs are built in a dedicated pipeline in
+      # pyvista/pyvista-doc-translations. See issue #8626.
 
       - name: Upload HTML documentation
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: docs-build
-          path:
-            | # Only vtksz files in 'doc/_build/html/_images/' are used. Exclude all others since these files may be large.
-            doc/_build/html/
-            !doc/_build/html/index-*.vtksz
-            !doc/_build/html/api/**/*.vtksz
-            !doc/_build/html/extras/**/*.vtksz
-            !doc/_build/html/getting-started/**/*.vtksz
-            !doc/_build/html/user-guide/**/*.vtksz
+          path: doc/_build/html/
 
       - name: Upload non-interactive HTML documentation
         if: ${{ !cancelled() }}
@@ -174,7 +156,7 @@ jobs:
     env:
       TOX_COLORED: "yes"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -219,7 +201,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v6
@@ -243,7 +225,7 @@ jobs:
       - name: Get app installation token (pyvista-examples)
         id: app-token
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
           private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
@@ -255,7 +237,7 @@ jobs:
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         with:
           external_repository: pyvista/pyvista-examples
           personal_token: ${{ steps.app-token.outputs.token }}

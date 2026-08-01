@@ -7,7 +7,7 @@ The imports are needed to initialize the various subcommands (ie. plot, report, 
 # ruff: noqa: I001
 from __future__ import annotations
 
-from .app import app as app
+from .app import CLI_APP as CLI_APP
 from . import report as report
 from . import convert as convert
 from . import plot as plot

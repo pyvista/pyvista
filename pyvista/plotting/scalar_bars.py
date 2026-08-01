@@ -9,10 +9,10 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .tools import parse_font_family
 
@@ -41,6 +41,10 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+
+    def __plotter_close__(self) -> None:
+        """Release scalar-bar state when the owning plotter closes."""
+        self.clear()
 
     def __repr__(self):
         """Nice representation of this class."""

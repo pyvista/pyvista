@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import json
 import locale
 import os
 from pathlib import Path
@@ -11,7 +12,6 @@ import sys
 from typing import TYPE_CHECKING
 import warnings
 
-from atsphinx.mini18n import get_template_dir
 from docutils.parsers.rst.directives.images import Image
 
 if TYPE_CHECKING:
@@ -70,8 +70,11 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
 # Prevent deprecated features from being used in examples
@@ -96,7 +99,6 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -241,6 +243,7 @@ nitpick_ignore_regex = [
     # PyVista shader/plotting enums
     (r'py:.*', '.*ShaderType'),
     (r'py:.*', '.*PointSpriteShape'),
+    (r'py:.*', '.*StereoType'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
@@ -293,6 +296,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
+    (r'py:.*', 'ndarray'),
     #
     # pyarrow does not register a py:module entry in its intersphinx
     # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
@@ -383,7 +387,7 @@ intersphinx_timeout = 5
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates', get_template_dir()]
+templates_path = ['_templates']
 
 # Autosummary configuration
 autosummary_context = {
@@ -428,6 +432,12 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+_repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
+_docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
+_context7_data = json.loads(_repo_context7.read_text())
+_context7_data['url'] = 'https://context7.com/websites/pyvista'
+_docs_context7.write_text(json.dumps(_context7_data, indent=2) + '\n')
+
 html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -448,6 +458,13 @@ def _filter_sphinx_gallery_warnings():
         'ignore',
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
+    )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
     )
 
     # Treat all remaining warnings as errors
@@ -664,6 +681,7 @@ html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
+    'codimensional.css',  # pin partner card to bottom of right sidebar
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -769,19 +787,21 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
-# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
         'icon-links.html',
-        'mini18n/snippets/select-lang.html',
         'search-button-field.html',
         'sbt-sidebar-nav.html',
     ],
 }
-mini18n_default_language = language
-mini18n_support_languages = ['en', 'ja']
-locale_dirs = ['../../pyvista-doc-translations/locale']
+
+# Pin the CoDimensional PBC partner card to the bottom of the right
+# (secondary) sidebar, below the page table of contents, on every page.
+html_theme_options['secondary_sidebar_items'] = [
+    'page-toc.html',
+    'codimensional.html',
+]
 
 
 class PlaceHolderImage(Image):

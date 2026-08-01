@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-import contextlib
 from itertools import product
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
 
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -30,12 +30,6 @@ from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
 from .geometric_sources import translate
-
-with contextlib.suppress(ImportError):
-    from .geometric_sources import CapsuleSource
-
-from typing import TYPE_CHECKING
-
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -106,25 +100,15 @@ def Capsule(  # noqa: PLR0917
     >>> capsule.plot(show_edges=True)
 
     """
-    if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-        algo = CylinderSource(
-            center=center,
-            direction=direction,
-            radius=radius,
-            height=cylinder_length,
-            capping=True,
-            resolution=resolution,
-        )
-        algo.capsule_cap = True
-    else:
-        algo = CapsuleSource(
-            center=(0, 0, 0),
-            direction=(1, 0, 0),
-            radius=radius,
-            cylinder_length=cylinder_length,
-            theta_resolution=resolution,
-            phi_resolution=resolution,
-        )
+    algo = CylinderSource(
+        center=center,
+        direction=direction,
+        radius=radius,
+        height=cylinder_length,
+        capping=True,
+        resolution=resolution,
+    )
+    algo.capsule_cap = True
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
@@ -194,6 +178,8 @@ def Cylinder(  # noqa: PLR0917
 
     The above examples are similar in terms of their behavior.
 
+    See :ref:`chemistry_molecule_example` for more examples using this function.
+
     """
     algo = CylinderSource(
         center=center,
@@ -211,7 +197,7 @@ def Cylinder(  # noqa: PLR0917
 
 @_deprecate_positional_args
 def CylinderStructured(  # noqa: PLR0917
-    radius: float = 0.5,
+    radius: float | VectorLike[float] = 0.5,
     height: float = 1.0,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -229,7 +215,8 @@ def CylinderStructured(  # noqa: PLR0917
     radius : float | sequence[float], default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
-        specified by the ``radius``.
+        specified by the ``radius``. The sequence must be sorted
+        in ascending order.
 
     height : float, default: 1.0
         Height of the cylinder along its Z-axis.
@@ -242,7 +229,6 @@ def CylinderStructured(  # noqa: PLR0917
 
     theta_resolution : int, default: 32
         Number of points on the circular face of the cylinder.
-        Ignored if ``radius`` is an iterable.
 
     z_resolution : int, default: 10
         Number of points along the height (Z-axis) of the cylinder.
@@ -275,7 +261,12 @@ def CylinderStructured(  # noqa: PLR0917
 
     """
     # Define grid in polar coordinates
-    r = np.array([radius]).ravel()
+    r = _validation.validate_arrayN(
+        radius,
+        must_be_in_range=[0.0, np.inf],
+        strict_lower_bound=True,
+        must_be_sorted={'ascending': True, 'strict': True},
+    )
     nr = len(r)
     theta = np.linspace(0, 2 * np.pi, num=theta_resolution + 1)
     radius_matrix, theta_matrix = np.meshgrid(r, theta)
@@ -288,7 +279,6 @@ def CylinderStructured(  # noqa: PLR0917
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
-    zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
@@ -398,6 +388,8 @@ def Sphere(  # noqa: PLR0917
     end_theta: float = 360.0,
     start_phi: float = 0.0,
     end_phi: float = 180.0,
+    tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
+    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a sphere.
 
@@ -447,6 +439,36 @@ def Sphere(  # noqa: PLR0917
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
 
+    tessellation : 'triangle' | 'phi_theta', default: 'triangle'
+        Configure the tessellation of the sphere.
+
+        - ``'triangle'``: tessellate with all :attr:`~pyvista.CellType.TRIANGLE` cells.
+        - ``'phi_theta'``: tessellate with :attr:`~pyvista.CellType.QUAD` cells
+          aligned to the phi and theta directions. Cells at the poles are
+          :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        .. versionadded:: 0.49
+
+    texture_coordinates : bool, default: False
+        If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
+        Enabling this option will also generate a topological seam at ``theta=0`` by duplicating
+        vertices, and the sphere will not be a closed surface.
+
+        This option is only supported for complete spheres.
+
+        .. note::
+
+            For textures of Earth such as :func:`~pyvista.examples.examples.load_globe_texture`,
+            the texture's seam corresponds to 180 degrees longitude. Accordingly, it is necessary
+            to rotate the sphere 180 degrees along the polar axis, (e.g. using
+            :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
+            the Prime Meridian along the positive x-axis.
+
+            In this case, consider using :func:`~pyvista.examples.planets.load_planet` instead,
+            which already includes this rotation.
+
+        .. versionadded:: 0.49
+
     Returns
     -------
     pyvista.PolyData
@@ -457,6 +479,8 @@ def Sphere(  # noqa: PLR0917
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
+    :func:`pyvista.examples.planets.load_planet`
+        Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
 
     Examples
     --------
@@ -476,6 +500,21 @@ def Sphere(  # noqa: PLR0917
     >>> sphere = pv.Sphere(end_phi=90)
     >>> out = sphere.plot(show_edges=True)
 
+    Tessellate along ``phi`` and ``theta`` directions.
+    The sphere is mostly quads with triangles at the poles.
+
+    >>> sphere = pv.Sphere(tessellation='phi_theta')
+    >>> sorted(sphere.distinct_cell_types)
+    [<CellType.TRIANGLE: 5>, <CellType.QUAD: 9>]
+
+    >>> out = sphere.plot(show_edges=True)
+
+    Include texture coordinates.
+
+    >>> sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    >>> sphere.active_texture_coordinates[0]
+    pyvista_ndarray([0., 1.], dtype=float32)
+
     """
     sphere = SphereSource(
         radius=radius,
@@ -485,6 +524,8 @@ def Sphere(  # noqa: PLR0917
         end_theta=end_theta,
         start_phi=start_phi,
         end_phi=end_phi,
+        tessellation=tessellation,
+        texture_coordinates=texture_coordinates,
     )
     surf = sphere.output
     surf.rotate_y(90, inplace=True)
@@ -638,7 +679,7 @@ def SolidSphere(  # noqa: PLR0917
         end_phi = np.pi if radians else 180.0
 
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution + 1)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
         radius=radius,
@@ -1155,6 +1196,9 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     >>> pl.camera.zoom(0.8)
     >>> pl.show()
 
+    See :ref:`create_multiple_lines_example` and :ref:`color_lines_example`
+    for more examples.
+
     """
     if points is None:
         points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
@@ -1507,10 +1551,10 @@ def Disc(  # noqa: PLR0917
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, default: 1
-        Number of points in radial direction.
+        Number of cells in radial direction.
 
     c_res : int, default: 6
-        Number of points in circumferential direction.
+        Number of cells in circumferential direction.
 
     Returns
     -------
@@ -1635,6 +1679,8 @@ def Text3D(  # noqa: PLR0917
     ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
     ... )
     >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    See :ref:`create_text_3d_example` for more examples using this function.
 
     """
     return Text3DSource(
@@ -1803,6 +1849,9 @@ def CircularArc(  # noqa: PLR0917
     >>> _ = pl.view_xy()
     >>> pl.show()
 
+    See :ref:`create_circular_arc_example` and :ref:`flight_paths_example`
+    for more examples using this function.
+
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -1892,6 +1941,8 @@ def CircularArcFromNormal(  # noqa: PLR0917
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
+
+    See :ref:`create_circular_arc_example` for more examples using this function.
 
     """
     check_valid_vector(center, 'center')

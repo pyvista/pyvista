@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import cast
 
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -957,6 +959,7 @@ class PolyDataFilters(DataSetFilters):
         feature_smoothing: bool = False,  # noqa: FBT001, FBT002
         non_manifold_smoothing: bool = False,  # noqa: FBT001, FBT002
         normalize_coordinates: bool = False,  # noqa: FBT001, FBT002
+        window_function: Literal['blackman', 'hamming', 'hanning', 'nuttall'] | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -1010,6 +1013,13 @@ class PolyDataFilters(DataSetFilters):
             smoothing, and translate and scale the position coordinates back to
             the original coordinate frame.
 
+        window_function : str, optional
+            Window function used by the underlying
+            :vtk:`vtkWindowedSincPolyDataFilter`. Accepted values are
+            ``'blackman'``, ``'hamming'``, ``'hanning'``, and ``'nuttall'``.
+            ``'nuttall'`` is used by default when available. This option
+            requires VTK 9.4.0 or later.
+
         inplace : bool, default: False
             Updates mesh in-place.
 
@@ -1049,6 +1059,29 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_text('Smoothed Mesh')
         >>> pl.show()
 
+        Use :func:`~pyvista.plot_compare_four` to show differences between
+        window functions.
+
+        >>> mesh = examples.download_foot_bones()
+        >>> multi_compare = pv.MultiBlock()
+        >>> multi_compare['nuttall'] = mesh.smooth_taubin(window_function='nuttall')
+        >>> multi_compare['blackman'] = mesh.smooth_taubin(window_function='blackman')
+        >>> multi_compare['hamming'] = mesh.smooth_taubin(window_function='hamming')
+        >>> multi_compare['hanning'] = mesh.smooth_taubin(window_function='hanning')
+        >>>
+        >>> cpos = pv.CameraPosition(
+        ...     position=(-0.7780, -12.74, -2.019),
+        ...     focal_point=(1.257, -1.716, -0.2136),
+        ...     viewup=(-0.2696, -0.1070, 0.9570),
+        ... )
+        >>>
+        >>> pv.plot_compare_four(
+        ...     *multi_compare,
+        ...     display_kwargs={'show_edges': True},
+        ...     labels=multi_compare.keys(),
+        ...     camera_position=cpos,
+        ... )
+
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
@@ -1062,6 +1095,29 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
+        if window_function is not None and pv.vtk_version_info < (9, 4, 0):
+            msg = '`window_function` requires VTK 9.4.0 or later.'
+            raise pv.VTKVersionError(msg)
+
+        if pv.vtk_version_info >= (9, 4, 0):
+            window_functions = {
+                'blackman': alg.SetWindowFunctionToBlackman,
+                'hamming': alg.SetWindowFunctionToHamming,
+                'hanning': alg.SetWindowFunctionoHanning,
+                'nuttall': alg.SetWindowFunctionToNuttall,
+            }
+
+            window_function_ = 'nuttall' if window_function is None else window_function.lower()
+            try:
+                set_window_function = window_functions[window_function_]
+            except KeyError as err:
+                msg = (
+                    f"Invalid window_function '{window_function}'. "
+                    f'Expected one of: {", ".join(window_functions)}.'
+                )
+                raise ValueError(msg) from err
+
+            set_window_function()
         _update_alg(
             alg, progress_bar=progress_bar, message='Smoothing Mesh using Taubin Smoothing'
         )
@@ -1730,14 +1786,12 @@ class PolyDataFilters(DataSetFilters):
         boundary_constraints: bool, default: False
             Use the legacy weighting by boundary_edge_length instead of by
             boundary_edge_length^2 for backwards compatibility.
-            It requires vtk>=9.3.0.
 
             .. versionadded:: 0.45.0
 
         boundary_weight: float, default: 1.0
             A floating point factor to weigh the boundary quadric constraints
             by: higher factors further constrain the boundary.
-            It requires vtk>=9.3.0.
 
             .. versionadded:: 0.45.0
 
@@ -1831,12 +1885,8 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            if boundary_constraints:
-                warn_external('`boundary_constraints` requires vtk >= 9.3.')
-        else:
-            alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
-            alg.SetBoundaryWeightFactor(boundary_weight)
+        alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
+        alg.SetBoundaryWeightFactor(boundary_weight)
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
@@ -1864,7 +1914,7 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Compute point and/or cell normals for a mesh.
 
-        The filter can reorder polygons to insure consistent
+        The filter can reorder polygons to ensure consistent
         orientation across polygon neighbors. Sharp edges can be split
         and points duplicated with separate normals to give crisp
         (rendered) surface definition. It is also possible to globally
@@ -2097,8 +2147,8 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Clip a sphere in the X direction centered at the origin.  This
-        will leave behind half a sphere in the positive X direction.
+        Clip a sphere in the negative Z direction centered at the origin.
+        This will leave behind half a sphere in the negative Z direction.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -2111,6 +2161,8 @@ class PolyDataFilters(DataSetFilters):
 
         >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
+
+        See :ref:`clip_closed_surface_example` for more examples using this filter.
 
         """
         # verify it is manifold
@@ -2187,6 +2239,8 @@ class PolyDataFilters(DataSetFilters):
         ...     feature_edges=False, manifold_edges=False
         ... )  # doctest:+SKIP
         >>> assert edges.n_cells == 0  # doctest:+SKIP
+
+        See :ref:`fill_holes_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkFillHolesFilter()
@@ -2515,6 +2569,12 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
+        PolyDataFilters.multi_ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
         :ref:`ray_trace_moeller_example`
             Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
 
@@ -2537,20 +2597,13 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`ray_trace_example` for more examples using this filter.
 
         """
-        points = _vtk.vtkPoints()
-        cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(list(origin), list(end_point), points, cell_ids)
+        intersection_points, intersection_cells = self.intersect_with_line(
+            origin, end_point, deduplicate_points=True
+        )
 
-        intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
         if first_point and has_intersection:
             intersection_points = intersection_points[0]
-
-        intersection_cells = []
-        if has_intersection:
-            ncells = 1 if first_point else cell_ids.GetNumberOfIds()
-            intersection_cells = [cell_ids.GetId(i) for i in range(ncells)]
-        intersection_cells = np.array(intersection_cells)  # type: ignore[assignment]
 
         if plot:
             pl = pv.Plotter(off_screen=off_screen)
@@ -2613,6 +2666,15 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
+
+        See Also
+        --------
+        PolyDataFilters.ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -2845,7 +2907,7 @@ class PolyDataFilters(DataSetFilters):
             normals = self.point_normals
 
         if flip:
-            normals *= -1  # type: ignore[misc]
+            normals *= -1
 
         pl.add_arrows(
             centers,
@@ -2976,21 +3038,12 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warn_external(
+        # Deprecated on v0.45.0, error on v0.49.0
+        msg = (
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
-            'Note that `inplace` is now `False` by default for the new filter.',
-            PyVistaDeprecationWarning,
+            'Note that `inplace` is now `False` by default for the new filter.'
         )
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
-            msg = 'Can only flip normals on an all triangle mesh.'
-            raise NotAllTrianglesError(msg)
-
-        f = self._connectivity_array  # type: ignore[attr-defined]
-
-        # swap first and last point index in-place
-        # See: https://stackoverflow.com/a/33362288/
-        f[::3], f[2::3] = f[2::3], f[::3].copy()
+        raise DeprecationError(msg)
 
     def _reverse_sense(  # type: ignore[misc]
         self: PolyData,

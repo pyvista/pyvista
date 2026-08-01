@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import is_dataclass
 from enum import Enum
 import importlib.util
 from pathlib import Path
+import re
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
@@ -16,6 +19,80 @@ from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.charts import _vtkWrapper
+
+
+def test_vtk_namespace():
+    # Test vtk class not defined in namespace
+    match = (
+        "'does_not_exist' is not defined in PyVista's vtk namespace.\n"
+        'Developers should add a new `module:does_not_exist` mapping to the `_vtk` module.'
+    )
+    with pytest.raises(AttributeError, match=re.escape(match)):
+        _ = _vtk.does_not_exist
+
+
+def test_vtk_module_does_not_exist(monkeypatch):
+    # Test module does not exist
+    cls, module = 'foo', 'bar'
+    monkeypatch.setitem(_vtk._VTK_CLASS_TO_MODULE, cls, module)
+    assert cls in _vtk._VTK_CLASS_TO_MODULE
+    match = (
+        f"Cannot import name {cls!r} from 'vtkmodules.{module}'.\n"
+        'The cause is likely attributable to VTK version or a custom VTK build.'
+    )
+    with pytest.raises(ImportError, match=match):
+        _ = getattr(_vtk, cls)
+
+
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Test hangs in CI on Linux')
+def test_vtk_class_does_not_exist(monkeypatch):
+    # Test module exists, but class does not
+    cls, module = 'foo', 'vtkCommonCore'
+    monkeypatch.setitem(_vtk._VTK_CLASS_TO_MODULE, cls, module)
+    assert 'foo' in _vtk._VTK_CLASS_TO_MODULE
+    match = (
+        f"Cannot import name {cls!r} from 'vtkmodules.{module}'.\n"
+        'The cause is likely attributable to VTK version or a custom VTK build.'
+    )
+    with pytest.raises(ImportError, match=match):
+        _ = getattr(_vtk, cls)
+
+
+@pytest.mark.parametrize(
+    'mapping',
+    [
+        _vtk._CORE_MODULES,
+        _vtk._PLOTTING_MODULES,
+        _vtk._OPENGL_MODULES,
+    ],
+    ids=['core', 'plotting', 'opengl'],
+)
+def test_vtk_module_mapping_is_sorted_and_unique(mapping):
+    # Modules are alphabetically ordered
+    assert list(mapping) == sorted(mapping)
+
+    # Classes are alphabetically ordered within each module
+    for module, classes in mapping.items():
+        assert classes == tuple(sorted(classes)), module
+
+    # Classes are unique within this mapping
+    counts = Counter(cls for classes in mapping.values() for cls in classes)
+    duplicates = {cls: count for cls, count in counts.items() if count > 1}
+    assert not duplicates
+
+
+def test_vtk_classes_are_globally_unique():
+    mappings = (
+        _vtk._CORE_MODULES,
+        _vtk._PLOTTING_MODULES,
+        _vtk._OPENGL_MODULES,
+    )
+
+    counts = Counter(
+        cls for mapping in mappings for classes in mapping.values() for cls in classes
+    )
+    duplicates = {cls: count for cls, count in counts.items() if count > 1}
+    assert not duplicates
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
@@ -164,6 +241,8 @@ def get_default_class_init_kwargs(pyvista_class):
     elif pyvista_class is pv.AffineWidget3D:
         kwargs['plotter'] = pv.Plotter()
         kwargs['actor'] = pv.Actor()
+    elif pyvista_class in (pv.PickingComponent, pv.WidgetComponent):
+        kwargs['plotter'] = pv.Plotter()
     elif pyvista_class is pv.BlockAttributes:
         dataset = pv.ImageData()
         kwargs['block'] = dataset
@@ -356,8 +435,6 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
         ):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Test fails without proper dataset files.')
-        elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
-            pytest.skip('Deprecated.')
         elif is_dataclass(pyvista_class):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Dataclass, no test required.')
@@ -381,6 +458,11 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             )
         elif pyvista_class is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
             pytest.skip('Requires vtk 9.4')
+        elif pyvista_class is pv.FluentReader and pv.vtk_version_info < (9, 4, 0):
+            # vtkFLUENTReader hangs indefinitely on older VTK when given a
+            # non-Fluent file. The other readers in `try_init_pyvista_object`
+            # tolerate the dummy `__file__` path without trying to parse it.
+            pytest.skip('vtkFLUENTReader hangs on bad input on vtk<9.4')
 
     skip_test_for_some_classes()
     instance = try_init_pyvista_object(pyvista_class)

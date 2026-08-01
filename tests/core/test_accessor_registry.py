@@ -223,6 +223,33 @@ def test_accessor_vs_accessor_collision_warns_and_replaces():
     assert pv.Sphere().clashing.who() == 'second'
 
 
+def test_re_register_same_class_is_silent_noop(recwarn):
+    """Re-registering the identical accessor class on the same target is a
+    true no-op and must not warn.
+
+    Module re-import (e.g. ``pytest --cov`` re-executing a plugin module)
+    re-runs the registration call with the same class object. Downstream
+    packages run under ``filterwarnings=error``, so a warning here would
+    be fatal and force them into a manual de-dup workaround instead of
+    just decorating their class.
+    """
+
+    class SameAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+        def who(self):
+            return 'same'
+
+    pv.register_dataset_accessor('reimport_noop', pv.PolyData)(SameAccessor)
+    pv.register_dataset_accessor('reimport_noop', pv.PolyData)(SameAccessor)
+
+    assert [w for w in recwarn.list if issubclass(w.category, UserWarning)] == []
+    assert pv.Sphere().reimport_noop.who() == 'same'
+    records = [r for r in pv.registered_accessors() if r.name == 'reimport_noop']
+    assert len(records) == 1
+
+
 def test_inherited_accessor_collision_warns():
     """Registering on a subclass when an ancestor already owns the name warns."""
 
@@ -645,6 +672,55 @@ def test_attribute_access_triggers_plugin_load(monkeypatch):
         with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('ep_demo', pv.PolyData)
         sys.modules.pop(plugin_name, None)
+
+
+def test_class_level_access_triggers_plugin_load(monkeypatch):
+    """Class-level access (e.g. ``pv.PolyData.<name>``) before any
+    instance access must also trigger the pending plugin import. Without
+    a metaclass ``__getattr__`` hook, class access bypasses the
+    instance-level resolution path and raises ``AttributeError``.
+    """
+    plugin_name = 'fake_ep_plugin_class_access'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('class_demo', pv.PolyData)\n"
+        'class ClassDemoAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n',
+    )
+    ep = MagicMock()
+    ep.name = 'class_demo'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
+
+    try:
+        # Class-level access first — the bug this protects against was
+        # that this raised AttributeError because the metaclass did not
+        # consult the entry-point registry.
+        accessor_cls = pv.PolyData.class_demo
+        assert accessor_cls.__name__ == 'ClassDemoAccessor'
+        # Instance access then returns an instance of that accessor.
+        assert isinstance(pv.Sphere().class_demo, accessor_cls)
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('class_demo', pv.PolyData)
+        sys.modules.pop(plugin_name, None)
+
+
+def test_class_level_access_unknown_attribute_raises(monkeypatch):
+    """Class-level access to a name that is not a pending accessor must
+    still raise ``AttributeError`` rather than silently returning ``None``
+    or hanging on plugin resolution."""
+    _reset_entry_point_state(monkeypatch, [])
+
+    with pytest.raises(AttributeError, match='no attribute'):
+        _ = pv.PolyData.definitely_not_a_real_attribute
 
 
 def test_pending_plugin_only_imported_once(monkeypatch):

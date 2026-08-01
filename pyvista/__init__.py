@@ -92,7 +92,7 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
+PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
@@ -113,6 +113,13 @@ if TYPE_CHECKING:
     from pyvista.plotting import *
 
 
+# Tracks whether the ``PYVISTA_PLOT_THEME`` environment variable has been
+# applied yet. Applying a plugin theme runs arbitrary plugin code that can
+# call back into ``pyvista`` before this module has finished the caller's
+# original request; the flag keeps the apply single-shot.
+_env_theme_applied: bool = False
+
+
 # Lazily import/access the plotting module
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
@@ -129,9 +136,15 @@ def __getattr__(name):
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
 
+    def _cache_attr_and_return(obj):
+        # Cache the attr on this module to avoid calls to __getattr__ on next access
+        globals()[name] = obj
+        return obj
+
     if name == 'hexcolors':
         from pyvista.plotting.colors import _get_deprecated_hexcolors  # noqa: PLC0415
 
+        # Do not cache since we want to re-issue the deprecation warning
         return _get_deprecated_hexcolors()
 
     allow = {
@@ -142,7 +155,7 @@ def __getattr__(name):
         'utilities',
     }
     if name in allow:
-        return importlib.import_module(f'pyvista.{name}')
+        return _cache_attr_and_return(importlib.import_module(f'pyvista.{name}'))
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
@@ -154,4 +167,17 @@ def __getattr__(name):
         msg = f"module 'pyvista' has no attribute '{name}'"
         raise AttributeError(msg) from None
 
-    return feature
+    # Apply ``PYVISTA_PLOT_THEME`` once, now that ``pyvista.plotting`` is fully
+    # loaded and the caller's requested attribute is already resolved. Doing
+    # this inside ``pyvista.plotting.__init__`` invites re-entrant access to a
+    # partially-initialized module when an entry-point-registered plugin is
+    # imported (Python 3.12 evaluates annotations like ``pv.Plotter`` eagerly
+    # at plugin module load). The flag is set before the call to prevent
+    # re-entrant double-application if a plugin's module body accesses
+    # attributes on ``pyvista`` during the theme apply.
+    global _env_theme_applied  # noqa: PLW0603
+    if not _env_theme_applied:
+        _env_theme_applied = True
+        sys.modules['pyvista.plotting']._set_plot_theme_from_env()
+
+    return _cache_attr_and_return(feature)

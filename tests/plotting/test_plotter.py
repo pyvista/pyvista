@@ -7,21 +7,30 @@ All other tests requiring rendering should to in
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
+import sys
 import threading
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import MissingDataError
-from pyvista.plotting import _vtk
 from pyvista.plotting.errors import RenderWindowUnavailable
+import pyvista.plotting.tools as tools_mod
+from pyvista.plotting.tools import supports_open_gl
+from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
 
@@ -57,9 +66,6 @@ def test_screenshot_fail_suppressed_rendering():
         pl.show(screenshot='tmp.png')
 
 
-@pytest.mark.filterwarnings(
-    'ignore:Assigning a theme for a plotter instance is deprecated:pyvista.PyVistaDeprecationWarning'  # noqa: E501
-)
 def test_plotter_theme_raises():
     with pytest.raises(
         TypeError,
@@ -68,10 +74,11 @@ def test_plotter_theme_raises():
         pv.Plotter(theme=1)
 
     pl = pv.Plotter()
-    match = re.escape('Expected a pyvista theme like ``pyvista.plotting.themes.Theme``, not int.')
-
-    with pytest.raises(TypeError, match=match):
-        pl.theme = 1
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'Assigning a theme for a plotter instance is deprecated',
+    ):
+        pl.theme = pv.themes.DarkTheme()
 
 
 def test_plotter_anti_aliasing_raises():
@@ -701,6 +708,74 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_plotter_meshes_mapper_without_dataset_input():
+    mapper = _vtk.vtkPolyDataMapper()
+    assert mapper.GetInput() is None
+
+    actor = _vtk.vtkActor()
+    actor.SetMapper(mapper)
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(actor)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_actor_without_mapper():
+    prop = _vtk.vtkPropAssembly()
+    assert not hasattr(prop, 'GetMapper')
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(prop)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_from_assembly():
+    assembly = pv.AxesAssembly()
+    n_3d_actors = 6
+    n_2d_actors = 3
+    assert len(assembly.parts) == n_2d_actors + n_3d_actors
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(assembly)
+
+    result = pl.meshes
+    assert len(result) == n_3d_actors
+
+    # Ensure all actors with meshes are included in result
+    for part in assembly.parts:
+        if isinstance(part, pv.DataObject):
+            assert part in result
+        else:
+            assert part not in result
+
+
+def test_plotter_meshes_from_nested_assembly():
+    assembly = pv.AxesAssembly()
+    subassembly = pv.AxesAssembly()
+    assembly.AddPart(subassembly)
+    n_3d_actors = 6
+    n_2d_actors = 3
+    n_nested = 1
+    assert len(assembly.parts) == n_2d_actors + n_3d_actors + n_nested
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(assembly)
+
+    result = pl.meshes
+    assert len(result) == n_3d_actors * 2
+
+    # Ensure all actors with meshes are included in result
+    for part in [*assembly.parts, *subassembly.parts]:
+        if isinstance(part, pv.DataObject):
+            assert part in result
+        else:
+            assert part not in result
+
+
 def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
     pl = pv.Plotter()
@@ -800,7 +875,6 @@ def test_legend_font(sphere):
     assert legend.GetEntryTextProperty().GetFontFamily() == _vtk.VTK_TIMES
 
 
-@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter()
@@ -872,3 +946,77 @@ def test_off_screen_background_thread_rendering():
     t.join(timeout=10)
 
     assert not errors, f'Background thread rendering failed: {errors[0]}'
+
+
+def test_supports_open_gl():
+    assert supports_open_gl()
+
+
+def _make_fake_render_window():
+    """MagicMock whose Get/Set for NSView context stay in sync."""
+    fake = MagicMock()
+    fake.GetConnectContextToNSView.return_value = True  # VTK's real default
+
+    def _set_connect(value):
+        fake.GetConnectContextToNSView.return_value = value
+
+    fake.SetConnectContextToNSView.side_effect = _set_connect
+    return fake
+
+
+def _invoke_check_depth_peeling():
+    fake_render_window = _make_fake_render_window()
+    with patch(
+        'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
+        return_value=fake_render_window,
+    ):
+        check_depth_peeling()
+    return fake_render_window
+
+
+def _invoke_supports_open_gl():
+    fake_render_window = _make_fake_render_window()
+    tools_mod.SUPPORTS_OPENGL = None  # bypass the module-level cache
+    with patch(
+        'pyvista.plotting.tools._vtk.vtkRenderWindow',
+        return_value=fake_render_window,
+    ):
+        supports_open_gl()
+    return fake_render_window
+
+
+def _invoke_plotter_offscreen():
+    pl = pv.Plotter(off_screen=True)
+    ren_win = pl.ren_win
+    pl.close()
+    return ren_win
+
+
+@dataclass
+class _MacOSFixCase:
+    id: str
+    invoke: Callable[[], MagicMock]
+
+
+# Test cases for functions that create off-screen render windows.
+# These functions all call `_prepare_offscreen_macos_render_window` internally.
+# NOTE: report.py has a script that creates an off-screen renderer but is not covered here
+_MACOS_FIX_CASES = [
+    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling),
+    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl),
+    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen),
+]
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+@pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
+def test_macos_offscreen_render_window_configured(case):
+    """Test no macOS phantom window is generated for off-screen plotting."""
+    appkit_mock = MagicMock()
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        render_window = case.invoke()
+
+    assert render_window.GetConnectContextToNSView() is False
+    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
+        appkit_mock.NSApplicationActivationPolicyProhibited,
+    )

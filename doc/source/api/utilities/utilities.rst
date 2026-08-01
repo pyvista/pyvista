@@ -61,10 +61,8 @@ File IO
    read_exodus
    read_grdecl
    read_meshio
-   read_pickle
    read_texture
    save_meshio
-   save_pickle
    set_pickle_format
 
 Mesh Creation
@@ -125,6 +123,7 @@ Colors
 
    Color
    ColorLike
+   get_cmap_safe
 
 Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
 and other plotting-related methods:
@@ -160,7 +159,6 @@ Miscellaneous
    JupyterBackendRegistration
    send_errors_to_logging
    set_jupyter_backend
-   start_xvfb
    Report
    enable_smp_tools
    set_default_active_scalars
@@ -191,6 +189,8 @@ Errors and Warnings
    core.errors.VTKExecutionError
    core.errors.VTKExecutionWarning
    core.errors.VTKVersionError
+   plotting.errors.InvalidCameraError
+   plotting.errors.RenderWindowUnavailable
 
 
 PyVista Version Information

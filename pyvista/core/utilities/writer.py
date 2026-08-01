@@ -20,10 +20,9 @@ from pyvista.core.utilities.misc import abstract_class
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from vtkmodules.vtkIOCore import vtkWriter
-
     from pyvista import DataObject
     from pyvista import NumpyArray
+    from pyvista import _vtk
 
 _DataFormatOptions = Literal['binary', 'ascii']
 
@@ -37,7 +36,7 @@ class _DataFormatMixin:
 
     @property
     @abstractmethod
-    def writer(self) -> vtkWriter: ...
+    def writer(self) -> _vtk.vtkWriter: ...
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -112,7 +111,7 @@ class BaseWriter(_FileIOBase):
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
     @property
-    def writer(self) -> vtkWriter:
+    def writer(self) -> _vtk.vtkWriter:
         """Return the vtk writer object.
 
         Returns
@@ -169,7 +168,6 @@ class BMPWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkBMPWriter'
 
 
@@ -182,7 +180,6 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetWriter'
 
     def _execute_before_write(self) -> None:
@@ -210,7 +207,6 @@ class HDFWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFWriter'
 
     def _execute_before_write(self) -> None:
@@ -263,7 +259,6 @@ class HoudiniPolyDataWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkHoudiniPolyDataWriter'
 
 
@@ -276,7 +271,6 @@ class IVWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkIVWriter'
 
 
@@ -289,7 +283,6 @@ class JPEGWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkJPEGWriter'
 
 
@@ -302,7 +295,6 @@ class NIFTIImageWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNIFTIImageWriter'
 
 
@@ -315,7 +307,6 @@ class OBJWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOBJWriter'
 
 
@@ -328,7 +319,6 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOPLY'
     _vtk_class_name = 'vtkPLYWriter'
 
     @property
@@ -367,7 +357,6 @@ class PNGWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNGWriter'
 
 
@@ -380,7 +369,6 @@ class PNMWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNMWriter'
 
 
@@ -393,7 +381,6 @@ class PolyDataWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkPolyDataWriter'
 
 
@@ -406,7 +393,6 @@ class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkRectilinearGridWriter'
 
 
@@ -419,7 +405,6 @@ class STLWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkSTLWriter'
 
 
@@ -432,7 +417,6 @@ class SimplePointsWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkSimplePointsWriter'
 
 
@@ -445,7 +429,6 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkStructuredGridWriter'
 
 
@@ -458,7 +441,6 @@ class TIFFWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkTIFFWriter'
 
 
@@ -471,7 +453,6 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkUnstructuredGridWriter'
 
 
@@ -511,7 +492,6 @@ class XMLImageDataWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataWriter'
 
 
@@ -524,7 +504,6 @@ class XMLMultiBlockDataWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataWriter'
 
     def _execute_before_write(self) -> None:
@@ -540,7 +519,6 @@ class XMLPartitionedDataSetWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOParallelXML'
     _vtk_class_name = 'vtkXMLPartitionedDataSetWriter'
 
 
@@ -553,7 +531,6 @@ class XMLPolyDataWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPolyDataWriter'
 
 
@@ -566,7 +543,6 @@ class XMLRectilinearGridWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLRectilinearGridWriter'
 
 
@@ -579,7 +555,6 @@ class XMLStructuredGridWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLStructuredGridWriter'
 
 
@@ -592,5 +567,4 @@ class XMLUnstructuredGridWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLUnstructuredGridWriter'

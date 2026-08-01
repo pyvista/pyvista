@@ -8,11 +8,10 @@ import weakref
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 
-from . import _vtk
-from . import _vtk_gl
 from ._property import Property
 from .opts import PointSpriteShape
 from .opts import ShaderType
@@ -636,7 +635,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             msg = f'Invalid shader_type {shader_type!r}. Must be one of: {valid}'
             raise ValueError(msg) from None
 
-        vtk_enum = getattr(_vtk_gl.vtkShader, shader_type.value.capitalize())
+        vtk_enum = getattr(_vtk.vtkShader, shader_type.value.capitalize())
         key = (shader_type, original, replace_first)
         registry = self._shader_replacements
 
@@ -704,7 +703,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             registry.clear()
         elif _feature_name in registry:
             for shader_type_val, original, replace_first in registry[_feature_name]:
-                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_val.value.capitalize())
+                vtk_enum = getattr(_vtk.vtkShader, shader_type_val.value.capitalize())
                 # vtkOpenGLShaderProperty at runtime; stubs only know vtkShaderProperty
                 shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
                     vtk_enum,
@@ -780,10 +779,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.enable_maximum_intensity_projection()
 
         """
-        if pv.vtk_version_info < (9, 3):
-            msg = 'Maximum intensity projection requires VTK >= 9.3.'
-            raise RuntimeError(msg)
-
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:

@@ -370,19 +370,6 @@ def test_save_builtin_writer_rejects_multiple_unexpected_kwargs(tmp_path):
         pv.Sphere().save(target, level=9, threads=4)
 
 
-def test_save_pickle_rejects_unexpected_kwargs(tmp_path):
-    target = tmp_path / 'mesh.pkl'
-    with pytest.raises(
-        TypeError,
-        match=(
-            r"unexpected keyword arguments \['level'\] for "
-            r"pickle format for extension '\.pkl'"
-        ),
-    ):
-        pv.Sphere().save(target, level=9)
-    assert not target.exists()
-
-
 def test_save_override_custom_writer_receives_kwargs(tmp_path):
     # override=True path still forwards kwargs to the custom writer.
     received: dict[str, object] = {}

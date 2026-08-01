@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
@@ -16,7 +17,6 @@ from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .prop3d import _Prop3DMixin
 from .themes import Theme
@@ -176,7 +176,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     ----------
     text : str, optional
         Text string to be displayed.
-        "\n" is recognized as a carriage return/linefeed (line separator).
+        ``\n`` is recognized as a carriage return/linefeed (line separator).
         The characters must be in the UTF-8 encoding.
 
     position : Sequence[float], optional
@@ -222,7 +222,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         -------
         str
             Text string to be displayed.
-            "\n" is recognized as a carriage return/linefeed (line separator).
+            ``\n`` is recognized as a carriage return/linefeed (line separator).
             The characters must be in the UTF-8 encoding.
 
         """

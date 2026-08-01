@@ -17,12 +17,13 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista import _vtk
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _load_css
@@ -33,7 +34,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -52,6 +52,7 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
 
     from .cube_axes_actor import CubeAxesActor
@@ -372,7 +373,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = _PropCollection(self.GetViewProps())
+        self._actors: _PropCollection | None = _PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -660,7 +661,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             for ax in range(3):
                 update_axis(ax)
 
-        for name, actor in self._actors.items():
+        for name, actor in self.actors.items():
             if not actor.GetUseBounds() and not force_use_bounds:
                 continue
             if not actor.GetVisibility() and not force_visibility:
@@ -992,6 +993,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The actors may also be unwrapped VTK objects.
 
         """
+        if self._actors is None:
+            # The renderer has been closed; it no longer holds any actors.
+            return {}
         return dict(self._actors.items())
 
     @_deprecate_positional_args(allowed=['actor'])
@@ -1290,8 +1294,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ylabel='Y',
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
-        box=None,
-        box_args=None,  # noqa: ARG002
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1328,23 +1330,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
-
-        box : bool, optional
-            Show a box orientation marker. Use ``box_args`` to adjust.
-            See :func:`pyvista.create_axes_orientation_box` for details.
-
-            .. deprecated:: 0.43.0
-                This parameter is deprecated. Use the ``add_box_axes`` method
-                instead.
-
-        box_args : dict, optional
-            Parameters for the orientation box widget when
-            ``box=True``. See the parameters of
-            :func:`pyvista.create_axes_orientation_box`.
-
-            .. deprecated:: 0.43.0
-                This parameter is deprecated. Use the ``add_box_axes`` method
-                instead.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
@@ -1407,10 +1392,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
-
-        if box:
-            msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
-            raise DeprecationError(msg)
 
         self.axes_actor = create_axes_marker(
             label_color=color,
@@ -2995,12 +2976,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if isinstance(actor, str):
             name = actor
-            keys = list(self._actors.keys())
+            actors = self.actors
+            keys = list(actors.keys())
             names = [k for k in keys if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
-                actor = self._actors[name]
+                actor = actors[name]
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
@@ -3773,17 +3755,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = (
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.'
-            )
-            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3817,11 +3788,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
 
     @_deprecate_positional_args(allowed=['texture'])
-    def set_environment_texture(
+    def set_environment_texture(  # noqa: PLR0917
         self,
         texture,
         is_srgb=False,  # noqa: FBT002
         resample: bool | float | None = None,  # noqa: FBT001
+        rotation: RotationLike | None = None,
+        show_background=True,  # noqa: FBT002
     ) -> None:
         """Set the environment texture used for image based lighting.
 
@@ -3858,6 +3831,27 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 does `not` resample the background texture.
 
             .. versionadded:: 0.45
+
+            .. versionchanged:: 0.48
+
+                Resampling now uses linear interpolation with anti-aliasing
+                instead of nearest-neighbor, which gives smoother results for
+                continuous environment textures.
+
+        rotation : RotationLike, optional
+            Rotation to apply to the environment texture for image-based
+            lighting and the background texture. Accepts any 3x3
+            :class:`numpy.ndarray`, :vtk:`vtkMatrix3x3`, or SciPy ``Rotation``.
+            Requires VTK >= 9.6.
+
+            .. versionadded:: 0.48
+
+        show_background : bool, default: True
+            Whether to also show the environment texture as the renderer
+            background. Set this to ``False`` to keep image-based lighting
+            enabled while using a solid or gradient background instead.
+
+            .. versionadded:: 0.48
 
         Examples
         --------
@@ -3899,14 +3893,27 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
-                texture_copy.SetInputDataObject(
-                    i, pv.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
-                )
+                old_image = pv.wrap(texture.GetInputDataObject(i, 0))
+                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
+                texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        self.SetBackgroundTexture(texture)
+        if rotation is not None:
+            if vtk_version_info < (9, 6):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
+                raise VTKVersionError(msg)
+            rotation_matrix = _validation.validate_rotation(
+                rotation,
+                must_have_handedness='right',
+                name='rotation',
+            )
+            self.SetEnvironmentRotationMatrix(pv.vtkmatrix_from_array(rotation_matrix))
+
+        self.SetBackgroundTexture(texture if show_background else None)  # type: ignore[arg-type]
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3935,17 +3942,29 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.RemoveAllObservers()
         self._remove_axes_widget()
 
+        # Detach all props from the underlying vtkRenderer's actual scene graph.
+        # Just dropping our own Python-side references (below) isn't enough: VTK's
+        # own C++ reference counting keeps a prop (and everything it owns, e.g. the
+        # cube axes actor's axis label arrays) alive as long as it's still attached
+        # here, regardless of whether we still hold a Python attribute pointing to it.
+        self.RemoveAllViewProps()
+
         self._bounding_box = None
         self._box_object = None
         self._marker_actor = None
+        self._border_actor = None
+        self.cube_axes_actor = None
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-        # Remove ref to `vtkPropCollection` held by vtkRenderer
-        if hasattr(self, '_actors'):
-            del self._actors
+        # Release the `_PropCollection` (and its ref to the `vtkPropCollection` held by
+        # vtkRenderer) by setting it to None rather than deleting the attribute. Deleting it
+        # conflicts with `_NoNewAttributesMixin`, which freezes attributes after `__init__` and
+        # so prevents the attribute from ever being restored (see #8419).
+        self._actors = None
 
         self._closed = True
 

@@ -10,6 +10,7 @@ import weakref
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -23,7 +24,6 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
-from . import _vtk
 from ._plotting import reduce_component_scalars
 from .colors import Color
 from .colors import get_cmap_safe
@@ -423,10 +423,34 @@ class _DataSetMapper(_BaseMapper):
         # -> _maybe_set_default_scalar_range) see the theme colors before
         # any set_scalars call.
         self.lookup_table.apply_cmap(self._theme.cmap, self.lookup_table.n_values)
-        self._active_scalars_algo: ActiveScalarsAlgorithm | None = None
         self._input_dataset_ref: weakref.ref[DataSet] | None = None
         if dataset is not None:
             self.dataset = dataset
+
+    @property
+    def _active_scalars_algo(self) -> ActiveScalarsAlgorithm | None:
+        """Return the spliced active-scalars algorithm, if any.
+
+        Derived from the mapper's VTK input connection rather than stored on
+        the instance: a ``__dict__`` reference would close an uncollectable
+        Python<->C++ cycle whenever the mapper's Python wrapper dies before
+        its C++ object. VTK's "ghost" mechanism then keeps the old
+        ``__dict__`` (and thus the algorithm's Python object) alive as long
+        as the mapper's C++ object lives, while the algorithm's pipeline
+        consumer references keep that C++ object alive -- and neither
+        Python's nor VTK's garbage collector can traverse the full loop.
+
+        A ``weakref`` (like ``_input_dataset_ref``) is not an option: this
+        dict entry was the *only* strong Python reference to the algorithm
+        (``vtkPythonAlgorithm`` does not keep its Python half alive), so a
+        weak one would die as soon as ``set_active_scalars`` returned even
+        though the C++ algorithm stays spliced in the pipeline. Deriving
+        from the pipeline instead re-wraps on demand; VTK's ghost dict
+        restores the wrapper's class and state on resurrection.
+        """
+        conn = cast('_vtk.vtkAlgorithmOutput | None', self.GetInputConnection(0, 0))
+        producer = conn.GetProducer() if conn is not None else None
+        return producer if isinstance(producer, ActiveScalarsAlgorithm) else None
 
     @property
     def dataset(self) -> DataSet | None:  # numpydoc ignore=RT01
@@ -653,8 +677,9 @@ class _DataSetMapper(_BaseMapper):
 
         """
         source_dataset = self._scalar_source_dataset
-        if self._active_scalars_algo is None:
-            self._active_scalars_algo = ActiveScalarsAlgorithm(name=name, preference=preference)
+        algo = self._active_scalars_algo
+        if algo is None:
+            algo = ActiveScalarsAlgorithm(name=name, preference=preference)
             # Splice the algo between the mapper and its current input.
             # Prefer the existing pipeline connection so upstream
             # modifications propagate on re-render. If no connection exists
@@ -662,13 +687,15 @@ class _DataSetMapper(_BaseMapper):
             # cached dataset input instead of wiring a null VTK connection.
             input_conn = cast('_vtk.vtkAlgorithmOutput | None', self.GetInputConnection(0, 0))
             if input_conn is not None:
-                self._active_scalars_algo.SetInputConnection(0, input_conn)
+                algo.SetInputConnection(0, input_conn)
             elif self._input_dataset is not None:
-                set_algorithm_input(self._active_scalars_algo, self._input_dataset)
-            self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
+                set_algorithm_input(algo, self._input_dataset)
+            # The pipeline connection is the only reference kept: see
+            # _active_scalars_algo for why it must not land in __dict__.
+            self.SetInputConnection(0, algo.GetOutputPort())
         else:
-            self._active_scalars_algo.scalars_name = name
-            self._active_scalars_algo.preference = preference
+            algo.scalars_name = name
+            algo.preference = preference
         # Also point the mapper at the array directly. SetInputConnection
         # above clears the VTK-level array name, so this must come last.
         self.SetArrayName(name)
@@ -687,10 +714,9 @@ class _DataSetMapper(_BaseMapper):
         set_active_scalars
 
         """
-        if self._active_scalars_algo is None:
-            return
         algo = self._active_scalars_algo
-        self._active_scalars_algo = None
+        if algo is None:
+            return
         if self._input_dataset is not None:
             set_algorithm_input(self, self._input_dataset)
         else:
@@ -1127,9 +1153,11 @@ class _DataSetMapper(_BaseMapper):
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
         else:  # pragma: no cover
             msg = (
-                f'Opacity array size ({opacity.size}) does not equal '
-                f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
+                (
+                    f'Opacity array size ({opacity.size}) does not equal '
+                    f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
+                    f'number of cells ({self.dataset.n_cells}).'  # type: ignore[union-attr]
+                ),
             )
             raise ValueError(msg)
 
@@ -1260,22 +1288,26 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         Plot spheres using `style='points_gaussian'` style and scale them by
         radius.
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> n_spheres = 1_000
-        >>> pos = np.random.random((n_spheres, 3))
-        >>> rad = np.random.random(n_spheres) * 0.01
-        >>> pdata = pv.PolyData(pos)
-        >>> pdata['radius'] = rad
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(
-        ...     pdata,
-        ...     style='points_gaussian',
-        ...     emissive=False,
-        ...     render_points_as_spheres=True,
-        ... )
-        >>> actor.mapper.scale_array = 'radius'
-        >>> pl.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import numpy as np
+           >>> import pyvista as pv
+           >>> n_spheres = 1_000
+           >>> rng = np.random.default_rng(seed=0)
+           >>> pos = rng.random((n_spheres, 3))
+           >>> rad = rng.random(n_spheres) * 0.01
+           >>> pdata = pv.PolyData(pos)
+           >>> pdata['radius'] = rad
+           >>> pl = pv.Plotter()
+           >>> actor = pl.add_mesh(
+           ...     pdata,
+           ...     style='points_gaussian',
+           ...     emissive=False,
+           ...     render_points_as_spheres=True,
+           ... )
+           >>> actor.mapper.scale_array = 'radius'
+           >>> pl.show()
 
         """
         return self.GetScaleArray()

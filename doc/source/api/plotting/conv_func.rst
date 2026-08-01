@@ -10,7 +10,12 @@ routines in PyVista.
 
    plot
    plot_arrows
+   plot_compare_four
+   close_all
+   load_theme
    set_plot_theme
+   registered_themes
+   ThemeRegistration
    create_axes_orientation_box
    create_axes_marker
    opacity_transfer_function

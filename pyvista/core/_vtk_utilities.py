@@ -7,8 +7,8 @@ import sys
 from typing import Literal
 from typing import NamedTuple
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.config import global_config
 
 
@@ -80,7 +80,7 @@ class VTKVersionInfo(VersionInfo):
 
 
 vtk_version_info = VTKVersionInfo(*_get_vtk_version())
-_MIN_SUPPORTED_VTK_VERSION = (9, 2, 2)
+_MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
 
 
 class vtkPyVistaOverride:  # noqa: N801

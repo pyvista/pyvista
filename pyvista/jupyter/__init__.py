@@ -176,7 +176,7 @@ def _ensure_entry_points() -> None:
     eps = entry_points(group=JUPYTER_BACKEND_ENTRY_POINT_GROUP)
     for ep in eps:
         name = ep.name.lower()
-        if name in ALLOWED_BACKENDS or name in _custom_backends:
+        if name in _custom_backends:
             continue
         try:
             # ep.load() runs third-party import machinery — it can raise
@@ -205,16 +205,16 @@ def _resolve_backend() -> str:
 
     """
     _ensure_entry_points()
+    # Prefer user registrations over plugin-discovered backends; among
+    # plugin-discovered ones, prefer 'trame' (the all-in-one backend)
+    # over the more specialized 'server'/'client'/'html' aliases.
+    for name, source in _custom_backend_sources.items():
+        if ':' not in source:  # explicit registration (module.qualname)
+            return name
+    if 'trame' in _custom_backends:
+        return 'trame'
     if _custom_backends:
         return next(iter(_custom_backends))
-
-    try:
-        from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
-    except ImportError:
-        pass
-    else:
-        return 'trame'
-
     return 'static'
 
 
@@ -244,10 +244,8 @@ def _validate_jupyter_backend(
 
     if _is_jupyter_backend(backend):
         if backend in ['server', 'client', 'trame', 'html']:
-            try:
-                from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
-            except ImportError:  # pragma: no cover
-                msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+            if _get_custom_backend_handler(backend) is None:  # pragma: no cover
+                msg = 'Please install trame dependencies: pip install trame-pyvista'
                 raise ImportError(msg)
         return backend
 

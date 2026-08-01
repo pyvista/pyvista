@@ -9,12 +9,10 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
-
-pytestmark = pytest.mark.skip_check_gc  # A large number of tests here fail gc
 
 
 def vtk_array_to_tuple(arr):
@@ -1138,12 +1136,6 @@ def test_iren_context_style(pl):
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.needs_vtk_version(
-    9,
-    3,
-    0,
-    reason='Chart interaction when using multiple renderers is bugged on older versions.',
-)
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts
     # in the bottom renderer.

@@ -13,7 +13,6 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataobject import USER_DICT_KEY
-from pyvista.core.utilities.fileio import save_pickle
 from pyvista.core.utilities.writer import BaseWriter
 
 
@@ -180,8 +179,7 @@ def test_metadata_save(hexbeam, tmpdir):
     assert not hexbeam_in.field_data
 
 
-@pytest.mark.needs_vtk_version(9, 3)
-@pytest.mark.parametrize('file_ext', ['.pkl', '.vtm'])
+@pytest.mark.parametrize('file_ext', ['.vtm'])
 def test_save_nested_multiblock_field_data(tmp_path, file_ext):
     filename = 'mesh' + file_ext
     nested = pv.MultiBlock()
@@ -358,28 +356,20 @@ def test_user_dict_persists_with_cells_to_points(uniform):
 
 
 def test_default_pickle_format():
-    assert pv.PICKLE_FORMAT == 'vtk' if pv.vtk_version_info >= (9, 3) else 'xml'
+    assert pv.PICKLE_FORMAT == 'vtk'
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-@pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
-def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_path):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
+def test_pickle_serialize_deserialize(datasets, pickle_format):
+    """Test in-memory pickle protocol (multiprocessing/dask use case).
 
+    Pickle is NOT a supported mesh file format — only the in-memory
+    pickle protocol via ``__getstate__``/``__setstate__`` is tested
+    here. File-format refusal is covered in ``test_reader.py``.
+    """
     pv.set_pickle_format(pickle_format)
     for dataset in datasets:
-        if file_ext is not None:
-            filepath_save = tmp_path / ('data_object' + file_ext)
-            if file_ext == '':
-                save_pickle(filepath_save, dataset)
-                filepath_read = tmp_path / ('data_object' + '.pkl')
-            else:
-                dataset.save(filepath_save)
-                filepath_read = filepath_save
-            dataset_2 = pv.read(filepath_read)
-        else:
-            dataset_2 = pickle.loads(pickle.dumps(dataset))
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
         for attr in dataset.__dict__:
@@ -411,9 +401,6 @@ def n_points(dataset):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
@@ -424,9 +411,6 @@ def test_pickle_multiprocessing(datasets, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     multiblock = multiblock_all_with_nested_and_none
 
@@ -446,9 +430,6 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_user_dict(sphere, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     user_dict = {'custom_attribute': 42}
     sphere.user_dict = user_dict
@@ -461,13 +442,8 @@ def test_pickle_user_dict(sphere, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_set_pickle_format(pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        match = 'requires VTK >= 9.3'
-        with pytest.raises(ValueError, match=match):
-            pv.set_pickle_format(pickle_format)
-    else:
-        pv.set_pickle_format(pickle_format)
-        assert pickle_format == pv.PICKLE_FORMAT
+    pv.set_pickle_format(pickle_format)
+    assert pickle_format == pv.PICKLE_FORMAT
 
 
 def test_pickle_invalid_format(sphere):
@@ -478,6 +454,16 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
+
+
+def test_pickle_deletes_cached_locators():
+    poly = pv.Cone()
+
+    for attr in ['_static_cell_locator', '_cell_tree_locator', '_point_locator']:
+        # Access each locator to trigger the caching
+        _ = getattr(poly, attr)
+
+    pickle.loads(pickle.dumps(poly))
 
 
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):

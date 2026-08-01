@@ -11,11 +11,11 @@ from typing import TypeVar
 import numpy as np
 import numpy.typing as npt
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
-from . import _vtk_core as _vtk
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array

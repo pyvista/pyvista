@@ -16,15 +16,13 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -34,6 +32,7 @@ from pyvista.core.utilities.misc import _reciprocal
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -89,229 +88,6 @@ def translate(
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center, dtype=surf.points.dtype)
-
-
-if vtk_version_info < (9, 3):
-
-    class CapsuleSource(_NoNewAttrMixin, _vtk.vtkCapsuleSource):  # type: ignore[misc]
-        """Capsule source algorithm class.
-
-        .. versionadded:: 0.44.0
-
-        Parameters
-        ----------
-        center : sequence[float], default: (0.0, 0.0, 0.0)
-            Center in ``[x, y, z]``.
-
-        direction : sequence[float], default: (1.0, 0.0, 0.0)
-            Direction of the capsule in ``[x, y, z]``.
-
-        radius : float, default: 0.5
-            Radius of the capsule.
-
-        cylinder_length : float, default: 1.0
-            Cylinder length of the capsule.
-
-        theta_resolution : int, default: 30
-            Set the number of points in the azimuthal direction (ranging
-            from ``start_theta`` to ``end_theta``).
-
-        phi_resolution : int, default: 30
-            Set the number of points in the polar direction (ranging from
-            ``start_phi`` to ``end_phi``).
-
-        Examples
-        --------
-        Create a default CapsuleSource.
-
-        >>> import pyvista as pv
-        >>> source = pv.CapsuleSource()
-        >>> source.output.plot(show_edges=True, line_width=5)
-
-        """
-
-        @_deprecate_positional_args
-        def __init__(  # noqa: PLR0917
-            self: CapsuleSource,
-            center: VectorLike[float] = (0.0, 0.0, 0.0),
-            direction: VectorLike[float] = (1.0, 0.0, 0.0),
-            radius: float = 0.5,
-            cylinder_length: float = 1.0,
-            theta_resolution: int = 30,
-            phi_resolution: int = 30,
-        ) -> None:
-            """Initialize the capsule source class."""
-            super().__init__()
-            self.center = center
-            self.direction = direction
-            self.radius = radius
-            self.cylinder_length = cylinder_length
-            self.theta_resolution = theta_resolution
-            self.phi_resolution = phi_resolution
-
-        @property
-        def center(self: CapsuleSource) -> tuple[float, float, float]:
-            """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
-
-            Returns
-            -------
-            tuple[float, float, float]
-                Center in ``[x, y, z]``. Axis of the capsule passes through this
-                point.
-
-            """
-            return self.GetCenter()
-
-        @center.setter
-        def center(self: CapsuleSource, center: VectorLike[float]) -> None:
-            """Set the center in ``[x, y, z]``. Axis of the capsule passes through this point.
-
-            Parameters
-            ----------
-            center : sequence[float]
-                Center in ``[x, y, z]``. Axis of the capsule passes through this
-                point.
-
-            """
-            self.SetCenter(*center)
-
-        @property
-        def direction(self: CapsuleSource) -> tuple[float, float, float]:
-            """Get the direction vector in ``[x, y, z]``. Orientation vector of the capsule.
-
-            Returns
-            -------
-            sequence[float]
-                Direction vector in ``[x, y, z]``. Orientation vector of the
-                capsule.
-
-            """
-            return self._direction
-
-        @direction.setter
-        def direction(self: CapsuleSource, direction: VectorLike[float]) -> None:
-            """Set the direction in ``[x, y, z]``. Axis of the capsule passes through this point.
-
-            Parameters
-            ----------
-            direction : sequence[float]
-                Direction vector in ``[x, y, z]``. Orientation vector of the
-                capsule.
-
-            """
-            valid_direction = _validation.validate_array3(
-                direction, dtype_out=float, to_tuple=True
-            )
-            self._direction = cast('tuple[float, float, float]', valid_direction)
-
-        @property
-        def cylinder_length(self: CapsuleSource) -> float:
-            """Get the cylinder length along the capsule in its specified direction.
-
-            Returns
-            -------
-            float
-                Cylinder length along the capsule in its specified direction.
-
-            """
-            return self.GetCylinderLength()
-
-        @cylinder_length.setter
-        def cylinder_length(self: CapsuleSource, length: float) -> None:
-            """Set the cylinder length of the capsule.
-
-            Parameters
-            ----------
-            length : float
-                Cylinder length of the capsule.
-
-            """
-            self.SetCylinderLength(length)
-
-        @property
-        def radius(self: CapsuleSource) -> float:
-            """Get base radius of the capsule.
-
-            Returns
-            -------
-            float
-                Base radius of the capsule.
-
-            """
-            return self.GetRadius()
-
-        @radius.setter
-        def radius(self: CapsuleSource, radius: float) -> None:
-            """Set base radius of the capsule.
-
-            Parameters
-            ----------
-            radius : float
-                Base radius of the capsule.
-
-            """
-            self.SetRadius(radius)
-
-        @property
-        def theta_resolution(self: CapsuleSource) -> int:
-            """Get the number of points in the azimuthal direction.
-
-            Returns
-            -------
-            int
-                The number of points in the azimuthal direction.
-
-            """
-            return self.GetThetaResolution()
-
-        @theta_resolution.setter
-        def theta_resolution(self: CapsuleSource, theta_resolution: int) -> None:
-            """Set the number of points in the azimuthal direction.
-
-            Parameters
-            ----------
-            theta_resolution : int
-                The number of points in the azimuthal direction.
-
-            """
-            self.SetThetaResolution(theta_resolution)
-
-        @property
-        def phi_resolution(self: CapsuleSource) -> int:
-            """Get the number of points in the polar direction.
-
-            Returns
-            -------
-            int
-                The number of points in the polar direction.
-
-            """
-            return self.GetPhiResolution()
-
-        @phi_resolution.setter
-        def phi_resolution(self: CapsuleSource, phi_resolution: int) -> None:
-            """Set the number of points in the polar direction.
-
-            Parameters
-            ----------
-            phi_resolution : int
-                The number of points in the polar direction.
-
-            """
-            self.SetPhiResolution(phi_resolution)
-
-        @property
-        def output(self: CapsuleSource) -> PolyData:
-            """Get the output data object for a port on this algorithm.
-
-            Returns
-            -------
-            pyvista.PolyData
-                Capsule surface.
-
-            """
-            self.Update()
-            return wrap(self.GetOutput())
 
 
 class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
@@ -894,12 +670,16 @@ class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSour
         return wrap(self.GetOutput())
 
 
-class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
+class Text3DSource(_NoNewAttrMixin):
     """3D text from a string.
 
     Generate 3D text from a string with a specified width, height or depth.
 
     .. versionadded:: 0.43
+
+    .. versionchanged:: 0.48
+
+        This class no longer inherits from :vtk:`vtkVectorText`, and uses composition instead.
 
     Parameters
     ----------
@@ -949,6 +729,7 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
         """Initialize source."""
         super().__init__()
 
+        self._source = _vtk.vtkVectorText()
         self._output = pv.PolyData()
 
         # Set params
@@ -975,11 +756,11 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
         """Return or set the text string."""
-        return self.GetText()
+        return self._source.GetText()
 
     @string.setter
     def string(self: Text3DSource, string: str | None) -> None:
-        self.SetText('' if string is None else string)
+        self._source.SetText('' if string is None else string)
 
     @property
     def process_empty_string(self: Text3DSource) -> bool:  # numpydoc ignore=RT01
@@ -1075,13 +856,13 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
-                self.Update()
-                out = self.GetOutput()
+                self._source.Update()
+                out = self._source.GetOutput()
             else:
                 # 3D case, apply filters
                 # Create output filters to make text 3D
                 extrude = _vtk.vtkLinearExtrusionFilter()
-                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetInputConnection(self._source.GetOutputPort())
                 extrude.SetExtrusionTypeToNormalExtrusion()
                 extrude.SetVector(0, 0, 1)
 
@@ -1418,10 +1199,10 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
         The outer radius.
 
     r_res : int, default: 1
-        Number of points in radial direction.
+        Number of cells in radial direction.
 
     c_res : int, default: 6
-        Number of points in circumferential direction.
+        Number of cells in circumferential direction.
 
     Examples
     --------
@@ -1525,48 +1306,48 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
 
     @property
     def r_res(self: DiscSource) -> int:
-        """Get number of points in radial direction.
+        """Get number of cells in radial direction.
 
         Returns
         -------
         int
-            Number of points in radial direction.
+            Number of cells in radial direction.
 
         """
         return self.GetRadialResolution()
 
     @r_res.setter
     def r_res(self: DiscSource, r_res: int) -> None:
-        """Set number of points in radial direction.
+        """Set number of cells in radial direction.
 
         Parameters
         ----------
         r_res : int
-            Number of points in radial direction.
+            Number of cells in radial direction.
 
         """
         self.SetRadialResolution(r_res)
 
     @property
     def c_res(self: DiscSource) -> int:
-        """Get number of points in circumferential direction.
+        """Get number of cells in circumferential direction.
 
         Returns
         -------
         int
-            Number of points in circumferential direction.
+            Number of cells in circumferential direction.
 
         """
         return self.GetCircumferentialResolution()
 
     @c_res.setter
     def c_res(self: DiscSource, c_res: int) -> None:
-        """Set number of points in circumferential direction.
+        """Set number of cells in circumferential direction.
 
         Parameters
         ----------
         c_res : int
-            Number of points in circumferential direction.
+            Number of cells in circumferential direction.
 
         """
         self.SetCircumferentialResolution(c_res)
@@ -1737,6 +1518,25 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
 
+    tessellation : 'triangle' | 'phi_theta', default: 'triangle'
+        Configure the tessellation of the sphere.
+
+        - ``'triangle'``: tessellate with all :attr:`~pyvista.CellType.TRIANGLE` cells.
+        - ``'phi_theta'``: tessellate with :attr:`~pyvista.CellType.QUAD` cells
+          aligned to the phi and theta directions. Cells at the poles are
+          :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        .. versionadded:: 0.49
+
+    texture_coordinates : bool, default: False
+        If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
+        Enabling this option will also generate a topological seam at ``theta=0`` by duplicating
+        vertices, and the sphere will not be a closed surface.
+
+        This option is only supported for complete spheres.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
@@ -1773,6 +1573,8 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         end_theta: float = 360.0,
         start_phi: float = 0.0,
         end_phi: float = 180.0,
+        tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
+        texture_coordinates: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the sphere source class."""
         super().__init__()
@@ -1785,6 +1587,8 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         self.end_theta = end_theta
         self.start_phi = start_phi
         self.end_phi = end_phi
+        self.tessellation = tessellation
+        self._texture_coordinates = texture_coordinates
 
     @property
     def center(self: SphereSource) -> tuple[float, float, float]:
@@ -1979,6 +1783,26 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         self.SetEndPhi(end_phi)
 
     @property
+    def tessellation(
+        self: SphereSource,
+    ) -> Literal['triangle', 'phi_theta']:  # numpydoc ignore: RT01
+        """Configure the tessellation of the sphere."""
+        return 'phi_theta' if self.GetLatLongTessellation() else 'triangle'
+
+    @tessellation.setter
+    def tessellation(self: SphereSource, tessellation: Literal['triangle', 'phi_theta']) -> None:
+        self.SetLatLongTessellation(tessellation == 'phi_theta')
+
+    @property
+    def texture_coordinates(self) -> bool:  # numpydoc ignore: RT01
+        """Enable or disable the generation of texture coordinates."""
+        return self._texture_coordinates
+
+    @texture_coordinates.setter
+    def texture_coordinates(self, texture_coordinates: bool) -> None:
+        self._texture_coordinates = texture_coordinates
+
+    @property
     def output(self: SphereSource) -> PolyData:
         """Get the output data object for a port on this algorithm.
 
@@ -1988,8 +1812,76 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             Sphere surface.
 
         """
+
+        def _compute_texture_coordinates() -> NumpyArray[float]:
+            """Compute phi and theta from points and normalize as texture coordinates."""
+            x, y, z = points[:, 0], points[:, 1], points[:, 2]
+
+            theta = np.arctan2(y, x)  # [-pi, pi]
+            theta = np.mod(theta, 2 * np.pi)  # [0, 2pi)
+
+            phi = np.arccos(z / self.radius)  # [0, pi]
+
+            u = theta / (2 * np.pi)
+            v = 1.0 - phi / np.pi
+            return np.c_[u, v]
+
         self.Update()
-        return wrap(self.GetOutput())
+        out = wrap(self.GetOutput())
+
+        if self.texture_coordinates:
+            partial_phi = not np.isclose(self.end_phi - self.start_phi, 180)
+            partial_theta = not np.isclose(self.end_theta - self.start_theta, 360)
+            if partial_phi or partial_theta:
+                msg = 'Texture coordinates are not supported for partial spheres'
+                raise ValueError(msg)
+            # Insert a topological seam by duplicating points
+            # This is needed so that texture coordinates do NOT render with a seam
+            n_points = out.n_points
+            seam_point_ids = range(2, self.phi_resolution)  # Skip the poles (ids 0 and 1)
+            new_point_ids = range(n_points, n_points + len(seam_point_ids))
+            points = out.points
+            out.points = np.vstack((points, points[seam_point_ids]))
+
+            normals = cast('pyvista_ndarray', out.active_normals)
+            out.point_data.active_normals = np.vstack((normals, normals[seam_point_ids]))
+
+            texture_coordinates = _compute_texture_coordinates()
+            texture_coordinates = np.vstack(
+                (texture_coordinates, texture_coordinates[seam_point_ids])
+            )
+            # Original seam "u" values are 0.0, duplicate values are 1.0
+            texture_coordinates[new_point_ids, 0] = 1.0
+            out.active_texture_coordinates = texture_coordinates
+
+            # Replace point ids in seam cells with new duplicate points
+            faces = out.faces
+            faces.flags['WRITEABLE'] = True  # Write in-place to avoid making a copy
+            replacement = dict(zip(seam_point_ids, new_point_ids, strict=True))
+            polys = out.GetPolys()
+
+            # Find seam cells where u coordinates span the 0->1 transition
+            candidate_cell_ids = {
+                cell_id for point_id in seam_point_ids for cell_id in out.point_cell_ids(point_id)
+            }
+            seam_cell_ids = set()
+            for cell_id in candidate_cell_ids:
+                cell_point_ids = out.get_cell(cell_id).point_ids
+                u_vals = texture_coordinates[cell_point_ids, 0]
+                if u_vals.max() - u_vals.min() > 0.5:
+                    seam_cell_ids.add(cell_id)
+
+            for cell_id in seam_cell_ids:
+                # Location of the face in the interleaved connectivity
+                faces_ids_loc = cell_id + polys.GetOffset(cell_id)
+                for i in range(faces[faces_ids_loc]):  # For every point referenced by the cell
+                    face_point_id = faces_ids_loc + i + 1
+                    pid = faces[face_point_id]
+                    if pid in replacement:
+                        faces[face_point_id] = replacement[pid]
+            out.faces = faces
+
+        return out
 
 
 class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):

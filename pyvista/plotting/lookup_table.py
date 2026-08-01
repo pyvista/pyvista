@@ -10,12 +10,12 @@ import matplotlib as mpl
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
@@ -1168,9 +1168,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)
-        else:
-            try:
-                return np.array([self.map_value(item) for item in value])
-            except (TypeError, ValueError):
-                msg = 'LookupTable __call__ expects a single value or an iterable.'
-                raise TypeError(msg)
+
+        try:
+            vtk_values: _vtk.vtkAbstractArray
+            if isinstance(value, _vtk.vtkDataArray):
+                vtk_values = value
+            else:
+                values = np.asarray(value)
+                if values.dtype == np.bool_:
+                    values = values.astype(np.uint8)
+                vtk_values = convert_array(values)
+            if not isinstance(vtk_values, _vtk.vtkDataArray):
+                raise TypeError
+            # Use VTK_COLOR_MODE_MAP_SCALARS to preserve lookup-table mapping for uint8 arrays.
+            rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
+        except (TypeError, ValueError) as err:
+            msg = 'LookupTable __call__ expects a single value or an iterable.'
+            raise TypeError(msg) from err
+
+        return rgba.reshape(-1, 4) / 255.0

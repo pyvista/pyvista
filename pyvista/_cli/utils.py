@@ -6,12 +6,16 @@ Mostly contains converters, validators, console error helper and help formatters
 
 from __future__ import annotations
 
+from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import NamedTuple
+from typing import Annotated
+from typing import Literal
 from typing import NoReturn
+from typing import get_args
 import warnings
 
+from cyclopts import Parameter
 from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
 from cyclopts.help import HelpEntry
@@ -21,12 +25,11 @@ from rich.panel import Panel
 from rich.text import Text
 
 import pyvista as pv
+from pyvista import _validation
+
+from .app import CLI_APP
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from cyclopts import App
-    from cyclopts import Token
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import Group
@@ -78,13 +81,20 @@ HELP_FORMATTER = _PyvistaHelpFormatter(
     ),
 )
 
+_skip_unreadable_help = """
+Skip any paths that are not readable instead of raising an error.
+"""
+skip_unreadable = Annotated[
+    bool,
+    Parameter(
+        name='skip-unreadable',
+        negative='',
+        help=_skip_unreadable_help,
+    ),
+]
 
-class _MeshAndPath(NamedTuple):
-    mesh: DataObject
-    path: Path
 
-
-def _console_error(*, app: App, message: str | Group, title: str = 'PyVista Error') -> NoReturn:
+def print_error_and_exit(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
     panel = Panel(
         message,
         title=title,
@@ -93,55 +103,156 @@ def _console_error(*, app: App, message: str | Group, title: str = 'PyVista Erro
         expand=True,
         title_align='left',
     )
-    app.error_console.print(panel)
+    CLI_APP.error_console.print(panel)
     raise SystemExit(1)
 
 
-def _converter_files(
-    type_: type,  # noqa: ARG001
-    tokens: Sequence[Token],
-) -> list[_MeshAndPath]:
-    """Helper function used to read provided files.
+_GLOB_CHARS = ('*', '?', '[')
 
-    Raises errors if:
 
-    - any file does not exits
-    - any file is not readable with ``pv.read``
+def _expand_globs(values: list[str]) -> list[str]:
+    """Expand any glob patterns in-place, preserving order.
 
-    """  # noqa: D401
-    values: list[str] = [t.value for t in tokens]
-
-    # Test file exists
-    if not all((files := {v: Path(v).exists() for v in values}).values()):
-        missing: str | list[str] = [k for k, v in files.items() if not v]
-        n_missings = len(missing)
-
-        literal_file = 'file' if n_missings == 1 else 'files'
-        missing = missing[0] if n_missings == 1 else missing
-
-        msg = f'{n_missings} {literal_file} not found: {missing}'
-        raise ValueError(msg)
-
-    # Test file can be read by pyvista
-    meshes_and_paths: list[_MeshAndPath] = []
-    not_readable: list[str] = []
-    for file in values:
-        try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    'ignore',
-                    category=pv.InvalidMeshWarning,
-                )
-                mesh = pv.read(file)
-        except Exception:  # noqa: BLE001
-            not_readable.append(file)
+    Tokens without glob characters are kept as-is so non-existent literals still raise the
+    "file not found" error downstream. Glob patterns with no matches are kept so they surface
+    as the missing token in the same error.
+    """
+    expanded: list[str] = []
+    for v in values:
+        v = str(Path(v).expanduser())  # noqa: PLW2901
+        if any(c in v for c in _GLOB_CHARS):
+            matches = sorted(glob(v, recursive=True))  # noqa: PTH207
+            if matches:
+                expanded.extend(matches)
+            else:
+                expanded.append(v)
         else:
-            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
+            expanded.append(v)
+    return expanded
 
-    if len(not_readable) > 0:
-        n = len(not_readable)
-        literal_file = 'file' if n == 1 else 'files'
-        msg = f'{n} {literal_file} not readable by PyVista:\n{not_readable}'
-        raise ValueError(msg)
 
-    return meshes_and_paths
+def _check_paths_exist(paths: list[Path]) -> None:
+    """Print a console error and exit if any paths do not exist."""
+    files = {p: p.exists() for p in paths}
+    if not all(files.values()):
+        missing = [str(p) for p, exists in files.items() if not exists]
+        n_missing = len(missing)
+
+        literal_file = 'file' if n_missing == 1 else 'files'
+        missing_display = missing[0] if n_missing == 1 else missing
+
+        msg = f'{n_missing} {literal_file} not found: {missing_display}'
+        print_error_and_exit(message=msg)
+
+
+_MULTIBLOCK_EXTS = frozenset({'.vtm', '.vtmb'})
+
+
+def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Path]]:
+    """Drop paths that live inside a sibling sidecar directory of a MultiBlock parent.
+
+    A ``.vtm`` / ``.vtmb`` file ``parent.vtm`` is paired on disk with a sidecar directory
+    ``parent/`` that holds the child blocks (e.g. ``parent/parent_0.vtp``). When both the
+    parent and its sidecar children appear in the same input list, converting the children
+    individually would duplicate work and break the 1:1 input/output mapping the user
+    expects from a parent ``.vtm``.
+
+    Children are filtered only when their parent is also in ``paths``. Standalone files
+    inside an unrelated directory are left untouched.
+
+    Returns a ``(kept, filtered)`` tuple; both lists preserve the input order.
+    """
+    sidecar_dirs = [
+        (p.parent / p.stem).resolve() for p in paths if p.suffix.lower() in _MULTIBLOCK_EXTS
+    ]
+    if not sidecar_dirs:
+        return paths, []
+
+    kept: list[Path] = []
+    filtered: list[Path] = []
+    for p in paths:
+        if p.suffix.lower() in _MULTIBLOCK_EXTS:
+            kept.append(p)
+            continue
+        resolved_parents = set(p.resolve().parents)
+        if any(sd in resolved_parents for sd in sidecar_dirs):
+            filtered.append(p)
+        else:
+            kept.append(p)
+    return kept, filtered
+
+
+def validate_paths(paths: list[str]) -> list[Path]:
+    """Expand globs, verify existence, and filter MultiBlock sidecar children.
+
+    Prints a console message for any sidecar children that were filtered out.
+
+    Returns
+    -------
+    list[Path]
+        The validated input paths.
+
+    """
+    expanded = _expand_globs(paths)
+    path_objects = [Path(v) for v in expanded]
+    _check_paths_exist(path_objects)
+    kept, dropped = _filter_multiblock_children(path_objects)
+    if n_dropped := len(dropped):
+        listed = ', '.join(p.as_posix() for p in dropped[:5])
+        if n_dropped > 5:
+            listed += f', ... ({n_dropped - 5} more)'
+        s = 's' if n_dropped > 1 else ''
+        msg = (
+            f'[yellow]Skipping {n_dropped} file{s} inside MultiBlock sidecar '
+            f'directories:[/yellow] {listed}'
+        )
+        CLI_APP.error_console.print(msg)
+    return kept
+
+
+_ReadMeshOptions = Literal['exit', 'exit+hint', 'suppress', 'suppress+warn']
+
+
+def read_mesh(
+    path: Path,
+    *,
+    on_error: _ReadMeshOptions = 'exit',
+) -> DataObject | None:
+    """Read a mesh with optional handling for read errors.
+
+    Parameters
+    ----------
+    path
+        Path to read with pyvista.read.
+
+    on_error
+        Behavior when the path cannot be read:
+
+        - ``'exit'``: print a console error and call SystemExit (default).
+        - ``'exit+hint'``: same as ``'exit'``, but append a hint to the error message
+          indicating to use the ``--skip-unreadable`` option.
+        - ``'suppress'``: return ``None`` silently.
+        - ``'suppress+warn'``: return ``None`` and print a console error indicating the path is
+          not readable.
+
+    Returns
+    -------
+    DataObject | None
+        Mesh object or None, depending on ``on_error`` value.
+
+    """
+    _validation.check_contains(get_args(_ReadMeshOptions), must_contain=on_error, name='on_error')
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
+            return pv.read(path)
+    except Exception:  # noqa: BLE001
+        if on_error.startswith('suppress'):
+            if on_error == 'suppress+warn':
+                CLI_APP.error_console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
+            return None
+        else:
+            msg = f'Path is not readable by PyVista:\n{path}'
+            if on_error == 'exit+hint':
+                msg += '\nUse --skip-unreadable to skip this file.'
+            print_error_and_exit(message=msg)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 import importlib.util
-import sys
 from unittest.mock import MagicMock
 from unittest.mock import patch
 import warnings
@@ -26,16 +25,22 @@ skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython p
 
 
 @contextlib.contextmanager
-def _block_trame_import():
-    """Temporarily make ``from pyvista.trame.jupyter import …`` raise ImportError."""
-    trame_keys = [k for k in sys.modules if k.startswith('pyvista.trame')]
-    saved = {k: sys.modules.pop(k) for k in trame_keys}
-    sentinel = dict.fromkeys(trame_keys) | {'pyvista.trame.jupyter': None}
+def _without_custom_backends():
+    """Run a test without any custom backend registrations or entry points."""
+    saved = _custom_backends.copy()
+    saved_sources = _custom_backend_sources.copy()
+    saved_loaded = jupyter_mod._entry_points_loaded
+    _custom_backends.clear()
+    _custom_backend_sources.clear()
+    jupyter_mod._entry_points_loaded = True
     try:
-        with patch.dict(sys.modules, sentinel):
-            yield
+        yield
     finally:
-        sys.modules.update(saved)
+        _custom_backends.clear()
+        _custom_backends.update(saved)
+        _custom_backend_sources.clear()
+        _custom_backend_sources.update(saved_sources)
+        jupyter_mod._entry_points_loaded = saved_loaded
 
 
 @pytest.fixture(autouse=True)
@@ -121,7 +126,11 @@ def test_registered_jupyter_backends_includes_entry_point_source():
     mock_ep.value = 'package.module:backend_func'
     mock_ep.load.return_value = _mock_handler
 
-    with patch('pyvista.jupyter.entry_points', return_value=[mock_ep]):
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.entry_points', return_value=[mock_ep]),
+    ):
+        jupyter_mod._entry_points_loaded = False
         records = pv.registered_jupyter_backends()
 
     matches = [r for r in records if r.name == 'discovered_backend']
@@ -130,31 +139,36 @@ def test_registered_jupyter_backends_includes_entry_point_source():
 
 
 def test_entry_point_load_failure_warns_and_continues():
-    jupyter_mod._entry_points_loaded = False
-
     broken = MagicMock()
     broken.name = 'broken_backend'
     broken.value = 'package:broken'
     broken.load.side_effect = RuntimeError('broken plugin')
 
     with (
+        _without_custom_backends(),
         patch('pyvista.jupyter.entry_points', return_value=[broken]),
-        pytest.warns(UserWarning, match='Failed to load pyvista.jupyter_backends entry point'),
     ):
-        assert _get_custom_backend_handler('broken_backend') is None
+        jupyter_mod._entry_points_loaded = False
+        with pytest.warns(
+            UserWarning, match='Failed to load pyvista.jupyter_backends entry point'
+        ):
+            handler = _get_custom_backend_handler('broken_backend')
+        assert handler is None
 
 
 def test_entry_point_uses_renamed_group():
     """Confirm the entry-point group name is ``pyvista.jupyter_backends``."""
-    jupyter_mod._entry_points_loaded = False
-
     captured: dict[str, object] = {}
 
     def fake_entry_points(*, group):
         captured['group'] = group
         return []
 
-    with patch('pyvista.jupyter.entry_points', side_effect=fake_entry_points):
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.entry_points', side_effect=fake_entry_points),
+    ):
+        jupyter_mod._entry_points_loaded = False
         jupyter_mod._ensure_entry_points()
 
     assert captured['group'] == 'pyvista.jupyter_backends'
@@ -195,36 +209,29 @@ def test_handle_plotter_dispatches_custom():
 
 @skip_no_ipython
 def test_entry_point_discovery():
-    import pyvista.jupyter as jupyter_mod
-
-    # Reset discovery state
-    jupyter_mod._entry_points_loaded = False
-
     mock_ep = MagicMock()
     mock_ep.name = 'discovered'
     mock_ep.load.return_value = _mock_handler
 
-    with patch(
-        'pyvista.jupyter.entry_points',
-        return_value=[mock_ep],
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.entry_points', return_value=[mock_ep]),
     ):
+        jupyter_mod._entry_points_loaded = False
         handler = _get_custom_backend_handler('discovered')
         assert handler is _mock_handler
 
 
 @skip_no_ipython
-def test_handle_plotter_falls_back_to_custom_backend_on_trame_import_error():
-    """When trame is unavailable but an entry-point backend is registered, use it."""
+def test_handle_plotter_falls_back_to_custom_backend_when_trame_unregistered():
+    """When the requested trame backend has no handler but a custom backend exists, use it."""
     mock_handler = MagicMock(return_value='ep_widget')
-    register_jupyter_backend('ep_backend', mock_handler)
-
     plotter = MagicMock()
 
-    with (
-        _block_trame_import(),
-        pytest.warns(UserWarning, match='Using registered backend "ep_backend"'),
-    ):
-        result = handle_plotter(plotter, backend='trame')
+    with _without_custom_backends():
+        register_jupyter_backend('ep_backend', mock_handler)
+        with pytest.warns(UserWarning, match='Using registered backend "ep_backend"'):
+            result = handle_plotter(plotter, backend='trame')
 
     assert result == 'ep_widget'
     mock_handler.assert_called_once_with(plotter, screenshot=None)
@@ -232,12 +239,12 @@ def test_handle_plotter_falls_back_to_custom_backend_on_trame_import_error():
 
 @skip_no_ipython
 def test_handle_plotter_static_fallback_lists_available_backends():
-    """When trame is unavailable and no custom backends exist, list available backends."""
+    """When trame has no handler and no custom backends exist, list available backends."""
     plotter = MagicMock()
     plotter.last_image = None
 
     with (
-        _block_trame_import(),
+        _without_custom_backends(),
         patch(
             'pyvista.jupyter.notebook.show_static_image',
             return_value='static_img',
@@ -252,41 +259,40 @@ def test_handle_plotter_static_fallback_lists_available_backends():
 
 @skip_no_ipython
 def test_resolve_backend_prefers_trame_when_no_custom():
-    """When trame is available and no custom backends registered, returns 'trame'."""
+    """When trame-pyvista is installed, the entry-point trame backend is selected."""
     assert _resolve_backend() == 'trame'
 
 
 @skip_no_ipython
 def test_resolve_backend_prefers_custom_over_trame():
-    """When both trame and a custom backend are available, prefer the custom one."""
+    """When both trame and a custom backend are available, prefer the user-registered one."""
     register_jupyter_backend('mybackend', _mock_handler)
     assert _resolve_backend() == 'mybackend'
 
 
 @skip_no_ipython
 def test_resolve_backend_prefers_custom_over_static():
-    """When trame is unavailable but a custom backend is registered, prefer it."""
-    register_jupyter_backend('mybackend', _mock_handler)
-    with _block_trame_import():
+    """When no entry points exist but a custom backend is registered, prefer it."""
+    with _without_custom_backends():
+        register_jupyter_backend('mybackend', _mock_handler)
         assert _resolve_backend() == 'mybackend'
 
 
 @skip_no_ipython
 def test_resolve_backend_falls_back_to_static():
     """When nothing else is available, _resolve_backend returns 'static'."""
-    with _block_trame_import():
+    with _without_custom_backends():
         assert _resolve_backend() == 'static'
 
 
 @skip_no_ipython
 def test_handle_plotter_auto_selects_custom_backend():
-    """When backend=None, trame unavailable, registered backend is auto-selected."""
+    """When backend=None and only a custom backend is registered, auto-select it."""
     mock_handler = MagicMock(return_value='auto_widget')
-    register_jupyter_backend('auto_backend', mock_handler)
-
     plotter = MagicMock()
 
-    with _block_trame_import():
+    with _without_custom_backends():
+        register_jupyter_backend('auto_backend', mock_handler)
         result = handle_plotter(plotter, backend=None)
 
     assert result == 'auto_widget'
@@ -299,12 +305,12 @@ def test_handle_plotter_auto_static_warns_install():
     plotter = MagicMock()
 
     with (
-        _block_trame_import(),
+        _without_custom_backends(),
         patch(
             'pyvista.jupyter.notebook.show_static_image',
             return_value='static_img',
         ),
-        pytest.warns(UserWarning, match=r'pip install "pyvista\[jupyter\]"'),
+        pytest.warns(UserWarning, match=r'pip install trame-pyvista'),
     ):
         result = handle_plotter(plotter, backend=None)
 

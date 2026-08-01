@@ -12,13 +12,13 @@ from typing import Union
 
 import matplotlib as mpl
 
+from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
 
-from . import _vtk
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:

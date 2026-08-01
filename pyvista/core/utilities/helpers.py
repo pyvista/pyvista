@@ -14,9 +14,9 @@ import numpy as np
 from typing_extensions import TypeIs
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
 from .fileio import from_meshio
@@ -97,7 +97,7 @@ def _dataset_array_lengths_match(obj: DataSet) -> bool:
 
 
 def _warn_if_invalid_data(obj: DataObject) -> None:
-    if pv.vtk_version_info < (9, 3, 0) or not hasattr(obj, 'validate_mesh'):
+    if not hasattr(obj, 'validate_mesh'):
         return
     # Fast path: for a plain DataSet, a direct Python-side array-length check
     # avoids the ~600us setup cost of the validate_mesh machinery on the
