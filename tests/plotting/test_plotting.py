@@ -2397,19 +2397,28 @@ def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_po
     )
 
 
-def test_plot_compare_link_warns_when_a_dataset_is_too_small(verify_image_cache):
+def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):
     verify_image_cache.skip = True
 
-    # A shared camera has to fit every dataset, so a much smaller one is barely visible.
-    # Only linking on purpose is warned about, since `'auto'` does not link these at all
     datasets = [pv.Sphere(radius=0.02), pv.Cone(height=5.0)]
-    match = 'The smallest dataset is 1.3% of the size of all of the datasets together'
+    match = 'The smallest dataset is 1.3% of the size of what its subplot has to fit'
+
+    # A shared camera has to fit every dataset, so a much smaller one is barely
+    # visible. Only linking on purpose is warned about, since these are not linked
+    # by default
     with pytest.warns(UserWarning, match=re.escape(match)):
         pv.plot_compare(datasets, link=True)
 
     # Each subplot is fit to its own dataset when unlinked, so the size does not matter
     pv.plot_compare(datasets, link=False)
     pv.plot_compare(datasets)
+
+    # Every subplot has to fit the reference mesh as well as its own dataset, so a
+    # dataset much smaller than the reference is barely visible however it is framed
+    reference_mesh = pv.MultiBlock(datasets).outline()
+    for link in [True, False, None]:
+        with pytest.warns(UserWarning, match=re.escape(match)):
+            pv.plot_compare(datasets, reference_mesh=reference_mesh, link=link)
 
 
 @pytest.mark.parametrize('box', [False, True], ids=['arrows', 'box'])
