@@ -53,6 +53,12 @@ Draw an outline of the bounds of every mesh in each subplot, to give the compari
 common frame of reference.
 """
 
+_HELP_NORMALIZE = """\
+Resize every mesh to a diagonal length of one, centered on the origin, so that meshes
+of very different sizes are compared shape by shape. The files themselves are left as
+they are. Normalized meshes are all the same size, so they share a camera by default.
+"""
+
 _HELP_LABEL_SIZE = """\
 Size of the label shown in each subplot, as either a font size or how to work one out.
 A font size is used as given, and may be too large for a label to fit in its subplot.
@@ -160,6 +166,7 @@ def _compare(
     link: Annotated[bool | None, Parameter(help=_HELP_LINK, group=Groups.RENDERING)] = None,
     cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
     outline: Annotated[bool, Parameter(help=_HELP_OUTLINE, group=Groups.RENDERING)] = False,
+    normalize: Annotated[bool, Parameter(help=_HELP_NORMALIZE, group=Groups.RENDERING)] = False,
     label_size: Annotated[
         float | LabelSize | None, Parameter(help=_HELP_LABEL_SIZE, group=Groups.RENDERING)
     ] = None,
@@ -198,6 +205,7 @@ def _compare(
             cpos=cpos,
             # The outline of a `MultiBlock` encloses every one of its blocks
             reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
+            normalize=normalize,
             label_size=label_size,
             show_bounds=show_bounds,
             show_axes=show_axes,

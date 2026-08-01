@@ -2016,6 +2016,16 @@ def test_compare_called_cpos(
     assert mock_plot_compare.call_args.kwargs['cpos'] == cpos
 
 
+def test_compare_called_normalize(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that normalizing the meshes is asked for."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names}')
+    assert mock_plot_compare.call_args.kwargs['normalize'] is False
+
+    main(f'compare {names} --normalize')
+    assert mock_plot_compare.call_args.kwargs['normalize'] is True
+
+
 def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that the outline drawn in each subplot encloses every mesh."""
     names = ' '.join(path.name for path in tmp_compare_files)

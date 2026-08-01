@@ -93,6 +93,19 @@ def _validate_reference_mesh(reference_mesh: Any) -> None:
         raise TypeError(msg)
 
 
+def _normalized(dataset: Any) -> Any:
+    """Return the dataset resized to a length of one and centered on the origin."""
+    resize = getattr(dataset, 'resize', None) if is_pyvista_dataset(dataset) else None
+    if resize is None:
+        msg = (
+            f'Cannot normalize {type(dataset).__name__}, which cannot be resized. '
+            'Convert it to a dataset which can, or use `normalize=False`.'
+        )
+        raise TypeError(msg)
+    # `resize` returns a new dataset, leaving the one which was given as it is
+    return resize(length=1.0, center=(0.0, 0.0, 0.0))
+
+
 def _auto_shape(n_datasets: int) -> tuple[int, int]:
     """Return the ``(n_rows, n_cols)`` grid to use when no shape is given."""
     # Use as few rows as the square root allows so that the grid is never
@@ -374,6 +387,7 @@ def plot_compare(  # noqa: ANN201
     labels: Sequence[str] | None = _AUTO_LABELS,
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
     shape: Sequence[int] | str | None = None,
+    normalize: bool = False,
     link: bool | None = None,
     show_axes: bool | None = None,
     show_bounds: bool = False,
@@ -474,6 +488,18 @@ def plot_compare(  # noqa: ANN201
         Must define at least as many subplots as there are datasets. By default,
         the compact grid described above is used.
 
+    normalize : bool, default: False
+        Resize every dataset to a diagonal :attr:`~pyvista.DataSet.length` of one,
+        centered on the origin, so that datasets of very different sizes are
+        compared shape by shape. The datasets given are left as they are, and the
+        resized copies of them are what is drawn. A ``reference_mesh`` is resized
+        along with them, so that it is the same frame of reference for each.
+
+        Normalized datasets are all the same size and in the same place, so they
+        are linked by default, which datasets of very different sizes are not.
+
+        .. versionadded:: 0.49
+
     link : bool, optional
         If ``True``, link the views of the subplots so that they share a single
         camera. The shared camera is fit to the bounds of every dataset, so the
@@ -558,6 +584,18 @@ def plot_compare(  # noqa: ANN201
 
     >>> pv.plot_compare(blocks, shape='2/1')
 
+    Datasets of very different sizes are compared shape by shape by normalizing
+    them. The airplane is some forty times the size of the ant, which is a speck
+    beside it otherwise.
+
+    >>> pv.plot_compare(
+    ...     {
+    ...         'airplane': examples.load_airplane(),
+    ...         'ant': examples.load_ant(),
+    ...     },
+    ...     normalize=True,
+    ... )
+
     Anything the :class:`~pyvista.Plotter` itself takes is given to it through
     ``plotter_kwargs``. Draw a border around each subplot to tell them apart.
 
@@ -581,6 +619,11 @@ def plot_compare(  # noqa: ANN201
 
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
     _validate_reference_mesh(reference_mesh)
+
+    if normalize:
+        datasets = [_normalized(dataset) for dataset in datasets]
+        if reference_mesh is not None:
+            reference_mesh = _normalized(reference_mesh)
 
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
     shape = _from_kwargs(

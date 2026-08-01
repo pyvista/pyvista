@@ -2731,6 +2731,86 @@ def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify
     assert forwards == backwards[::-1]
 
 
+def test_plot_compare_normalize(verify_image_cache):  # noqa: ARG001
+    # The airplane is some forty times the size of the ant, and normalizing makes them
+    # comparable shape by shape
+    pv.plot_compare(
+        {'airplane': examples.load_airplane(), 'ant': examples.load_ant()},
+        normalize=True,
+        display_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_normalize_resizes_every_dataset(verify_image_cache):
+    verify_image_cache.skip = True
+
+    airplane, ant = examples.load_airplane(), examples.load_ant()
+    lengths = []
+    centers = []
+    linked = []
+
+    def capture(plotter):
+        lengths.extend(renderer.length for renderer in plotter.renderers)
+        centers.extend(renderer.center for renderer in plotter.renderers)
+        linked.append(plotter.renderers[0].camera is plotter.renderers[1].camera)
+
+    def plot(**kwargs):
+        lengths.clear()
+        centers.clear()
+        pv.plot_compare(
+            [airplane, ant],
+            display_kwargs={'color': 'w'},
+            show_kwargs={'before_close_callback': capture},
+            **kwargs,
+        )
+
+    # Every dataset is resized to a length of one about the origin
+    plot(normalize=True)
+    assert lengths == pytest.approx([1.0, 1.0])
+    assert centers == pytest.approx([(0.0, 0.0, 0.0)] * 2)
+
+    # The datasets which were given are left as they are
+    assert airplane.length == pytest.approx(2011.5550932463605)
+    assert ant.length == pytest.approx(50.03865544431554)
+
+    # Datasets of such different sizes are not linked, and normalized ones are, since
+    # they are then the same size and in the same place
+    plot()
+    assert linked == [True, False]
+
+
+def test_plot_compare_normalize_reference_mesh(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A reference mesh is resized along with the datasets, so that it stays the same
+    # frame of reference for each of them rather than dwarfing them
+    lengths = []
+    pv.plot_compare(
+        [examples.load_airplane(), examples.load_ant()],
+        reference_mesh=examples.load_airplane().outline(),
+        normalize=True,
+        display_kwargs={'color': 'w'},
+        show_kwargs={
+            'before_close_callback': lambda pl: lengths.extend(r.length for r in pl.renderers)
+        },
+    )
+    # Each subplot holds a dataset and the reference mesh, both of length one
+    assert lengths == pytest.approx([1.0, 1.0], abs=0.5)
+
+
+def test_plot_compare_normalize_raises(no_images_to_verify):  # noqa: ARG001
+    match = (
+        'Cannot normalize PartitionedDataSet, which cannot be resized. '
+        'Convert it to a dataset which can, or use `normalize=False`.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(
+            [pv.Sphere(), pv.Cube()],
+            reference_mesh=pv.PartitionedDataSet([pv.Sphere()]),
+            normalize=True,
+        )
+
+
 def test_plot_compare_reference_mesh(compare_datasets):
     pv.plot_compare(
         compare_datasets,
