@@ -232,7 +232,6 @@ def plot_compare(
     show_axes: bool | None = None,
     show_bounds: bool = False,
     zoom: float | str | None = None,
-    notebook: bool | None = None,
 ):
     """Plot a grid comparison of any number of data objects.
 
@@ -255,8 +254,8 @@ def plot_compare(
 
     plotter_kwargs : dict, optional
         Additional keyword arguments to pass to the ``Plotter`` constructor. A
-        ``'shape'`` or ``'notebook'`` given here is used as the argument of the
-        same name below, and it is an error to give either in both places.
+        A ``'shape'`` given here is used as the ``shape`` argument below, and it
+        is an error to give it in both places.
 
     show_kwargs : dict, optional
         Additional keyword arguments to pass to the ``show`` method.
@@ -330,9 +329,6 @@ def plot_compare(
         Camera zoom, applied after the camera is fit to the datasets. Either
         ``'tight'`` or a float, where a value greater than 1 is a zoom-in.
 
-    notebook : bool, optional
-        If ``True``, display the plot in a Jupyter notebook.
-
     Returns
     -------
     cpos : CameraPosition
@@ -402,7 +398,6 @@ def plot_compare(
 
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
     shape = _from_plotter_kwargs(plotter_kwargs, 'shape', shape)
-    notebook = _from_plotter_kwargs(plotter_kwargs, 'notebook', notebook)
 
     if shape is None:
         shape = _auto_shape(n_datasets)
@@ -411,8 +406,6 @@ def plot_compare(
     show_kwargs = {} if show_kwargs is None else show_kwargs
     text_kwargs = {} if text_kwargs is None else text_kwargs
     reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
-
-    plotter_kwargs['notebook'] = notebook
 
     # The shape itself is validated by the plotter
     pl = pv.Plotter(shape=shape, **plotter_kwargs)
@@ -578,6 +571,11 @@ def plot_compare_four(  # noqa: PLR0917
         msg = 'Remove this deprecated function.'
         raise RuntimeError(msg)
 
+    # `plot_compare` leaves the notebook argument to the plotter, as it does every
+    # other argument of the plotter which it does not need itself
+    plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
+    plotter_kwargs['notebook'] = notebook
+
     return plot_compare(
         [data_a, data_b, data_c, data_d],
         display_kwargs=display_kwargs,
@@ -591,7 +589,6 @@ def plot_compare_four(  # noqa: PLR0917
         reference_kwargs={'color': outline_color},
         labels=labels,
         link=link,
-        notebook=notebook,
     )
 
 
