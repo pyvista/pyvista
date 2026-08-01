@@ -99,12 +99,13 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
-def fix_edit_link_button(pagename: str, link: str) -> str | None:
+def fix_edit_link_button(pagename: str, link: str) -> str:
     """Rewrite an "edit on GitHub" link to point at the actual source file.
 
-    The default Sphinx "edit this page" link points at the rendered page
-    (for example, the generated ``.rst`` for a gallery example), which
-    404s on GitHub. Two cases need rewriting:
+    The default "edit this page" link points at the rendered page source
+    under ``doc/source`` (for example, the ``.rst`` generated for a gallery
+    example), which 404s on GitHub because that file is not in the repo.
+    Two cases need rewriting:
 
     - Gallery examples ``.rst`` to the source ``.py`` under ``examples/``.
     - Autosummary stubs to the file defining the Python object.
@@ -119,10 +120,9 @@ def fix_edit_link_button(pagename: str, link: str) -> str | None:
 
     Returns
     -------
-    str or None
-        The corrected edit URL, or the original ``link`` for pages that
-        do not need rewriting. ``None`` if no source location can be
-        resolved for an autosummary stub.
+    str
+        The corrected edit URL, or the original ``link`` for pages that do
+        not need rewriting or whose source could not be resolved.
 
     """
     if pagename.startswith('examples') and 'index' not in pagename:
@@ -132,7 +132,9 @@ def fix_edit_link_button(pagename: str, link: str) -> str | None:
     if '_autosummary' in pagename:
         # API summary stub: resolve the source via the Python object.
         fullname = pagename.split('_autosummary')[1].lstrip('/')
-        return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
+        resolved = linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
+        # ``linkcode_resolve`` returns ``None`` for objects it cannot locate
+        return resolved or link
     # Fall back to the default link for everything else.
     return link
 
@@ -143,11 +145,37 @@ def pv_html_page_context(  # noqa: PLR0917
     templatename: str,  # noqa: ARG001
     context,
     doctree,  # noqa: ARG001
-) -> None:  # pragma: no cover
-    """Inject the ``fix_edit_link_button`` helper into the Jinja context.
+) -> None:
+    """Point the "suggest edit" button at the file the page is generated from.
 
-    The Sphinx ``html-page-context`` event fires per page, so the helper
-    is bound here to the current ``pagename`` and called from the
-    ``edit-this-page.html`` template.
+    ``sphinx-book-theme`` builds the pencil button in Python rather than in a
+    template: ``header_buttons`` is populated by its ``add_source_buttons``
+    handler (priority 501) from ``get_edit_provider_and_url()``. So the URL is
+    patched here after the fact, which requires this handler to be connected
+    with a priority greater than 501.
+
+    ``get_edit_provider_and_url`` is replaced as well so that any template
+    calling it directly -- such as the ``edit-this-page.html`` component of
+    ``pydata-sphinx-theme`` -- gets the corrected URL too. Templates render
+    after every ``html-page-context`` handler has run, so the override is
+    picked up regardless of priority.
+
     """
-    context['fix_edit_link_button'] = lambda link: fix_edit_link_button(pagename, link)
+    get_edit_provider_and_url = context.get('get_edit_provider_and_url')
+    if get_edit_provider_and_url is None:  # pragma: no cover
+        # ``use_edit_page_button`` is disabled, or a theme without the
+        # pydata "edit this page" machinery is in use.
+        return
+
+    def fixed_provider_and_url() -> tuple[str, str]:
+        provider, link = get_edit_provider_and_url()
+        return provider, fix_edit_link_button(pagename, link)
+
+    context['get_edit_provider_and_url'] = fixed_provider_and_url
+
+    for button in context.get('header_buttons', []):
+        # A single enabled repo button is added flat, several are nested in a group
+        buttons = button['buttons'] if button.get('type') == 'group' else [button]
+        for repo_button in buttons:
+            if repo_button.get('label') == 'source-edit-button':
+                repo_button['url'] = fix_edit_link_button(pagename, repo_button['url'])

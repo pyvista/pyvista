@@ -65,6 +65,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
 from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -1203,6 +1204,48 @@ def test_fix_edit_link_button_other_pages_fall_through():
     # Other pages should return the default link unchanged
     link = fix_edit_link_button('user-guide/intro', 'default-link')
     assert link == 'default-link'
+
+
+def _edit_button_context(pagename):
+    # Mimic the context sphinx-book-theme builds for the "suggest edit" button
+    default_url = f'https://github.com/pyvista/pyvista/edit/main/doc/source/{pagename}.rst'
+    return {
+        'get_edit_provider_and_url': lambda: ('GitHub', default_url),
+        'header_buttons': [
+            {'type': 'link', 'url': default_url, 'label': 'source-edit-button'},
+            {'type': 'group', 'buttons': [{'type': 'javascript', 'label': 'download-pdf-button'}]},
+        ],
+    }
+
+
+def test_pv_html_page_context_patches_edit_button():
+    # The button built by the theme should be rewritten to the .py source file
+    pagename = 'examples/00-load/create_draped_surface'
+    context = _edit_button_context(pagename)
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    expected = (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+    assert context['header_buttons'][0]['url'] == expected
+    assert context['get_edit_provider_and_url']() == ('GitHub', expected)
+
+
+def test_pv_html_page_context_leaves_other_pages_alone():
+    # Pages whose source really is in the repo must keep the theme's link
+    pagename = 'api/core/index'
+    context = _edit_button_context(pagename)
+    default_url = context['header_buttons'][0]['url']
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    assert context['header_buttons'][0]['url'] == default_url
+
+
+def test_pv_html_page_context_without_edit_button():
+    # No-op when the edit button is disabled
+    context = {}
+    pv_html_page_context(None, 'index', 'page.html', context, None)
+    assert context == {}
 
 
 def test_coerce_point_like_arg():
