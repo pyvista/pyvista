@@ -13,6 +13,7 @@ import pyvista as pv
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
+from .utils import CposView
 from .utils import Groups
 from .utils import _kwargs_converter
 from .utils import _validator_window_size
@@ -38,6 +39,16 @@ _HELP_LINK = """\
 Share a single camera between the subplots, so that the meshes are shown at a common
 scale. By default, the cameras are shared only when every mesh is at least half the
 size of all of them together.
+"""
+
+_HELP_OUTLINE = """\
+Draw an outline of the bounds of every mesh in each subplot, to give the comparison a
+common frame of reference.
+"""
+
+_HELP_LABEL_SIZE = """\
+Font size of the label shown in each subplot. Useful when the file names are long
+enough to be cut off.
 """
 
 
@@ -91,6 +102,11 @@ def _compare(
         Parameter(consume_multiple=True, help=_HELP_LABELS, group=Groups.RENDERING),
     ] = None,
     link: Annotated[bool | None, Parameter(help=_HELP_LINK, group=Groups.RENDERING)] = None,
+    cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
+    outline: Annotated[bool, Parameter(help=_HELP_OUTLINE, group=Groups.RENDERING)] = False,
+    label_size: Annotated[
+        int | None, Parameter(help=_HELP_LABEL_SIZE, group=Groups.RENDERING)
+    ] = None,
     show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
@@ -121,6 +137,10 @@ def _compare(
         labels=names,
         shape=None if shape is None else _parse_shape(shape),
         link=link,
+        cpos=cpos,
+        # The outline of a `MultiBlock` encloses every one of its blocks
+        reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
+        text_kwargs=None if label_size is None else {'font_size': label_size},
         show_bounds=show_bounds,
         show_axes=show_axes,
         zoom=zoom,

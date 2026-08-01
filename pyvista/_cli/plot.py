@@ -13,6 +13,7 @@ import pyvista as pv
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
+from .utils import CposView
 from .utils import Groups
 from .utils import _kwargs_converter
 from .utils import _validator_window_size
@@ -53,6 +54,7 @@ def _plot(
             group=Groups.PLOTTER,
         ),
     ] = None,
+    cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
     show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     background: Annotated[str | None, Parameter(group=Groups.RENDERING)] = None,
@@ -83,6 +85,7 @@ def _plot(
         full_screen=full_screen,
         screenshot=screenshot,
         interactive=interactive,
+        cpos=cpos,
         window_size=window_size,
         show_bounds=show_bounds,
         show_axes=show_axes,

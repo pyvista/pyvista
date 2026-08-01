@@ -1057,7 +1057,6 @@ def missing_plot_arguments():
         'theme',
         'return_viewer',
         'return_img',
-        'cpos',
         'jupyter_kwargs',
         'notebook',
         'var_item',  # intentionally renamed to 'paths' in the CLI
@@ -1137,7 +1136,15 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     plot_annotations = {name: plot_annotations[name] for name in cli_annotations}
 
     # Filter the ones which have intentionally different annotations
-    excludes = {'anti_aliasing', 'background', 'border_color', 'var_item', 'screenshot'}
+    excludes = {
+        'anti_aliasing',
+        'background',
+        'border_color',
+        'var_item',
+        'screenshot',
+        # The CLI takes the named camera positions only, not a full one
+        'cpos',
+    }
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
 
@@ -1145,6 +1152,13 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
 
 class CasesPlot:
+    @parametrize(cpos=['xy', 'iso'])
+    def case_cpos(self, default_plot_kwargs: dict, cpos: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--cpos={cpos}'
+        kwargs.update(cpos=cpos)
+        return tokens, kwargs
+
     @parametrize(offscreen=['True', 'yes', 'y', 'true'])
     def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
         kwargs = default_plot_kwargs
@@ -1961,6 +1975,39 @@ def test_compare_kwargs_hyphen_warns(
     assert '--show_edges=True' in err.replace('\n', '').replace('│', '')
     # The argument is still forwarded, with the hyphenated name
     assert mock_plot_compare.call_args.kwargs['display_kwargs'] == {'show-edges': True}
+
+
+@pytest.mark.parametrize('cpos', ['xy', 'iso'])
+def test_compare_called_cpos(
+    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, cpos: str
+):
+    """Test that a named camera position is forwarded."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} --cpos={cpos}')
+
+    assert mock_plot_compare.call_args.kwargs['cpos'] == cpos
+
+
+def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that the outline drawn in each subplot encloses every mesh."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names}')
+    assert mock_plot_compare.call_args.kwargs['reference_mesh'] is None
+
+    main(f'compare {names} --outline')
+    outline = mock_plot_compare.call_args.kwargs['reference_mesh']
+    meshes = pv.MultiBlock([pv.read(path) for path in tmp_compare_files])
+    assert outline.bounds == meshes.bounds
+
+
+def test_compare_called_label_size(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that the label size is given to the text drawn in each subplot."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names}')
+    assert mock_plot_compare.call_args.kwargs['text_kwargs'] is None
+
+    main(f'compare {names} --label-size 8')
+    assert mock_plot_compare.call_args.kwargs['text_kwargs'] == {'font_size': 8}
 
 
 def test_compare_glob_expands_files(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):

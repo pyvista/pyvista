@@ -266,6 +266,12 @@ def read_mesh(
             print_error_and_exit(message=msg)
 
 
+# The camera positions which can be named on the command line, as opposed to the fully
+# specified positions which the Python API also accepts. Mirrors the keys of
+# ``Renderer.CAMERA_STR_ATTR_MAP``
+CposView = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+
+
 class Groups(StrEnum):
     """Groups for the arguments of the plotting CLI commands."""
 
