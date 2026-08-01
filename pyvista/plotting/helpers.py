@@ -8,10 +8,14 @@ import math
 import string
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
+from typing import cast
+import weakref
 
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -191,27 +195,228 @@ def _warn_if_dataset_is_too_small(relative_size: float, of_what: str, remedy: st
         warn_external(msg)
 
 
-def _from_plotter_kwargs(plotter_kwargs: dict[str, Any], name: str, value: Any) -> Any:
-    """Return the value of an argument which may instead be given in ``plotter_kwargs``.
+def _from_kwargs(
+    kwargs: dict[str, Any], key: str, value: Any, *, name: str, kwargs_name: str
+) -> Any:
+    """Return the value of an argument which may instead be given in a keyword dict.
 
-    Both this function and the ``Plotter`` accept these arguments, so allow either
-    one to define them, but not both, where the two could contradict each other.
+    Both this function and the method the keywords are forwarded to accept these
+    arguments, so allow either one to define them, but not both, where the two could
+    contradict each other.
     """
-    if name not in plotter_kwargs:
+    if key not in kwargs:
         return value
     if value is not None:
         msg = (
-            f'{name.capitalize()} was given both as the {name!r} argument and in '
-            "'plotter_kwargs'. Use one or the other."
+            f'{name.replace("_", " ").capitalize()} was given both as the {name!r} '
+            f'argument and in {kwargs_name!r}. Use one or the other.'
         )
         raise TypeError(msg)
-    return plotter_kwargs.pop(name)
+    return kwargs.pop(key)
 
 
 def _subplot_args(shape: tuple[int, ...], index: int) -> tuple[int, ...]:
     """Return the ``subplot`` arguments for the index within the layout."""
     # Layouts defined by a string descriptor are 1D and take a single index
     return (index,) if len(shape) == 1 else divmod(index, shape[1])
+
+
+# Draw each label as large as it fits in its own subplot, so labels of different
+# lengths, or subplots of different sizes, are drawn at different sizes
+_BEST_FIT = 'best_fit'
+
+# Draw every label at the size of the one which has to be smallest to fit, so that they
+# are all the same size no matter how long they are or which subplot they are in
+_UNIFORM = 'uniform'
+
+_LABEL_SIZE_MODES = (_BEST_FIT, _UNIFORM)
+
+# Labels are measured at this size and scaled from it, since the width of a string is
+# proportional to its font size. It is large enough that the rounding of the measured
+# width does not skew the result.
+_REFERENCE_FONT_SIZE = 100
+
+# The fraction of the width of a subplot a label may occupy. The rest keeps the label
+# clear of the edge of the subplot and of the label of the subplot beside it.
+_LABEL_WIDTH_FRACTION = 0.9
+
+# A label drawn any smaller than this is unreadable, so shorten the text instead
+_MIN_LABEL_SIZE = 8
+
+# What the middle of a label too long to be drawn at a readable size is replaced with
+_ELLIPSIS = '…'
+
+# The name the label of a subplot is drawn under, which is how it is found again to be
+# fitted to the subplot each time the window is rendered at a new size
+_LABEL_NAME = 'plot_compare_label'
+
+# `add_text` draws text at twice the font size it is given, so the font size of the
+# theme is expressed in the same units as a fitted size by doubling it as well
+_POINTS_PER_FONT_SIZE = 2
+
+
+def _validate_label_size(label_size: Any) -> float | Literal['best_fit', 'uniform'] | None:
+    """Return the label size as either a font size or the name of a sizing mode."""
+    if label_size is None:
+        return None
+    modes = ', '.join(repr(mode) for mode in _LABEL_SIZE_MODES)
+    if isinstance(label_size, str):
+        if label_size in _LABEL_SIZE_MODES:
+            return cast('Literal["best_fit", "uniform"]', label_size)
+        msg = f'Label size {label_size!r} is not a font size, {modes} or None.'
+        raise ValueError(msg)
+    if isinstance(label_size, bool) or not isinstance(label_size, (int, float, np.number)):
+        msg = (
+            f'Label size must be a font size, {modes} or None, '
+            f'got {type(label_size).__name__} instead.'
+        )
+        raise TypeError(msg)
+    if label_size <= 0:
+        msg = f'Label size must be greater than zero, got {label_size} instead.'
+        raise ValueError(msg)
+    return float(label_size)
+
+
+def _text_width(text: str, prop: Any, *, size: float, dpi: int) -> float:
+    """Return the width in pixels of the text drawn at the given font size."""
+    # A `pyvista.TextProperty` loads the theme into a property shared by every one of
+    # them, which measuring has no business doing, so measure with a plain VTK one
+    measured = _vtk.vtkTextProperty()
+    # Copy the property the text is actually drawn with, so that the font family and
+    # style it defines are measured rather than the defaults
+    measured.ShallowCopy(prop)
+    measured.SetFontSize(int(size))
+    bounds = [0, 0, 0, 0]
+    # The text is measured rather than drawn, so no render window is needed for it.
+    # The renderer is made here and dropped again rather than kept, since a text
+    # renderer of its own is not something a plot has any business outliving.
+    _vtk.vtkMathTextFreeTypeTextRenderer().GetBoundingBox(measured, text, bounds, dpi)
+    return bounds[1] - bounds[0]
+
+
+def _fitting_size(text: str, prop: Any, *, width: float, dpi: int) -> float:
+    """Return the largest font size at which the text fits within the width."""
+    measured = _text_width(text, prop, size=_REFERENCE_FONT_SIZE, dpi=dpi)
+    # An empty label has no width to fit, so it never constrains the size
+    return math.inf if measured <= 0 else _REFERENCE_FONT_SIZE * width / measured
+
+
+def _ellipsize(text: str, n_kept: int) -> str:
+    """Return the text with all but ``n_kept`` of its middle characters elided."""
+    head = math.ceil(n_kept / 2)
+    tail = n_kept // 2
+    return text[:head] + _ELLIPSIS + (text[len(text) - tail :] if tail else '')
+
+
+def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float) -> str:
+    """Return the longest elision of the text which fits the width at the given size."""
+    if _text_width(text, prop, size=size, dpi=dpi) <= width:
+        # The label fits as it is, so there is nothing to elide
+        return text
+    # The elided text only grows as more of it is kept, so bisect for the most it can
+    # keep rather than measuring every length
+    low, high = 0, len(text) - 1
+    while low < high:
+        n_kept = (low + high + 1) // 2
+        if _text_width(_ellipsize(text, n_kept), prop, size=size, dpi=dpi) <= width:
+            low = n_kept
+        else:
+            high = n_kept - 1
+    return _ellipsize(text, low)
+
+
+def _draw_label(actor: Any, text: str, *, size: float, position: Any) -> None:
+    """Draw the label at a fixed size, whatever the size of its subplot."""
+    if isinstance(actor, pv.CornerAnnotation):
+        # A corner annotation scales its own text with the size of the subplot, which
+        # the fitted size already accounts for. Pin it by allowing only that size.
+        actor.minimum_font_size = actor.maximum_font_size = int(size)
+        actor.set_text(position, text)
+    else:
+        actor.prop.font_size = int(size)
+        actor.input = text
+
+
+def _fit_labels(
+    actors: Sequence[Any],
+    labels: Sequence[str],
+    renderers: Sequence[Any],
+    *,
+    uniform: bool,
+    ceiling: float,
+    dpi: int,
+    position: Any,
+) -> None:
+    """Draw every label at the largest size which fits in its subplot."""
+    widths = [renderer.GetSize()[0] * _LABEL_WIDTH_FRACTION for renderer in renderers]
+    sizes = [
+        min(ceiling, _fitting_size(label, actor.prop, width=width, dpi=dpi))
+        for label, actor, width in zip(labels, actors, widths, strict=True)
+    ]
+    if uniform:
+        sizes = [min(sizes)] * len(sizes)
+
+    for actor, label, width, size in zip(actors, labels, widths, sizes, strict=True):
+        if size < _MIN_LABEL_SIZE:
+            # The label is unreadable at the size it takes to fit, so draw it at the
+            # smallest readable size and shorten the text until that fits instead
+            size = _MIN_LABEL_SIZE  # noqa: PLW2901
+            label = _shorten(label, actor.prop, width=width, dpi=dpi, size=size)  # noqa: PLW2901
+        _draw_label(actor, label, size=size, position=position)
+
+
+def _fit_labels_on_render(
+    plotter: pv.Plotter,
+    labels: Sequence[str],
+    *,
+    name: str,
+    uniform: bool | None,
+    position: Any,
+) -> None:
+    """Fit the labels to their subplots before every render which needs it again.
+
+    The size which fits depends on the size of the subplots, which is only settled
+    once the window is shown, and changes again whenever the window is resized.
+    """
+    fitted: list[Any] = []
+    # The render window holds this callback for as long as it lives, so hold nothing
+    # of the plotter it belongs to in return, and look up what is needed instead.
+    # Anything held here would outlive the plotter it was drawn by.
+    reference = weakref.ref(plotter)
+
+    def fit(*_args: Any) -> None:
+        plotter = reference()
+        render_window = None if plotter is None else plotter.render_window
+        if plotter is None or render_window is None:  # pragma: no cover
+            return
+        dpi = render_window.GetDPI()
+        renderers = list(plotter.renderers)[: len(labels)]
+        actors = [renderer.actors.get(name) for renderer in renderers]
+        if not all(actors):
+            # A label has been removed or drawn over since it was added, so there is
+            # nothing left to fit rather than anything to complain about mid-render
+            return
+        sizes = [renderer.GetSize() for renderer in renderers]
+        if fitted == [dpi, sizes]:
+            # Nothing the fitted sizes depend on has changed since the last render
+            return
+        fitted[:] = [dpi, sizes]
+        _fit_labels(
+            actors,
+            labels,
+            renderers,
+            # Subplots of the same size share a size which suits all of the labels.
+            # Sharing one between subplots of different sizes would instead pin every
+            # label to the size which fits in the smallest of them.
+            uniform=len(set(sizes)) == 1 if uniform is None else uniform,
+            ceiling=plotter.theme.font.size * _POINTS_PER_FONT_SIZE,
+            dpi=dpi,
+            position=position,
+        )
+
+    # `StartEvent` is emitted before each render, when the subplots have already been
+    # given the size they are about to be drawn at
+    plotter.render_window.AddObserver(_vtk.vtkCommand.StartEvent, fit)  # type: ignore[union-attr]
 
 
 def plot_compare(
@@ -226,6 +431,7 @@ def plot_compare(
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
+    label_size: float | Literal['best_fit', 'uniform'] | None = None,
     shape: Sequence[int] | str | None = None,
     link: bool | None = None,
     show_axes: bool | None = None,
@@ -291,6 +497,29 @@ def plot_compare(
 
         If the input has keys `and` ``labels`` are provided, the provided
         ``labels`` take precedence and are used instead of its keys.
+
+    label_size : float | str, optional
+        The size to draw the ``labels`` at, as either a font size or how to work
+        one out. A font size is used as given, and may be too large for a label
+        to fit in its subplot. The sizes which are worked out are:
+
+        * ``'best_fit'``: draw each label as large as it fits in its own
+          subplot, up to the font size of the theme. Labels of different lengths,
+          and labels in subplots of different sizes, are drawn at different sizes.
+        * ``'uniform'``: draw every label at the size of the one which has to be
+          smallest to fit, so that they are all the same size no matter how long
+          they are or which subplot they are in.
+
+        By default, ``'uniform'`` is used when the subplots are all the same
+        size, and ``'best_fit'`` otherwise, since one size shared between
+        subplots of different sizes is pinned to whatever fits the smallest of
+        them. A label too long to fit at a readable size has its middle elided.
+
+        The size is worked out again whenever the window is resized. It may also
+        be given as ``'font_size'`` in ``text_kwargs``, but not in both places.
+        Has no effect when ``labels`` is ``None``.
+
+        .. versionadded:: 0.49
 
     shape : Sequence[int] | str, optional
         The shape of the subplot layout, in any form accepted by
@@ -396,15 +625,30 @@ def plot_compare(
     _validate_reference_mesh(reference_mesh)
 
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
-    shape = _from_plotter_kwargs(plotter_kwargs, 'shape', shape)
+    shape = _from_kwargs(
+        plotter_kwargs, 'shape', shape, name='shape', kwargs_name='plotter_kwargs'
+    )
 
     if shape is None:
         shape = _auto_shape(n_datasets)
 
     display_kwargs = {} if display_kwargs is None else display_kwargs
     show_kwargs = {} if show_kwargs is None else show_kwargs
-    text_kwargs = {} if text_kwargs is None else text_kwargs
+    text_kwargs = {} if text_kwargs is None else dict(text_kwargs)
     reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
+
+    label_size = _validate_label_size(
+        _from_kwargs(
+            text_kwargs, 'font_size', label_size, name='label_size', kwargs_name='text_kwargs'
+        )
+    )
+    # A font size is drawn as given, and only the sizes which are worked out are fitted
+    fitted = not isinstance(label_size, float)
+    if not fitted:
+        text_kwargs['font_size'] = label_size
+    elif text_kwargs.get('name') is None:
+        # Name the labels so that they can be found again to be fitted on every render
+        text_kwargs['name'] = _LABEL_NAME
 
     # The shape itself is validated by the plotter
     pl = pv.Plotter(shape=shape, **plotter_kwargs)
@@ -492,6 +736,16 @@ def plot_compare(
         # Linked subplots share one camera, so zooming each would compound the zoom
         for renderer in renderers[:1] if link else renderers:
             renderer.camera.zoom(zoom)
+
+    if fitted and labels is not None:
+        _fit_labels_on_render(
+            pl,
+            labels,
+            name=text_kwargs['name'],
+            uniform=None if label_size is None else label_size == _UNIFORM,
+            # The labels are drawn wherever `add_text` was told to draw them
+            position=text_kwargs.get('position', 'upper_left'),
+        )
 
     return pl.show(screenshot=screenshot, **show_kwargs)
 

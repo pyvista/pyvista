@@ -2343,6 +2343,148 @@ def test_plot_compare_labels_none(compare_datasets):
     pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
 
 
+@pytest.fixture
+def compare_labels():
+    """Return labels of very different lengths, to be sized against each other."""
+    return [
+        'runs/2024-06-01/experiment_alpha/output_mesh.vtk',
+        'short',
+        'runs/2024-06-01/experiment_beta_with_a_long_name/output_mesh.vtk',
+        'medium_length_name.vtp',
+    ]
+
+
+def _drawn_labels(datasets, **kwargs):
+    """Return the size and text of the label drawn in each subplot."""
+    drawn: list[tuple[int, str]] = []
+
+    def capture(plotter):
+        # `add_text` draws in the upper left corner, which is index 2
+        drawn.extend(
+            (actor.maximum_font_size, actor.get_text(2))
+            for renderer in plotter.renderers
+            for actor in renderer.actors.values()
+            if isinstance(actor, pv.CornerAnnotation)
+        )
+
+    pv.plot_compare(
+        datasets,
+        display_kwargs={'color': 'w'},
+        show_kwargs={'before_close_callback': capture},
+        **kwargs,
+    )
+    return drawn
+
+
+@pytest.mark.parametrize('label_size', ['best_fit', 'uniform', 24])
+def test_plot_compare_label_size(compare_datasets, compare_labels, label_size):
+    pv.plot_compare(
+        compare_datasets,
+        labels=compare_labels,
+        label_size=label_size,
+        display_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_label_size_modes(compare_datasets, compare_labels, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def sizes(**kwargs):
+        drawn = _drawn_labels(compare_datasets, labels=compare_labels, **kwargs)
+        return [size for size, _ in drawn]
+
+    # Each label is drawn as large as it fits, so the longer a label is the smaller it
+    # is drawn, and none of them is drawn larger than the size the theme asks for
+    best_fit = sizes(label_size='best_fit')
+    lengths = [len(label) for label in compare_labels]
+    by_length = [size for _, size in sorted(zip(lengths, best_fit, strict=True))]
+    assert by_length == sorted(best_fit, reverse=True)
+    assert max(best_fit) <= pv.global_theme.font.size * 2
+
+    # Every label is drawn at the same size, which is the size of the one which has to
+    # be smallest to fit
+    assert sizes(label_size='uniform') == [min(best_fit)] * len(compare_labels)
+
+
+def test_plot_compare_label_size_default(compare_datasets, compare_labels, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def sizes(**kwargs):
+        drawn = _drawn_labels(compare_datasets, labels=compare_labels, **kwargs)
+        return [size for size, _ in drawn]
+
+    # Subplots of the same size share one size, since it suits all of the labels
+    assert sizes() == sizes(label_size='uniform')
+    assert sizes() != sizes(label_size='best_fit')
+
+    # Subplots of different sizes are fitted one by one, since a shared size would be
+    # pinned to whatever fits in the smallest of them
+    assert sizes(shape='3|1') == sizes(shape='3|1', label_size='best_fit')
+    assert sizes(shape='3|1') != sizes(shape='3|1', label_size='uniform')
+
+
+def test_plot_compare_label_size_font_size_is_used_as_given(
+    compare_datasets, compare_labels, verify_image_cache
+):
+    verify_image_cache.skip = True
+
+    # A font size is drawn as given rather than fitted, so it is left to the annotation
+    # to scale it, which it does within the default limits on the size
+    unlimited = pv.CornerAnnotation('upper_left', '').maximum_font_size
+    for kwargs in [{'label_size': 24}, {'text_kwargs': {'font_size': 24}}]:
+        drawn = _drawn_labels(compare_datasets, labels=compare_labels, **kwargs)
+        assert [size for size, _ in drawn] == [unlimited] * 4
+
+
+def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
+    compare_datasets, verify_image_cache
+):
+    verify_image_cache.skip = True
+
+    # A label far too long to be drawn at a readable size has its middle elided, and
+    # what is left of it is drawn at the smallest readable size
+    labels = ['x' * 400, 'y' * 400, 'short', 'also short']
+    drawn = _drawn_labels(compare_datasets, labels=labels)
+    for (size, text), label in zip(drawn[:2], labels[:2], strict=True):
+        assert size == 8
+        assert '…' in text
+        assert len(text) < len(label)
+        # What is kept of the label is its start and its end
+        assert text.startswith(label[0])
+        assert text.endswith(label[0])
+
+    # The labels which fit at that size are drawn as they are
+    assert [text for _, text in drawn[2:]] == labels[2:]
+
+
+def test_plot_compare_label_size_follows_the_window(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The size which fits depends on the size of the subplots, so the labels are fitted
+    # again whenever the window is resized
+    sizes = []
+
+    def resize(plotter):
+        for window_size in ([1600, 1200], [500, 400]):
+            plotter.window_size = window_size
+            plotter.render()
+            sizes.append(
+                next(
+                    actor.maximum_font_size
+                    for actor in plotter.renderers[0].actors.values()
+                    if isinstance(actor, pv.CornerAnnotation)
+                )
+            )
+
+    pv.plot_compare(
+        compare_datasets,
+        labels=['runs/2024-06-01/experiment_alpha/output_mesh.vtk'] * 4,
+        display_kwargs={'color': 'w'},
+        show_kwargs={'before_close_callback': resize},
+    )
+    assert sizes[0] > sizes[1]
+
+
 @pytest.mark.parametrize('multiblock', [False, True], ids=['dict', 'multiblock'])
 def test_plot_compare_labels_take_precedence_over_keys(multiblock, verify_image_cache):
     verify_image_cache.skip = True
@@ -2675,6 +2817,25 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=(1, 2), plotter_kwargs={'shape': (2, 1)})
+
+    match = (
+        "Label size was given both as the 'label_size' argument and in 'text_kwargs'. "
+        'Use one or the other.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size=12, text_kwargs={'font_size': 24})
+
+    match = "Label size 'biggest' is not a font size, 'best_fit', 'uniform' or None."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size='biggest')
+
+    match = "Label size must be a font size, 'best_fit', 'uniform' or None, got bool instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size=True)
+
+    match = 'Label size must be greater than zero, got 0 instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size=0)
 
 
 def test_plot_compare_four_deprecated(compare_datasets, verify_image_cache):

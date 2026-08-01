@@ -2026,14 +2026,19 @@ def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare
     assert outline.bounds == meshes.bounds
 
 
-def test_compare_called_label_size(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+@pytest.mark.parametrize(
+    ('tokens', 'expected'),
+    [('', None), ('--label-size 8', 8.0), ('--label-size best_fit', 'best_fit')],
+    ids=['default', 'font_size', 'mode'],
+)
+def test_compare_called_label_size(
+    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected: Any
+):
     """Test that the label size is given to the text drawn in each subplot."""
     names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names}')
-    assert mock_plot_compare.call_args.kwargs['text_kwargs'] is None
+    main(shlex.split(f'compare {names} {tokens}'))
 
-    main(f'compare {names} --label-size 8')
-    assert mock_plot_compare.call_args.kwargs['text_kwargs'] == {'font_size': 8}
+    assert mock_plot_compare.call_args.kwargs['label_size'] == expected
 
 
 @pytest.mark.usefixtures('patch_app_console')

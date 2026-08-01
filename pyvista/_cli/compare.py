@@ -18,6 +18,7 @@ from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
 from .utils import CposView
 from .utils import Groups
+from .utils import LabelSize
 from .utils import _kwargs_converter
 from .utils import _validator_window_size
 from .utils import call_or_exit
@@ -53,8 +54,11 @@ common frame of reference.
 """
 
 _HELP_LABEL_SIZE = """\
-Font size of the label shown in each subplot. Useful when the file names are long
-enough to be cut off.
+Size of the label shown in each subplot, as either a font size or how to work one out.
+A font size is used as given, and may be too large for a label to fit in its subplot.
+``best_fit`` draws each label as large as it fits in its own subplot, and ``uniform``
+draws them all at the size of the one which has to be smallest to fit. By default,
+``uniform`` is used when the subplots are all the same size, and ``best_fit`` otherwise.
 """
 
 # What to do about a dataset which is too small to make out, in terms of the options
@@ -157,7 +161,7 @@ def _compare(
     cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
     outline: Annotated[bool, Parameter(help=_HELP_OUTLINE, group=Groups.RENDERING)] = False,
     label_size: Annotated[
-        int | None, Parameter(help=_HELP_LABEL_SIZE, group=Groups.RENDERING)
+        float | LabelSize | None, Parameter(help=_HELP_LABEL_SIZE, group=Groups.RENDERING)
     ] = None,
     show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
@@ -194,7 +198,7 @@ def _compare(
             cpos=cpos,
             # The outline of a `MultiBlock` encloses every one of its blocks
             reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
-            text_kwargs=None if label_size is None else {'font_size': label_size},
+            label_size=label_size,
             show_bounds=show_bounds,
             show_axes=show_axes,
             zoom=zoom,

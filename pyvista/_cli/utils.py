@@ -271,6 +271,10 @@ def read_mesh(
 # ``Renderer.CAMERA_STR_ATTR_MAP``
 CposView = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
 
+# The ways a label size can be worked out, as opposed to the font size which may be
+# named instead. Mirrors the modes of ``pyvista.plot_compare``.
+LabelSize = Literal['best_fit', 'uniform']
+
 
 class Groups(StrEnum):
     """Groups for the arguments of the plotting CLI commands."""
