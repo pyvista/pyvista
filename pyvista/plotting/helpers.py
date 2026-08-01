@@ -198,7 +198,9 @@ def plot_compare(
         Additional keyword arguments to pass to the ``add_mesh`` method.
 
     plotter_kwargs : dict, default: None
-        Additional keyword arguments to pass to the ``Plotter`` constructor.
+        Additional keyword arguments to pass to the ``Plotter`` constructor. A
+        ``'shape'`` given here is used as the ``shape`` argument below, and it is
+        an error to give it in both places.
 
     show_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``show`` method.
@@ -318,12 +320,23 @@ def plot_compare(
         raise ValueError(msg)
 
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
-    if shape is None or (isinstance(shape, str) and shape == 'auto'):
-        shape = _auto_shape(n_datasets)
-
     _validate_reference_mesh(reference_mesh)
 
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
+    if 'shape' in plotter_kwargs:
+        # The plotter's shape is this function's `shape`, so accept it from either
+        # place but not from both, where the two could contradict each other
+        if shape is not None:
+            msg = (
+                "Shape was given both as the 'shape' argument and in 'plotter_kwargs'. "
+                'Use one or the other.'
+            )
+            raise TypeError(msg)
+        shape = plotter_kwargs.pop('shape')
+
+    if shape is None or (isinstance(shape, str) and shape == 'auto'):
+        shape = _auto_shape(n_datasets)
+
     display_kwargs = {} if display_kwargs is None else display_kwargs
     show_kwargs = {} if show_kwargs is None else show_kwargs
     text_kwargs = {} if text_kwargs is None else text_kwargs

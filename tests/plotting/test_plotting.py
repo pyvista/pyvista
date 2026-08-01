@@ -2306,6 +2306,20 @@ def test_plot_compare_shape(compare_datasets, shape, n_datasets):
     pv.plot_compare(datasets, shape=shape, display_kwargs={'color': 'w'})
 
 
+@pytest.mark.parametrize('shape', [(4, 1), '3|1'], ids=['grid', 'left_right'])
+def test_plot_compare_shape_from_plotter_kwargs(compare_datasets, shape, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A shape given to the plotter is used as the shape of the comparison
+    shapes = []
+    pv.plot_compare(
+        compare_datasets,
+        plotter_kwargs={'shape': shape},
+        show_kwargs={'before_close_callback': lambda pl: shapes.append(pl.renderers.shape)},
+    )
+    assert shapes == [(4, 1) if shape == (4, 1) else (4,)]
+
+
 def test_plot_compare_labels(compare_datasets):
     pv.plot_compare(
         compare_datasets, labels=['one', 'two', 'three', 'four'], display_kwargs={'color': 'w'}
@@ -2477,6 +2491,13 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     match = 'Reference mesh must be a dataset, got bool instead.'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], reference_mesh=True)
+
+    match = (
+        "Shape was given both as the 'shape' argument and in 'plotter_kwargs'. "
+        'Use one or the other.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(1, 2), plotter_kwargs={'shape': (2, 1)})
 
 
 def test_plot_compare_four_deprecated(compare_datasets, verify_image_cache):
