@@ -12,8 +12,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
-from .plot_compare import plot_compare
-
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
@@ -68,7 +66,7 @@ def plot_arrows(cent, direction, **kwargs):
 
 
 @_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
-def plot_compare_four(  # noqa: PLR0917
+def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     data_a,
     data_b,
     data_c,
@@ -106,23 +104,23 @@ def plot_compare_four(  # noqa: PLR0917
     data_d : pyvista.DataSet
         The data object to display in the bottom-right corner.
 
-    display_kwargs : dict, optional
+    display_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``add_mesh`` method.
 
-    plotter_kwargs : dict, optional
+    plotter_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``Plotter`` constructor.
 
-    show_kwargs : dict, optional
+    show_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``show`` method.
 
-    screenshot : str | bool, optional
+    screenshot : str | bool, default: None
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
 
-    camera_position : list, optional
+    camera_position : list, default: None
         The camera position to use in the plot.
 
-    outline : pyvista.DataSet, optional
+    outline : pyvista.DataSet, default: None
         An outline to plot around the data objects.
 
     outline_color : str, default: 'k'
@@ -134,7 +132,7 @@ def plot_compare_four(  # noqa: PLR0917
     link : bool, default: True
         If ``True``, link the views of the subplots.
 
-    notebook : bool, optional
+    notebook : bool, default: None
         If ``True``, display the plot in a Jupyter notebook.
 
     Returns
@@ -159,25 +157,38 @@ def plot_compare_four(  # noqa: PLR0917
         msg = 'Remove this deprecated function.'
         raise RuntimeError(msg)
 
-    # `plot_compare` leaves the notebook argument to the plotter, as it does every
-    # other argument of the plotter which it does not need itself
-    plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
+    datasets = [[data_a, data_b], [data_c, data_d]]
+    labels = [labels[0:2], labels[2:4]]
+
+    if plotter_kwargs is None:
+        plotter_kwargs = {}
+    if display_kwargs is None:
+        display_kwargs = {}
+    if show_kwargs is None:
+        show_kwargs = {}
+
     plotter_kwargs['notebook'] = notebook
 
-    return plot_compare(
-        [data_a, data_b, data_c, data_d],
-        display_kwargs=display_kwargs,
-        plotter_kwargs=plotter_kwargs,
-        show_kwargs=show_kwargs,
-        screenshot=screenshot,
-        cpos=camera_position,
-        # Non-dataset outlines were silently ignored by this function, so keep
-        # ignoring them here rather than raising as `plot_compare` now does
-        reference_mesh=outline if is_pyvista_dataset(outline) else None,
-        reference_kwargs={'color': outline_color},
-        labels=labels,
-        link=link,
-    )
+    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
+
+    for i in range(2):
+        for j in range(2):
+            pl.subplot(i, j)
+            pl.add_mesh(datasets[i][j], **display_kwargs)
+            pl.add_text(labels[i][j])
+            if is_pyvista_dataset(outline):
+                pl.add_mesh(outline, color=outline_color)
+            if camera_position is not None:
+                pl.camera_position = camera_position
+
+    if link:
+        pl.link_views()
+        # when linked, camera must be reset such that the view range
+        # of all subrender windows matches
+        if camera_position is None:
+            pl.reset_camera()
+
+    return pl.show(screenshot=screenshot, **show_kwargs)
 
 
 @_deprecate_positional_args(allowed=['view'])
