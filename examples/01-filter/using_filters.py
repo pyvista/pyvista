@@ -61,7 +61,7 @@ contours = dataset.contour()
 slices = dataset.slice_orthogonal()
 glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
 
-# Use `plot_compare` to show each result in its own linked subplot with an
+# Use :func:`~pyvista.plot_compare` to show each result in its own linked subplot with an
 # outline of the original dataset.
 datasets = {
     'Threshold': threshed,
