@@ -156,6 +156,23 @@ def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
     )
 
 
+def _from_plotter_kwargs(plotter_kwargs: dict[str, Any], name: str, value: Any) -> Any:
+    """Return the value of an argument which may instead be given in ``plotter_kwargs``.
+
+    Both this function and the ``Plotter`` accept these arguments, so allow either
+    one to define them, but not both, where the two could contradict each other.
+    """
+    if name not in plotter_kwargs:
+        return value
+    if value is not None:
+        msg = (
+            f'{name.capitalize()} was given both as the {name!r} argument and in '
+            "'plotter_kwargs'. Use one or the other."
+        )
+        raise TypeError(msg)
+    return plotter_kwargs.pop(name)
+
+
 def _subplot_args(shape: tuple[int, ...], index: int) -> tuple[int, ...]:
     """Return the ``subplot`` arguments for the index within the layout."""
     # Layouts defined by a string descriptor are 1D and take a single index
@@ -199,8 +216,8 @@ def plot_compare(
 
     plotter_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``Plotter`` constructor. A
-        ``'shape'`` given here is used as the ``shape`` argument below, and it is
-        an error to give it in both places.
+        ``'shape'`` or ``'notebook'`` given here is used as the argument of the
+        same name below, and it is an error to give either in both places.
 
     show_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``show`` method.
@@ -323,16 +340,8 @@ def plot_compare(
     _validate_reference_mesh(reference_mesh)
 
     plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
-    if 'shape' in plotter_kwargs:
-        # The plotter's shape is this function's `shape`, so accept it from either
-        # place but not from both, where the two could contradict each other
-        if shape is not None:
-            msg = (
-                "Shape was given both as the 'shape' argument and in 'plotter_kwargs'. "
-                'Use one or the other.'
-            )
-            raise TypeError(msg)
-        shape = plotter_kwargs.pop('shape')
+    shape = _from_plotter_kwargs(plotter_kwargs, 'shape', shape)
+    notebook = _from_plotter_kwargs(plotter_kwargs, 'notebook', notebook)
 
     if shape is None or (isinstance(shape, str) and shape == 'auto'):
         shape = _auto_shape(n_datasets)

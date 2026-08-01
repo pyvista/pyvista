@@ -2499,6 +2499,13 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=(1, 2), plotter_kwargs={'shape': (2, 1)})
 
+    match = (
+        "Notebook was given both as the 'notebook' argument and in 'plotter_kwargs'. "
+        'Use one or the other.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], notebook=False, plotter_kwargs={'notebook': False})
+
 
 def test_plot_compare_four_deprecated(compare_datasets, verify_image_cache):
     verify_image_cache.skip = True
