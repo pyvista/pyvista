@@ -1142,8 +1142,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
         'border_color',
         'var_item',
         'screenshot',
-        # The CLI takes the named camera positions only, not a full one
-        'cpos',
+        'cpos',  # The CLI takes the named camera positions only, not a full one
     }
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
