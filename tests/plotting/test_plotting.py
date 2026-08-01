@@ -2368,6 +2368,19 @@ def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_po
     )
 
 
+def test_plot_compare_link_warns_when_a_dataset_is_too_small(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A shared camera has to fit every dataset, so a much smaller one is barely visible
+    datasets = [pv.Sphere(radius=0.02), pv.Cone(height=5.0)]
+    match = 'The smallest dataset is 1.3% of the size of all of the datasets together'
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        pv.plot_compare(datasets)
+
+    # Each subplot is fit to its own dataset when unlinked, so the size does not matter
+    pv.plot_compare(datasets, link=False)
+
+
 def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify_image_cache):
     verify_image_cache.skip = True
 

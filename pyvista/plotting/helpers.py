@@ -159,6 +159,31 @@ def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
     )
 
 
+# A dataset smaller than this fraction of all of them together is barely visible when
+# the subplots share a camera fit to all of them
+_MIN_RELATIVE_SIZE = 0.05
+
+
+def _diagonal(bounds: Sequence[float]) -> float:
+    """Return the length of the diagonal of the bounds."""
+    return float(
+        np.linalg.norm([bounds[1] - bounds[0], bounds[3] - bounds[2], bounds[5] - bounds[4]])
+    )
+
+
+def _warn_if_dataset_is_too_small(renderers: Sequence[Any]) -> None:
+    """Warn when sharing a camera leaves one of the datasets too small to make out."""
+    union = _diagonal(_union_bounds(renderers))
+    smallest = min(_diagonal(renderer.bounds) for renderer in renderers)
+    if union > 0 and (relative_size := smallest / union) < _MIN_RELATIVE_SIZE:
+        msg = (
+            f'The smallest dataset is {relative_size:.1%} of the size of all of the datasets '
+            f'together, so it may be too small to make out when the subplots share a camera. '
+            f'Use `link=False` to fit each subplot to its own dataset instead.'
+        )
+        warn_external(msg)
+
+
 def _from_plotter_kwargs(plotter_kwargs: dict[str, Any], name: str, value: Any) -> Any:
     """Return the value of an argument which may instead be given in ``plotter_kwargs``.
 
@@ -399,6 +424,9 @@ def plot_compare(
     # Empty subplots are skipped throughout, since an empty renderer reports default
     # bounds rather than no bounds at all, and has nothing to decorate
     renderers = list(pl.renderers)[:n_datasets]
+
+    if link:
+        _warn_if_dataset_is_too_small(renderers)
 
     # Do not reset when a fully-specified cpos is provided.
     if cpos is None or isinstance(cpos, str):
