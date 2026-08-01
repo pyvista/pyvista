@@ -70,7 +70,7 @@ pv.plot_compare(
     display_kwargs={'opacity': 0.75},
     reference_mesh=mesh_g.outline(),
     shape=keys.shape,
-    camera_position='iso',
+    cpos='iso',
 )
 
 
@@ -95,7 +95,7 @@ pv.plot_compare(
     display_kwargs={'opacity': 0.75},
     reference_mesh=mesh_g.outline(),
     shape=keys.shape,
-    camera_position='iso',
+    cpos='iso',
 )
 # %%
 # .. tags:: filter

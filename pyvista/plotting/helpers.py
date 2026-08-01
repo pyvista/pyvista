@@ -190,12 +190,15 @@ def plot_compare(
     show_kwargs: dict[str, Any] | None = None,
     text_kwargs: dict[str, Any] | None = None,
     screenshot: str | bool | None = None,
-    camera_position: CameraPositionOptions | None = None,
+    cpos: CameraPositionOptions | None = None,
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
     shape: Sequence[int] | str | None = None,
     link: bool = True,
+    show_axes: bool | None = None,
+    show_bounds: bool = False,
+    zoom: float | str | None = None,
     notebook: bool | None = None,
 ):
     """Plot a grid comparison of any number of data objects.
@@ -234,7 +237,7 @@ def plot_compare(
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
 
-    camera_position : list, default: None
+    cpos : list, default: None
         The camera position to use in the plot.
 
     reference_mesh : DataSet | MultiBlock, default: None
@@ -269,8 +272,20 @@ def plot_compare(
         datasets are shown at a common scale and the framing does not depend on
         the order they are given in. If ``False``, each subplot keeps its own
         camera and is fit to its own dataset. In both cases the camera is only
-        fit when ``camera_position`` is ``None`` or a string, since a
-        fully-specified camera position is used as given.
+        fit when ``cpos`` is ``None`` or a string, since a fully-specified
+        camera position is used as given.
+
+    show_axes : bool, default: None
+        Show the axes orientation widget in every subplot. By default, the
+        :attr:`~pyvista.plotting.themes.Theme.axes` setting of the theme is
+        used, as it is by :func:`pyvista.plot`.
+
+    show_bounds : bool, default: False
+        Show the bounds axes in every subplot.
+
+    zoom : float | str, default: None
+        Camera zoom, applied after the camera is fit to the datasets. Either
+        ``'tight'`` or a float, where a value greater than 1 is a zoom-in.
 
     notebook : bool, default: None
         If ``True``, display the plot in a Jupyter notebook.
@@ -308,7 +323,7 @@ def plot_compare(
     ...         'clip z': mesh.clip('z'),
     ...     },
     ...     display_kwargs={'color': 'w'},
-    ...     camera_position='xy',
+    ...     cpos='xy',
     ... )
 
     A :class:`~pyvista.MultiBlock` is compared block-by-block, and its block
@@ -375,22 +390,24 @@ def plot_compare(
             pl.add_text(labels[index], **text_kwargs)
         if reference_mesh is not None:
             pl.add_mesh(reference_mesh, **reference_kwargs)
-        if camera_position is not None:
-            pl.camera_position = camera_position
+        if cpos is not None:
+            pl.camera_position = cpos
 
     if link:
         pl.link_views()
 
+    # Empty subplots are skipped throughout, since an empty renderer reports default
+    # bounds rather than no bounds at all, and has nothing to decorate
+    renderers = list(pl.renderers)[:n_datasets]
+
     # Do not reset when a fully-specified cpos is provided.
-    if camera_position is None or isinstance(camera_position, str):
+    if cpos is None or isinstance(cpos, str):
         # Linked views share a single camera, so it is fit to the bounds of every
         # dataset at once. This shows the datasets at a common scale and keeps the
         # framing from depending on the order the datasets are given in. Each subplot
-        # has its own camera otherwise, and is fit to its own dataset. Empty subplots
-        # are skipped since they report default bounds rather than no bounds at all.
-        renderers = list(pl.renderers)[:n_datasets]
+        # has its own camera otherwise, and is fit to its own dataset.
         if link:
-            if camera_position is None:
+            if cpos is None:
                 # Apply the default view direction now. It is otherwise applied lazily,
                 # which would both override the fit below and leave the camera pointing
                 # down an axis instead. Setting it also marks the camera as set.
@@ -401,6 +418,22 @@ def plot_compare(
             # independently
             for renderer in renderers:
                 renderer.reset_camera()
+
+    if show_axes is None:
+        show_axes = pl.theme.axes.show
+    if show_axes:
+        for renderer in renderers:
+            # Match `pyvista.plot`, which draws box axes when the theme asks for them
+            renderer.add_box_axes() if pl.theme.axes.box else renderer.add_axes()
+
+    if show_bounds:
+        for renderer in renderers:
+            renderer.show_bounds()
+
+    if zoom is not None:
+        # Linked subplots share one camera, so zooming each would compound the zoom
+        for renderer in renderers[:1] if link else renderers:
+            renderer.camera.zoom(zoom)
 
     return pl.show(screenshot=screenshot, **show_kwargs)
 
@@ -503,7 +536,7 @@ def plot_compare_four(  # noqa: PLR0917
         plotter_kwargs=plotter_kwargs,
         show_kwargs=show_kwargs,
         screenshot=screenshot,
-        camera_position=camera_position,
+        cpos=camera_position,
         # Non-dataset outlines were silently ignored by this function, so keep
         # ignoring them here rather than raising as `plot_compare` now does
         reference_mesh=outline if is_pyvista_dataset(outline) else None,

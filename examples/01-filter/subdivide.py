@@ -55,7 +55,7 @@ pv.plot_compare(
     datasets,
     shape=(3, 3),
     display_kwargs=dict(show_edges=True, color=True),
-    camera_position=cpos,
+    cpos=cpos,
 )
 # %%
 # .. tags:: filter

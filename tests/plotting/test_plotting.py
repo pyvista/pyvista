@@ -2363,7 +2363,7 @@ def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_po
     pv.plot_compare(
         compare_datasets,
         link=link,
-        camera_position=camera_position,
+        cpos=camera_position,
         display_kwargs={'color': 'w'},
     )
 
@@ -6515,7 +6515,7 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         data,
         display_kwargs={'show_edges': True},
         link=False,
-        camera_position=pv.CameraPosition(
+        cpos=pv.CameraPosition(
             position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
             focal_point=(0.0, 0.0, 0.0),
             viewup=(0.0, 0.0, 1.0),
@@ -6563,7 +6563,7 @@ def test_sphere_texture_seam(tessellation):
         data,
         display_kwargs={'texture': texture, 'smooth_shading': True},
         link=False,
-        camera_position='yz',
+        cpos='yz',
     )
 
 

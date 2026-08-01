@@ -61,7 +61,7 @@ pv.plot_compare(
     datasets,
     display_kwargs=dargs,
     text_kwargs={'font_size': 24},
-    camera_position=cpos,
+    cpos=cpos,
 )
 
 # %%
