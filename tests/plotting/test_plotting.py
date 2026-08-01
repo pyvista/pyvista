@@ -2354,26 +2354,17 @@ def compare_labels():
     ]
 
 
-def _label_of(actor):
-    """Return the size and text of a label, however it is drawn."""
-    if isinstance(actor, pv.Text):
-        # A text actor is drawn at the size it is given
-        return actor.prop.font_size, actor.input
-    # A corner annotation works out a size of its own, within the limit it is given.
-    # `add_text` draws in its upper left corner, which is index 2.
-    return actor.maximum_font_size, actor.get_text(2)
-
-
 def _drawn_labels(datasets, **kwargs):
     """Return the size and text of the label drawn in each subplot."""
     drawn: list[tuple[int, str]] = []
 
     def capture(plotter):
+        # A label is drawn by a text actor, which draws it at the size it is given
         drawn.extend(
-            _label_of(actor)
+            (actor.prop.font_size, actor.input)
             for renderer in plotter.renderers
             for actor in renderer.actors.values()
-            if isinstance(actor, (pv.Text, pv.CornerAnnotation))
+            if isinstance(actor, pv.Text)
         )
 
     pv.plot_compare(
@@ -2437,12 +2428,11 @@ def test_plot_compare_label_size_font_size_is_used_as_given(
 ):
     verify_image_cache.skip = True
 
-    # A font size is drawn as given rather than fitted, so it is left to the annotation
-    # to scale it, which it does within the default limits on the size
-    unlimited = pv.CornerAnnotation('upper_left', '').maximum_font_size
+    # A font size is drawn as given rather than fitted, however long the label is, at
+    # the size `add_text` draws that font size at
     for kwargs in [{'label_size': 24}, {'text_kwargs': {'font_size': 24}}]:
         drawn = _drawn_labels(compare_datasets, labels=compare_labels, **kwargs)
-        assert [size for size, _ in drawn] == [unlimited] * 4
+        assert [size for size, _ in drawn] == [24 * 2] * 4
 
 
 def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
@@ -2469,7 +2459,7 @@ def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
 def _size_in_first_subplot(plotter):
     """Return the size of the label drawn in the first subplot."""
     actors = plotter.renderers[0].actors.values()
-    return next(_label_of(a)[0] for a in actors if isinstance(a, (pv.Text, pv.CornerAnnotation)))
+    return next(a.prop.font_size for a in actors if isinstance(a, pv.Text))
 
 
 def test_plot_compare_label_size_follows_the_window(compare_datasets, verify_image_cache):
@@ -2504,18 +2494,16 @@ def test_plot_compare_label_size_is_drawn_by_a_text_actor(compare_datasets, veri
     verify_image_cache.skip = True
 
     def drawn_by(**kwargs):
-        """Return what draws each label, with the limits on the size it is drawn at."""
-        drawn: list[tuple[str, int, int]] = []
+        """Return what draws each label."""
+        drawn: list[str] = []
 
         def capture(plotter):
-            for renderer in plotter.renderers:
-                for actor in renderer.actors.values():
-                    if isinstance(actor, pv.CornerAnnotation):
-                        drawn.append(
-                            ('annotation', actor.minimum_font_size, actor.maximum_font_size)
-                        )
-                    elif isinstance(actor, pv.Text):
-                        drawn.append(('text', actor.prop.font_size, actor.prop.font_size))
+            drawn.extend(
+                type(actor).__name__
+                for renderer in plotter.renderers
+                for actor in renderer.actors.values()
+                if isinstance(actor, (pv.Text, pv.CornerAnnotation))
+            )
 
         pv.plot_compare(
             compare_datasets,
@@ -2525,18 +2513,13 @@ def test_plot_compare_label_size_is_drawn_by_a_text_actor(compare_datasets, veri
         )
         return drawn
 
-    # A fitted label is drawn by a text actor, which draws it at the size it is given
-    assert [kind for kind, *_ in drawn_by()] == ['text'] * 4
-
-    # A named position draws a corner annotation instead, which works out a size of its
-    # own from the size of the subplot, so it is given the fitted size as a limit
-    named = drawn_by(text_kwargs={'position': 'lower_left'})
-    unfitted = pv.CornerAnnotation('lower_left', '')
-    assert [kind for kind, *_ in named] == ['annotation'] * 4
-    assert all(largest < unfitted.maximum_font_size for _, _, largest in named)
-    # Only the limit is given to it. Made to use a larger size than the one it works
-    # out for itself, an annotation draws nothing at all.
-    assert all(smallest == unfitted.minimum_font_size for _, smallest, _ in named)
+    # Every label is drawn by a text actor, which draws it at the size it is given,
+    # wherever it is drawn and whether or not the size is fitted. A corner annotation
+    # works out a size of its own, which fights a fitted size as the window is resized,
+    # and draws nothing at all when it is made to use a larger size than that.
+    assert drawn_by() == ['Text'] * 4
+    assert drawn_by(label_size=24) == ['Text'] * 4
+    assert drawn_by(text_kwargs={'position': 'lower_right'}) == ['Text'] * 4
 
 
 @pytest.mark.parametrize('multiblock', [False, True], ids=['dict', 'multiblock'])

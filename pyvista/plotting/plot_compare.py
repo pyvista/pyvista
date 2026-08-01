@@ -201,11 +201,6 @@ _ELLIPSIS = '…'
 # fitted to the subplot each time the window is rendered at a new size
 _LABEL_NAME = 'plot_compare_label'
 
-# Where a fitted label is drawn in its subplot, as a fraction of the size of the
-# subplot, measured from the bottom left. The label hangs from its top edge, so that
-# growing and shrinking it moves the text it draws rather than the space above it.
-_LABEL_POSITION = (0.02, 0.98)
-
 # `add_text` draws text at twice the font size it is given, so the font size of the
 # theme is expressed in the same units as a fitted size by doubling it as well
 _POINTS_PER_FONT_SIZE = 2
@@ -281,29 +276,14 @@ def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float) -> st
     return _ellipsize(text, low)
 
 
-def _draw_label(actor: Any, text: str, *, size: float, position: Any) -> None:
-    """Draw the label at a fixed size, whatever the size of its subplot."""
-    if isinstance(actor, pv.CornerAnnotation):
-        # A corner annotation works out a size of its own from the size of the subplot,
-        # and draws nothing at all when it is made to use a larger one than that. The
-        # fitted size is a limit on the size it works out, which it never fights, and
-        # which it never grows past.
-        actor.maximum_font_size = int(size)
-        actor.set_text(position, text)
-    else:
-        actor.prop.font_size = int(size)
-        actor.input = text
-
-
 def _fit_labels(
-    actors: Sequence[Any],
+    actors: Sequence[pv.Text],
     labels: Sequence[str],
     renderers: Sequence[Any],
     *,
     uniform: bool,
     ceiling: float,
     dpi: int,
-    position: Any,
 ) -> None:
     """Draw every label at the largest size which fits in its subplot."""
     widths = [renderer.GetSize()[0] * _LABEL_WIDTH_FRACTION for renderer in renderers]
@@ -320,7 +300,8 @@ def _fit_labels(
             # smallest readable size and shorten the text until that fits instead
             size = _MIN_LABEL_SIZE  # noqa: PLW2901
             label = _shorten(label, actor.prop, width=width, dpi=dpi, size=size)  # noqa: PLW2901
-        _draw_label(actor, label, size=size, position=position)
+        actor.prop.font_size = int(size)
+        actor.input = label
 
 
 def _fit_labels_on_render(
@@ -329,7 +310,6 @@ def _fit_labels_on_render(
     *,
     name: str,
     uniform: bool | None,
-    position: Any,
 ) -> None:
     """Fit the labels to their subplots before every render which needs it again.
 
@@ -372,7 +352,6 @@ def _fit_labels_on_render(
             uniform=max(widths) - min(widths) <= 1 if uniform is None else uniform,
             ceiling=plotter.theme.font.size * _POINTS_PER_FONT_SIZE,
             dpi=dpi,
-            position=position,
         )
 
     # `StartEvent` is emitted before each render, when the subplots have already been
@@ -480,12 +459,9 @@ def plot_compare(  # noqa: ANN201
         be given as ``'font_size'`` in ``text_kwargs``, but not in both places.
         Has no effect when ``labels`` is ``None``.
 
-        A fitted label is drawn in the upper left of its subplot by a
-        :class:`~pyvista.Text` actor, which draws it at the size it is given. A
-        ``'position'`` in ``text_kwargs`` naming a corner draws a
-        :class:`~pyvista.CornerAnnotation` instead, which works out a size of its
-        own from the size of the subplot, and is given the fitted size as the
-        largest size it may use.
+        Labels are drawn by a :class:`~pyvista.Text` actor, which draws text at
+        the size it is given, in the upper left of the subplot unless a
+        ``'position'`` in ``text_kwargs`` says otherwise.
 
         .. versionadded:: 0.49
 
@@ -614,17 +590,9 @@ def plot_compare(  # noqa: ANN201
     fitted = not isinstance(label_size, float)
     if not fitted:
         text_kwargs['font_size'] = label_size
-    else:
-        if text_kwargs.get('name') is None:
-            # Name the labels so they can be found again to be fitted on every render
-            text_kwargs['name'] = _LABEL_NAME
-        if 'position' not in text_kwargs:
-            # Draw the label as a text actor, which is drawn at the size it is given.
-            # A corner annotation, which a named position draws instead, works out a
-            # size of its own from the size of the subplot, and rescaling itself as
-            # the window is resized fights the size fitted to the same resize.
-            text_kwargs['position'] = _LABEL_POSITION
-            text_kwargs['viewport'] = True
+    elif text_kwargs.get('name') is None:
+        # Name the labels so they can be found again to be fitted on every render
+        text_kwargs['name'] = _LABEL_NAME
 
     # The shape itself is validated by the plotter
     pl = pv.Plotter(shape=shape, **plotter_kwargs)
@@ -642,11 +610,7 @@ def plot_compare(  # noqa: ANN201
         pl.subplot(*_subplot_args(pl.renderers.shape, index))
         pl.add_mesh(dataset, **display_kwargs)
         if labels is not None:
-            label_actor = pl.add_text(labels[index], **text_kwargs)
-            if fitted and isinstance(label_actor, pv.Text):
-                # Anchor the text to the top of the space it is given, so that it is
-                # drawn in the same place whatever size it ends up being drawn at
-                label_actor.prop.justification_vertical = 'top'
+            pl._add_text_actor(labels[index], **text_kwargs)
         if cpos is not None:
             pl.camera_position = cpos
 
@@ -723,8 +687,6 @@ def plot_compare(  # noqa: ANN201
             labels,
             name=text_kwargs['name'],
             uniform=None if label_size is None else label_size == _UNIFORM,
-            # The labels are drawn wherever `add_text` was told to draw them
-            position=text_kwargs.get('position', 'upper_left'),
         )
 
     return pl.show(screenshot=screenshot, **show_kwargs)
