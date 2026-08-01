@@ -56,8 +56,6 @@ from .errors import InvalidCameraError as InvalidCameraError
 from .errors import RenderWindowUnavailable as RenderWindowUnavailable
 from .follower import Follower as Follower
 from .helpers import plot_arrows as plot_arrows
-from .plot_compare import plot_compare as plot_compare
-from .plot_compare import plot_compare_four as plot_compare_four
 from .interactor_style_registry import register_interactor_style as register_interactor_style
 from .lights import Light as Light
 from .lookup_table import LookupTable as LookupTable
@@ -71,6 +69,8 @@ from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolum
 from .opts import PointSpriteShape as PointSpriteShape
 from .opts import ShaderType as ShaderType
 from .picking import PickingComponent as PickingComponent
+from .plot_compare import plot_compare as plot_compare
+from .plot_compare import plot_compare_four as plot_compare_four
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter
