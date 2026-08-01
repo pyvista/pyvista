@@ -535,7 +535,7 @@ class EnSightWriter(BaseWriter):
         # paths (falls back to Path="./" and mangles the rest into BaseName).
         raw_path = pathlib.Path(path)
         self.writer.SetPath(str(raw_path.parent))  # type: ignore[attr-defined]
-        self.writer.SetBaseName(raw_path.name)  # type: ignore[attr-defined]
+        self.writer.SetBaseName(raw_path.stem)  # type: ignore[attr-defined]
 
     def _execute_before_write(self) -> None:
         # ProcessNumber can still change after path is set (e.g. via writer_kwargs),

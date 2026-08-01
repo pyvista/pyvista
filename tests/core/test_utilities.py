@@ -3332,14 +3332,14 @@ def test_write_path_of_ensight_writer(tmp_path, hexbeam):
 
     path = tmp_path / 'hexbeam.case'
     writer = EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
-    assert writer.path == str(path)
+    assert writer.path == str(path.parent / path.stem)
     # written_path is initialized same as path,
     # but is updated after write() is called
     assert writer.written_path == path
 
     writer.write()
 
-    assert writer.path == str(path)
+    assert writer.path == str(path.parent / path.stem)
 
     expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
     assert writer.written_path == expected_path
