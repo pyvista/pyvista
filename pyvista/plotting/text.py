@@ -181,62 +181,6 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
     def linear_font_scale_factor(self, factor: float):
         self.SetLinearFontScaleFactor(factor)
 
-    @property
-    def minimum_font_size(self) -> int:
-        """Smallest font size the text is scaled down to.
-
-        .. versionadded:: 0.49
-
-        Returns
-        -------
-        int
-            Smallest font size the text is scaled down to.
-
-        Examples
-        --------
-        Draw the text at a fixed size by giving it the same smallest and largest size.
-
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_text('Sample Text')
-        >>> actor.minimum_font_size = actor.maximum_font_size = 20
-        >>> pl.show()
-
-        """
-        return self.GetMinimumFontSize()
-
-    @minimum_font_size.setter
-    def minimum_font_size(self, size: int):
-        self.SetMinimumFontSize(size)
-
-    @property
-    def maximum_font_size(self) -> int:
-        """Largest font size the text is scaled up to.
-
-        .. versionadded:: 0.49
-
-        Returns
-        -------
-        int
-            Largest font size the text is scaled up to.
-
-        Examples
-        --------
-        Keep the text from being drawn larger than 20 points.
-
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_text('Sample Text')
-        >>> actor.maximum_font_size = 20
-        >>> pl.show()
-
-        """
-        return self.GetMaximumFontSize()
-
-    @maximum_font_size.setter
-    def maximum_font_size(self, size: int):
-        self.SetMaximumFontSize(size)
-
 
 class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
