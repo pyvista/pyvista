@@ -2438,6 +2438,8 @@ def test_plot_compare_label_size_font_size_is_used_as_given(
 def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
     compare_datasets, verify_image_cache
 ):
+    from pyvista.plotting.plot_compare import _MIN_LABEL_SIZE
+
     verify_image_cache.skip = True
 
     # A label far too long to be drawn at a readable size has its middle elided, and
@@ -2445,7 +2447,7 @@ def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
     labels = ['x' * 400, 'y' * 400, 'short', 'also short']
     drawn = _drawn_labels(compare_datasets, labels=labels)
     for (size, text), label in zip(drawn[:2], labels[:2], strict=True):
-        assert size == 8
+        assert size == _MIN_LABEL_SIZE
         assert '…' in text
         assert len(text) < len(label)
         # What is kept of the label is its start and its end

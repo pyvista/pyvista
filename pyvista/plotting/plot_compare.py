@@ -191,8 +191,9 @@ _REFERENCE_FONT_SIZE = 100
 # clear of the edge of the subplot and of the label of the subplot beside it.
 _LABEL_WIDTH_FRACTION = 0.9
 
-# A label drawn any smaller than this is unreadable, so shorten the text instead
-_MIN_LABEL_SIZE = 8
+# A label drawn any smaller than this is too small to read, so shorten the text
+# instead. Roughly a third of the size the theme asks for.
+_MIN_LABEL_SIZE = 14
 
 # What the middle of a label too long to be drawn at a readable size is replaced with
 _ELLIPSIS = '…'
