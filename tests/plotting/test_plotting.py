@@ -2290,7 +2290,7 @@ def test_plot_compare(compare_datasets):
     [(2, (1, 2)), (3, (1, 3)), (4, (2, 2)), (5, (2, 3)), (6, (2, 3)), (7, (2, 4)), (9, (3, 3))],
 )
 def test_plot_compare_auto_shape(n_datasets, expected, no_images_to_verify):  # noqa: ARG001
-    from pyvista.plotting.helpers import _auto_shape
+    from pyvista.plotting.plot_compare import _auto_shape
 
     assert _auto_shape(n_datasets) == expected
 
