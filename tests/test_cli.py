@@ -1946,7 +1946,9 @@ def test_compare_labels_are_unique(
 
     main(f'compare {" ".join(files)}')
 
-    assert mock_plot_compare.call_args.kwargs['labels'] == expected
+    # A label which needs the directory to tell it apart is spelled the way the
+    # platform spells a path, e.g. `run1\out.vtk` on Windows
+    assert mock_plot_compare.call_args.kwargs['labels'] == [str(Path(name)) for name in expected]
 
 
 def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
