@@ -18,6 +18,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import is_pyvista_dataset
+from pyvista.plotting.text import _TEXT_POSITIONS
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from pyvista import PartitionedDataSet
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting.text import TextPositionOptions
 
 
 # Sentinel for the default labels, since `None` means no labels at all
@@ -239,6 +241,16 @@ def _validate_label_size(label_size: Any) -> float | Literal['best_fit', 'unifor
     return float(label_size)
 
 
+def _validate_label_position(label_position: Any) -> TextPositionOptions | None:
+    """Return the position to draw the labels in, which is one of the named places."""
+    if label_position is None or label_position in _TEXT_POSITIONS:
+        return label_position
+    positions = ', '.join(repr(position) for position in _TEXT_POSITIONS)
+    coordinate = '' if isinstance(label_position, str) else " Give a coordinate in 'label_kwargs'."
+    msg = f'Label position must be one of {positions} or None, got {label_position!r} instead.{coordinate}'  # noqa: E501
+    raise ValueError(msg)
+
+
 def _text_width(text: str, prop: Any, *, size: float, dpi: int) -> float:
     """Return the width in pixels of the text drawn at the given font size."""
     # A `pyvista.TextProperty` loads the theme into a property shared by every one of
@@ -376,13 +388,14 @@ def plot_compare(  # noqa: ANN201
     display_kwargs: dict[str, Any] | None = None,
     plotter_kwargs: dict[str, Any] | None = None,
     show_kwargs: dict[str, Any] | None = None,
-    text_kwargs: dict[str, Any] | None = None,
+    label_kwargs: dict[str, Any] | None = None,
     screenshot: str | bool | None = None,
     cpos: CameraPositionOptions | None = None,
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
+    label_position: TextPositionOptions | None = None,
     shape: Sequence[int] | str | None = None,
     normalize: bool = False,
     link: bool | None = None,
@@ -417,7 +430,7 @@ def plot_compare(  # noqa: ANN201
     show_kwargs : dict, optional
         Additional keyword arguments to pass to the ``show`` method.
 
-    text_kwargs : dict, optional
+    label_kwargs : dict, optional
         Additional keyword arguments to pass to the ``add_text`` method used to
         show the ``labels``, e.g. ``{'font_size': 24}``. Has no effect when
         ``labels`` is ``None``.
@@ -468,12 +481,25 @@ def plot_compare(  # noqa: ANN201
         them. A label too long to fit at a readable size has its middle elided.
 
         The size is worked out again whenever the window is resized. It may also
-        be given as ``'font_size'`` in ``text_kwargs``, but not in both places.
+        be given as ``'font_size'`` in ``label_kwargs``, but not in both places.
         Has no effect when ``labels`` is ``None``.
 
         Labels are drawn by a :class:`~pyvista.Text` actor, which draws text at
-        the size it is given, in the upper left of the subplot unless a
-        ``'position'`` in ``text_kwargs`` says otherwise.
+        the size it is given.
+
+        .. versionadded:: 0.49
+
+    label_position : str, optional
+        Where in its subplot to draw each of the ``labels``, as one of the places
+        :meth:`~pyvista.Plotter.add_text` names: ``'upper_left'``,
+        ``'upper_right'``, ``'lower_left'``, ``'lower_right'``, ``'upper_edge'``,
+        ``'lower_edge'``, ``'left_edge'`` or ``'right_edge'``. Defaults to
+        ``'upper_left'``.
+
+        A coordinate may be given as ``'position'`` in ``label_kwargs`` instead,
+        along with ``'viewport'`` to read it as a fraction of the size of the
+        subplot rather than as pixels, but not in both places. Has no effect when
+        ``labels`` is ``None``.
 
         .. versionadded:: 0.49
 
@@ -632,21 +658,33 @@ def plot_compare(  # noqa: ANN201
 
     display_kwargs = {} if display_kwargs is None else display_kwargs
     show_kwargs = {} if show_kwargs is None else show_kwargs
-    text_kwargs = {} if text_kwargs is None else dict(text_kwargs)
+    label_kwargs = {} if label_kwargs is None else dict(label_kwargs)
     reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
 
     label_size = _validate_label_size(
         _from_kwargs(
-            text_kwargs, 'font_size', label_size, name='label_size', kwargs_name='text_kwargs'
+            label_kwargs, 'font_size', label_size, name='label_size', kwargs_name='label_kwargs'
         )
     )
+    # A coordinate is only ever given in the keywords, so validate the argument on its
+    # own before the two are reconciled
+    label_position = _from_kwargs(
+        label_kwargs,
+        'position',
+        _validate_label_position(label_position),
+        name='label_position',
+        kwargs_name='label_kwargs',
+    )
+    if label_position is not None:
+        label_kwargs['position'] = label_position
+
     # A font size is drawn as given, and only the sizes which are worked out are fitted
     fitted = not isinstance(label_size, float)
     if not fitted:
-        text_kwargs['font_size'] = label_size
-    elif text_kwargs.get('name') is None:
+        label_kwargs['font_size'] = label_size
+    elif label_kwargs.get('name') is None:
         # Name the labels so they can be found again to be fitted on every render
-        text_kwargs['name'] = _LABEL_NAME
+        label_kwargs['name'] = _LABEL_NAME
 
     # The shape itself is validated by the plotter
     pl = pv.Plotter(shape=shape, **plotter_kwargs)
@@ -664,7 +702,7 @@ def plot_compare(  # noqa: ANN201
         pl.subplot(*_subplot_args(pl.renderers.shape, index))
         pl.add_mesh(dataset, **display_kwargs)
         if labels is not None:
-            pl._add_text_actor(labels[index], **text_kwargs)
+            pl._add_text_actor(labels[index], **label_kwargs)
         if cpos is not None:
             pl.camera_position = cpos
 
@@ -740,7 +778,7 @@ def plot_compare(  # noqa: ANN201
         _fit_labels_on_render(
             pl,
             labels,
-            name=text_kwargs['name'],
+            name=label_kwargs['name'],
             uniform=None if label_size is None else label_size == _UNIFORM,
         )
 

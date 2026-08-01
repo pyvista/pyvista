@@ -41,7 +41,7 @@ for std_dev in [2.0, 4.0, 8.0]:
 pv.plot_compare(
     datasets,
     display_kwargs={'rgb': True},
-    text_kwargs={'font_size': 14},
+    label_size=14,
     cpos=cp,
 )
 

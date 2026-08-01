@@ -60,7 +60,7 @@ datasets = {
 pv.plot_compare(
     datasets,
     display_kwargs=dargs,
-    text_kwargs={'font_size': 24},
+    label_size=24,
     cpos=cpos,
 )
 

@@ -2334,7 +2334,8 @@ def test_plot_compare_labels(compare_datasets):
     pv.plot_compare(
         compare_datasets,
         labels=['one', 'two', 'three', 'four'],
-        text_kwargs={'font_size': 24, 'color': 'red'},
+        label_size=24,
+        label_kwargs={'color': 'red'},
         display_kwargs={'color': 'w'},
     )
 
@@ -2430,9 +2431,74 @@ def test_plot_compare_label_size_font_size_is_used_as_given(
 
     # A font size is drawn as given rather than fitted, however long the label is, at
     # the size `add_text` draws that font size at
-    for kwargs in [{'label_size': 24}, {'text_kwargs': {'font_size': 24}}]:
+    for kwargs in [{'label_size': 24}, {'label_kwargs': {'font_size': 24}}]:
         drawn = _drawn_labels(compare_datasets, labels=compare_labels, **kwargs)
         assert [size for size, _ in drawn] == [24 * 2] * 4
+
+
+def test_plot_compare_label_position(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def drawn(**kwargs):
+        """Return where the label of the first subplot is drawn, and how it is anchored."""
+        placed = []
+
+        def capture(plotter):
+            actor = next(a for a in plotter.renderers[0].actors.values() if isinstance(a, pv.Text))
+            placed.append(
+                (
+                    tuple(round(coordinate, 2) for coordinate in actor.position),
+                    actor.prop.justification_horizontal,
+                    actor.prop.justification_vertical,
+                )
+            )
+
+        pv.plot_compare(
+            compare_datasets,
+            display_kwargs={'color': 'w'},
+            show_kwargs={'before_close_callback': capture},
+            **kwargs,
+        )
+        return placed[0]
+
+    # Each label is drawn in the upper left of its subplot by default, anchored there
+    # so that it stays put whatever size it ends up being drawn at
+    assert drawn() == ((0.02, 0.98), 'left', 'top')
+    assert drawn(label_position='upper_left') == drawn()
+
+    # Every place `add_text` names may be used, and is anchored to that place
+    assert drawn(label_position='lower_right') == ((0.98, 0.02), 'right', 'bottom')
+    assert drawn(label_position='upper_edge') == ((0.5, 0.98), 'center', 'top')
+    assert drawn(label_position='left_edge') == ((0.02, 0.5), 'left', 'center')
+
+    # It may be given in the keywords instead, where a coordinate is given as well
+    assert drawn(label_kwargs={'position': 'lower_left'}) == ((0.02, 0.02), 'left', 'bottom')
+    assert drawn(label_kwargs={'position': (0.4, 0.4), 'viewport': True})[0] == (0.4, 0.4)
+
+
+def test_plot_compare_label_position_raises(no_images_to_verify):  # noqa: ARG001
+    mesh = pv.Sphere()
+    places = (
+        "'lower_left', 'lower_right', 'upper_left', 'upper_right', 'lower_edge', "
+        "'upper_edge', 'left_edge', 'right_edge'"
+    )
+    match = f"Label position must be one of {places} or None, got 'middle' instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_position='middle')
+
+    # A coordinate is a position `add_text` takes, but not one of the named places
+    match = "or None, got (0.1, 0.9) instead. Give a coordinate in 'label_kwargs'."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_position=(0.1, 0.9))
+
+    match = (
+        "Label position was given both as the 'label_position' argument and in "
+        "'label_kwargs'. Use one or the other."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(
+            [mesh, mesh], label_position='upper_left', label_kwargs={'position': 'lower_left'}
+        )
 
 
 def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
@@ -2521,7 +2587,7 @@ def test_plot_compare_label_size_is_drawn_by_a_text_actor(compare_datasets, veri
     # and draws nothing at all when it is made to use a larger size than that.
     assert drawn_by() == ['Text'] * 4
     assert drawn_by(label_size=24) == ['Text'] * 4
-    assert drawn_by(text_kwargs={'position': 'lower_right'}) == ['Text'] * 4
+    assert drawn_by(label_kwargs={'position': 'lower_right'}) == ['Text'] * 4
 
 
 @pytest.mark.parametrize('multiblock', [False, True], ids=['dict', 'multiblock'])
@@ -2925,11 +2991,11 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
         pv.plot_compare([mesh, mesh], shape=(1, 2), plotter_kwargs={'shape': (2, 1)})
 
     match = (
-        "Label size was given both as the 'label_size' argument and in 'text_kwargs'. "
+        "Label size was given both as the 'label_size' argument and in 'label_kwargs'. "
         'Use one or the other.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare([mesh, mesh], label_size=12, text_kwargs={'font_size': 24})
+        pv.plot_compare([mesh, mesh], label_size=12, label_kwargs={'font_size': 24})
 
     match = "Label size 'biggest' is not a font size, 'best_fit', 'uniform' or None."
     with pytest.raises(ValueError, match=re.escape(match)):
