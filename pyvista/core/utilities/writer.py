@@ -506,8 +506,8 @@ class EnSightWriter(BaseWriter):
 
     .. note::
         This is a parallel writer that prepends a process number to the ``.case`` extension,
-        e.g. ``<filename>.0.case``. Use :attr:`written_path` to get the saved file after calling
-        :meth:`write`.
+        e.g. ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
+        to get the saved file after calling :meth:`~pyvista.BaseWriter.write`.
 
     .. note::
         This writer saves the mesh as a multi-block dataset.
@@ -520,11 +520,29 @@ class EnSightWriter(BaseWriter):
 
     _vtk_class_name = 'vtkEnSightWriter'
 
+    @property
+    def path(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the filename or directory of the writer."""
+        # vtkEnSightWriter has no single FileName concept, only Path/BaseName.
+        path = pathlib.Path(self.writer.GetPath())  # type: ignore[attr-defined]
+        basename = self.writer.GetBaseName()  # type: ignore[attr-defined]
+        return str(path / basename) if basename else str(path)
+
+    @path.setter
+    def path(self, path: str | Path) -> None:
+        # Set Path/BaseName directly to avoid vtkEnSightWriter's ComputeNames(),
+        # which splits FileName on the last '/' and breaks on Windows backslash
+        # paths (falls back to Path="./" and mangles the rest into BaseName).
+        raw_path = pathlib.Path(path)
+        self.writer.SetPath(str(raw_path.parent))  # type: ignore[attr-defined]
+        self.writer.SetBaseName(raw_path.name)  # type: ignore[attr-defined]
+
     def _execute_before_write(self) -> None:
+        # ProcessNumber can still change after path is set (e.g. via writer_kwargs),
+        # so the final filename must be resolved here, not in the path setter.
         raw_path = pathlib.Path(self.path)
         process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
-        basename = raw_path.stem
-        self.written_path = raw_path.parent / f'{basename}.{process_number}.case'
+        self.written_path = raw_path.parent / f'{raw_path.stem}.{process_number}.case'
 
 
 @abstract_class
