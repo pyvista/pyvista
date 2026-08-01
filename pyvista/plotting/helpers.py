@@ -8,7 +8,6 @@ import math
 import string
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Literal
 
 import numpy as np
 
@@ -78,6 +77,10 @@ def plot_arrows(cent, direction, **kwargs):
     return pv.plot([cent, direction], **kwargs)
 
 
+# Sentinel for the default labels, since `None` means no labels at all
+_AUTO_LABELS: Any = object()
+
+
 def _generate_labels(n_labels: int) -> list[str]:
     """Generate labels ``'A'``, ``'B'``, ..., ``'Z'``, ``'AA'``, ``'AB'``, ... ."""
     labels = []
@@ -111,16 +114,16 @@ def _unpack_datasets(datasets: Any) -> tuple[list[Any], list[str] | None]:
 
 def _validate_labels(labels: Any, *, names: list[str] | None, n_datasets: int) -> list[str] | None:
     """Return one label per dataset, or ``None`` if no labels should be shown."""
+    if labels is _AUTO_LABELS:
+        return _generate_labels(n_datasets) if names is None else names
     if labels is None:
         return None
     if isinstance(labels, str):
-        if labels != 'auto':
-            msg = (
-                f"Labels must be a sequence of strings, 'auto', or None, got {labels!r} instead.\n"
-                'A single string is not a valid sequence of labels.'
-            )
-            raise TypeError(msg)
-        return _generate_labels(n_datasets) if names is None else names
+        msg = (
+            f'Labels must be a sequence of strings or None, got {labels!r} instead.\n'
+            'A single string is not a valid sequence of labels.'
+        )
+        raise TypeError(msg)
     labels = list(labels)
     if len(labels) != n_datasets:
         msg = f'Number of labels ({len(labels)}) must match the number of datasets ({n_datasets}).'
@@ -190,7 +193,7 @@ def plot_compare(
     camera_position: CameraPositionOptions | None = None,
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
-    labels: Sequence[str] | Literal['auto'] | None = 'auto',
+    labels: Sequence[str] | None = _AUTO_LABELS,
     shape: Sequence[int] | str | None = None,
     link: bool = True,
     notebook: bool | None = None,
@@ -244,13 +247,13 @@ def plot_compare(
         Additional keyword arguments to pass to the ``add_mesh`` method used to
         show the ``reference_mesh``. Defaults to ``{'color': 'k'}``.
 
-    labels : Sequence[str] | 'auto' | None, default: 'auto'
+    labels : Sequence[str] | None, optional
         The labels to display for each data object. Must have the same length as
-        ``datasets``. If ``'auto'``, the keys of ``datasets`` are used when it is
-        a mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
+        ``datasets``. By default, the keys of ``datasets`` are used when it is a
+        mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
         ``'B'``, ``'C'``, ... are generated otherwise. Set to ``None`` to disable
-        labels. A string other than ``'auto'`` is not a valid sequence of labels
-        and raises an error.
+        labels. A single string is not a valid sequence of labels and raises an
+        error.
 
     shape : Sequence[int] | str, default: None
         The shape of the subplot layout, in any form accepted by

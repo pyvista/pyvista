@@ -2450,7 +2450,7 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(ValueError, match=match):
         pv.plot_compare([mesh])
 
-    match = "Labels must be a sequence of strings, 'auto', or None, got 'AB' instead."
+    match = "Labels must be a sequence of strings or None, got 'AB' instead."
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], labels='AB')
 
