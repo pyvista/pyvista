@@ -17,13 +17,6 @@ from typing import get_args
 
 import numpy as np
 import pytest
-
-from pyvista._cli.plot import _plot as cli_plot
-
-needs_pyvista_zstd = pytest.mark.skipif(
-    importlib.util.find_spec('pyvista_zstd') is None,
-    reason='pyvista-zstd is not installed (registers the .pv extension)',
-)
 from pytest_cases import case
 from pytest_cases import filters
 from pytest_cases import fixture
@@ -36,14 +29,21 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.__main__ import CLI_APP
 from pyvista.__main__ import main
+from pyvista._cli.plot import _plot as cli_plot
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from tests.core.test_dataobject_filters import _add_vtk_array
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from unittest.mock import MagicMock
 
     from pytest_cases.case_parametrizer_new import Case
     from pytest_mock import MockerFixture
+
+needs_pyvista_zstd = pytest.mark.skipif(
+    importlib.util.find_spec('pyvista_zstd') is None,
+    reason='pyvista-zstd is not installed (registers the .pv extension)',
+)
 
 COMMANDS_WITH_PATHS = [  # Commands that accept positional-only path or paths
     'convert',
@@ -566,15 +566,26 @@ def test_convert_help(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_compound_extension(tmp_example_dir: Path):
+@pytest.mark.parametrize(
+    ('download', 'in_ext', 'out_ext'),
+    [
+        (examples.download_brain_atlas_with_sides, '.nii.gz', '.vti'),
+        (examples.download_parallel_exodus, '.e.4.0', '.vtm'),
+    ],
+)
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='Flaky issue with dataset loader')
+def test_convert_compound_extension(
+    tmp_example_dir: Path, download: Callable, in_ext: str, out_ext: str
+):
     """Compound extensions like .nii.gz are correctly stripped from the input stem
     and replaced with the target extension."""
-    src = Path(examples.download_brain_atlas_with_sides(load=False))
+
+    src = Path(download(load=False))
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
-    main(shlex.split(f'convert {str(dst)!r} .vti'))
-    # stem should be bare (no .nii residue), extension replaced
-    assert (tmp_example_dir / f'{dst.name[: -len(".nii.gz")]}.vti').is_file()
+    main(shlex.split(f'convert {str(dst)!r} {out_ext}'))
+    # stem should be bare, extension replaced
+    assert (tmp_example_dir / f'{dst.name[: -len(in_ext)]}{out_ext}').is_file()
 
 
 @pytest.mark.usefixtures('patch_app_console')

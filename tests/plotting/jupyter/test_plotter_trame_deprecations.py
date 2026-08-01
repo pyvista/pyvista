@@ -51,7 +51,6 @@ def test_trame_component_raises_when_unregistered():
         _StandIn()._trame_component()
 
 
-@pytest.mark.skip_check_gc
 def test_export_html_warns_and_delegates(plotter, tmp_path):
     target = tmp_path / 'scene.html'
     with pytest.warns(PyVistaDeprecationWarning, match='Plotter.export_html is deprecated'):
@@ -61,7 +60,6 @@ def test_export_html_warns_and_delegates(plotter, tmp_path):
     assert target.stat().st_size > 0
 
 
-@pytest.mark.skip_check_gc
 def test_export_vtksz_warns_and_delegates(plotter, tmp_path):
     target = tmp_path / 'scene.vtksz'
     with pytest.warns(PyVistaDeprecationWarning, match='Plotter.export_vtksz is deprecated'):
@@ -70,7 +68,6 @@ def test_export_vtksz_warns_and_delegates(plotter, tmp_path):
     assert target.stat().st_size > 0
 
 
-@pytest.mark.skip_check_gc
 def test_export_vtksz_returns_bytes_when_no_filename(plotter):
     with pytest.warns(PyVistaDeprecationWarning, match='Plotter.export_vtksz is deprecated'):
         data = plotter.export_vtksz(filename=None)

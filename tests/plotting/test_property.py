@@ -90,7 +90,6 @@ def test_property_opacity(prop):
         prop.opacity = 2
 
 
-@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_property_edge_opacity(prop):
     edge_opacity = 0.5
     prop.edge_opacity = edge_opacity

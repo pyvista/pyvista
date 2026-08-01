@@ -42,6 +42,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
@@ -204,13 +205,14 @@ def _sort_by_class_name(mapping: dict[Any, Any]):
 
 def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
     # Create dict for reader info: extension(s) and output type(s)
-    reader_info: dict[pv.BaseReader, tuple[set[str], set[str]]] = {
-        reader: (set(), set()) for reader in set(CLASS_READERS.values())
-    }
-    # Store extensions
+    readers = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
+    reader_info = {reader: (set(), set()) for reader in readers}
+
     for reader, extensions in _swap_extension_mapping(CLASS_READERS):
-        info_extensions, _ = reader_info[reader]
-        info_extensions.update(extensions)
+        reader_info[reader][0].update(extensions)
+
+    for display, _, reader in _CLASS_READER_PATTERNS:
+        reader_info[reader][0].add(display)
 
     # Store output type(s)
     for reader, types in _CLASS_READER_RETURN_TYPE.items():
@@ -2820,6 +2822,11 @@ class DatasetCardFetcher:
                 dataset_loader = item
                 # Store module as a dynamic property for access later
                 dataset_loader._module = module
+                # Store function as a dynamic property for access later
+                try:
+                    dataset_loader._function = getattr(module, f'download_{dataset_name}')
+                except AttributeError:
+                    dataset_loader._function = getattr(module, f'load_{dataset_name}')
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
@@ -3581,6 +3588,41 @@ def _resolve_path(cls):
     return path
 
 
+def _validate_function_annotations(
+    dataset_cards: dict[str, DatasetCard],
+) -> None:
+    """Validate that download/load function return annotations match runtime types."""
+    type_mismatches: dict[str, str] = {}
+    for name, card in dataset_cards.items():
+        if card.loader._module not in [
+            pv.examples.downloads,
+            pv.examples.examples,
+            pv.examples.planets,
+        ]:
+            continue
+        runtime_name = type(card.loader.dataset).__name__
+        function = card.loader._function
+        params = inspect.signature(function).parameters
+
+        expected_annotation = runtime_name
+        if 'texture' in params:
+            expected_annotation = f'Texture | {expected_annotation}'
+        if 'load' in params:
+            expected_annotation += ' | str'
+
+        ann = inspect.signature(function).return_annotation
+        ann_name = ann if isinstance(ann, str) else ann.__name__
+        if expected_annotation != ann_name:
+            type_mismatches[name] = (
+                f'{function.__name__!r} annotated type is {ann_name!r}, '
+                f'expected {expected_annotation!r}'
+            )
+    if type_mismatches:
+        mismatches = '\n'.join(sorted(type_mismatches.values()))
+        msg = f'Type mismatches:\n{mismatches}'
+        raise RuntimeError(msg)
+
+
 def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
     # Check if all carousel RST files already exist - if so, skip the
     # expensive dataset download/load step on incremental builds
@@ -3609,6 +3651,9 @@ def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  #
 
     # Generate rst for all carousels
     [carousel.generate() for carousel in carousels]
+
+    # Validate function annotations
+    _validate_function_annotations(DatasetCardFetcher.DATASET_CARDS_OBJ)
 
     # Clear loaded datasets from memory
     DatasetCardFetcher.clear_datasets()

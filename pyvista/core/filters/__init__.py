@@ -90,27 +90,11 @@ def _get_output(
     return data
 
 
-from .composite import CompositeFilters
-from .data_object import DataObjectFilters
-
-# Re-export submodules to maintain the same import paths
-# before filters.py was split into submodules
-from .data_set import DataSetFilters
-from .image_data import ImageDataFilters
-from .poly_data import PolyDataFilters
-from .rectilinear_grid import RectilinearGridFilters
-from .structured_grid import StructuredGridFilters
-from .unstructured_grid import UnstructuredGridFilters
-
-__all__ = [
-    'CompositeFilters',
-    'DataObjectFilters',
-    'DataSetFilters',
-    'ImageDataFilters',
-    'PolyDataFilters',
-    'RectilinearGridFilters',
-    'StructuredGridFilters',
-    'UnstructuredGridFilters',
-    '_get_output',
-    '_update_alg',
-]
+from .composite import CompositeFilters as CompositeFilters  # noqa: E402
+from .data_object import DataObjectFilters as DataObjectFilters  # noqa: E402
+from .data_set import DataSetFilters as DataSetFilters  # noqa: E402
+from .image_data import ImageDataFilters as ImageDataFilters  # noqa: E402
+from .poly_data import PolyDataFilters as PolyDataFilters  # noqa: E402
+from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters  # noqa: E402
+from .structured_grid import StructuredGridFilters as StructuredGridFilters  # noqa: E402
+from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters  # noqa: E402
