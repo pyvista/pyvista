@@ -14,6 +14,7 @@ import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import get_args
+import warnings
 
 import numpy as np
 import pytest
@@ -2007,6 +2008,47 @@ def test_compare_called_label_size(tmp_compare_files: list[Path], mock_plot_comp
 
     main(f'compare {names} --label-size 8')
     assert mock_plot_compare.call_args.kwargs['text_kwargs'] == {'font_size': 8}
+
+
+@pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize(
+    ('tokens', 'remedy'),
+    [('--outline', 'Omit `--outline`'), ('--link', 'Use `--no-link`')],
+)
+def test_compare_too_small_warning_advises_the_command(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture, tokens: str, remedy: str
+):
+    """Test that the advice for a barely visible mesh names the options of this command.
+
+    `plot_compare` suggests its own arguments, which are not the ones a command line
+    user has to hand: the outline is drawn by this command rather than given to it.
+    """
+    for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
+        mesh.save(tmp_example_dir / f'{name}.vtp')
+
+    main(f'compare tiny.vtp huge.vtp {tokens} --off-screen')
+
+    _, err = capture_out_err(capsys)
+    # The message is wrapped and padded to the width of the panel it is printed in
+    flattened = ' '.join(err.replace('│', ' ').split())
+    assert 'too small to make out' in flattened
+    assert remedy in flattened
+    # The arguments of `plot_compare` are not mentioned, since they cannot be given here
+    assert 'reference_mesh' not in flattened
+    assert 'link=False' not in flattened
+
+
+def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):
+    """Test that a warning this command has nothing to add to is still raised."""
+
+    def warn(**kwargs):  # noqa: ARG001
+        warnings.warn('something else entirely', UserWarning, stacklevel=2)
+
+    mocker.patch.object(pv, 'plot_compare', side_effect=warn)
+
+    names = ' '.join(path.name for path in tmp_compare_files)
+    with pytest.warns(UserWarning, match='something else entirely'):
+        main(f'compare {names}')
 
 
 def test_compare_glob_expands_files(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):

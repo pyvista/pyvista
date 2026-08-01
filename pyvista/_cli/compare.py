@@ -5,8 +5,10 @@ from __future__ import annotations
 import re
 from typing import Annotated
 from typing import Any
+import warnings
 
 from cyclopts import Parameter
+from rich.panel import Panel
 
 import pyvista as pv
 
@@ -50,6 +52,37 @@ _HELP_LABEL_SIZE = """\
 Font size of the label shown in each subplot. Useful when the file names are long
 enough to be cut off.
 """
+
+# What to do about a dataset which is too small to make out, in terms of the options
+# this command has rather than the arguments of `plot_compare`, which it does not
+_REMEDIES = {
+    'reference mesh': 'Omit `--outline` to fit each subplot to its own mesh.',
+    'shared camera': 'Use `--no-link` to fit each subplot to its own mesh.',
+}
+
+
+def _report_warnings(caught: list[warnings.WarningMessage]) -> None:
+    """Print the warnings raised while plotting, with advice for a command line."""
+    for warning in caught:
+        message = str(warning.message)
+        problem, made_out, _ = message.partition('make out.')
+        remedy = next((advice for cause, advice in _REMEDIES.items() if cause in message), None)
+        # This command draws the reference mesh itself, so name it as it is spelled here
+        problem = problem.replace('the reference mesh', 'the outline')
+        if not made_out or remedy is None:
+            # Not a warning this command has anything better to say about
+            warnings.warn_explicit(
+                warning.message, warning.category, warning.filename, warning.lineno
+            )
+            continue
+        CLI_APP.error_console.print(
+            Panel(
+                f'{problem}{made_out} {remedy}',
+                style='magenta',
+                title='Warning',
+                title_align='left',
+            )
+        )
 
 
 def _parse_shape(shape: str) -> list[int] | str:
@@ -130,28 +163,33 @@ def _compare(
     # Label each subplot with the name of the file it was read from
     names = labels if labels is not None else [path.stem for path in validate_paths(paths)]
 
-    return call_or_exit(
-        pv.plot_compare,
-        command='compare',
-        datasets=meshes,
-        labels=names,
-        shape=None if shape is None else _parse_shape(shape),
-        link=link,
-        cpos=cpos,
-        # The outline of a `MultiBlock` encloses every one of its blocks
-        reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
-        text_kwargs=None if label_size is None else {'font_size': label_size},
-        show_bounds=show_bounds,
-        show_axes=show_axes,
-        zoom=zoom,
-        screenshot=screenshot,
-        plotter_kwargs={
-            'off_screen': off_screen,
-            'window_size': window_size,
-            'border': border,
-            'border_color': border_color,
-            'border_width': border_width,
-        },
-        show_kwargs={'full_screen': full_screen, 'interactive': interactive},
-        display_kwargs=kwargs,
-    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always')
+        result = call_or_exit(
+            pv.plot_compare,
+            command='compare',
+            datasets=meshes,
+            labels=names,
+            shape=None if shape is None else _parse_shape(shape),
+            link=link,
+            cpos=cpos,
+            # The outline of a `MultiBlock` encloses every one of its blocks
+            reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
+            text_kwargs=None if label_size is None else {'font_size': label_size},
+            show_bounds=show_bounds,
+            show_axes=show_axes,
+            zoom=zoom,
+            screenshot=screenshot,
+            plotter_kwargs={
+                'off_screen': off_screen,
+                'window_size': window_size,
+                'border': border,
+                'border_color': border_color,
+                'border_width': border_width,
+            },
+            show_kwargs={'full_screen': full_screen, 'interactive': interactive},
+            display_kwargs=kwargs,
+        )
+
+    _report_warnings(caught)
+    return result
