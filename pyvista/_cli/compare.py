@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
 import warnings
@@ -25,6 +26,9 @@ from .utils import read_meshes
 from .utils import skip_unreadable
 from .utils import validate_paths
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 _HELP_SHAPE = """\
 Shape of the subplot grid, as either the number of rows and columns, e.g. ``2,2``,
 or one of the string descriptors accepted by ``Plotter``, e.g. ``3|1`` for three
@@ -33,8 +37,8 @@ never taller than it is wide is used.
 """
 
 _HELP_LABELS = """\
-Labels to show in each subplot. Must be given once per path. By default, the file
-name of each path is used.
+Labels to show in each subplot. Must be given once per path. By default, the file name
+of each path is used, with as much of the path as it takes to tell them apart.
 """
 
 _HELP_LINK = """\
@@ -83,6 +87,21 @@ def _report_warnings(caught: list[warnings.WarningMessage]) -> None:
                 title_align='left',
             )
         )
+
+
+def _label_paths(paths: list[Path]) -> list[str]:
+    """Return the shortest name of each path which tells them all apart.
+
+    Comparing ``file.vtk`` with ``file.vtp``, or ``run1/out.vtk`` with
+    ``run2/out.vtk``, needs more than the stem of each path to say which subplot is
+    which, but the extension and the directory are noise when they are all the same.
+    """
+    for name_of in (lambda path: path.stem, lambda path: path.name, str):
+        labels = [name_of(path) for path in paths]
+        if len(set(labels)) == len(labels):
+            return labels
+    # Nothing tells apart the same path given more than once
+    return [str(path) for path in paths]
 
 
 def _parse_shape(shape: str) -> list[int] | str:
@@ -161,7 +180,7 @@ def _compare(
         print_error_and_exit(message=msg)
 
     # Label each subplot with the name of the file it was read from
-    names = labels if labels is not None else [path.stem for path in validate_paths(paths)]
+    names = labels if labels is not None else _label_paths(validate_paths(paths))
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter('always')

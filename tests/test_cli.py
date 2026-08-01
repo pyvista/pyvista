@@ -1923,6 +1923,32 @@ def test_compare_called_link(
     assert mock_plot_compare.call_args.kwargs['link'] is expected
 
 
+@pytest.mark.parametrize(
+    ('files', 'expected'),
+    [
+        # The extension and the directory are noise when they are all the same
+        (['a.vtk', 'b.vtk'], ['a', 'b']),
+        # Neither the stem nor the file name alone tells these apart
+        (['file.vtk', 'file.vtp'], ['file.vtk', 'file.vtp']),
+        (['run1/out.vtk', 'run2/out.vtk'], ['run1/out.vtk', 'run2/out.vtk']),
+        # Nothing tells apart the same path given more than once
+        (['a.vtk', 'a.vtk'], ['a.vtk', 'a.vtk']),
+    ],
+    ids=['stem', 'extension', 'directory', 'duplicate'],
+)
+def test_compare_labels_are_unique(
+    tmp_example_dir: Path, mock_plot_compare: MagicMock, files: list[str], expected: list[str]
+):
+    """Test that each subplot is labelled with enough of its path to tell them apart."""
+    for name in files:
+        (path := tmp_example_dir / name).parent.mkdir(exist_ok=True)
+        pv.Sphere().save(path)
+
+    main(f'compare {" ".join(files)}')
+
+    assert mock_plot_compare.call_args.kwargs['labels'] == expected
+
+
 def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that explicit labels are used instead of the file names."""
     names = ' '.join(path.name for path in tmp_compare_files)
