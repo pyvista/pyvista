@@ -181,30 +181,12 @@ def _relative_size(renderers: Sequence[Any]) -> float:
     return min(renderer.length for renderer in renderers) / union if union > 0 else 1.0
 
 
-def _smallest_relative_size(renderers: Sequence[Any], *, reference_mesh: Any, link: bool) -> float:
-    """Return the size of the smallest dataset relative to what its subplot must fit.
-
-    Every subplot must fit the reference mesh as well as its own dataset, and a shared
-    camera must fit every dataset at once.
-    """
-    reference = () if reference_mesh is None else (reference_mesh,)
-    if link:
-        frames = [_union_bounds([*renderers, *reference])] * len(renderers)
-    else:
-        frames = [_union_bounds([renderer, *reference]) for renderer in renderers]
-    return min(
-        renderer.length / length if (length := _bounds_length(frame)) > 0 else 1.0
-        for renderer, frame in zip(renderers, frames, strict=True)
-    )
-
-
-def _warn_if_dataset_is_too_small(relative_size: float) -> None:
+def _warn_if_dataset_is_too_small(relative_size: float, of_what: str, remedy: str) -> None:
     """Warn when one of the datasets is too small to make out in its subplot."""
     if relative_size < _MIN_RELATIVE_SIZE:
         msg = (
-            f'The smallest dataset is {relative_size:.1%} of the size of what its subplot '
-            f'has to fit, so it may be too small to make out. Use `link=False` to fit each '
-            f'subplot to its own dataset, or a smaller `reference_mesh`.'
+            f'The smallest dataset is {relative_size:.1%} of the size of {of_what}, so it '
+            f'may be too small to make out. {remedy}'
         )
         warn_external(msg)
 
@@ -450,17 +432,28 @@ def plot_compare(
 
     # Measure the datasets before the reference mesh is added, since it goes in every
     # subplot and would otherwise make them all report the same bounds as each other
+    smallest = min(renderer.length for renderer in renderers)
+    linked_on_purpose = link is not None
     if link is None:
         link = _relative_size(renderers) >= _LINK_RELATIVE_SIZE
 
     if link:
         pl.link_views()
-
-    _warn_if_dataset_is_too_small(
-        _smallest_relative_size(renderers, reference_mesh=reference_mesh, link=link)
-    )
+        # Linking on its own is only worth warning about when it was asked for, since
+        # datasets which are linked automatically are of a comparable size already
+        if linked_on_purpose:
+            _warn_if_dataset_is_too_small(
+                _relative_size(renderers),
+                'all of the datasets together, which the shared camera has to fit',
+                'Use `link=False` to fit each subplot to its own dataset instead.',
+            )
 
     if reference_mesh is not None:
+        _warn_if_dataset_is_too_small(
+            smallest / reference_mesh.length if reference_mesh.length > 0 else 1.0,
+            'the reference mesh, which every subplot has to fit as well as its own dataset',
+            'Use a smaller `reference_mesh`.',
+        )
         for index in range(n_datasets):
             pl.subplot(*_subplot_args(pl.renderers.shape, index))
             pl.add_mesh(reference_mesh, **reference_kwargs)
