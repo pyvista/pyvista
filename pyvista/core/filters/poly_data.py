@@ -1078,7 +1078,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pv.plot_compare(
         ...     multi_compare,
         ...     display_kwargs={'show_edges': True},
-        ...     camera_position=cpos,
+        ...     cpos=cpos,
         ... )
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
