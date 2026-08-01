@@ -2056,7 +2056,11 @@ def test_compare_called_label_size(
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize(
     ('tokens', 'remedy'),
-    [('--outline', 'Omit `--outline`'), ('--link', 'Use `--no-link`')],
+    [
+        ('--outline', 'Omit `--outline`'),
+        # Normalizing is the way to keep the shared camera which was asked for
+        ('--link', 'Use `--no-link` to fit each subplot to its own mesh, or `--normalize`'),
+    ],
 )
 def test_compare_too_small_warning_advises_the_command(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, tokens: str, remedy: str

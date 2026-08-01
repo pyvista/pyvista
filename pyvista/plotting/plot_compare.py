@@ -687,7 +687,8 @@ def plot_compare(  # noqa: ANN201
             _warn_if_dataset_is_too_small(
                 _relative_size(renderers),
                 'all of the datasets together, which the shared camera has to fit',
-                'Use `link=False` to fit each subplot to its own dataset instead.',
+                'Use `link=False` to fit each subplot to its own dataset, or '
+                '`normalize=True` to resize them all to the same size.',
             )
 
     if reference_mesh is not None:

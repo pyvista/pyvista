@@ -71,7 +71,10 @@ draws them all at the size of the one which has to be smallest to fit. By defaul
 # this command has rather than the arguments of `plot_compare`, which it does not
 _REMEDIES = {
     'reference mesh': 'Omit `--outline` to fit each subplot to its own mesh.',
-    'shared camera': 'Use `--no-link` to fit each subplot to its own mesh.',
+    'shared camera': (
+        'Use `--no-link` to fit each subplot to its own mesh, or `--normalize` to '
+        'resize them all to the same size.'
+    ),
 }
 
 
