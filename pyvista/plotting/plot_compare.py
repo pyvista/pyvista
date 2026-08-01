@@ -558,6 +558,19 @@ def plot_compare(  # noqa: ANN201
 
     >>> pv.plot_compare(blocks, shape='2/1')
 
+    Anything the :class:`~pyvista.Plotter` itself takes is given to it through
+    ``plotter_kwargs``. Draw a border around each subplot to tell them apart.
+
+    >>> pv.plot_compare(
+    ...     blocks,
+    ...     plotter_kwargs={'border': True, 'border_color': 'grey'},
+    ... )
+
+    Plot on a dark background by giving the plotter a theme of its own, which
+    also decides the color the labels are drawn in.
+
+    >>> pv.plot_compare(blocks, plotter_kwargs={'theme': pv.themes.DarkTheme()})
+
     """
     datasets, names = _unpack_datasets(datasets)
 
