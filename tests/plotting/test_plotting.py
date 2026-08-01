@@ -2383,6 +2383,75 @@ def test_plot_compare_link_warns_when_a_dataset_is_too_small(verify_image_cache)
     pv.plot_compare(datasets)
 
 
+@pytest.mark.parametrize('box', [False, True], ids=['arrows', 'box'])
+def test_plot_compare_show_axes(compare_datasets, box, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The theme decides between the two kinds of axes, as it does for `pyvista.plot`
+    theme = pv.plotting.themes.Theme()
+    theme.axes.box = box
+
+    enabled = []
+    pv.plot_compare(
+        compare_datasets,
+        show_axes=True,
+        plotter_kwargs={'theme': theme},
+        show_kwargs={
+            'before_close_callback': lambda pl: enabled.extend(
+                renderer.axes_enabled for renderer in pl.renderers
+            )
+        },
+    )
+    assert enabled == [True] * len(compare_datasets)
+
+
+def test_plot_compare_show_bounds(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    actors = []
+    pv.plot_compare(
+        compare_datasets,
+        show_bounds=True,
+        show_kwargs={
+            'before_close_callback': lambda pl: actors.extend(
+                renderer.cube_axes_actor for renderer in pl.renderers
+            )
+        },
+    )
+    assert all(actor is not None for actor in actors)
+
+
+@pytest.mark.parametrize('link', [True, False], ids=['linked', 'unlinked'])
+@pytest.mark.parametrize('zoom', [2.0, 'tight'], ids=['float', 'tight'])
+def test_plot_compare_zoom(compare_datasets, link, zoom, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def cameras(**kwargs):
+        # A float zoom narrows the view angle and `'tight'` moves the camera
+        captured: list[tuple[float, float]] = []
+        pv.plot_compare(
+            compare_datasets,
+            link=link,
+            show_kwargs={
+                'before_close_callback': lambda pl: captured.extend(
+                    (round(ren.camera.view_angle, 4), round(ren.camera.GetDistance(), 3))
+                    for ren in pl.renderers
+                )
+            },
+            **kwargs,
+        )
+        return captured
+
+    before = cameras()
+    after = cameras(zoom=zoom)
+    assert after != before
+
+    if zoom == 2.0:
+        # Zooming twice halves the view angle. Linked subplots share one camera, so
+        # this must happen once rather than once per subplot, which would compound it
+        assert after[0][0] == pytest.approx(before[0][0] / 2)
+
+
 @pytest.mark.parametrize(
     ('datasets', 'expected'),
     [

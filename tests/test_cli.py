@@ -1948,6 +1948,21 @@ def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare:
     }
 
 
+@pytest.mark.usefixtures('patch_app_console')
+def test_compare_kwargs_hyphen_warns(
+    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, capsys: pytest.CaptureFixture
+):
+    """Test that a hyphen in a supplementary keyword argument is pointed out."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} --show-edges=True')
+
+    _, err = capture_out_err(capsys)
+    assert 'A hyphen `-` has been used as supplementary keyword' in err
+    assert '--show_edges=True' in err.replace('\n', '').replace('│', '')
+    # The argument is still forwarded, with the hyphenated name
+    assert mock_plot_compare.call_args.kwargs['display_kwargs'] == {'show-edges': True}
+
+
 def test_compare_glob_expands_files(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that glob patterns are expanded, as they are for the plot command."""
     main('compare *.vtp')
