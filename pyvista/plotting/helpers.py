@@ -258,7 +258,7 @@ def plot_compare(
         string descriptor such as ``'3|1'`` for three subplots on the left and
         one on the right, or ``'4/2'`` for four on top and two on the bottom.
         Must define at least as many subplots as there are datasets. By default,
-        or with ``'auto'``, the compact grid described above is used.
+        the compact grid described above is used.
 
     link : bool, default: True
         If ``True``, link the views of the subplots so that they share a single
@@ -343,7 +343,7 @@ def plot_compare(
     shape = _from_plotter_kwargs(plotter_kwargs, 'shape', shape)
     notebook = _from_plotter_kwargs(plotter_kwargs, 'notebook', notebook)
 
-    if shape is None or (isinstance(shape, str) and shape == 'auto'):
+    if shape is None:
         shape = _auto_shape(n_datasets)
 
     display_kwargs = {} if display_kwargs is None else display_kwargs

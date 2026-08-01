@@ -2294,12 +2294,11 @@ def test_plot_compare_n_datasets(compare_datasets, n_datasets):
     ('shape', 'n_datasets'),
     [
         ((4, 1), 4),
-        ('auto', 4),
         ('3|1', 4),  # three subplots on the left, one on the right
         ('4/2', 6),  # four subplots on top, two on the bottom
     ],
     # Give the string descriptors file-safe ids since they are used as image names
-    ids=['grid', 'auto', 'left_right', 'top_bottom'],
+    ids=['grid', 'left_right', 'top_bottom'],
 )
 def test_plot_compare_shape(compare_datasets, shape, n_datasets):
     datasets = [compare_datasets[i % len(compare_datasets)] for i in range(n_datasets)]
