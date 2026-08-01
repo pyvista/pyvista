@@ -96,7 +96,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     blob_or_edit = 'edit' if edit else 'blob'
 
-    return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
+    return f'https://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
 def fix_edit_link_button(pagename: str, link: str) -> str:

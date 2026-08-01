@@ -1152,6 +1152,7 @@ def test_spherical_to_cartesian():
 def test_linkcode_resolve():
     assert linkcode_resolve('not-py', {}) is None
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
+    assert link.startswith('https://github.com/pyvista/pyvista/')
     assert 'dataobject.py' in link
     assert '#L' in link
 
