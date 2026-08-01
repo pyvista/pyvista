@@ -2284,9 +2284,19 @@ def test_plot_compare(compare_datasets):
     pv.plot_compare(compare_datasets, display_kwargs={'color': 'w'})
 
 
-@pytest.mark.parametrize('n_datasets', [2, 3, 5])
-def test_plot_compare_n_datasets(compare_datasets, n_datasets):
-    datasets = [compare_datasets[i % len(compare_datasets)] for i in range(n_datasets)]
+@pytest.mark.parametrize(
+    ('n_datasets', 'expected'),
+    [(2, (1, 2)), (3, (1, 3)), (4, (2, 2)), (5, (2, 3)), (6, (2, 3)), (7, (2, 4)), (9, (3, 3))],
+)
+def test_plot_compare_auto_shape(n_datasets, expected, no_images_to_verify):  # noqa: ARG001
+    from pyvista.plotting.helpers import _auto_shape
+
+    assert _auto_shape(n_datasets) == expected
+
+
+def test_plot_compare_n_datasets(compare_datasets):
+    # Five datasets are laid out in a 2 by 3 grid, leaving the last subplot empty
+    datasets = [compare_datasets[i % len(compare_datasets)] for i in range(5)]
     pv.plot_compare(datasets, display_kwargs={'color': 'w'})
 
 
@@ -2321,7 +2331,10 @@ def test_plot_compare_shape_from_plotter_kwargs(compare_datasets, shape, verify_
 
 def test_plot_compare_labels(compare_datasets):
     pv.plot_compare(
-        compare_datasets, labels=['one', 'two', 'three', 'four'], display_kwargs={'color': 'w'}
+        compare_datasets,
+        labels=['one', 'two', 'three', 'four'],
+        text_kwargs={'font_size': 24, 'color': 'red'},
+        display_kwargs={'color': 'w'},
     )
 
 
@@ -2329,18 +2342,22 @@ def test_plot_compare_labels_none(compare_datasets):
     pv.plot_compare(compare_datasets, labels=None, display_kwargs={'color': 'w'})
 
 
-@pytest.mark.parametrize('link', [True, False], ids=['linked', 'unlinked'])
 @pytest.mark.parametrize(
-    'camera_position',
+    ('link', 'camera_position'),
     [
-        None,
-        'xy',
-        pv.CameraPosition(
-            position=(20.0, 20.0, 20.0), focal_point=(4.5, 4.5, 4.5), viewup=(0.0, 0.0, 1.0)
+        # Linked with no camera position is the default, covered by `test_plot_compare`
+        (False, None),
+        (True, 'xy'),
+        (False, 'xy'),
+        # A fully specified camera position is used as given, so linking cannot change it
+        (
+            True,
+            pv.CameraPosition(
+                position=(20.0, 20.0, 20.0), focal_point=(4.5, 4.5, 4.5), viewup=(0.0, 0.0, 1.0)
+            ),
         ),
     ],
-    # A fully specified camera position is used as given, the others are fit to the data
-    ids=['cpos_none', 'cpos_str', 'cpos_full'],
+    ids=['unlinked', 'linked_cpos_str', 'unlinked_cpos_str', 'cpos_full'],
 )
 def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_position):
     pv.plot_compare(
@@ -2392,19 +2409,20 @@ def test_plot_compare_reference_mesh(compare_datasets):
     )
 
 
-def test_plot_compare_reference_mesh_default_color(compare_datasets):
-    pv.plot_compare(
-        compare_datasets,
+def test_plot_compare_reference_kwargs(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The reference mesh is drawn with `reference_kwargs`, so styling it differs
+    # from the default styling. Neither needs an image of its own to show that
+    kwargs = dict(
         reference_mesh=examples.load_uniform().outline(),
         display_kwargs={'color': 'w'},
+        screenshot=True,
+        show_kwargs={'return_img': True},
     )
-
-
-def test_plot_compare_text_kwargs(compare_datasets):
-    pv.plot_compare(
-        compare_datasets,
-        text_kwargs={'font_size': 24, 'color': 'red'},
-        display_kwargs={'color': 'w'},
+    assert not np.array_equal(
+        pv.plot_compare(compare_datasets, **kwargs),
+        pv.plot_compare(compare_datasets, reference_kwargs={'color': 'red'}, **kwargs),
     )
 
 
@@ -2415,21 +2433,18 @@ def test_plot_compare_dict(compare_datasets):
     pv.plot_compare(datasets, display_kwargs={'color': 'w'})
 
 
-def test_plot_compare_multiblock(compare_datasets):
-    datasets = pv.MultiBlock(
-        dict(zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True))
-    )
-    pv.plot_compare(datasets, display_kwargs={'color': 'w'})
+def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
 
-
-def test_plot_compare_camera_position():
-    mesh = examples.download_foot_bones()
-    cpos = pv.CameraPosition(
-        position=(-0.7780, -12.74, -2.019),
-        focal_point=(1.257, -1.716, -0.2136),
-        viewup=(-0.2696, -0.1070, 0.9570),
+    # A MultiBlock is compared block by block and uses its block names as labels,
+    # which is the same plot the equivalent dict gives
+    datasets = dict(
+        zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
     )
-    pv.plot_compare([mesh] * 4, camera_position=cpos)
+    kwargs = dict(display_kwargs={'color': 'w'}, screenshot=True, show_kwargs={'return_img': True})
+    assert np.array_equal(
+        pv.plot_compare(pv.MultiBlock(datasets), **kwargs), pv.plot_compare(datasets, **kwargs)
+    )
 
 
 def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
