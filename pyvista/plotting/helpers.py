@@ -372,6 +372,8 @@ def plot_compare(
                 pl.camera_position = pl.get_default_cam_pos()
             pl.renderer.reset_camera(bounds=_union_bounds(renderers))
         else:
+            # Every renderer has its own camera, so reset each to fit each dataset
+            # independently
             for renderer in renderers:
                 renderer.reset_camera()
 
