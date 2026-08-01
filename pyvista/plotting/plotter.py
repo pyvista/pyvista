@@ -5628,8 +5628,12 @@ class BasePlotter(_BoundsSizeMixin):
         if font_size is None:
             font_size = self.theme.font.size
         prop = TextProperty(
-            color=color,
-            font_family=font,
+            # A text property left to fill in the color and the font family itself
+            # takes them from the global theme rather than from the theme of the
+            # plotter it is drawn by, which draws black text on the black background
+            # of a plotter given a dark theme of its own
+            color=Color(color, default_color=self.theme.font.color),
+            font_family=self.theme.font.family if font is None else font,
             orientation=orientation,
             font_file=font_file,
             shadow=shadow,

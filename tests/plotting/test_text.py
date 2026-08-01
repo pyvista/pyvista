@@ -316,3 +316,23 @@ def test_add_text_actor_raises():
     with pytest.raises(ValueError, match=re.escape(match)):
         pl._add_text_actor('text', position='middle')
     pl.close()
+
+
+def test_add_text_actor_follows_the_theme_of_the_plotter():
+    """Test that text is drawn in the color and font its own plotter asks for."""
+    theme = pv.themes.Theme()
+    theme.font.color = 'red'
+    theme.font.family = 'courier'
+    pl = pv.Plotter(theme=theme)
+
+    # A plotter with a theme of its own, a dark one in particular, would otherwise
+    # draw text in the color of the global theme, which its background may well be
+    actor = pl._add_text_actor('text')
+    assert actor.prop.color == pv.Color('red')
+    assert actor.prop.font_family == 'courier'
+
+    # What the caller asks for is used instead
+    actor = pl._add_text_actor('text', color='blue', font='times')
+    assert actor.prop.color == pv.Color('blue')
+    assert actor.prop.font_family == 'times'
+    pl.close()
