@@ -1349,6 +1349,26 @@ def test_left_button_down():
     pl.close()
 
 
+def test_left_button_down_pickpoint(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # an empty plotter is enough to reproduce, no mesh is required
+    pl = pv.Plotter()
+    assert pl.pickpoint is None
+
+    pl.show(auto_close=False)  # must start renderer first
+    width, height = pl.window_size
+
+    # pressing 'b' registers ``left_button_down`` for the next left click
+    pl.iren.interactor.SetKeySym('b')
+    pl.iren.interactor.KeyPressEvent()
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+
+    assert pl.pickpoint.shape == (1, 3)
+    assert not np.any(np.isnan(pl.pickpoint))
+    pl.close()
+
+
 def test_show_axes():
     pl = pv.Plotter()
     pl.show_axes()
