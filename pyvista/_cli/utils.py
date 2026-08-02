@@ -275,6 +275,19 @@ CposView = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
 # named instead. Mirrors the modes of ``pyvista.plot_compare``.
 LabelSize = Literal['best_fit', 'uniform']
 
+# The places a label may be drawn in. Mirrors the places `Plotter.add_text` names,
+# which is what ``pyvista.plot_compare`` draws its labels in.
+LabelPosition = Literal[
+    'lower_left',
+    'lower_right',
+    'upper_left',
+    'upper_right',
+    'lower_edge',
+    'upper_edge',
+    'left_edge',
+    'right_edge',
+]
+
 
 class Groups(StrEnum):
     """Groups for the arguments of the plotting CLI commands."""

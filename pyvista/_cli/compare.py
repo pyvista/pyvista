@@ -18,6 +18,7 @@ from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
 from .utils import CposView
 from .utils import Groups
+from .utils import LabelPosition
 from .utils import LabelSize
 from .utils import _kwargs_converter
 from .utils import _validator_window_size
@@ -57,6 +58,10 @@ _HELP_NORMALIZE = """\
 Resize every mesh to a diagonal length of one, centered on the origin, so that meshes
 of very different sizes are compared shape by shape. The files themselves are left as
 they are. Normalized meshes are all the same size, so they share a camera by default.
+"""
+
+_HELP_LABEL_POSITION = """\
+Where in each subplot to draw its label. Defaults to the upper left.
 """
 
 _HELP_LABEL_SIZE = """\
@@ -173,6 +178,9 @@ def _compare(
     label_size: Annotated[
         float | LabelSize | None, Parameter(help=_HELP_LABEL_SIZE, group=Groups.RENDERING)
     ] = None,
+    label_position: Annotated[
+        LabelPosition | None, Parameter(help=_HELP_LABEL_POSITION, group=Groups.RENDERING)
+    ] = None,
     show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
@@ -210,6 +218,7 @@ def _compare(
             reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
             normalize=normalize,
             label_size=label_size,
+            label_position=label_position,
             show_bounds=show_bounds,
             show_axes=show_axes,
             zoom=zoom,

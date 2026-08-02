@@ -2038,6 +2038,29 @@ def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare
     assert outline.bounds == meshes.bounds
 
 
+def test_compare_label_positions_are_the_ones_which_can_be_drawn():
+    """Test that the positions offered are the ones a label can be drawn in."""
+    from pyvista._cli.utils import LabelPosition
+    from pyvista.plotting.text import _TEXT_POSITIONS
+
+    assert set(get_args(LabelPosition)) == set(_TEXT_POSITIONS)
+
+
+@pytest.mark.parametrize(
+    ('tokens', 'expected'),
+    [('', None), ('--label-position lower_right', 'lower_right')],
+    ids=['default', 'position'],
+)
+def test_compare_called_label_position(
+    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected: Any
+):
+    """Test that where to draw the label of each subplot is forwarded."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(shlex.split(f'compare {names} {tokens}'))
+
+    assert mock_plot_compare.call_args.kwargs['label_position'] == expected
+
+
 @pytest.mark.parametrize(
     ('tokens', 'expected'),
     [('', None), ('--label-size 8', 8.0), ('--label-size best_fit', 'best_fit')],
