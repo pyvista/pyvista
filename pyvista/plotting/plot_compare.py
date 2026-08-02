@@ -465,8 +465,6 @@ def plot_compare(  # noqa: ANN201
         Labels are drawn by a :class:`~pyvista.Text` actor, which draws text at
         the size it is given.
 
-        .. versionadded:: 0.49
-
     label_position : str, optional
         Where in its subplot to draw each of the ``labels``, as one of the places
         :meth:`~pyvista.Plotter.add_text` names: ``'upper_left'``,
@@ -478,8 +476,6 @@ def plot_compare(  # noqa: ANN201
         in both places, which is also the only way to give a coordinate, along
         with ``'viewport'`` to read it as a fraction of the size of the subplot
         rather than as pixels. Has no effect when ``labels`` is ``None``.
-
-        .. versionadded:: 0.49
 
     label_kwargs : dict, optional
         Additional keyword arguments for the :class:`~pyvista.Text` actor which
@@ -522,8 +518,6 @@ def plot_compare(  # noqa: ANN201
             of them is resized by a factor of its own, so the one mesh drawn in
             every subplot no longer relates them to each other, and is drawn at
             the size of each rather than around it.
-
-        .. versionadded:: 0.49
 
     link : bool, optional
         If ``True``, link the views of the subplots so that they share a single
