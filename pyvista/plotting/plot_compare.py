@@ -261,7 +261,7 @@ def _validate_label_position(label_position: Any) -> TextPositionOptions | None:
     raise ValueError(msg)
 
 
-def _text_width(text: str, prop: Any, *, size: float, dpi: int) -> float:
+def _text_width(text: str, prop: Any, *, size: float, dpi: int, measurer: Any) -> float:
     """Return the width in pixels of the text drawn at the given font size."""
     # A `pyvista.TextProperty` loads the theme into a property shared by all of them,
     # which measuring has no business doing, so measure with a plain VTK one
@@ -270,15 +270,13 @@ def _text_width(text: str, prop: Any, *, size: float, dpi: int) -> float:
     measured.ShallowCopy(prop)
     measured.SetFontSize(int(size))
     bounds = [0, 0, 0, 0]
-    # Measuring needs no render window. The renderer is made and dropped rather than
-    # kept, since a plot has no business outliving one.
-    _vtk.vtkMathTextFreeTypeTextRenderer().GetBoundingBox(measured, text, bounds, dpi)
+    measurer.GetBoundingBox(measured, text, bounds, dpi)
     return bounds[1] - bounds[0]
 
 
-def _fitting_size(text: str, prop: Any, *, width: float, dpi: int) -> float:
+def _fitting_size(text: str, prop: Any, *, width: float, dpi: int, measurer: Any) -> float:
     """Return the largest font size at which the text fits within the width."""
-    measured = _text_width(text, prop, size=_REFERENCE_FONT_SIZE, dpi=dpi)
+    measured = _text_width(text, prop, size=_REFERENCE_FONT_SIZE, dpi=dpi, measurer=measurer)
     # An empty label has no width to fit, so it never constrains the size
     return math.inf if measured <= 0 else _REFERENCE_FONT_SIZE * width / measured
 
@@ -290,9 +288,9 @@ def _ellipsize(text: str, n_kept: int) -> str:
     return text[:head] + _ELLIPSIS + (text[len(text) - tail :] if tail else '')
 
 
-def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float) -> str:
+def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float, measurer: Any) -> str:
     """Return the longest elision of the text which fits the width at the given size."""
-    if _text_width(text, prop, size=size, dpi=dpi) <= width:
+    if _text_width(text, prop, size=size, dpi=dpi, measurer=measurer) <= width:
         # The label fits as it is, so there is nothing to elide
         return text
     # The elided text only grows as more of it is kept, so bisect for the most it can
@@ -300,7 +298,8 @@ def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float) -> st
     low, high = 0, len(text) - 1
     while low < high:
         n_kept = (low + high + 1) // 2
-        if _text_width(_ellipsize(text, n_kept), prop, size=size, dpi=dpi) <= width:
+        kept = _ellipsize(text, n_kept)
+        if _text_width(kept, prop, size=size, dpi=dpi, measurer=measurer) <= width:
             low = n_kept
         else:
             high = n_kept - 1
@@ -315,11 +314,12 @@ def _fit_labels(
     uniform: bool,
     ceiling: float,
     dpi: int,
+    measurer: Any,
 ) -> None:
     """Draw every label at the largest size which fits in its subplot."""
     widths = [renderer.GetSize()[0] * _LABEL_WIDTH_FRACTION for renderer in renderers]
     sizes = [
-        min(ceiling, _fitting_size(label, actor.prop, width=width, dpi=dpi))
+        min(ceiling, _fitting_size(label, actor.prop, width=width, dpi=dpi, measurer=measurer))
         for label, actor, width in zip(labels, actors, widths, strict=True)
     ]
     if uniform:
@@ -330,7 +330,9 @@ def _fit_labels(
             # The label is unreadable at the size it takes to fit, so draw it at the
             # smallest readable size and shorten the text until that fits instead
             size = _MIN_LABEL_SIZE  # noqa: PLW2901
-            label = _shorten(label, actor.prop, width=width, dpi=dpi, size=size)  # noqa: PLW2901
+            label = _shorten(  # noqa: PLW2901
+                label, actor.prop, width=width, dpi=dpi, size=size, measurer=measurer
+            )
         actor.prop.font_size = int(size)
         actor.input = label
 
@@ -348,6 +350,10 @@ def _fit_labels_on_render(
     once the window is shown, and changes again whenever the window is resized.
     """
     fitted: list[Any] = []
+    # Measuring text needs a text renderer, which is made here rather than where the
+    # measuring happens, since that is called from within a render, and making one of
+    # these brings up the backends which draw text
+    measurer = _vtk.vtkMathTextFreeTypeTextRenderer()
     # The render window holds this callback for as long as it lives, so hold nothing of
     # the plotter in return: anything held here would outlive the plot
     reference = weakref.ref(plotter)
@@ -380,6 +386,7 @@ def _fit_labels_on_render(
             uniform=max(widths) - min(widths) <= 1 if uniform is None else uniform,
             ceiling=plotter.theme.font.size * _POINTS_PER_FONT_SIZE,
             dpi=dpi,
+            measurer=measurer,
         )
 
     # `StartEvent` is emitted before each render, when the subplots already have the
@@ -392,7 +399,7 @@ def plot_compare(  # noqa: ANN201
     *,
     dataset_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
-    label_size: int | Literal['best_fit', 'uniform'] | None = None,
+    label_size: float | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
     label_kwargs: dict[str, Any] | None = None,
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
@@ -439,7 +446,7 @@ def plot_compare(  # noqa: ANN201
         If the input has keys `and` ``labels`` are provided, the provided
         ``labels`` take precedence and are used instead of its keys.
 
-    label_size : int | str, optional
+    label_size : float | str, optional
         The size of the ``labels``, either as a literal font size integer or as
         a string denoting how to work one out. A font size is used as given, and
         the labels will have the same constant size regardless of the window size
