@@ -428,10 +428,12 @@ def plot_compare(  # noqa: ANN201
 
     Parameters
     ----------
-    datasets : Sequence[DataSet] | Mapping[str, DataSet] | MultiBlock
-        The data objects to compare. At least two datasets are required. If a
-        mapping or a :class:`~pyvista.MultiBlock` is given, its keys are used as
-        the default ``labels``.
+    datasets : Sequence[PlottableType] | Mapping[str, PlottableType] | MultiBlock
+        The data objects to compare, each of which is anything
+        :meth:`~pyvista.Plotter.add_mesh` can draw. At least two datasets are
+        required. If a mapping or a :class:`~pyvista.MultiBlock` is given, its
+        keys are used as the default ``labels``. ``normalize`` needs datasets
+        which can be resized.
 
     dataset_kwargs : dict, optional
         Additional keyword arguments to pass to the
@@ -540,8 +542,12 @@ def plot_compare(  # noqa: ANN201
         In every case the camera is only fit when ``cpos`` is ``None`` or a
         string, since a fully-specified camera position is used as given.
 
-    cpos : list, optional
-        The camera position to use in the plot.
+    cpos : CameraPositionOptions, optional
+        The camera position to use in every subplot, as a list of the position,
+        the focal point and the view up, or as one of the views
+        :attr:`~pyvista.Plotter.camera_position` names, e.g. ``'xy'`` or
+        ``'iso'``. A view is fit to the datasets, and a fully specified position
+        is used as it is.
 
     zoom : float | str, optional
         Camera zoom, applied after the camera is fit to the datasets. Either
