@@ -93,6 +93,17 @@ repos:
         language: pygrep
         entry: '^\s*(?:>>>|\.\.\.)?\s*(?:plotter|p|plot|plt|pltr)\s*=\s*pv\.Plotter\('
         types_or: [python, rst, markdown]
+      # Counterpart to ruff's flake8-import-conventions 'banned-from' in
+      # pyproject.toml, which enforces the opposite direction. These modules
+      # export names that read unambiguously on their own, so import the member
+      # (`from pathlib import Path`), not the namespace. Ruff has no rule for
+      # this direction: 'banned-api' matches the resolved symbol and so would
+      # reject `from pathlib import Path` too.
+      - id: namespace-stdlib-imports
+        name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
+        language: pygrep
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:pathlib|functools|contextlib|textwrap|enum|types|io|itertools)\s*$'
+        types_or: [python, rst, markdown]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0

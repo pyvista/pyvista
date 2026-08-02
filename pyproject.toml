@@ -465,6 +465,33 @@ unfixable = ['F401', 'PLC0415']
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
+[tool.ruff.lint.flake8-import-conventions]
+# Modules whose members are too generic, or collide too easily, to read well
+# unqualified: keep the namespace prefix (`re.escape`, `os.environ`,
+# `weakref.ref`, `copy.copy`). `importlib` is deliberately absent -- its
+# submodules must be imported explicitly, so `from importlib.metadata import
+# entry_points` is the correct idiom. The opposite direction (modules that must
+# use member imports) is enforced by the 'namespace-stdlib-imports' hook in
+# .pre-commit-config.yaml, since ruff has no rule for it.
+banned-from = [
+  'copy',
+  'inspect',
+  'json',
+  'logging',
+  'math',
+  'operator',
+  'os',
+  'platform',
+  're',
+  'reprlib',
+  'shutil',
+  'subprocess',
+  'sys',
+  'time',
+  'warnings',
+  'weakref',
+]
+
 [tool.ruff.lint.flake8-import-conventions.aliases]
 pyvista = "pv"
 
