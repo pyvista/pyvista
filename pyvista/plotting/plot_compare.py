@@ -389,12 +389,6 @@ def _fit_labels_on_render(
             measurer=measurer,
         )
 
-    if pv.vtk_version_info < (9, 4):
-        # Fitting from within a render aborts VTK 9.3 when it draws without a window,
-        # so fit to the window as it is now and leave it at that
-        fit()
-        return
-
     # `StartEvent` is emitted before each render, when the subplots already have the
     # size they are about to be drawn at
     plotter.render_window.AddObserver(_vtk.vtkCommand.StartEvent, fit)  # type: ignore[union-attr]

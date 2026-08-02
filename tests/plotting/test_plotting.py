@@ -2487,7 +2487,6 @@ def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
     assert [text for _, text in drawn[2:]] == labels[2:]
 
 
-@pytest.mark.needs_vtk_version(9, 4, reason='Labels are fitted once before 9.4')
 def test_plot_compare_label_size_follows_the_window(compare_datasets, verify_image_cache):
     verify_image_cache.skip = True
 
