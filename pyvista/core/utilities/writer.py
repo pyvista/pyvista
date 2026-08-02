@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 import contextlib
-import pathlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
@@ -130,8 +130,6 @@ class BaseWriter(_FileIOBase):
 
         Notes
         -----
-        :attr:`path`:
-
         This is the path that will be passed to the underlying VTK writer.
         For most writers, this is the actual path of the written file.
         For writers that write multiple files (e.g., EnSightWriter),
@@ -163,10 +161,10 @@ class BaseWriter(_FileIOBase):
     def written_path(self) -> pathlib.Path:
         """Return the formatted path of the written files.
 
+        .. versionadded:: 0.49.0
+
         Notes
         -----
-        :attr:`written_path`:
-
         Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
         For most readers, ``path`` and ``written_path`` are identical. In cases where
         multiple files are written (e.g. :class:`vtkEnSightWriter`), this path corresponds
@@ -182,7 +180,7 @@ class BaseWriter(_FileIOBase):
 
     @written_path.setter
     def written_path(self, path: str | Path) -> None:
-        self._written_path = pathlib.Path(path)
+        self._written_path = Path(path)
 
     def _execute_before_write(self) -> None:
         """Execute code before calling `write()`.
@@ -500,7 +498,7 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class EnSightWriter(BaseWriter):
-    """EnSightWriter for `.case` files.
+    """EnSightWriter for ``.case`` files.
 
     Wraps :vtk:`vtkEnSightWriter`.
 
@@ -524,7 +522,7 @@ class EnSightWriter(BaseWriter):
     def path(self) -> str:  # numpydoc ignore=RT01
         """Return or set the filename or directory of the writer."""
         # vtkEnSightWriter has no single FileName concept, only Path/BaseName.
-        path = pathlib.Path(self.writer.GetPath())  # type: ignore[attr-defined]
+        path = Path(self.writer.GetPath())  # type: ignore[attr-defined]
         basename = self.writer.GetBaseName()  # type: ignore[attr-defined]
         return str(path / basename) if basename else str(path)
 
@@ -533,14 +531,14 @@ class EnSightWriter(BaseWriter):
         # Set Path/BaseName directly to avoid vtkEnSightWriter's ComputeNames(),
         # which splits FileName on the last '/' and breaks on Windows backslash
         # paths (falls back to Path="./" and mangles the rest into BaseName).
-        raw_path = pathlib.Path(path)
+        raw_path = Path(path)
         self.writer.SetPath(str(raw_path.parent))  # type: ignore[attr-defined]
         self.writer.SetBaseName(raw_path.stem)  # type: ignore[attr-defined]
 
     def _execute_before_write(self) -> None:
         # ProcessNumber can still change after path is set (e.g. via writer_kwargs),
         # so the final filename must be resolved here, not in the path setter.
-        raw_path = pathlib.Path(self.path)
+        raw_path = Path(self.path)
         process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
         self.written_path = raw_path.parent / f'{raw_path.stem}.{process_number}.case'
 
