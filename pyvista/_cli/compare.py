@@ -231,7 +231,7 @@ def _compare(
                 'border_width': border_width,
             },
             show_kwargs={'full_screen': full_screen, 'interactive': interactive},
-            display_kwargs=kwargs,
+            dataset_kwargs=kwargs,
         )
 
     _report_warnings(caught)

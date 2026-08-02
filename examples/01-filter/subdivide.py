@@ -54,7 +54,7 @@ datasets = subdivisions(mesh, 1, 3)
 pv.plot_compare(
     datasets,
     shape=(3, 3),
-    display_kwargs=dict(show_edges=True, color=True),
+    dataset_kwargs=dict(show_edges=True, color=True),
     cpos=cpos,
 )
 # %%

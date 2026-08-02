@@ -31,8 +31,22 @@ if TYPE_CHECKING:
     from pyvista.plotting.text import TextPositionOptions
 
 
-# Sentinel for the default labels, since `None` means no labels at all
-_AUTO_LABELS: Any = object()
+class _Sentinel:
+    """A default which stands for something other than a value a caller can give.
+
+    Prints as the name it is given, so that it reads as the default it stands for
+    wherever the signature is shown rather than as the address of an object.
+    """
+
+    def __init__(self, name: str) -> None:
+        self._name = name
+
+    def __repr__(self) -> str:
+        return self._name
+
+
+# The default labels, which `None` cannot stand for since it means no labels at all
+_AUTO_LABELS: Any = _Sentinel('auto')
 
 
 def _generate_labels(n_labels: int) -> list[str]:
@@ -385,23 +399,23 @@ def _fit_labels_on_render(
 def plot_compare(  # noqa: ANN201
     datasets: Sequence[PlottableType] | Mapping[str, PlottableType] | MultiBlock,
     *,
-    display_kwargs: dict[str, Any] | None = None,
-    plotter_kwargs: dict[str, Any] | None = None,
-    show_kwargs: dict[str, Any] | None = None,
-    label_kwargs: dict[str, Any] | None = None,
-    screenshot: str | bool | None = None,
-    cpos: CameraPositionOptions | None = None,
-    reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
-    reference_kwargs: dict[str, Any] | None = None,
+    dataset_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
+    label_kwargs: dict[str, Any] | None = None,
+    reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
+    reference_kwargs: dict[str, Any] | None = None,
     shape: Sequence[int] | str | None = None,
     normalize: bool = False,
     link: bool | None = None,
+    cpos: CameraPositionOptions | None = None,
+    zoom: float | str | None = None,
     show_axes: bool | None = None,
     show_bounds: bool = False,
-    zoom: float | str | None = None,
+    screenshot: str | bool | None = None,
+    plotter_kwargs: dict[str, Any] | None = None,
+    show_kwargs: dict[str, Any] | None = None,
 ):
     """Plot a grid comparison of any number of data objects.
 
@@ -419,42 +433,9 @@ def plot_compare(  # noqa: ANN201
         mapping or a :class:`~pyvista.MultiBlock` is given, its keys are used as
         the default ``labels``.
 
-    display_kwargs : dict, optional
+    dataset_kwargs : dict, optional
         Additional keyword arguments to pass to the
         :meth:`~pyvista.Plotter.add_mesh` method.
-
-    plotter_kwargs : dict, optional
-        Additional keyword arguments to pass to the :class:`~pyvista.Plotter`
-        constructor. A ``'shape'`` given here is used as the ``shape`` argument
-        below, but not in both places.
-
-    show_kwargs : dict, optional
-        Additional keyword arguments to pass to the :meth:`~pyvista.Plotter.show`
-        method.
-
-    label_kwargs : dict, optional
-        Additional keyword arguments for the :class:`~pyvista.Text` actor which
-        draws each of the ``labels``, e.g. ``{'color': 'red'}``. Takes what
-        :meth:`~pyvista.Plotter.add_text` takes. Has no effect when ``labels``
-        is ``None``.
-
-    screenshot : str | bool, optional
-        File name or path to save screenshot of the plot, or ``True`` to return
-        a screenshot array.
-
-    cpos : list, optional
-        The camera position to use in the plot.
-
-    reference_mesh : DataSet | MultiBlock, optional
-        A mesh to draw in every subplot to give the comparison a common frame of
-        reference, e.g. an outline of the dataset the compared results are
-        derived from. The same mesh is drawn in each subplot, so it does not
-        follow the bounds of the individual datasets.
-
-    reference_kwargs : dict, optional
-        Additional keyword arguments to pass to the
-        :meth:`~pyvista.Plotter.add_mesh` method used to show the
-        ``reference_mesh``. Defaults to ``{'color': 'k'}``.
 
     labels : Sequence[str] | None, optional
         The labels to display for each data object. Must have the same length as
@@ -484,9 +465,9 @@ def plot_compare(  # noqa: ANN201
         subplots of different widths is pinned to whatever fits the narrowest of
         them. A label too long to fit at a readable size has its middle elided.
 
-        The size is worked out again whenever the window is resized. It may also
-        be given as ``'font_size'`` in ``label_kwargs``, but not in both places.
-        Has no effect when ``labels`` is ``None``.
+        The size is worked out again whenever the window is resized. It may be
+        given in ``label_kwargs`` as ``'font_size'`` instead, but not in both
+        places. Has no effect when ``labels`` is ``None``.
 
         Labels are drawn by a :class:`~pyvista.Text` actor, which draws text at
         the size it is given.
@@ -500,12 +481,29 @@ def plot_compare(  # noqa: ANN201
         ``'lower_edge'``, ``'left_edge'`` or ``'right_edge'``. Defaults to
         ``'upper_left'``.
 
-        A coordinate may be given as ``'position'`` in ``label_kwargs`` instead,
-        along with ``'viewport'`` to read it as a fraction of the size of the
-        subplot rather than as pixels, but not in both places. Has no effect when
-        ``labels`` is ``None``.
+        It may be given in ``label_kwargs`` as ``'position'`` instead, but not
+        in both places, which is also the only way to give a coordinate, along
+        with ``'viewport'`` to read it as a fraction of the size of the subplot
+        rather than as pixels. Has no effect when ``labels`` is ``None``.
 
         .. versionadded:: 0.49
+
+    label_kwargs : dict, optional
+        Additional keyword arguments for the :class:`~pyvista.Text` actor which
+        draws each of the ``labels``, e.g. ``{'color': 'red'}``. Takes what
+        :meth:`~pyvista.Plotter.add_text` takes. Has no effect when ``labels``
+        is ``None``.
+
+    reference_mesh : DataSet | MultiBlock, optional
+        A mesh to draw in every subplot to give the comparison a common frame of
+        reference, e.g. an outline of the dataset the compared results are
+        derived from. The same mesh is drawn in each subplot, so it does not
+        follow the bounds of the individual datasets.
+
+    reference_kwargs : dict, optional
+        Additional keyword arguments to pass to the
+        :meth:`~pyvista.Plotter.add_mesh` method used to show the
+        ``reference_mesh``. Defaults to ``{'color': 'k'}``.
 
     shape : Sequence[int] | str, optional
         The shape of the subplot layout, in any form accepted by
@@ -519,8 +517,7 @@ def plot_compare(  # noqa: ANN201
         Resize every dataset to a diagonal :attr:`~pyvista.DataSet.length` of one,
         centered on the origin, so that datasets of very different sizes are
         compared shape by shape. The datasets given are left as they are, and the
-        resized copies of them are what is drawn. A ``reference_mesh`` is resized
-        along with them, so that it is the same frame of reference for each.
+        resized copies of them are what is drawn, as is a ``reference_mesh``.
 
         Normalized datasets are all the same size and in the same place, so they
         are linked by default, which datasets of very different sizes are not.
@@ -543,6 +540,13 @@ def plot_compare(  # noqa: ANN201
         In every case the camera is only fit when ``cpos`` is ``None`` or a
         string, since a fully-specified camera position is used as given.
 
+    cpos : list, optional
+        The camera position to use in the plot.
+
+    zoom : float | str, optional
+        Camera zoom, applied after the camera is fit to the datasets. Either
+        ``'tight'`` or a float, where a value greater than 1 is a zoom-in.
+
     show_axes : bool, optional
         Show the axes orientation widget in every subplot. By default, the
         :attr:`~pyvista.plotting.themes.Theme.axes` setting of the theme is
@@ -551,9 +555,18 @@ def plot_compare(  # noqa: ANN201
     show_bounds : bool, default: False
         Show the bounds axes in every subplot.
 
-    zoom : float | str, optional
-        Camera zoom, applied after the camera is fit to the datasets. Either
-        ``'tight'`` or a float, where a value greater than 1 is a zoom-in.
+    screenshot : str | bool, optional
+        File name or path to save screenshot of the plot, or ``True`` to return
+        a screenshot array.
+
+    plotter_kwargs : dict, optional
+        Additional keyword arguments to pass to the :class:`~pyvista.Plotter`
+        constructor. The ``shape`` may be given here as ``'shape'`` instead,
+        but not in both places.
+
+    show_kwargs : dict, optional
+        Additional keyword arguments to pass to the :meth:`~pyvista.Plotter.show`
+        method.
 
     Returns
     -------
@@ -576,7 +589,7 @@ def plot_compare(  # noqa: ANN201
     >>> mesh = examples.load_airplane()
     >>> pv.plot_compare(
     ...     [mesh.clip('x'), mesh.clip('y'), mesh.clip('z')],
-    ...     display_kwargs={'color': 'w'},
+    ...     dataset_kwargs={'color': 'w'},
     ... )
 
     Use a dictionary to label each dataset and set the camera position explicitly.
@@ -587,7 +600,7 @@ def plot_compare(  # noqa: ANN201
     ...         'clip y': mesh.clip('y'),
     ...         'clip z': mesh.clip('z'),
     ...     },
-    ...     display_kwargs={'color': 'w'},
+    ...     dataset_kwargs={'color': 'w'},
     ...     cpos='xy',
     ... )
 
@@ -660,7 +673,7 @@ def plot_compare(  # noqa: ANN201
     if shape is None:
         shape = _auto_shape(n_datasets)
 
-    display_kwargs = {} if display_kwargs is None else display_kwargs
+    dataset_kwargs = {} if dataset_kwargs is None else dataset_kwargs
     show_kwargs = {} if show_kwargs is None else show_kwargs
     label_kwargs = {} if label_kwargs is None else dict(label_kwargs)
     reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
@@ -704,7 +717,7 @@ def plot_compare(  # noqa: ANN201
 
     for index, dataset in enumerate(datasets):
         pl.subplot(*_subplot_args(pl.renderers.shape, index))
-        pl.add_mesh(dataset, **display_kwargs)
+        pl.add_mesh(dataset, **dataset_kwargs)
         if labels is not None:
             pl._add_text_actor(labels[index], **label_kwargs)
         if cpos is not None:

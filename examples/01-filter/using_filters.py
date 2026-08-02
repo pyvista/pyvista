@@ -72,7 +72,7 @@ datasets = {
 
 pv.plot_compare(
     datasets,
-    display_kwargs={'show_scalar_bar': False},
+    dataset_kwargs={'show_scalar_bar': False},
     reference_mesh=outline,
     cpos=[-2, 5, 3],
 )

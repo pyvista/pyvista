@@ -59,7 +59,7 @@ datasets = {
 
 pv.plot_compare(
     datasets,
-    display_kwargs=dargs,
+    dataset_kwargs=dargs,
     label_size=24,
     cpos=cpos,
 )
