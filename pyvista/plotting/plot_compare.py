@@ -420,20 +420,23 @@ def plot_compare(  # noqa: ANN201
         the default ``labels``.
 
     display_kwargs : dict, optional
-        Additional keyword arguments to pass to the ``add_mesh`` method.
+        Additional keyword arguments to pass to the
+        :meth:`~pyvista.Plotter.add_mesh` method.
 
     plotter_kwargs : dict, optional
-        Additional keyword arguments to pass to the ``Plotter`` constructor. A
-        A ``'shape'`` given here is used as the ``shape`` argument below, and it
-        is an error to give it in both places.
+        Additional keyword arguments to pass to the :class:`~pyvista.Plotter`
+        constructor. A ``'shape'`` given here is used as the ``shape`` argument
+        below, but not in both places.
 
     show_kwargs : dict, optional
-        Additional keyword arguments to pass to the ``show`` method.
+        Additional keyword arguments to pass to the :meth:`~pyvista.Plotter.show`
+        method.
 
     label_kwargs : dict, optional
-        Additional keyword arguments to pass to the ``add_text`` method used to
-        show the ``labels``, e.g. ``{'font_size': 24}``. Has no effect when
-        ``labels`` is ``None``.
+        Additional keyword arguments for the :class:`~pyvista.Text` actor which
+        draws each of the ``labels``, e.g. ``{'color': 'red'}``. Takes what
+        :meth:`~pyvista.Plotter.add_text` takes. Has no effect when ``labels``
+        is ``None``.
 
     screenshot : str | bool, optional
         File name or path to save screenshot of the plot, or ``True`` to return
@@ -449,8 +452,9 @@ def plot_compare(  # noqa: ANN201
         follow the bounds of the individual datasets.
 
     reference_kwargs : dict, optional
-        Additional keyword arguments to pass to the ``add_mesh`` method used to
-        show the ``reference_mesh``. Defaults to ``{'color': 'k'}``.
+        Additional keyword arguments to pass to the
+        :meth:`~pyvista.Plotter.add_mesh` method used to show the
+        ``reference_mesh``. Defaults to ``{'color': 'k'}``.
 
     labels : Sequence[str] | None, optional
         The labels to display for each data object. Must have the same length as
