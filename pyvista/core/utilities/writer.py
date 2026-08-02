@@ -19,7 +19,6 @@ from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-
     from pyvista import DataObject
     from pyvista import NumpyArray
     from pyvista import _vtk
@@ -157,7 +156,7 @@ class BaseWriter(_FileIOBase):
         self.writer.SetInputData(data_object)
 
     @property
-    def written_path(self) -> pathlib.Path:
+    def written_path(self) -> Path:
         """Return the formatted path of the written files.
 
         .. versionadded:: 0.49.0
