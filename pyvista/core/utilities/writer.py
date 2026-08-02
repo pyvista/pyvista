@@ -19,7 +19,6 @@ from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from pathlib import Path
 
     from pyvista import DataObject
     from pyvista import NumpyArray
