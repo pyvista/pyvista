@@ -34,8 +34,8 @@ if TYPE_CHECKING:
 class _Sentinel:
     """A default which stands for something other than a value a caller can give.
 
-    Prints as the name it is given, so that it reads as the default it stands for
-    wherever the signature is shown rather than as the address of an object.
+    Prints as the name it is given, so that a signature shows what it stands for
+    rather than the address of an object.
     """
 
     def __init__(self, name: str) -> None:
@@ -198,23 +198,20 @@ def _subplot_args(shape: tuple[int, ...], index: int) -> tuple[int, ...]:
     return (index,) if len(shape) == 1 else divmod(index, shape[1])
 
 
-# Draw each label as large as it fits in its own subplot, so labels of different
-# lengths, or subplots of different sizes, are drawn at different sizes
+# Draw each label as large as it fits in its own subplot
 _BEST_FIT = 'best_fit'
 
-# Draw every label at the size of the one which has to be smallest to fit, so that they
-# are all the same size no matter how long they are or which subplot they are in
+# Draw every label at the size of the one which has to be smallest to fit
 _UNIFORM = 'uniform'
 
 _LABEL_SIZE_MODES = (_BEST_FIT, _UNIFORM)
 
 # Labels are measured at this size and scaled from it, since the width of a string is
-# proportional to its font size. It is large enough that the rounding of the measured
-# width does not skew the result.
+# proportional to its font size. Large enough that rounding the width does not skew it.
 _REFERENCE_FONT_SIZE = 100
 
-# The fraction of the width of a subplot a label may occupy. The rest keeps the label
-# clear of the edge of the subplot and of the label of the subplot beside it.
+# The fraction of the width of a subplot a label may occupy, the rest keeping it clear
+# of the edge and of the label beside it
 _LABEL_WIDTH_FRACTION = 0.9
 
 # A label drawn any smaller than this is too small to read, so shorten the text
@@ -224,12 +221,11 @@ _MIN_LABEL_SIZE = 14
 # What the middle of a label too long to be drawn at a readable size is replaced with
 _ELLIPSIS = '…'
 
-# The name the label of a subplot is drawn under, which is how it is found again to be
-# fitted to the subplot each time the window is rendered at a new size
+# The name a label is drawn under, which is how it is found again to be refitted
 _LABEL_NAME = 'plot_compare_label'
 
-# `add_text` draws text at twice the font size it is given, so the font size of the
-# theme is expressed in the same units as a fitted size by doubling it as well
+# Text is drawn at twice the font size it is given, so doubling a font size puts it in
+# the same units as a fitted size
 _POINTS_PER_FONT_SIZE = 2
 
 
@@ -267,17 +263,15 @@ def _validate_label_position(label_position: Any) -> TextPositionOptions | None:
 
 def _text_width(text: str, prop: Any, *, size: float, dpi: int) -> float:
     """Return the width in pixels of the text drawn at the given font size."""
-    # A `pyvista.TextProperty` loads the theme into a property shared by every one of
-    # them, which measuring has no business doing, so measure with a plain VTK one
+    # A `pyvista.TextProperty` loads the theme into a property shared by all of them,
+    # which measuring has no business doing, so measure with a plain VTK one
     measured = _vtk.vtkTextProperty()
-    # Copy the property the text is actually drawn with, so that the font family and
-    # style it defines are measured rather than the defaults
+    # Copy what the text is drawn with, to measure its font rather than the default
     measured.ShallowCopy(prop)
     measured.SetFontSize(int(size))
     bounds = [0, 0, 0, 0]
-    # The text is measured rather than drawn, so no render window is needed for it.
-    # The renderer is made here and dropped again rather than kept, since a text
-    # renderer of its own is not something a plot has any business outliving.
+    # Measuring needs no render window. The renderer is made and dropped rather than
+    # kept, since a plot has no business outliving one.
     _vtk.vtkMathTextFreeTypeTextRenderer().GetBoundingBox(measured, text, bounds, dpi)
     return bounds[1] - bounds[0]
 
@@ -354,9 +348,8 @@ def _fit_labels_on_render(
     once the window is shown, and changes again whenever the window is resized.
     """
     fitted: list[Any] = []
-    # The render window holds this callback for as long as it lives, so hold nothing
-    # of the plotter it belongs to in return, and look up what is needed instead.
-    # Anything held here would outlive the plotter it was drawn by.
+    # The render window holds this callback for as long as it lives, so hold nothing of
+    # the plotter in return: anything held here would outlive the plot
     reference = weakref.ref(plotter)
 
     def fit(*_args: Any) -> None:
@@ -381,18 +374,16 @@ def _fit_labels_on_render(
             actors,
             labels,
             renderers,
-            # Subplots of the same width share a size which suits all of the labels.
-            # Sharing one between subplots of different widths would instead pin every
-            # label to the size which fits in the narrowest of them. A grid divides the
-            # window between its subplots, which leaves a pixel of it over now and
-            # then, so widths within a pixel of each other count as the same width.
+            # A shared size is pinned to whatever fits the narrowest subplot, so it
+            # is only shared between subplots of the same width. A grid leaves a pixel
+            # of the window over now and then, so widths within a pixel are the same.
             uniform=max(widths) - min(widths) <= 1 if uniform is None else uniform,
             ceiling=plotter.theme.font.size * _POINTS_PER_FONT_SIZE,
             dpi=dpi,
         )
 
-    # `StartEvent` is emitted before each render, when the subplots have already been
-    # given the size they are about to be drawn at
+    # `StartEvent` is emitted before each render, when the subplots already have the
+    # size they are about to be drawn at
     plotter.render_window.AddObserver(_vtk.vtkCommand.StartEvent, fit)  # type: ignore[union-attr]
 
 
@@ -500,7 +491,8 @@ def plot_compare(  # noqa: ANN201
         A mesh to draw in every subplot to give the comparison a common frame of
         reference, e.g. an outline of the dataset the compared results are
         derived from. The same mesh is drawn in each subplot, so it does not
-        follow the bounds of the individual datasets.
+        follow the bounds of the individual datasets. See the warning in
+        ``normalize`` before using both.
 
     reference_kwargs : dict, optional
         Additional keyword arguments to pass to the
@@ -523,6 +515,13 @@ def plot_compare(  # noqa: ANN201
 
         Normalized datasets are all the same size and in the same place, so they
         are linked by default, which datasets of very different sizes are not.
+
+        .. warning::
+
+            A ``reference_mesh`` says much less about normalized datasets. Each
+            of them is resized by a factor of its own, so the one mesh drawn in
+            every subplot no longer relates them to each other, and is drawn at
+            the size of each rather than around it.
 
         .. versionadded:: 0.49
 

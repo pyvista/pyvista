@@ -58,6 +58,7 @@ _HELP_NORMALIZE = """\
 Resize every mesh to a diagonal length of one, centered on the origin, so that meshes
 of very different sizes are compared shape by shape. The files themselves are left as
 they are. Normalized meshes are all the same size, so they share a camera by default.
+An ``--outline`` says much less about them, since each is resized by a factor of its own.
 """
 
 _HELP_LABEL_POSITION = """\

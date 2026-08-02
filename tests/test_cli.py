@@ -1911,16 +1911,52 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
 
 
 @pytest.mark.parametrize(
-    ('tokens', 'expected'), [('', None), ('--link', True), ('--no-link', False)]
+    ('tokens', 'argument', 'expected'),
+    [
+        ('', 'link', None),
+        ('--link', 'link', True),
+        ('--no-link', 'link', False),
+        ('--shape 3,1', 'shape', [3, 1]),
+        ('--shape "2 1"', 'shape', [2, 1]),
+        ('--shape 3|1', 'shape', '3|1'),
+        ('--cpos=xy', 'cpos', 'xy'),
+        ('', 'normalize', False),
+        ('--normalize', 'normalize', True),
+        ('', 'label_size', None),
+        ('--label-size 8', 'label_size', 8.0),
+        ('--label-size best_fit', 'label_size', 'best_fit'),
+        ('', 'label_position', None),
+        ('--label-position lower_right', 'label_position', 'lower_right'),
+    ],
+    ids=[
+        'link_default',
+        'link',
+        'no_link',
+        'shape_comma',
+        'shape_space',
+        'shape_descriptor',
+        'cpos',
+        'normalize_default',
+        'normalize',
+        'label_size_default',
+        'label_size_font',
+        'label_size_mode',
+        'label_position_default',
+        'label_position',
+    ],
 )
-def test_compare_called_link(
-    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected
+def test_compare_forwards_arguments(
+    tmp_compare_files: list[Path],
+    mock_plot_compare: MagicMock,
+    tokens: str,
+    argument: str,
+    expected: Any,
 ):
-    """Test that the cameras are shared only when asked to, or automatically."""
+    """Test that each argument of the command reaches `plot_compare` as it is spelled there."""
     names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names} {tokens}'.strip())
+    main(shlex.split(f'compare {names} {tokens}'))
 
-    assert mock_plot_compare.call_args.kwargs['link'] is expected
+    assert mock_plot_compare.call_args.kwargs[argument] == expected
 
 
 @pytest.mark.parametrize(
@@ -1959,26 +1995,6 @@ def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare:
     assert mock_plot_compare.call_args.kwargs['labels'] == ['one', 'two']
 
 
-@pytest.mark.parametrize(
-    ('tokens', 'expected'),
-    [
-        ('--shape 3,1', [3, 1]),
-        ('--shape "2 1"', [2, 1]),
-        ('--shape 2|1', '2|1'),  # string descriptors are passed through
-        ('--shape 4/2', '4/2'),
-        ('', None),
-    ],
-)
-def test_compare_called_shape(
-    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected
-):
-    """Test that the shape is parsed from its command line spelling."""
-    names = ' '.join(path.name for path in tmp_compare_files)
-    main(shlex.split(f'compare {names} {tokens}'))
-
-    assert mock_plot_compare.call_args.kwargs['shape'] == expected
-
-
 def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that supplementary keyword arguments are forwarded to add_mesh."""
     names = ' '.join(path.name for path in tmp_compare_files)
@@ -2005,27 +2021,6 @@ def test_compare_kwargs_hyphen_warns(
     assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {'show-edges': True}
 
 
-@pytest.mark.parametrize('cpos', ['xy', 'iso'])
-def test_compare_called_cpos(
-    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, cpos: str
-):
-    """Test that a named camera position is forwarded."""
-    names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names} --cpos={cpos}')
-
-    assert mock_plot_compare.call_args.kwargs['cpos'] == cpos
-
-
-def test_compare_called_normalize(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
-    """Test that normalizing the meshes is asked for."""
-    names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names}')
-    assert mock_plot_compare.call_args.kwargs['normalize'] is False
-
-    main(f'compare {names} --normalize')
-    assert mock_plot_compare.call_args.kwargs['normalize'] is True
-
-
 def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that the outline drawn in each subplot encloses every mesh."""
     names = ' '.join(path.name for path in tmp_compare_files)
@@ -2044,36 +2039,6 @@ def test_compare_label_positions_are_the_ones_which_can_be_drawn():
     from pyvista.plotting.text import _TEXT_POSITIONS
 
     assert set(get_args(LabelPosition)) == set(_TEXT_POSITIONS)
-
-
-@pytest.mark.parametrize(
-    ('tokens', 'expected'),
-    [('', None), ('--label-position lower_right', 'lower_right')],
-    ids=['default', 'position'],
-)
-def test_compare_called_label_position(
-    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected: Any
-):
-    """Test that where to draw the label of each subplot is forwarded."""
-    names = ' '.join(path.name for path in tmp_compare_files)
-    main(shlex.split(f'compare {names} {tokens}'))
-
-    assert mock_plot_compare.call_args.kwargs['label_position'] == expected
-
-
-@pytest.mark.parametrize(
-    ('tokens', 'expected'),
-    [('', None), ('--label-size 8', 8.0), ('--label-size best_fit', 'best_fit')],
-    ids=['default', 'font_size', 'mode'],
-)
-def test_compare_called_label_size(
-    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, tokens: str, expected: Any
-):
-    """Test that the label size is given to the text drawn in each subplot."""
-    names = ' '.join(path.name for path in tmp_compare_files)
-    main(shlex.split(f'compare {names} {tokens}'))
-
-    assert mock_plot_compare.call_args.kwargs['label_size'] == expected
 
 
 @pytest.mark.usefixtures('patch_app_console')
