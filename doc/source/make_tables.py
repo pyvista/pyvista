@@ -11,12 +11,12 @@ from colorsys import rgb_to_hls
 from dataclasses import dataclass
 from enum import auto
 import inspect
-import io
+from io import StringIO
 from itertools import starmap
 import os
 from pathlib import Path
 import re
-import textwrap
+from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -109,7 +109,7 @@ def _aligned_dedent(txt):
 
     Helper method to dedent the provided text up to the special alignment character ``'|'``.
     """
-    return textwrap.dedent(txt).replace('|', '')
+    return dedent(txt).replace('|', '')
 
 
 class DocTable:
@@ -139,7 +139,7 @@ class DocTable:
         data = cls.fetch_data()
         assert data is not None, f'No data was fetched by {cls}.'
 
-        with io.StringIO() as fnew:
+        with StringIO() as fnew:
             fnew.write(cls.get_header(data))
             for i, row_data in enumerate(data):
                 row = cls.get_row(i, row_data)

@@ -7,19 +7,19 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import Sequence
-import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
-from copy import deepcopy
+import copy
 import ctypes
 from functools import wraps
-import io
+from io import BytesIO
+from io import StringIO
 from itertools import cycle
 import logging
 import os
 from pathlib import Path
 import sys
-import textwrap
+from textwrap import dedent
 from threading import Event
 from threading import Thread
 import time
@@ -774,7 +774,7 @@ class BasePlotter(_BoundsSizeMixin):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def export_html(self, filename: str | Path | None) -> io.StringIO | None:
+    def export_html(self, filename: str | Path | None) -> StringIO | None:
         """Export this plotter as an interactive scene to a HTML file.
 
         Parameters
@@ -3785,7 +3785,7 @@ class BasePlotter(_BoundsSizeMixin):
                 not_hidden = mesh.extract_cells(
                     ~hidden_cells, pass_cell_ids=False, pass_point_ids=False
                 )
-                with contextlib.suppress(KeyError):
+                with suppress(KeyError):
                     del not_hidden.cell_data[ghost_name]
 
                 # Simulate the non-visible bounds by adding points at the corners
@@ -4245,7 +4245,7 @@ class BasePlotter(_BoundsSizeMixin):
                 backface_prop = backface_params
             elif isinstance(backface_params, dict):
                 # preserve omitted kwargs from frontface
-                backface_kwargs = deepcopy(prop_kwargs)
+                backface_kwargs = copy.deepcopy(prop_kwargs)
                 backface_kwargs.update(backface_params)
                 backface_prop = Property(**backface_kwargs)
             else:
@@ -5302,7 +5302,7 @@ class BasePlotter(_BoundsSizeMixin):
         s[:] = scalars
         vtk_scalars.Modified()
         data.Modified()
-        with contextlib.suppress(Exception):
+        with suppress(Exception):
             # Why are the points updated here? Not all datasets have points
             # and only the scalars array is modified by this function...
             mesh.GetPoints().Modified()
@@ -6418,7 +6418,7 @@ class BasePlotter(_BoundsSizeMixin):
     @staticmethod
     def _save_image(
         image: pv.pyvista_ndarray,
-        filename: str | Path | io.BytesIO | bool | None,  # noqa: FBT001
+        filename: str | Path | BytesIO | bool | None,  # noqa: FBT001
         return_img: bool,  # noqa: FBT001
     ) -> pv.pyvista_ndarray | None:
         """Save to file and/or return a NumPy image array.
@@ -6430,7 +6430,7 @@ class BasePlotter(_BoundsSizeMixin):
             msg = 'Empty image. Have you run plot() first?'
             raise ValueError(msg)
         # write screenshot to file if requested
-        if isinstance(filename, (str, Path, io.BytesIO)):
+        if isinstance(filename, (str, Path, BytesIO)):
             from PIL import Image  # noqa: PLC0415
 
             if isinstance(filename, (str, Path)):
@@ -6537,7 +6537,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917
         self,
-        filename: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
+        filename: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
         transparent_background: bool | None = None,  # noqa: FBT001
         return_img: bool = True,  # noqa: FBT001, FBT002
         window_size: Sequence[int] | None = None,
@@ -6651,7 +6651,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         if self.last_image is None:
             return None
-        buf = io.BytesIO()
+        buf = BytesIO()
         PIL.Image.fromarray(self.last_image).save(buf, format='PNG')
         return buf.getvalue()
 
@@ -8048,7 +8048,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         auto_close: bool | None = None,  # noqa: FBT001
         interactive_update: bool = False,  # noqa: FBT001, FBT002
         full_screen: bool | None = None,  # noqa: FBT001
-        screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
+        screenshot: str | Path | BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
         cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | str | None = None,
@@ -8239,7 +8239,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             auto_close = False
         elif interactive_update and auto_close:
             warn_external(
-                textwrap.dedent(
+                dedent(
                     """
                     The plotter will close immediately automatically since ``auto_close=True``.
                     Either, do not specify ``auto_close``, or set it to ``False`` if you want to

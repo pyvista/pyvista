@@ -28,7 +28,7 @@ pyvista.registered_accessors
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 from importlib import import_module
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
@@ -162,7 +162,7 @@ class _CachedAccessor:
         accessor_instance = self._accessor_cls(obj)
         # Skip the cache on ``__slots__`` targets (no ``__dict__``) and
         # construct fresh on each access.
-        with contextlib.suppress(AttributeError):
+        with suppress(AttributeError):
             obj.__dict__[self._name] = accessor_instance
         return accessor_instance
 

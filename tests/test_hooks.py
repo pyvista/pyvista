@@ -5,7 +5,7 @@ from __future__ import annotations
 import shlex
 import subprocess
 import sys
-import textwrap
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
@@ -44,7 +44,7 @@ def test_warnings_converter(
     """  # noqa: E501
 
     with (file := (tmp_path / 'file.py')).open('w') as f:
-        f.write(textwrap.dedent(test))
+        f.write(dedent(test))
 
     local = next(v for v in pre_commit_config['repos'] if v['repo'] == 'local')
     warning_hook = next(v for v in local['hooks'] if v['id'] == 'warn_external')
@@ -77,4 +77,4 @@ def test_warnings_converter(
         warn_external(message="foo", category=UserWarning)
         """
 
-    assert textwrap.dedent(expected) == ''.join(lines)
+    assert dedent(expected) == ''.join(lines)

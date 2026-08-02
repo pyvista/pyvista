@@ -5,7 +5,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Sequence
 from functools import wraps
-import itertools
+from itertools import chain
+from itertools import product
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -179,7 +180,7 @@ class _XYZAssembly(
 
     @property
     def _label_actor_iterator(self) -> Iterator[Label]:
-        return itertools.chain.from_iterable(self._assembly_label_actors)
+        return chain.from_iterable(self._assembly_label_actors)
 
     def _post_set_update(self):
         # Update prop3D attributes for all assembly parts
@@ -1197,7 +1198,7 @@ class AxesAssembly(_XYZAssembly):
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
         actors: list[Actor] = []
-        for part_type, axis_num in itertools.product(_PartEnum, _AxisEnum):
+        for part_type, axis_num in product(_PartEnum, _AxisEnum):
             if part in [part_type.name, part_type.value, 'all'] and axis in [
                 axis_num.name,
                 axis_num.value,

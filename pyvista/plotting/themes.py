@@ -35,8 +35,8 @@ from __future__ import annotations
 from enum import Enum
 import json
 import os
-import pathlib
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -1416,7 +1416,7 @@ class _TrameConfig(_ConfigBase):
             # JupyterHub service prefixes are URL paths, not filesystem paths,
             # so use PurePosixPath to force forward-slash joining on Windows.
             self._server_proxy_prefix = (
-                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+                str(PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
             )
             self._server_proxy_enabled = True
         else:
@@ -3412,11 +3412,11 @@ class Theme(_ConfigBase):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: str | pathlib.Path | None):
+    def logo_file(self, logo_file: str | Path | None):
         if logo_file is None:
             path = None
         else:
-            if not pathlib.Path(logo_file).exists():
+            if not Path(logo_file).exists():
                 msg = f'Logo file ({logo_file}) not found.'
                 raise FileNotFoundError(msg)
             path = str(logo_file)

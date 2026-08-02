@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
 from enum import IntEnum
-import pathlib
+from pathlib import Path
 import re
 from typing import TYPE_CHECKING
 from typing import Any
@@ -150,7 +150,7 @@ class _FRDParser:
 
     def parse(self) -> _FRDData:
         frd_data = _FRDData()
-        with pathlib.Path(self._filename).open(errors='replace') as file_stream:
+        with Path(self._filename).open(errors='replace') as file_stream:
             lines = _LineTrackingStream(file_stream)
             for line in lines:
                 s = line.strip()
@@ -294,7 +294,7 @@ class _FRDParser:
                     # Fallback for malformed or edge-case real-world files
                     # where standard fixed-width indexing fails.
                     for p in data_str.split():
-                        with contextlib.suppress(ValueError):
+                        with suppress(ValueError):
                             node_ids.append(int(p))
 
                 if (n_nodes := len(node_ids)) < needed:

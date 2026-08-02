@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import functools
+from functools import partial
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -177,14 +177,12 @@ class CompositeFilters(DataObjectFilters):
                 function_ = (
                     getattr(block_, function_)
                     if isinstance(function_, str)
-                    else functools.partial(function_, block_)
+                    else partial(function_, block_)
                 )
                 output_ = function_(**kwargs) if len(args) == 0 else function_(*args, **kwargs)
             except (AttributeError, ValueError, TypeError, RuntimeError) as e:
                 # Construct a helpful error message
-                func_name = (
-                    function_.func if isinstance(function_, functools.partial) else function_
-                )
+                func_name = function_.func if isinstance(function_, partial) else function_
                 obj_name = type(block).__name__
                 if len(ids_) == 1:
                     index = ids_[0]

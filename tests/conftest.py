@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import faulthandler
-import functools
+from functools import wraps
 from importlib import metadata
-from inspect import BoundArguments
-from inspect import Parameter
-from inspect import Signature
+import inspect
 import os
 import platform
 import re
@@ -95,7 +93,7 @@ def flaky_test(
         # Allow decorator is called without parentheses
         return lambda func: flaky_test(func, times=times, exceptions=exceptions)
 
-    @functools.wraps(test_function)
+    @wraps(test_function)
     def wrapper(*args, **kwargs):
         for i in range(times):
             try:
@@ -355,7 +353,7 @@ def pytest_addoption(parser):
     )
 
 
-def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
+def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
     try:
@@ -373,8 +371,8 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
 
 def _get_min_max_vtk_version(
     item_mark: pytest.Mark,
-    sig: Signature,
-) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    sig: inspect.Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, inspect.BoundArguments]:
     bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
 
     def _pad_version(val: tuple[int] | None):
@@ -423,28 +421,28 @@ def pytest_runtest_setup(item: pytest.Item):
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     'args',
-                    kind=Parameter.VAR_POSITIONAL,
+                    kind=inspect.Parameter.VAR_POSITIONAL,
                     annotation=int | tuple[int],
                 ),
-                Parameter(
+                inspect.Parameter(
                     'at_least',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     annotation=tuple[int] | None,
                     default=None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'less_than',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=tuple[int] | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'reason',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -490,11 +488,11 @@ def pytest_runtest_setup(item: pytest.Item):
                 pytest.skip(reason=reason)
 
     if item_mark := item.get_closest_marker('skip_egl'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails when using OSMesa/EGL VTK build',
                     annotation=str,
                 )
@@ -506,11 +504,11 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_windows'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on Windows',
                     annotation=str,
                 )
@@ -522,23 +520,23 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on MacOS',
                     annotation=str,
                 ),
-                Parameter(
+                inspect.Parameter(
                     p := 'processor',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     m := 'machine',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),

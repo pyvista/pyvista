@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from copy import deepcopy
+import copy
 from functools import cached_property
 from functools import partial
 from typing import TYPE_CHECKING
@@ -940,8 +940,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if deep:
-            self._association_complex_names = deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
+            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()

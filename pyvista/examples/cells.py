@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-import itertools
+from itertools import cycle
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -3042,7 +3042,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     # Build output from distinct meshes
     output = pv.MultiBlock()
     iterator = distinct_meshes.recursive_iterator('items')
-    iterator = itertools.cycle(iterator) if fill_mode == 'cycle' else iterator
+    iterator = cycle(iterator) if fill_mode == 'cycle' else iterator
 
     center_iter = iter(cell_centers)
     name_counts: dict[str, int] = {}

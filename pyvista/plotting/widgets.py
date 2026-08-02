@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import product
-import pathlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -3062,7 +3062,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['logo'])
     def add_logo_widget(  # noqa: PLR0917
         self,
-        logo: ImageData | str | pathlib.Path | None = None,
+        logo: ImageData | str | Path | None = None,
         position: VectorLike[float] = (0.75, 0.8),
         size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,
@@ -3114,7 +3114,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
             logo = examples.logofile
 
-        if isinstance(logo, (str, pathlib.Path)):
+        if isinstance(logo, (str, Path)):
             logo = pv.read(logo, cls=pv.ImageData)
         elif not isinstance(logo, pv.ImageData):
             # Defensive runtime check: Python does not enforce type hints,

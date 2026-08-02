@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-import itertools
-import pathlib
+from itertools import product
+from pathlib import Path
 import re
 import weakref
 
@@ -436,7 +436,7 @@ def test_multi_block_io(
 ):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
-        pathlib.Path(filename)
+        Path(filename)
 
     # Use non-nested multiblock with no None types for vtkhdf case
     # these cases are tested separately
@@ -1064,7 +1064,7 @@ def test_multiblock_partitioned_zip(container):
 
     assert len(zipped_container) == len(zipped_list)
     assert len(zipped_container[0]) == len(zipped_list[0])
-    for i, j in itertools.product(range(2), repeat=2):
+    for i, j in product(range(2), repeat=2):
         assert zipped_container[i][j] is zipped_list[i][j] is None
 
 

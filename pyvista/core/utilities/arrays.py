@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import Sequence
-import enum
+from enum import Enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
-class FieldAssociation(enum.Enum):
+class FieldAssociation(Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
     POINT = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)

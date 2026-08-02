@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 import importlib.util
 import sys
-import types
+from types import ModuleType
 from unittest.mock import MagicMock
 import warnings
 
@@ -30,7 +30,7 @@ def _fake_importer(name, body):
 
     def _import(module_path):
         assert module_path == name
-        module = types.ModuleType(name)
+        module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
         exec(compiled, module.__dict__)  # noqa: S102
@@ -541,7 +541,7 @@ def test_attribute_access_triggers_plugin_load(monkeypatch):
         # Cached on second access.
         assert pl.ep_demo.value() == 42
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_plotter_component('ep_demo')
         sys.modules.pop(plugin_name, None)
 
@@ -572,7 +572,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
     def _counting_import(path):
         nonlocal import_count
         import_count += 1
-        module = types.ModuleType(path)
+        module = ModuleType(path)
         sys.modules[path] = module
         exec(  # noqa: S102
             'import pyvista as pv\n'
@@ -600,7 +600,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
             _ = pl.one_shot
         assert import_count == 1
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_plotter_component('one_shot')
         sys.modules.pop(plugin_name, None)
 
@@ -681,7 +681,7 @@ def test_registered_components_forces_discovery(monkeypatch):
         names = {r.name for r in pv.registered_plotter_components()}
         assert 'forced' in names
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_plotter_component('forced')
         sys.modules.pop(plugin_name, None)
 

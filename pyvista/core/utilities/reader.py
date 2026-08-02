@@ -5,7 +5,8 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
-import enum
+from enum import Enum
+from enum import IntEnum
 import json
 from pathlib import Path
 import re
@@ -1451,7 +1452,7 @@ class Plot3DMetaReader(BaseReader['MultiBlock']):
     _vtk_class_name = 'vtkPlot3DMetaReader'
 
 
-class Plot3DFunctionEnum(enum.IntEnum):
+class Plot3DFunctionEnum(IntEnum):
     """An enumeration for the functions used in :class:`MultiBlockPlot3DReader`."""
 
     DENSITY = 100
@@ -1583,7 +1584,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         ... )  # add a function by enumeration via class variable alias
 
         """
-        if isinstance(value, enum.Enum):
+        if isinstance(value, Enum):
             value = value.value
         self.reader.AddFunction(value)
 
@@ -1598,7 +1599,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
             The function to remove.
 
         """
-        if isinstance(value, enum.Enum):
+        if isinstance(value, Enum):
             value = value.value
         self.reader.RemoveFunction(value)
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -760,7 +759,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
             Font file path.
 
         """
-        path = pathlib.Path(font_file)
+        path = Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
             msg = f'Unable to locate {path}'

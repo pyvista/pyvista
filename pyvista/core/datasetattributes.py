@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -873,7 +873,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             msg = f'{key} not present.'
             raise KeyError(msg)
 
-        with contextlib.suppress(KeyError):
+        with suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
         if hasattr(self.dataset, '_user_dict'):
             del self.dataset._user_dict

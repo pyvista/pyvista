@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 
 # isort: off
 import vtkmodules.vtkRenderingContextOpenGL2  # noqa: F401, TID251
@@ -12,7 +12,7 @@ import vtkmodules.vtkRenderingContextOpenGL2  # noqa: F401, TID251
 # unavailable (`check_math_text_support()` returns False), but plotting otherwise works.
 import vtkmodules.vtkRenderingFreeType  # noqa: F401, TID251
 
-with contextlib.suppress(ImportError):
+with suppress(ImportError):
     import vtkmodules.vtkRenderingMatplotlib  # noqa: F401, TID251
 
 # isort: on

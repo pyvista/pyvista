@@ -9,8 +9,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
-import itertools
-import pathlib
+from itertools import zip_longest
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -180,7 +180,7 @@ class MultiBlock(
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
                 for key, block in args[0].items():
@@ -1936,7 +1936,7 @@ class MultiBlock(
             name = index
         elif isinstance(index, slice):
             index_iter = range(self.n_blocks)[index]
-            for i, (idx, d) in enumerate(itertools.zip_longest(index_iter, data)):
+            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
                         index_iter[-1] + 1 + (i - len(index_iter)),

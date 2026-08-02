@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-import contextlib
+from contextlib import suppress
 from functools import wraps
 import numbers
 from pathlib import Path
@@ -185,7 +185,7 @@ class _PointSet(DataSet):
         array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
         target.cell_data[array_name] = ghost_cells
         target.RemoveGhostCells()
-        with contextlib.suppress(KeyError):
+        with suppress(KeyError):
             del target.cell_data[array_name]
         return target
 
@@ -1660,7 +1660,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            with contextlib.suppress(TypeError):
+            with suppress(TypeError):
                 self.compute_normals(inplace=True)
         super().save(
             filename,

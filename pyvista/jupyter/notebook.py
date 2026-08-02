@@ -18,7 +18,7 @@ from pyvista.jupyter import _get_custom_backend_handler
 from pyvista.jupyter import _resolve_backend
 
 if TYPE_CHECKING:
-    import io
+    from io import BytesIO
     from pathlib import Path
 
     from IPython.lib.display import IFrame
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 def handle_plotter(
     plotter: Plotter,
     backend: JupyterBackendOptions | str | None = None,
-    screenshot: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
+    screenshot: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
@@ -96,7 +96,7 @@ def handle_plotter(
 
 def show_static_image(
     plotter: Plotter,
-    screenshot: str | Path | io.BytesIO | bool | None,  # noqa: FBT001
+    screenshot: str | Path | BytesIO | bool | None,  # noqa: FBT001
 ) -> Image:  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image  # noqa: PLC0415

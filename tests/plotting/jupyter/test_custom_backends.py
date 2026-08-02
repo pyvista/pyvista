@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import contextmanager
 import importlib.util
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -24,7 +24,7 @@ has_ipython = bool(importlib.util.find_spec('IPython'))
 skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython package')
 
 
-@contextlib.contextmanager
+@contextmanager
 def _without_custom_backends():
     """Run a test without any custom backend registrations or entry points."""
     saved = _custom_backends.copy()

@@ -5,7 +5,8 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
-import itertools
+from itertools import pairwise
+from itertools import product
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -1014,7 +1015,7 @@ def _read_grdecl(
     xcorners = np.empty_like(zcorners)
     ycorners = np.empty_like(zcorners)
 
-    for i, j in itertools.product(range(2 * ni), range(2 * nj)):
+    for i, j in product(range(2 * ni), range(2 * nj)):
         ip = np.ravel_multi_index(((i + 1) // 2, (j + 1) // 2), (ni + 1, nj + 1), order='F')
         z = pillars[ip, [2, 5]]
         xcorners[i, j] = np.interp(zcorners[i, j], z, pillars[ip, [0, 3]])
@@ -1287,7 +1288,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         offsets_ = np.cumsum(offsets)
 
-        return [arr[i1 + 1 : i2] for i1, i2 in itertools.pairwise(offsets_)]
+        return [arr[i1 + 1 : i2] for i1, i2 in pairwise(offsets_)]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
@@ -1367,7 +1368,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = {
-        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in itertools.pairwise(indices)]
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in pairwise(indices)]
         for k, v in vtk_cell_data.items()
     }
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from functools import wraps
 import inspect
-import itertools
+from itertools import chain
 import re
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -3345,7 +3345,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         # to be able to find the largest match first (e.g. find 'darkred' and '--' first instead
         # of 'red' and '-')
         colors = sorted(
-            itertools.chain(_formatted_hex_colors.keys(), _formatted_color_synonyms.keys()),
+            chain(_formatted_hex_colors.keys(), _formatted_color_synonyms.keys()),
             key=len,
             reverse=True,
         )

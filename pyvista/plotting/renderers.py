@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from itertools import product
-from weakref import proxy
+import weakref
 
 import numpy as np
 
@@ -65,7 +65,7 @@ class Renderers(_NoNewAttrMixin):
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
-        self._plotter = proxy(plotter)
+        self._plotter = weakref.proxy(plotter)
         self._renderers = []
         self._shadow_renderer = None
 

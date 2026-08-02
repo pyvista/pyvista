@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-import contextlib
+from contextlib import suppress
 import inspect
-import itertools
+from itertools import combinations
 import json
 import operator
 import os
@@ -84,7 +84,7 @@ from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
 
-with contextlib.suppress(ImportError):
+with suppress(ImportError):
     import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
@@ -2180,7 +2180,7 @@ def test_transform_equivalent_methods():
 
     trans = [tr1, tr2, tr3, tr4]
 
-    for _tr1, _tr2 in itertools.combinations(trans, 2):
+    for _tr1, _tr2 in combinations(trans, 2):
         assert_transform_equivalence(_tr1, _tr2)
 
 

@@ -7,9 +7,8 @@ See the image regression notes in doc/extras/developer_notes.rst
 from __future__ import annotations
 
 import inspect
-import io
+from io import BytesIO
 import os
-import pathlib
 from pathlib import Path
 import re
 import time
@@ -75,7 +74,7 @@ except ImportError:
         raise
 
 
-THIS_PATH = pathlib.Path(__file__).parent.absolute()
+THIS_PATH = Path(__file__).parent.absolute()
 
 
 def using_mesa():
@@ -452,14 +451,14 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     assert Path(filename).is_file()
 
     verify_image_cache.skip = True
-    filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
+    filename = Path(str(tmp_dir.join('tmp2.png')))
     pv.plot(sphere, screenshot=filename)
 
     # Ensure it added a PNG extension by default
     assert filename.with_suffix('.png').is_file()
 
     # test invalid extension
-    filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
+    filename = Path(str(tmp_dir.join('tmp3.foo')))
     with pytest.raises(ValueError):  # noqa: PT011
         pv.plot(sphere, screenshot=filename)
 
@@ -1539,7 +1538,7 @@ def test_screenshot_altered_window_size(sphere):
 
 def test_screenshot_bytes():
     # Test screenshot to bytes object
-    buffer = io.BytesIO()
+    buffer = BytesIO()
     pl = pv.Plotter(off_screen=True)
     pl.add_mesh(pv.Sphere())
     pl.show(screenshot=buffer)
@@ -1563,7 +1562,7 @@ def test_repr_png_after_show(verify_image_cache):
     pl.show()
     png = pl._repr_png_()
     assert isinstance(png, bytes)
-    im = Image.open(io.BytesIO(png))
+    im = Image.open(BytesIO(png))
     assert im.format == 'PNG'
 
 
@@ -1575,7 +1574,7 @@ def test_repr_png_after_close(verify_image_cache):
     pl.close()
     png = pl._repr_png_()
     assert isinstance(png, bytes)
-    im = Image.open(io.BytesIO(png))
+    im = Image.open(BytesIO(png))
     assert im.format == 'PNG'
 
 
@@ -1597,7 +1596,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     pl.add_mesh(sphere)
     pl.screenshot(filename)
     assert Path(filename).is_file()
-    assert pathlib.Path(filename).stat().st_size
+    assert Path(filename).stat().st_size
 
 
 def test_scalars_by_name(verify_image_cache):

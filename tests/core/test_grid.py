@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import pathlib
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -497,7 +496,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 
 def test_pathlib_read_write(tmpdir, hexbeam):
-    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
+    path = Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     assert not path.is_file()
     hexbeam.save(path)
     assert path.is_file()
@@ -1014,7 +1013,7 @@ def test_read_rectilinear_grid_from_file():
 
 
 def test_read_rectilinear_grid_from_pathlib():
-    grid = pv.RectilinearGrid(pathlib.Path(examples.rectfile))
+    grid = pv.RectilinearGrid(Path(examples.rectfile))
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
@@ -1324,7 +1323,7 @@ def test_read_image_data_from_file():
 
 
 def test_read_image_data_from_pathlib():
-    grid = pv.ImageData(pathlib.Path(examples.uniformfile))
+    grid = pv.ImageData(Path(examples.uniformfile))
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)

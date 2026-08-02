@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import functools
-import itertools
+from functools import partial
+from itertools import permutations
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -2400,7 +2400,7 @@ def test_extract_values_preference(
     fixture = extracted_with_adjacent_true if adjacent_fixture else extracted_with_adjacent_false
     input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
 
-    func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
+    func = partial(input_surf.extract_values, scalars='labels', preference=preference)
     if preference == 'point':
         sub_surf = func(input_point_ids)
         if not adjacent_fixture:
@@ -4108,7 +4108,7 @@ def test_align_xyz_swap_axes():
 @pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
 @pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
 @pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
-@pytest.mark.parametrize('order', itertools.permutations([0, 1, 2]))
+@pytest.mark.parametrize('order', permutations([0, 1, 2]))
 @pytest.mark.parametrize(
     ('test_case', 'values'),
     [

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-import contextlib
+from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
+class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:

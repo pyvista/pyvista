@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-import contextlib
+from contextlib import suppress
 from functools import partial
 from functools import wraps
 from html import escape
@@ -1084,10 +1084,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         if culling:
             if culling in [True, 'back', 'backface', 'b']:
-                with contextlib.suppress(AttributeError):
+                with suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
             elif culling in ['front', 'frontface', 'f']:
-                with contextlib.suppress(AttributeError):
+                with suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
             else:
                 msg = f'Culling option ({culling}) not understood.'
@@ -2720,7 +2720,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
-                with contextlib.suppress(KeyError):
+                with suppress(KeyError):
                     self.remove_actor(actor, reset_camera=False, render=False)
             self.Modified()
 
@@ -3000,7 +3000,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._labels.pop(actor.GetAddressAsString(''), None)
 
         # ensure any scalar bars associated with this actor are removed
-        with contextlib.suppress(AttributeError, ReferenceError):
+        with suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
         self.update_bounds_axes()

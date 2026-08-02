@@ -145,11 +145,11 @@ from __future__ import annotations
 import doctest
 import hashlib
 import os
-from os.path import relpath
 from pathlib import Path
 import re
 import shutil
-import textwrap
+from textwrap import dedent
+from textwrap import indent
 import traceback
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -596,7 +596,7 @@ def hash_plot_code(code: str, options: dict) -> str:
         line_without_comments = re.sub(r'(?<!["\'])#.*', '', line).strip()
         if line_without_comments:
             lines.append(line_without_comments)
-    clean_script = textwrap.dedent('\n'.join(lines))
+    clean_script = dedent('\n'.join(lines))
 
     parts = [
         'ctx=' + str('context' in options),
@@ -655,7 +655,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
-        code = textwrap.dedent('\n'.join(map(str, content)))
+        code = dedent('\n'.join(map(str, content)))
 
         base = Path(source_file_name).stem
         ext = Path(source_file_name).suffix
@@ -687,7 +687,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = relpath(source_file_name, setup.confdir)
+    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
@@ -703,9 +703,9 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = Path(relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
+    dest_dir_link = Path(os.path.relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
     try:
-        build_dir_link = relpath(build_dir, rst_dir)
+        build_dir_link = os.path.relpath(build_dir, rst_dir)
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
@@ -753,7 +753,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 lines = [
                     '.. code-block:: python',
                     '',
-                    *textwrap.indent(code_piece, '    ').splitlines(),
+                    *indent(code_piece, '    ').splitlines(),
                 ]
             source_code = '\n'.join(lines)
         else:

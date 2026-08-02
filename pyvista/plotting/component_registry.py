@@ -34,7 +34,7 @@ pyvista.registered_plotter_components
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 from importlib import import_module
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
@@ -219,7 +219,7 @@ class _CachedComponent:
         # access.
         components = getattr(obj, '_components', None)
         if components is None:
-            with contextlib.suppress(AttributeError):
+            with suppress(AttributeError):
                 obj.__dict__['_components'] = []
                 components = obj.__dict__['_components']
         if components is not None:

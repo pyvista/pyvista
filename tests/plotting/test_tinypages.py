@@ -5,8 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from subprocess import PIPE
-from subprocess import Popen
+import subprocess
 import sys
 
 import pytest
@@ -57,10 +56,10 @@ def _sphinx_build_cmd(
 
 def _run_sphinx_build(cmd: list[str]) -> tuple[int, str, str]:
     """Run sphinx-build and return returncode, stdout, and stderr."""
-    proc = Popen(
+    proc = subprocess.Popen(
         cmd,
-        stdout=PIPE,
-        stderr=PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         universal_newlines=True,
         env={**os.environ, 'MPLBACKEND': ''},
         encoding='utf8',

@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Sequence
-import functools
+from functools import partial
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -464,7 +464,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
         if target_file is not None:
             # download from archive
-            self._download_func = functools.partial(
+            self._download_func = partial(
                 _download_archive_file_or_folder,
                 target_file=target_file,
             )

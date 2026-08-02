@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from collections.abc import Sequence
-import enum
+from enum import Enum
 from functools import cache
 import importlib
-from inspect import getattr_static
+import inspect
 import sys
 import threading
 import traceback
@@ -44,7 +44,6 @@ _SMP_BACKEND_NAMES: dict[str, str] = {
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
-    from enum import Enum
 
     class StrEnum(str, Enum):  # noqa: D101
         def __str__(self) -> str:
@@ -134,7 +133,7 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     return cls_
 
 
-class AnnotatedIntEnum(int, enum.Enum):
+class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 
     annotation: str
@@ -483,7 +482,7 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
 def _hasattr_static(obj: Any, attr: str) -> bool:
     """Replicate behavior of hasattr using static lookup."""
     try:
-        getattr_static(obj, attr)
+        inspect.getattr_static(obj, attr)
     except AttributeError:
         return False
     return True

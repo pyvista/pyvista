@@ -8,7 +8,7 @@ Used code from matplotlib.colors.  Thanks for your work.
 from __future__ import annotations
 
 from colorsys import rgb_to_hls
-import contextlib
+from contextlib import suppress
 import importlib
 import inspect
 from typing import TYPE_CHECKING
@@ -2311,7 +2311,7 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
                 raise ModuleNotFoundError(msg) from None
 
             cmap_dict = get_nested_attr(mod, parts[1:])
-            with contextlib.suppress(KeyError):
+            with suppress(KeyError):
                 return cmap_dict[cmap_]
         return None
 

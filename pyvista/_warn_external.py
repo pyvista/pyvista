@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import itertools
-import pathlib
+from itertools import count
+from pathlib import Path
 import re
 import sys
 import warnings
@@ -17,11 +17,11 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
     kwargs = {}
     if sys.version_info[:2] >= (3, 12):
         # Go to Python's `site-packages` or `pyvista` from an editable install.
-        basedir = pathlib.Path(__file__).parents[1]
+        basedir = Path(__file__).parents[1]
         kwargs['skip_file_prefixes'] = (str(basedir / 'pyvista'),)
     else:
         frame = sys._getframe()
-        for stacklevel in itertools.count(1):
+        for stacklevel in count(1):
             if frame is None:
                 # when called in embedded context may hit frame is None
                 kwargs['stacklevel'] = stacklevel

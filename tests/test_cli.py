@@ -10,7 +10,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-import textwrap
+from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import get_args
@@ -97,7 +97,7 @@ def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
 def test_no_input(args, capsys: pytest.CaptureFixture):
     main(args)
 
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
         Usage: pyvista COMMAND
 
@@ -119,7 +119,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_invalid_command(capsys: pytest.CaptureFixture):
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
     Usage: pyvista COMMAND
 
@@ -149,7 +149,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize('command', COMMANDS_WITHOUT_KWARGS)
 def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown option: --foo=1.                                           │
@@ -1563,7 +1563,7 @@ def test_validate_glob_expands_files(
 def test_report_help(capsys: pytest.CaptureFixture):
     main('report --help')
 
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
             Usage: pyvista report [ARGS]
 
@@ -1579,7 +1579,7 @@ def test_report_help(capsys: pytest.CaptureFixture):
 def test_plot_help(capsys: pytest.CaptureFixture):
     main('plot --help')
 
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
         Usage: pyvista plot PATH... [OPTIONS]
 
@@ -1603,7 +1603,7 @@ def test_version(capsys: pytest.CaptureFixture):
 def test_help(capsys: pytest.CaptureFixture):
     main('--help')
 
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
         Usage: pyvista COMMAND
 

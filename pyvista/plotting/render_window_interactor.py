@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
-from inspect import signature
+import inspect
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -168,7 +168,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if not callable(callback):
             msg = 'callback must be callable.'
             raise TypeError(msg)
-        for param in signature(callback).parameters.values():
+        for param in inspect.signature(callback).parameters.values():
             if param.default is param.empty:
                 msg = '`callback` must not have any arguments without default values.'
                 raise TypeError(msg)

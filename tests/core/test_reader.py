@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import textwrap
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
@@ -2032,7 +2032,7 @@ def test_vtu_series_reader():
 
 
 def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
             {
             "file-series-version" : "1.0",
@@ -2055,7 +2055,7 @@ def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
 
 
 def test_forbid_inconsistent_ext_among_children(tmp_path: Path):
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
             {
             "file-series-version" : "1.0",
@@ -2076,7 +2076,7 @@ def test_forbid_inconsistent_ext_among_children(tmp_path: Path):
 
 
 def test_forbid_empty_series_file(tmp_path: Path):
-    expected = textwrap.dedent(
+    expected = dedent(
         """\
             {
             "file-series-version" : "1.0",

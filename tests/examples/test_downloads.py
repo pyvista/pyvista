@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
 from pathlib import Path
 from pathlib import PureWindowsPath
 import re
@@ -241,7 +240,7 @@ def test_warn_if_path_not_accessible_file_blocks(tmp_path):
 
 @pytest.mark.skip_windows(reason='CI has admin rights and can write to system dirs.')
 def test_warn_if_path_not_accessible_no_write_permission():
-    system_dir = pathlib.Path('/etc')
+    system_dir = Path('/etc')
     assert system_dir.exists()
     assert not os.access(system_dir, os.W_OK)
     blocked_dir = system_dir / 'blocked'

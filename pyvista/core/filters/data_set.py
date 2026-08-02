@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
-import contextlib
-import functools
-import itertools
+from contextlib import suppress
+from functools import partial
+from itertools import cycle
 import operator
 from typing import TYPE_CHECKING
 from typing import Any
@@ -2597,7 +2597,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             )
 
         # Remove temp point array
-        with contextlib.suppress(KeyError):
+        with suppress(KeyError):
             output.point_data.remove('__point_data')
 
         if not label_regions and output.n_cells > 0:
@@ -5406,9 +5406,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 if array_.ndim == 1:
                     component_logic_function = None
                 elif component_mode_ == 'any':
-                    component_logic_function = functools.partial(np.any, axis=1)
+                    component_logic_function = partial(np.any, axis=1)
                 elif component_mode_ in ['all', 'multi']:
-                    component_logic_function = functools.partial(np.all, axis=1)
+                    component_logic_function = partial(np.all, axis=1)
             else:
                 msg = (
                     f"Invalid component '{component_mode_}'. "
@@ -7728,7 +7728,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                     msg = "Negative indexing is not supported with 'cycle' mode enabled."
                     raise ValueError(msg)
                 keys = np.unique(array)
-                values = itertools.cycle(color_rgb_sequence)
+                values = cycle(color_rgb_sequence)
 
             items = zip(keys, values, strict=False)
 

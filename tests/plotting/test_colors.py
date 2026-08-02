@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import colorsys
 import importlib.util
-import itertools
+from itertools import product
 import re
 from typing import get_args
 
@@ -141,7 +141,7 @@ def test_color():
     for h_prefix in h_prefixes:
         assert pv.Color(h_prefix + h) == i_rgba
     # Check dict
-    for channels in itertools.product(*pv.Color.CHANNEL_NAMES):
+    for channels in product(*pv.Color.CHANNEL_NAMES):
         dct = dict(zip(channels, i_rgba, strict=True))
         assert pv.Color(dct) == i_rgba
     # Check opacity

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 import sys
-import types
+from types import ModuleType
 from unittest.mock import MagicMock
 import warnings
 
@@ -597,9 +597,9 @@ def _fake_importer(name: str, body: str):
     """
     compiled = compile(body, f'<fake {name}>', 'exec')
 
-    def _import(module_path: str) -> types.ModuleType:
+    def _import(module_path: str) -> ModuleType:
         assert module_path == name
-        module = types.ModuleType(name)
+        module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
         exec(compiled, module.__dict__)  # noqa: S102
@@ -669,7 +669,7 @@ def test_attribute_access_triggers_plugin_load(monkeypatch):
         # Second access hits the cached accessor without re-triggering.
         assert pv.Sphere().ep_demo.value() == 42
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_dataset_accessor('ep_demo', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
@@ -708,7 +708,7 @@ def test_class_level_access_triggers_plugin_load(monkeypatch):
         # Instance access then returns an instance of that accessor.
         assert isinstance(pv.Sphere().class_demo, accessor_cls)
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_dataset_accessor('class_demo', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
@@ -733,7 +733,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
     def _counting_import(path):
         nonlocal import_count
         import_count += 1
-        module = types.ModuleType(path)
+        module = ModuleType(path)
         sys.modules[path] = module
         # Module attaches an accessor as a side effect of import.
         exec(  # noqa: S102
@@ -761,7 +761,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
             _ = pv.Sphere().one_shot
         assert import_count == 1
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_dataset_accessor('one_shot', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
@@ -894,7 +894,7 @@ def test_decorator_wins_over_pending_entry_point(monkeypatch):
         assert pv.Sphere().ep_preempted.who() == 'decorator'
         import_mock.assert_not_called()
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_dataset_accessor('ep_preempted', pv.PolyData)
 
 
@@ -924,7 +924,7 @@ def test_registered_accessors_forces_discovery(monkeypatch):
         names = {r.name for r in pv.registered_accessors()}
         assert 'forced' in names
     finally:
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             pv.unregister_dataset_accessor('forced', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
