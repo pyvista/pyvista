@@ -159,26 +159,22 @@ def image_from_window(  # noqa: PLR0917
     imfilter.SetInput(render_window)
     imfilter.SetScale(scale)
     imfilter.FixBoundaryOn()
-    imfilter.ReadFrontBufferOff()
     imfilter.ShouldRerenderOff()
     if ignore_alpha:
         imfilter.SetInputBufferTypeToRGB()
     else:
         imfilter.SetInputBufferTypeToRGBA()
-    # Read the back buffer: the front buffer is the on-screen one, so it only holds
-    # the scene once the window has been composited -- a screenshot taken before
-    # that comes back as screen garbage.  What is left in the back buffer after a
-    # swap is undefined by the OpenGL spec, so render with swapping off and restore
-    # it afterwards.  This is what VTK's own regression tests and ParaView do:
-    # https://github.com/Kitware/VTK/blob/master/Testing/Rendering/vtkTesting.cxx
-    # https://gitlab.kitware.com/paraview/paraview/-/blob/master/Remoting/Views/vtkSMViewProxy.cxx
-    swap_buffers = render_window.GetSwapBuffers()
-    render_window.SwapBuffersOff()
-    render_window.Render()
-    try:
-        data = run_image_filter(imfilter)
-    finally:
-        render_window.SetSwapBuffers(swap_buffers)
+    # Read the front buffer, and say so once.  This used to be turned off here and then
+    # straight back on a few lines later, so only the second call ever took effect.
+    #
+    # The buffers are not interchangeable when multisampling is on (the default is
+    # ``multi_samples=8``).  A front-buffer read returns VTK's DisplayFramebuffer, which
+    # Frame() has already resolved with a gamma-correct shader; a back-buffer read
+    # returns the raw multisample framebuffer, which vtkOpenGLRenderWindow::ReadPixels
+    # resolves inline with a plain glBlitFramebuffer average.  The two disagree on every
+    # anti-aliased edge pixel, by enough to fail image regression.
+    imfilter.ReadFrontBufferOn()
+    data = run_image_filter(imfilter)
     if off:
         # Critical for Trame and other offscreen tools
         render_window.GetInteractor().EnableRenderOff()
