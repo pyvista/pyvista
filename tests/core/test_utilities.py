@@ -79,7 +79,6 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
-from pyvista.core.utilities.writer import EnSightWriter
 from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
@@ -3331,7 +3330,7 @@ def test_try_callback_warns_every_time():
 def test_write_path_of_ensight_writer(tmp_path, hexbeam):
 
     path = tmp_path / 'hexbeam.case'
-    writer = EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
+    writer = pv.EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
     assert writer.path == str(path.parent / path.stem)
     # written_path is initialized same as path,
     # but is updated after write() is called
