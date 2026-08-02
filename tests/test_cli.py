@@ -2051,7 +2051,11 @@ def test_compare_label_positions_are_the_ones_which_can_be_drawn():
     ],
 )
 def test_compare_too_small_warning_advises_the_command(
-    tmp_example_dir: Path, capsys: pytest.CaptureFixture, tokens: str, remedy: str
+    tmp_example_dir: Path,
+    capsys: pytest.CaptureFixture,
+    mocker: MockerFixture,
+    tokens: str,
+    remedy: str,
 ):
     """Test that the advice for a barely visible mesh names the options of this command.
 
@@ -2061,6 +2065,9 @@ def test_compare_too_small_warning_advises_the_command(
     for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
         mesh.save(tmp_example_dir / f'{name}.vtp')
 
+    # The comparison itself is drawn for real, warnings and all, but not shown: these
+    # tests are run by a job which does no plotting, as every other one here mocks
+    mocker.patch.object(pv.Plotter, 'show')
     main(f'compare tiny.vtp huge.vtp {tokens} --off-screen')
 
     _, err = capture_out_err(capsys)
