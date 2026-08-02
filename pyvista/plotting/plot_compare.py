@@ -388,11 +388,11 @@ def _fit_labels_on_render(
 
 
 def plot_compare(  # noqa: ANN201
-    datasets: Sequence[PlottableType] | Mapping[str, PlottableType] | MultiBlock,
+    datasets: Sequence[PlottableType] | Mapping[str, PlottableType],
     *,
     dataset_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
-    label_size: float | Literal['best_fit', 'uniform'] | None = None,
+    label_size: int | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
     label_kwargs: dict[str, Any] | None = None,
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
@@ -419,32 +419,31 @@ def plot_compare(  # noqa: ANN201
 
     Parameters
     ----------
-    datasets : Sequence[PlottableType] | Mapping[str, PlottableType] | MultiBlock
+    datasets : Sequence[PlottableType] | Mapping[str, PlottableType]
         The data objects to compare, each of which is anything
         :meth:`~pyvista.Plotter.add_mesh` can draw. At least two datasets are
         required. If a mapping or a :class:`~pyvista.MultiBlock` is given, its
-        keys are used as the default ``labels``. ``normalize`` needs datasets
-        which can be resized.
+        keys are used as the default ``labels``.
 
     dataset_kwargs : dict, optional
-        Additional keyword arguments to pass to the
-        :meth:`~pyvista.Plotter.add_mesh` method.
+        Additional keyword arguments passed to :meth:`~pyvista.Plotter.add_mesh`.
+        The same arguments are used for each dataset.
 
     labels : Sequence[str] | None, optional
         The labels to display for each data object. Must have the same length as
         ``datasets``. By default, the keys of ``datasets`` are used when it is a
         mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
         ``'B'``, ``'C'``, ... are generated otherwise. Set to ``None`` to disable
-        labels. A single string is not a valid sequence of labels and raises an
-        error.
+        labels.
 
         If the input has keys `and` ``labels`` are provided, the provided
         ``labels`` take precedence and are used instead of its keys.
 
-    label_size : float | str, optional
-        The size to draw the ``labels`` at, as either a font size or how to work
-        one out. A font size is used as given, and may be too large for a label
-        to fit in its subplot. The sizes which are worked out are:
+    label_size : int | str, optional
+        The size of the ``labels``, either as a literal font size integer or as
+        a string denoting how to work one out. A font size is used as given, and
+        the labels will have the same constant size regardless of the window size
+        of the plot. The label sizes which are worked out are:
 
         * ``'best_fit'``: draw each label as large as it fits in its own
           subplot, up to the font size of the theme. Labels of different lengths,
@@ -453,29 +452,22 @@ def plot_compare(  # noqa: ANN201
           smallest to fit, so that they are all the same size no matter how long
           they are or which subplot they are in.
 
-        By default, ``'uniform'`` is used when the subplots are all the same
-        width, and ``'best_fit'`` otherwise, since one size shared between
-        subplots of different widths is pinned to whatever fits the narrowest of
-        them. A label too long to fit at a readable size has its middle elided.
+        By default, ``'uniform'`` is used when ``shape`` is a grid and all subplots
+        have the same width; `'best_fit'`` is used otherwise when ``shape`` is a
+        string descriptor and the subplots have different widths. A label too long
+        to fit at a readable size has its middle elided, e.g. ``this is a very long label``
+        may become ``this is...g label``.
 
-        The size is worked out again whenever the window is resized. It may be
-        given in ``label_kwargs`` as ``'font_size'`` instead, but not in both
-        places. Has no effect when ``labels`` is ``None``.
-
-        Labels are drawn by a :class:`~pyvista.Text` actor, which draws text at
-        the size it is given.
+        With the ``'best_fit'`` and ``'uniform'`` options, the actual font size is
+        dynamically re-computed whenever the window is resized. Has no effect when
+        ``labels`` is ``None``.
 
     label_position : str, optional
-        Where in its subplot to draw each of the ``labels``, as one of the places
-        :meth:`~pyvista.Plotter.add_text` names: ``'upper_left'``,
+        Where in its subplot to draw each of the ``labels``: ``'upper_left'``,
         ``'upper_right'``, ``'lower_left'``, ``'lower_right'``, ``'upper_edge'``,
-        ``'lower_edge'``, ``'left_edge'`` or ``'right_edge'``. Defaults to
-        ``'upper_left'``.
+        ``'lower_edge'``, ``'left_edge'`` or ``'right_edge'``.
 
-        It may be given in ``label_kwargs`` as ``'position'`` instead, but not
-        in both places, which is also the only way to give a coordinate, along
-        with ``'viewport'`` to read it as a fraction of the size of the subplot
-        rather than as pixels. Has no effect when ``labels`` is ``None``.
+        Defaults to ``'upper_left'``. Has no effect when ``labels`` is ``None``.
 
     label_kwargs : dict, optional
         Additional keyword arguments for the :class:`~pyvista.Text` actor which
@@ -501,7 +493,7 @@ def plot_compare(  # noqa: ANN201
         string descriptor such as ``'3|1'`` for three subplots on the left and
         one on the right, or ``'4/2'`` for four on top and two on the bottom.
         Must define at least as many subplots as there are datasets. By default,
-        the compact grid described above is used.
+        the compact grid described above in the summary is used.
 
     normalize : bool, default: False
         Resize every dataset to a diagonal :attr:`~pyvista.DataSet.length` of one,
@@ -544,12 +536,11 @@ def plot_compare(  # noqa: ANN201
 
     zoom : float | str, optional
         Camera zoom, applied after the camera is fit to the datasets. Either
-        ``'tight'`` or a float, where a value greater than 1 is a zoom-in.
+        ``'tight'`` or a float, where a value greater than ``1`` is a zoom-in.
 
     show_axes : bool, optional
         Show the axes orientation widget in every subplot. By default, the
-        :attr:`~pyvista.plotting.themes.Theme.axes` setting of the theme is
-        used, as it is by :func:`pyvista.plot`.
+        :attr:`~pyvista.plotting.themes.Theme.axes` setting of the theme is used.
 
     show_bounds : bool, default: False
         Show the bounds axes in every subplot.
@@ -560,8 +551,7 @@ def plot_compare(  # noqa: ANN201
 
     plotter_kwargs : dict, optional
         Additional keyword arguments to pass to the :class:`~pyvista.Plotter`
-        constructor. The ``shape`` may be given here as ``'shape'`` instead,
-        but not in both places.
+        constructor.
 
     show_kwargs : dict, optional
         Additional keyword arguments to pass to the :meth:`~pyvista.Plotter.show`

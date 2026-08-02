@@ -5551,19 +5551,19 @@ class BasePlotter(_BoundsSizeMixin):
         self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return actor
 
-    def _add_text_actor(  # noqa: PLR0917
+    def _add_text_actor(
         self,
         text: str,
+        *,
         position: TextPositionOptions | Sequence[float] = 'upper_left',
         font_size: float | None = None,
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
+        shadow: bool = False,
         name: str | None = None,
-        viewport: bool = False,  # noqa: FBT001, FBT002
+        viewport: bool = False,
         orientation: float = 0.0,
         font_file: str | None = None,
-        *,
         render: bool = True,
     ) -> Text:
         """Add text drawn by a text actor, wherever it is placed.
