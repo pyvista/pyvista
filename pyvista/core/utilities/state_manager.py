@@ -5,9 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 
-# ICN003 waived: this is a type used in a base-class/annotation position, where
-# `contextlib.AbstractContextManager[None]` is needlessly verbose. See the
-# import-convention notes in pyproject.toml.
+# A type in a base-class position; see "Import Conventions" in CONTRIBUTING.rst.
 from contextlib import AbstractContextManager  # noqa: ICN003
 from typing import TYPE_CHECKING
 from typing import Generic

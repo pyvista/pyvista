@@ -1,18 +1,10 @@
 """Guard the stdlib import conventions against drift.
 
-Two complementary lists govern how stdlib modules may be imported:
-
-* ``banned-from`` under ``[tool.ruff.lint.flake8-import-conventions]`` in
-  ``pyproject.toml`` -- modules that must be namespace-imported
-  (``re.escape``, ``functools.wraps``).
-* the ``namespace-stdlib-imports`` pygrep hook in ``.pre-commit-config.yaml``
-  -- modules that must be member-imported (``from pathlib import Path``).
-
-They live in separate files because ruff can only express one direction. These
-tests make the relationship between them machine-checked rather than a matter
-of two comments staying honest: the lists must be disjoint, and together they
-must govern every stdlib module the repository actually imports. A module
-belonging to neither list fails here rather than drifting silently.
+The rule, the two lists, and why they live in separate files are documented
+under "Import Conventions" in ``CONTRIBUTING.rst``. These tests make the
+relationship between the lists machine-checked rather than a matter of two
+comments staying honest: they must be disjoint, and together they must govern
+every stdlib module the repository actually imports.
 """
 
 from __future__ import annotations
@@ -158,5 +150,5 @@ def test_every_imported_stdlib_module_is_governed():
         + '\n\nAdd each to the namespace list (ruff banned-from in '
         'pyproject.toml) if it exports actions, or to the member list (the '
         'namespace-stdlib-imports hook in .pre-commit-config.yaml) if it '
-        'exports types used in annotation or base-class positions.'
+        'exports types. See "Import Conventions" in CONTRIBUTING.rst.'
     )

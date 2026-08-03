@@ -466,34 +466,9 @@ unfixable = ['F401', 'PLC0415']
 allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.flake8-import-conventions]
-# ---------------------------------------------------------------------------
-# Stdlib import conventions. THIS LIST HAS A COUNTERPART -- see below.
-# ---------------------------------------------------------------------------
-# The rule: import the name that carries its own meaning at the call site.
-#
-# These modules export *actions* -- things you call. The module name supplies
-# the domain that makes the call readable, so keep the namespace prefix:
-# `re.escape`, `html.escape`, `functools.wraps`, `itertools.product`,
-# `weakref.proxy`, `copy.copy`. Bare `escape`, `wraps`, or `proxy` lose the
-# context that tells you what they do, and `from time import time` /
-# `from glob import glob` shadow their own module outright.
-#
-# The complement -- modules that export *types*, where the bare name is a noun
-# that reads fine alone and the prefix is noise in annotation and base-class
-# positions (`Path`, `Sequence`, `Literal`, `Enum`) -- is enforced by the
-# 'namespace-stdlib-imports' hook in .pre-commit-config.yaml. Ruff cannot
-# express that direction: flake8-tidy-imports' `banned-api` matches the
-# resolved symbol, so banning "pathlib" would reject `from pathlib import Path`
-# just as readily as `import pathlib`.
-#
-# The two lists must stay disjoint and must jointly cover every stdlib module
-# the repo imports. tests/test_import_conventions.py asserts both, so a module
-# belonging to neither list fails CI rather than drifting silently.
-#
-# Note `banned-from` does not match submodules: banning 'importlib' still
-# permits `from importlib.metadata import entry_points`, and banning 'unittest'
-# still permits `from unittest.mock import patch`. Those submodule idioms are
-# waived explicitly in the test.
+# Stdlib modules that must be namespace-imported (`re.escape`, not `escape`).
+# Counterpart: the 'namespace-stdlib-imports' hook in .pre-commit-config.yaml.
+# See "Import Conventions" in CONTRIBUTING.rst for the rule and how they interact.
 banned-from = [
   'argparse',
   'ast',

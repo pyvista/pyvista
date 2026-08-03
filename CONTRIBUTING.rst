@@ -289,6 +289,82 @@ PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
+Import Conventions
+^^^^^^^^^^^^^^^^^^
+
+Standard library imports follow one rule: **import the name that carries its
+own meaning at the call site.**
+
+Modules that export *types* -- nouns you annotate with, subclass, or check with
+``isinstance`` -- are imported by member. The module prefix adds nothing to a
+name that already names a thing, and it is noise in annotation and base-class
+positions:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from collections.abc import Sequence
+    from typing import Literal
+
+    def load(path: Path, names: Sequence[str]) -> Literal['ok']: ...
+
+Modules that export *actions* -- things you call -- keep the namespace prefix.
+The module name supplies the domain that makes the call readable:
+
+.. code-block:: python
+
+    import functools
+    import re
+
+    @functools.wraps(func)  # not `wraps` -- wraps what?
+    def wrapper(*args, **kwargs): ...
+
+    pattern = re.escape(text)  # not `escape` -- shell? HTML? regex?
+
+Bare ``escape``, ``wraps``, or ``proxy`` lose the context that tells you what
+they do, and some member imports shadow their own module outright
+(``from time import time``, ``from glob import glob``).
+
+How this is enforced
+""""""""""""""""""""
+
+Two lists in two files, because ``ruff`` can only express one direction:
+
+* **Namespace-imported modules** are listed under ``banned-from`` in
+  ``[tool.ruff.lint.flake8-import-conventions]`` in ``pyproject.toml``. Ruff
+  rejects ``from re import escape`` with ``ICN003``.
+* **Member-imported modules** are listed in the ``namespace-stdlib-imports``
+  pygrep hook in ``.pre-commit-config.yaml``, which rejects ``import pathlib``.
+
+Ruff cannot enforce the member direction: ``flake8-tidy-imports``'
+``banned-api`` matches the resolved symbol, so banning ``pathlib`` would reject
+``from pathlib import Path`` -- the form we want -- as readily as
+``import pathlib``.
+
+The member list is deliberately short and closed: ``__future__``, ``typing``,
+``typing_extensions``, ``collections``, ``collections.abc``, ``pathlib``,
+``types``, ``enum``, ``io``, ``abc``, ``dataclasses``, and ``unittest.mock``.
+Every other standard library module is namespace-imported.
+
+The two lists must stay disjoint and must jointly govern every standard library
+module the repository imports. ``tests/test_import_conventions.py`` asserts
+both, so a module governed by neither fails CI rather than settling into
+whichever form its first author happened to pick. When that test fails, add the
+module to whichever list matches the rule above.
+
+Two details worth knowing:
+
+* ``banned-from`` does not match submodules. Banning ``importlib`` still
+  permits ``from importlib.metadata import entry_points``, and banning
+  ``unittest`` still permits ``from unittest.mock import patch``. Such
+  submodule idioms are waived explicitly in the test.
+* The action/type split occasionally cuts *across* a module rather than between
+  modules. ``contextlib.AbstractContextManager`` is a type used in a base-class
+  position inside an otherwise action-shaped module, so it carries a
+  ``# noqa: ICN003``. Prefer fixing the code over adding a waiver -- a local
+  variable shadowing a module is a reason to rename the variable, not to
+  exempt the file.
+
 Documentation Style
 ^^^^^^^^^^^^^^^^^^^
 
