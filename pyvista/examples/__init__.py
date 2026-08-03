@@ -10,3 +10,4 @@ from .cells import generate_cell_blocks as generate_cell_blocks
 from .cells import plot_cell as plot_cell
 from .downloads import *
 from .examples import *
+from .load import load as load
