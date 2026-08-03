@@ -29,7 +29,11 @@ pyvista.registered_accessors
 from __future__ import annotations
 
 import contextlib
-import importlib
+
+# ICN003 waived: tests patch this module-level name to intercept plugin
+# imports. Patching `importlib.import_module` instead would apply globally,
+# for every importer, for the duration of the test.
+from importlib import import_module  # noqa: ICN003
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
@@ -606,7 +610,7 @@ def _resolve_pending_accessor(name: str) -> bool:
     if module_path is None:
         return False
     try:
-        importlib.import_module(module_path)
+        import_module(module_path)
     except Exception as exc:  # noqa: BLE001
         msg = (
             f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
