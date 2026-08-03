@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
+import contextlib
 import importlib.util
 import sys
 from types import ModuleType
@@ -541,7 +541,7 @@ def test_attribute_access_triggers_plugin_load(monkeypatch):
         # Cached on second access.
         assert pl.ep_demo.value() == 42
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_plotter_component('ep_demo')
         sys.modules.pop(plugin_name, None)
 
@@ -600,7 +600,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
             _ = pl.one_shot
         assert import_count == 1
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_plotter_component('one_shot')
         sys.modules.pop(plugin_name, None)
 
@@ -681,7 +681,7 @@ def test_registered_components_forces_discovery(monkeypatch):
         names = {r.name for r in pv.registered_plotter_components()}
         assert 'forced' in names
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_plotter_component('forced')
         sys.modules.pop(plugin_name, None)
 

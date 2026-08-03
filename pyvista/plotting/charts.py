@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import wraps
+import functools
 import inspect
-from itertools import chain
+import itertools
 import re
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -126,7 +126,7 @@ class DocSubs:
     def _wrap_member(member):
         if callable(member):
 
-            @wraps(member)
+            @functools.wraps(member)
             def mem_sub(*args, **kwargs):
                 return member(*args, **kwargs)
 
@@ -3345,7 +3345,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         # to be able to find the largest match first (e.g. find 'darkred' and '--' first instead
         # of 'red' and '-')
         colors = sorted(
-            chain(_formatted_hex_colors.keys(), _formatted_color_synonyms.keys()),
+            itertools.chain(_formatted_hex_colors.keys(), _formatted_color_synonyms.keys()),
             key=len,
             reverse=True,
         )

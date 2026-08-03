@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import nullcontext
+import contextlib
 import importlib.util
 from io import BytesIO
 from pathlib import Path
@@ -308,7 +308,7 @@ def test_s3_without_fsspec_raises():
 def test_download_uri_uses_fsspec_and_tracks_temp_file():
     payload = b'custom-reader-data'
     fake_fsspec = SimpleNamespace(
-        open=MagicMock(return_value=nullcontext(BytesIO(payload))),
+        open=MagicMock(return_value=contextlib.nullcontext(BytesIO(payload))),
     )
 
     with patch.dict('sys.modules', {'fsspec': fake_fsspec}):

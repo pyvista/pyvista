@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from contextlib import suppress
+import contextlib
 import inspect
-from itertools import combinations
+import itertools
 import json
 import operator
 import os
@@ -20,7 +20,8 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import get_args
-from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 import warnings
 
 from hypothesis import given
@@ -84,7 +85,7 @@ from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
 
-with suppress(ImportError):
+with contextlib.suppress(ImportError):
     import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
@@ -383,9 +384,9 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type_)
 
 
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
-@mock.patch('pyvista.BaseReader.show_progress')
+@patch('pyvista.BaseReader.read')
+@patch('pyvista.BaseReader.reader')
+@patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
@@ -2180,7 +2181,7 @@ def test_transform_equivalent_methods():
 
     trans = [tr1, tr2, tr3, tr4]
 
-    for _tr1, _tr2 in combinations(trans, 2):
+    for _tr1, _tr2 in itertools.combinations(trans, 2):
         assert_transform_equivalence(_tr1, _tr2)
 
 
@@ -2605,9 +2606,9 @@ def test_vtk_verbosity_set_get():
 def test_vtk_verbosity_logging_disabled():
     # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
     # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
-    mock_logger = mock.MagicMock()
+    mock_logger = MagicMock()
     mock_logger.GetCurrentVerbosityCutoff.return_value = -10
-    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+    with patch.object(_vtk, 'vtkLogger', mock_logger):
         assert pv.vtk_verbosity() == 'off'
 
 

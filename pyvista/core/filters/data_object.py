@@ -9,8 +9,8 @@ from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
 from enum import IntEnum
-from functools import partial
-from itertools import repeat
+import functools
+import itertools
 import re
 import reprlib
 from typing import TYPE_CHECKING
@@ -5137,7 +5137,7 @@ class DataObjectFilters:
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
-        cell_quality = partial(
+        cell_quality = functools.partial(
             DataObjectFilters._dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
@@ -5332,7 +5332,7 @@ class _Crinkler:
             b_iter = (
                 multi_b.recursive_iterator(**_Crinkler.ITER_KWARGS)
                 if multi_b is not None
-                else repeat(None)
+                else itertools.repeat(None)
             )
 
             for (ids, _, block_self), block_a, block_b, scalars_info in zip(

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from contextlib import suppress
-from functools import partial
-from functools import wraps
-from html import escape
+import contextlib
+import functools
+import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -295,7 +294,7 @@ class CameraPosition(_NoNewAttrMixin):
                 ('viewup', [('', vup)], vup),
             ]
         )
-        text_fallback = escape(repr(self))
+        text_fallback = html.escape(repr(self))
 
         return (
             f'<div><style>{css}</style>'
@@ -898,7 +897,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))  # type: ignore[arg-type]
+            self.AddObserver(
+                'StartEvent', functools.partial(try_callback, self._before_render_event)
+            )  # type: ignore[arg-type]
         self._charts.add_chart(chart, *charts)
 
     @property
@@ -925,7 +926,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @wraps(Charts.set_interaction)
+    @functools.wraps(Charts.set_interaction)
     @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
@@ -935,7 +936,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @wraps(Charts.get_charts_by_pos)
+    @functools.wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
@@ -1084,10 +1085,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         if culling:
             if culling in [True, 'back', 'backface', 'b']:
-                with suppress(AttributeError):
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
             elif culling in ['front', 'frontface', 'f']:
-                with suppress(AttributeError):
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
             else:
                 msg = f'Culling option ({culling}) not understood.'
@@ -2720,7 +2721,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
-                with suppress(KeyError):
+                with contextlib.suppress(KeyError):
                     self.remove_actor(actor, reset_camera=False, render=False)
             self.Modified()
 
@@ -3000,7 +3001,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._labels.pop(actor.GetAddressAsString(''), None)
 
         # ensure any scalar bars associated with this actor are removed
-        with suppress(AttributeError, ReferenceError):
+        with contextlib.suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
         self.update_bounds_axes()

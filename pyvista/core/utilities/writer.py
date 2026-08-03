@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from contextlib import suppress
+import contextlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
@@ -155,7 +155,7 @@ class BaseWriter(_FileIOBase):
     def _apply_kwargs_safely(self, **kwargs) -> None:
         """Try to set property keyword values and ignore attribute errors."""
         for name, value in kwargs.items():
-            with suppress(AttributeError):
+            with contextlib.suppress(AttributeError):
                 setattr(self, name, value)
 
 

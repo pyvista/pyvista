@@ -148,8 +148,7 @@ import os
 from pathlib import Path
 import re
 import shutil
-from textwrap import dedent
-from textwrap import indent
+import textwrap
 import traceback
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -596,7 +595,7 @@ def hash_plot_code(code: str, options: dict) -> str:
         line_without_comments = re.sub(r'(?<!["\'])#.*', '', line).strip()
         if line_without_comments:
             lines.append(line_without_comments)
-    clean_script = dedent('\n'.join(lines))
+    clean_script = textwrap.dedent('\n'.join(lines))
 
     parts = [
         'ctx=' + str('context' in options),
@@ -655,7 +654,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
-        code = dedent('\n'.join(map(str, content)))
+        code = textwrap.dedent('\n'.join(map(str, content)))
 
         base = Path(source_file_name).stem
         ext = Path(source_file_name).suffix
@@ -753,7 +752,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 lines = [
                     '.. code-block:: python',
                     '',
-                    *indent(code_piece, '    ').splitlines(),
+                    *textwrap.indent(code_piece, '    ').splitlines(),
                 ]
             source_code = '\n'.join(lines)
         else:

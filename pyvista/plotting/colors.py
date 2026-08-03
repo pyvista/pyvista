@@ -7,8 +7,8 @@ Used code from matplotlib.colors.  Thanks for your work.
 # of methods defined in this module.
 from __future__ import annotations
 
-from colorsys import rgb_to_hls
-from contextlib import suppress
+import colorsys
+import contextlib
 import importlib
 import inspect
 from typing import TYPE_CHECKING
@@ -2036,7 +2036,7 @@ class Color(_NoNewAttrMixin):
     @property
     def _float_hls(self) -> tuple[float, float, float]:
         """Get the color as Hue, Lightness, Saturation (HLS) in range [0.0, 1.0]."""
-        return rgb_to_hls(*self.float_rgb)
+        return colorsys.rgb_to_hls(*self.float_rgb)
 
     @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
@@ -2311,7 +2311,7 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
                 raise ModuleNotFoundError(msg) from None
 
             cmap_dict = get_nested_attr(mod, parts[1:])
-            with suppress(KeyError):
+            with contextlib.suppress(KeyError):
                 return cmap_dict[cmap_]
         return None
 

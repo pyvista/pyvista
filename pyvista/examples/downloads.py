@@ -21,7 +21,7 @@ Examples
 
 from __future__ import annotations
 
-from functools import partial
+import functools
 import importlib.util
 import logging
 import os
@@ -4374,7 +4374,7 @@ def _tetra_dc_mesh_files_func():
 
 _dataset_tetra_dc_mesh = _MultiFileDownloadableDatasetLoader(
     _tetra_dc_mesh_files_func,
-    load_func=partial(_load_as_multiblock, names=['forward', 'inverse']),
+    load_func=functools.partial(_load_as_multiblock, names=['forward', 'inverse']),
 )
 
 
@@ -4704,7 +4704,7 @@ def download_dolfin(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT00
 
 _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
     'dolfin_fine.xml',
-    read_func=partial(read, file_format='dolfin-xml'),
+    read_func=functools.partial(read, file_format='dolfin-xml'),
 )
 
 
@@ -5459,7 +5459,7 @@ def download_gpr_path(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
-    read_func=partial(np.loadtxt, skiprows=1),
+    read_func=functools.partial(np.loadtxt, skiprows=1),
     load_func=pv.PolyData,  # type: ignore[arg-type]
 )
 

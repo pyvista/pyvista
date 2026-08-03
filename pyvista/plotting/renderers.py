@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from itertools import product
+import itertools
 import weakref
 
 import numpy as np
@@ -197,7 +197,7 @@ class Renderers(_NoNewAttrMixin):
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i, j in product(
+                    for i, j in itertools.product(
                         range(norm_group[0], norm_group[2] + 1),
                         range(norm_group[1], norm_group[3] + 1),
                     ):
@@ -209,7 +209,7 @@ class Renderers(_NoNewAttrMixin):
                         axis=0,
                     )
             # Create subplot renderers
-            for row, col in product(range(shape[0]), range(shape[1])):
+            for row, col in itertools.product(range(shape[0]), range(shape[1])):
                 group = self.loc_to_group((row, col))
                 nb_rows = None
                 nb_cols = None

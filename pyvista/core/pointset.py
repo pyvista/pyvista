@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from contextlib import suppress
-from functools import wraps
+import contextlib
+import functools
 import numbers
 from pathlib import Path
-from textwrap import dedent
+import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
@@ -185,7 +185,7 @@ class _PointSet(DataSet):
         array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
         target.cell_data[array_name] = ghost_cells
         target.RemoveGhostCells()
-        with suppress(KeyError):
+        with contextlib.suppress(KeyError):
             del target.cell_data[array_name]
         return target
 
@@ -412,14 +412,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)
+    @functools.wraps(DataSet.plot)
     def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @wraps(PolyDataFilters.threshold)
+    @functools.wraps(PolyDataFilters.threshold)
     def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -427,7 +427,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.threshold_percent)
+    @functools.wraps(PolyDataFilters.threshold_percent)
     def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -437,7 +437,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @wraps(PolyDataFilters.explode)
+    @functools.wraps(PolyDataFilters.explode)
     def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
@@ -446,7 +446,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.delaunay_3d)
+    @functools.wraps(PolyDataFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
@@ -850,7 +850,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 - vtkDataArray
 
                 Instead got: {type(var_inp)}"""
-            raise TypeError(dedent(msg.strip('\n')))
+            raise TypeError(textwrap.dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
         if faces is lines is strips is verts is None:
@@ -1660,7 +1660,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            with suppress(TypeError):
+            with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
         super().save(
             filename,

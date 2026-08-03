@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from itertools import count
+import itertools
 from pathlib import Path
 import re
 import sys
@@ -21,7 +21,7 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
         kwargs['skip_file_prefixes'] = (str(basedir / 'pyvista'),)
     else:
         frame = sys._getframe()
-        for stacklevel in count(1):
+        for stacklevel in itertools.count(1):
             if frame is None:
                 # when called in embedded context may hit frame is None
                 kwargs['stacklevel'] = stacklevel

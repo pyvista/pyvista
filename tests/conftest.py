@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import faulthandler
-from functools import wraps
-from importlib import metadata
+import functools
+import importlib.metadata
 import inspect
 import os
 import platform
@@ -93,7 +93,7 @@ def flaky_test(
         # Allow decorator is called without parentheses
         return lambda func: flaky_test(func, times=times, exceptions=exceptions)
 
-    @wraps(test_function)
+    @functools.wraps(test_function)
     def wrapper(*args, **kwargs):
         for i in range(times):
             try:
@@ -568,7 +568,7 @@ def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}
-    for item in metadata.requires('pyvista'):
+    for item in importlib.metadata.requires('pyvista'):
         pkg_name = re.findall(r'[a-z0-9_\-]+', item, re.IGNORECASE)[0]
         if pkg_name == 'pyvista':
             continue
@@ -585,9 +585,9 @@ def pytest_report_header(config):  # noqa: ARG001
     items = []
     for name in required:
         try:
-            version = metadata.version(name)
+            version = importlib.metadata.version(name)
             items.append(f'{name}-{version}')
-        except metadata.PackageNotFoundError:
+        except importlib.metadata.PackageNotFoundError:
             items.append(f'{name} (not found)')
     lines.append('required packages: ' + ', '.join(items))
 
@@ -596,9 +596,9 @@ def pytest_report_header(config):  # noqa: ARG001
         installed = []
         for name in extra[pkg_extra]:
             try:
-                version = metadata.version(name)
+                version = importlib.metadata.version(name)
                 installed.append(f'{name}-{version}')
-            except metadata.PackageNotFoundError:
+            except importlib.metadata.PackageNotFoundError:
                 not_found.append(name)
         if installed:
             plrl = 's' if len(installed) != 1 else ''

@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from enum import EnumMeta
 from enum import IntEnum
-from textwrap import dedent
-from textwrap import indent
+import textwrap
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -100,7 +99,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 
 def _indent_paragraph(string: str, level: int) -> str:
     indentation = ''.join(['    '] * level)
-    return indent(dedent(string).strip(), indentation)
+    return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
 
 # See link for color names: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
@@ -1040,7 +1039,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             self._n_edges = -1 if _variable_edges else cell.GetNumberOfEdges()
             self._n_faces = -1 if _variable_faces else cell.GetNumberOfFaces()
 
-        _doc = dedent(_doc).strip()
+        _doc = textwrap.dedent(_doc).strip()
 
         # Generate cell type documentation if specified
         if self._vtk_class or _doc or _example:

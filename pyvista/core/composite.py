@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
-from itertools import zip_longest
+import itertools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -1936,7 +1936,7 @@ class MultiBlock(
             name = index
         elif isinstance(index, slice):
             index_iter = range(self.n_blocks)[index]
-            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
+            for i, (idx, d) in enumerate(itertools.zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
                         index_iter[-1] + 1 + (i - len(index_iter)),

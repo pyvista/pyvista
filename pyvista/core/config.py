@@ -52,7 +52,7 @@ Dump the current config to a plain dict (useful for logging or round-tripping):
 
 from __future__ import annotations
 
-from itertools import chain
+import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -174,7 +174,7 @@ class _ConfigBase(metaclass=_ForceSlots):
     def _all__slots__(cls) -> tuple[str, ...]:
         """Return all slot names including parent classes."""
         mro = cls.mro()
-        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
+        return tuple(itertools.chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
 
 
 class Config(_ConfigBase):

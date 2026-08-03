@@ -7,16 +7,16 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
-from colorsys import rgb_to_hls
+import colorsys
 from dataclasses import dataclass
 from enum import auto
 import inspect
 from io import StringIO
-from itertools import starmap
+import itertools
 import os
 from pathlib import Path
 import re
-from textwrap import dedent
+import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -109,7 +109,7 @@ def _aligned_dedent(txt):
 
     Helper method to dedent the provided text up to the special alignment character ``'|'``.
     """
-    return dedent(txt).replace('|', '')
+    return textwrap.dedent(txt).replace('|', '')
 
 
 class DocTable:
@@ -1646,7 +1646,7 @@ class ColormapTable(DocTable):
                 return colors[order]
 
             else:  # sort_by == 'hue':
-                hls = np.array(list(starmap(rgb_to_hls, colors)))
+                hls = np.array(list(itertools.starmap(colorsys.rgb_to_hls, colors)))
                 hue_sorted_indices = np.argsort(hls[:, 0])
                 return colors[hue_sorted_indices]
 
@@ -1664,7 +1664,7 @@ class ColormapTable(DocTable):
                 xyz = colour.sRGB_to_XYZ(rgb_sampled)
                 return colour.XYZ_to_CAM02UCS(xyz)
             else:  # sort_by == 'hue':
-                hls = np.array(list(starmap(rgb_to_hls, rgb_sampled)))
+                hls = np.array(list(itertools.starmap(colorsys.rgb_to_hls, rgb_sampled)))
                 return hls[:, 0]
 
         def compute_delta_between_swatches(swatch1, swatch2, weights):
@@ -2484,7 +2484,7 @@ class DatasetCard:
 
         Any fields with a `None` value are completely excluded from the block.
         """
-        field_grids = list(starmap(DatasetCard._generate_field_grid, fields))
+        field_grids = list(itertools.starmap(DatasetCard._generate_field_grid, fields))
         block = '\n'.join([grid for grid in field_grids if grid])
         return _indent_multi_line_string(block, indent_level=indent_level)
 

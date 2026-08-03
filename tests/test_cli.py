@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from functools import partial
+import functools
 import importlib.util
 import inspect
-from itertools import chain
+import itertools
 import os
 from pathlib import Path
 import shlex
 import shutil
 import subprocess
 import sys
-from textwrap import dedent
+import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import get_args
@@ -64,7 +64,7 @@ def capture_out_err(capsys: pytest.CaptureFixture):
 
 @pytest.fixture
 def patch_app_console(monkeypatch: pytest.MonkeyPatch):
-    Console_ = partial(
+    Console_ = functools.partial(
         Console,
         width=70,
         force_terminal=False,
@@ -79,7 +79,7 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture
 def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
-    Console_ = partial(
+    Console_ = functools.partial(
         Console,
         width=70,
         highlight=True,
@@ -97,7 +97,7 @@ def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
 def test_no_input(args, capsys: pytest.CaptureFixture):
     main(args)
 
-    expected = dedent(
+    expected = textwrap.dedent(
         """\
         Usage: pyvista COMMAND
 
@@ -119,7 +119,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_invalid_command(capsys: pytest.CaptureFixture):
-    expected = dedent(
+    expected = textwrap.dedent(
         """\
     Usage: pyvista COMMAND
 
@@ -149,7 +149,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 @pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize('command', COMMANDS_WITHOUT_KWARGS)
 def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
-    expected = dedent(
+    expected = textwrap.dedent(
         """\
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown option: --foo=1.                                           │
@@ -996,7 +996,8 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
 
 @pytest.mark.skip_windows  # file path issues
 @pytest.mark.parametrize(
-    'field', chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields))
+    'field',
+    itertools.chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields)),
 )
 def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     # Test that all fields specified in the annotations work
@@ -1563,7 +1564,7 @@ def test_validate_glob_expands_files(
 def test_report_help(capsys: pytest.CaptureFixture):
     main('report --help')
 
-    expected = dedent(
+    expected = textwrap.dedent(
         """\
             Usage: pyvista report [ARGS]
 
@@ -1579,7 +1580,7 @@ def test_report_help(capsys: pytest.CaptureFixture):
 def test_plot_help(capsys: pytest.CaptureFixture):
     main('plot --help')
 
-    expected = dedent(
+    expected = textwrap.dedent(
         """\
         Usage: pyvista plot PATH... [OPTIONS]
 
@@ -1603,7 +1604,7 @@ def test_version(capsys: pytest.CaptureFixture):
 def test_help(capsys: pytest.CaptureFixture):
     main('--help')
 
-    expected = dedent(
+    expected = textwrap.dedent(
         """\
         Usage: pyvista COMMAND
 

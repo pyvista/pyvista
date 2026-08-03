@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABCMeta
 from collections.abc import Sequence
 from enum import Enum
-from functools import cache
+import functools
 import importlib
 import inspect
 import sys
@@ -202,7 +202,7 @@ class AnnotatedIntEnum(int, Enum):
             raise TypeError(msg)
 
 
-@cache
+@functools.cache
 def has_module(module_name: str) -> bool:
     """Return if a module can be imported.
 

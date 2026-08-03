@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
+import contextlib
 import sys
 from types import ModuleType
 from unittest.mock import MagicMock
@@ -669,7 +669,7 @@ def test_attribute_access_triggers_plugin_load(monkeypatch):
         # Second access hits the cached accessor without re-triggering.
         assert pv.Sphere().ep_demo.value() == 42
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('ep_demo', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
@@ -708,7 +708,7 @@ def test_class_level_access_triggers_plugin_load(monkeypatch):
         # Instance access then returns an instance of that accessor.
         assert isinstance(pv.Sphere().class_demo, accessor_cls)
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('class_demo', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
@@ -761,7 +761,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
             _ = pv.Sphere().one_shot
         assert import_count == 1
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('one_shot', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
@@ -894,7 +894,7 @@ def test_decorator_wins_over_pending_entry_point(monkeypatch):
         assert pv.Sphere().ep_preempted.who() == 'decorator'
         import_mock.assert_not_called()
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('ep_preempted', pv.PolyData)
 
 
@@ -924,7 +924,7 @@ def test_registered_accessors_forces_discovery(monkeypatch):
         names = {r.name for r in pv.registered_accessors()}
         assert 'forced' in names
     finally:
-        with suppress(ValueError):
+        with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('forced', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 

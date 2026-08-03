@@ -346,7 +346,7 @@ def test_parallel_error(tmp_path: Path) -> None:
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
     from http.server import ThreadingHTTPServer
-    from threading import Thread
+    import threading
 
     from playwright.sync_api import sync_playwright
 
@@ -362,7 +362,7 @@ def test_interactive_plot_moves(tmp_path: Path):
     os.chdir(html_dir)
 
     server = ThreadingHTTPServer(('127.0.0.1', 0), SimpleHTTPRequestHandler)
-    thread = Thread(target=server.serve_forever, daemon=True)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
     try:

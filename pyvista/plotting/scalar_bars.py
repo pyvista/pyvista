@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
+import contextlib
 import weakref
 
 import numpy as np
@@ -76,7 +76,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         # NOTE: keys to list to prevent iterator changing during loop
         for name in list(self._scalar_bar_mappers):
-            with suppress(ValueError):
+            with contextlib.suppress(ValueError):
                 self._scalar_bar_mappers[name].remove(mapper)
 
             if not self._scalar_bar_mappers[name]:

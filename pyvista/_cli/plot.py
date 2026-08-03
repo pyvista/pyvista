@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ast import literal_eval
+import ast
 from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
@@ -51,7 +51,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
 
         # Coerce using literal_eval with fallback to str value
         try:
-            return literal_eval(token.value)
+            return ast.literal_eval(token.value)
         except (ValueError, SyntaxError):
             return token.value
     return None

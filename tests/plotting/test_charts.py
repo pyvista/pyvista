@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import chain
+import itertools
 import weakref
 
 import numpy as np
@@ -805,7 +805,7 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ['#fa09b6', '0xa53a8d', '#b02239f0', '0xcee6927f']
-    colors = chain(
+    colors = itertools.chain(
         pv.plotting.colors._formatted_hex_colors,
         pv.plotting.colors._formatted_color_synonyms,
         [*hex_colors, ''],

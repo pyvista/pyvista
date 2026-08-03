@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import wraps
+import functools
 import inspect
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -188,7 +188,7 @@ def _deprecate_positional_args(
             )
             raise RuntimeError(msg)
 
-        @wraps(f)
+        @functools.wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
             passed_positional_names = param_names[: len(args)]
 

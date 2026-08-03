@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import cycle
+import itertools
 import sys
 from typing import TYPE_CHECKING
 import weakref
@@ -690,9 +690,9 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         self.scalar_visibility = False
 
         if isinstance(color_cycler, bool):
-            colors = cycle(get_cycler('matplotlib'))
+            colors = itertools.cycle(get_cycler('matplotlib'))
         else:
-            colors = cycle(get_cycler(color_cycler))
+            colors = itertools.cycle(get_cycler(color_cycler))
 
         for attr in self.block_attr:
             attr.color = next(colors)['color']

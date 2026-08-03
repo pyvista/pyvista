@@ -10,7 +10,7 @@ filter to a sphere mesh that has 3D displacement vectors defined at each node.
 
 # %%
 # We first compare the unwarped sphere to the warped sphere.
-from itertools import product
+import itertools
 
 import pyvista as pv
 from pyvista import examples
@@ -34,7 +34,7 @@ pl.show()
 
 warp_factors = [0, 1.5, 3.5, 5.5]
 pl = pv.Plotter(shape=(2, 2))
-for i, j in product(range(2), repeat=2):
+for i, j in itertools.product(range(2), repeat=2):
     idx = 2 * i + j
     pl.subplot(i, j)
     pl.add_mesh(sphere.warp_by_vector(factor=warp_factors[idx]))

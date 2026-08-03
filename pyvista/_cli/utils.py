@@ -6,7 +6,7 @@ Mostly contains converters, validators, console error helper and help formatters
 
 from __future__ import annotations
 
-from glob import glob
+import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
@@ -121,7 +121,7 @@ def _expand_globs(values: list[str]) -> list[str]:
     for v in values:
         v = str(Path(v).expanduser())  # noqa: PLW2901
         if any(c in v for c in _GLOB_CHARS):
-            matches = sorted(glob(v, recursive=True))  # noqa: PTH207
+            matches = sorted(glob.glob(v, recursive=True))  # noqa: PTH207
             if matches:
                 expanded.extend(matches)
             else:

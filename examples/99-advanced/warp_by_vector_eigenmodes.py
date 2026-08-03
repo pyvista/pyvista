@@ -18,7 +18,7 @@ https://asa.scitation.org/doi/10.1121/1.401643.
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
-from itertools import product
+import itertools
 
 import numpy as np
 import pyvista as pv
@@ -72,7 +72,7 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     }
 
     cijkl = np.zeros((3, 3, 3, 3))
-    for i, j, k, l in product(range(3), repeat=4):
+    for i, j, k, l in itertools.product(range(3), repeat=4):
         u = coord_mapping[i + 1, j + 1]
         v = coord_mapping[k + 1, l + 1]
         cijkl[i, j, k, l] = cij[u - 1, v - 1]
@@ -109,7 +109,7 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
-    for i, triplet in product(range(3), triplets):
+    for i, triplet in itertools.product(range(3), triplets):
         quadruplets.append((i, *triplet))
     assert len(quadruplets) == 3 * (N + 1) * (N + 2) * (N + 3) // 6
 
@@ -265,7 +265,7 @@ pl.show()
 
 
 pl = pv.Plotter(shape=(2, 4))
-for i, j in product(range(2), range(4)):
+for i, j in itertools.product(range(2), range(4)):
     pl.subplot(i, j)
     current_index = 4 * i + j
     vector = f'eigenmode_{current_index:02}'

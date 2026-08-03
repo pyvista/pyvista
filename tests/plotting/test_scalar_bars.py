@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from itertools import product
+import itertools
 
 import pytest
 
@@ -142,7 +142,7 @@ def test_unique_scalar_bars(sphere, unique_bar: bool, shape: tuple[int, int]):
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter(shape=shape)
-    pairs = list(product(range(shape[0]), range(shape[1])))
+    pairs = list(itertools.product(range(shape[0]), range(shape[1])))
     for i, j in pairs:
         pl.subplot(i, j)
         pl.add_mesh(sphere, show_scalar_bar=True, scalar_bar_args={'unique_bar': unique_bar})

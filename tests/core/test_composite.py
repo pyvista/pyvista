@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from itertools import product
+import itertools
 from pathlib import Path
 import re
 import weakref
@@ -1064,7 +1064,7 @@ def test_multiblock_partitioned_zip(container):
 
     assert len(zipped_container) == len(zipped_list)
     assert len(zipped_container[0]) == len(zipped_list[0])
-    for i, j in product(range(2), repeat=2):
+    for i, j in itertools.product(range(2), repeat=2):
         assert zipped_container[i][j] is zipped_list[i][j] is None
 
 

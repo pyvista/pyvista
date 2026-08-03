@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sized
-from itertools import product
+import itertools
 import re
 import sys
 from typing import Literal
@@ -871,7 +871,7 @@ def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
 
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
-    product([0, 1, 2], [0, 1, 2]),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     dx, dy, dz = -1.0, 2.0, 3.0
@@ -912,7 +912,7 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
-    product([0, 1, 2], [0, 1, 2]),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     sx, sy, sz = -1.1, 2.2, 3.3
@@ -979,7 +979,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
-    product([0, 1, 2], [0, 1, 2]),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     tf = pv.Transform().scale((1, 2, 3))

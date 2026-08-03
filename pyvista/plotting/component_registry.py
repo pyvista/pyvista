@@ -34,8 +34,8 @@ pyvista.registered_plotter_components
 
 from __future__ import annotations
 
-from contextlib import suppress
-from importlib import import_module
+import contextlib
+import importlib
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
@@ -219,7 +219,7 @@ class _CachedComponent:
         # access.
         components = getattr(obj, '_components', None)
         if components is None:
-            with suppress(AttributeError):
+            with contextlib.suppress(AttributeError):
                 obj.__dict__['_components'] = []
                 components = obj.__dict__['_components']
         if components is not None:
@@ -625,7 +625,7 @@ def _resolve_pending_component(name: str) -> bool:
     if module_path is None:
         return False
     try:
-        import_module(module_path)
+        importlib.import_module(module_path)
     except Exception as exc:  # noqa: BLE001
         msg = (
             f'Failed to load {COMPONENT_ENTRY_POINT_GROUP} entry point '

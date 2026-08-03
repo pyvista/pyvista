@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import product
+import itertools
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -2922,7 +2922,7 @@ class WidgetComponent(_NoNewAttrMixin):
             rad_outer = centre
             rad_inner = centre - border_size
             # Paint radio button with simple anti-aliasing
-            for i, j in product(range(size), range(size)):
+            for i, j in itertools.product(range(size), range(size)):
                 distance = np.sqrt((i - size / 2) ** 2 + (j - size / 2) ** 2)
                 if distance < rad_inner:
                     arr[i, j] = fg_color

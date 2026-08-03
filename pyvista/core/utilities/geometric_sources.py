@@ -7,7 +7,7 @@ Also includes some pure-python helpers.
 from __future__ import annotations
 
 from enum import IntEnum
-from itertools import product
+import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -3457,7 +3457,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
             self._shaft_datasets_normalized,
             self._tip_datasets_normalized,
         ]
-        for part_type, axis in product(_PartEnum, _AxisEnum):
+        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
             # Reset part by copying from the normalized version
             part_normalized = nested_datasets_normalized[part_type][axis]
             part = nested_datasets[part_type][axis]

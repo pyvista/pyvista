@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from functools import cache
+import functools
 import sys
 from typing import Literal
 from typing import NamedTuple
@@ -204,7 +204,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
 
 # Wrap the check in an LRU cache
-@cache
+@functools.cache
 def _is_vtk_attribute_cached(target_type, attr):
     return is_vtk_attribute(target_type, attr)
 

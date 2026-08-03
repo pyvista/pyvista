@@ -93,16 +93,31 @@ repos:
         language: pygrep
         entry: '^\s*(?:>>>|\.\.\.)?\s*(?:plotter|p|plot|plt|pltr)\s*=\s*pv\.Plotter\('
         types_or: [python, rst, markdown]
-      # Counterpart to ruff's flake8-import-conventions 'banned-from' in
-      # pyproject.toml, which enforces the opposite direction. These modules
-      # export names that read unambiguously on their own, so import the member
-      # (`from pathlib import Path`), not the namespace. Ruff has no rule for
-      # this direction: 'banned-api' matches the resolved symbol and so would
-      # reject `from pathlib import Path` too.
+      # -------------------------------------------------------------------
+      # Stdlib import conventions. THIS LIST HAS A COUNTERPART --
+      # see 'banned-from' under [tool.ruff.lint.flake8-import-conventions]
+      # in pyproject.toml, which enforces the opposite direction.
+      # -------------------------------------------------------------------
+      # These modules export *types* -- nouns that read fine alone and whose
+      # module prefix is noise in annotation and base-class positions
+      # (`Path`, `Sequence`, `Literal`, `Enum`, `BytesIO`). Import the member.
+      # Every other stdlib module goes in ruff's 'banned-from' list instead.
+      #
+      # Ruff cannot enforce this direction, which is why it lives here:
+      # flake8-tidy-imports' 'banned-api' matches the resolved symbol, so
+      # banning "pathlib" would reject `from pathlib import Path` -- the form
+      # we want -- as readily as `import pathlib`.
+      #
+      # The two lists must stay disjoint and must jointly cover every stdlib
+      # module the repo imports. tests/test_import_conventions.py asserts
+      # both, so drift between them fails CI.
+      #
+      # An aliased import (`import typing as _typing`) is deliberately not
+      # matched -- the alias is an explicit escape hatch.
       - id: namespace-stdlib-imports
         name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
         language: pygrep
-        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:pathlib|functools|contextlib|textwrap|enum|types|io|itertools)\s*$'
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

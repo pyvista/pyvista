@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Sequence
-from functools import wraps
-from itertools import chain
-from itertools import product
+import functools
+import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -180,7 +179,7 @@ class _XYZAssembly(
 
     @property
     def _label_actor_iterator(self) -> Iterator[Label]:
-        return chain.from_iterable(self._assembly_label_actors)
+        return itertools.chain.from_iterable(self._assembly_label_actors)
 
     def _post_set_update(self):
         # Update prop3D attributes for all assembly parts
@@ -665,104 +664,104 @@ class AxesAssembly(_XYZAssembly):
         return '\n'.join(attr)
 
     @property
-    @wraps(AxesGeometrySource.shaft_length.fget)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.shaft_length.fget)  # type: ignore[attr-defined]
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
         return self._shaft_and_tip_geometry_source.shaft_length
 
     @shaft_length.setter
-    @wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
     def shaft_length(self, length: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_length = length
         self._shaft_and_tip_geometry_source.update()
 
     @property
-    @wraps(AxesGeometrySource.tip_length.fget)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.tip_length.fget)  # type: ignore[attr-defined]
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
         return self._shaft_and_tip_geometry_source.tip_length
 
     @tip_length.setter
-    @wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
     def tip_length(self, length: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_length = length
         self._shaft_and_tip_geometry_source.update()
 
     @property
-    @wraps(AxesGeometrySource.shaft_radius.fget)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.shaft_radius.fget)  # type: ignore[attr-defined]
     def shaft_radius(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
         return self._shaft_and_tip_geometry_source.shaft_radius
 
     @shaft_radius.setter
-    @wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
     def shaft_radius(self, radius: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_radius = radius
         self._shaft_and_tip_geometry_source.update()
 
     @property
-    @wraps(AxesGeometrySource.tip_radius.fget)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.tip_radius.fget)  # type: ignore[attr-defined]
     def tip_radius(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
         return self._shaft_and_tip_geometry_source.tip_radius
 
     @tip_radius.setter
-    @wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
     def tip_radius(self, radius: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_radius = radius
         self._shaft_and_tip_geometry_source.update()
 
     @property
-    @wraps(AxesGeometrySource.shaft_type.fget)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.shaft_type.fget)  # type: ignore[attr-defined]
     def shaft_type(self) -> str:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
         return self._shaft_and_tip_geometry_source.shaft_type
 
     @shaft_type.setter
-    @wraps(AxesGeometrySource.shaft_type.fset)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.shaft_type.fset)  # type: ignore[attr-defined]
     def shaft_type(self, shaft_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_type = shaft_type
         self._shaft_and_tip_geometry_source.update()
 
     @property
-    @wraps(AxesGeometrySource.tip_type.fget)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.tip_type.fget)  # type: ignore[attr-defined]
     def tip_type(self) -> str:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
         return self._shaft_and_tip_geometry_source.tip_type
 
     @tip_type.setter
-    @wraps(AxesGeometrySource.tip_type.fset)  # type: ignore[attr-defined]
+    @functools.wraps(AxesGeometrySource.tip_type.fset)  # type: ignore[attr-defined]
     def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_type = tip_type
         self._shaft_and_tip_geometry_source.update()
 
     @property
-    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap Prop3D.scale."""
         return _Prop3DMixin.scale.fget(self)  # type: ignore[attr-defined]
 
     @scale.setter
-    @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
     def scale(self, scale: float | VectorLike[float]):
         """Wrap Prop3D.scale."""
         _Prop3DMixin.scale.fset(self, scale)  # type: ignore[attr-defined]
         self._update_scale()
 
     @property
-    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
     def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Wrap Prop3D.user_matrix."""
         return _Prop3DMixin.user_matrix.fget(self)  # type: ignore[attr-defined]
 
     @user_matrix.setter
-    @wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
     def user_matrix(self, value: TransformLike) -> None:
         """Wrap Prop3D.user_matrix."""
         _Prop3DMixin.user_matrix.fset(self, value)  # type: ignore[attr-defined]
@@ -1198,7 +1197,7 @@ class AxesAssembly(_XYZAssembly):
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
         actors: list[Actor] = []
-        for part_type, axis_num in product(_PartEnum, _AxisEnum):
+        for part_type, axis_num in itertools.product(_PartEnum, _AxisEnum):
             if part in [part_type.name, part_type.value, 'all'] and axis in [
                 axis_num.name,
                 axis_num.value,

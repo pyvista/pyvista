@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
+import contextlib
 from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
@@ -294,7 +294,7 @@ class _FRDParser:
                     # Fallback for malformed or edge-case real-world files
                     # where standard fixed-width indexing fails.
                     for p in data_str.split():
-                        with suppress(ValueError):
+                        with contextlib.suppress(ValueError):
                             node_ids.append(int(p))
 
                 if (n_nodes := len(node_ids)) < needed:

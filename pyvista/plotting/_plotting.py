@@ -304,7 +304,7 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
     Picks ``base_name`` if free on ``point_data``, ``cell_data``, and
     ``field_data``; otherwise appends a numeric suffix.
     """
-    from itertools import count  # noqa: PLC0415
+    import itertools  # noqa: PLC0415
 
     def _is_free(name: str) -> bool:
         return (
@@ -315,7 +315,7 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
 
     if _is_free(base_name):
         return base_name
-    return next(f'{base_name}-{i}' for i in count(1) if _is_free(f'{base_name}-{i}'))
+    return next(f'{base_name}-{i}' for i in itertools.count(1) if _is_free(f'{base_name}-{i}'))
 
 
 @_deprecate_positional_args

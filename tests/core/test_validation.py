@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from itertools import product
+import itertools
 import re
 import sys
 from typing import NamedTuple
@@ -1100,7 +1100,7 @@ def test_cast_to_list():
 def test_array_from_vtkmatrix(cls, shape):
     expected = np.random.default_rng().random(shape)
     mat = cls()
-    for i, j in product(range(shape[0]), range(shape[1])):
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
         mat.SetElement(i, j, expected[i, j])
     actual = _array_from_vtkmatrix(mat, shape=shape)
     assert np.array_equal(actual, expected)

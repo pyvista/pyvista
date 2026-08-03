@@ -28,8 +28,8 @@ pyvista.registered_accessors
 
 from __future__ import annotations
 
-from contextlib import suppress
-from importlib import import_module
+import contextlib
+import importlib
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
@@ -162,7 +162,7 @@ class _CachedAccessor:
         accessor_instance = self._accessor_cls(obj)
         # Skip the cache on ``__slots__`` targets (no ``__dict__``) and
         # construct fresh on each access.
-        with suppress(AttributeError):
+        with contextlib.suppress(AttributeError):
             obj.__dict__[self._name] = accessor_instance
         return accessor_instance
 
@@ -606,7 +606,7 @@ def _resolve_pending_accessor(name: str) -> bool:
     if module_path is None:
         return False
     try:
-        import_module(module_path)
+        importlib.import_module(module_path)
     except Exception as exc:  # noqa: BLE001
         msg = (
             f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
