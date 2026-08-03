@@ -295,75 +295,68 @@ Import Conventions
 Standard library imports follow one rule: **import the name that carries its
 own meaning at the call site.**
 
-Modules that export *types* -- nouns you annotate with, subclass, or check with
-``isinstance`` -- are imported by member. The module prefix adds nothing to a
-name that already names a thing, and it is noise in annotation and base-class
-positions:
+Modules that export *types* are imported by member. "Type" here means a name
+that appears in a type position -- an annotation, a base class, or a
+class-defining decorator -- where the module prefix is pure noise:
 
 .. code-block:: python
 
     from pathlib import Path
     from collections.abc import Sequence
-    from typing import Literal
+    from dataclasses import dataclass
 
-    def load(path: Path, names: Sequence[str]) -> Literal['ok']: ...
+    @dataclass
+    class Config:
+        path: Path
+        names: Sequence[str]
 
-Modules that export *actions* -- things you call -- keep the namespace prefix.
-The module name supplies the domain that makes the call readable:
+Everything else keeps the namespace prefix, because the module name supplies
+the domain that makes the call readable:
 
 .. code-block:: python
 
-    import functools
-    import re
-
     @functools.wraps(func)  # not `wraps` -- wraps what?
-    def wrapper(*args, **kwargs): ...
-
     pattern = re.escape(text)  # not `escape` -- shell? HTML? regex?
 
-Bare ``escape``, ``wraps``, or ``proxy`` lose the context that tells you what
-they do, and some member imports shadow their own module outright
-(``from time import time``, ``from glob import glob``).
+Some member imports also shadow their own module (``from time import time``,
+``from glob import glob``), which the namespace form avoids.
+
+The unit is the module, not the name. ``argparse`` exports ``ArgumentParser``
+but is namespace-imported, because one type does not make a type module;
+``argparse.ArgumentParser`` reads fine. The member list is closed and short:
+``__future__``, ``abc``, ``collections``, ``collections.abc``, ``dataclasses``,
+``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
+``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
 
 How this is enforced
 """"""""""""""""""""
 
-Two lists in two files, because ``ruff`` can only express one direction:
+Two lists, because ``ruff`` can only express one direction:
 
-* **Namespace-imported modules** are listed under ``banned-from`` in
-  ``[tool.ruff.lint.flake8-import-conventions]`` in ``pyproject.toml``. Ruff
-  rejects ``from re import escape`` with ``ICN003``.
-* **Member-imported modules** are listed in the ``namespace-stdlib-imports``
-  pygrep hook in ``.pre-commit-config.yaml``, which rejects ``import pathlib``.
+* ``banned-from`` under ``[tool.ruff.lint.flake8-import-conventions]`` in
+  ``pyproject.toml`` rejects ``from re import escape`` (``ICN003``).
+* the ``namespace-stdlib-imports`` pygrep hook in ``.pre-commit-config.yaml``
+  rejects ``import pathlib``. Ruff cannot do this direction --
+  ``flake8-tidy-imports``' ``banned-api`` matches the resolved symbol, so
+  banning ``pathlib`` would reject ``from pathlib import Path`` too.
 
-Ruff cannot enforce the member direction: ``flake8-tidy-imports``'
-``banned-api`` matches the resolved symbol, so banning ``pathlib`` would reject
-``from pathlib import Path`` -- the form we want -- as readily as
-``import pathlib``.
+``tests/test_import_conventions.py`` asserts the lists stay disjoint and
+jointly govern every standard library module the repository imports, so a
+module governed by neither fails CI instead of settling into whichever form its
+first author picked. When it fails, add the module to the matching list.
 
-The member list is deliberately short and closed: ``__future__``, ``typing``,
-``typing_extensions``, ``collections``, ``collections.abc``, ``pathlib``,
-``types``, ``enum``, ``io``, ``abc``, ``dataclasses``, and ``unittest.mock``.
-Every other standard library module is namespace-imported.
+Two details:
 
-The two lists must stay disjoint and must jointly govern every standard library
-module the repository imports. ``tests/test_import_conventions.py`` asserts
-both, so a module governed by neither fails CI rather than settling into
-whichever form its first author happened to pick. When that test fails, add the
-module to whichever list matches the rule above.
+* ``banned-from`` does not match submodules -- banning ``importlib`` still
+  permits ``from importlib.metadata import entry_points``. Govern the submodule
+  explicitly when it is used directly.
+* Aliased imports (``import xml.dom.minidom as md``) are an intentional escape
+  hatch and neither list matches them.
 
-Two details worth knowing:
-
-* ``banned-from`` does not match submodules. Banning ``importlib`` still
-  permits ``from importlib.metadata import entry_points``, and banning
-  ``unittest`` still permits ``from unittest.mock import patch``. Such
-  submodule idioms are waived explicitly in the test.
-* The action/type split occasionally cuts *across* a module rather than between
-  modules. ``contextlib.AbstractContextManager`` is a type used in a base-class
-  position inside an otherwise action-shaped module, so it carries a
-  ``# noqa: ICN003``. Prefer fixing the code over adding a waiver -- a local
-  variable shadowing a module is a reason to rename the variable, not to
-  exempt the file.
+Prefer fixing the code over adding a waiver: a local variable shadowing a
+module is a reason to rename the variable. The sole exception in the tree is
+``contextlib.AbstractContextManager``, a type in a base-class position inside
+an otherwise action-shaped module, carrying a ``# noqa: ICN003``.
 
 Documentation Style
 ^^^^^^^^^^^^^^^^^^^

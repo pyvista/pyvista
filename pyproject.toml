@@ -487,6 +487,7 @@ banned-from = [
   'hashlib',
   'html',
   'importlib',
+  'importlib.util',
   'inspect',
   'itertools',
   'json',

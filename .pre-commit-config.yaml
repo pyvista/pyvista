@@ -100,7 +100,7 @@ repos:
       - id: namespace-stdlib-imports
         name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
         language: pygrep
-        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

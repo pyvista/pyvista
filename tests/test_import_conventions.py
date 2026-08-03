@@ -29,17 +29,12 @@ REPO_ROOT = Path(__file__).parent.parent
 SOURCE_DIRS = ('pyvista', 'tests', 'doc', 'examples')
 SKIP_PARTS = {'build', 'dist', '_build', '__pycache__', '.git'}
 
-# Submodule idioms that neither list governs. `banned-from` does not match
-# submodules, so banning the parent leaves these untouched -- which is what we
-# want, since the submodule must be imported explicitly to be usable.
+# Aliased imports are an intentional escape hatch, so the modules only ever
+# reached that way are governed by neither list.
 WAIVED = {
-    'http.server',
-    'importlib.metadata',
-    'importlib.resources',
-    'importlib.util',
-    'xml.dom.minidom',
-    'xml.etree',
-    'xml.etree.ElementTree',
+    'importlib.resources',  # from importlib.resources import files as _resources_files
+    'xml.dom.minidom',  # import xml.dom.minidom as md
+    'xml.etree',  # from xml.etree import ElementTree as ET
 }
 
 
@@ -79,6 +74,19 @@ def _member_modules() -> set[str]:
     return {name.replace('\\.', '.') for name in alternation.group('names').split('|')}
 
 
+def _documented_member_modules() -> set[str]:
+    """The member list as spelled out in CONTRIBUTING.rst."""
+    text = (REPO_ROOT / 'CONTRIBUTING.rst').read_text(encoding='utf-8')
+    listing = re.search(
+        r'The member list is closed and short:(?P<body>.*?)\.\n\n', text, flags=re.DOTALL
+    )
+    assert listing is not None, (
+        'Could not find the member list in CONTRIBUTING.rst. If the wording '
+        'changed, update this test -- the list still needs to match the hook.'
+    )
+    return set(re.findall(r'``([a-z_]+(?:\.[a-z_]+)?)``', listing.group('body')))
+
+
 def _imported_stdlib_modules() -> dict[str, set[str]]:
     """Map each imported stdlib module to the files importing it."""
     found: dict[str, set[str]] = {}
@@ -108,6 +116,16 @@ def test_convention_lists_are_disjoint():
         'A module must be either namespace-imported (ruff banned-from in '
         'pyproject.toml) or member-imported (the namespace-stdlib-imports '
         'hook in .pre-commit-config.yaml), never both.'
+    )
+
+
+def test_documentation_matches_the_enforced_member_list():
+    """CONTRIBUTING.rst must list exactly what the hook enforces."""
+    documented, enforced = _documented_member_modules(), _member_modules()
+    assert documented == enforced, (
+        f'CONTRIBUTING.rst and the namespace-stdlib-imports hook disagree. '
+        f'Only in the docs: {sorted(documented - enforced)}. '
+        f'Only in the hook: {sorted(enforced - documented)}.'
     )
 
 

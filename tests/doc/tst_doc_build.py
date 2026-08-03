@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from xml.etree.ElementTree import parse
+from xml.etree import ElementTree as ET
 
 import pytest
 
@@ -19,7 +19,7 @@ XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
 assert XML_FILE.is_file()
 
 
-xml_root = parse(XML_FILE).getroot()
+xml_root = ET.parse(XML_FILE).getroot()
 test_cases = [dict(case.attrib) for case in xml_root.iterfind('testcase')]
 test_ids = [case['classname'] for case in test_cases]
 
