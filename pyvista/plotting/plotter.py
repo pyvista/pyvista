@@ -2231,14 +2231,13 @@ class BasePlotter(_BoundsSizeMixin):
         finally:
             self.image_scale = scale_before
 
-    def render(self) -> None:
-        """Render the main window.
+    def _render_main_window(self) -> None:
+        """Draw the render window without invoking ``on_render`` callbacks.
 
-        Will not render until ``show`` has been called.
-
-        Any render callbacks added with
-        :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
-        and the ``render_event=False`` option set will still execute on any call.
+        Shared by :meth:`render` and :meth:`screenshot` so the actual draw
+        has a single implementation. Callbacks are intentionally not fired
+        here so that an implicit screenshot (e.g. the image-cache close
+        hook) does not trigger user ``on_render`` callbacks.
         """
         if (
             self.render_window is not None
@@ -2249,6 +2248,17 @@ class BasePlotter(_BoundsSizeMixin):
             self.renderers.on_plotter_render()
             self.render_window.Render()
             self._rendered = True
+
+    def render(self) -> None:
+        """Render the main window.
+
+        Will not render until ``show`` has been called.
+
+        Any render callbacks added with
+        :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
+        and the ``render_event=False`` option set will still execute on any call.
+        """
+        self._render_main_window()
         for callback in self._on_render_callbacks:
             callback(self)
 
@@ -6624,7 +6634,13 @@ class BasePlotter(_BoundsSizeMixin):
             # before extracting an image
             if self._first_time:
                 self._on_first_render_request()
-                self.render()
+
+            # Flush pending scene changes to the framebuffer so every
+            # screenshot reflects the current scene, not only the first
+            # one (discussion #8670). Uses the shared draw helper rather
+            # than ``render`` so user ``on_render`` callbacks do not fire
+            # on an implicit screenshot (e.g. the image-cache close hook).
+            self._render_main_window()
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()
