@@ -305,6 +305,7 @@ class-defining decorator -- where the module prefix is pure noise:
     from collections.abc import Sequence
     from dataclasses import dataclass
 
+
     @dataclass
     class Config:
         path: Path
@@ -315,8 +316,15 @@ the domain that makes the call readable:
 
 .. code-block:: python
 
-    @functools.wraps(func)  # not `wraps` -- wraps what?
+    import functools
+    import re
+
     pattern = re.escape(text)  # not `escape` -- shell? HTML? regex?
+
+
+    @functools.wraps(func)  # not `wraps` -- wraps what?
+    def wrapper(*args, **kwargs): ...
+
 
 Some member imports also shadow their own module (``from time import time``,
 ``from glob import glob``), which the namespace form avoids.
