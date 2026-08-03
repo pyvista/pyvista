@@ -898,8 +898,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self._charts is None:
             self._charts = Charts(self)
             self.AddObserver(
-                'StartEvent', functools.partial(try_callback, self._before_render_event)
-            )  # type: ignore[arg-type]
+                'StartEvent',  # type: ignore[arg-type]
+                functools.partial(try_callback, self._before_render_event),
+            )
         self._charts.add_chart(chart, *charts)
 
     @property
