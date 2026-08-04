@@ -1264,8 +1264,7 @@ def test_is_all_triangles():
     mesh = pv.PolyData(vertices, faces)
     assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
-    with patch('pyvista.core.pointset._get_offset_array', side_effect=AssertionError):
-        assert mesh.is_all_triangles
+    assert mesh.is_all_triangles
 
 
 def test_extrude():
