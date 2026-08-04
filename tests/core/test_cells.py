@@ -548,6 +548,15 @@ def test_init_cell_array_from_regular_cells(cells, deep):
     cell_array = pv.core.cell.CellArray.from_regular_cells(cells, deep=deep)
     assert np.array_equal(np.array(cells), cell_array.regular_cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert cell_array.IsStorageFixedSize()
+
+
+def test_init_cell_array_from_regular_cells_preserves_int32():
+    cells = np.array(REGULAR_CELL_LIST, np.int32)
+    cell_array = pv.CellArray.from_regular_cells(cells)
+    expected_dtype = np.int32 if pv.vtk_version_info >= (9, 6, 2) else pv.ID_TYPE
+    assert cell_array.connectivity_array.dtype == expected_dtype
 
 
 def test_set_shallow_regular_cells():

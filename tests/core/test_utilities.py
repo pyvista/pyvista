@@ -594,6 +594,8 @@ def test_line_segments_from_points():
     cells = poly.lines
     assert np.allclose(cells[:3], [2, 0, 1])
     assert np.allclose(cells[3:], [2, 2, 3])
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert poly.GetLines().IsStorageFixedSize()
 
 
 def test_lines_from_points():
@@ -604,6 +606,8 @@ def test_lines_from_points():
     cells = poly.lines
     assert np.allclose(cells[:3], [2, 0, 1])
     assert np.allclose(cells[3:], [2, 1, 2])
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert poly.GetLines().IsStorageFixedSize()
 
 
 def test_grid_from_sph_coords():

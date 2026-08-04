@@ -586,6 +586,8 @@ def test_make_tri_mesh(sphere):
 
     assert np.allclose(sphere.points, mesh.points)
     assert np.allclose(sphere.faces, mesh.faces)
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_wrappers():

@@ -11,6 +11,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
 from ._typing_core import BoundsTuple
@@ -788,6 +789,30 @@ class CellArray(
         self.__offsets = vtk_offsets
         self.__connectivity = vtk_connectivity
 
+    def _set_data_fixed_size(
+        self: Self,
+        cell_size: int,
+        connectivity: MatrixLike[int],
+        *,
+        deep: bool = False,
+    ) -> None:
+        """Set fixed-size cell connectivity without an explicit offset array."""
+        connectivity = np.asarray(connectivity)
+
+        if connectivity.dtype == np.int32:
+            vtk_connectivity = _vtk.numpy_to_vtk(
+                np.ascontiguousarray(connectivity.ravel()), deep=deep
+            )
+            self.Use32BitStorage()
+        else:
+            vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        self.SetData(cell_size, vtk_connectivity)
+
+        # Keep the connectivity alive for shallow copies. VTK generates the
+        # offsets implicitly for fixed-size storage.
+        self.__offsets = None
+        self.__connectivity = vtk_connectivity
+
     @staticmethod
     @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
     def from_arrays(
@@ -859,11 +884,17 @@ class CellArray(
             Constructed ``CellArray``.
 
         """
-        cells = np.asarray(cells, dtype=pv.ID_TYPE)
+        cells = np.asarray(cells)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+        if cells.dtype != np.int32:
+            cells = np.asarray(cells, dtype=pv.ID_TYPE)
+
         cellarr = cls()
-        cellarr._set_data(offsets, cells, deep=deep)
+        if vtk_version_info >= (9, 6, 2):
+            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
+        else:
+            offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+            cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
@@ -909,11 +940,16 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     if len(cells) == 0:
         return cells
 
-    offsets = _get_offset_array(cellarr)
-    cell_size = offsets[1] - offsets[0]
+    if vtk_version_info >= (9, 6, 2) and cellarr.IsStorageFixedSize():
+        cell_size = cellarr.IsHomogeneous()
+    else:
+        offsets = _get_offset_array(cellarr)
+        cell_size = offsets[1] - offsets[0]
+
     try:
         return cells.reshape(-1, cell_size)
     except ValueError:
+        offsets = _get_offset_array(cellarr)
         sizes = sorted(np.unique(np.diff(offsets)).tolist())
         msg = (
             f'Cell array does not have regular cells. '

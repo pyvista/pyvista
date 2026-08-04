@@ -148,15 +148,13 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
         raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
-    n_lines = n_points // 2
     lines = np.c_[
-        2 * np.ones(n_lines, np.int_),
         np.arange(0, n_points - 1, step=2),
         np.arange(1, n_points + 1, step=2),
     ]
     poly = pv.PolyData()
     poly.points = points
-    poly.lines = lines
+    poly.lines = pv.CellArray.from_regular_cells(lines)
     return poly
 
 
@@ -195,12 +193,12 @@ def lines_from_points(
     """
     poly = pv.PolyData()
     poly.points = points
-    cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
-    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
-    cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
+    cells = np.empty((len(points) - 1, 2), dtype=np.int_)
+    cells[:, 0] = np.arange(0, len(points) - 1, dtype=np.int_)
+    cells[:, 1] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
-    poly.lines = cells
+        cells = np.append(cells, [[len(points) - 1, 0]], axis=0)
+    poly.lines = pv.CellArray.from_regular_cells(cells)
     return poly
 
 
@@ -591,10 +589,7 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
     if faces.ndim != 2 or faces.shape[1] != 3:
         msg = 'Face array should have shape (M, 3).'
         raise ValueError(msg)
-    cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
-    cells[:, 0] = 3
-    cells[:, 1:] = faces
-    return pv.PolyData(points, cells)
+    return pv.PolyData.from_regular_faces(points, faces)
 
 
 def vector_poly_data(

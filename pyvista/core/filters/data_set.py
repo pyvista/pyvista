@@ -6940,7 +6940,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        cell_array = split.GetCells()
+        cell_size = (
+            cell_array.IsHomogeneous()
+            if vtk_version_info >= (9, 6, 2) and cell_array.IsStorageFixedSize()
+            else -1
+        )
+        repeats = cell_size if cell_size >= 0 else np.diff(split.offset)
+        split.points += np.repeat(vec, repeats, axis=0)
         return split
 
     def separate_cells(  # type: ignore[misc]

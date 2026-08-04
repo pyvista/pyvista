@@ -153,12 +153,12 @@ def test_init_as_points():
 
     vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
     cells = np.array([1, 0, 1, 1, 1, 2], np.int16)
-    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).cells
     assert np.allclose(to_check, cells)
 
     # from list
     mesh.verts = [[1, 0], [1, 1], [1, 2]]
-    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).cells
     assert np.allclose(to_check, cells)
 
     mesh = pv.PolyData()
@@ -173,6 +173,12 @@ def test_init_as_points_from_list():
     points = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
     mesh = pv.PolyData(points)
     assert np.allclose(mesh.points, points)
+
+
+def test_init_as_points_uses_fixed_size_storage():
+    mesh = pv.PolyData(np.zeros((3, 3)))
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert mesh.GetVerts().IsStorageFixedSize()
 
 
 def test_invalid_init():
@@ -1388,6 +1394,8 @@ def test_regular_faces(deep):
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
     assert np.array_equal(mesh.faces, expected_faces)
     assert np.array_equal(mesh.regular_faces, faces)
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_set_regular_faces():
