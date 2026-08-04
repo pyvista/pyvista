@@ -167,7 +167,8 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
 
     make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
     make lint           # run pre-commit on all files
-    make typecheck      # run mypy via tox
+    make docstyle       # run Vale on doc/pyvista/examples (matches CI)
+    make typecheck      # run mypy via tox (matches CI)
     make test           # run the full test suite via tox (matches CI flags)
     make test-core      # run the core test suite via tox (matches CI)
     make test-plotting  # run the plotting test suite via tox (matches CI)
@@ -196,9 +197,9 @@ variable, for example:
 These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
 and ``pytest``. If you need more control (e.g., running against a
 specific ``vtk`` or ``numpy`` version, or building documentation), see
-the `Unit Testing`_, `Style Checking`_, and `Building the
-Documentation`_ sections below, which document the underlying tools
-directly.
+the `Unit Testing`_, `Docstring Testing`_, `Type Checking`_, `Style
+Checking`_, and `Building the Documentation`_ sections below, which
+document the underlying tools directly.
 
 Guidelines
 ~~~~~~~~~~
@@ -838,10 +839,65 @@ Run all code examples in the docstrings with:
 
             tox run -e doctest-modules
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make doctest
+
+        .. note::
+
+            ``make doctest`` runs ``tox run -f doctest``, which matches CI
+            (``.github/workflows/style-docstring.yml``) by running both the
+            ``doctest-modules`` environment above and the ``doctest-local``
+            environment. The latter has no ``pytest``/``tox -e`` equivalent
+            shown above since it doesn't run through ``pytest``: it statically
+            checks that names used in docstring examples are actually defined
+            (see ``tests/check_doctest_names.py``).
+
 .. note::
 
     Additional testing is also performed on any images generated
     by the docstring. See `Documentation Image Regression Testing`_.
+
+
+Type Checking
+~~~~~~~~~~~~~
+PyVista uses `mypy <https://mypy.readthedocs.io/>`_ for static type checking. Configuration
+lives in the ``[tool.mypy]`` section of ``pyproject.toml``, so no additional command-line
+flags are required to run it.
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: mypy
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pip install -e . --group typing
+            mypy
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e mypy
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make typecheck
+
+.. seealso::
+
+    `Notes Regarding Input Validation Testing`_ describes a related but separate
+    ``pytest``-based suite that checks the type hints of ``pyvista.core.validation``
+    using ``mypy`` and ``pyanalyze`` at both static-analysis and runtime.
 
 
 Style Checking
@@ -1156,6 +1212,14 @@ Documentation can be build either directly (i.e. using Python commands) or with 
             .. code-block:: bash
 
                 tox run -e docs-build -- mini18n-html # for translated languages
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make sync-deps # install dev dependencies via uv
+            make docs      # matches CI
 
 The generated documentation can be found in the ``doc/_build/html``
 directory.
