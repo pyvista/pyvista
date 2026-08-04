@@ -65,15 +65,16 @@ jobs:
   # Runner labels should match the actual runners used by the different jobs in this file
 
   # GitHub-hosted runners can re-use the cache across OS's.
-  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
+  # Here we run the cache on ubuntu, but it's usable by Windows and
+  # GitHub-hosted macOS runners too.
   cache-github-hosted:
     name: Cache pyvista/data
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
-  # The macOS self-hosted runner needs its own cache (GitHub-hosted runners
-  # share cache-github-hosted across Linux and Windows).
+  # The self-hosted macOS runners need their own cache (GitHub-hosted
+  # runners share cache-github-hosted across Linux, Windows, and macOS).
   cache-macOS-self-hosted:
     name: Cache pyvista/data
     uses: ./.github/workflows/cache-pyvista-data.yml
@@ -82,21 +83,27 @@ jobs:
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-macOS-self-hosted
+    needs: [cache-github-hosted, cache-macOS-self-hosted]
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Self-hosted runner configurations
+          # macOS runners are our CI bottleneck: only 5 concurrent
+          # GitHub-hosted macOS jobs (org-wide cap) and 5 self-hosted
+          # macOS runners are available. Balance new Python versions
+          # across both accordingly.
+
+          # GitHub-hosted runner configurations
           - name: MacOS Unit Testing (3.10)
             python-version: "3.10"
-            runner-labels: "macos-15-self-hosted"
+            runner-labels: "macos-15"
           - name: MacOS Unit Testing (3.11)
             python-version: "3.11"
-            runner-labels: "macos-15-self-hosted"
+            runner-labels: "macos-15"
           - name: MacOS Unit Testing (3.12)
             python-version: "3.12"
-            runner-labels: "macos-15-self-hosted"
+            runner-labels: "macos-15"
+          # Self-hosted runner configurations
           - name: MacOS Unit Testing (3.13)
             python-version: "3.13"
             runner-labels: "macos-15-self-hosted"
@@ -128,7 +135,7 @@ jobs:
         uses: actions/cache/restore@v6.1.0
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
+          key: ${{ matrix.runner-labels == 'macos-15-self-hosted' && needs.cache-macOS-self-hosted.outputs.key || needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
