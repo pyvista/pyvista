@@ -308,9 +308,10 @@ GitHub Actions, and you can run Vale locally with:
 .. code-block:: bash
 
    pip install vale
-   vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
+   vale --config doc/.vale.ini doc pyvista examples
 
-If you are on Linux or macOS, you can run:
+If you are on Linux or macOS, the top-level ``Makefile`` wraps this
+invocation (kept in sync with CI, see ``.github/workflows/style-docstring.yml``):
 
 .. code-block:: bash
 
@@ -629,7 +630,7 @@ The top-level ``Makefile`` also wraps the most common invocations — see
 
                 tox run -e py3.11-core # run core tests (no need for graphics library)
                 tox run -e py3.11-plotting # run plotting tests (requires graphics library)
-                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+                tox run -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
 
             To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
             ``tox`` arguments from ``pytest`` ones such that:
@@ -1620,7 +1621,7 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 For PRs of branches coming from the main pyvista repository, the documentation
-is automatically deployed using `Netifly GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
+is automatically deployed using `Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
 However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
 that contains a non-interactive subset of the documentation build. It typically weights
 500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
@@ -1679,15 +1680,16 @@ created the following will occur:
 #.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-#.  Locally test and build the documentation. Be sure to run ``make clean``
-    to ensure no results are cached.
+#.  Locally test and build the documentation. Be sure to run ``make -C doc clean``
+    to ensure no results are cached. Run these commands from the repository
+    root, since ``tox`` (and the ``make`` targets that wrap it) must be
+    invoked from where ``tox.ini`` lives, not from ``doc/``.
 
     .. code-block:: bash
 
-       cd doc
-       make clean  # deletes the sphinx-gallery cache
-       tox run -e doctest-modules
-       tox run -e docs-build
+       make -C doc clean  # deletes the sphinx-gallery cache
+       make doctest       # matches CI
+       make docs          # matches CI
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -1816,12 +1818,12 @@ status check label regardless of if it is self hosted.
       matrix:
         include:
           # GitHub-hosted runner configuration
-          - job-name: MacOS Unit Testing (Python 3.9)
-            python-version: "3.9"
-            runner-labels: "macos-13"
-          # Self-hosted runner configurations
           - job-name: MacOS Unit Testing (Python 3.10)
             python-version: "3.10"
+            runner-labels: "macos-13"
+          # Self-hosted runner configurations
+          - job-name: MacOS Unit Testing (Python 3.11)
+            python-version: "3.11"
             runner-labels: "macos-15-self-hosted"
 
 With this approach, a job can be configured to use GitHub's hosted runners simply
