@@ -23,6 +23,7 @@ from typing import get_args
 from unittest import mock
 import warnings
 
+from docutils import nodes as docutils_nodes
 from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
@@ -31,6 +32,7 @@ from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
+from sphinx import addnodes
 
 import pyvista as pv
 from pyvista import _vtk
@@ -1266,12 +1268,11 @@ def test_pv_html_page_context_without_edit_button():
 
 
 def _gallery_note(text, classes):
-    nodes = pytest.importorskip('docutils.nodes')
-    note = nodes.note(classes=classes)
-    paragraph = nodes.paragraph()
-    paragraph += nodes.Text(text)
+    note = docutils_nodes.note(classes=classes)
+    paragraph = docutils_nodes.paragraph()
+    paragraph += docutils_nodes.Text(text)
     note += paragraph
-    section = nodes.section()
+    section = docutils_nodes.section()
     section += note
     return section, paragraph
 
@@ -1335,8 +1336,6 @@ def test_pv_html_page_context_drops_source_download():
 def test_pv_html_page_context_uses_gallery_downloads():
     # On a gallery page the .rst download is replaced by the .py and .ipynb
     # files sphinx-gallery already links at the bottom of the page
-    addnodes = pytest.importorskip('sphinx.addnodes')
-
     doctree = addnodes.compact_paragraph()
     for filename in ['9f/create_sphere.ipynb', '3b/create_sphere.py', '7c/create_sphere.zip']:
         doctree += addnodes.download_reference('', '', filename=filename)
