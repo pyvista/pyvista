@@ -5,7 +5,13 @@ from __future__ import annotations
 import inspect
 import os
 import os.path as op
+from pathlib import PurePosixPath
 import sys
+from typing import TYPE_CHECKING
+from urllib.parse import quote
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001, FBT002
@@ -139,20 +145,14 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
     return link
 
 
-def pv_html_page_context(  # noqa: PLR0917
-    app,  # noqa: ARG001
-    pagename: str,
-    templatename: str,  # noqa: ARG001
-    context,
-    doctree,  # noqa: ARG001
-) -> None:
+def _fix_edit_button(pagename: str, context) -> None:
     """Point the "suggest edit" button at the file the page is generated from.
 
     ``sphinx-book-theme`` builds the pencil button in Python rather than in a
     template: ``header_buttons`` is populated by its ``add_source_buttons``
     handler (priority 501) from ``get_edit_provider_and_url()``. So the URL is
-    patched here after the fact, which requires this handler to be connected
-    with a priority greater than 501.
+    patched here after the fact, which requires ``pv_html_page_context`` to be
+    connected with a priority greater than 501.
 
     ``get_edit_provider_and_url`` is replaced as well so that any template
     calling it directly -- such as the ``edit-this-page.html`` component of
@@ -179,3 +179,134 @@ def pv_html_page_context(  # noqa: PLR0917
         for repo_button in buttons:
             if repo_button.get('label') == 'source-edit-button':
                 repo_button['url'] = fix_edit_link_button(pagename, repo_button['url'])
+
+
+# Download buttons keyed by suffix, in the order they appear in the dropdown.
+# Icons and labels match the ones ``sphinx-book-theme`` uses for its own.
+_DOWNLOAD_BUTTONS = {
+    '.py': ('fas fa-file', 'Download source code', 'download-source-button'),
+    '.ipynb': ('fas fa-code', 'Download notebook file', 'download-notebook-button'),
+}
+
+
+def download_buttons(dlpath: str, filenames: Iterable[str]) -> list[dict[str, str]]:
+    """Build header download buttons for the given ``_downloads`` targets.
+
+    Parameters
+    ----------
+    dlpath : str
+        Path to the ``_downloads`` directory, relative to the page being
+        rendered. This is ``builder.dlpath``.
+
+    filenames : Iterable[str]
+        Download targets relative to ``dlpath``, as sphinx-gallery names them,
+        for example ``'2c9fe2436f8311afc0b428f917bf5/create_sphere.py'``.
+        Suffixes other than ``.py`` and ``.ipynb`` are ignored.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        Button definitions in the form ``sphinx-book-theme`` expects.
+
+    """
+    available = {}
+    for filename in filenames:
+        suffix = PurePosixPath(filename).suffix
+        # Keep the first of each suffix; a page has one download per kind
+        if suffix in _DOWNLOAD_BUTTONS and suffix not in available:
+            available[suffix] = filename
+
+    return [
+        {
+            'type': 'link',
+            # ``quote`` to match the theme's own handling of download targets
+            'url': f'{dlpath}/{quote(available[suffix])}',
+            'text': suffix,
+            'tooltip': tooltip,
+            'icon': icon,
+            'label': label,
+        }
+        for suffix, (icon, tooltip, label) in _DOWNLOAD_BUTTONS.items()
+        if suffix in available
+    ]
+
+
+def _gallery_download_buttons(app, doctree) -> list[dict[str, str]]:
+    """Return download buttons for the files sphinx-gallery offers for a page.
+
+    Every gallery example links its ``.py`` and ``.ipynb`` downloads at the
+    bottom of the page. Those are still ``download_reference`` nodes in the
+    resolved doctree at ``html-page-context`` time, each carrying the hashed
+    name the builder writes under ``_downloads``, so the header button can be
+    pointed at exactly the same files.
+
+    """
+    from sphinx import addnodes  # noqa: PLC0415
+
+    if doctree is None:  # pragma: no cover
+        return []
+
+    filenames = [
+        node['filename']
+        for node in doctree.findall(addnodes.download_reference)
+        if node.get('filename')
+    ]
+    return download_buttons(app.builder.dlpath, filenames)
+
+
+def _fix_source_downloads(app, context, doctree) -> None:
+    """Repoint the download buttons at files that actually exist.
+
+    ``sphinx-book-theme`` adds ".rst"/".ipynb" download buttons whenever the
+    page has a source suffix, without checking ``sourcename``. Sphinx leaves
+    ``sourcename`` empty when ``html_copy_source`` is disabled, as it is for
+    these docs, so those buttons link to a bare ``_sources/`` that is never
+    written and 404s.
+
+    Gallery examples get sphinx-gallery's ``.py`` and ``.ipynb`` downloads
+    instead. Other pages have nothing to download and keep only "Print to PDF".
+
+    """
+    if context.get('sourcename') or 'header_buttons' not in context:
+        # Sources are copied into the build, so the theme's links are valid
+        return
+
+    replacements = _gallery_download_buttons(app, doctree)
+    broken = {'download-source-button', 'download-notebook-button'}
+    header_buttons = []
+    for button in context['header_buttons']:
+        if button.get('label') != 'download-buttons':
+            header_buttons.append(button)
+            continue
+
+        buttons = replacements + [
+            nested for nested in button['buttons'] if nested.get('label') not in broken
+        ]
+        if len(buttons) > 1:
+            button['buttons'] = buttons
+            header_buttons.append(button)
+        elif buttons:
+            # Match the theme's own handling of a lone button: no dropdown,
+            # and no text since it is rendered as a bare icon
+            (only,) = buttons
+            only['text'] = ''
+            header_buttons.append(only)
+
+    context['header_buttons'] = header_buttons
+
+
+def pv_html_page_context(  # noqa: PLR0917
+    app,
+    pagename: str,
+    templatename: str,  # noqa: ARG001
+    context,
+    doctree,
+) -> None:
+    """Fix up the ``sphinx-book-theme`` header buttons for the page being rendered.
+
+    Must be connected to ``html-page-context`` with a priority above the 501
+    used by the theme's own handlers, which is where the buttons are built.
+
+    """
+    _fix_edit_button(pagename, context)
+    _fix_source_downloads(app, context, doctree)
