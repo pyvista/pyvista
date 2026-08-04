@@ -1371,7 +1371,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return False
 
         # next, check if there are three points per face
-        return bool((np.diff(self._offset_array) == 3).all())
+        return self.GetPolys().IsHomogeneous() == 3
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
