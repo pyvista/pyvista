@@ -295,6 +295,42 @@ def _fix_source_downloads(app, context, doctree) -> None:
     context['header_buttons'] = header_buttons
 
 
+# Icon sphinx-book-theme uses for the header download button
+_DOWNLOAD_ICON = '<i class="fas fa-download"></i>'
+
+
+def patch_gallery_download_note(app, doctree, docname) -> None:  # noqa: ARG001
+    """Point the note at the top of a gallery example at the download button too.
+
+    sphinx-gallery opens every example with "Go to the end to download the full
+    example code.", referring to the links in the page footer. The same files
+    are on the header download button, which is easier to reach, so mention it.
+
+    The wording is a module constant in ``sphinx_gallery.gen_rst`` with no
+    config hook, so the note is amended in the doctree instead of templating it.
+
+    """
+    from docutils import nodes  # noqa: PLC0415
+
+    for note in doctree.findall(nodes.note):
+        if 'sphx-glr-download-link-note' not in note['classes']:
+            continue
+
+        paragraph = note.next_node(nodes.paragraph)
+        if paragraph is None:  # pragma: no cover
+            continue
+
+        # Drop the full stop that ends "...the full example code." so the
+        # sentence can be continued
+        tail = paragraph[-1]
+        if isinstance(tail, nodes.Text) and tail.rstrip().endswith('.'):
+            paragraph.replace(tail, nodes.Text(tail.rstrip()[:-1]))
+
+        paragraph += nodes.Text(', or use the ')
+        paragraph += nodes.raw('', _DOWNLOAD_ICON, format='html')
+        paragraph += nodes.Text(' button at the top of the page.')
+
+
 def pv_html_page_context(  # noqa: PLR0917
     app,
     pagename: str,

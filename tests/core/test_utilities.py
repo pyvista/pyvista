@@ -66,6 +66,7 @@ from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import download_buttons
 from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.docs import patch_gallery_download_note
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
@@ -1262,6 +1263,40 @@ def test_pv_html_page_context_without_edit_button():
     context = {}
     pv_html_page_context(None, 'index', 'page.html', context, None)
     assert context == {}
+
+
+def _gallery_note(text, classes):
+    nodes = pytest.importorskip('docutils.nodes')
+    note = nodes.note(classes=classes)
+    paragraph = nodes.paragraph()
+    paragraph += nodes.Text(text)
+    note += paragraph
+    section = nodes.section()
+    section += note
+    return section, paragraph
+
+
+def test_patch_gallery_download_note():
+    # The sphinx-gallery note should also point at the header download button
+    doctree, paragraph = _gallery_note(
+        'Go to the end to download the full example code.',
+        classes=['sphx-glr-download-link-note'],
+    )
+    patch_gallery_download_note(None, doctree, 'examples/00-load/create_sphere')
+
+    text = paragraph.astext()
+    assert 'full example code, or use the' in text
+    assert text.endswith('button at the top of the page.')
+    assert 'fa-download' in text
+
+
+def test_patch_gallery_download_note_ignores_other_notes():
+    # Notes that are not the sphinx-gallery download note are left alone
+    original = 'Some unrelated note.'
+    doctree, paragraph = _gallery_note(original, classes=[])
+    patch_gallery_download_note(None, doctree, 'user-guide/intro')
+
+    assert paragraph.astext() == original
 
 
 def test_download_buttons():
