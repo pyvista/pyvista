@@ -45,6 +45,7 @@ import make_tables
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
+from pyvista.core.utilities.docs import patch_gallery_download_note
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
@@ -851,7 +852,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+    app.connect('doctree-resolved', patch_gallery_download_note)
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
     app.add_js_file('redirect_fragments.js')
+    app.add_js_file('download_buttons.js')
