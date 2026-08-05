@@ -768,7 +768,19 @@ def plot_compare(  # noqa: ANN201
                 # which would both override the fit below and leave the camera pointing
                 # down an axis instead. Setting it also marks the camera as set.
                 pl.camera_position = pl.get_default_cam_pos()
-            pl.renderer.reset_camera(bounds=_union_bounds(renderers))
+            bounds = _union_bounds(renderers)
+            pl.renderer.ResetCamera(*bounds)
+            # `reset_camera` resets the clipping range from the bounds of whichever
+            # renderer happens to be active rather than the ones it was just fit to,
+            # which is one subplot's worth of bounds where every subplot needs fitting.
+            # Reset it from the same bounds the camera itself was just fit to instead.
+            pl.renderer.ResetCameraClippingRange(*bounds)
+            # An interactor style narrows the clipping range again before every render
+            # it drives, from the bounds of whichever renderer the interaction is in.
+            # That undoes the fit above the moment the smaller subplot is interacted
+            # with, since linked renderers share one camera but not one clipping range.
+            if pl.iren is not None:
+                pl.iren.style.AutoAdjustCameraClippingRangeOff()
         else:
             # Every renderer has its own camera, so reset each to fit each dataset
             # independently
