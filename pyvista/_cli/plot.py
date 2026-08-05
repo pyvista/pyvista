@@ -78,6 +78,8 @@ def _plot(
     ],
 ) -> None:
     meshes = read_meshes(paths, skip_unreadable=skip_unreadable)
+    if static:
+        kwargs['static'] = True
     return call_or_exit(
         pv.plot,
         command='plot',
@@ -104,50 +106,3 @@ def _plot(
         ssao=ssao,
         **kwargs,
     )
-    meshes = [
-        read_mesh(path, on_error='suppress' if skip_unreadable else on_error_if_unreadable)
-        for path in valid_paths
-    ]
-    if static:
-        kwargs['static'] = True
-    try:
-        res = pv.plot(
-            var_item=[mesh for mesh in meshes if mesh is not None],  # type: ignore [arg-type]
-            off_screen=off_screen,
-            full_screen=full_screen,
-            screenshot=screenshot,
-            interactive=interactive,
-            window_size=window_size,
-            show_bounds=show_bounds,
-            show_axes=show_axes,
-            background=background,
-            text=text,
-            eye_dome_lighting=eye_dome_lighting,
-            volume=volume,
-            parallel_projection=parallel_projection,
-            return_cpos=return_cpos,
-            anti_aliasing=anti_aliasing,
-            zoom=zoom,
-            border=border,
-            border_color=border_color,
-            border_width=border_width,
-            ssao=ssao,
-            **kwargs,
-        )
-
-    except Exception as ex:  # noqa: BLE001
-        # Prevent traceback and output error along with help message
-        CLI_APP.help_print(tokens='plot', console=CLI_APP.error_console)
-
-        msg = Group(
-            ':warning: The following exception has been raised when calling [u]pv.plot[/u]:',
-            NewLine(),
-            Panel(
-                str(ex), title=f'{type(ex).__name__}', title_align='left', style='bold blink red'
-            ),
-            NewLine(),
-            Text('Please check the provided arguments.'),
-        )
-        print_error_and_exit(message=msg)
-    else:
-        return res
