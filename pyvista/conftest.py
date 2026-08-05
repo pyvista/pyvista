@@ -8,6 +8,10 @@ import matplotlib as mpl
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
 
 
 @pytest.fixture(autouse=True, scope='session')
