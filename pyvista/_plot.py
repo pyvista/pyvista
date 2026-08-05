@@ -53,7 +53,7 @@ def plot(  # noqa: ANN202, PLR0917
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,
     border: bool = False,  # noqa: FBT001, FBT002
-    border_color: ColorLike = 'k',
+    border_color: ColorLike | None = None,
     border_width: float = 2.0,
     ssao: bool = False,  # noqa: FBT001, FBT002
     **kwargs,
@@ -179,13 +179,15 @@ def plot(  # noqa: ANN202, PLR0917
     border : bool, default: False
         Draw a border around each render window.
 
-    border_color : ColorLike, default: "k"
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.
