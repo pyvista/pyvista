@@ -3519,3 +3519,20 @@ def test_try_callback_warns_every_time():
     messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
     assert len(messages) == n_calls
     assert 'callback failed' in str(messages[0].message)
+
+
+def test_write_path_of_ensight_writer(tmp_path, hexbeam):
+
+    path = tmp_path / 'hexbeam.case'
+    writer = pv.EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
+    assert writer.path == str(path.parent / path.stem)
+    # written_path is initialized same as path,
+    # but is updated after write() is called
+    assert writer.written_path == path
+
+    writer.write()
+
+    assert writer.path == str(path.parent / path.stem)
+
+    expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
+    assert writer.written_path == expected_path
