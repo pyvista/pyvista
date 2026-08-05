@@ -108,10 +108,10 @@ ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
 
 # Map readers to Plotter import methods
-READER_IMPORTERS: dict[type[pv.BaseReader], Callable[..., None]] = {}
+READER_IMPORTERS: dict[type[pv.BaseReader], str] = {}
 for ext, reader in CLASS_READERS.items():
-    name = f'import_{ext.removeprefix(".")}'
-    if method := getattr(pv.Plotter, name, None):
+    method = f'import_{ext.removeprefix(".")}'
+    if hasattr(pv.Plotter, method):
         READER_IMPORTERS.setdefault(reader, method)
 
 
