@@ -168,6 +168,16 @@ Miscellaneous Datasets
 Browse Datasets by Category
 ---------------------------
 
+.. dropdown:: Plotter Imported Datasets
+    :name: plotter_import_gallery
+
+    .. tab-set::
+
+        .. tab-item:: All
+
+            .. include:: /api/examples/dataset-gallery/plotter_import_carousel.rst
+
+
 .. dropdown:: Medical Datasets
     :name: medical_dataset_gallery
 

@@ -107,6 +107,14 @@ SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
 ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
 
+# Map readers to Plotter import methods
+READER_IMPORTERS: dict[type[pv.BaseReader], Callable[..., None]] = {}
+for ext, reader in CLASS_READERS.items():
+    name = f'import_{ext.removeprefix(".")}'
+    if method := getattr(pv.Plotter, name, None):
+        READER_IMPORTERS.setdefault(reader, method)
+
+
 def _aligned_dedent(txt):
     """Variant of `textwrap.dedent`.
 
@@ -2193,6 +2201,7 @@ class DatasetCard:
             num_files,
             file_ext,
             reader_type,
+            importer_meth,
             dataset_type,
             datasource_links,
             n_cells,
@@ -2236,6 +2245,7 @@ class DatasetCard:
             num_files=num_files,
             file_ext=file_ext,
             reader_type=reader_type,
+            importer_method=importer_meth,
         )
         seealso_block = self._create_seealso_block(cross_references)
         footer_block = self._create_footer_block(datasource_links)
@@ -2275,6 +2285,7 @@ class DatasetCard:
         num_files = DatasetPropsGenerator.generate_num_files(loader)
         file_ext = DatasetPropsGenerator.generate_file_ext(loader)
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
+        importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
         dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
@@ -2291,6 +2302,7 @@ class DatasetCard:
             num_files,
             file_ext,
             reader_type,
+            importer_meth,
             dataset_type,
             datasource_links,
             n_cells,
@@ -2561,13 +2573,16 @@ class DatasetCard:
         )
 
     @classmethod
-    def _create_file_props_block(cls, *, loader, file_size, num_files, file_ext, reader_type):
+    def _create_file_props_block(
+        cls, *, loader, file_size, num_files, file_ext, reader_type, importer_method
+    ):
         if isinstance(loader, _DatasetLoader):
             file_info_fields = [
                 ('File Size', file_size),
                 ('Num Files', num_files),
                 ('File Ext', file_ext),
                 ('Reader', reader_type),
+                ('Importer', importer_method),
             ]
             return DatasetCard._generate_field_block(
                 file_info_fields,
@@ -2658,6 +2673,19 @@ class DatasetPropsGenerator:
                 .replace(')', '')
             ).replace(', ', '\n')
         return reader_type
+
+    @staticmethod
+    def generate_importer_method(
+        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+    ):
+        """Format Plotter importer method with a doc reference."""
+        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if reader_type is None:
+            return None
+
+        if importer := READER_IMPORTERS.get(reader_type):
+            return f':meth:`~pyvista.Plotter.{importer}`'
+        return None
 
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
@@ -2939,11 +2967,22 @@ class DatasetCardFetcher:
             yield name, card.loader
 
     @classmethod
-    def fetch_and_filter(cls, filter_func: Callable[..., bool]) -> list[str]:
+    def fetch_and_filter(
+        cls,
+        filter_func: Callable[..., bool],
+        *,
+        fetch_by: Literal['dataset', 'loader'] = 'dataset',
+    ) -> list[str]:
         """Return dataset names where any dataset object returns 'True' for a given function."""
         names_dict: dict[str, None] = {}  # Use dict as an ordered set
-        for name, dataset_iterable in cls.fetch_all_dataset_objects():
-            for obj in dataset_iterable:
+        all_objects = (
+            cls.fetch_all_dataset_objects()
+            if fetch_by == 'dataset'
+            else cls.fetch_all_dataset_loaders()
+        )
+        for name, content in all_objects:
+            iterable = content if fetch_by == 'dataset' else [content]
+            for obj in iterable:
                 try:
                     keep = filter_func(obj)
                 except AttributeError:
@@ -3258,6 +3297,24 @@ class PlanetsCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
+
+
+class PlotterImportCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel of cards for formats that can be imported by Plotter."""
+
+    name = 'plotter_import_carousel'
+    doc = 'File formats with a :class:`~pyvista.Plotter` import method.'
+    badge = SpecialDataTypeBadge('Plotter Import', ref='plotter_import_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        importable_filter = lambda loader: (
+            DatasetPropsGenerator.generate_importer_method(loader) is not None
+        )
+        importable_names = DatasetCardFetcher.fetch_and_filter(
+            importable_filter, fetch_by='loader'
+        )
+        return sorted(importable_names)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -3624,6 +3681,7 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
+    PlotterImportCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
