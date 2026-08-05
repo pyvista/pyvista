@@ -156,7 +156,7 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 )
 
 
-def _gltf_loader(name):
+def _gltf_loader(name: str):
     """Return a dataset loader for glTF files.
 
     The glTF files are hosted in a separate repository from `pyvista/data`, so
@@ -9782,7 +9782,11 @@ _dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_teapot_vrml(*, load: bool = True):
+@overload
+def download_teapot_vrml(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_teapot_vrml(*, load: Literal[False]) -> str: ...
+def download_teapot_vrml(*, load: bool = True) -> MultiBlock | str:
     """Download a 2-manifold solid version of the famous teapot example.
 
     The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
@@ -9817,7 +9821,11 @@ def download_teapot_vrml(*, load: bool = True):
 _dataset_teapot_vrml = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
 
 
-def download_sextant(*, load: bool = True):
+@overload
+def download_sextant(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_sextant(*, load: Literal[False]) -> str: ...
+def download_sextant(*, load: bool = True) -> MultiBlock | str:
     """Download the sextant example.
 
     Returns
@@ -9846,7 +9854,11 @@ def download_sextant(*, load: bool = True):
 _dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
 
 
-def download_grasshopper(*, load: bool = True):
+@overload
+def download_grasshopper(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_grasshopper(*, load: Literal[False]) -> str: ...
+def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
     """Download the grasshopper example.
 
     .. versionadded:: 0.45
@@ -9882,7 +9894,11 @@ def download_grasshopper(*, load: bool = True):
 _dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grasshop.wrl')
 
 
-def download_flamingo(*, load: bool = True):
+@overload
+def download_flamingo(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_flamingo(*, load: Literal[False]) -> str: ...
+def download_flamingo(*, load: bool = True) -> MultiBlock | str:
     """Download the flamingo example.
 
     .. versionadded:: 0.44.0
@@ -9913,13 +9929,17 @@ def download_flamingo(*, load: bool = True):
 _dataset_flamingo = _SingleFileDownloadableDatasetLoader('iflamigm.3ds')
 
 
-def download_damaged_helmet(*, load: bool = True):  # pragma: no cover
+@overload
+def download_damaged_helmet(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_damaged_helmet(*, load: Literal[False]) -> str: ...
+def download_damaged_helmet(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the damaged helmet example.
 
     Returns
     -------
-    str
-        Filename of the gltf file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -9944,13 +9964,17 @@ def download_damaged_helmet(*, load: bool = True):  # pragma: no cover
 _dataset_damaged_helmet = _gltf_loader('damaged_helmet')
 
 
-def download_gearbox(*, load: bool = True):  # pragma: no cover
+@overload
+def download_gearbox(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_gearbox(*, load: Literal[False]) -> str: ...
+def download_gearbox(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the gearbox example.
 
     Returns
     -------
-    str
-        Filename of the gltf file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -9973,13 +9997,17 @@ def download_gearbox(*, load: bool = True):  # pragma: no cover
 _dataset_gearbox = _gltf_loader('gearbox')
 
 
-def download_avocado(*, load: bool = True):  # pragma: no cover
+@overload
+def download_avocado(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_avocado(*, load: Literal[False]) -> str: ...
+def download_avocado(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the avocado example.
 
     Returns
     -------
-    str
-        Filename of the gltf file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -10002,13 +10030,17 @@ def download_avocado(*, load: bool = True):  # pragma: no cover
 _dataset_avocado = _gltf_loader('avocado')
 
 
-def download_milk_truck(*, load: bool = True):  # pragma: no cover
+@overload
+def download_milk_truck(*, load: Literal[True] = True) -> MultiBlock: ...
+@overload
+def download_milk_truck(*, load: Literal[False]) -> str: ...
+def download_milk_truck(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the milk truck example.
 
     Returns
     -------
-    str
-        Filename of the gltf file.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
