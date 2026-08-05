@@ -32,33 +32,20 @@ cp = pv.CameraPosition(
 # %%
 # Let's apply the Gaussian smoothing with different values of standard
 # deviation.
-pl = pv.Plotter(shape=(2, 2))
+datasets = {'Original Image': data}
+for std_dev in [2.0, 4.0, 8.0]:
+    datasets[f'Gaussian smoothing, std={std_dev:g}'] = data.gaussian_smooth(
+        std_dev=std_dev
+    )
 
-pl.subplot(0, 0)
-pl.add_text('Original Image', font_size=14)
-pl.add_mesh(data, rgb=True)
-pl.camera_position = cp
-
-pl.subplot(0, 1)
-pl.add_text('Gaussian smoothing, std=2', font_size=14)
-pl.add_mesh(data.gaussian_smooth(std_dev=2.0), rgb=True)
-pl.camera_position = cp
-
-pl.subplot(1, 0)
-pl.add_text('Gaussian smoothing, std=4', font_size=14)
-pl.add_mesh(data.gaussian_smooth(std_dev=4.0), rgb=True)
-pl.camera_position = cp
-
-pl.subplot(1, 1)
-pl.add_text('Gaussian smoothing, std=8', font_size=14)
-pl.add_mesh(data.gaussian_smooth(std_dev=8.0), rgb=True)
-pl.camera_position = cp
-
-pl.show()
+pv.plot_compare(
+    datasets,
+    dataset_kwargs={'rgb': True},
+    label_size=14,
+    cpos=cp,
+)
 
 # %%
-# |
-#
 # Volume Rendering
 # ~~~~~~~~~~~~~~~~
 # Now let's see an example on a 3D dataset with volume rendering:

@@ -11,4 +11,5 @@ from .app import CLI_APP as CLI_APP
 from . import report as report
 from . import convert as convert
 from . import plot as plot
+from . import compare as compare
 from . import validate as validate
