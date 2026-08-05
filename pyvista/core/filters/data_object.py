@@ -2609,6 +2609,7 @@ class DataObjectFilters:
         bounds_size: float | VectorLike[float] | None = None,
         length: float | None = None,
         center: VectorLike[float] | None = None,
+        preserve_aspect_ratio: bool | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ) -> _MeshType_co:
@@ -2656,6 +2657,21 @@ class DataObjectFilters:
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
             :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` or ``length``
             is specified.
+
+        preserve_aspect_ratio : bool, optional
+            Whether to preserve the dataset's aspect ratio during resizing.
+
+            - If ``True``, a uniform scale factor is applied. For ``bounds`` and
+              ``bounds_size``, the specified values are treated as maximum extents
+              rather than exact targets.
+            - If ``False``, each axis is scaled independently to exactly match the
+              requested ``bounds`` or ``bounds_size``.
+
+            By default, ``bounds`` and ``bounds_size`` use independent axis scaling,
+            while ``length`` preserves the aspect ratio. This parameter can be used to
+            enable aspect ratio preservation for ``bounds`` and ``bounds_size``.
+
+            .. versionadded:: 0.49
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
@@ -2738,6 +2754,22 @@ class DataObjectFilters:
                     z_min = -0.5,
                     z_max =  0.5)
 
+        Normalize it again, but preserve the aspect ratio. Its 1:2:3 x-y-z bounds
+        ratio is preserved.
+
+        >>> resized = mesh.resize(
+        ...     bounds_size=1.0, center=(0.0, 0.0, 0.0), preserve_aspect_ratio=True
+        ... )
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.1666,
+                    x_max =  0.1666,
+                    y_min = -0.3333,
+                    y_max =  0.3333,
+                    z_min = -0.5,
+                    z_max =  0.5)
+        >>> resized.bounds_size
+        (0.3333, 0.6666, 1.0)
+
         """
         if self.is_empty:
             return self.copy()
@@ -2755,6 +2787,13 @@ class DataObjectFilters:
             msg = (
                 'Cannot specify more than one resizing method. Choose either `bounds`, '
                 '`bounds_size`, or `length` independently.'
+            )
+            raise ValueError(msg)
+
+        if preserve_aspect_ratio is False and length_set:
+            msg = (
+                '`preserve_aspect_ratio=False` cannot be used with `length` since '
+                '`length` resizing always preserves the aspect ratio.'
             )
             raise ValueError(msg)
 
@@ -2795,6 +2834,9 @@ class DataObjectFilters:
 
         current_size = self.bounds_size
         scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        if preserve_aspect_ratio:
+            scale_factors = np.full(3, scale_factors.min())
 
         # Apply transformation
         transform = pv.Transform()
