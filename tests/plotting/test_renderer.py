@@ -754,3 +754,27 @@ def test_init_renderers_groups_item_len_raises(groups):
         match=re.escape('Each group entry must have length 2.'),
     ):
         pv.Plotter(groups=[groups])
+
+
+@pytest.mark.parametrize(('shape', 'n_renderers'), [('3|1', 4), ('4/2', 6), ('1|1', 2)])
+def test_init_renderers_shape_descriptor(shape, n_renderers):
+    pl = pv.Plotter(shape=shape)
+    assert len(pl.renderers) == n_renderers
+    assert pl.renderers.shape == (n_renderers,)
+
+
+@pytest.mark.parametrize('shape', ['abc', '1|2|3', '1|2/3', '3|', '', ' 3|1'])
+def test_init_renderers_shape_descriptor_raises(shape):
+    match = (
+        '"shape" string descriptor must be two integers separated by "|" or "/", '
+        f'for example "3|1" or "4/2". Got {shape!r}.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Plotter(shape=shape)
+
+
+@pytest.mark.parametrize('shape', ['0|2', '3|0', '0/2'])
+def test_init_renderers_shape_descriptor_positive_raises(shape):
+    match = f'"shape" must contain only positive integers. Got {shape!r}.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Plotter(shape=shape)
