@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 import contextlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
@@ -18,8 +19,6 @@ from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from pyvista import DataObject
     from pyvista import NumpyArray
     from pyvista import _vtk
@@ -92,6 +91,7 @@ class BaseWriter(_FileIOBase):
         super().__init__()
         self.path = path
         self.data_object = data_object
+        self.written_path = path
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
@@ -124,7 +124,21 @@ class BaseWriter(_FileIOBase):
 
     @property
     def path(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the filename or directory of the writer."""
+        """Return or set the filename or directory of the writer.
+
+        Notes
+        -----
+        This is the path that will be passed to the underlying VTK writer.
+        For most writers, this is the actual path of the written file.
+        For writers that write multiple files (e.g., EnSightWriter),
+        this path can be renamed. See :attr:`written_path` for the actual path of the written file.
+
+        Returns
+        -------
+        str
+            The path of the file to write to.
+
+        """
         return self.writer.GetFileName()  # type: ignore[attr-defined]
 
     @path.setter
@@ -140,6 +154,31 @@ class BaseWriter(_FileIOBase):
     def data_object(self, data_object: DataObject) -> None:
         self._data_object = data_object
         self.writer.SetInputData(data_object)
+
+    @property
+    def written_path(self) -> Path:
+        """Return the formatted path of the written files.
+
+        .. versionadded:: 0.49.0
+
+        Notes
+        -----
+        Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
+        For most readers, ``path`` and ``written_path`` are identical. In cases where
+        multiple files are written (e.g. :class:`vtkEnSightWriter`), this path corresponds
+        to the "main" output file that would be used for reading the mesh again.
+
+        Returns
+        -------
+        pathlib.Path
+            The path of the written file.
+
+        """
+        return self._written_path
+
+    @written_path.setter
+    def written_path(self, path: str | Path) -> None:
+        self._written_path = Path(path)
 
     def _execute_before_write(self) -> None:
         """Execute code before calling `write()`.
@@ -454,6 +493,52 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkUnstructuredGridWriter'
+
+
+class EnSightWriter(BaseWriter):
+    """EnSightWriter for ``.case`` files.
+
+    Wraps :vtk:`vtkEnSightWriter`.
+
+    .. note::
+        This is a parallel writer that prepends a process number to the ``.case`` extension,
+        e.g. ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
+        to get the saved file after calling :meth:`~pyvista.BaseWriter.write`.
+
+    .. note::
+        This writer saves the mesh as a multi-block dataset.
+        Even if the input mesh is a single block, the output will be a multi-block dataset
+        and the default block name will be ``VTK Part``.
+
+    .. versionadded:: 0.49.0
+
+    """
+
+    _vtk_class_name = 'vtkEnSightWriter'
+
+    @property
+    def path(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the filename or directory of the writer."""
+        # vtkEnSightWriter has no single FileName concept, only Path/BaseName.
+        path = Path(self.writer.GetPath())  # type: ignore[attr-defined]
+        basename = self.writer.GetBaseName()  # type: ignore[attr-defined]
+        return str(path / basename) if basename else str(path)
+
+    @path.setter
+    def path(self, path: str | Path) -> None:
+        # Set Path/BaseName directly to avoid vtkEnSightWriter's ComputeNames(),
+        # which splits FileName on the last '/' and breaks on Windows backslash
+        # paths (falls back to Path="./" and mangles the rest into BaseName).
+        raw_path = Path(path)
+        self.writer.SetPath(str(raw_path.parent))  # type: ignore[attr-defined]
+        self.writer.SetBaseName(raw_path.stem)  # type: ignore[attr-defined]
+
+    def _execute_before_write(self) -> None:
+        # ProcessNumber can still change after path is set (e.g. via writer_kwargs),
+        # so the final filename must be resolved here, not in the path setter.
+        raw_path = Path(self.path)
+        process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
+        self.written_path = raw_path.parent / f'{raw_path.stem}.{process_number}.case'
 
 
 @abstract_class
