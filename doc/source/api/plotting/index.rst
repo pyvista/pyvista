@@ -80,9 +80,7 @@ These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 Charts API
 ----------
 Charts API reference. These dedicated classes can be used to embed
-charts in plotting windows. Note that full charts functionality
-requires a VTK version of at least 9.3. Most components work fine
-in older versions though.
+charts in plotting windows.
 
 .. toctree::
    :maxdepth: 2

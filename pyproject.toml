@@ -23,12 +23,13 @@ dependencies = [
   'numpy>=1.21.0',
   'pillow',
   'pooch',
+  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
   'vtk<9.7.0',
-  'vtk>=9.2.2',
+  'vtk>=9.3.1',
 ]
 description = '3D visualization and mesh analysis for science and engineering.'
 dynamic = ['version']
@@ -46,18 +47,19 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.20.0',
+  'cyclopts<4.23.0',
   'matplotlib<3.10.10',
   'numpy<2.5.0',
-  'pillow<12.3.0',
+  'pillow<12.4.0',
   'pooch<1.10.0',
+  'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
   'scooby<0.12.0',
-  'typing-extensions<4.16.0',
+  'typing-extensions<4.17.0',
 ]
 
 typing = [
   'meshio<5.4.0',
-  'mypy<2.2.0',
+  'mypy<2.4.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
   'trimesh<4.13.0',
@@ -70,7 +72,7 @@ test = [
   'colorcet<3.3.0',
   'embreex<4.4.1',
   'fsspec<2026.7.0',
-  'hypothesis<6.155.8',
+  'hypothesis<6.161.3',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
@@ -80,8 +82,7 @@ test = [
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
-  'pyarrow<25.0.0',
-  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
+  'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
@@ -90,6 +91,7 @@ test = [
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-zstd>=0.2.3,<0.3.0',
+  'refleak>=0.2.1,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -97,14 +99,14 @@ test = [
   'sphinx-gallery<0.22.0',
   'sphinx<8.3.0',
   'sympy<1.15.0',
-  'tqdm<4.69.0',
+  'tqdm<4.70.0',
   'trame-pyvista<0.2.0',
   'trimesh<4.13.0',
-  'typing-extensions<4.16.0',
+  'typing-extensions<4.17.0',
   { include-group = 'pinned' },
 ]
 
-test-playwright = ['playwright<1.61.0', { include-group = 'test' }]
+test-playwright = ['playwright<1.62.0', { include-group = 'test' }]
 
 docs = [
   'cmcrameri==1.9.0',
@@ -115,18 +117,18 @@ docs = [
   'enum-tools==0.13.0',
   'fsspec==2026.6.0',
   'imageio-ffmpeg==0.6.0',
-  'imageio==2.37.3',
+  'imageio==2.37.4',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.6.0',
+  'jupyterlab==4.6.2',
   'lxml==6.1.1',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==2.1.0',
+  'mypy==2.3.0',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
   'pandas==2.3.3',
-  'pyarrow==24.0.0',
+  'pyarrow==25.0.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
@@ -143,21 +145,21 @@ docs = [
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.4.5',
   'sphinx-toolbox==4.2.0',
+  'sphinx-vtk-xref==0.2.1',
   'sphinx==8.2.3; python_version >= "3.11"',
   'sphinxcontrib-asciinema==0.4.3',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-pyvista==0.1.1',
+  'trame-pyvista==0.1.6',
   'trimesh==4.12.2',
-  'vtk-xref==0.1.2',
   { include-group = 'pinned' },
 ]
 
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
-  'trame-vtk==2.11.8',
+  'trame-pyvista==0.1.6',
   { include-group = 'pinned' },
 ]
 
@@ -305,6 +307,7 @@ follow_untyped_imports = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
+platform = 'linux'
 plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
@@ -437,7 +440,6 @@ ignore = [
   'D213', # Incompatible with D212
   'D402', # First line should not be the function's signature
   'D416', # Section name ends in colon
-  'E402', # module level import not at top of file
   'E731', # do not assign a lambda expression, use a def
   'E741', # ambiguous variable name
   'F403', # 'from module import *' used; unable to detect undefined names
@@ -474,6 +476,7 @@ pyvista = "pv"
 # TODO: Add annotations to any files with 'ANN' ignores listed below
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+'doc/source/conf.py' = ['E402']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -484,8 +487,8 @@ pyvista = "pv"
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
 'examples/*' = [
+  'ANN',
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
   'D102',
@@ -494,10 +497,14 @@ pyvista = "pv"
   'D212',
   'D400',
   'D415',
+  'E402',
+  'INP',
+  'PLC0415',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
   'S101',
   'SIM115',
   'T20',
+  'TID251',
 ]
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'hooks/*' = ['INP001']
@@ -527,8 +534,8 @@ pyvista = "pv"
 'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
-'pyvista/examples*' = ['ANN']
 'pyvista/examples/_dataset_loader.py' = [
+  'ANN',
   'PTH112',
   'PTH113',
   'PTH117',
@@ -537,6 +544,12 @@ pyvista = "pv"
   'S101',
 ]
 'pyvista/examples/cells.py' = ['N802']
+'pyvista/examples/download_3ds.py' = ['ANN']
+'pyvista/examples/downloads.py' = ['ANN202']
+'pyvista/examples/examples.py' = ['ANN202']
+'pyvista/examples/gltf.py' = ['ANN']
+'pyvista/examples/planets.py' = ['ANN']
+'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
 'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
@@ -590,6 +603,7 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
+'tests/plotting/tinypages/conf.py' = ['E402']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

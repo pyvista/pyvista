@@ -288,6 +288,19 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
+def test_download_parallel_exodus():
+    path = Path(examples.download_parallel_exodus(load=False))
+    assert path.name == 'can.e.4.0'
+    assert all(path.with_name(f'can.e.4.{partition}').is_file() for partition in range(4))
+
+    reader = pv.get_reader(path)
+    assert isinstance(reader, pv.PExodusIIReader)
+
+    dataset = examples.download_parallel_exodus()
+    assert isinstance(dataset, pv.MultiBlock)
+    assert dataset.n_blocks
+
+
 def test_download_can_crushed_hdf():
     path = examples.download_can_crushed_hdf(load=False)
     assert Path(path).is_file()
@@ -797,6 +810,25 @@ def test_download_cubemap_space_16k():
     assert isinstance(dataset, pv.Texture)
 
 
+def test_download_particles():
+    filename = examples.download_particles(load=False)
+    assert Path(filename).is_file()
+
+    dataset = examples.download_particles(load=True)
+    assert isinstance(dataset, pv.PolyData)
+    actual = dataset.bounds
+    expected = pv.BoundsTuple(
+        x_min=817.33349609375,
+        x_max=826.0890502929688,
+        y_min=545.0177001953125,
+        y_max=571.0205688476562,
+        z_min=1443.4783935546875,
+        z_max=1511.181396484375,
+    )
+    assert np.allclose(actual, expected)
+    assert dataset.validate_mesh().is_valid
+
+
 def test_download_particles_lethe():
     filename = examples.download_particles_lethe(load=False)
     assert Path(filename).is_file()
@@ -1205,13 +1237,11 @@ def test_download_nek5000():
     assert Path(filename).is_file()
     assert filename.endswith('nek5000')
 
-    # nek5000 reader can only be used with vtk >= 9.3
-    if pv.vtk_version_info >= (9, 3):
-        nek_reader = pv.get_reader(filename)
-        assert nek_reader.number_time_points == 11
+    nek_reader = pv.get_reader(filename)
+    assert nek_reader.number_time_points == 11
 
-        nek_data = examples.download_nek5000(load=True)
-        assert isinstance(nek_data, pv.UnstructuredGrid)
+    nek_data = examples.download_nek5000(load=True)
+    assert isinstance(nek_data, pv.UnstructuredGrid)
 
 
 @pytest.mark.skip_windows

@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from threading import Event
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
@@ -86,11 +87,14 @@ from .renderer import Renderer
 from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .text import _TEXT_POSITIONS
 from .text import CornerAnnotation
 from .text import Text
+from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import callback_algorithm
@@ -396,6 +400,8 @@ class BasePlotter(_BoundsSizeMixin):
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
         self.ren_win: _vtk.vtkRenderWindow | None = None
+        # 3D location of the last click registered by ``left_button_down``
+        self.pickpoint: NumpyArray[float] | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -415,6 +421,10 @@ class BasePlotter(_BoundsSizeMixin):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
+        # background thread (and its cancellation event) started by a threaded
+        # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
+        self._orbit_thread: Thread | None = None
+        self._orbit_stop_event: Event | None = None
         self.mesh: MultiBlock | DataSet | None = None
         if title is None:
             title = self._theme.title
@@ -467,6 +477,7 @@ class BasePlotter(_BoundsSizeMixin):
         log.debug('BasePlotter init stop')
 
         self._image_depth_null: NumpyArray[bool] | None = None
+        self._window_size_unset = False
         self.last_image_depth: pv.pyvista_ndarray | None = None
         self.last_image: pv.pyvista_ndarray | None = None
         self.last_vtksz: str | Path | None = None
@@ -3106,7 +3117,7 @@ class BasePlotter(_BoundsSizeMixin):
         )
         self.mapper = mapper
 
-        actor, _ = self.add_actor(mapper, render=False)
+        actor, _ = self.add_actor(mapper, render=False)  # type: ignore[arg-type]
         actor = cast('Actor', actor)
         actor.force_opaque = force_opaque
 
@@ -3978,7 +3989,7 @@ class BasePlotter(_BoundsSizeMixin):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
-        if edge_opacity is None and pv.vtk_version_info >= (9, 3):
+        if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
@@ -5323,6 +5334,18 @@ class BasePlotter(_BoundsSizeMixin):
 
     def close(self) -> None:
         """Close the render window."""
+        # Stop any background `orbit_on_path(threaded=True)` thread before
+        # tearing anything else down, so it stops touching this plotter's
+        # VTK objects once they're cleared.
+        if self._orbit_thread is not None:
+            # no branch: whether the thread already finished is timing-dependent
+            if self._orbit_thread.is_alive():  # pragma: no branch
+                # `_orbit_stop_event` is always set alongside `_orbit_thread` in
+                # `orbit_on_path`, so it can't be `None` here.
+                assert self._orbit_stop_event is not None  # noqa: S101
+                self._orbit_stop_event.set()
+                self._orbit_thread.join(timeout=5)
+
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)  # type: ignore[arg-type]
@@ -5528,6 +5551,118 @@ class BasePlotter(_BoundsSizeMixin):
             text_prop.font_size = int(font_size * 2)
         actor.prop = text_prop
         self.text = actor
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
+
+    def _add_text_actor(
+        self,
+        text: str,
+        *,
+        position: TextPositionOptions | Sequence[float] = 'upper_left',
+        font_size: float | None = None,
+        color: ColorLike | None = None,
+        font: FontFamilyOptions | None = None,
+        shadow: bool = False,
+        name: str | None = None,
+        viewport: bool = False,
+        orientation: float = 0.0,
+        font_file: str | None = None,
+        render: bool = True,
+    ) -> Text:
+        """Add text drawn by a text actor, wherever it is placed.
+
+        Takes the same arguments as :meth:`add_text` and does the same thing, except
+        that a named ``position`` is drawn by a :class:`~pyvista.Text` as well, rather
+        than by a :class:`~pyvista.CornerAnnotation`.
+
+        An annotation works out a font size of its own from the size of the viewport,
+        which is what makes it convenient, but also means that it does not draw text
+        at the size it is given, that the size it draws at changes as the window is
+        resized, and that it draws nothing at all when it is made to use a size larger
+        than the one it works out. A text actor draws text at the size it is given,
+        which is what a caller which works out a size of its own needs of it.
+
+        Parameters
+        ----------
+        text : str
+            The text to draw.
+
+        position : str | sequence[float], default: 'upper_left'
+            Where to draw the text. Either one of the names :meth:`add_text` accepts,
+            which places the text in that part of the viewport, or a coordinate,
+            which is used as it is.
+
+        font_size : float, optional
+            Size of the font, defaulting to the size the theme asks for.
+
+        color : ColorLike, optional
+            Color of the text, defaulting to the color the theme asks for.
+
+        font : str, optional
+            Font family, one of ``'courier'``, ``'times'`` or ``'arial'``. Ignored
+            when ``font_file`` is given.
+
+        shadow : bool, default: False
+            Draw a black shadow behind the text.
+
+        name : str, optional
+            Name to track the actor by, replacing any actor of the same name.
+
+        viewport : bool, default: False
+            Read a ``position`` given as a coordinate as a fraction of the size of the
+            viewport rather than as pixels. A named ``position`` is always placed as a
+            fraction of it.
+
+        orientation : float, default: 0.0
+            Angle to draw the text at, counterclockwise in degrees.
+
+        font_file : str, optional
+            Path to a font file to draw the text with.
+
+        render : bool, default: True
+            Render right away.
+
+        Returns
+        -------
+        pyvista.Text
+            The text actor which was added.
+
+        """
+        if font_size is None:
+            font_size = self.theme.font.size
+        prop = TextProperty(
+            # A text property left to fill in the color and the font family itself
+            # takes them from the global theme rather than from the theme of the
+            # plotter it is drawn by, which draws black text on the black background
+            # of a plotter given a dark theme of its own
+            color=Color(color, default_color=self.theme.font.color),
+            font_family=self.theme.font.family if font is None else font,
+            orientation=orientation,
+            font_file=font_file,
+            shadow=shadow,
+        )
+        # `add_text` draws a text actor at twice the font size it is given, which this
+        # keeps to, so that the same font size means the same thing to both of them
+        prop.font_size = int(font_size * 2)
+
+        named = isinstance(position, str)
+        if named:
+            if position not in _TEXT_POSITIONS:
+                positions = ', '.join(repr(name) for name in _TEXT_POSITIONS)
+                msg = f'Position {position!r} is not a coordinate or one of {positions}.'
+                raise ValueError(msg)
+            x, y, horizontal, vertical = _TEXT_POSITIONS[position]
+            position = (x, y)
+            # Anchor the text to the part of the viewport it is placed in, so that it
+            # stays there whatever size it is drawn at
+            prop.justification_horizontal = horizontal
+            prop.justification_vertical = vertical
+
+        actor = Text(text=text, position=position)
+        if named or viewport:
+            actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+            actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+        actor.prop = prop
         self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return actor
 
@@ -6801,11 +6936,19 @@ class BasePlotter(_BoundsSizeMixin):
                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
                 raise ImportError(msg)
 
+        # Lets a threaded orbit be cancelled from `close()` so the background
+        # thread stops touching this plotter's VTK objects once they're torn down.
+        stop_event = Event() if threaded else None
+
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
             points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
+                if stop_event is not None and stop_event.is_set():
+                    # Cancellation is usually observed in the `wait()` below
+                    # instead, so reaching this exit is timing-dependent.
+                    return  # pragma: no cover
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
                 self.set_focus(focus, render=False)  # type: ignore[arg-type]
@@ -6819,12 +6962,21 @@ class BasePlotter(_BoundsSizeMixin):
                 if sleep_time > 0 and (
                     hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
-                    time.sleep(sleep_time)
-            if write_frames:
+                    if stop_event is not None:
+                        # no branch: whether close() interrupts the wait or the
+                        # wait times out first is timing-dependent
+                        if stop_event.wait(sleep_time):  # pragma: no branch
+                            return
+                    else:  # pragma: no cover
+                        # needs a non-threaded run with off_screen=False
+                        time.sleep(sleep_time)
+            if write_frames:  # pragma: no cover
                 self._get_mwriter_not_none().close()
 
         if threaded:
+            self._orbit_stop_event = stop_event
             thread = Thread(target=orbit)
+            self._orbit_thread = thread
             thread.start()
         else:
             orbit()
@@ -7843,6 +7995,12 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     stereo : StereoType | bool, optional
         Enable stereo rendering. If True, defaults to Anaglyph.
 
+    See Also
+    --------
+    pyvista.plot
+    pyvista.plot_compare
+    pyvista.plot_arrows
+
     Examples
     --------
     >>> import pyvista as pv
@@ -7948,8 +8106,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # the main thread.  Disconnecting from NSView creates a
             # standalone CGL context instead — no dock icon, no
             # main-thread requirement, and enables background-thread rendering.
-            if hasattr(self.render_window, 'SetConnectContextToNSView'):
-                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
+            _prepare_offscreen_macos_render_window(self.render_window)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
@@ -8306,9 +8463,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                                 )
                     else:
                         self.iren.start()  # type: ignore[union-attr]
-
-                if pv.vtk_version_info < (9, 2, 3):
-                    self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')

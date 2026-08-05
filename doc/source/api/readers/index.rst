@@ -56,6 +56,7 @@ Reader Classes
     OpenFOAMReader
     ParticleReader
     PDBReader
+    PExodusIIReader
     PLYReader
     PNGReader
     PNMReader
@@ -213,6 +214,7 @@ formats. These are used internally by :meth:`pyvista.DataObject.save`.
    BaseWriter
    BMPWriter
    DataSetWriter
+   EnSightWriter
    HDFWriter
    HoudiniPolyDataWriter
    IVWriter

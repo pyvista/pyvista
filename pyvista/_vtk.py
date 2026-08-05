@@ -146,10 +146,10 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_PARAMETRIC_TRI_SURFACE',
         'VTK_PENTAGONAL_PRISM',
         'VTK_PIXEL',
-        'VTK_POLY_LINE',
-        'VTK_POLY_VERTEX',
         'VTK_POLYGON',
         'VTK_POLYHEDRON',
+        'VTK_POLY_LINE',
+        'VTK_POLY_VERTEX',
         'VTK_PYRAMID',
         'VTK_QUAD',
         'VTK_QUADRATIC_EDGE',
@@ -171,6 +171,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_VOXEL',
         'VTK_WEDGE',
         'vtkAbstractCellLocator',
+        'vtkAbstractPointLocator',
         'vtkBezierCurve',
         'vtkBezierHexahedron',
         'vtkBezierQuadrilateral',
@@ -211,6 +212,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLagrangeTriangle',
         'vtkLagrangeWedge',
         'vtkLine',
+        'vtkLocator',
         'vtkMultiBlockDataSet',
         'vtkNonMergingPointLocator',
         'vtkPartitionedDataSet',
@@ -224,11 +226,11 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPointLocator',
         'vtkPointSet',
         'vtkPolyData',
-        'vtkPolygon',
-        'vtkPolyhedron',
         'vtkPolyLine',
         'vtkPolyPlane',
         'vtkPolyVertex',
+        'vtkPolygon',
+        'vtkPolyhedron',
         'vtkPyramid',
         'vtkQuad',
         'vtkQuadraticEdge',
@@ -251,10 +253,10 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkStructuredPoints',
         'vtkTable',
         'vtkTetra',
-        'vtkTriangle',
-        'vtkTriangleStrip',
         'vtkTriQuadraticHexahedron',
         'vtkTriQuadraticPyramid',
+        'vtkTriangle',
+        'vtkTriangleStrip',
         'vtkUnstructuredGrid',
         'vtkVertex',
         'vtkVoxel',
@@ -293,6 +295,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkDelaunay3D',
         'vtkElevationFilter',
         'vtkExplicitStructuredGridToUnstructuredGrid',
+        'vtkExtractCells',
         'vtkExtractEdges',
         'vtkFeatureEdges',
         'vtkFlyingEdges3D',
@@ -425,57 +428,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCellSizeFilter',
         'vtkMeshQuality',
     ),
-    'vtkImagingCore': (
-        'vtkAbstractImageInterpolator',
-        'vtkExtractVOI',
-        'vtkImageBinaryThreshold',
-        'vtkImageBSplineCoefficients',
-        'vtkImageBSplineInterpolator',
-        'vtkImageConstantPad',
-        'vtkImageDifference',
-        'vtkImageExtractComponents',
-        'vtkImageFlip',
-        'vtkImageInterpolator',
-        'vtkImageMirrorPad',
-        'vtkImageResize',
-        'vtkImageSincInterpolator',
-        'vtkImageThreshold',
-        'vtkImageWrapPad',
-        'vtkRTAnalyticSource',
-    ),
-    'vtkImagingFourier': (
-        'vtkImageButterworthHighPass',
-        'vtkImageButterworthLowPass',
-        'vtkImageFFT',
-        'vtkImageRFFT',
-    ),
-    'vtkImagingGeneral': (
-        'vtkImageGaussianSmooth',
-        'vtkImageMedian3D',
-    ),
-    'vtkImagingHybrid': (
-        'vtkGaussianSplatter',
-        'vtkSampleFunction',
-        'vtkSurfaceReconstructionFilter',
-    ),
-    'vtkImagingMorphological': (
-        'vtkImageConnectivityFilter',
-        'vtkImageContinuousDilate3D',
-        'vtkImageContinuousErode3D',
-        'vtkImageDilateErode3D',
-    ),
-    'vtkImagingSources': (
-        'vtkImageEllipsoidSource',
-        'vtkImageGaussianSource',
-        'vtkImageGridSource',
-        'vtkImageMandelbrotSource',
-        'vtkImageNoiseSource',
-        'vtkImageSinusoidSource',
-    ),
-    'vtkImagingStencil': (
-        'vtkImageStencil',
-        'vtkPolyDataToImageStencil',
-    ),
     'vtkIOCGNSReader': ('vtkCGNSReader',),
     'vtkIOChemistry': (
         'vtkGaussianCubeReader',
@@ -503,9 +455,9 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOBJReader',
         'vtkOBJWriter',
         'vtkOpenFOAMReader',
+        'vtkPTSReader',
         'vtkParticleReader',
         'vtkProStarReader',
-        'vtkPTSReader',
         'vtkSTLReader',
         'vtkSTLWriter',
         'vtkTecplotReader',
@@ -553,30 +505,32 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkUnstructuredGridWriter',
     ),
     'vtkIOMINC': ('vtkMINCImageReader',),
-    'vtkIOParallel': (
-        'vtkMultiBlockPLOT3DReader',
-        'vtkNek5000Reader',
-        'vtkPDataSetReader',
-        'vtkPlot3DMetaReader',
-        'vtkPOpenFOAMReader',
-    ),
-    'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),
     'vtkIOPLY': (
         'vtkPLYReader',
         'vtkPLYWriter',
     ),
+    'vtkIOParallel': (
+        'vtkEnSightWriter',
+        'vtkMultiBlockPLOT3DReader',
+        'vtkNek5000Reader',
+        'vtkPDataSetReader',
+        'vtkPOpenFOAMReader',
+        'vtkPlot3DMetaReader',
+    ),
+    'vtkIOParallelExodus': ('vtkPExodusIIReader',),
+    'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),
     'vtkIOSegY': ('vtkSegYReader',),
     'vtkIOXML': (
         'vtkXMLImageDataReader',
         'vtkXMLImageDataWriter',
         'vtkXMLMultiBlockDataReader',
         'vtkXMLMultiBlockDataWriter',
-        'vtkXMLPartitionedDataSetReader',
         'vtkXMLPImageDataReader',
-        'vtkXMLPolyDataReader',
-        'vtkXMLPolyDataWriter',
         'vtkXMLPRectilinearGridReader',
         'vtkXMLPUnstructuredGridReader',
+        'vtkXMLPartitionedDataSetReader',
+        'vtkXMLPolyDataReader',
+        'vtkXMLPolyDataWriter',
         'vtkXMLRectilinearGridReader',
         'vtkXMLRectilinearGridWriter',
         'vtkXMLStructuredGridReader',
@@ -587,6 +541,58 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkXMLUnstructuredGridWriter',
     ),
     'vtkIOXdmf2': ('vtkXdmfReader',),
+    'vtkImagingCore': (
+        'vtkAbstractImageInterpolator',
+        'vtkExtractVOI',
+        'vtkImageBSplineCoefficients',
+        'vtkImageBSplineInterpolator',
+        'vtkImageBinaryThreshold',
+        'vtkImageConstantPad',
+        'vtkImageDifference',
+        'vtkImageExtractComponents',
+        'vtkImageFlip',
+        'vtkImageInterpolator',
+        'vtkImageMirrorPad',
+        'vtkImageResize',
+        'vtkImageSincInterpolator',
+        'vtkImageThreshold',
+        'vtkImageWrapPad',
+        'vtkRTAnalyticSource',
+    ),
+    'vtkImagingFourier': (
+        'vtkImageButterworthHighPass',
+        'vtkImageButterworthLowPass',
+        'vtkImageFFT',
+        'vtkImageRFFT',
+    ),
+    'vtkImagingGeneral': (
+        'vtkImageGaussianSmooth',
+        'vtkImageMedian3D',
+    ),
+    'vtkImagingHybrid': (
+        'vtkGaussianSplatter',
+        'vtkSampleFunction',
+        'vtkSurfaceReconstructionFilter',
+    ),
+    'vtkImagingMorphological': (
+        'vtkImageConnectivityFilter',
+        'vtkImageContinuousDilate3D',
+        'vtkImageContinuousErode3D',
+        'vtkImageDilateErode3D',
+    ),
+    'vtkImagingSources': (
+        'vtkImageEllipsoidSource',
+        'vtkImageGaussianSource',
+        'vtkImageGridSource',
+        'vtkImageMandelbrotSource',
+        'vtkImageNoiseSource',
+        'vtkImageSinusoidSource',
+    ),
+    'vtkImagingStencil': (
+        'vtkImageStencil',
+        'vtkPolyDataToImageStencil',
+    ),
+    'vtkParallelCore': ('vtkDummyController',),
 }
 
 # Rendering modules for pyvista's plotting API
@@ -698,12 +704,12 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkProp3D',
         'vtkPropAssembly',
         'vtkPropCollection',
-        'vtkProperty',
         'vtkPropPicker',
-        'vtkRenderedAreaPicker',
-        'vtkRenderer',
+        'vtkProperty',
         'vtkRenderWindow',
         'vtkRenderWindowInteractor',
+        'vtkRenderedAreaPicker',
+        'vtkRenderer',
         'vtkScenePicker',
         'vtkSelectVisiblePoints',
         'vtkSkybox',
@@ -747,6 +753,7 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
         'vtkDepthOfFieldPass',
         'vtkEDLShading',
+        'vtkEGLRenderWindow',  # optional (Linux EGL builds)
         'vtkGaussianBlurPass',
         'vtkOpenGLFXAAPass',
         'vtkOpenGLHardwareSelector',
@@ -755,11 +762,12 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLTexture',
         'vtkRenderPassCollection',
         'vtkRenderStepsPass',
+        'vtkSSAAPass',
+        'vtkSSAOPass',
         'vtkSequencePass',
         'vtkShader',
         'vtkShadowMapPass',
-        'vtkSSAAPass',
-        'vtkSSAOPass',
+        'vtkXOpenGLRenderWindow',  # optional (Linux X11 builds)
     ),
     'vtkRenderingVolumeOpenGL2': (
         'vtkOpenGLGPUVolumeRayCastMapper',
@@ -867,16 +875,6 @@ def _import_vtkPythonItem():  # noqa: N802
     return vtkPythonItem
 
 
-def _import_vtkExtractCells():  # noqa: N802
-    try:  # Module changed in VTK 9.3.0
-        from vtkmodules.vtkFiltersCore import vtkExtractCells  # noqa: TID251
-    except ImportError:
-        from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef] # noqa: TID251
-            vtkExtractCells,
-        )
-    return vtkExtractCells
-
-
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
         from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities  # noqa: TID251
@@ -889,6 +887,5 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
-    'vtkExtractCells': _import_vtkExtractCells,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
 }

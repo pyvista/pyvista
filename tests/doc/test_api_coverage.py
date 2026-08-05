@@ -46,12 +46,7 @@ _IDENTIFIER_RE = re.compile(r'([A-Za-z_][\w\.]*)')
 # the user-facing reference. Each entry is a low-level VTK/NumPy helper, a
 # decorator, or an internal base class that ships public for back-compat but is
 # not meant to appear in the end-user Sphinx reference.
-# ``CapsuleSource`` is a back-compat shim defined only when ``vtk_version_info < (9, 3)``;
-# include it in the allowlist exactly when it is actually a public symbol so
-# ``test_allowlist_stays_accurate`` does not flag a stale entry on newer VTK.
 _VERSION_CONDITIONAL_UNDOCUMENTED: set[str] = set()
-if pv.vtk_version_info < (9, 3):
-    _VERSION_CONDITIONAL_UNDOCUMENTED.add('CapsuleSource')
 
 _ALLOWED_UNDOCUMENTED = frozenset(
     {
@@ -61,6 +56,7 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'BasePlotter',  # abstract base; Plotter subclass is documented
         'FONTS',  # internal variable
         'Grid',  # abstract base; concrete Grid subclasses are documented
+        'has_module',  # internal helper for testing only - should be moved into conftest.py
         'PointGrid',  # abstract base; concrete subclasses are documented
         'QtDeprecationError',  # deprecated and moved to pyvistaqt
         'QtInteractor',  # deprecated and moved to pyvistaqt
@@ -117,7 +113,8 @@ def _collect_public_symbols() -> set[str]:
         obj = getattr(pv, name, None)
         if obj is None:
             continue
-        if not (inspect.isclass(obj) or inspect.isfunction(obj)):
+        # Use `isroutine` instead of `isfunction` so that we also catch @cache decorated functions
+        if not (inspect.isclass(obj) or inspect.isroutine(obj)):
             continue
         if not _is_pyvista_owned(obj):
             continue

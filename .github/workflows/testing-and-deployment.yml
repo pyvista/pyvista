@@ -112,7 +112,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: runner.environment != 'self-hosted'
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         continue-on-error: true
         with:
           python-version: ${{ matrix.python-version }}
@@ -125,7 +125,7 @@ jobs:
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6.1.0
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
@@ -167,21 +167,15 @@ jobs:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
           - python-version: "3.10"
-            vtk-version: "9.2.2"
-            numpy-version: "1.26"
-          - python-version: "3.11"
-            vtk-version: "9.2.6"
-            numpy-version: "latest"
-          - python-version: "3.12"
             vtk-version: "9.3.1"
             numpy-version: "latest"
-          - python-version: "3.13"
+          - python-version: "3.11"
             vtk-version: "9.4.2"
             numpy-version: "latest"
-          - python-version: "3.13"
+          - python-version: "3.12"
             vtk-version: "9.5.2"
             numpy-version: "latest"
-          - python-version: "3.14"
+          - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "latest"
           - python-version: "3.14"
@@ -198,7 +192,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -208,7 +202,7 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6.1.0
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -277,18 +271,18 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6.1.0
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -344,13 +338,13 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6.1.0
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
@@ -448,7 +442,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.14
 
@@ -459,4 +453,4 @@ jobs:
 
       - name: Upload to PyPi
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247

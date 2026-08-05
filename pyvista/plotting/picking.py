@@ -315,7 +315,7 @@ class PickingComponent(_NoNewAttrMixin):
         # Mesh-aware picking state
         self._picked_actor = None
         self._picked_mesh = None
-        self._picked_cell: None | pv.MultiBlock | pv.UnstructuredGrid = None
+        self._picked_cell: pv.MultiBlock | pv.UnstructuredGrid | None = None
         self._picking_text = None
         self._picked_block_index = None
         # Path / geodesic / horizon state
@@ -356,7 +356,7 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_mesh
 
     @property
-    def picked_cells(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
+    def picked_cells(self) -> pv.UnstructuredGrid | pv.MultiBlock | None:
         r"""Return the cell-picked object.
 
         Returns

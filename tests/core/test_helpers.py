@@ -68,7 +68,6 @@ def trimesh_mesh_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
     return trimesh_poly
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
     vtk_poly = _vtk.vtkPolyData()
     vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
@@ -85,20 +84,17 @@ def vtk_poly_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
     return vtk_poly
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_validate_false_suppresses_warning(vtk_poly_with_invalid_arrays):
     with warnings.catch_warnings():
         warnings.simplefilter('error', pv.InvalidMeshWarning)
         pv.wrap(vtk_poly_with_invalid_arrays, validate=False)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_validate_true_still_warns(vtk_poly_with_invalid_arrays):
     with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
         pv.wrap(vtk_poly_with_invalid_arrays, validate=True)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
     # validate=None (default) defers to pv.global_config.validate_on_wrap.
     assert pv.global_config.validate_on_wrap is True
@@ -111,7 +107,6 @@ def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
         pv.wrap(vtk_poly_with_invalid_arrays)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='fast path requires validate_mesh')
 def test_wrap_auto_names_unnamed_arrays():
     # The pre-optimization wrap() path validated via keys(), which has the
     # side effect of renaming unnamed arrays to ``Unnamed_<i>``. Filters
@@ -189,7 +184,6 @@ def test_reader_forwards_validate_kwarg(mocker: MockerFixture):
     assert kwargs.get('validate') is True
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_fast_path_skips_validate_mesh(sphere, mocker: MockerFixture):
     # When the cheap array-length check passes, ``wrap`` must not call
     # ``validate_mesh`` — that's the whole point of the fast path. See #8473.

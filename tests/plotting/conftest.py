@@ -5,10 +5,12 @@ memory leaks for all plotting tests
 from __future__ import annotations
 
 import gc
-import inspect
 import platform
+from types import SimpleNamespace
 
 import pytest
+from refleak.testing import Snapshot
+from refleak.testing import gc_collect_once
 
 import pyvista as pv
 from pyvista import _vtk
@@ -64,78 +66,128 @@ if APPLE_SILICON:
         del pool
 
 
+_phase_report_key = pytest.StashKey()
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # noqa: ARG001
+    """Stash per-phase reports so check_gc can skip the leak check on failure."""
+    outcome = yield
+    rep = outcome.get_result()
+    item.stash.setdefault(_phase_report_key, {})[rep.when] = rep
+
+
+def _test_passed(item) -> bool:
+    report = item.stash.get(_phase_report_key, {})
+    return 'call' in report and report['call'].outcome == 'passed'
+
+
+def _flush_vtk_ghosts() -> None:
+    """Sweep dead entries out of VTK's ghost map.
+
+    When a wrapper with attributes dies while its C++ object is still
+    referenced, VTK "ghosts" the attribute dict so it can be restored should
+    the C++ object resurface in Python. The map is only swept when a new
+    ghost is added, so the dict of a wrapper that died during this test can
+    linger after its C++ object dies -- and anything it holds (e.g. a
+    composite mapper's ``_dataset``) then looks like a leak. Adding one
+    throwaway ghost forces the sweep.
+    """
+    holder = _vtk.vtkPolyData()
+    bait = _vtk.vtkPoints()
+    bait._pyvista_ghost_bait = True
+    holder.SetPoints(bait)
+    # bait's wrapper dies while its C++ object is still held by holder, so it
+    # is added to the ghost map, sweeping out stale ghosts; deleting holder
+    # then kills the C++ object, letting a later sweep remove the bait itself.
+    del bait
+    del holder
+
+
+_check_gc_key = pytest.StashKey()
+
+
 @pytest.fixture(autouse=True)
 def check_gc(request):
-    """Ensure that all VTK objects are garbage-collected by Python."""
+    """Snapshot live objects so leaks from this test can be detected.
+
+    The check itself runs in the ``pytest_runtest_teardown`` hookwrapper
+    below, not in this fixture's teardown: several fixtures are set up
+    before this one (``monkeypatch`` via other autouse fixtures, the
+    registry save/restore in ``tests/conftest.py::reset_global_state``),
+    so their finalizers run *after* an autouse fixture's teardown -- and
+    anything they still held (a patched-in mock, a test class left in a
+    global registry) would be misreported here as a leak.
+    """
     if request.node.get_closest_marker('skip_check_gc'):
         yield
         return
 
-    # Get all VTK objects before calling the test
-    gc.collect()
-    before = set()
-    for obj in gc.get_objects():
-        # Micro-optimized for performance as this is called millions of times
-        try:
-            if isinstance(obj, _vtk.vtkObjectBase) and obj.__class__.__name__.startswith('vtk'):
-                before.add(id(obj))
-        except ReferenceError:
-            pass
-
+    # A snapshot, so that leftovers of earlier tests that legitimately skip
+    # this check are not blamed on this test. Matching vtkObjectBase by
+    # isinstance rather than by class-name prefix also covers pyvista's own
+    # vtk subclasses (PolyData, ...) and the pythonic override subclasses
+    # VTK >= 9.6 instantiates, whose names lack the 'vtk' prefix.
+    #
+    # BasePlotter is not a vtkObjectBase, so both types are needed; matching
+    # them as a single tuple keeps this to one pass over the heap (which is
+    # walked once per test at setup and once at teardown). Snapshot() collects
+    # before it records ids, so there is no gc.collect() here.
+    request.node.stash[_check_gc_key] = Snapshot(
+        (pv.plotting.plotter.BasePlotter, _vtk.vtkObjectBase),
+        label='VTK/plotter',
+    )
     yield
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Ensure that all VTK objects created during a test are garbage-collected.
+
+    A hookwrapper so the check runs after every fixture finalizer has run
+    (see ``check_gc``, which takes the snapshot this checks against).
+    """
+    yield
+    snapshot = item.stash.get(_check_gc_key, None)
+    if snapshot is None:
+        return
+    del item.stash[_check_gc_key]
 
     pv.close_all()
 
-    # Skip GC check if test failed
-    if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
+    # Skip GC check if test failed (or was skipped during call)
+    if not _test_passed(item):
         return
 
-    # get all vtk objects after the test
-    gc.collect()
-    after = []
-    for obj in gc.get_objects():
-        # Micro-optimized for performance as this is called millions of times
+    # pytest holds every fixture value in item.funcargs until after all
+    # teardown hooks have run (its runner only then sets it to None), so a
+    # VTK-typed fixture value (sphere, texture, ...) would always be flagged
+    # as a leak. The test passed and its fixtures are already finalized, so
+    # release them a moment early.
+    item.funcargs.clear()
+
+    when = f'teardown of {item.name}'
+    # gc_collect_once deduplicates on request.node; it only needs .node
+    request = SimpleNamespace(node=item)
+    gc_collect_once(request)
+
+    def _assert_no_new():
+        # No plotter and no VTK object created during a test may survive it.
         try:
-            if (
-                isinstance(obj, _vtk.vtkObjectBase)
-                and obj.__class__.__name__.startswith('vtk')
-                and id(obj) not in before
-            ):
-                after.append(obj)
-        except ReferenceError:
-            pass
+            snapshot.assert_no_new(when, request=request)
+        except AssertionError:
+            # A stale VTK ghost is deferred bookkeeping, not a leak: flush
+            # the ghost map and re-check before reporting a failure.
+            _flush_vtk_ghosts()
+            gc.collect()
+            snapshot.assert_no_new(when, request=request)
 
-    msg = 'Not all objects GCed:\n'
-    for obj in after:
-        cn = obj.__class__.__name__
-        cf = inspect.currentframe()
-        referrers = [v for v in gc.get_referrers(obj) if v is not after and v is not cf]
-        del cf
-        for ri, referrer in enumerate(referrers):
-            if isinstance(referrer, dict):
-                for k, v in referrer.items():
-                    if k is obj:
-                        referrers[ri] = 'dict: d key'
-                        del k, v
-                        break
-                    elif v is obj:
-                        referrers[ri] = f'dict: d[{k!r}]'
-                        del k, v
-                        break
-                    del k, v
-                else:
-                    referrers[ri] = f'dict: len={len(referrer)}'
-            else:
-                referrers[ri] = repr(referrer)
-            del ri, referrer
-        msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
-        del cn, referrers
-
-    if request.node.get_closest_marker('expect_check_gc_fail'):
-        assert after
+    if item.get_closest_marker('expect_check_gc_fail'):
+        with pytest.raises(AssertionError, match='Found '):
+            _assert_no_new()
         return
 
-    assert len(after) == 0, msg
+    _assert_no_new()
 
 
 @pytest.fixture

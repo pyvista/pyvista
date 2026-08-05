@@ -11,7 +11,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -3166,11 +3165,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show(cpos=pl.camera_position)
 
         """
-        if vtk_version_info < (9, 3, 0):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
-            raise VTKVersionError(msg)
         representation = _vtk.vtkCamera3DRepresentation()
         representation.SetCamera(self._plotter.renderer.GetActiveCamera())
         widget = _vtk.vtkCamera3DWidget()
