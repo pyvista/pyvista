@@ -779,6 +779,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Highlight cell types in yellow
         # Reverse sort to ensure we replace things like 'QUADRATIC_HEXAHEDRON' before 'QUAD'
         cell_names = sorted(celltype.name for celltype in CellType)[::-1]
+        # Ensure single-word cell types are last so that POLY_VERTEX is replaced before VERTEX
+        for name in cell_names.copy():
+            if '_' not in name:
+                cell_names.remove(name)
+                cell_names.append(name)
         string = _format_style(string, cell_names, 'yellow')
 
         # Highlight mesh types in purple
