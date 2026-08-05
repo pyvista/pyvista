@@ -63,7 +63,6 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
 from pyvista.core.utilities.cell_quality import CellQualityInfo
-from pyvista.core.utilities.docs import download_buttons
 from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.docs import pv_html_page_context
@@ -1208,28 +1207,14 @@ def test_fix_edit_link_button_other_pages_fall_through():
     assert link == 'default-link'
 
 
-def _header_buttons_context(pagename, sourcename=''):
-    # Mimic the header buttons sphinx-book-theme builds for a page. ``sourcename``
-    # is empty whenever ``html_copy_source`` is disabled, as it is for these docs.
+def _edit_button_context(pagename):
+    # Mimic the context sphinx-book-theme builds for the "suggest edit" button
     default_url = f'https://github.com/pyvista/pyvista/edit/main/doc/source/{pagename}.rst'
     return {
-        'sourcename': sourcename,
         'get_edit_provider_and_url': lambda: ('GitHub', default_url),
         'header_buttons': [
             {'type': 'link', 'url': default_url, 'label': 'source-edit-button'},
-            {
-                'type': 'group',
-                'label': 'download-buttons',
-                'buttons': [
-                    {
-                        'type': 'link',
-                        'url': f'../_sources/{sourcename}',
-                        'text': '.rst',
-                        'label': 'download-source-button',
-                    },
-                    {'type': 'javascript', 'text': '.pdf', 'label': 'download-pdf-button'},
-                ],
-            },
+            {'type': 'group', 'buttons': [{'type': 'javascript', 'label': 'download-pdf-button'}]},
         ],
     }
 
@@ -1237,7 +1222,7 @@ def _header_buttons_context(pagename, sourcename=''):
 def test_pv_html_page_context_patches_edit_button():
     # The button built by the theme should be rewritten to the .py source file
     pagename = 'examples/00-load/create_draped_surface'
-    context = _header_buttons_context(pagename)
+    context = _edit_button_context(pagename)
     pv_html_page_context(None, pagename, 'page.html', context, None)
 
     expected = (
@@ -1250,7 +1235,7 @@ def test_pv_html_page_context_patches_edit_button():
 def test_pv_html_page_context_leaves_other_pages_alone():
     # Pages whose source really is in the repo must keep the theme's link
     pagename = 'api/core/index'
-    context = _header_buttons_context(pagename)
+    context = _edit_button_context(pagename)
     default_url = context['header_buttons'][0]['url']
     pv_html_page_context(None, pagename, 'page.html', context, None)
 
@@ -1262,75 +1247,6 @@ def test_pv_html_page_context_without_edit_button():
     context = {}
     pv_html_page_context(None, 'index', 'page.html', context, None)
     assert context == {}
-
-
-def test_download_buttons():
-    # Only .py and .ipynb get a button, in that order; the .zip is ignored
-    buttons = download_buttons('../_downloads', ['a1/ex.ipynb', 'b2/ex.py', 'c3/ex.zip'])
-
-    assert [button['label'] for button in buttons] == [
-        'download-source-button',
-        'download-notebook-button',
-    ]
-    assert [button['text'] for button in buttons] == ['.py', '.ipynb']
-    assert [button['url'] for button in buttons] == [
-        '../_downloads/b2/ex.py',
-        '../_downloads/a1/ex.ipynb',
-    ]
-
-
-def test_download_buttons_without_targets():
-    assert download_buttons('../_downloads', []) == []
-
-
-def test_pv_html_page_context_drops_source_download():
-    # Without a sourcename there is no _sources dir, so the .rst download 404s.
-    # Nothing replaces it on a non-gallery page, and the theme renders the lone
-    # remaining button flat rather than as a dropdown.
-    context = _header_buttons_context('api/core/index')
-    pv_html_page_context(None, 'api/core/index', 'page.html', context, None)
-
-    labels = [button['label'] for button in context['header_buttons']]
-    assert labels == ['source-edit-button', 'download-pdf-button']
-    assert context['header_buttons'][1]['text'] == ''
-
-
-def test_pv_html_page_context_uses_gallery_downloads():
-    # On a gallery page the .rst download is replaced by the .py and .ipynb
-    # files sphinx-gallery already links at the bottom of the page
-    addnodes = pytest.importorskip('sphinx.addnodes')
-
-    doctree = addnodes.compact_paragraph()
-    for filename in ['9f/create_sphere.ipynb', '3b/create_sphere.py', '7c/create_sphere.zip']:
-        doctree += addnodes.download_reference('', '', filename=filename)
-    app = SimpleNamespace(builder=SimpleNamespace(dlpath='../../_downloads'))
-
-    pagename = 'examples/00-load/create_sphere'
-    context = _header_buttons_context(pagename)
-    pv_html_page_context(app, pagename, 'page.html', context, doctree)
-
-    group = context['header_buttons'][1]
-    assert group['label'] == 'download-buttons'
-    assert [button['label'] for button in group['buttons']] == [
-        'download-source-button',
-        'download-notebook-button',
-        'download-pdf-button',
-    ]
-    assert group['buttons'][0]['url'] == '../../_downloads/3b/create_sphere.py'
-    assert group['buttons'][1]['url'] == '../../_downloads/9f/create_sphere.ipynb'
-
-
-def test_pv_html_page_context_keeps_download_when_source_copied():
-    # With html_copy_source enabled the download links are valid and must stay
-    context = _header_buttons_context('api/core/index', sourcename='api/core/index.rst')
-    pv_html_page_context(None, 'api/core/index', 'page.html', context, None)
-
-    group = context['header_buttons'][1]
-    assert group['label'] == 'download-buttons'
-    assert [button['label'] for button in group['buttons']] == [
-        'download-source-button',
-        'download-pdf-button',
-    ]
 
 
 def test_coerce_point_like_arg():
