@@ -87,8 +87,10 @@ from .renderer import Renderer
 from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .text import _TEXT_POSITIONS
 from .text import CornerAnnotation
 from .text import Text
+from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
@@ -5578,6 +5580,118 @@ class BasePlotter(_BoundsSizeMixin):
         self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return actor
 
+    def _add_text_actor(
+        self,
+        text: str,
+        *,
+        position: TextPositionOptions | Sequence[float] = 'upper_left',
+        font_size: float | None = None,
+        color: ColorLike | None = None,
+        font: FontFamilyOptions | None = None,
+        shadow: bool = False,
+        name: str | None = None,
+        viewport: bool = False,
+        orientation: float = 0.0,
+        font_file: str | None = None,
+        render: bool = True,
+    ) -> Text:
+        """Add text drawn by a text actor, wherever it is placed.
+
+        Takes the same arguments as :meth:`add_text` and does the same thing, except
+        that a named ``position`` is drawn by a :class:`~pyvista.Text` as well, rather
+        than by a :class:`~pyvista.CornerAnnotation`.
+
+        An annotation works out a font size of its own from the size of the viewport,
+        which is what makes it convenient, but also means that it does not draw text
+        at the size it is given, that the size it draws at changes as the window is
+        resized, and that it draws nothing at all when it is made to use a size larger
+        than the one it works out. A text actor draws text at the size it is given,
+        which is what a caller which works out a size of its own needs of it.
+
+        Parameters
+        ----------
+        text : str
+            The text to draw.
+
+        position : str | sequence[float], default: 'upper_left'
+            Where to draw the text. Either one of the names :meth:`add_text` accepts,
+            which places the text in that part of the viewport, or a coordinate,
+            which is used as it is.
+
+        font_size : float, optional
+            Size of the font, defaulting to the size the theme asks for.
+
+        color : ColorLike, optional
+            Color of the text, defaulting to the color the theme asks for.
+
+        font : str, optional
+            Font family, one of ``'courier'``, ``'times'`` or ``'arial'``. Ignored
+            when ``font_file`` is given.
+
+        shadow : bool, default: False
+            Draw a black shadow behind the text.
+
+        name : str, optional
+            Name to track the actor by, replacing any actor of the same name.
+
+        viewport : bool, default: False
+            Read a ``position`` given as a coordinate as a fraction of the size of the
+            viewport rather than as pixels. A named ``position`` is always placed as a
+            fraction of it.
+
+        orientation : float, default: 0.0
+            Angle to draw the text at, counterclockwise in degrees.
+
+        font_file : str, optional
+            Path to a font file to draw the text with.
+
+        render : bool, default: True
+            Render right away.
+
+        Returns
+        -------
+        pyvista.Text
+            The text actor which was added.
+
+        """
+        if font_size is None:
+            font_size = self.theme.font.size
+        prop = TextProperty(
+            # A text property left to fill in the color and the font family itself
+            # takes them from the global theme rather than from the theme of the
+            # plotter it is drawn by, which draws black text on the black background
+            # of a plotter given a dark theme of its own
+            color=Color(color, default_color=self.theme.font.color),
+            font_family=self.theme.font.family if font is None else font,
+            orientation=orientation,
+            font_file=font_file,
+            shadow=shadow,
+        )
+        # `add_text` draws a text actor at twice the font size it is given, which this
+        # keeps to, so that the same font size means the same thing to both of them
+        prop.font_size = int(font_size * 2)
+
+        named = isinstance(position, str)
+        if named:
+            if position not in _TEXT_POSITIONS:
+                positions = ', '.join(repr(name) for name in _TEXT_POSITIONS)
+                msg = f'Position {position!r} is not a coordinate or one of {positions}.'
+                raise ValueError(msg)
+            x, y, horizontal, vertical = _TEXT_POSITIONS[position]
+            position = (x, y)
+            # Anchor the text to the part of the viewport it is placed in, so that it
+            # stays there whatever size it is drawn at
+            prop.justification_horizontal = horizontal
+            prop.justification_vertical = vertical
+
+        actor = Text(text=text, position=position)
+        if named or viewport:
+            actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+            actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+        actor.prop = prop
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
+
     def open_movie(
         self, filename: str | Path, framerate: int = 24, quality: int = 5, **kwargs
     ) -> None:
@@ -7937,6 +8051,12 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     stereo : StereoType | bool, optional
         Enable stereo rendering. If True, defaults to Anaglyph.
+
+    See Also
+    --------
+    pyvista.plot
+    pyvista.plot_compare
+    pyvista.plot_arrows
 
     Examples
     --------
