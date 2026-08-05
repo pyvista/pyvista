@@ -2248,10 +2248,11 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl = pv.Plotter()
         >>> mesh = pv.Sphere()
         >>> _ = pl.add_mesh(mesh)
+        >>> text_actor = pl.add_text("Pressing 'q' will shrink the sphere")
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> mesh.points *= 0.5  # doctest:+SKIP
-        >>> pl.render()  # doctest:+SKIP
-        >>> pl.close()  # doctest:+SKIP
+        >>> pl.remove_actor(text_actor)  # doctest:+SKIP
+        >>> pl.show(auto_close=True)  # doctest:+SKIP
 
         """
         if (
@@ -6784,9 +6785,11 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere(center=(-1, 0, 0)))
         >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> text_actor = pl.add_text("Pressing 'q' will center on the cube")
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.fly_to((1, 0, 0))  # doctest:+SKIP
-        >>> pl.close()  # doctest:+SKIP
+        >>> pl.remove_actor(text_actor)  # doctest:+SKIP
+        >>> pl.show(auto_close=True)  # doctest:+SKIP
 
         """
         self._get_iren_not_none().fly_to(self.renderer, point)
