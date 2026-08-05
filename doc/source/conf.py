@@ -434,7 +434,29 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '**.ipynb_checkpoints',
+    '_templates*',
+    # Fragments that only ever get ``.. include::``-ed into another page or into a
+    # docstring. Sphinx exempts included files from the "isn't included in any
+    # toctree" warning but still builds them as standalone documents, which puts 70
+    # title-less pages in the search index, e.g. searching `bunny` returns four
+    # `<no title>` dataset-gallery carousels. Excluding them keeps the text
+    # searchable through the page that includes it.
+    'api/core/cell_quality/*.rst',
+    'api/examples/dataset-gallery/*.rst',
+    'api/plotting/charts/pen_line_styles.rst',
+    'api/plotting/charts/plot_color_schemes.rst',
+    'api/plotting/charts/scatter_marker_styles.rst',
+    'api/readers/readers_table.rst',
+    'api/utilities/color_table/*.rst',
+    'api/utilities/colormap_table/*.rst',
+    'api/utilities/io_table/*.rst',
+    'api/utilities/mesh_io.rst',
+]
 _repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
 _docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
 _context7_data = json.loads(_repo_context7.read_text())
