@@ -1177,6 +1177,14 @@ def test_linkcode_resolve():
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
 
+    # edit mode should still include the line span, just under /edit/ instead
+    # of /blob/, so the edit page opens at the same lines as [source] does
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}, edit=True
+    )
+    assert '/edit/' in link
+    assert '#L' in link
+
 
 def test_fix_edit_link_button_gallery_example():
     # Gallery examples should point to the source .py file in /examples
@@ -1193,12 +1201,22 @@ def test_fix_edit_link_button_gallery_index_falls_through():
 
 
 def test_fix_edit_link_button_autosummary_stub():
-    # Autosummary stubs should resolve to a linkcode edit URL for the object
+    # Autosummary stubs should resolve to the same location as the page's
+    # [source] button -- same file, same line span -- just in edit mode
     pagename = 'api/core/_autosummary/pyvista.core.DataObject'
     link = fix_edit_link_button(pagename, 'default-link')
     assert link is not None
     assert '/edit/' in link
     assert 'dataobject.py' in link
+    assert '#L' in link
+
+
+def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():
+    # When linkcode can't locate the object -- so the page has no [source]
+    # button either -- fall back to editing the page's own default link
+    pagename = 'api/core/_autosummary/pyvista.not.an.object'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link == 'default-link'
 
 
 def test_fix_edit_link_button_other_pages_fall_through():

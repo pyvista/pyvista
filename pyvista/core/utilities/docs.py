@@ -20,7 +20,9 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         With keys "module" and "fullname".
 
     edit : bool, default=False
-        Jump right to the edit page.
+        Link to the GitHub edit page instead of the blob view. The line span
+        is included either way, so the edit page opens with the same lines
+        already scrolled to and selected.
 
     Returns
     -------
@@ -87,7 +89,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     except Exception:  # noqa: BLE001 # pragma: no cover
         lineno = None
 
-    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
+    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno else ''
 
     if 'dev' in pv.__version__:
         kind = 'main'
@@ -108,7 +110,9 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
     Two cases need rewriting:
 
     - Gallery examples ``.rst`` to the source ``.py`` under ``examples/``.
-    - Autosummary stubs to the file defining the Python object.
+    - Autosummary stubs to the object's definition, at the same line span as
+      the page's ``[source]`` button, so the implementation doesn't have to
+      be found by hand once the edit page opens.
 
     Parameters
     ----------
