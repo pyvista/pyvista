@@ -61,14 +61,17 @@ mesh_g
 
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
-pl = pv.Plotter(shape=keys.shape)
-for (i, j), name in np.ndenumerate(keys):
-    pl.subplot(i, j)
-    pl.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    pl.add_mesh(mesh_g.outline(), color='k')
-pl.link_views()
-pl.view_isometric()
-pl.show()
+# `contour` makes the scalars it contours by the active scalars, so each mesh is
+# colored by its own gradient component.
+datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
+
+pv.plot_compare(
+    datasets,
+    dataset_kwargs={'opacity': 0.75},
+    reference_mesh=mesh_g.outline(),
+    shape=keys.shape,
+    cpos='iso',
+)
 
 
 # %%
@@ -85,14 +88,14 @@ mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
-pl = pv.Plotter(shape=keys.shape)
+datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
 
-for (i, j), name in np.ndenumerate(keys):
-    pl.subplot(i, j)
-    pl.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    pl.add_mesh(mesh_g.outline(), color='k')
-pl.link_views()
-pl.view_isometric()
-pl.show()
+pv.plot_compare(
+    datasets,
+    dataset_kwargs={'opacity': 0.75},
+    reference_mesh=mesh_g.outline(),
+    shape=keys.shape,
+    cpos='iso',
+)
 # %%
 # .. tags:: filter

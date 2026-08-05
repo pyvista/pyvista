@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from .app import CLI_APP as CLI_APP
 from . import plot as plot
+from . import compare as compare
 from . import convert as convert
 from . import validate as validate
 from . import report as report
