@@ -2090,6 +2090,35 @@ def test_compare_too_small_warning_advises_the_command(
     assert 'link=False' not in flattened
 
 
+def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
+):
+    """Test that the advice is printed before the window opens, not after it closes.
+
+    `plot_compare` raises every one of its warnings well before it shows the window,
+    but the interactive window blocks until it is closed, and warnings only caught
+    with `warnings.catch_warnings(record=True)` are not printed until whoever caught
+    them chooses to. Printing them only after `show` returns would leave a command
+    line user staring at a plot with no idea anything was wrong until they closed it.
+    """
+    for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
+        mesh.save(tmp_example_dir / f'{name}.vtp')
+
+    printed_before_shown = []
+
+    def fake_show(*args, **kwargs):  # noqa: ARG001
+        _, err = capsys.readouterr()
+        # The message is wrapped and padded to the width of the panel it is printed
+        # in, so flatten it the same way it is elsewhere before matching a substring
+        flattened = ' '.join(err.replace('│', ' ').split())
+        printed_before_shown.append('too small to make out' in flattened)
+
+    mocker.patch.object(pv.Plotter, 'show', fake_show)
+    main('compare tiny.vtp huge.vtp --link --off-screen')
+
+    assert printed_before_shown == [True]
+
+
 def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):
     """Test that a warning this command has nothing to add to is still raised."""
 

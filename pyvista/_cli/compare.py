@@ -29,7 +29,9 @@ from .utils import skip_unreadable
 from .utils import validate_paths
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
+    from typing import TextIO
 
 _HELP_SHAPE = """\
 Shape of the subplot grid, as either the number of rows and columns, e.g. ``2,2``,
@@ -84,20 +86,34 @@ _REMEDIES = {
 }
 
 
-def _report_warnings(caught: list[warnings.WarningMessage]) -> None:
-    """Print the warnings raised while plotting, with advice for a command line."""
-    for warning in caught:
-        message = str(warning.message)
-        problem, made_out, _ = message.partition('make out.')
-        remedy = next((advice for cause, advice in _REMEDIES.items() if cause in message), None)
+def _showwarning_with_advice(fallback: Callable[..., None]) -> Callable[..., None]:
+    """Return a ``showwarning`` which prints a warning as it is raised, with advice.
+
+    A warning is otherwise not seen until the interactive window this command opens is
+    closed, since `plot_compare` raises every one of them well before it shows the
+    window, but nothing is printed until the window closes and this call returns.
+    """
+
+    def showwarning(  # noqa: PLR0917
+        message: Warning | str,
+        category: type[Warning],
+        filename: str,
+        lineno: int,
+        file: TextIO | None = None,
+        line: str | None = None,
+    ) -> None:
+        text = str(message)
+        problem, made_out, _ = text.partition('make out.')
+        remedy = next((advice for cause, advice in _REMEDIES.items() if cause in text), None)
         # This command draws the reference mesh itself, so name it as it is spelled here
         problem = problem.replace('the reference mesh', 'the outline')
         if not made_out or remedy is None:
-            # Not a warning this command has anything better to say about
-            warnings.warn_explicit(
-                warning.message, warning.category, warning.filename, warning.lineno
-            )
-            continue
+            # Not a warning this command has anything better to say about. Fall back to
+            # whichever `showwarning` was active before this one took over, rather than
+            # raising the warning again, which would only call this same function once
+            # more.
+            fallback(message, category, filename, lineno, file, line)
+            return
         CLI_APP.error_console.print(
             Panel(
                 f'{problem}{made_out} {remedy}',
@@ -106,6 +122,8 @@ def _report_warnings(caught: list[warnings.WarningMessage]) -> None:
                 title_align='left',
             )
         )
+
+    return showwarning
 
 
 def _label_paths(paths: list[Path]) -> list[str]:
@@ -206,9 +224,13 @@ def _compare(
     # Label each subplot with the name of the file it was read from
     names = labels if labels is not None else _label_paths(validate_paths(paths))
 
-    with warnings.catch_warnings(record=True) as caught:
+    with warnings.catch_warnings():
         warnings.simplefilter('always')
-        result = call_or_exit(
+        # `catch_warnings` saves and restores `showwarning` along with the filter
+        # above, so capture whichever one is active now to fall back to, print
+        # warnings this command has nothing to add to as it would have anyway.
+        warnings.showwarning = _showwarning_with_advice(warnings.showwarning)
+        return call_or_exit(
             pv.plot_compare,
             command='compare',
             datasets=meshes,
@@ -235,6 +257,3 @@ def _compare(
             show_kwargs={'full_screen': full_screen, 'interactive': interactive},
             dataset_kwargs=kwargs,
         )
-
-    _report_warnings(caught)
-    return result
