@@ -3486,7 +3486,7 @@ class BasePlotter(_BoundsSizeMixin):
             ``render_points_as_spheres`` is ``True`` (explicitly or via
             theme), it will be automatically disabled with a warning.
 
-            .. versionadded:: 0.49
+            .. versionadded:: 0.48
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -3622,7 +3622,7 @@ class BasePlotter(_BoundsSizeMixin):
             between replacements may allow the rendering backend to reuse index
             buffers while updating vertex attributes.
 
-            .. versionadded:: 0.48
+            .. versionadded:: 0.49
 
         user_matrix : TransformLike, default: np.eye(4)
             Matrix passed to the Actor class before rendering. This affects the
