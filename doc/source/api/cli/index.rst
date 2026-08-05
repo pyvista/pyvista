@@ -4,9 +4,9 @@ Command Line
 ============
 
 PyVista ships a command-line interface (CLI) for :ref:`plotting <cli_plot>`,
-:ref:`converting <cli_convert>`, and :ref:`validating <cli_validate>`
-mesh files, as well as generating environment :ref:`reports <cli_report>`,
-without requiring Python code.
+:ref:`comparing <cli_compare>`, :ref:`converting <cli_convert>`, and
+:ref:`validating <cli_validate>` mesh files, as well as generating environment
+:ref:`reports <cli_report>`, without requiring Python code.
 The CLI is enabled with a standard PyVista installation, e.g.:
 
 .. code-block:: bash
@@ -37,6 +37,7 @@ The API for each subcommand is documented below.
    :maxdepth: 1
 
    plot
+   compare
    convert
    validate
    report

@@ -417,6 +417,10 @@ def plot_compare(  # noqa: ANN201
 ):
     """Plot a grid comparison of any number of data objects.
 
+    .. note::
+        This function is also available via command-line interface. See
+        :ref:`pyvista compare <cli_compare>` for details.
+
     Each data object is shown in its own subplot. By default, the subplots are arranged
     in a compact grid which is never taller than it is wide, e.g. ``(1, 2)`` for two
     datasets, ``(1, 3)`` for three, ``(2, 2)`` for four, and ``(2, 3)`` for five or six.
