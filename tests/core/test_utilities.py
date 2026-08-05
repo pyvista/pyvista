@@ -1208,13 +1208,21 @@ def test_fix_edit_link_button_other_pages_fall_through():
 
 
 def _edit_button_context(pagename):
-    # Mimic the context sphinx-book-theme builds for the "suggest edit" button
+    # Mimic the context sphinx-book-theme builds for the header buttons
     default_url = f'https://github.com/pyvista/pyvista/edit/main/doc/source/{pagename}.rst'
     return {
         'get_edit_provider_and_url': lambda: ('GitHub', default_url),
         'header_buttons': [
             {'type': 'link', 'url': default_url, 'label': 'source-edit-button'},
-            {'type': 'group', 'buttons': [{'type': 'javascript', 'label': 'download-pdf-button'}]},
+            {
+                'type': 'group',
+                'label': 'download-buttons',
+                'buttons': [
+                    {'type': 'link', 'label': 'download-source-button'},
+                    {'type': 'javascript', 'label': 'download-pdf-button'},
+                ],
+            },
+            {'type': 'javascript', 'label': 'fullscreen-button'},
         ],
     }
 
@@ -1247,6 +1255,16 @@ def test_pv_html_page_context_without_edit_button():
     context = {}
     pv_html_page_context(None, 'index', 'page.html', context, None)
     assert context == {}
+
+
+def test_pv_html_page_context_drops_download_button():
+    # The download button offers nothing useful -- .rst 404s and PDF is a
+    # browser feature -- so it is dropped, leaving other buttons untouched
+    context = _edit_button_context('api/core/index')
+    pv_html_page_context(None, 'api/core/index', 'page.html', context, None)
+
+    labels = [button['label'] for button in context['header_buttons']]
+    assert labels == ['source-edit-button', 'fullscreen-button']
 
 
 def test_coerce_point_like_arg():

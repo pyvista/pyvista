@@ -139,20 +139,14 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
     return link
 
 
-def pv_html_page_context(  # noqa: PLR0917
-    app,  # noqa: ARG001
-    pagename: str,
-    templatename: str,  # noqa: ARG001
-    context,
-    doctree,  # noqa: ARG001
-) -> None:
+def _fix_edit_button(pagename: str, context) -> None:
     """Point the "suggest edit" button at the file the page is generated from.
 
     ``sphinx-book-theme`` builds the pencil button in Python rather than in a
     template: ``header_buttons`` is populated by its ``add_source_buttons``
     handler (priority 501) from ``get_edit_provider_and_url()``. So the URL is
-    patched here after the fact, which requires this handler to be connected
-    with a priority greater than 501.
+    patched here after the fact, which requires ``pv_html_page_context`` to be
+    connected with a priority greater than 501.
 
     ``get_edit_provider_and_url`` is replaced as well so that any template
     calling it directly -- such as the ``edit-this-page.html`` component of
@@ -179,3 +173,40 @@ def pv_html_page_context(  # noqa: PLR0917
         for repo_button in buttons:
             if repo_button.get('label') == 'source-edit-button':
                 repo_button['url'] = fix_edit_link_button(pagename, repo_button['url'])
+
+
+def _drop_download_button(context) -> None:
+    """Remove the header "download this page" button.
+
+    ``sphinx-book-theme`` adds it whenever a page has a source suffix, without
+    checking whether that source is actually served: it links to a ``.rst``
+    under ``_sources`` that 404s the same way the unfixed edit button does,
+    since ``html_copy_source`` is disabled for these docs. There is nothing
+    else worth downloading either -- "Print to PDF" is a browser feature, not
+    a real download. Gallery examples keep their own ``.py``/``.ipynb``/``.zip``
+    downloads from sphinx-gallery's links at the bottom of the page.
+
+    """
+    if 'header_buttons' not in context:
+        return
+
+    context['header_buttons'] = [
+        button for button in context['header_buttons'] if button.get('label') != 'download-buttons'
+    ]
+
+
+def pv_html_page_context(  # noqa: PLR0917
+    app,  # noqa: ARG001
+    pagename: str,
+    templatename: str,  # noqa: ARG001
+    context,
+    doctree,  # noqa: ARG001
+) -> None:
+    """Fix up the ``sphinx-book-theme`` header buttons for the page being rendered.
+
+    Must be connected to ``html-page-context`` with a priority above the 501
+    used by the theme's own handlers, which is where the buttons are built.
+
+    """
+    _fix_edit_button(pagename, context)
+    _drop_download_button(context)
