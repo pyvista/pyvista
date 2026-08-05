@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 from typing import get_args
+import warnings
 
 import numpy as np
 from PIL import Image
@@ -94,9 +95,6 @@ def using_mesa():
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
-)
-skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
-    9, 3, reason='Functions not implemented before 9.3.X'
 )
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
@@ -1347,15 +1345,28 @@ def test_enable_picking_gc():
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_left_button_down():
     pl = pv.Plotter()
-
-    attr = 'GetRenderFramebuffer'
-    if hasattr(renwin := pl.render_window, attr):
-        if not getattr(renwin, attr)().GetFBOIndex():
-            # This only fails for VTK<9.2.3
-            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
-                pl.left_button_down(None, None)
-    else:
+    with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
         pl.left_button_down(None, None)
+    pl.close()
+
+
+def test_left_button_down_pickpoint(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # an empty plotter is enough to reproduce, no mesh is required
+    pl = pv.Plotter()
+    assert pl.pickpoint is None
+
+    pl.show(auto_close=False)  # must start renderer first
+    width, height = pl.window_size
+
+    # pressing 'b' registers ``left_button_down`` for the next left click
+    pl.iren.interactor.SetKeySym('b')
+    pl.iren.interactor.KeyPressEvent()
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+
+    assert pl.pickpoint.shape == (1, 3)
+    assert not np.any(np.isnan(pl.pickpoint))
     pl.close()
 
 
@@ -1429,7 +1440,6 @@ def test_axes():
     pl.show()
 
 
-@pytest.mark.skip_check_gc
 def test_box_axes_removed(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -1734,8 +1744,6 @@ def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
     return dataset
 
 
-# check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 def test_plot_rgb(composite, dtype):
@@ -1748,8 +1756,6 @@ def test_plot_rgb(composite, dtype):
     pl.show()
 
 
-# check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 def test_plot_rgb_implicit(composite, scalars):
@@ -2179,7 +2185,6 @@ def test_image_properties() -> None:
     pl.close()
 
 
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('enable_parallel_projection', [True, False])
 def test_image_depth_parallel_projection(enable_parallel_projection):
     # Create depth image
@@ -2284,30 +2289,696 @@ def test_array_volume_rendering(uniform, verify_image_cache):
     pv.plot(arr, volume=True, opacity='linear')
 
 
-def test_plot_compare_four():
-    # Really just making sure no errors are thrown
+@pytest.fixture
+def compare_datasets():
     mesh = examples.load_uniform()
-    data_a = mesh.contour()
-    data_b = mesh.threshold_percent(0.5)
-    data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph(scale=False, orient=False)
-    pv.plot_compare_four(
-        data_a,
-        data_b,
-        data_c,
-        data_d,
-        display_kwargs={'color': 'w'},
+    return [
+        mesh.contour(),
+        mesh.threshold_percent(0.5),
+        mesh.decimate_boundary(0.5),
+        mesh.glyph(scale=False, orient=False),
+    ]
+
+
+def test_plot_compare(compare_datasets):
+    # Really just making sure no errors are thrown
+    pv.plot_compare(compare_datasets, dataset_kwargs={'color': 'w'})
+
+
+@pytest.mark.parametrize(
+    ('n_datasets', 'expected'),
+    [(2, (1, 2)), (3, (1, 3)), (4, (2, 2)), (5, (2, 3)), (6, (2, 3)), (7, (2, 4)), (9, (3, 3))],
+)
+def test_plot_compare_auto_shape(n_datasets, expected, no_images_to_verify):  # noqa: ARG001
+    from pyvista.plotting.plot_compare import _auto_shape
+
+    assert _auto_shape(n_datasets) == expected
+
+
+def test_plot_compare_n_datasets(compare_datasets):
+    # Five datasets are laid out in a 2 by 3 grid, leaving the last subplot empty
+    datasets = [compare_datasets[i % len(compare_datasets)] for i in range(5)]
+    pv.plot_compare(datasets, dataset_kwargs={'color': 'w'})
+
+
+@pytest.mark.parametrize(
+    ('shape', 'n_datasets'),
+    [
+        ((4, 1), 4),
+        ('3|1', 4),  # three subplots on the left, one on the right
+        ('4/2', 6),  # four subplots on top, two on the bottom
+    ],
+    # Give the string descriptors file-safe ids since they are used as image names
+    ids=['grid', 'left_right', 'top_bottom'],
+)
+def test_plot_compare_shape(compare_datasets, shape, n_datasets):
+    datasets = [compare_datasets[i % len(compare_datasets)] for i in range(n_datasets)]
+    pv.plot_compare(datasets, shape=shape, dataset_kwargs={'color': 'w'})
+
+
+@pytest.mark.parametrize('shape', [(4, 1), '3|1'], ids=['grid', 'left_right'])
+def test_plot_compare_shape_from_plotter_kwargs(compare_datasets, shape, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A shape given to the plotter is used as the shape of the comparison
+    shapes = []
+    pv.plot_compare(
+        compare_datasets,
+        plotter_kwargs={'shape': shape},
+        show_kwargs={'before_close_callback': lambda pl: shapes.append(pl.renderers.shape)},
+    )
+    assert shapes == [(4, 1) if shape == (4, 1) else (4,)]
+
+
+def test_plot_compare_labels(compare_datasets):
+    pv.plot_compare(
+        compare_datasets,
+        labels=['one', 'two', 'three', 'four'],
+        label_size=24,
+        label_kwargs={'color': 'red'},
+        dataset_kwargs={'color': 'w'},
     )
 
 
-def test_plot_compare_four_camera_position():
-    mesh = examples.download_foot_bones()
-    cpos = pv.CameraPosition(
-        position=(-0.7780, -12.74, -2.019),
-        focal_point=(1.257, -1.716, -0.2136),
-        viewup=(-0.2696, -0.1070, 0.9570),
+def test_plot_compare_labels_none(compare_datasets):
+    pv.plot_compare(compare_datasets, labels=None, dataset_kwargs={'color': 'w'})
+
+
+@pytest.fixture
+def compare_labels():
+    """Return labels of very different lengths, to be sized against each other."""
+    return [
+        'runs/2024-06-01/experiment_alpha/output_mesh.vtk',
+        'short',
+        'runs/2024-06-01/experiment_beta_with_a_long_name/output_mesh.vtk',
+        'medium_length_name.vtp',
+    ]
+
+
+def _drawn_labels(datasets, describe=None, **kwargs):
+    """Return something describing the label drawn in each subplot.
+
+    Describes the size and the text of each by default, which is what a text actor
+    draws it with. Holds nothing of the plotter, which has to be free to be collected.
+    """
+    describe = describe or (lambda actor: (actor.prop.font_size, actor.input))
+    drawn: list[Any] = []
+
+    def capture(plotter):
+        drawn.extend(
+            describe(actor)
+            for renderer in plotter.renderers
+            for actor in renderer.actors.values()
+            if isinstance(actor, (pv.Text, pv.CornerAnnotation))
+        )
+
+    pv.plot_compare(
+        datasets,
+        dataset_kwargs={'color': 'w'},
+        show_kwargs={'before_close_callback': capture},
+        **kwargs,
     )
-    pv.plot_compare_four(mesh, mesh, mesh, mesh, camera_position=cpos)
+    return drawn
+
+
+@pytest.mark.parametrize('label_size', ['best_fit', 'uniform', 24])
+def test_plot_compare_label_size(compare_datasets, compare_labels, label_size):
+    pv.plot_compare(
+        compare_datasets,
+        labels=compare_labels,
+        label_size=label_size,
+        dataset_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_label_size_modes(compare_datasets, compare_labels, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def sizes(**kwargs):
+        drawn = _drawn_labels(compare_datasets, labels=compare_labels, **kwargs)
+        return [size for size, _ in drawn]
+
+    # The longer a label is the smaller it is drawn, and none larger than the theme
+    best_fit = sizes(label_size='best_fit')
+    lengths = (len(label) for label in compare_labels)
+    assert [size for _, size in sorted(zip(lengths, best_fit, strict=True))] == sorted(
+        best_fit, reverse=True
+    )
+    assert max(best_fit) <= pv.global_theme.font.size * 2
+
+    # Every label is drawn at the size of the one which has to be smallest to fit
+    assert sizes(label_size='uniform') == [min(best_fit)] * len(compare_labels)
+
+    # A font size is drawn as given, however long the label is
+    assert sizes(label_size=24) == [24 * 2] * 4
+    assert sizes(label_kwargs={'font_size': 24}) == [24 * 2] * 4
+
+    # Subplots of the same width share a size, and those of different widths are
+    # fitted one by one, since a shared size is pinned to whatever fits the narrowest
+    assert sizes() == sizes(label_size='uniform') != sizes(label_size='best_fit')
+    assert sizes(shape='3|1') == sizes(shape='3|1', label_size='best_fit')
+    assert sizes(shape='3|1') != sizes(shape='3|1', label_size='uniform')
+
+
+def test_plot_compare_label_position(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def placed(**kwargs):
+        """Return where the label of the first subplot is, and how it is anchored."""
+        return _drawn_labels(
+            compare_datasets,
+            describe=lambda actor: (
+                tuple(round(coordinate, 2) for coordinate in actor.position),
+                actor.prop.justification_horizontal,
+                actor.prop.justification_vertical,
+            ),
+            **kwargs,
+        )[0]
+
+    # Drawn in the upper left by default, anchored there so that it stays put at any size
+    assert placed() == ((0.02, 0.98), 'left', 'top')
+    assert placed(label_position='upper_left') == placed()
+
+    # Every place `add_text` names may be used, and is anchored to that place
+    assert placed(label_position='lower_right') == ((0.98, 0.02), 'right', 'bottom')
+    assert placed(label_position='upper_edge') == ((0.5, 0.98), 'center', 'top')
+    assert placed(label_position='left_edge') == ((0.02, 0.5), 'left', 'center')
+
+    # It may be given in the keywords instead, which is where a coordinate goes
+    assert placed(label_kwargs={'position': 'lower_left'}) == ((0.02, 0.02), 'left', 'bottom')
+    assert placed(label_kwargs={'position': (0.4, 0.4), 'viewport': True})[0] == (0.4, 0.4)
+
+
+def test_plot_compare_label_is_drawn_by_a_text_actor(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def drawn_by(**kwargs):
+        describe = lambda actor: type(actor).__name__
+        return _drawn_labels(compare_datasets, describe=describe, **kwargs)
+
+    # A text actor draws text at the size it is given, wherever the label goes and
+    # whether or not the size is fitted. A corner annotation works out a size of its
+    # own, which fights a fitted one and draws nothing when made to use a larger one.
+    assert drawn_by() == ['Text'] * 4
+    assert drawn_by(label_size=24) == ['Text'] * 4
+    assert drawn_by(label_kwargs={'position': 'lower_right'}) == ['Text'] * 4
+
+
+def test_plot_compare_label_size_elides_a_label_which_cannot_fit(
+    compare_datasets, verify_image_cache
+):
+    from pyvista.plotting.plot_compare import _MIN_LABEL_SIZE
+
+    verify_image_cache.skip = True
+
+    # A label far too long to be drawn at a readable size has its middle elided, and
+    # what is left of it is drawn at the smallest readable size
+    labels = ['x' * 400, 'y' * 400, 'short', 'also short']
+    drawn = _drawn_labels(compare_datasets, labels=labels)
+    for (size, text), label in zip(drawn[:2], labels[:2], strict=True):
+        assert size == _MIN_LABEL_SIZE
+        assert '\u2026' in text
+        assert len(text) < len(label)
+        # What is kept of the label is its start and its end
+        assert text.startswith(label[0])
+        assert text.endswith(label[0])
+
+    # The labels which fit at that size are drawn as they are
+    assert [text for _, text in drawn[2:]] == labels[2:]
+
+
+def test_plot_compare_label_size_follows_the_window(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def size_of_first_label(plotter):
+        actors = plotter.renderers[0].actors.values()
+        return next(actor.prop.font_size for actor in actors if isinstance(actor, pv.Text))
+
+    # Labels are fitted again whenever the window is resized. Rendering again at the
+    # same size must draw them the same, or they flicker as the window is dragged.
+    drawn = []
+
+    def resize(plotter):
+        for window_size in ([1600, 1200], [800, 600], [500, 400], [1600, 1200]):
+            plotter.window_size = window_size
+            plotter.render()
+            size = size_of_first_label(plotter)
+            plotter.render()
+            assert size_of_first_label(plotter) == size
+            drawn.append(size)
+
+    pv.plot_compare(
+        compare_datasets,
+        labels=['runs/2024-06-01/experiment_alpha/output_mesh.vtk'] * 4,
+        dataset_kwargs={'color': 'w'},
+        show_kwargs={'before_close_callback': resize},
+    )
+    # The narrower the window, the smaller the label, and the same window size gives
+    # the same size again however it was arrived at
+    assert drawn == [*sorted(drawn[:3], reverse=True), drawn[0]]
+
+
+@pytest.mark.parametrize('multiblock', [False, True], ids=['dict', 'multiblock'])
+def test_plot_compare_labels_take_precedence_over_keys(multiblock, verify_image_cache):
+    verify_image_cache.skip = True
+
+    datasets = {'sphere': pv.Sphere(), 'cube': pv.Cube()}
+    if multiblock:
+        datasets = pv.MultiBlock(datasets)
+
+    def drawn(**kwargs):
+        """Return the text which is actually drawn in each subplot."""
+        return [text for _, text in _drawn_labels(datasets, **kwargs)]
+
+    assert drawn() == ['sphere', 'cube']
+    assert drawn(labels=['one', 'two']) == ['one', 'two']
+
+
+@pytest.mark.parametrize(
+    ('link', 'camera_position'),
+    [
+        # Linked with no camera position is the default, covered by `test_plot_compare`
+        (False, None),
+        (True, 'xy'),
+        (False, 'xy'),
+        # A fully specified camera position is used as given, so linking cannot change it
+        (
+            True,
+            pv.CameraPosition(
+                position=(20.0, 20.0, 20.0), focal_point=(4.5, 4.5, 4.5), viewup=(0.0, 0.0, 1.0)
+            ),
+        ),
+    ],
+    ids=['unlinked', 'linked_cpos_str', 'unlinked_cpos_str', 'cpos_full'],
+)
+def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_position):
+    pv.plot_compare(
+        compare_datasets,
+        link=link,
+        cpos=camera_position,
+        dataset_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):
+    verify_image_cache.skip = True
+
+    datasets = [pv.Sphere(radius=0.02), pv.Cone(height=5.0)]
+    reference_mesh = pv.MultiBlock(datasets).outline()
+    causes = {
+        'linked': 'all of the datasets together, which the shared camera has to fit',
+        'reference': 'the reference mesh, which every subplot has to fit',
+    }
+
+    def warned(**kwargs):
+        """Return which of the two causes were reported, if any."""
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            pv.plot_compare(datasets, **kwargs)
+        messages = [str(warning.message) for warning in caught]
+        return [name for name, cause in causes.items() if any(cause in m for m in messages)]
+
+    # Each subplot is fit to its own dataset when unlinked, and these are not linked
+    # by default, so there is nothing to report
+    assert warned() == []
+    assert warned(link=False) == []
+
+    # A shared camera has to fit every dataset, so a much smaller one is barely
+    # visible. Only linking on purpose is reported, since datasets which are linked
+    # automatically are of a comparable size already
+    assert warned(link=True) == ['linked']
+
+    # Every subplot has to fit the reference mesh as well as its own dataset, so a
+    # dataset much smaller than the reference is barely visible however it is framed
+    assert warned(reference_mesh=reference_mesh) == ['reference']
+    assert warned(reference_mesh=reference_mesh, link=False) == ['reference']
+
+    # Both are reported when both apply
+    assert warned(reference_mesh=reference_mesh, link=True) == ['linked', 'reference']
+
+
+@pytest.mark.parametrize('box', [False, True], ids=['arrows', 'box'])
+def test_plot_compare_show_axes(compare_datasets, box, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The theme decides between the two kinds of axes, as it does for `pyvista.plot`
+    theme = pv.plotting.themes.Theme()
+    theme.axes.box = box
+
+    enabled = []
+    pv.plot_compare(
+        compare_datasets,
+        show_axes=True,
+        plotter_kwargs={'theme': theme},
+        show_kwargs={
+            'before_close_callback': lambda pl: enabled.extend(
+                renderer.axes_enabled for renderer in pl.renderers
+            )
+        },
+    )
+    assert enabled == [True] * len(compare_datasets)
+
+
+def test_plot_compare_show_bounds(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    actors = []
+    pv.plot_compare(
+        compare_datasets,
+        show_bounds=True,
+        show_kwargs={
+            'before_close_callback': lambda pl: actors.extend(
+                renderer.cube_axes_actor for renderer in pl.renderers
+            )
+        },
+    )
+    assert all(actor is not None for actor in actors)
+
+
+@pytest.mark.parametrize('link', [True, False], ids=['linked', 'unlinked'])
+@pytest.mark.parametrize('zoom', [2.0, 'tight'], ids=['float', 'tight'])
+def test_plot_compare_zoom(compare_datasets, link, zoom, verify_image_cache):
+    verify_image_cache.skip = True
+
+    def cameras(**kwargs):
+        # A float zoom narrows the view angle and `'tight'` moves the camera
+        captured: list[tuple[float, float]] = []
+        pv.plot_compare(
+            compare_datasets,
+            link=link,
+            show_kwargs={
+                'before_close_callback': lambda pl: captured.extend(
+                    (round(ren.camera.view_angle, 4), round(ren.camera.GetDistance(), 3))
+                    for ren in pl.renderers
+                )
+            },
+            **kwargs,
+        )
+        return captured
+
+    before = cameras()
+    after = cameras(zoom=zoom)
+    assert after != before
+
+    if zoom == 2.0:
+        # Zooming twice halves the view angle. Linked subplots share one camera, so
+        # this must happen once rather than once per subplot, which would compound it
+        assert after[0][0] == pytest.approx(before[0][0] / 2)
+
+
+@pytest.mark.parametrize(
+    ('datasets', 'expected'),
+    [
+        # Variants of one dataset occupy the same space at the same scale
+        ([pv.Sphere(), pv.Sphere().decimate(0.9), pv.Sphere().clip('x')], True),
+        # A dataset much smaller than the rest would be left too small to make out
+        ([pv.Sphere(radius=0.1), pv.Cube(), pv.Cone(height=5.0)], False),
+        # Datasets of the same size which are far apart span more than any one of them
+        ([pv.Sphere(), pv.Sphere(center=(20.0, 0.0, 0.0))], False),
+    ],
+    ids=['variants', 'different_sizes', 'far_apart'],
+)
+def test_plot_compare_link_auto(datasets, expected, verify_image_cache):
+    verify_image_cache.skip = True
+
+    shared = []
+    pv.plot_compare(
+        datasets,
+        show_kwargs={
+            'before_close_callback': lambda pl: shared.append(
+                len({id(renderer.camera) for renderer in pl.renderers}) == 1
+            )
+        },
+    )
+    assert shared == [expected]
+
+
+def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # Linked views share one camera, so it is fit to the bounds of every dataset
+    # rather than to whichever dataset happens to be drawn last
+    def distances(datasets, *, link):
+        # Do not keep a reference to the plotter itself, it must be free to be collected
+        captured: list[float] = []
+
+        def capture(plotter):
+            captured.extend(round(ren.camera.GetDistance(), 2) for ren in plotter.renderers)
+
+        pv.plot_compare(
+            datasets,
+            link=link,
+            dataset_kwargs={'color': 'w'},
+            show_kwargs={'before_close_callback': capture},
+        )
+        return captured
+
+    forwards = distances(compare_datasets, link=True)
+    backwards = distances(compare_datasets[::-1], link=True)
+    assert forwards == backwards
+    assert len(set(forwards)) == 1
+
+    # Each subplot keeps its own camera when unlinked, so reversing the datasets
+    # reverses the per-subplot framing
+    forwards = distances(compare_datasets, link=False)
+    backwards = distances(compare_datasets[::-1], link=False)
+    assert forwards == backwards[::-1]
+
+
+def test_plot_compare_normalize(verify_image_cache):  # noqa: ARG001
+    # The airplane is some forty times the size of the ant, and normalizing makes them
+    # comparable shape by shape
+    pv.plot_compare(
+        {'airplane': examples.load_airplane(), 'ant': examples.load_ant()},
+        normalize=True,
+        dataset_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_normalize_resizes_every_dataset(verify_image_cache):
+    verify_image_cache.skip = True
+
+    airplane, ant = examples.load_airplane(), examples.load_ant()
+    lengths = []
+    centers = []
+    linked = []
+
+    def capture(plotter):
+        lengths.extend(renderer.length for renderer in plotter.renderers)
+        centers.extend(renderer.center for renderer in plotter.renderers)
+        linked.append(plotter.renderers[0].camera is plotter.renderers[1].camera)
+
+    def plot(**kwargs):
+        lengths.clear()
+        centers.clear()
+        pv.plot_compare(
+            [airplane, ant],
+            dataset_kwargs={'color': 'w'},
+            show_kwargs={'before_close_callback': capture},
+            **kwargs,
+        )
+
+    # Every dataset is resized to a length of one about the origin
+    plot(normalize=True)
+    assert lengths == pytest.approx([1.0, 1.0])
+    assert centers == pytest.approx([(0.0, 0.0, 0.0)] * 2)
+
+    # The datasets which were given are left as they are
+    assert airplane.length == pytest.approx(2011.5550932463605)
+    assert ant.length == pytest.approx(50.03865544431554)
+
+    # Datasets of such different sizes are not linked, and normalized ones are, since
+    # they are then the same size and in the same place
+    plot()
+    assert linked == [True, False]
+
+
+def test_plot_compare_normalize_reference_mesh(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A reference mesh is resized along with the datasets, so that it stays the same
+    # frame of reference for each of them rather than dwarfing them
+    lengths = []
+    pv.plot_compare(
+        [examples.load_airplane(), examples.load_ant()],
+        reference_mesh=examples.load_airplane().outline(),
+        normalize=True,
+        dataset_kwargs={'color': 'w'},
+        show_kwargs={
+            'before_close_callback': lambda pl: lengths.extend(r.length for r in pl.renderers)
+        },
+    )
+    # Each subplot holds a dataset and the reference mesh, both of length one
+    assert lengths == pytest.approx([1.0, 1.0], abs=0.5)
+
+
+def test_plot_compare_reference_mesh(compare_datasets):
+    pv.plot_compare(
+        compare_datasets,
+        reference_mesh=examples.load_uniform().outline(),
+        reference_kwargs={'color': 'red', 'line_width': 3},
+        dataset_kwargs={'color': 'w'},
+    )
+
+
+def test_plot_compare_reference_kwargs(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The reference mesh is drawn with `reference_kwargs`, so styling it differs
+    # from the default styling. Neither needs an image of its own to show that
+    kwargs = dict(
+        reference_mesh=examples.load_uniform().outline(),
+        dataset_kwargs={'color': 'w'},
+        screenshot=True,
+        show_kwargs={'return_img': True},
+    )
+    assert not np.array_equal(
+        pv.plot_compare(compare_datasets, **kwargs),
+        pv.plot_compare(compare_datasets, reference_kwargs={'color': 'red'}, **kwargs),
+    )
+
+
+def test_plot_compare_dict(compare_datasets):
+    datasets = dict(
+        zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
+    )
+    pv.plot_compare(datasets, dataset_kwargs={'color': 'w'})
+
+
+def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A MultiBlock is compared block by block and uses its block names as labels,
+    # which is the same plot the equivalent dict gives
+    datasets = dict(
+        zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
+    )
+    kwargs = dict(dataset_kwargs={'color': 'w'}, screenshot=True, show_kwargs={'return_img': True})
+    assert np.array_equal(
+        pv.plot_compare(pv.MultiBlock(datasets), **kwargs), pv.plot_compare(datasets, **kwargs)
+    )
+
+
+def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
+    mesh = pv.Sphere()
+    match = 'Expected a sequence of datasets, got a single PolyData instead.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(mesh)
+
+    match = 'Expected a sequence of datasets, got int instead.'
+    with pytest.raises(TypeError, match=match):
+        pv.plot_compare(42)
+
+    match = 'At least two datasets are required for comparison, got 0 instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.plot_compare([])
+
+    match = 'At least two datasets are required for comparison, got 1 instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.plot_compare([mesh])
+
+    match = "Labels must be a sequence of strings or None, got 'AB' instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], labels='AB')
+
+    match = 'Number of labels (1) must match the number of datasets (2).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], labels=['A'])
+
+    # The shape itself is validated by the plotter
+    match = (
+        '"shape" string descriptor must be two integers separated by "|" or "/", '
+        'for example "3|1" or "4/2". Got \'not a shape\'.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape='not a shape')
+
+    match = '"shape" should be a list, tuple or string descriptor'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=2)
+
+    match = '"shape" must have length 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(1, 2, 3))
+
+    match = '"shape" must contain only positive integers.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(0, 2))
+
+    # Whether the layout is big enough is validated by `plot_compare`
+    match = "Shape '1|1' defines 2 subplot(s) which is not enough for 3 datasets."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh, mesh], shape='1|1')
+
+    match = 'Shape (1, 1) defines 1 subplot(s) which is not enough for 2 datasets.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(1, 1))
+
+    match = 'Reference mesh must be a dataset, got bool instead.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], reference_mesh=True)
+
+    match = (
+        "Shape was given both as the 'shape' argument and in 'plotter_kwargs'. "
+        'Use one or the other.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], shape=(1, 2), plotter_kwargs={'shape': (2, 1)})
+
+    match = (
+        "Label size was given both as the 'label_size' argument and in 'label_kwargs'. "
+        'Use one or the other.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size=12, label_kwargs={'font_size': 24})
+
+    match = (
+        "Label position was given both as the 'label_position' argument and in "
+        "'label_kwargs'. Use one or the other."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(
+            [mesh, mesh], label_position='upper_left', label_kwargs={'position': 'lower_left'}
+        )
+
+    places = (
+        "'lower_left', 'lower_right', 'upper_left', 'upper_right', 'lower_edge', "
+        "'upper_edge', 'left_edge', 'right_edge'"
+    )
+    match = f"Label position must be one of {places} or None, got 'middle' instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_position='middle')
+
+    # A coordinate is a position `add_text` takes, but not one of the named places
+    match = "or None, got (0.1, 0.9) instead. Give a coordinate in 'label_kwargs'."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_position=(0.1, 0.9))
+
+    match = (
+        'Cannot normalize PartitionedDataSet, which cannot be resized. '
+        'Convert it to a dataset which can, or use `normalize=False`.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], reference_mesh=pv.PartitionedDataSet([mesh]), normalize=True)
+
+    match = "Label size 'biggest' is not a font size, 'best_fit', 'uniform' or None."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size='biggest')
+
+    match = "Label size must be a font size, 'best_fit', 'uniform' or None, got bool instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size=True)
+
+    match = 'Label size must be greater than zero, got 0 instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare([mesh, mesh], label_size=0)
+
+
+def test_plot_compare_four_deprecated(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+    match = '`plot_compare_four` is deprecated. Use `plot_compare` instead'
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        pv.plot_compare_four(*compare_datasets, display_kwargs={'color': 'w'})
 
 
 @skip_lesser_9_4_X_depth_peeling
@@ -3261,6 +3932,21 @@ def test_orbit_on_path(sphere):
     pl.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_orbit_on_path_threaded_stopped_on_close(sphere):
+    # Regression test: `close()` must stop a threaded `orbit_on_path()` run before
+    # returning. Otherwise the orbit thread keeps running afterward, and while it
+    # runs, its live stack frame keeps VTK objects (e.g. the orbit path's point
+    # array) reachable past `close()` -- previously an intermittent leak
+    # ("only sometimes -- usually macOS").
+    pl = pv.Plotter(off_screen=False)
+    pl.add_mesh(sphere)
+    pl.orbit_on_path(threaded=True, step=0.05)
+    time.sleep(0.02)  # let the thread actually start before closing
+    pl.close()
+    assert not pl._orbit_thread.is_alive()
+
+
 def test_rectlinear_edge_case(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 
@@ -3763,14 +4449,12 @@ def test_tight_square(noise_2d):
     )
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 def test_plot_cell():
     grid = examples.cells.Tetrahedron()
     examples.plot_cell(grid)
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize(
     ('line_width', 'point_size', 'font_size', 'normals_scale', 'cls'),
     [
@@ -3801,7 +4485,6 @@ def test_plot_cell_kwargs(
     )
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 @pytest.mark.parametrize('wrong_orientation', [True, False])
 def test_plot_cell_polyhedron(wrong_orientation):
@@ -3817,7 +4500,6 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
 def test_plot_cell_multiple_cell_types(verify_image_cache):
     verify_image_cache.high_variance_test = True
@@ -4015,7 +4697,6 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14")
 def test_plotter_volume_lookup_table(uniform):
     uniform.set_active_scalars('Spatial Point Data')
 
@@ -4030,7 +4711,6 @@ def test_plotter_volume_lookup_table(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc
 def test_plotter_volume_lookup_table_reactive(uniform):
     """Ensure that changes to the underlying lookup table are reflected by the volume property."""
     uniform.set_active_scalars('Spatial Point Data')
@@ -4290,7 +4970,6 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_plot_individual_cell(hexbeam):
     hexbeam.get_cell(0).plot(color='b')
 
@@ -4895,7 +5574,6 @@ def test_plot_texture_flip_y(texture):
 
 
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
-@pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
     """Test plotting directly from the Texture class."""
     verify_image_cache.high_variance_test = True
@@ -4974,7 +5652,6 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
 def test_axes_geometry_shaft_type_tip_type(geometry_type):
     if geometry_type == 'custom':
@@ -5169,7 +5846,6 @@ def test_show_bounds_n_labels(verify_image_cache):
     pl.show()
 
 
-@skip_lesser_9_3_X
 def test_radial_gradient_background():
     pl = pv.Plotter()
     pl.set_background('white', right='black')
@@ -5405,13 +6081,11 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     # Remove Spline from test case (if present).
     if 'Spline' in functions.keys():
         functions.pop('Spline')
-    # Add a separate test for vtk < 9.3
-    functions['Capsule_legacy'] = functions['Capsule']
+
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
         'Capsule',
-        'Capsule_legacy',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -5463,7 +6137,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
     positive_dir = direction == 'pos'
@@ -5474,15 +6147,6 @@ def test_direction_objects(direction_obj_test_case):
         kwargs['center'] = (0, 0, 0)
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
-
-    # Test Capsule separately based on vtk version
-    if 'Capsule' in name:
-        legacy_vtk = pv.vtk_version_info < (9, 3)
-        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
-            pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing '
-                'with wrong version.',
-            )
 
     direction_param_name = None
 
@@ -5541,7 +6205,6 @@ def test_direction_objects(direction_obj_test_case):
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
     if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
@@ -5579,7 +6242,6 @@ def _show_edges():
     [(None, None), (None, 2), (2, 2)],
     ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
 )
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,  # noqa: F811
     select_inputs,
@@ -5604,6 +6266,8 @@ def test_contour_labels_boundary_style(
                 **test_kwargs,
                 **fixed_kwargs,
             )
+        if mesh.n_cells > 0:
+            assert mesh.array_names == ['boundary_labels']
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -5659,7 +6323,6 @@ def test_contour_labels_boundary_style(
         'dist_5-scale_1',
     ],
 )
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
@@ -5698,7 +6361,6 @@ def test_contour_labels_smoothing_constraint(
 
 @pytest.mark.usefixtures('_show_edges')
 @pytest.mark.parametrize('smoothing', [True, False])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_compare_select_inputs_select_outputs(
     labeled_image,  # noqa: F811
     smoothing,
@@ -5737,7 +6399,6 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.skip_check_gc  # gc fails, suspected memory leak with merge
 @pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_push(distance):
     source = pv.OrthogonalPlanesSource()
@@ -5990,7 +6651,6 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
-@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(
     (9, 6, 99),  # >= 9,7,0
     reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
@@ -6047,7 +6707,6 @@ def test_hide_cells_no_scalars(verify_image_cache):
     grid.plot(color='w', show_edges=True, show_grid=True)
 
 
-@pytest.mark.skip_check_gc
 def test_connectivity_cmap():
     # Test case described in https://github.com/pyvista/pyvista/issues/8252
     large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
@@ -6245,7 +6904,6 @@ def mip_test_points():
     return cloud
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_test_points):
     verify_image_cache_wrapper.high_variance_test = True
     pl = pv.Plotter()
@@ -6265,7 +6923,6 @@ def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_tes
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_points):
     verify_image_cache_wrapper.high_variance_test = True
     pl = pv.Plotter()
@@ -6307,12 +6964,11 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         data[f'Sphere {phi_res} {theta_res}'] = pv.Sphere(**kwargs)
         data[f'Solid {phi_res} {theta_res}'] = pv.SolidSphere(**kwargs)
 
-    pv.plot_compare_four(
-        *data.values(),
-        display_kwargs={'show_edges': True},
-        labels=list(data),
+    pv.plot_compare(
+        data,
+        dataset_kwargs={'show_edges': True},
         link=False,
-        camera_position=pv.CameraPosition(
+        cpos=pv.CameraPosition(
             position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
             focal_point=(0.0, 0.0, 0.0),
             viewup=(0.0, 0.0, 1.0),
@@ -6356,10 +7012,36 @@ def test_sphere_texture_seam(tessellation):
         )
     texture = examples.load_globe_texture()
 
-    pv.plot_compare_four(
-        *data.values(),
-        display_kwargs={'texture': texture, 'smooth_shading': True},
-        labels=list(data.keys()),
+    pv.plot_compare(
+        data,
+        dataset_kwargs={'texture': texture, 'smooth_shading': True},
         link=False,
-        camera_position='yz',
+        cpos='yz',
     )
+
+
+@pytest.mark.parametrize('rate', [(1, 1, 1), (3, 6, 1)])
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset_rate(rate, rebase_coordinates):
+    extent = (-6, 6, -6, 6, -6, 6)
+    image = pv.ImageData()
+    image.extent = extent
+    image.cell_data['data'] = np.arange(image.n_cells)
+    subset = image.extract_subset(
+        (*extent[:4], 0, 0), rate=rate, rebase_coordinates=rebase_coordinates
+    )
+    expected_bounds = pv.BoundsTuple(
+        x_min=-6.0, x_max=6.0, y_min=-6.0, y_max=6.0, z_min=0.0, z_max=0.0
+    )
+    assert np.allclose(subset.bounds, expected_bounds)
+
+    # Put a hemisphere at the global and image origins for reference
+    global_origin = pv.Sphere(radius=2.0, center=(0, 0, 0), start_theta=0, end_theta=180)
+    image_origin = pv.Sphere(radius=2.0, center=subset.origin, start_theta=180, end_theta=360)
+
+    pl = pv.Plotter()
+    pl.add_mesh(subset)
+    pl.add_mesh(global_origin, color='blue')
+    pl.add_mesh(image_origin, color='orange')
+    pl.view_xy()
+    pl.show()

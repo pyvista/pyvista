@@ -187,6 +187,26 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
+@pytest.mark.parametrize(
+    ('shape', 'association'),
+    [
+        ((2, 3, 4), 'points'),
+        ((1, 2, 3), 'cells'),
+    ],
+)
+def test_raise_not_matching_suggests_flattening(shape, association):
+    grid = pv.ImageData(dimensions=(2, 3, 4))
+    scalars = np.zeros(shape)
+
+    with pytest.raises(ValueError, match='Number of scalars') as exc_info:
+        grid['scalars'] = scalars
+
+    message = str(exc_info.value)
+    assert f'shape {shape}' in message
+    assert f'matches the number of {association}' in message
+    assert "scalars.ravel(order='F')" in message
+
+
 def test_vtk_version_info():
     ver = _vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
@@ -279,6 +299,8 @@ def test_createvectorpolydata():
         ('/data/mesh.stl', '.stl'),
         ('/data/image.nii.gz', '.nii.gz'),
         ('/data/other.gz', '.gz'),
+        ('/data/can.e.4.0', '.e.4.0'),
+        ('/data/can.n.16.15', '.n.16.15'),
     ],
 )
 def test_get_ext(path, target_ext):
@@ -551,7 +573,9 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
-    assert package in REPORT
+    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+        pytest.xfail('package only available on macOS')
+    assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 
 def test_report_downloads():
@@ -3253,7 +3277,7 @@ def test_fileio_extensions(cls):
     if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
         # These classes are not associated with any extensions
         pytest.xfail()
-    assert len(cls.extensions) > 0
+    assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
 def test_ply_writer(sphere, tmp_path):
@@ -3301,3 +3325,20 @@ def test_try_callback_warns_every_time():
     messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
     assert len(messages) == n_calls
     assert 'callback failed' in str(messages[0].message)
+
+
+def test_write_path_of_ensight_writer(tmp_path, hexbeam):
+
+    path = tmp_path / 'hexbeam.case'
+    writer = pv.EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
+    assert writer.path == str(path.parent / path.stem)
+    # written_path is initialized same as path,
+    # but is updated after write() is called
+    assert writer.written_path == path
+
+    writer.write()
+
+    assert writer.path == str(path.parent / path.stem)
+
+    expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
+    assert writer.written_path == expected_path

@@ -288,7 +288,6 @@ def assert_color_in_annotations(name: str, invert: bool = False):
         assert name in _ALL_ANNOTATED_COLORS, msg
 
 
-@pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
@@ -308,7 +307,6 @@ def test_css4_colors(css4_color):
         assert_color_in_annotations(delimited_name)
 
 
-@pytest.mark.skip_check_gc
 def test_tab_colors(tab_color):
     # Test value
     name, value = tab_color
@@ -319,7 +317,6 @@ def test_tab_colors(tab_color):
     assert_color_in_annotations(name)
 
 
-@pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
     assert_color_in_annotations(name)
@@ -349,7 +346,6 @@ def _vtk_named_color_as_hex(name: str) -> str:
     return pv.Color(int_rgb).hex_rgb
 
 
-@pytest.mark.skip_check_gc
 @pytest.mark.needs_vtk_version(9, 6, 99)  # >= 9.7.0
 def test_paraview_colors(paraview_color):
     name, value = paraview_color
@@ -365,7 +361,6 @@ def test_paraview_colors(paraview_color):
     assert_color_in_annotations(name)
 
 
-@pytest.mark.skip_check_gc
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
@@ -384,7 +379,6 @@ def test_unique_colors():
     assert set(pv.hex_colors.keys()) == set(_ALL_ANNOTATED_COLORS)
 
 
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('color_annotation', _ALL_ANNOTATED_COLORS)
 def test_color_annotations(color_annotation):
     color = pv.Color(color_annotation)

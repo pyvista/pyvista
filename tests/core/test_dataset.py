@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -1045,6 +1046,106 @@ def test_find_cells_intersecting_line():
 
     with pytest.raises(TypeError):
         mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
+
+
+@pytest.mark.parametrize('points_dtype', [np.single, np.double])
+def test_intersect_with_line(points_dtype):
+    def assert_intersection_results(mesh_, points_, cell_ids_):
+        assert isinstance(points_, np.ndarray)
+        assert isinstance(cell_ids_, np.ndarray)
+        assert len(points_) == len(cell_ids_)
+        assert points_.dtype == mesh_.points.dtype
+        assert cell_ids_.dtype == np.int64
+        for idx in range(len(points_)):
+            cell = mesh_.get_cell(cell_ids_[idx])
+            point = points_[idx]
+            assert point in cell.points
+
+    # Manually create source to properly configure double precision points
+    source = _vtk.vtkSphereSource()
+    source.SetPhiResolution(10)
+    source.SetThetaResolution(10)
+    output_precision = (
+        _vtk.vtkAlgorithm.DOUBLE_PRECISION
+        if points_dtype == np.double
+        else _vtk.vtkAlgorithm.SINGLE_PRECISION
+    )
+    source.SetOutputPointsPrecision(output_precision)
+    source.Update()
+    mesh = pv.wrap(source.GetOutput())
+
+    assert mesh.points.dtype == points_dtype
+
+    # The exact value of pointb matters, see example from https://github.com/pyvista/pyvista/issues/8698
+    pointa = [0.0, 0, 5]
+    pointb = [0.0, 0, -1.687329400596207]
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb)
+
+    expected_points = [
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+    ]
+    # Use a set since the exact order depends on the OS and the points precision
+    # The exact order doesn't matter here, and the cell-id matching the point is tested separately
+    lower_ids = set(range(10))
+    upper_ids = set(range(10, 20))
+    expected_cell_ids = lower_ids | upper_ids
+
+    assert np.allclose(points, expected_points)
+    assert set(cell_ids.tolist()) == expected_cell_ids
+    assert_intersection_results(mesh, points, cell_ids)
+
+    # Test again with deduplicated points
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb, deduplicate_points=True)
+
+    expected_points = [[0.0, 0.0, 0.5], [0.0, 0.0, -0.5]]
+
+    assert_intersection_results(mesh, points, cell_ids)
+    assert np.allclose(points, expected_points)
+    # Only check cell id membership because the exact id returned depends on dtype and OS
+    assert cell_ids[0] in lower_ids
+    assert cell_ids[1] in upper_ids
+
+    # Test again with a tolerance of zero to show that zero tolerance can fail to properly
+    # locate both intersections (and therefore tolerance should not be zero by default)
+    points, cell_ids = mesh.intersect_with_line(
+        pointa, pointb, deduplicate_points=True, tolerance=0.0
+    )
+    assert points.ndim == 2
+    if sys.platform == 'darwin':
+        assert len(points) < 2
+    else:
+        assert len(points) == 2
+
+
+def test_build_locator_raises():
+    poly = pv.PolyData()
+    match = 'Building vtkStaticCellLocator requires a dataset with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
+
+    poly = pv.PolyData()
+    match = 'Building vtkPointLocator requires a dataset with points.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.find_closest_point([0, 0, 0])
 
 
 def test_find_cells_within_bounds():

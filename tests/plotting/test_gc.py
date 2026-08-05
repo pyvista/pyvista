@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -39,12 +40,23 @@ def test_leak_pv() -> None:
     points.VTKObject._ref = points
 """)
 
+    # The failure report contains non-ASCII box-drawing characters (refleak's
+    # referrer tree), so force UTF-8 on both sides of the pipe -- otherwise
+    # the runner's locale (ASCII on CI) breaks the encode or decode step.
     result = subprocess.run(
-        ['pytest', '-v', str(test_file)], cwd=tmp_path, capture_output=True, text=True, check=False
+        ['pytest', '-v', str(test_file)],
+        cwd=tmp_path,
+        capture_output=True,
+        check=False,
+        env={**os.environ, 'PYTHONIOENCODING': 'utf-8'},
+        encoding='utf-8',
+        errors='replace',
     )
 
     assert result.returncode != 0
-    assert 'Not all objects GCed' in result.stdout
+    # Matches the singular and the plural: how many objects the planted cycle
+    # keeps alive is a VTK implementation detail.
+    assert 'new VTK/plotter object' in result.stdout
 
 
 @pytest.mark.expect_check_gc_fail

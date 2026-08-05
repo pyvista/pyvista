@@ -89,7 +89,6 @@ def test_top_level_read_pickle_stub_refuses(sphere):
         pv.save_pickle('anything.pkl', sphere)
 
 
-@pytest.mark.needs_vtk_version((9, 3), reason='VTK < 9.3 has limited pickle support.')
 def test_in_memory_pickle_protocol_still_works(sphere):
     """The in-memory pickle protocol (multiprocessing/dask) must NOT break.
 

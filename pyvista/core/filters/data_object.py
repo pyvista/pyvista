@@ -779,6 +779,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Highlight cell types in yellow
         # Reverse sort to ensure we replace things like 'QUADRATIC_HEXAHEDRON' before 'QUAD'
         cell_names = sorted(celltype.name for celltype in CellType)[::-1]
+        # Ensure single-word cell types are last so that POLY_VERTEX is replaced before VERTEX
+        for name in cell_names.copy():
+            if '_' not in name:
+                cell_names.remove(name)
+                cell_names.append(name)
         string = _format_style(string, cell_names, 'yellow')
 
         # Highlight mesh types in purple
@@ -1749,24 +1754,52 @@ class DataObjectFilters:
             # ZERO_SIZE
             state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
-            # INVALID_POINT_REFERENCES
-            if hasattr(mesh, 'dimensions'):
-                return  # Cell connectivity is explicitly defined and cannot be invalid
+            # COINCIDENT_POINTS
+            # Skip remaining checks for datasets where cell connectivity cannot be invalid
+            # Do not skip types StructuredGrid where coincident points are possible
+            if isinstance(mesh, pv.Grid):
+                return
 
             ugrid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
 
-            # Find invalid connectivity entries
             conn = ugrid.cell_connectivity
+            offset = ugrid.offset
             n_cells = ugrid.n_cells
-            invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
+            n_points = ugrid.n_points
+
+            # VTK's face-based vtkCellValidator never flags 2D cells,
+            # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
+            # check: a cell is coincident if any two of its points are within tol. This
+            # applies to all cell types (also OR-ing the bit into already-caught cases).
+            coincident = np.zeros(n_cells, dtype=bool)
+            n_cell_points = np.diff(offset)
+            valid_conn = (conn >= 0) & (conn < n_points)
+            for size in np.unique(n_cell_points[n_cell_points >= 2]):
+                cells = np.nonzero(n_cell_points == size)[0]
+                # Gather this group's point ids as an (m, size) block via CSR offsets
+                entry_ids = offset[cells, np.newaxis] + np.arange(size)[np.newaxis, :]
+                pids = conn[entry_ids]
+                # Skip cells with invalid connectivity (handled below); clamp for safe
+                # indexing so the gather never raises on out-of-range ids.
+                group_valid = np.all(valid_conn[entry_ids], axis=1)
+                pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
+                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                iu = np.triu_indices(size, k=1)
+                any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
+                coincident[cells] = any_coincident & group_valid
+            state[coincident] |= CellStatus.COINCIDENT_POINTS
+
+            # INVALID_POINT_REFERENCES
+            invalid_conn = ~valid_conn
             if not np.any(invalid_conn):
                 return
 
             # Map invalid connectivity indices to cell IDs
             invalid_conn_ids = np.nonzero(invalid_conn)[0]
-            cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
+            cell_ids = np.searchsorted(offset, invalid_conn_ids, side='right') - 1
 
             # Build per-cell boolean mask
             is_invalid = np.zeros(n_cells, dtype=bool)
@@ -2581,6 +2614,7 @@ class DataObjectFilters:
         bounds_size: float | VectorLike[float] | None = None,
         length: float | None = None,
         center: VectorLike[float] | None = None,
+        preserve_aspect_ratio: bool | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ) -> _MeshType_co:
@@ -2628,6 +2662,21 @@ class DataObjectFilters:
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
             :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` or ``length``
             is specified.
+
+        preserve_aspect_ratio : bool, optional
+            Whether to preserve the dataset's aspect ratio during resizing.
+
+            - If ``True``, a uniform scale factor is applied. For ``bounds`` and
+              ``bounds_size``, the specified values are treated as maximum extents
+              rather than exact targets.
+            - If ``False``, each axis is scaled independently to exactly match the
+              requested ``bounds`` or ``bounds_size``.
+
+            By default, ``bounds`` and ``bounds_size`` use independent axis scaling,
+            while ``length`` preserves the aspect ratio. This parameter can be used to
+            enable aspect ratio preservation for ``bounds`` and ``bounds_size``.
+
+            .. versionadded:: 0.49
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
@@ -2710,6 +2759,22 @@ class DataObjectFilters:
                     z_min = -0.5,
                     z_max =  0.5)
 
+        Normalize it again, but preserve the aspect ratio. Its 1:2:3 x-y-z bounds
+        ratio is preserved.
+
+        >>> resized = mesh.resize(
+        ...     bounds_size=1.0, center=(0.0, 0.0, 0.0), preserve_aspect_ratio=True
+        ... )
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.1666,
+                    x_max =  0.1666,
+                    y_min = -0.3333,
+                    y_max =  0.3333,
+                    z_min = -0.5,
+                    z_max =  0.5)
+        >>> resized.bounds_size
+        (0.3333, 0.6666, 1.0)
+
         """
         if self.is_empty:
             return self.copy()
@@ -2727,6 +2792,13 @@ class DataObjectFilters:
             msg = (
                 'Cannot specify more than one resizing method. Choose either `bounds`, '
                 '`bounds_size`, or `length` independently.'
+            )
+            raise ValueError(msg)
+
+        if preserve_aspect_ratio is False and length_set:
+            msg = (
+                '`preserve_aspect_ratio=False` cannot be used with `length` since '
+                '`length` resizing always preserves the aspect ratio.'
             )
             raise ValueError(msg)
 
@@ -2767,6 +2839,9 @@ class DataObjectFilters:
 
         current_size = self.bounds_size
         scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        if preserve_aspect_ratio:
+            scale_factors = np.full(3, scale_factors.min())
 
         # Apply transformation
         transform = pv.Transform()
