@@ -70,6 +70,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolum
 from .opts import PointSpriteShape as PointSpriteShape
 from .opts import ShaderType as ShaderType
 from .picking import PickingComponent as PickingComponent
+from .plot_compare import plot_compare as plot_compare
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter
