@@ -145,6 +145,36 @@ def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
     return _union_of_bounds([renderer.bounds for renderer in renderers])
 
 
+def _fix_clipping_range_on_render(
+    plotter: pv.Plotter, bounds: tuple[float, ...], n_renderers: int
+) -> None:
+    """Reset the clipping range to the given bounds before every future render.
+
+    Linked renderers share one camera but not one clipping range: an interactor style
+    narrows the range before every render it drives, from `ComputeVisiblePropBounds`
+    of whichever renderer the interaction is in, which is one subplot's worth of
+    bounds where every subplot needs fitting. Undo that here, every time, from the
+    same bounds the camera itself was fit to, rather than from an actor standing in
+    for them, which would leave `renderer.bounds` itself, and anything that relies on
+    it, reporting more than what is actually in each subplot.
+    """
+    # The render window holds this callback for as long as it lives, so hold nothing of
+    # the plotter in return: anything held here would outlive the plot
+    reference = weakref.ref(plotter)
+
+    def fix(*_args: Any) -> None:
+        plotter = reference()
+        render_window = None if plotter is None else plotter.render_window
+        if plotter is None or render_window is None:  # pragma: no cover
+            return
+        for renderer in list(plotter.renderers)[:n_renderers]:
+            renderer.ResetCameraClippingRange(*bounds)
+
+    # `StartEvent` is emitted before each render, ahead of whatever clipping range an
+    # interactor style narrowed it to while handling the interaction that led here
+    plotter.render_window.AddObserver(_vtk.vtkCommand.StartEvent, fix)  # type: ignore[union-attr]
+
+
 # A dataset smaller than this fraction of all of them together is barely visible when
 # the subplots share a camera fit to all of them
 _MIN_RELATIVE_SIZE = 0.05
@@ -793,17 +823,16 @@ def plot_compare(  # noqa: ANN201
                 pl.camera_position = pl.get_default_cam_pos()
             bounds = _union_bounds(renderers)
             pl.renderer.ResetCamera(*bounds)
-            # `reset_camera` resets the clipping range from the bounds of whichever
-            # renderer happens to be active rather than the ones it was just fit to,
-            # which is one subplot's worth of bounds where every subplot needs fitting.
-            # Reset it from the same bounds the camera itself was just fit to instead.
             pl.renderer.ResetCameraClippingRange(*bounds)
-            # An interactor style narrows the clipping range again before every render
-            # it drives, from the bounds of whichever renderer the interaction is in.
-            # That undoes the fit above the moment the smaller subplot is interacted
-            # with, since linked renderers share one camera but not one clipping range.
-            if pl.iren is not None:
-                pl.iren.style.AutoAdjustCameraClippingRangeOff()
+            # `reset_camera` above only reaches this render; an interactor style
+            # narrows the clipping range again before every render it drives, from
+            # `ComputeVisiblePropBounds` of whichever renderer the interaction is in,
+            # which is one subplot's worth of bounds where every subplot needs
+            # fitting. Undo that on every future render too, from the same bounds
+            # rather than an actor standing in for them, which would leave
+            # `renderer.bounds`, and anything relying on it, reporting more than what
+            # is actually in each subplot.
+            _fix_clipping_range_on_render(pl, bounds, n_datasets)
         else:
             # Every renderer has its own camera, so reset each to fit each dataset
             # independently

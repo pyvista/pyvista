@@ -2569,17 +2569,20 @@ def test_plot_compare_link_clipping_range_fits_every_dataset(verify_image_cache)
     # subplot's worth of bounds where every subplot needs fitting.
     airplane, ant = examples.load_airplane(), examples.load_ant()
 
+    def far_needed(camera):
+        distance = np.linalg.norm(np.array(camera.position) - np.array(airplane.center))
+        return distance + airplane.length
+
     captured = {}
 
     def capture(plotter):
         camera = plotter.renderer.camera
         captured['clipping_range'] = camera.clipping_range
-        captured['far_needed'] = (
-            np.linalg.norm(np.array(camera.position) - np.array(airplane.center)) + airplane.length
-        )
+        captured['far_needed'] = far_needed(camera)
         # An interactor style narrows the clipping range again before every render it
         # drives, from the bounds of whichever renderer is being interacted with. A
-        # drag inside the small subplot must not undo the fit to every dataset.
+        # drag inside the small subplot must not undo the fit to every dataset, even
+        # though the drag itself moves the camera and so changes what fits it.
         plotter.subplot(0, 1)
         interactor, style = plotter.iren.interactor, plotter.iren.style
         interactor.SetEventPosition(50, 50)
@@ -2589,6 +2592,7 @@ def test_plot_compare_link_clipping_range_fits_every_dataset(verify_image_cache)
         style.OnLeftButtonUp()
         plotter.subplot(0, 0)
         captured['clipping_range_after_drag'] = camera.clipping_range
+        captured['far_needed_after_drag'] = far_needed(camera)
 
     with pytest.warns(UserWarning, match='too small to make out'):
         pv.plot_compare(
@@ -2599,7 +2603,7 @@ def test_plot_compare_link_clipping_range_fits_every_dataset(verify_image_cache)
         )
 
     assert captured['clipping_range'][1] >= captured['far_needed']
-    assert captured['clipping_range_after_drag'] == captured['clipping_range']
+    assert captured['clipping_range_after_drag'][1] >= captured['far_needed_after_drag']
 
 
 def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):

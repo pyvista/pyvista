@@ -16,7 +16,7 @@ Examples
 
         cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
 
-Compare two mesh files. Each is drawn in its own subplot and labeled with its file name.
+Compare two mesh files. Each is drawn in its own subplot and labeled with its filename.
 
 .. command-output:: pyvista compare ant.ply nut.ply
    :extraargs: --off-screen
