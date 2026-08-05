@@ -35,6 +35,12 @@ test_cases = load_test_cases()
 test_ids = [case['classname'] for case in test_cases]
 
 
+def test_top_level_module_target():
+    index_html = (Path(HTML_DIR) / 'index.html').read_text(encoding='utf-8')
+
+    assert 'id="module-pyvista"' in index_html
+
+
 def test_sphinx_gallery_junit_results_exist():
     assert XML_FILE.is_file(), f'{XML_FILE} not found. Build the documentation first.'
 
