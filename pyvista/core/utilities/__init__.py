@@ -248,6 +248,7 @@ from .transform import Transform as Transform
 from .writer import BaseWriter as BaseWriter
 from .writer import BMPWriter as BMPWriter
 from .writer import DataSetWriter as DataSetWriter
+from .writer import EnSightWriter as EnSightWriter
 from .writer import HDFWriter as HDFWriter
 from .writer import HoudiniPolyDataWriter as HoudiniPolyDataWriter
 from .writer import IVWriter as IVWriter

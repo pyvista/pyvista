@@ -476,6 +476,10 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
+    if extension == '.case':
+        pytest.skip('Tests for EnSightWriter are prepared in a separate test function.')
+        return
+
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if extension == '.vtkhdf' and not binary:
         with pytest.raises(
@@ -491,6 +495,34 @@ def test_save(extension, binary, tmpdir, hexbeam):
     assert grid.points.shape == hexbeam.points.shape
 
     grid = pv.read(filename)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+    assert isinstance(grid, pv.UnstructuredGrid)
+
+
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['.case'])
+def test_ensight_save(extension, binary, tmpdir, hexbeam):
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
+    if not binary:
+        with pytest.raises(ValueError, match=r'.case files can only be written in binary format'):
+            hexbeam.save(filename, binary=binary)
+        return
+
+    hexbeam.save(filename, binary=binary)
+
+    output_filename = list(pathlib.Path(filename).parent.glob('*.case'))
+    expected_pattern = re.compile(r'^tmp\.[0-9]+\.case$')
+
+    assert len(output_filename) == 1
+    assert expected_pattern.match(output_filename[0].name)
+    output_filename = str(output_filename[0])
+
+    grid = pv.MultiBlock(output_filename)['VTK Part']
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+
+    grid = pv.read(output_filename)['VTK Part']
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
     assert isinstance(grid, pv.UnstructuredGrid)
