@@ -2621,25 +2621,25 @@ def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):
         return [name for name, cause in causes.items() if any(cause in m for m in messages)]
 
     # Each subplot is fit to its own dataset when unlinked, and these are not linked
-    # by default, so there is nothing to report
+    # by default without a reference mesh, so there is nothing to report
     assert warned() == []
     assert warned(link=False) == []
 
     # A shared camera has to fit every dataset, so a much smaller one is barely
-    # visible. Only linking on purpose is reported, since datasets which are linked
-    # automatically are of a comparable size already
+    # visible, whether linking was asked for outright...
     assert warned(link=True) == ['linked']
 
-    # Every subplot has to fit the reference mesh as well as its own dataset, so a
-    # dataset much smaller than the reference is barely visible however it is framed
-    assert warned(reference_mesh=reference_mesh) == ['reference']
-    assert warned(reference_mesh=reference_mesh, link=False) == ['reference']
+    # ...or decided automatically because a reference mesh made every subplot's own
+    # bounds the same, which does not make the smaller dataset any easier to see: a
+    # reference mesh large enough to enclose every dataset is reported alongside the
+    # reference regardless of why the views ended up linked
+    assert warned(reference_mesh=reference_mesh) == ['linked', 'reference']
+    assert warned(reference_mesh=reference_mesh, link=True) == ['linked', 'reference']
 
-    # This reference mesh encloses every dataset, so it is what every subplot is
-    # actually fit to once it is drawn, which is the same for each of them. The
-    # shared camera has nothing left to report once linking is asked for, since what
-    # it has to fit is now identical everywhere; only the reference is still too small.
-    assert warned(reference_mesh=reference_mesh, link=True) == ['reference']
+    # Only the reference is reported when linking is declined outright, since each
+    # subplot is fit to its own dataset and the reference rather than to one shared
+    # by every subplot
+    assert warned(reference_mesh=reference_mesh, link=False) == ['reference']
 
 
 @pytest.mark.parametrize('box', [False, True], ids=['arrows', 'box'])

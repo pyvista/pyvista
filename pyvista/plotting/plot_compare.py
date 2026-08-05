@@ -747,24 +747,27 @@ def plot_compare(  # noqa: ANN201
     # Measure the datasets before the reference mesh is added, since it goes in every
     # subplot and would otherwise make them all report the same bounds as each other
     smallest = min(renderer.length for renderer in renderers)
-    linked_on_purpose = link is not None
     # A reference mesh is drawn in every subplot, so what a subplot has to fit is the
-    # dataset and the reference together, which is what decides whether to link too
+    # dataset and the reference together, which is what decides whether to link too. An
+    # outline enclosing every dataset, for instance, makes every subplot's own bounds
+    # the same regardless of how different the datasets themselves are, which is
+    # exactly the case linking suits.
     reference_bounds = None if reference_mesh is None else reference_mesh.bounds
     if link is None:
         link = _relative_size(renderers, reference_bounds=reference_bounds) >= _LINK_RELATIVE_SIZE
 
     if link:
         pl.link_views()
-        # Linking on its own is only worth warning about when it was asked for, since
-        # datasets which are linked automatically are of a comparable size already
-        if linked_on_purpose:
-            _warn_if_dataset_is_too_small(
-                _relative_size(renderers, reference_bounds=reference_bounds),
-                'all of the datasets together, which the shared camera has to fit',
-                'Use `link=False` to fit each subplot to its own dataset, or '
-                '`normalize=True` to resize them all to the same size.',
-            )
+        # A dataset which is small beside the others is not made any easier to see by
+        # a reference mesh which happens to be large enough to enclose all of them, so
+        # warn from the size of the datasets on their own, whether linking was asked
+        # for or decided from the reference mesh being one they are all small beside.
+        _warn_if_dataset_is_too_small(
+            _relative_size(renderers),
+            'all of the datasets together, which the shared camera has to fit',
+            'Use `link=False` to fit each subplot to its own dataset, or '
+            '`normalize=True` to resize them all to the same size.',
+        )
 
     if reference_mesh is not None:
         _warn_if_dataset_is_too_small(
