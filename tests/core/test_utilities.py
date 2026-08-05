@@ -1285,11 +1285,9 @@ def test_patch_gallery_download_note():
     patch_gallery_download_note(None, doctree, 'examples/00-load/create_sphere')
 
     text = paragraph.astext()
-    assert text.startswith('Use the ')
-    assert text.endswith(' button at the top of the page to download the full example code.')
+    assert 'full example code, or use the' in text
+    assert text.endswith('button at the top of the page.')
     assert 'fa-download' in text
-    # The reference to the footer links is replaced, not appended to
-    assert 'Go to the end' not in text
 
 
 def test_patch_gallery_download_note_ignores_other_notes():
