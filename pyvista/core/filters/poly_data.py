@@ -894,12 +894,12 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, default: True
-            Flag to control smoothing of boundary edges. When ``True``,
+            Flag to control smoothing of boundary edges. When ``False``,
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
             Flag to control smoothing of feature edges.  When ``True``,
-            boundary edges remain fixed as defined by ``feature_angle`` and
+            feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
         inplace : bool, default: False
@@ -994,12 +994,12 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, default: True
-            Flag to control smoothing of boundary edges. When ``True``,
+            Flag to control smoothing of boundary edges. When ``False``,
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
             Flag to control smoothing of feature edges.  When ``True``,
-            boundary edges remain fixed as defined by ``feature_angle`` and
+            feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
         non_manifold_smoothing : bool, default: False
