@@ -400,6 +400,8 @@ class BasePlotter(_BoundsSizeMixin):
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
         self.ren_win: _vtk.vtkRenderWindow | None = None
+        # 3D location of the last click registered by ``left_button_down``
+        self.pickpoint: NumpyArray[float] | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -475,6 +477,7 @@ class BasePlotter(_BoundsSizeMixin):
         log.debug('BasePlotter init stop')
 
         self._image_depth_null: NumpyArray[bool] | None = None
+        self._window_size_unset = False
         self.last_image_depth: pv.pyvista_ndarray | None = None
         self.last_image: pv.pyvista_ndarray | None = None
         self.last_vtksz: str | Path | None = None
