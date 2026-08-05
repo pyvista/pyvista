@@ -4,6 +4,7 @@ import importlib.util
 import pathlib
 from pathlib import Path
 import re
+import sys
 from typing import TYPE_CHECKING
 import weakref
 
@@ -1978,6 +1979,10 @@ def test_explicit_structured_grid_neighbors():
     assert indices == [1, 4, 20]
 
 
+@pytest.mark.skipif(
+    sys.maxsize <= 2**32,
+    reason='Fails on 32-bit systems, see https://github.com/pyvista/pyvista/issues/8841',
+)
 def test_explicit_structured_grid_compute_connectivity():
     connectivity = np.asarray(
         """
@@ -2005,6 +2010,10 @@ def test_explicit_structured_grid_compute_connectivity():
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
+@pytest.mark.skipif(
+    sys.maxsize <= 2**32,
+    reason='Fails on 32-bit systems, see https://github.com/pyvista/pyvista/issues/8841',
+)
 def test_explicit_structured_grid_compute_connections():
     connections = np.asarray(
         """

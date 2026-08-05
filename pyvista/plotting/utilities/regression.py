@@ -159,12 +159,21 @@ def image_from_window(  # noqa: PLR0917
     imfilter.SetInput(render_window)
     imfilter.SetScale(scale)
     imfilter.FixBoundaryOn()
-    imfilter.ReadFrontBufferOff()
     imfilter.ShouldRerenderOff()
     if ignore_alpha:
         imfilter.SetInputBufferTypeToRGB()
     else:
         imfilter.SetInputBufferTypeToRGBA()
+    # Read the front buffer, and say so once.  This used to be turned off here and then
+    # straight back on a few lines later, so only the second call ever took effect.
+    #
+    # The buffers are not interchangeable when multisampling is on (the default is
+    # ``multi_samples=8``).  A front-buffer read returns VTK's DisplayFramebuffer, which
+    # Frame() has already resolved with a gamma-correct shader; a back-buffer read
+    # returns the raw multisample framebuffer, which vtkOpenGLRenderWindow::ReadPixels
+    # resolves inline with a plain glBlitFramebuffer average.  The two disagree on every
+    # anti-aliased edge pixel, by enough to fail image regression.  Reported upstream at
+    # https://gitlab.kitware.com/vtk/vtk/-/work_items/20138
     imfilter.ReadFrontBufferOn()
     data = run_image_filter(imfilter)
     if off:

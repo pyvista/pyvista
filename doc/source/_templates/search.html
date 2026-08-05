@@ -1,0 +1,7 @@
+{%- extends "!search.html" %} {# `search_dedupe.js` patches
+`Search._performSearch`, so it has to load after the theme's `searchtools.js`
+(which defines `Search`) and before the first query runs on `DOMContentLoaded`.
+Scripts added through `app.add_js_file` are emitted by `super()`, i.e. too
+early, hence this override. #} {% block scripts -%} {{ super() }}
+<script src="{{ pathto('_static/search_dedupe.js', 1) }}"></script>
+{%- endblock scripts %}
