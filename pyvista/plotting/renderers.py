@@ -242,7 +242,7 @@ class Renderers(_NoNewAttrMixin):
                     ]
 
         # each render will also have an associated background renderer
-        self._background_renderers: list[None | BackgroundRenderer] = [
+        self._background_renderers: list[BackgroundRenderer | None] = [
             None for _ in range(len(self))
         ]
 

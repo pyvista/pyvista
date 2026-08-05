@@ -2385,7 +2385,7 @@ class Transform(
         self: Transform,
         point: VectorLike[float] | None,
         multiply_mode: Literal['pre', 'post'] | None,
-    ) -> tuple[None | Transform, None | Transform]:
+    ) -> tuple[Transform | None, Transform | None]:
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')

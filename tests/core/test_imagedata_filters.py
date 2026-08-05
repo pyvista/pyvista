@@ -1023,8 +1023,10 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            '`invalid` is not a valid `operation_mask`. Use one of '
-            '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+            (
+                '`invalid` is not a valid `operation_mask`. Use one of '
+                '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].'
+            ),
         ),
         (
             (1, 1, 1),
@@ -1045,24 +1047,30 @@ def test_validate_dim_operation(
             '1D',
             operator.add,
             ValueError,
-            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
-            'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+            (
+                'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
+                'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.'
+            ),
         ),
         (
             (2, 1, 2),
             '3D',
             operator.sub,
             ValueError,
-            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
-            'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+            (
+                'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
+                'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.'
+            ),
         ),
         (
             (1, 2, 5),
             (True, False, True),
             operator.sub,
             ValueError,
-            'The mask (True, False, True), size [1 3 5], and operation sub would result in '
-            '[0 2 0] which contains <= 0 dimensions.',
+            (
+                'The mask (True, False, True), size [1 3 5], and operation sub would result in '
+                '[0 2 0] which contains <= 0 dimensions.'
+            ),
         ),
     ],
 )
@@ -1455,43 +1463,55 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'margin': (
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'dims_offset': (
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'dimensions': (
         dict(dimensions=CROPPED_DIMENSIONS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'mask': (
         dict(mask=MASK_ARRAY_NAME),
