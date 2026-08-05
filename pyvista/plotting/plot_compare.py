@@ -127,17 +127,22 @@ def _auto_shape(n_datasets: int) -> tuple[int, int]:
     return n_rows, math.ceil(n_datasets / n_rows)
 
 
+def _union_of_bounds(bounds: Sequence[Sequence[float]]) -> tuple[float, ...]:
+    """Return the bounds enclosing every one of the given bounds."""
+    stacked = np.array(bounds)
+    return (
+        stacked[:, 0].min(),
+        stacked[:, 1].max(),
+        stacked[:, 2].min(),
+        stacked[:, 3].max(),
+        stacked[:, 4].min(),
+        stacked[:, 5].max(),
+    )
+
+
 def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
     """Return the bounds enclosing all of the renderers."""
-    bounds = np.array([renderer.bounds for renderer in renderers])
-    return (
-        bounds[:, 0].min(),
-        bounds[:, 1].max(),
-        bounds[:, 2].min(),
-        bounds[:, 3].max(),
-        bounds[:, 4].min(),
-        bounds[:, 5].max(),
-    )
+    return _union_of_bounds([renderer.bounds for renderer in renderers])
 
 
 # A dataset smaller than this fraction of all of them together is barely visible when
@@ -156,10 +161,20 @@ def _bounds_length(bounds: Sequence[float]) -> float:
     )
 
 
-def _relative_size(renderers: Sequence[Any]) -> float:
-    """Return the size of the smallest dataset relative to all of them together."""
-    union = _bounds_length(_union_bounds(renderers))
-    return min(renderer.length for renderer in renderers) / union if union > 0 else 1.0
+def _relative_size(
+    renderers: Sequence[Any], *, reference_bounds: Sequence[float] | None = None
+) -> float:
+    """Return the size of the smallest dataset relative to all of them together.
+
+    A ``reference_mesh`` is drawn in every subplot alongside its own dataset, so what
+    a subplot actually has to fit is the two together rather than the dataset alone.
+    Give its bounds to size each subplot by that instead.
+    """
+    own_bounds = [renderer.bounds for renderer in renderers]
+    if reference_bounds is not None:
+        own_bounds = [_union_of_bounds([bounds, reference_bounds]) for bounds in own_bounds]
+    union = _bounds_length(_union_of_bounds(own_bounds))
+    return min(_bounds_length(bounds) for bounds in own_bounds) / union if union > 0 else 1.0
 
 
 def _warn_if_dataset_is_too_small(relative_size: float, of_what: str, remedy: str) -> None:
@@ -533,7 +548,9 @@ def plot_compare(  # noqa: ANN201
         size of all of them together, which means they occupy the same space at a
         comparable scale and one camera suits them all. Datasets which are much
         smaller than the rest, or which are far apart, are not linked, since a
-        shared camera would leave some of them too small to make out.
+        shared camera would leave some of them too small to make out. What each
+        subplot has to fit is the dataset and the ``reference_mesh`` together when
+        one is given, since the same mesh is drawn alongside every dataset.
 
         In every case the camera is only fit when ``cpos`` is ``None`` or a
         string, since a fully-specified camera position is used as given.
@@ -731,8 +748,11 @@ def plot_compare(  # noqa: ANN201
     # subplot and would otherwise make them all report the same bounds as each other
     smallest = min(renderer.length for renderer in renderers)
     linked_on_purpose = link is not None
+    # A reference mesh is drawn in every subplot, so what a subplot has to fit is the
+    # dataset and the reference together, which is what decides whether to link too
+    reference_bounds = None if reference_mesh is None else reference_mesh.bounds
     if link is None:
-        link = _relative_size(renderers) >= _LINK_RELATIVE_SIZE
+        link = _relative_size(renderers, reference_bounds=reference_bounds) >= _LINK_RELATIVE_SIZE
 
     if link:
         pl.link_views()
@@ -740,7 +760,7 @@ def plot_compare(  # noqa: ANN201
         # datasets which are linked automatically are of a comparable size already
         if linked_on_purpose:
             _warn_if_dataset_is_too_small(
-                _relative_size(renderers),
+                _relative_size(renderers, reference_bounds=reference_bounds),
                 'all of the datasets together, which the shared camera has to fit',
                 'Use `link=False` to fit each subplot to its own dataset, or '
                 '`normalize=True` to resize them all to the same size.',

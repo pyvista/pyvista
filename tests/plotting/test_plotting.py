@@ -2635,8 +2635,11 @@ def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):
     assert warned(reference_mesh=reference_mesh) == ['reference']
     assert warned(reference_mesh=reference_mesh, link=False) == ['reference']
 
-    # Both are reported when both apply
-    assert warned(reference_mesh=reference_mesh, link=True) == ['linked', 'reference']
+    # This reference mesh encloses every dataset, so it is what every subplot is
+    # actually fit to once it is drawn, which is the same for each of them. The
+    # shared camera has nothing left to report once linking is asked for, since what
+    # it has to fit is now identical everywhere; only the reference is still too small.
+    assert warned(reference_mesh=reference_mesh, link=True) == ['reference']
 
 
 @pytest.mark.parametrize('box', [False, True], ids=['arrows', 'box'])
@@ -2733,6 +2736,39 @@ def test_plot_compare_link_auto(datasets, expected, verify_image_cache):
         },
     )
     assert shared == [expected]
+
+
+def test_plot_compare_link_auto_considers_the_reference_mesh(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The airplane is some forty times the size of the ant, so they are not linked
+    # on their own
+    airplane, ant = examples.load_airplane(), examples.load_ant()
+    datasets = {'airplane': airplane, 'ant': ant}
+
+    def linked(**kwargs):
+        shared = []
+        pv.plot_compare(
+            datasets,
+            show_kwargs={
+                'before_close_callback': lambda pl: shared.append(
+                    len({id(renderer.camera) for renderer in pl.renderers}) == 1
+                )
+            },
+            **kwargs,
+        )
+        return shared[0]
+
+    with pytest.warns(UserWarning, match='too small to make out'):
+        assert linked(link=True) is True
+    assert linked() is False
+
+    # An outline of every dataset together is what each subplot is actually fit to
+    # once it is drawn, and it is the same for each of them, which is what deciding
+    # whether to link is meant to notice
+    outline = pv.MultiBlock([airplane, ant]).outline()
+    with pytest.warns(UserWarning, match='too small to make out'):
+        assert linked(reference_mesh=outline) is True
 
 
 def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify_image_cache):
