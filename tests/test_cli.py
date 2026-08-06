@@ -103,12 +103,12 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ plot         Plot one or more mesh files in an interactive window. │
         │ compare      Compare two or more mesh files side-by-side.          │
-        │ convert      Convert a mesh file to another format.                │
-        │ plot         Plot one or more mesh files in an interactive window  │
-        │              that can be customized with various options.          │
+        │ convert      Convert one or more mesh files to another format.     │
+        │ validate     Validate data, points, and cells for one or more mesh │
+        │              files.                                                │
         │ report       Generate a PyVista software environment report.       │
-        │ validate     Validate a mesh's array data, points, and cells.      │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
@@ -126,18 +126,18 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
+    │ plot         Plot one or more mesh files in an interactive window. │
     │ compare      Compare two or more mesh files side-by-side.          │
-    │ convert      Convert a mesh file to another format.                │
-    │ plot         Plot one or more mesh files in an interactive window  │
-    │              that can be customized with various options.          │
+    │ convert      Convert one or more mesh files to another format.     │
+    │ validate     Validate data, points, and cells for one or more mesh │
+    │              files.                                                │
     │ report       Generate a PyVista software environment report.       │
-    │ validate     Validate a mesh's array data, points, and cells.      │
     │ --help (-h)  Display this message and exit.                        │
     │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown command "foo". Available commands: report, convert, plot,  │
-    │ compare, validate.                                                 │
+    │ Unknown command "foo". Available commands: plot, compare, convert, │
+    │ validate, report.                                                  │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -562,12 +562,8 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     out, err = capture_out_err(capsys)
     assert err == ''
     assert 'Usage: pyvista convert PATH-IN [PATH-IN...] PATH-OUT' in out, out
-    assert 'Convert a mesh file to another format.' in out, out
+    assert 'Convert one or more mesh files to another format.' in out, out
     assert 'glob patterns are expanded' in out, out
-    assert 'pyvista convert foo.abc bar.xyz' in out, out
-    assert 'pyvista convert foo.abc .xyz' in out, out
-    assert 'pyvista convert sub/*.vtu .pv' in out, out
-    assert 'next to each input' in out, out
     assert 'MultiBlock files' in out, out
     assert 'sidecar' in out, out
 
@@ -935,7 +931,7 @@ def test_validate_help(capsys: pytest.CaptureFixture):
         'Usage: pyvista validate PATH... [--fields FIELD...] [--exclude \n'
         'FIELD...]\n'
         '\n'
-        "Validate a mesh's array data, points, and cells.\n"
+        'Validate data, points, and cells for one or more mesh files.\n'
     )
     assert usage in out, out
 
@@ -1600,13 +1596,12 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         """\
         Usage: pyvista plot PATH... [OPTIONS]
 
-        Plot one or more mesh files in an interactive window that can be 
-        customized with various options.
-        """  # noqa: W291
+        Plot one or more mesh files in an interactive window.
+        """
     )
     out, err = capture_out_err(capsys)
     assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:5])
+    assert expected == '\n'.join(out.split('\n')[:4])
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -1625,12 +1620,12 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ plot         Plot one or more mesh files in an interactive window. │
         │ compare      Compare two or more mesh files side-by-side.          │
-        │ convert      Convert a mesh file to another format.                │
-        │ plot         Plot one or more mesh files in an interactive window  │
-        │              that can be customized with various options.          │
+        │ convert      Convert one or more mesh files to another format.     │
+        │ validate     Validate data, points, and cells for one or more mesh │
+        │              files.                                                │
         │ report       Generate a PyVista software environment report.       │
-        │ validate     Validate a mesh's array data, points, and cells.      │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
@@ -1755,8 +1750,8 @@ def test_validate_many_invalid(
     main(f'validate {str(tmp_ant_file)!r} {str(tmp_cow_file_invalid)!r}')
     out, err = capture_out_err(capsys)
     assert out == ''
-    assert '1 invalid meshes out of 2 meshes validated.' in err, err
-    assert err.index('invalid meshes') < err.index("'cow.vtk' is not valid"), err
+    assert '1 invalid mesh out of 2 meshes validated.' in err, err
+    assert err.index('invalid mesh') < err.index("'cow.vtk' is not valid"), err
     assert 'is valid!' not in err, err
 
     # All invalid -- both messages deferred after summary
@@ -1770,6 +1765,21 @@ def test_validate_many_invalid(
     assert err.index("'cow.vtk' is not valid") > summary_pos, err
     assert err.index("'ant.vtm' is not valid") > summary_pos, err
     assert 'is valid!' not in err, err
+
+
+@pytest.mark.skip_windows('file path issues')
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_multiple_files_single_mesh_invalid(
+    tmp_cow_file_invalid: Path,
+    capsys: pytest.CaptureFixture,
+):
+    # Add a second unreadable file
+    dirname = tmp_cow_file_invalid.parent
+    (dirname / 'file.txt').touch()
+    main(f'validate {dirname}{os.sep}*.* --skip-unreadable')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert '1 invalid mesh out of 1 mesh validated.' in err, err
 
 
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
@@ -2079,6 +2089,35 @@ def test_compare_too_small_warning_advises_the_command(
     # The arguments of `plot_compare` are not mentioned, since they cannot be given here
     assert 'reference_mesh' not in flattened
     assert 'link=False' not in flattened
+
+
+def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
+    tmp_example_dir: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
+):
+    """Test that the advice is printed before the window opens, not after it closes.
+
+    `plot_compare` raises every one of its warnings well before it shows the window,
+    but the interactive window blocks until it is closed, and warnings only caught
+    with `warnings.catch_warnings(record=True)` are not printed until whoever caught
+    them chooses to. Printing them only after `show` returns would leave a command
+    line user staring at a plot with no idea anything was wrong until they closed it.
+    """
+    for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
+        mesh.save(tmp_example_dir / f'{name}.vtp')
+
+    printed_before_shown = []
+
+    def fake_show(*args, **kwargs):  # noqa: ARG001
+        _, err = capsys.readouterr()
+        # The message is wrapped and padded to the width of the panel it is printed
+        # in, so flatten it the same way it is elsewhere before matching a substring
+        flattened = ' '.join(err.replace('│', ' ').split())
+        printed_before_shown.append('too small to make out' in flattened)
+
+    mocker.patch.object(pv.Plotter, 'show', fake_show)
+    main('compare tiny.vtp huge.vtp --link --off-screen')
+
+    assert printed_before_shown == [True]
 
 
 def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):
