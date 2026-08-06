@@ -2336,20 +2336,6 @@ def test_plot_compare_shape(compare_datasets, shape, n_datasets):
     pv.plot_compare(datasets, shape=shape, color='w')
 
 
-@pytest.mark.parametrize('shape', [(4, 1), '3|1'], ids=['grid', 'left_right'])
-def test_plot_compare_shape_from_plotter_kwargs(compare_datasets, shape, verify_image_cache):
-    verify_image_cache.skip = True
-
-    # A shape given to the plotter is used as the shape of the comparison
-    shapes = []
-    pv.plot_compare(
-        compare_datasets,
-        plotter_kwargs={'shape': shape},
-        show_kwargs={'before_close_callback': lambda pl: shapes.append(pl.renderers.shape)},
-    )
-    assert shapes == [(4, 1) if shape == (4, 1) else (4,)]
-
-
 def test_plot_compare_labels(compare_datasets):
     pv.plot_compare(
         compare_datasets,
@@ -2395,7 +2381,7 @@ def _drawn_labels(datasets, describe=None, **kwargs):
     pv.plot_compare(
         datasets,
         color='w',
-        show_kwargs={'before_close_callback': capture},
+        before_close_callback=capture,
         **kwargs,
     )
     return drawn
@@ -2531,7 +2517,7 @@ def test_plot_compare_label_size_follows_the_window(compare_datasets, verify_ima
         compare_datasets,
         labels=['runs/2024-06-01/experiment_alpha/output_mesh.vtk'] * 4,
         color='w',
-        show_kwargs={'before_close_callback': resize},
+        before_close_callback=resize,
     )
     # The narrower the window, the smaller the label, and the same window size gives
     # the same size again however it was arrived at
@@ -2619,7 +2605,7 @@ def test_plot_compare_link_clipping_range_fits_every_dataset(verify_image_cache)
             {'airplane': airplane, 'ant': ant},
             link=True,
             color='w',
-            show_kwargs={'before_close_callback': capture},
+            before_close_callback=capture,
         )
 
     assert captured['clipping_range'][1] >= captured['far_needed']
@@ -2678,12 +2664,10 @@ def test_plot_compare_show_axes(compare_datasets, box, verify_image_cache):
     pv.plot_compare(
         compare_datasets,
         show_axes=True,
-        plotter_kwargs={'theme': theme},
-        show_kwargs={
-            'before_close_callback': lambda pl: enabled.extend(
-                renderer.axes_enabled for renderer in pl.renderers
-            )
-        },
+        theme=theme,
+        before_close_callback=lambda pl: enabled.extend(
+            renderer.axes_enabled for renderer in pl.renderers
+        ),
     )
     assert enabled == [True] * len(compare_datasets)
 
@@ -2695,11 +2679,9 @@ def test_plot_compare_show_bounds(compare_datasets, verify_image_cache):
     pv.plot_compare(
         compare_datasets,
         show_bounds=True,
-        show_kwargs={
-            'before_close_callback': lambda pl: actors.extend(
-                renderer.cube_axes_actor for renderer in pl.renderers
-            )
-        },
+        before_close_callback=lambda pl: actors.extend(
+            renderer.cube_axes_actor for renderer in pl.renderers
+        ),
     )
     assert all(actor is not None for actor in actors)
 
@@ -2715,12 +2697,10 @@ def test_plot_compare_zoom(compare_datasets, link, zoom, verify_image_cache):
         pv.plot_compare(
             compare_datasets,
             link=link,
-            show_kwargs={
-                'before_close_callback': lambda pl: captured.extend(
-                    (round(ren.camera.view_angle, 4), round(ren.camera.GetDistance(), 3))
-                    for ren in pl.renderers
-                )
-            },
+            before_close_callback=lambda pl: captured.extend(
+                (round(ren.camera.view_angle, 4), round(ren.camera.GetDistance(), 3))
+                for ren in pl.renderers
+            ),
             **kwargs,
         )
         return captured
@@ -2753,11 +2733,9 @@ def test_plot_compare_link_auto(datasets, expected, verify_image_cache):
     shared = []
     pv.plot_compare(
         datasets,
-        show_kwargs={
-            'before_close_callback': lambda pl: shared.append(
-                len({id(renderer.camera) for renderer in pl.renderers}) == 1
-            )
-        },
+        before_close_callback=lambda pl: shared.append(
+            len({id(renderer.camera) for renderer in pl.renderers}) == 1
+        ),
     )
     assert shared == [expected]
 
@@ -2774,11 +2752,9 @@ def test_plot_compare_link_auto_considers_the_reference_mesh(verify_image_cache)
         shared = []
         pv.plot_compare(
             datasets,
-            show_kwargs={
-                'before_close_callback': lambda pl: shared.append(
-                    len({id(renderer.camera) for renderer in pl.renderers}) == 1
-                )
-            },
+            before_close_callback=lambda pl: shared.append(
+                len({id(renderer.camera) for renderer in pl.renderers}) == 1
+            ),
             **kwargs,
         )
         return shared[0]
@@ -2811,7 +2787,7 @@ def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify
             datasets,
             link=link,
             color='w',
-            show_kwargs={'before_close_callback': capture},
+            before_close_callback=capture,
         )
         return captured
 
@@ -2856,7 +2832,7 @@ def test_plot_compare_normalize_resizes_every_dataset(verify_image_cache):
         pv.plot_compare(
             [airplane, ant],
             color='w',
-            show_kwargs={'before_close_callback': capture},
+            before_close_callback=capture,
             **kwargs,
         )
 
@@ -2886,9 +2862,7 @@ def test_plot_compare_normalize_reference_mesh(verify_image_cache):
         reference_mesh=examples.load_airplane().outline(),
         normalize=True,
         color='w',
-        show_kwargs={
-            'before_close_callback': lambda pl: lengths.extend(r.length for r in pl.renderers)
-        },
+        before_close_callback=lambda pl: lengths.extend(r.length for r in pl.renderers),
     )
     # Each subplot holds a dataset and the reference mesh, both of length one
     assert lengths == pytest.approx([1.0, 1.0], abs=0.5)
@@ -2918,7 +2892,7 @@ def test_plot_compare_takes_what_plot_takes(compare_datasets, verify_image_cache
         background='navy',
         parallel_projection=True,
         window_size=[640, 480],
-        show_kwargs={'before_close_callback': capture},
+        before_close_callback=capture,
     )
     assert seen == {
         'background': 'navy',
@@ -2943,14 +2917,12 @@ def test_plot_compare_volume(verify_image_cache):
         volumes,
         volume=True,
         labels=['a', 'b'],
-        show_kwargs={
-            'before_close_callback': lambda pl: drawn.extend(
-                type(actor).__name__
-                for renderer in pl.renderers
-                for actor in renderer.actors.values()
-                if isinstance(actor, (pv.Actor, pv.Volume))
-            )
-        },
+        before_close_callback=lambda pl: drawn.extend(
+            type(actor).__name__
+            for renderer in pl.renderers
+            for actor in renderer.actors.values()
+            if isinstance(actor, (pv.Actor, pv.Volume))
+        ),
     )
     assert drawn == ['Volume', 'Volume']
 
@@ -2973,7 +2945,7 @@ def test_plot_compare_reference_kwargs(compare_datasets, verify_image_cache):
         reference_mesh=examples.load_uniform().outline(),
         color='w',
         screenshot=True,
-        show_kwargs={'return_img': True},
+        return_img=True,
     )
     assert not np.array_equal(
         pv.plot_compare(compare_datasets, **kwargs),
@@ -2996,7 +2968,7 @@ def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
     datasets = dict(
         zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
     )
-    kwargs = dict(color='w', screenshot=True, show_kwargs={'return_img': True})
+    kwargs = dict(color='w', screenshot=True, return_img=True)
     assert np.array_equal(
         pv.plot_compare(pv.MultiBlock(datasets), **kwargs), pv.plot_compare(datasets, **kwargs)
     )
@@ -3060,13 +3032,6 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     match = 'Reference mesh must be a dataset, got bool instead.'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], reference_mesh=True)
-
-    match = (
-        "Shape was given both as the 'shape' argument and in 'plotter_kwargs'. "
-        'Use one or the other.'
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare([mesh, mesh], shape=(1, 2), plotter_kwargs={'shape': (2, 1)})
 
     match = (
         "Label size was given both as the 'label_size' argument and in 'label_kwargs'. "

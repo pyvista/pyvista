@@ -24,6 +24,7 @@ from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.plotting.text import _TEXT_POSITIONS
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Sequence
 
     from pyvista import DataSet
@@ -471,19 +472,18 @@ def plot_compare(  # noqa: ANN201
     notebook: bool | None = None,
     window_size: list[int] | None = None,
     border: bool | None = None,
-    border_color: ColorLike | None = None,
-    border_width: float | None = None,
+    border_color: ColorLike = 'k',
+    border_width: float = 2.0,
     theme: Theme | None = None,
     screenshot: str | bool | None = None,
     full_screen: bool | None = None,
-    interactive: bool | None = None,
-    return_img: bool | None = None,
-    return_cpos: bool | None = None,
-    return_viewer: bool | None = None,
+    interactive: bool = True,
+    return_img: bool = False,
+    return_cpos: bool = False,
+    return_viewer: bool = False,
     jupyter_backend: JupyterBackendOptions | None = None,
     jupyter_kwargs: dict[str, Any] | None = None,
-    plotter_kwargs: dict[str, Any] | None = None,
-    show_kwargs: dict[str, Any] | None = None,
+    before_close_callback: Callable[[pv.Plotter], None] | None = None,
     **kwargs: Any,
 ):
     """Plot a grid comparison of any number of data objects.
@@ -652,9 +652,6 @@ def plot_compare(  # noqa: ANN201
         Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
 
-    **kwargs : dict, optional
-        See :func:`pyvista.Plotter.add_mesh` for additional options.
-
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
         screenshots without a window popping up.  Defaults to the
@@ -667,8 +664,10 @@ def plot_compare(  # noqa: ANN201
     window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
 
-    border : bool, default: False
-        Draw a border around each render window.
+    border : bool, optional
+        Draw a border around each subplot. By default, a border is drawn
+        whenever there is more than one, which every comparison has, and is
+        not otherwise. Set to ``False`` to never draw one.
 
     border_color : ColorLike, default: "k"
         Either a string, rgb list, or hex color string.  For example:
@@ -718,13 +717,14 @@ def plot_compare(  # noqa: ANN201
         See :ref:`customize_trame_toolbar_example` for an example
         using this keyword.
 
-    plotter_kwargs : dict, optional
-        Additional keyword arguments to pass to the :class:`~pyvista.Plotter`
-        constructor.
+    before_close_callback : Callable, optional
+        Callback that is called before the plotter is closed.
+        The function takes a single parameter, which is the plotter object
+        before it closes. An example of use is to capture a screenshot after
+        interaction::
 
-    show_kwargs : dict, optional
-        Additional keyword arguments to pass to the :meth:`~pyvista.Plotter.show`
-        method.
+            def fun(plotter):
+                plotter.screenshot('file.png')
 
     **kwargs : dict, optional
         Additional keyword arguments to pass to the
@@ -800,18 +800,14 @@ def plot_compare(  # noqa: ANN201
     ...     normalize=True,
     ... )
 
-    Anything the :class:`~pyvista.Plotter` itself takes is given to it through
-    ``plotter_kwargs``. Draw a border around each subplot to tell them apart.
+    Draw a border around each subplot to tell them apart.
 
-    >>> pv.plot_compare(
-    ...     blocks,
-    ...     plotter_kwargs={'border': True, 'border_color': 'grey'},
-    ... )
+    >>> pv.plot_compare(blocks, border=True, border_color='grey')
 
     Plot on a dark background by giving the plotter a theme of its own, which
     also decides the color the labels are drawn in.
 
-    >>> pv.plot_compare(blocks, plotter_kwargs={'theme': pv.themes.DarkTheme()})
+    >>> pv.plot_compare(blocks, theme=pv.themes.DarkTheme())
 
     """
     datasets, names = _unpack_datasets(datasets)
@@ -829,15 +825,11 @@ def plot_compare(  # noqa: ANN201
         if reference_mesh is not None:
             reference_mesh = _normalized(reference_mesh)
 
-    plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
-    shape = _from_kwargs(
-        plotter_kwargs, 'shape', shape, name='shape', kwargs_name='plotter_kwargs'
-    )
-
     if shape is None:
         shape = _auto_shape(n_datasets)
 
-    show_kwargs = {} if show_kwargs is None else dict(show_kwargs)
+    if jupyter_kwargs is None:
+        jupyter_kwargs = {}
     label_kwargs = {} if label_kwargs is None else dict(label_kwargs)
     reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
 
@@ -846,33 +838,6 @@ def plot_compare(  # noqa: ANN201
             label_kwargs, 'font_size', label_size, name='label_size', kwargs_name='label_kwargs'
         )
     )
-    # A coordinate is only ever given in the keywords, so validate the argument on its
-    # own before the two are reconciled
-    for name, value in {
-        'off_screen': off_screen,
-        'notebook': notebook,
-        'window_size': window_size,
-        'border': border,
-        'border_color': border_color,
-        'border_width': border_width,
-        'theme': theme,
-    }.items():
-        given = _from_kwargs(plotter_kwargs, name, value, name=name, kwargs_name='plotter_kwargs')
-        if given is not None:
-            plotter_kwargs[name] = given
-
-    for name, value in {
-        'full_screen': full_screen,
-        'interactive': interactive,
-        'return_img': return_img,
-        'return_cpos': return_cpos,
-        'return_viewer': return_viewer,
-        'jupyter_backend': jupyter_backend,
-        'jupyter_kwargs': jupyter_kwargs,
-    }.items():
-        given = _from_kwargs(show_kwargs, name, value, name=name, kwargs_name='show_kwargs')
-        if given is not None:
-            show_kwargs[name] = given
 
     label_position = _from_kwargs(
         label_kwargs,
@@ -893,7 +858,16 @@ def plot_compare(  # noqa: ANN201
         label_kwargs['name'] = _LABEL_NAME
 
     # The shape itself is validated by the plotter
-    pl = pv.Plotter(shape=shape, **plotter_kwargs)
+    pl = pv.Plotter(
+        shape=shape,
+        off_screen=off_screen,
+        notebook=notebook,
+        window_size=window_size,
+        border=border,
+        border_color=border_color,
+        border_width=border_width,
+        theme=theme,
+    )
 
     n_subplots = len(pl.renderers)
     if n_subplots < n_datasets:
@@ -1012,4 +986,14 @@ def plot_compare(  # noqa: ANN201
             uniform=None if label_size is None else label_size == _UNIFORM,
         )
 
-    return pl.show(screenshot=screenshot, **show_kwargs)
+    return pl.show(
+        screenshot=screenshot,
+        full_screen=full_screen,
+        interactive=interactive,
+        return_img=return_img,
+        return_cpos=return_cpos,
+        return_viewer=return_viewer,
+        jupyter_backend=jupyter_backend,
+        jupyter_kwargs=jupyter_kwargs,
+        before_close_callback=before_close_callback,
+    )
