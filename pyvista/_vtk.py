@@ -510,6 +510,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPLYWriter',
     ),
     'vtkIOParallel': (
+        'vtkEnSightWriter',
         'vtkMultiBlockPLOT3DReader',
         'vtkNek5000Reader',
         'vtkPDataSetReader',
@@ -850,6 +851,16 @@ def has_attr(name: str) -> bool:
     except (AttributeError, ImportError):
         return False
     return True
+
+
+def import_all(*, suppress_import_errors: bool = True):
+    """Eagerly import all vtk classes used by PyVista."""
+    for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):
+        if suppress_import_errors:
+            # Use has_attr to suppress import errors
+            has_attr(name)
+        else:
+            __getattr__(name)
 
 
 # Specialized loading functions for irregular imports
