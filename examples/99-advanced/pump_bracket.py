@@ -103,7 +103,7 @@ pl.add_mesh(ds, lighting=True, color='w')
 pl.camera_position = cpos
 pl.enable_anti_aliasing('fxaa')
 
-n_frames = 16
+n_frames = 10
 pl.open_gif('pump_bracket_mode_shape.gif')
 for phase in np.linspace(0, 2 * np.pi, n_frames, endpoint=False):
     # use the original unmodified points, modify copy inplace

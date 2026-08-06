@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -154,13 +153,7 @@ class UnstructuredGridFilters(DataSetFilters):
         >>> pl.show()
 
         """
-        try:
-            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid  # noqa: PLC0415
-        except ImportError:  # pragma no cover
-            msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
-            raise VTKVersionError(msg) from None
-
-        alg = vtkStaticCleanUnstructuredGrid()
+        alg = _vtk.vtkStaticCleanUnstructuredGrid()
         # https://github.com/pyvista/pyvista/pull/6337
         alg.SetInputDataObject(self.copy())  # type: ignore[attr-defined]
         alg.SetAbsoluteTolerance(True)

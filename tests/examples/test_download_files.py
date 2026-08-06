@@ -32,6 +32,14 @@ if 'TEST_DOWNLOADS' in os.environ:
 pytestmark = pytest.mark.needs_download
 
 
+with warnings.catch_warnings():
+    # Deprecation warning emits once on initial import, suppress it here
+    warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+    import pyvista.examples.download_3ds
+    import pyvista.examples.gltf  # noqa: F401
+    import pyvista.examples.vrml  # noqa: F401
+
+
 def _on_ci():
     return os.environ.get('CI', 'false').lower() == 'true'
 
@@ -155,10 +163,30 @@ def test_download_fea_hertzian_contact_cylinder():
 
 
 def test_download_nefertiti():
-    filename = examples.download_nefertiti(load=False)
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        filename = examples.download_nefertiti(load=False)
     assert Path(filename).is_file()
 
-    data = examples.download_nefertiti()
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        data = examples.download_nefertiti()
+    assert data.n_cells
+
+
+def test_download_washington_bust():
+    filename = examples.download_washington_bust(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_washington_bust()
+    assert isinstance(data, pv.PolyData)
+    assert data.n_cells
+
+
+def test_download_lincoln_life_mask():
+    filename = examples.download_lincoln_life_mask(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_lincoln_life_mask()
+    assert isinstance(data, pv.PolyData)
     assert data.n_cells
 
 
@@ -258,6 +286,19 @@ def test_download_cake_easy():
 def test_download_cake_easy_texture():
     data = examples.download_cake_easy_texture()
     assert isinstance(data, pv.Texture)
+
+
+def test_download_parallel_exodus():
+    path = Path(examples.download_parallel_exodus(load=False))
+    assert path.name == 'can.e.4.0'
+    assert all(path.with_name(f'can.e.4.{partition}').is_file() for partition in range(4))
+
+    reader = pv.get_reader(path)
+    assert isinstance(reader, pv.PExodusIIReader)
+
+    dataset = examples.download_parallel_exodus()
+    assert isinstance(dataset, pv.MultiBlock)
+    assert dataset.n_blocks
 
 
 def test_download_can_crushed_hdf():
@@ -542,13 +583,162 @@ def test_download_dicom_stack():
 
 
 def test_download_teapot_vrml():
-    filename = examples.vrml.download_teapot()
+    match = (
+        '`examples.vrml.download_teapot` is deprecated. '
+        'Use `examples.download_teapot_vrml` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_teapot()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_teapot_vrml(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_teapot_vrml()
+    assert isinstance(mesh, pv.MultiBlock)
 
 
 def test_download_sextant_vrml():
-    filename = examples.vrml.download_sextant()
+    match = (
+        '`examples.vrml.download_sextant` is deprecated. Use `examples.download_sextant` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_sextant()
     assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_sextant(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_sextant()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_grasshopper():
+    match = (
+        '`examples.vrml.download_grasshopper` is deprecated. '
+        'Use `examples.download_grasshopper` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.vrml.download_grasshopper()
+    assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_grasshopper(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_grasshopper()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_flamingo():
+    match = (
+        '`examples.download_3ds.download_iflamigm` is deprecated. '
+        'Use `examples.download_flamingo` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.download_3ds.download_iflamigm()
+    assert Path(filename).is_file()
+
+    # Moved to downloads module
+    filename = examples.download_flamingo(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_flamingo()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_milk_truck():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_milk_truck` is deprecated. '
+        'Use `examples.download_milk_truck` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_milk_truck()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_milk_truck(load=False)
+    assert Path(filename).is_file()
+    with pytest.warns(UserWarning, match='vtkGLTFReader'):
+        # Ignore known vtkGLTFReader errors
+        mesh = examples.download_milk_truck()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_damaged_helmet():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_damaged_helmet` is deprecated. '
+        'Use `examples.download_damaged_helmet` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_damaged_helmet()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_damaged_helmet(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_damaged_helmet()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_gearbox():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_gearbox` is deprecated. Use `examples.download_gearbox` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_gearbox()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_gearbox(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_gearbox()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_gltf_avocado():
+    if _on_ci():
+        pytest.skip('GitHub rate limited in CI')
+    match = (
+        '`examples.gltf.download_avocado` is deprecated. Use `examples.download_avocado` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        filename = examples.gltf.download_avocado()
+    assert Path(filename).is_file()
+    pl = pv.Plotter()
+    pl.import_gltf(filename)
+
+    # Moved to downloads module
+    filename = examples.download_avocado(load=False)
+    assert Path(filename).is_file()
+    mesh = examples.download_avocado()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_download_sheen_chair_deprecated(monkeypatch):
+    match = (
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.'
+    )
+
+    class MockLoader:
+        def download(self):
+            return 'SheenChair.glb'
+
+    monkeypatch.setattr(examples.gltf, '_gltf_loader', lambda _: MockLoader())
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert examples.gltf.download_sheen_chair() == 'SheenChair.glb'
 
 
 def test_download_cavity():
@@ -618,6 +808,25 @@ def test_download_cubemap_space_4k():
 def test_download_cubemap_space_16k():
     dataset = examples.download_cubemap_space_16k()
     assert isinstance(dataset, pv.Texture)
+
+
+def test_download_particles():
+    filename = examples.download_particles(load=False)
+    assert Path(filename).is_file()
+
+    dataset = examples.download_particles(load=True)
+    assert isinstance(dataset, pv.PolyData)
+    actual = dataset.bounds
+    expected = pv.BoundsTuple(
+        x_min=817.33349609375,
+        x_max=826.0890502929688,
+        y_min=545.0177001953125,
+        y_max=571.0205688476562,
+        z_min=1443.4783935546875,
+        z_max=1511.181396484375,
+    )
+    assert np.allclose(actual, expected)
+    assert dataset.validate_mesh().is_valid
 
 
 def test_download_particles_lethe():
@@ -1023,73 +1232,16 @@ def test_download_coil_magnetic_field():
     assert dataset.n_points == 531441
 
 
-def test_load_sun():
-    mesh = examples.planets.load_sun()
-    assert mesh.n_cells
-
-
-def test_load_moon():
-    mesh = examples.planets.load_moon()
-    assert mesh.n_cells
-
-
-def test_load_mercury():
-    mesh = examples.planets.load_mercury()
-    assert mesh.n_cells
-
-
-def test_load_venus():
-    mesh = examples.planets.load_venus()
-    assert mesh.n_cells
-
-
-def test_load_mars():
-    mesh = examples.planets.load_mars()
-    assert mesh.n_cells
-
-
-def test_load_jupiter():
-    mesh = examples.planets.load_jupiter()
-    assert mesh.n_cells
-
-
-def test_load_saturn():
-    mesh = examples.planets.load_saturn()
-    assert mesh.n_cells
-
-
-def test_load_saturn_rings():
-    mesh = examples.planets.load_saturn_rings()
-    assert mesh.n_cells
-
-
-def test_load_uranus():
-    mesh = examples.planets.load_uranus()
-    assert mesh.n_cells
-
-
-def test_load_neptune():
-    mesh = examples.planets.load_neptune()
-    assert mesh.n_cells
-
-
-def test_load_pluto():
-    mesh = examples.planets.load_pluto()
-    assert mesh.n_cells
-
-
 def test_download_nek5000():
     filename = examples.download_nek5000(load=False)
     assert Path(filename).is_file()
     assert filename.endswith('nek5000')
 
-    # nek5000 reader can only be used with vtk >= 9.3
-    if pv.vtk_version_info >= (9, 3):
-        nek_reader = pv.get_reader(filename)
-        assert nek_reader.number_time_points == 11
+    nek_reader = pv.get_reader(filename)
+    assert nek_reader.number_time_points == 11
 
-        nek_data = examples.download_nek5000(load=True)
-        assert isinstance(nek_data, pv.UnstructuredGrid)
+    nek_data = examples.download_nek5000(load=True)
+    assert isinstance(nek_data, pv.UnstructuredGrid)
 
 
 @pytest.mark.skip_windows

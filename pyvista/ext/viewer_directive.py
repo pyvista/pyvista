@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import shutil
+from typing import TYPE_CHECKING
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from docutils.utils import relative_path  # pragma: no cover
 from sphinx.util import logging
+from sphinx.util.osutil import relative_uri
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
+
+if TYPE_CHECKING:
+    from sphinx.environment import BuildEnvironment
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,22 @@ def is_path_relative_to(path, other):
     [1] https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to.
     """
     return path.is_relative_to(other)
+
+
+def _offline_viewer_paths(env: BuildEnvironment, dest_file: Path) -> tuple[str | None, str | None]:
+    viewer_uri = (Path('_static') / Path(HTML_VIEWER_PATH).name).as_posix()
+    try:
+        rel = dest_file.relative_to(Path(env.app.outdir) / '_images')
+    except ValueError:
+        logger.warning(f'{dest_file} is not under outdir/_images; cannot compute asset URI')
+        return None, None
+
+    asset_uri = (Path('_images') / rel).as_posix()
+    page_uri = env.app.builder.get_target_uri(env.docname)
+
+    rel_viewer_path = relative_uri(page_uri, viewer_uri)
+    rel_asset_path = relative_uri(viewer_uri, asset_uri)
+    return rel_viewer_path, rel_asset_path
 
 
 class OfflineViewerDirective(Directive):
@@ -79,14 +98,10 @@ class OfflineViewerDirective(Directive):
             except Exception as e:  # noqa: BLE001
                 logger.warning(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
-        # Compute the relative path of the current source to the source directory,
-        # which is the same as the relative path of the '_static' directory to the
-        # generated HTML file.
-        relpath_to_source_root = relative_path(self.state.document.current_source, source_dir)
-        rel_viewer_path = (
-            Path() / relpath_to_source_root / '_static' / Path(HTML_VIEWER_PATH).name
-        ).as_posix()
-        rel_asset_path = Path(os.path.relpath(dest_file, static_path)).as_posix()
+        env = self.state.document.settings.env
+        rel_viewer_path, rel_asset_path = _offline_viewer_paths(env, dest_file)
+        if rel_viewer_path is None or rel_asset_path is None:
+            return []
         html = (
             f"<iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' "
             "width='100%%' height='400px' frameborder='0'></iframe>"

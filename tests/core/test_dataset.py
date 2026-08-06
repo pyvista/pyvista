@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset as dataset_module
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -726,6 +726,56 @@ def test_rename_array_doesnt_delete():
     assert (mesh.point_data['renamed'] == 1).all()
 
 
+def test_rename_array_preserves_active_attributes():
+    # Regression test for issue #8746: renaming an array must not drop its active
+    # normals / texture coordinates / vectors / tensors designation, and must not
+    # promote the renamed array to the active scalars.
+    mesh = pv.Sphere()
+    n = mesh.n_points
+    point_data = mesh.point_data
+    point_data['my_normals'] = np.tile([0.0, 0.0, 1.0], (n, 1))
+    point_data.active_normals_name = 'my_normals'
+    point_data['my_tcoords'] = np.zeros((n, 2))
+    point_data.active_texture_coordinates_name = 'my_tcoords'
+    point_data['my_vectors'] = np.zeros((n, 3))
+    point_data.active_vectors_name = 'my_vectors'
+    point_data['my_tensors'] = np.zeros((n, 9))
+    mesh.active_tensors_name = 'my_tensors'
+    # Active normals/tcoords/vectors/tensors but explicitly NO active scalars:
+    # renaming must not add any.
+    point_data.active_scalars_name = None
+
+    def active_tensors_name():
+        # There is no attributes-level tensors accessor, and the dataset-level
+        # `active_tensors_name` reports stale state after a rename (see issue #8749),
+        # so read the actual state from VTK directly.
+        tensors = point_data.VTKObject.GetTensors()
+        return None if tensors is None else tensors.GetName()
+
+    # Sanity check the setup before renaming.
+    assert point_data.active_normals_name == 'my_normals'
+    assert point_data.active_texture_coordinates_name == 'my_tcoords'
+    assert point_data.active_vectors_name == 'my_vectors'
+    assert active_tensors_name() == 'my_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+    mesh.rename_array('my_normals', 'renamed_normals', preference='point')
+    mesh.rename_array('my_tcoords', 'renamed_tcoords', preference='point')
+    mesh.rename_array('my_vectors', 'renamed_vectors', preference='point')
+    mesh.rename_array('my_tensors', 'renamed_tensors', preference='point')
+
+    assert point_data.active_normals_name == 'renamed_normals'
+    assert point_data.active_normals is not None
+    assert point_data.active_texture_coordinates_name == 'renamed_tcoords'
+    assert point_data.active_texture_coordinates is not None
+    assert point_data.active_vectors_name == 'renamed_vectors'
+    assert point_data.active_vectors is not None
+    assert active_tensors_name() == 'renamed_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+
 def test_change_name_fail(hexbeam):
     with pytest.raises(KeyError):
         hexbeam.rename_array('not a key', '')
@@ -928,7 +978,7 @@ def test_find_closest_cells():
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
-    assert np.allclose(indices, np.arange(mesh.n_faces_strict))
+    assert np.allclose(indices, np.arange(mesh.n_faces))
 
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)
@@ -996,6 +1046,106 @@ def test_find_cells_intersecting_line():
 
     with pytest.raises(TypeError):
         mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
+
+
+@pytest.mark.parametrize('points_dtype', [np.single, np.double])
+def test_intersect_with_line(points_dtype):
+    def assert_intersection_results(mesh_, points_, cell_ids_):
+        assert isinstance(points_, np.ndarray)
+        assert isinstance(cell_ids_, np.ndarray)
+        assert len(points_) == len(cell_ids_)
+        assert points_.dtype == mesh_.points.dtype
+        assert cell_ids_.dtype == np.int64
+        for idx in range(len(points_)):
+            cell = mesh_.get_cell(cell_ids_[idx])
+            point = points_[idx]
+            assert point in cell.points
+
+    # Manually create source to properly configure double precision points
+    source = _vtk.vtkSphereSource()
+    source.SetPhiResolution(10)
+    source.SetThetaResolution(10)
+    output_precision = (
+        _vtk.vtkAlgorithm.DOUBLE_PRECISION
+        if points_dtype == np.double
+        else _vtk.vtkAlgorithm.SINGLE_PRECISION
+    )
+    source.SetOutputPointsPrecision(output_precision)
+    source.Update()
+    mesh = pv.wrap(source.GetOutput())
+
+    assert mesh.points.dtype == points_dtype
+
+    # The exact value of pointb matters, see example from https://github.com/pyvista/pyvista/issues/8698
+    pointa = [0.0, 0, 5]
+    pointb = [0.0, 0, -1.687329400596207]
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb)
+
+    expected_points = [
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+    ]
+    # Use a set since the exact order depends on the OS and the points precision
+    # The exact order doesn't matter here, and the cell-id matching the point is tested separately
+    lower_ids = set(range(10))
+    upper_ids = set(range(10, 20))
+    expected_cell_ids = lower_ids | upper_ids
+
+    assert np.allclose(points, expected_points)
+    assert set(cell_ids.tolist()) == expected_cell_ids
+    assert_intersection_results(mesh, points, cell_ids)
+
+    # Test again with deduplicated points
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb, deduplicate_points=True)
+
+    expected_points = [[0.0, 0.0, 0.5], [0.0, 0.0, -0.5]]
+
+    assert_intersection_results(mesh, points, cell_ids)
+    assert np.allclose(points, expected_points)
+    # Only check cell id membership because the exact id returned depends on dtype and OS
+    assert cell_ids[0] in lower_ids
+    assert cell_ids[1] in upper_ids
+
+    # Test again with a tolerance of zero to show that zero tolerance can fail to properly
+    # locate both intersections (and therefore tolerance should not be zero by default)
+    points, cell_ids = mesh.intersect_with_line(
+        pointa, pointb, deduplicate_points=True, tolerance=0.0
+    )
+    assert points.ndim == 2
+    if sys.platform == 'darwin':
+        assert len(points) < 2
+    else:
+        assert len(points) == 2
+
+
+def test_build_locator_raises():
+    poly = pv.PolyData()
+    match = 'Building vtkStaticCellLocator requires a dataset with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
+
+    poly = pv.PolyData()
+    match = 'Building vtkPointLocator requires a dataset with points.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.find_closest_point([0, 0, 0])
 
 
 def test_find_cells_within_bounds():
@@ -1532,13 +1682,8 @@ def mesh():
     return examples.load_globe()
 
 
-def test_active_array_info_deprecated():
-    match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
-        pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this deprecated class'
-        raise RuntimeError(msg)
+def test_active_array_info_removed():
+    assert not hasattr(pv.core.dataset, 'ActiveArrayInfo')
 
 
 def test_dimensionality():

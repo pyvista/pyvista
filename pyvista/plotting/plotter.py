@@ -20,9 +20,11 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from threading import Event
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 import uuid
@@ -33,9 +35,11 @@ import numpy as np
 import scooby
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -51,7 +55,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
-from . import _vtk
 from ._plotting import _common_arg_parser
 from ._plotting import _reduce_multicomponent_scalars_on_mesh
 from ._plotting import _remap_scalars_through_topology_change
@@ -62,6 +65,7 @@ from .actor import Actor
 from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
+from .component_registry import register_plotter_component as _register_plotter_component
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
 from .mapper import DataSetMapper
@@ -74,18 +78,23 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _BaseMapper
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
-from .picking import PickingHelper
+from .opts import StereoType
+from .picking import PickingComponent
+from .prop_collection import _PropCollection
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
 from .renderer import Renderer
 from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .text import _TEXT_POSITIONS
 from .text import CornerAnnotation
 from .text import Text
+from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import callback_algorithm
@@ -100,13 +109,15 @@ from .utilities.regression import image_from_window
 from .utilities.regression import run_image_filter
 from .volume import Volume
 from .volume_property import VolumeProperty
-from .widgets import WidgetHelper
+from .widgets import WidgetComponent
 
 if TYPE_CHECKING:
     import cycler
     import imageio
     from IPython.lib.display import IFrame
     from PIL.Image import Image
+    from trame_pyvista.jupyter import EmbeddableWidget
+    from trame_pyvista.jupyter import Widget
 
     from pyvista import DataSet
     from pyvista import LookupTable
@@ -138,8 +149,6 @@ if TYPE_CHECKING:
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
-    from pyvista.trame.jupyter import EmbeddableWidget
-    from pyvista.trame.jupyter import Widget
 
     from .opts import PointSpriteShape
 
@@ -276,7 +285,7 @@ def _warn_xserver() -> None:  # pragma: no cover
 
 
 @abstract_class
-class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
+class BasePlotter(_BoundsSizeMixin):
     """Base plotting class.
 
     To be used by the :class:`pyvista.Plotter` and
@@ -376,6 +385,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._initialized = False
+        self._show_called = False
+
+        # Tracks plotter components (see
+        # ``pyvista.plotting.component_registry``) that have been
+        # constructed on this instance. ``close()`` walks this list in
+        # reverse to invoke each component's optional lifecycle hooks.
+        self._components: list[Any] = []
 
         self.mapper: _BaseMapper | None = None
         self.volume: Volume | None = None
@@ -384,6 +400,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
         self.ren_win: _vtk.vtkRenderWindow | None = None
+        # 3D location of the last click registered by ``left_button_down``
+        self.pickpoint: NumpyArray[float] | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -403,6 +421,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
+        # background thread (and its cancellation event) started by a threaded
+        # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
+        self._orbit_thread: Thread | None = None
+        self._orbit_stop_event: Event | None = None
         self.mesh: MultiBlock | DataSet | None = None
         if title is None:
             title = self._theme.title
@@ -420,9 +442,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             border_color=border_color,
             border_width=border_width,
         )
-
-        # This keeps track of scalars names already plotted and their ranges
-        self._scalar_bars = ScalarBars(self)
 
         # track if the camera has been set up
         self._first_time = True
@@ -458,6 +477,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         log.debug('BasePlotter init stop')
 
         self._image_depth_null: NumpyArray[bool] | None = None
+        self._window_size_unset = False
         self.last_image_depth: pv.pyvista_ndarray | None = None
         self.last_image: pv.pyvista_ndarray | None = None
         self.last_vtksz: str | Path | None = None
@@ -472,6 +492,38 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+
+    def __getattr__(self, item: str) -> Any:
+        """Resolve plotter component plugin lookups on attribute miss.
+
+        Before falling through, check whether ``item`` matches a
+        pending ``pyvista.plotter_components`` entry point. A match
+        triggers a one-shot plugin import, after which normal attribute
+        resolution finds the newly-attached component descriptor.
+
+        Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
+        and dataset extension points present the same lookup contract.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.plotting.component_registry import _resolve_pending_component  # noqa: PLC0415
+
+        if _resolve_pending_component(item):
+            return object.__getattribute__(self, item)
+        return super().__getattribute__(item)
+
+    def __dir__(self) -> list[str]:
+        """Include pending plotter-component names so tab completion surfaces them.
+
+        Plugin-contributed components registered via the
+        ``pyvista.plotter_components`` entry-point group are imported
+        lazily on first attribute access. Listing their names alongside
+        the normal attribute set lets IPython / Jupyter / REPL tab
+        completion surface them without paying the plugin import cost
+        ahead of time.
+        """
+        from pyvista.plotting.component_registry import _pending_component_names  # noqa: PLC0415
+
+        return sorted({*super().__dir__(), *_pending_component_names()})
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
         if (iren := self.iren) is None:
@@ -523,24 +575,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @property
     def theme(self) -> Theme:  # numpydoc ignore=RT01
-        """Return or set the theme used for this plotter.
+        """Return the theme used for this plotter.
 
-        .. deprecated:: 0.47
-            Assigning the ``theme`` attribute to a plotter object does not affect global appearance
-            settings such as ``background``, which are set at instantiation.
-            To this respect, you need to set the theme such that:
-
-            .. code-block:: python
-
-                import pyvista as pv
-
-                pl = pv.Plotter()
-                pl.theme = theme
-                # change above lines to
-                pl = pv.Plotter(theme=theme)
-
-            However, actor appearance settings such as ``edge_color`` for example are correctly
-            taken into account.
+        Set the theme when initializing the plotter instance.
 
         Returns
         -------
@@ -553,8 +590,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> from pyvista import themes
-        >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()  # doctest: +SKIP
+        >>> pl = pv.Plotter(theme=themes.DarkTheme())
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
@@ -562,24 +598,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         return self._theme
 
     @theme.setter
-    def theme(self, theme: Theme) -> None:
-        # Deprecated on 0.47.0, convert to error in v0.49, estimated removal on v0.50
+    def theme(self, theme: Theme) -> None:  # noqa: ARG002
+        # Deprecated on 0.47.0, error in v0.49, estimated removal on v0.50
         msg = (
             'Assigning a theme for a plotter instance is deprecated '
             'and will removed in a future version of PyVista. '
             'Set the theme when initializing the plotter instance instead.'
         )
-        warn_external(msg, PyVistaDeprecationWarning)
-
-        if not isinstance(theme, pv.plotting.themes.Theme):
-            msg = (  # type: ignore[unreachable]
-                'Expected a pyvista theme like '
-                '``pyvista.plotting.themes.Theme``, '
-                f'not {type(theme).__name__}.'
-            )
-            raise TypeError(msg)
-
-        self._theme.load_theme(theme)
+        raise DeprecationError(msg)
 
     @_deprecate_positional_args(allowed=['filename'])
     def import_gltf(self, filename: str | Path, set_camera: bool = True) -> None:  # noqa: FBT001, FBT002
@@ -595,6 +621,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         set_camera : bool, default: True
             Set the camera viewing angle to one compatible with the
             default three.js perspective (``'xy'``).
+
+        See Also
+        --------
+        pyvista.GLTFReader
+            Read GLTF file as a mesh.
 
         Examples
         --------
@@ -616,10 +647,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
-
-        importer = vtkGLTFImporter()
+        importer = _vtk.vtkGLTFImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -636,6 +664,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         filename : str | Path
             Path to the VRML file.
 
+        See Also
+        --------
+        pyvista.VRMLReader
+            Read VRML file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -648,15 +681,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
-        from vtkmodules.vtkIOImport import vtkVRMLImporter  # noqa: PLC0415
-
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        importer = vtkVRMLImporter()
+        importer = _vtk.vtkVRMLImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -671,25 +701,27 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         filename : str | Path
             Path to the 3DS file.
 
+        See Also
+        --------
+        pyvista.ThreeDSReader
+            Read 3DS file as a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> download_3ds_file = examples.download_3ds.download_iflamigm()
+        >>> file_3ds = examples.download_flamingo(load=False)
         >>> pl = pv.Plotter()
-        >>> pl.import_3ds(download_3ds_file)
+        >>> pl.import_3ds(file_3ds)
         >>> pl.show()
 
         """
-        from vtkmodules.vtkIOImport import vtk3DSImporter  # noqa: PLC0415
-
         filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        importer = vtk3DSImporter()
+        importer = _vtk.vtk3DSImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -706,6 +738,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         filename_mtl : str | Path, optional
             Path to the .mtl file.
+
+        See Also
+        --------
+        pyvista.OBJReader
+            Read OBJ file as a mesh.
 
         Examples
         --------
@@ -725,15 +762,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.show(cpos='xy')
 
         """
-        from vtkmodules.vtkIOImport import vtkOBJImporter  # noqa: PLC0415
-
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
             msg = f'Unable to locate {filename}'
             raise FileNotFoundError(msg)
 
-        # lazy import here to avoid importing unused modules
-        importer = vtkOBJImporter()
+        importer = _vtk.vtkOBJImporter()
         importer.SetFileName(filename)  # type:ignore[arg-type]
         if filename_mtl is None:
             filename_mtl_path = filename.with_suffix('.mtl')
@@ -773,29 +807,18 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pv.html')  # doctest:+SKIP
 
+        .. deprecated:: 0.49.0
+            Use ``plotter.trame.export_html(...)`` instead. This method
+            now proxies to that registered plotter component (provided by
+            the ``trame-pyvista`` package).
+
         """
-        try:
-            from trame_vtk.tools.vtksz2html import write_html  # noqa: PLC0415
-        except ImportError:  # pragma: no cover
-            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
-            raise ImportError(msg)
-
-        data = self.export_vtksz(filename=None)
-        buffer = io.StringIO()
-        write_html(data, buffer)
-        buffer.seek(0)
-
-        if filename is None:
-            return buffer
-
-        filename = Path(filename)
-        if filename.suffix != '.html':
-            filename / '.html'
-
-        # Move to final destination
-        with filename.open('w', encoding='utf-8') as f:
-            f.write(buffer.read())
-            return None
+        warn_external(
+            'Plotter.export_html is deprecated. Use plotter.trame.export_html(...) instead. '
+            'Install via `pip install trame-pyvista`.',
+            PyVistaDeprecationWarning,
+        )
+        return self._trame_component().export_html(filename)
 
     def export_vtksz(
         self,
@@ -821,35 +844,29 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         output : str | Path
             The exported filename.
 
+        .. deprecated:: 0.49.0
+            Use ``plotter.trame.export_vtksz(...)`` instead. This method
+            now proxies to that registered plotter component (provided by
+            the ``trame-pyvista`` package).
+
         """
-        try:
-            from pyvista.trame import PyVistaLocalView  # noqa: PLC0415
-            from pyvista.trame.jupyter import elegantly_launch  # noqa: PLC0415
-            from pyvista.trame.views import get_server  # noqa: PLC0415
-        except ImportError:  # pragma: no cover
-            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+        warn_external(
+            'Plotter.export_vtksz is deprecated. Use plotter.trame.export_vtksz(...) instead. '
+            'Install via `pip install trame-pyvista`.',
+            PyVistaDeprecationWarning,
+        )
+        return self._trame_component().export_vtksz(filename=filename, format=format)
+
+    def _trame_component(self) -> Any:
+        """Return the registered ``trame`` plotter component or raise."""
+        component = getattr(self, 'trame', None)
+        if component is None:
+            msg = (
+                'The "trame" plotter component is not registered. '
+                'Install trame-pyvista: pip install trame-pyvista'
+            )
             raise ImportError(msg)
-
-        # Ensure trame server is launched
-        server = get_server(pv.global_theme.trame.jupyter_server_name)
-        if not server.running:
-            elegantly_launch(pv.global_theme.trame.jupyter_server_name)
-
-        view = PyVistaLocalView(self, trame_server=server)
-
-        content = view.export(format=format)
-
-        view.release_resources()
-        # Make sure callbacks are unregistered
-        self._on_render_callbacks.remove(view._plotter_render_callback)
-
-        if filename is None:
-            return content
-
-        with Path(filename).open('wb') as f:
-            f.write(content)
-
-        return filename
+        return component
 
     @_deprecate_positional_args(allowed=['filename'])
     def export_gltf(  # noqa: PLR0917
@@ -921,8 +938,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = 'This plotter has been closed and is unable to export the scene.'
             raise RuntimeError(msg)
 
-        from vtkmodules.vtkIOExport import vtkGLTFExporter  # noqa: PLC0415
-
         # rotate scene to gltf compatible view
         renamed_arrays = []  # any renamed normal arrays
         if rotate_scene:
@@ -968,7 +983,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                         except Exception as e:  # noqa: BLE001  # pragma: no cover
                             log.debug('Failed to rename array during gLTF export: %s', e)
 
-        exporter = vtkGLTFExporter()
+        exporter = _vtk.vtkGLTFExporter()
         exporter.SetRenderWindow(self.render_window)
         exporter.SetFileName(filename)
         exporter.SetInlineData(inline_data)
@@ -1006,13 +1021,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.export_vrml('sample')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkVRMLExporter  # noqa: PLC0415
-
         if self.render_window is None:
             msg = 'This plotter has been closed and cannot be shown.'
             raise RuntimeError(msg)
 
-        exporter = vtkVRMLExporter()
+        exporter = _vtk.vtkVRMLExporter()
         exporter.SetFileName(filename)  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
@@ -1098,34 +1111,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         """
         return next(iter(self.scalar_bars.values()))
-
-    @property
-    def scalar_bars(self) -> ScalarBars:  # numpydoc ignore=RT01
-        """Scalar bars.
-
-        Returns
-        -------
-        pyvista.ScalarBars
-            Scalar bar object.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> sphere['Data'] = sphere.points[:, 2]
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere)
-        >>> pl.scalar_bars
-        Scalar Bar Title     Interactive
-        "Data"               False
-
-        Select a scalar bar actor based on the title of the bar.
-
-        >>> pl.scalar_bars['Data']
-        <vtkmodules.vtkRenderingAnnotation.vtkScalarBarActor(...) at ...>
-
-        """
-        return self._scalar_bars
 
     @property
     def _before_close_callback(self) -> Callable[[Plotter], None] | None:
@@ -2144,6 +2129,22 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise RenderWindowUnavailable(msg)
         self.render_window.MakeCurrent()  # pragma: no cover
 
+    def _enable_stereo_rendering(self, stereo_type: StereoType = StereoType.ANAGLYPH) -> None:
+        """Enable stereo rendering.
+
+        This method must be called before the window is realized.
+        """
+        if self.render_window is None:
+            msg = 'The render window has been closed.'
+            raise AttributeError(msg)
+        if not self.render_window.GetNeverRendered():
+            msg = 'Stereo rendering must be enabled before the window is realized.'
+            raise RuntimeError(msg)
+        self.render_window.SetStereoCapableWindow(1)
+        self.render_window.SetStereoType(stereo_type.value)
+        self.render_window.SetStereoRender(1)
+        self.render_window.StereoUpdate()
+
     @property
     def image(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return an image array of current render window.
@@ -2168,12 +2169,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self._check_rendered()
         self._check_has_ren_win()
 
-        data = image_from_window(self.render_window, scale=self.image_scale)
-        if self.image_transparent_background:
-            return data
-
-        # ignore alpha channel
-        return data[:, :, :-1]
+        return image_from_window(
+            self.render_window,
+            scale=self.image_scale,
+            ignore_alpha=not self.image_transparent_background,
+        )
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
@@ -2425,6 +2425,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         """
         for renderer in self.renderers:
+            if renderer._actors is None:  # the renderer has been closed
+                continue
             for actor in renderer._actors:
                 if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
@@ -2462,7 +2464,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         )
         self.add_key_event('b', b_left_down_callback)  # type: ignore[arg-type]
         self.add_key_event('v', lambda: self.isometric_view_interactive())  # type: ignore[arg-type]  # noqa: PLW0108
-        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type]  # noqa: PLW0108
+        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type,call-arg]  # noqa: PLW0108
         self.add_key_event('Up', lambda: self.zoom_camera(1.05))  # type: ignore[arg-type]
         self.add_key_event('Down', lambda: self.zoom_camera(0.95))  # type: ignore[arg-type]
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))  # type: ignore[arg-type]
@@ -2723,6 +2725,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         component: int | None = None,
         color_missing_with_nan: bool = False,  # noqa: FBT001, FBT002
         copy_mesh: bool = False,  # noqa: FBT001, FBT002
@@ -2969,6 +2972,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when ``True``.
 
+        static : bool, default: False
+            If ``True``, the mapper assumes the input data is static and skips
+            checking its input pipeline for updates when rendering. The mapper's
+            input may still be replaced explicitly. Keeping the topology unchanged
+            between replacements may allow the rendering backend to reuse index
+            buffers while updating vertex attributes.
+
+            .. versionadded:: 0.49
+
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
@@ -3115,7 +3127,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         )
         self.mapper = mapper
 
-        actor, _ = self.add_actor(mapper, render=False)
+        actor, _ = self.add_actor(mapper, render=False)  # type: ignore[arg-type]
         actor = cast('Actor', actor)
         actor.force_opaque = force_opaque
 
@@ -3192,6 +3204,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if show_scalar_bar and scalars is not None and isinstance(scalar_bar_args, Mapping):
             self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
+        if static:
+            mapper.update()
+        mapper.static = static
+
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
@@ -3209,6 +3225,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                static=static,
                 show_vertices=False,
             )
 
@@ -3274,6 +3291,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         user_matrix: TransformLike | None = None,
         component: int | None = None,
         emissive: bool | None = None,  # noqa: FBT001
@@ -3597,6 +3615,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when ``True``.
 
+        static : bool, default: False
+            If ``True``, the mapper assumes the input data is static and skips
+            checking its input pipeline for updates when rendering. The mapper's
+            input may still be replaced explicitly. Keeping the topology unchanged
+            between replacements may allow the rendering backend to reuse index
+            buffers while updating vertex attributes.
+
+            .. versionadded:: 0.49
+
         user_matrix : TransformLike, default: np.eye(4)
             Matrix passed to the Actor class before rendering. This affects the
             actor/rendering only, not the input volume itself. The user matrix is the
@@ -3854,7 +3881,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             show_edges = False
 
         if isinstance(mesh, (str, Path)):
-            mesh = pv.read(mesh)  # type: ignore[assignment]
+            mesh = pv.read(mesh)
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -3925,6 +3952,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                static=static,
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
                 remove_existing_actor=remove_existing_actor,
@@ -3987,7 +4015,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if show_vertices is None:
             show_vertices = self._theme.show_vertices
 
-        if edge_opacity is None and pv.vtk_version_info >= (9, 3):
+        if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
 
         if silhouette is None:
@@ -4201,6 +4229,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         else:
             mapper.scalar_visibility = False
 
+        if static:
+            mapper.update()
+        mapper.static = static
+
         # Set actor properties ================================================
         prop_kwargs = dict(
             theme=self._theme,
@@ -4282,6 +4314,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                static=static,
                 show_vertices=False,
             )
 
@@ -5332,14 +5365,32 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     def close(self) -> None:
         """Close the render window."""
+        # Stop any background `orbit_on_path(threaded=True)` thread before
+        # tearing anything else down, so it stops touching this plotter's
+        # VTK objects once they're cleared.
+        if self._orbit_thread is not None:
+            # no branch: whether the thread already finished is timing-dependent
+            if self._orbit_thread.is_alive():  # pragma: no branch
+                # `_orbit_stop_event` is always set alongside `_orbit_thread` in
+                # `orbit_on_path`, so it can't be `None` here.
+                assert self._orbit_stop_event is not None  # noqa: S101
+                self._orbit_stop_event.set()
+                self._orbit_thread.join(timeout=5)
+
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)  # type: ignore[arg-type]
             self._before_close_callback = None
 
-        # must close out widgets first
-        super().close()
-        # Renderer has an axes widget, so close it
+        # Tear down plotter components first (in reverse construction
+        # order) so that widgets / pickers release their VTK observers
+        # before the renderers and render window go away.
+        for component in reversed(getattr(self, '_components', ())):
+            hook = getattr(component, '__plotter_close__', None)
+            if hook is not None:
+                hook()
+
+        # Renderer has an axes widget, so close it.
         self.renderers.close()
         self.renderers.remove_all_lights()
 
@@ -5347,8 +5398,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # self.last_image = self.screenshot(None, return_img=True)
         # self.last_image_depth = self.get_image_depth()
 
-        # reset scalar bars
-        self.scalar_bars.clear()
         self.mesh = None
         self.mapper = None
         self.text = None
@@ -5374,9 +5423,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     def deep_clean(self) -> None:
         """Clean the plotter of the memory."""
-        self.disable_picking()  # type: ignore[call-arg]
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
+        # Run deep-clean hooks on constructed components in reverse order.
+        for component in reversed(getattr(self, '_components', ())):
+            hook = getattr(component, '__plotter_deep_clean__', None)
+            if hook is not None:
+                hook()
         self.mesh = None
         self.mapper = None
         self.volume = None
@@ -5529,6 +5582,118 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             text_prop.font_size = int(font_size * 2)
         actor.prop = text_prop
         self.text = actor
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
+
+    def _add_text_actor(
+        self,
+        text: str,
+        *,
+        position: TextPositionOptions | Sequence[float] = 'upper_left',
+        font_size: float | None = None,
+        color: ColorLike | None = None,
+        font: FontFamilyOptions | None = None,
+        shadow: bool = False,
+        name: str | None = None,
+        viewport: bool = False,
+        orientation: float = 0.0,
+        font_file: str | None = None,
+        render: bool = True,
+    ) -> Text:
+        """Add text drawn by a text actor, wherever it is placed.
+
+        Takes the same arguments as :meth:`add_text` and does the same thing, except
+        that a named ``position`` is drawn by a :class:`~pyvista.Text` as well, rather
+        than by a :class:`~pyvista.CornerAnnotation`.
+
+        An annotation works out a font size of its own from the size of the viewport,
+        which is what makes it convenient, but also means that it does not draw text
+        at the size it is given, that the size it draws at changes as the window is
+        resized, and that it draws nothing at all when it is made to use a size larger
+        than the one it works out. A text actor draws text at the size it is given,
+        which is what a caller which works out a size of its own needs of it.
+
+        Parameters
+        ----------
+        text : str
+            The text to draw.
+
+        position : str | sequence[float], default: 'upper_left'
+            Where to draw the text. Either one of the names :meth:`add_text` accepts,
+            which places the text in that part of the viewport, or a coordinate,
+            which is used as it is.
+
+        font_size : float, optional
+            Size of the font, defaulting to the size the theme asks for.
+
+        color : ColorLike, optional
+            Color of the text, defaulting to the color the theme asks for.
+
+        font : str, optional
+            Font family, one of ``'courier'``, ``'times'`` or ``'arial'``. Ignored
+            when ``font_file`` is given.
+
+        shadow : bool, default: False
+            Draw a black shadow behind the text.
+
+        name : str, optional
+            Name to track the actor by, replacing any actor of the same name.
+
+        viewport : bool, default: False
+            Read a ``position`` given as a coordinate as a fraction of the size of the
+            viewport rather than as pixels. A named ``position`` is always placed as a
+            fraction of it.
+
+        orientation : float, default: 0.0
+            Angle to draw the text at, counterclockwise in degrees.
+
+        font_file : str, optional
+            Path to a font file to draw the text with.
+
+        render : bool, default: True
+            Render right away.
+
+        Returns
+        -------
+        pyvista.Text
+            The text actor which was added.
+
+        """
+        if font_size is None:
+            font_size = self.theme.font.size
+        prop = TextProperty(
+            # A text property left to fill in the color and the font family itself
+            # takes them from the global theme rather than from the theme of the
+            # plotter it is drawn by, which draws black text on the black background
+            # of a plotter given a dark theme of its own
+            color=Color(color, default_color=self.theme.font.color),
+            font_family=self.theme.font.family if font is None else font,
+            orientation=orientation,
+            font_file=font_file,
+            shadow=shadow,
+        )
+        # `add_text` draws a text actor at twice the font size it is given, which this
+        # keeps to, so that the same font size means the same thing to both of them
+        prop.font_size = int(font_size * 2)
+
+        named = isinstance(position, str)
+        if named:
+            if position not in _TEXT_POSITIONS:
+                positions = ', '.join(repr(name) for name in _TEXT_POSITIONS)
+                msg = f'Position {position!r} is not a coordinate or one of {positions}.'
+                raise ValueError(msg)
+            x, y, horizontal, vertical = _TEXT_POSITIONS[position]
+            position = (x, y)
+            # Anchor the text to the part of the viewport it is placed in, so that it
+            # stays there whatever size it is drawn at
+            prop.justification_horizontal = horizontal
+            prop.justification_vertical = vertical
+
+        actor = Text(text=text, position=position)
+        if named or viewport:
+            actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+            actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+        actor.prop = prop
         self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return actor
 
@@ -6481,8 +6646,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.save_graphic('img.svg')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter  # noqa: PLC0415
-
         if self.render_window is None:
             msg = 'This plotter is closed and unable to save a screenshot.'
             raise AttributeError(msg)
@@ -6495,7 +6658,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         filepath = filepath.expanduser().resolve()
         extension = pv.core.utilities.fileio.get_ext(filepath)
 
-        writer = vtkGL2PSExporter()
+        writer = _vtk.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -6614,6 +6777,31 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             with self.image_scale_context(scale):
                 self._make_render_window_current()
                 return self._save_image(self.image, filename, return_img)
+
+    def _repr_png_(self) -> bytes | None:
+        """Return the last cached screenshot as PNG bytes for IPython display hooks.
+
+        Enables the plotter to render as a static image in IDE plot panes and
+        rich notebook frontends (Positron, VS Code Jupyter, JupyterLab). Uses
+        :attr:`last_image`, which is populated by :meth:`show` or
+        :meth:`screenshot`. Returns ``None`` when no screenshot has been
+        captured yet; this method never triggers a render, so IDE variable
+        inspectors can probe a plotter without side effects.
+
+        Returns
+        -------
+        bytes or None
+            PNG-encoded image of the most recent screenshot, or ``None`` if
+            the plotter has not been rendered.
+
+        """
+        import PIL.Image  # noqa: PLC0415
+
+        if self.last_image is None:
+            return None
+        buf = io.BytesIO()
+        PIL.Image.fromarray(self.last_image).save(buf, format='PNG')
+        return buf.getvalue()
 
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -6779,11 +6967,19 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
                 raise ImportError(msg)
 
+        # Lets a threaded orbit be cancelled from `close()` so the background
+        # thread stops touching this plotter's VTK objects once they're torn down.
+        stop_event = Event() if threaded else None
+
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
             points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
+                if stop_event is not None and stop_event.is_set():
+                    # Cancellation is usually observed in the `wait()` below
+                    # instead, so reaching this exit is timing-dependent.
+                    return  # pragma: no cover
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
                 self.set_focus(focus, render=False)  # type: ignore[arg-type]
@@ -6797,12 +6993,21 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 if sleep_time > 0 and (
                     hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
-                    time.sleep(sleep_time)
-            if write_frames:
+                    if stop_event is not None:
+                        # no branch: whether close() interrupts the wait or the
+                        # wait times out first is timing-dependent
+                        if stop_event.wait(sleep_time):  # pragma: no branch
+                            return
+                    else:  # pragma: no cover
+                        # needs a non-threaded run with off_screen=False
+                        time.sleep(sleep_time)
+            if write_frames:  # pragma: no cover
                 self._get_mwriter_not_none().close()
 
         if threaded:
+            self._orbit_stop_event = stop_event
             thread = Thread(target=orbit)
+            self._orbit_thread = thread
             thread.start()
         else:
             orbit()
@@ -6825,8 +7030,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkOBJExporter  # noqa: PLC0415
-
         if self.render_window is None:
             msg = 'This plotter must still have a render window open.'
             raise RuntimeError(msg)
@@ -6841,7 +7044,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = '`filename` must end with ".obj"'
             raise ValueError(msg)
 
-        exporter = vtkOBJExporter()
+        exporter = _vtk.vtkOBJExporter()
         # remove the extension as VTK always adds it in
         exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
@@ -6954,7 +7157,20 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             self._first_time = False
 
     def reset_camera_clipping_range(self) -> None:
-        """Reset camera clipping planes."""
+        """Reset camera clipping planes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Sphere()
+        >>> _ = pl.add_mesh(mesh)
+        >>> pl.camera.clipping_range = (1.0, 10.0)
+        >>> pl.reset_camera_clipping_range()
+        >>> pl.camera.clipping_range != (1.0, 10.0)
+        True
+
+        """
         self.renderer.ResetCameraClippingRange()
 
     @_deprecate_positional_args(allowed=['light'])
@@ -7056,8 +7272,693 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         return [
             tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
-            if name in self.renderers[index]._actors.keys()
+            if self.renderers[index]._actors is not None
+            and name in self.renderers[index]._actors.keys()
         ]
+
+    # =======================================================================
+    # Picking — forwarding shims for plotter.picking component.
+    # =======================================================================
+
+    @wraps(PickingComponent.disable_picking)
+    def disable_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.disable_picking`."""
+        return self.picking.disable_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.get_pick_position)
+    def get_pick_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.get_pick_position`."""
+        return self.picking.get_pick_position(*args, **kwargs)
+
+    @wraps(PickingComponent.pick_click_position)
+    def pick_click_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.pick_click_position`."""
+        return self.picking.pick_click_position(*args, **kwargs)
+
+    @wraps(PickingComponent.pick_mouse_position)
+    def pick_mouse_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.pick_mouse_position`."""
+        return self.picking.pick_mouse_position(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_point_picking)
+    def enable_point_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_point_picking`."""
+        return self.picking.enable_point_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_rectangle_picking)
+    def enable_rectangle_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_rectangle_picking`.
+
+        See the component method for full documentation.
+
+        """
+        return self.picking.enable_rectangle_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_surface_point_picking)
+    def enable_surface_point_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to ``PickingComponent.enable_surface_point_picking``.
+
+        See :meth:`~pyvista.plotting.picking.PickingComponent.enable_surface_point_picking`.
+
+        """
+        return self.picking.enable_surface_point_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_mesh_picking)
+    def enable_mesh_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_mesh_picking`."""
+        return self.picking.enable_mesh_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_rectangle_through_picking)
+    def enable_rectangle_through_picking(
+        self, *args, **kwargs
+    ) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to ``PickingComponent.enable_rectangle_through_picking``.
+
+        See :meth:`~pyvista.plotting.picking.PickingComponent.enable_rectangle_through_picking`.
+
+        """
+        return self.picking.enable_rectangle_through_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_rectangle_visible_picking)
+    def enable_rectangle_visible_picking(
+        self, *args, **kwargs
+    ) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to ``PickingComponent.enable_rectangle_visible_picking``.
+
+        See :meth:`~pyvista.plotting.picking.PickingComponent.enable_rectangle_visible_picking`.
+
+        """
+        return self.picking.enable_rectangle_visible_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_cell_picking)
+    def enable_cell_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_cell_picking`."""
+        return self.picking.enable_cell_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_element_picking)
+    def enable_element_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_element_picking`."""
+        return self.picking.enable_element_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_block_picking)
+    def enable_block_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_block_picking`."""
+        return self.picking.enable_block_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_fly_to_right_click)
+    def enable_fly_to_right_click(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_fly_to_right_click`.
+
+        See the component method for full documentation.
+
+        """
+        return self.picking.enable_fly_to_right_click(*args, **kwargs)
+
+    @wraps(PickingComponent.fly_to_mouse_position)
+    def fly_to_mouse_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.fly_to_mouse_position`."""
+        return self.picking.fly_to_mouse_position(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_path_picking)
+    def enable_path_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_path_picking`."""
+        return self.picking.enable_path_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_geodesic_picking)
+    def enable_geodesic_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_geodesic_picking`.
+
+        See the component method for full documentation.
+
+        """
+        return self.picking.enable_geodesic_picking(*args, **kwargs)
+
+    @wraps(PickingComponent.enable_horizon_picking)
+    def enable_horizon_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_horizon_picking`."""
+        return self.picking.enable_horizon_picking(*args, **kwargs)
+
+    @property
+    def picked_point(self) -> Any:  # numpydoc ignore=RT01
+        """Picked point.
+
+        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_point`.
+
+        """
+        return self.picking.picked_point
+
+    @property
+    def picked_actor(self) -> Any:  # numpydoc ignore=RT01
+        """Picked actor.
+
+        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_actor`.
+
+        """
+        return self.picking.picked_actor
+
+    @property
+    def picked_mesh(self) -> Any:  # numpydoc ignore=RT01
+        """Picked mesh.
+
+        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_mesh`.
+
+        """
+        return self.picking.picked_mesh
+
+    @property
+    def picked_cells(self) -> Any:  # numpydoc ignore=RT01
+        """Picked cells.
+
+        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_cells`.
+
+        """
+        return self.picking.picked_cells
+
+    @property
+    def picked_block_index(self) -> Any:  # numpydoc ignore=RT01
+        """Picked block index.
+
+        Forwarded from :attr:`~pyvista.plotting.picking.PickingComponent.picked_block_index`.
+
+        """
+        return self.picking.picked_block_index
+
+    @property
+    def picked_path(self) -> Any:  # numpydoc ignore=RT01
+        """Picked path polyline.
+
+        Forwarded from ``PickingComponent.picked_path``.
+
+        """
+        return self.picking.picked_path
+
+    @property
+    def picked_geodesic(self) -> Any:  # numpydoc ignore=RT01
+        """Picked geodesic polyline.
+
+        Forwarded from ``PickingComponent.picked_geodesic``.
+
+        """
+        return self.picking.picked_geodesic
+
+    @property
+    def picked_horizon(self) -> Any:  # numpydoc ignore=RT01
+        """Picked horizon ribbon surface.
+
+        Forwarded from ``PickingComponent.picked_horizon``.
+
+        """
+        return self.picking.picked_horizon
+
+    # =======================================================================
+    # Widgets — forwarding shims for plotter.widgets component.
+    # =======================================================================
+
+    @wraps(WidgetComponent.add_box_widget)
+    def add_box_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_box_widget`."""
+        return self.widgets.add_box_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_box_widgets)
+    def clear_box_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_box_widgets`."""
+        return self.widgets.clear_box_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_clip_box)
+    def add_mesh_clip_box(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_clip_box`."""
+        return self.widgets.add_mesh_clip_box(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_plane_widget)
+    def add_plane_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_plane_widget`."""
+        return self.widgets.add_plane_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_plane_widgets)
+    def clear_plane_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_plane_widgets`."""
+        return self.widgets.clear_plane_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_clip_plane)
+    def add_mesh_clip_plane(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_clip_plane`."""
+        return self.widgets.add_mesh_clip_plane(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_volume_clip_plane)
+    def add_volume_clip_plane(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_volume_clip_plane`."""
+        return self.widgets.add_volume_clip_plane(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_slice)
+    def add_mesh_slice(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_slice`."""
+        return self.widgets.add_mesh_slice(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_slice_orthogonal)
+    def add_mesh_slice_orthogonal(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_slice_orthogonal`.
+
+        See the component method for full documentation.
+
+        """
+        return self.widgets.add_mesh_slice_orthogonal(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_line_widget)
+    def add_line_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_line_widget`."""
+        return self.widgets.add_line_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_line_widgets)
+    def clear_line_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_line_widgets`."""
+        return self.widgets.clear_line_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_text_slider_widget)
+    def add_text_slider_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_text_slider_widget`."""
+        return self.widgets.add_text_slider_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_slider_widget)
+    def add_slider_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_slider_widget`."""
+        return self.widgets.add_slider_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_slider_widgets)
+    def clear_slider_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_slider_widgets`."""
+        return self.widgets.clear_slider_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_threshold)
+    def add_mesh_threshold(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_threshold`."""
+        return self.widgets.add_mesh_threshold(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_isovalue)
+    def add_mesh_isovalue(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_isovalue`."""
+        return self.widgets.add_mesh_isovalue(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_spline_widget)
+    def add_spline_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_spline_widget`."""
+        return self.widgets.add_spline_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_spline_widgets)
+    def clear_spline_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_spline_widgets`."""
+        return self.widgets.clear_spline_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_mesh_slice_spline)
+    def add_mesh_slice_spline(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_slice_spline`."""
+        return self.widgets.add_mesh_slice_spline(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_measurement_widget)
+    def add_measurement_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_measurement_widget`."""
+        return self.widgets.add_measurement_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_measure_widgets)
+    def clear_measure_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_measure_widgets`."""
+        return self.widgets.clear_measure_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_sphere_widget)
+    def add_sphere_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_sphere_widget`."""
+        return self.widgets.add_sphere_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_sphere_widgets)
+    def clear_sphere_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_sphere_widgets`."""
+        return self.widgets.clear_sphere_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_affine_transform_widget)
+    def add_affine_transform_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to ``WidgetComponent.add_affine_transform_widget``.
+
+        See :meth:`~pyvista.plotting.widgets.WidgetComponent.add_affine_transform_widget`.
+
+        """
+        return self.widgets.add_affine_transform_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_checkbox_button_widget)
+    def add_checkbox_button_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_checkbox_button_widget`.
+
+        See the component method for full documentation.
+
+        """
+        return self.widgets.add_checkbox_button_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_radio_button_widget)
+    def add_radio_button_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_radio_button_widget`."""
+        return self.widgets.add_radio_button_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_radio_button_widgets)
+    def clear_radio_button_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_radio_button_widgets`.
+
+        See the component method for full documentation.
+
+        """
+        return self.widgets.clear_radio_button_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_camera_orientation_widget)
+    def add_camera_orientation_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to ``WidgetComponent.add_camera_orientation_widget``.
+
+        See :meth:`~pyvista.plotting.widgets.WidgetComponent.add_camera_orientation_widget`.
+
+        """
+        return self.widgets.add_camera_orientation_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_camera_widgets)
+    def clear_camera_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_camera_widgets`."""
+        return self.widgets.clear_camera_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_button_widgets)
+    def clear_button_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_button_widgets`."""
+        return self.widgets.clear_button_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_logo_widget)
+    def add_logo_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_logo_widget`."""
+        return self.widgets.add_logo_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_logo_widgets)
+    def clear_logo_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_logo_widgets`."""
+        return self.widgets.clear_logo_widgets(*args, **kwargs)
+
+    @wraps(WidgetComponent.add_camera3d_widget)
+    def add_camera3d_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_camera3d_widget`."""
+        return self.widgets.add_camera3d_widget(*args, **kwargs)
+
+    @wraps(WidgetComponent.clear_camera3d_widgets)
+    def clear_camera3d_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
+        """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_camera3d_widgets`."""
+        return self.widgets.clear_camera3d_widgets(*args, **kwargs)
+
+    # =======================================================================
+    # Widgets — deprecated forwarding properties for state collections.
+    # =======================================================================
+
+    @property
+    def camera_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.camera_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.camera_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.camera_widgets`` is deprecated; '
+            'use ``Plotter.widgets.camera_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.camera_widgets
+
+    @property
+    def box_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.box_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.box_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.box_widgets`` is deprecated; use ``Plotter.widgets.box_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.box_widgets
+
+    @property
+    def box_clipped_meshes(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.box_clipped_meshes``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.box_clipped_meshes`` instead.
+
+        """
+        warn_external(
+            '``Plotter.box_clipped_meshes`` is deprecated; '
+            'use ``Plotter.widgets.box_clipped_meshes`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.box_clipped_meshes
+
+    @property
+    def plane_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.plane_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.plane_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.plane_widgets`` is deprecated; '
+            'use ``Plotter.widgets.plane_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.plane_widgets
+
+    @property
+    def plane_clipped_meshes(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.plane_clipped_meshes``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.plane_clipped_meshes`` instead.
+
+        """
+        warn_external(
+            '``Plotter.plane_clipped_meshes`` is deprecated; '
+            'use ``Plotter.widgets.plane_clipped_meshes`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.plane_clipped_meshes
+
+    @property
+    def plane_sliced_meshes(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.plane_sliced_meshes``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.plane_sliced_meshes`` instead.
+
+        """
+        warn_external(
+            '``Plotter.plane_sliced_meshes`` is deprecated; '
+            'use ``Plotter.widgets.plane_sliced_meshes`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.plane_sliced_meshes
+
+    @property
+    def line_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.line_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.line_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.line_widgets`` is deprecated; '
+            'use ``Plotter.widgets.line_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.line_widgets
+
+    @property
+    def slider_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.slider_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.slider_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.slider_widgets`` is deprecated; '
+            'use ``Plotter.widgets.slider_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.slider_widgets
+
+    @property
+    def threshold_meshes(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.threshold_meshes``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.threshold_meshes`` instead.
+
+        """
+        warn_external(
+            '``Plotter.threshold_meshes`` is deprecated; '
+            'use ``Plotter.widgets.threshold_meshes`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.threshold_meshes
+
+    @property
+    def isovalue_meshes(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.isovalue_meshes``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.isovalue_meshes`` instead.
+
+        """
+        warn_external(
+            '``Plotter.isovalue_meshes`` is deprecated; '
+            'use ``Plotter.widgets.isovalue_meshes`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.isovalue_meshes
+
+    @property
+    def spline_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.spline_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.spline_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.spline_widgets`` is deprecated; '
+            'use ``Plotter.widgets.spline_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.spline_widgets
+
+    @property
+    def spline_sliced_meshes(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.spline_sliced_meshes``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.spline_sliced_meshes`` instead.
+
+        """
+        warn_external(
+            '``Plotter.spline_sliced_meshes`` is deprecated; '
+            'use ``Plotter.widgets.spline_sliced_meshes`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.spline_sliced_meshes
+
+    @property
+    def sphere_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.sphere_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.sphere_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.sphere_widgets`` is deprecated; '
+            'use ``Plotter.widgets.sphere_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.sphere_widgets
+
+    @property
+    def button_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.button_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.button_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.button_widgets`` is deprecated; '
+            'use ``Plotter.widgets.button_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.button_widgets
+
+    @property
+    def radio_button_widget_dict(self) -> dict[str, Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.radio_button_widget_dict``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.radio_button_widget_dict`` instead.
+
+        """
+        warn_external(
+            '``Plotter.radio_button_widget_dict`` is deprecated; '
+            'use ``Plotter.widgets.radio_button_widget_dict`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.radio_button_widget_dict
+
+    @property
+    def radio_button_title_dict(self) -> dict[str, Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.radio_button_title_dict``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.radio_button_title_dict`` instead.
+
+        """
+        warn_external(
+            '``Plotter.radio_button_title_dict`` is deprecated; '
+            'use ``Plotter.widgets.radio_button_title_dict`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.radio_button_title_dict
+
+    @property
+    def distance_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.distance_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.distance_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.distance_widgets`` is deprecated; '
+            'use ``Plotter.widgets.distance_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.distance_widgets
+
+    @property
+    def logo_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.logo_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.logo_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.logo_widgets`` is deprecated; '
+            'use ``Plotter.widgets.logo_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.logo_widgets
+
+    @property
+    def camera3d_widgets(self) -> list[Any]:  # numpydoc ignore=RT01
+        """Forward to ``WidgetComponent.camera3d_widgets``.
+
+        .. deprecated:: 0.48
+           Use ``Plotter.widgets.camera3d_widgets`` instead.
+
+        """
+        warn_external(
+            '``Plotter.camera3d_widgets`` is deprecated; '
+            'use ``Plotter.widgets.camera3d_widgets`` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.widgets.camera3d_widgets
+
+
+# Register built-in plotter components. Imperative (not decorator on
+# ``ScalarBars``) to avoid circular imports between ``plotter.py`` and
+# the component modules it imports.
+_register_plotter_component('scalar_bars', target_cls=BasePlotter)(ScalarBars)
+_register_plotter_component('picking', target_cls=BasePlotter)(PickingComponent)
+_register_plotter_component('widgets', target_cls=BasePlotter)(WidgetComponent)
 
 
 class Plotter(_NoNewAttrMixin, BasePlotter):
@@ -7122,6 +8023,15 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
 
+    stereo : StereoType | bool, optional
+        Enable stereo rendering. If True, defaults to Anaglyph.
+
+    See Also
+    --------
+    pyvista.plot
+    pyvista.plot_compare
+    pyvista.plot_arrows
+
     Examples
     --------
     >>> import pyvista as pv
@@ -7157,6 +8067,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         lighting: LightingOptions | None = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
+        stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -7226,8 +8137,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # the main thread.  Disconnecting from NSView creates a
             # standalone CGL context instead — no dock icon, no
             # main-thread requirement, and enables background-thread rendering.
-            if hasattr(self.render_window, 'SetConnectContextToNSView'):
-                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
+            _prepare_offscreen_macos_render_window(self.render_window)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
@@ -7247,7 +8157,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         # Set camera widget based on theme. This requires that an
         # interactor be present.
         if self.theme._enable_camera_orientation_widget:
-            self.add_camera_orientation_widget()
+            self.add_camera_orientation_widget()  # type: ignore[call-arg]
 
         # Set background
         self.set_background(self._theme.background)  # type: ignore[arg-type]
@@ -7273,6 +8183,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             self.enable_parallel_projection()  # type: ignore[call-arg]
 
         self.parallel_scale = self.theme.camera.parallel_scale
+
+        if isinstance(stereo, StereoType):
+            self._enable_stereo_rendering(stereo)
+        elif stereo:
+            self._enable_stereo_rendering()
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
@@ -7465,6 +8380,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                        viewup=(0.0, 0.0, 1.0))
 
         """
+        self._show_called = True
+
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
@@ -7542,7 +8459,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             with suppress(ImportError):
-                self.last_vtksz = self.export_vtksz(filename=None)
+                self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:  # pragma: no cover
@@ -7578,9 +8495,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     else:
                         self.iren.start()  # type: ignore[union-attr]
 
-                if pv.vtk_version_info < (9, 2, 3):
-                    self.iren.initialize()  # type: ignore[union-attr]
-
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
@@ -7597,7 +8511,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if _ren_win is None:
             # Render window was already cleaned up (e.g. plotter.close()
             # called from a key event callback). Nothing left to do.
-            pass  # pragma: no cover
+            pass  # type: ignore[unreachable]  # pragma: no cover
         elif jupyter_disp is None and not _is_current:
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
@@ -7786,11 +8700,33 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [
-            actor.mapper.dataset
-            for actor in self.actors.values()
-            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
-        ]
+
+        def _iter_leaf_props(prop: _vtk.vtkProp) -> Iterator[_vtk.vtkProp]:
+            if hasattr(prop, 'GetParts'):
+                for part in _PropCollection(prop.GetParts()):
+                    yield from _iter_leaf_props(part)
+            else:
+                yield prop
+
+        def _append_actor_dataset(prop: _vtk.vtkProp) -> None:
+            try:
+                mapper = prop.GetMapper()  # type: ignore[attr-defined]
+                dataset = _mapper_get_data_set_input(mapper)
+            except AttributeError:
+                return
+            else:
+                if isinstance(dataset, _vtk.vtkDataObject):
+                    # Need to update any input connections to ensure a mesh is generated
+                    if input_alg := mapper.GetInputAlgorithm():
+                        input_alg.Update()
+                    meshes.append(pv.wrap(dataset))
+
+        meshes: list[pv.DataSet | pv.MultiBlock] = []
+        for actor in self.actors.values():
+            for leaf in _iter_leaf_props(actor):
+                _append_actor_dataset(leaf)
+
+        return meshes
 
 
 # Tracks created plotters.  This is the end of the module as we need to

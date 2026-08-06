@@ -8,9 +8,9 @@ from typing import cast
 
 import numpy as np
 
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
-from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
 from .utilities.misc import _NoNewAttrMixin

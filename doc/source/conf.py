@@ -4,17 +4,21 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import json
 import locale
 import os
 from pathlib import Path
+import shutil
 import sys
 from typing import TYPE_CHECKING
 import warnings
 
-from atsphinx.mini18n import get_template_dir
+from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
+from sphinx import addnodes
 
 if TYPE_CHECKING:
+    from docutils.nodes import Element
     from sphinx.application import Sphinx
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
@@ -43,10 +47,14 @@ import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
 
 # Manage errors
 pv.set_error_output_file('errors.txt')
@@ -64,14 +72,25 @@ if not Path(pv.FIGURE_PATH).exists():
 pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
+# Copy contents of `pyvista/examples` dir so that we have actual mesh files
+# we can run CLI commands on locally without polluting the source dir
+HERE = Path(__file__).parent
+src = HERE.parent.parent / 'pyvista' / 'examples'
+dst = HERE / '_local_examples'
+shutil.rmtree(dst, ignore_errors=True)
+shutil.copytree(src, dst)
+
 # SG warnings
 import warnings
 
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
 # Prevent deprecated features from being used in examples
@@ -96,8 +115,8 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
     'enum_tools.autoenum',
+    'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
@@ -113,6 +132,7 @@ extensions = [
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
+    'sphinxcontrib.programoutput',
     'sphinx_togglebutton',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -120,7 +140,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
-    'vtk_xref',
+    'sphinx_vtk_xref',
 ]
 
 
@@ -142,6 +162,9 @@ autodoc_type_aliases = {
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
+
+# Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
+programoutput_use_ansi = True
 
 # Needed to address a code-block parsing error by sphinx for an example
 autodoc_mock_imports = ['example']
@@ -195,6 +218,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_MeshType_co'),
+    (r'py:.*', '.*_T_Output_co'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
@@ -202,6 +226,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
+    # Python 3.14 typing internals leaked through get_type_hints() on
+    # forward-refs inside Union aliases (e.g., 'Color' inside ColorLike).
+    (r'py:.*', 'TypeAliasForwardRef'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -237,6 +264,7 @@ nitpick_ignore_regex = [
     # PyVista shader/plotting enums
     (r'py:.*', '.*ShaderType'),
     (r'py:.*', '.*PointSpriteShape'),
+    (r'py:.*', '.*StereoType'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
@@ -289,6 +317,13 @@ nitpick_ignore_regex = [
     (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
+    (r'py:.*', 'ndarray'),
+    #
+    # pyarrow does not register a py:module entry in its intersphinx
+    # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
+    # inventory is loaded. ``pyarrow.Table`` is registered as a py:class
+    # and resolves normally.
+    (r'py:mod', 'pyarrow'),
     #
     # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
@@ -308,10 +343,29 @@ nitpick_ignore_regex = [
     #
     # Misc general ignores
     (r'py:.*', 'optional'),
+    #
+    # Private implementation types used in signatures
+    (r'py:.*', r'.*_SMPToolsContext'),
+    (r'py:.*', r'.*_ActiveArrayExistsInfoTuple'),
+    #
+    # Private algorithm classes returned by plotting utility functions
+    (r'py:.*', r'.*ActiveScalarsAlgorithm'),
+    (r'py:.*', r'.*AddIDsAlgorithm'),
+    (r'py:.*', r'.*CallbackFilterAlgorithm'),
+    (r'py:.*', r'.*CrinkleAlgorithm'),
+    (r'py:.*', r'.*PointSetToPolyDataAlgorithm'),
+    (r'py:.*', r'.*SmoothShadingAlgorithm'),
+    (r'py:.*', r'.*SourceAlgorithm'),
+    (r'py:.*', r'pyvista\.Common'),
+    #
+    # Long-form function paths used in some docstrings/examples
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.perlin_noise'),
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.sample_function'),
 ]
 
 
 add_module_names = False
+toc_object_entries_show_parents = 'hide'
 
 # Intersphinx mapping
 # NOTE: if these are changed, then doc/intersphinx/update.sh
@@ -319,30 +373,34 @@ add_module_names = False
 intersphinx_mapping = {
     'python': (
         'https://docs.python.org/3.11',
-        (None, '../intersphinx/python-objects.inv'),
+        ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
-        (None, '../intersphinx/scipy-objects.inv'),
+        ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
         'https://matplotlib.org/stable',
-        (None, '../intersphinx/matplotlib-objects.inv'),
+        ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
         'https://imageio.readthedocs.io/en/stable',
-        (None, '../intersphinx/imageio-objects.inv'),
+        ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
-        (None, '../intersphinx/pandas-objects.inv'),
+        ('../intersphinx/pandas-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'pyarrow': (
+        'https://arrow.apache.org/docs',
+        ('../intersphinx/pyarrow-objects.inv',),
+    ),
+    'pytest': ('https://docs.pytest.org/en/stable', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
-intersphinx_timeout = 10
+intersphinx_timeout = 5
 
 # Select if we want to generate production or dev documentation
 #
@@ -350,7 +408,7 @@ intersphinx_timeout = 10
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates', get_template_dir()]
+templates_path = ['_templates']
 
 # Autosummary configuration
 autosummary_context = {
@@ -394,7 +452,35 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '**.ipynb_checkpoints',
+    '_templates*',
+    # Fragments that only ever get ``.. include::``-ed into another page or into a
+    # docstring. Sphinx exempts included files from the "isn't included in any
+    # toctree" warning but still builds them as standalone documents, which puts 70
+    # title-less pages in the search index, e.g. searching `bunny` returns four
+    # `<no title>` dataset-gallery carousels. Excluding them keeps the text
+    # searchable through the page that includes it.
+    'api/core/cell_quality/*.rst',
+    'api/examples/dataset-gallery/*.rst',
+    'api/plotting/charts/pen_line_styles.rst',
+    'api/plotting/charts/plot_color_schemes.rst',
+    'api/plotting/charts/scatter_marker_styles.rst',
+    'api/readers/readers_table.rst',
+    'api/utilities/color_table/*.rst',
+    'api/utilities/colormap_table/*.rst',
+    'api/utilities/io_table/*.rst',
+    'api/utilities/mesh_io.rst',
+]
+_repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
+_docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
+_context7_data = json.loads(_repo_context7.read_text())
+_context7_data['url'] = 'https://context7.com/websites/pyvista'
+_docs_context7.write_text(json.dumps(_context7_data, indent=2) + '\n')
+
 html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -415,6 +501,13 @@ def _filter_sphinx_gallery_warnings():
         'ignore',
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
+    )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
     )
 
     # Treat all remaining warnings as errors
@@ -526,6 +619,56 @@ def _str_examples(self):
 SphinxDocString._str_examples = _str_examples
 
 
+# -- headings instead of rubrics for docstring sections -----------------------
+# numpydoc renders section headers (Notes, References, Examples) as
+# `.. rubric::` by default. Rubrics aren't real docutils sections, so they're
+# invisible to the "on this page" navbar, which is built from actual heading
+# structure. Since pyvista generates one dedicated page per function/method/
+# class (see doc/source/_templates/autosummary/*.rst), each page has at most
+# one docstring, so promoting these to real headings doesn't create the
+# duplicate-heading clutter it would on a page combining many docstrings.
+def _str_header(self, name):  # noqa: ARG001
+    return [name, '-' * len(name), '']
+
+
+SphinxDocString._str_header = _str_header
+
+
+# Making the sections above real headings isn't enough on its own: autodoc wraps
+# the whole docstring in a `desc` node, and Sphinx's TocTreeCollector explicitly
+# skips any section it finds inside one. Lift them out to page level so they show
+# up in the navbar.
+def _is_nested_desc(node: Element) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, addnodes.desc):
+            return True
+        parent = parent.parent
+    return False
+
+
+def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Move docstring sections out of their ``desc`` node to page level."""
+    for desc in list(doctree.findall(addnodes.desc)):
+        if _is_nested_desc(desc):
+            continue
+        parent = desc.parent
+        if parent is None:
+            continue
+        # Only hoist when this object owns the page, otherwise sections from
+        # several objects would collide at page level.
+        if len([node for node in parent if isinstance(node, addnodes.desc)]) != 1:
+            continue
+        content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
+        if content is None:
+            continue
+        sections = [node for node in content if isinstance(node, nodes.section)]
+        index = parent.index(desc)
+        for offset, section in enumerate(sections):
+            content.remove(section)
+            parent.insert(index + 1 + offset, section)
+
+
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -567,6 +710,8 @@ html_theme_options = {
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
+    # Capping at depth 4 keeps classes nested under their section pages while
+    # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
     'icon_links': [
         {
@@ -629,6 +774,7 @@ html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
+    'codimensional.css',  # pin partner card to bottom of right sidebar
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -734,19 +880,21 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
-# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
         'icon-links.html',
-        'mini18n/snippets/select-lang.html',
         'search-button-field.html',
         'sbt-sidebar-nav.html',
     ],
 }
-mini18n_default_language = language
-mini18n_support_languages = ['en', 'ja']
-locale_dirs = ['../../pyvista-doc-translations/locale']
+
+# Pin the CoDimensional PBC partner card to the bottom of the right
+# (secondary) sidebar, below the page table of contents, on every page.
+html_theme_options['secondary_sidebar_items'] = [
+    'page-toc.html',
+    'codimensional.html',
+]
 
 
 class PlaceHolderImage(Image):
@@ -790,7 +938,12 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
-    app.connect('html-page-context', pv_html_page_context)
+    # Priority must stay above the 501 used by sphinx-book-theme's
+    # ``add_source_buttons``, which is what builds the "suggest edit" button.
+    app.connect('html-page-context', pv_html_page_context, priority=502)
+
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)

@@ -10,7 +10,7 @@ import weakref
 import numpy as np
 
 import pyvista as pv
-from pyvista import vtk_version_info
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
@@ -18,7 +18,6 @@ from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
@@ -513,14 +512,7 @@ class CompositeAttributes(
             yield self[ii]
 
 
-class CompositePolyDataMapper(
-    _BaseMapper,
-    (
-        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
-        if vtk_version_info >= (9, 3)
-        else _vtk.vtkCompositePolyDataMapper2
-    ),
-):
+class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
     """Composite PolyData mapper.
 
     Parameters

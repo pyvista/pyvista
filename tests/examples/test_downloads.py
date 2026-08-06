@@ -60,7 +60,7 @@ def _is_valid_url(url):
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
-        sources = test_case.dataset_loader[1].source_url_blob
+        sources = test_case.dataset_loader[1].source_url
     except pv.VTKVersionError as e:
         reason = e.args[0]
         pytest.skip(reason)
@@ -68,7 +68,7 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     # Test valid url
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
-        # Check is_file() in case local cache of vtk-data is used
+        # Check is_file() in case local cache of pyvista/data is used
         if not (Path(url).is_file() or _is_valid_url(url)):
             pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
@@ -159,7 +159,7 @@ def test_local_file_cache(tmp_path: Path):
         assert isinstance(dataset, pv.DataSet)
 
     finally:
-        downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
+        downloads.FETCHER.base_url = 'https://github.com/pyvista/data/raw/master/Data/'
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)
         downloads.FETCHER.path = old_path

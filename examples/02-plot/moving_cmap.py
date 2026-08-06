@@ -73,7 +73,7 @@ pl.add_mesh(
 )
 pl.open_gif('Hopf_torus.gif')
 
-for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
+for t in np.linspace(0, 2 * np.pi, 30, endpoint=False):
     mesh['distances'] = np.sin(dists - t)
     pl.write_frame()
 

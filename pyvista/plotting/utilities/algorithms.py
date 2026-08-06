@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
-from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,9 +26,9 @@ if TYPE_CHECKING:
 def algorithm_to_mesh_handler(
     mesh_or_algo, port=0
 ) -> tuple[DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None]:
-    """Handle :vtk:`vtkAlgorithms` where mesh objects are expected.
+    """Handle :vtk:`vtkAlgorithm` where mesh objects are expected.
 
-    This is a convenience method to handle :vtk:`vtkAlgorithms` when passed to methods
+    This is a convenience method to handle :vtk:`vtkAlgorithm` when passed to methods
     that expect a :class:`~pyvista.DataSet`. This method will check if the passed
     object is a :vtk:`vtkAlgorithm` or :vtk:`vtkAlgorithmOutput` and if so,
     return that algorithm's output dataset (mesh) as the mesh to be used by the
@@ -762,7 +762,7 @@ def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT00
 
     Parameters
     ----------
-    inp : pyvista.Common
+    inp : pyvista.DataSet
         Input data to be filtered.
     generate_faces : bool, default: False
         Whether to generate faces for the outline.
@@ -850,7 +850,7 @@ def extract_surface_algorithm(  # noqa: PLR0917
 
     Parameters
     ----------
-    inp : pyvista.Common
+    inp : pyvista.DataSet
         Input data to be filtered.
     pass_pointid : bool, default: False
         If ``True``, pass point IDs to the output.

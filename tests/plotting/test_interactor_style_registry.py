@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import warnings
 
 import pytest
 
@@ -11,6 +12,14 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting import interactor_style_registry as _reg_mod
 from pyvista.plotting.interactor_style_registry import _get_interactor_style_handler
+
+
+@pytest.fixture(autouse=True)
+def _clean_interactor_styles():
+    """Restore the interactor style registry around every test."""
+    state = _reg_mod._save_registry_state()
+    yield
+    _reg_mod._restore_registry_state(state)
 
 
 def _mock_style_factory(_interactor):
@@ -31,6 +40,34 @@ def test_register_interactor_style_rejects_empty_name():
 def test_register_interactor_style_rejects_builtin_collision():
     with pytest.raises(ValueError, match='collides with a built-in interactor style'):
         pv.register_interactor_style('terrain_style', _mock_style_factory)
+
+
+def test_register_interactor_style_builtin_override_allowed():
+    pv.register_interactor_style('terrain_style', _mock_style_factory, override=True)
+    assert _get_interactor_style_handler('terrain_style') is _mock_style_factory
+
+
+def test_register_interactor_style_custom_collision_warns_and_replaces():
+    pv.register_interactor_style('mycollide', _mock_style_factory)
+
+    def replacement(_interactor):
+        return _vtk.vtkInteractorStyleTrackballCamera()
+
+    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+        pv.register_interactor_style('mycollide', replacement)
+    assert _get_interactor_style_handler('mycollide') is replacement
+
+
+def test_register_interactor_style_custom_collision_override_silent():
+    pv.register_interactor_style('mycollide', _mock_style_factory)
+
+    def replacement(_interactor):
+        return _vtk.vtkInteractorStyleTrackballCamera()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        pv.register_interactor_style('mycollide', replacement, override=True)
+    assert _get_interactor_style_handler('mycollide') is replacement
 
 
 def test_available_interactor_style_names_includes_builtins_and_custom():

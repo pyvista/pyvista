@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
+from pyvista import examples
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -435,6 +436,104 @@ def test_actors_prop_collection_init():
     assert pl.renderer._actors is prop_collection
 
 
+def test_actors_after_close():
+    # Regression test for #8419: closing a plotter must not leave the renderer's
+    # `_actors` attribute deleted (which `_NoNewAttributesMixin` could never restore,
+    # raising "'Renderer' object has no attribute '_actors'" on any later access).
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), name='sph')
+    assert len(pl.renderer.actors) == 1
+
+    pl.close()
+
+    # `_actors` is reset to None instead of being deleted, so accessing it no longer raises.
+    assert pl.renderer._actors is None
+    # and the public `actors` property keeps working, reporting no actors.
+    assert pl.renderer.actors == {}
+    # methods that read `_actors` must tolerate the closed (None) state, not raise.
+    assert pl.renderer.compute_bounds() is not None
+    assert pl.renderer.remove_actor('nonexistent') is False
+    # Plotter-level methods that scan renderer actors must tolerate the closed state too.
+    assert pl.where_is('sph') == []
+    pl.increment_point_size_and_line_width(1)
+
+
+def _add_self_referencing_observer(pl, vtk_obj):
+    """Add an observer whose callback closes over ``pl``.
+
+    VTK's observer/command storage holds the callback (and anything it closes
+    over) in a way that isn't visible to Python's cyclic garbage collector.
+    Without that, plain refcounting already collects an unreferenced ``pl`` --
+    an observer like this is what makes a *missing* ``close()`` cleanup step
+    actually manifest as a real, unreachable leak instead of getting silently
+    swept up anyway.
+    """
+
+    def _cb(*_args):
+        return pl
+
+    vtk_obj.AddObserver('ModifiedEvent', _cb)
+
+
+def test_border_actor_gc_after_close():
+    # Regression test: `Renderer.close()` must clear `_border_actor` (in addition
+    # to `_bounding_box`/`_box_object`/`_marker_actor`, which it already cleared)
+    # so the border actor can be garbage-collected instead of lingering after close.
+    pl = pv.Plotter(border=True)
+    _add_self_referencing_observer(pl, pl.renderer._border_actor)
+    pl.close()
+
+
+def test_render_passes_gc_after_close():
+    # Regression test: `Renderer.close()` must clean up render passes (e.g. the
+    # EDL pass enabled below) the same way `deep_clean()` already does, so their
+    # VTK objects don't linger after close.
+    pl = pv.Plotter()
+    pl.enable_eye_dome_lighting()
+    _add_self_referencing_observer(pl, pl.renderer._render_passes._edl_pass)
+    pl.close()
+
+
+def test_actors_removed_from_scene_on_close():
+    # Regression test: `Renderer.close()` must detach all props from the
+    # underlying vtkRenderer's actual scene graph (e.g. via `RemoveAllViewProps()`),
+    # not just drop pyvista's own Python-side references to them. VTK's own C++
+    # reference counting otherwise keeps a still-attached prop -- and everything
+    # it owns, like the cube axes actor's axis label arrays below -- alive
+    # regardless of whether pyvista still holds a Python attribute pointing to it.
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    cube_axes_actor = pl.show_bounds()
+    _add_self_referencing_observer(pl, cube_axes_actor)
+
+    assert pl.renderer.GetViewProps().GetNumberOfItems() > 0
+    pl.close()
+    assert pl.renderer.GetViewProps().GetNumberOfItems() == 0
+
+
+def test_background_renderer_resize_after_close():
+    # Regression test for #8419: a background renderer can be closed (its `_actors`
+    # reset to None) while the parent plotter and its render window are still alive,
+    # e.g. when the background image is cleared and the window is later resized. The
+    # resize handler must not subscript the now-``None`` ``_actors`` collection.
+    pl = pv.Plotter()
+    pl.add_background_image(examples.mapfile)
+    background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
+    assert background_renderer is not None
+
+    background_renderer.close()
+
+    # The renderer is closed but the plotter/render window remain valid, so `resize`
+    # gets past its `parent`/`render_window` guards and would previously raise
+    # `TypeError: 'NoneType' object is not subscriptable` on `self._actors['background']`.
+    assert background_renderer._actors is None
+    assert background_renderer.parent is not None
+    assert background_renderer.parent.render_window is not None
+    background_renderer.resize()  # must return early via the closed-renderer guard
+
+    pl.close()
+
+
 @pytest.fixture
 def prop_collection():
     vtk_collection = _vtk.vtkPropCollection()
@@ -655,3 +754,27 @@ def test_init_renderers_groups_item_len_raises(groups):
         match=re.escape('Each group entry must have length 2.'),
     ):
         pv.Plotter(groups=[groups])
+
+
+@pytest.mark.parametrize(('shape', 'n_renderers'), [('3|1', 4), ('4/2', 6), ('1|1', 2)])
+def test_init_renderers_shape_descriptor(shape, n_renderers):
+    pl = pv.Plotter(shape=shape)
+    assert len(pl.renderers) == n_renderers
+    assert pl.renderers.shape == (n_renderers,)
+
+
+@pytest.mark.parametrize('shape', ['abc', '1|2|3', '1|2/3', '3|', '', ' 3|1'])
+def test_init_renderers_shape_descriptor_raises(shape):
+    match = (
+        '"shape" string descriptor must be two integers separated by "|" or "/", '
+        f'for example "3|1" or "4/2". Got {shape!r}.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Plotter(shape=shape)
+
+
+@pytest.mark.parametrize('shape', ['0|2', '3|0', '0/2'])
+def test_init_renderers_shape_descriptor_positive_raises(shape):
+    match = f'"shape" must contain only positive integers. Got {shape!r}.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Plotter(shape=shape)

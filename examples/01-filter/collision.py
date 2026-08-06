@@ -59,7 +59,7 @@ pl.open_gif('collision_movie.gif')
 # alternatively, to disable movie generation:
 # pl.show(auto_close=False, interactive=False)
 
-delta_x = 0.05
+delta_x = 0.1
 for _ in range(int(2 / delta_x)):
     sphere1.translate([delta_x, 0, 0], inplace=True)
     col, n_contacts = sphere0.collision(sphere1)

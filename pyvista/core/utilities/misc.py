@@ -14,12 +14,13 @@ import traceback
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
+import warnings
 
 import numpy as np
 from typing_extensions import Self
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from typing import Any
@@ -270,7 +271,7 @@ def enable_smp_tools(
 
     Returns
     -------
-    _SMPToolsContext
+    contextlib.AbstractContextManager
         A context manager that restores the previous SMP backend and thread
         count when exited. The return value may be discarded when the change
         should apply for the remainder of the process.
@@ -373,7 +374,14 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warn_external(formatted_exception)
+        # Force the warning to always be shown. Otherwise, callbacks bound to
+        # high-frequency events (e.g. ``MouseMoveEvent``) emit an identical
+        # warning at the same call site on every invocation, and Python's
+        # default filter de-duplicates it to a single message per session,
+        # making callback errors appear to be silently swallowed.
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warn_external(formatted_exception)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -446,6 +454,30 @@ class _AutoFreezeMeta(type):
 
 class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
     """Metaclass to combine automatic attribute freezing with ABC support."""
+
+
+class _DataObjectMeta(_AutoFreezeABCMeta):
+    """Metaclass for ``DataObject`` that resolves accessor entry-points on class access.
+
+    Without this hook, class-level attribute access (e.g. ``pv.PolyData.manifold``)
+    bypasses lazy loading of ``pyvista.accessors`` entry-point plugins and raises
+    ``AttributeError`` until the plugin happens to be imported some other way.
+    Instance access is handled by ``DataObject.__getattr__``.
+    """
+
+    def __getattr__(cls, name: str) -> Any:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is None:  # pragma: no cover
+            return None  # type: ignore[unreachable]
+
+        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
+            _resolve_pending_accessor,
+        )
+
+        if _resolve_pending_accessor(name):
+            return getattr(cls, name)
+        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)
 
 
 def _hasattr_static(obj: Any, attr: str) -> bool:
@@ -651,7 +683,7 @@ class _BoundsSizeMixin:
 
         Examples
         --------
-        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        Get the size of a cube. The cube has edge lengths of ``(1.0, 1.0, 1.0)``
         by default.
 
         >>> import pyvista as pv
