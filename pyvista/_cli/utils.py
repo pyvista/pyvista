@@ -6,33 +6,41 @@ Mostly contains converters, validators, console error helper and help formatters
 
 from __future__ import annotations
 
+import ast
 import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
+from typing import Any
 from typing import Literal
 from typing import NoReturn
 from typing import get_args
 import warnings
 
 from cyclopts import Parameter
+from cyclopts import Token
 from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
 from cyclopts.help import HelpEntry
 from cyclopts.help import TableSpec
 from rich import box
+from rich.console import Group
+from rich.console import NewLine
 from rich.panel import Panel
 from rich.text import Text
 
 import pyvista as pv
 from pyvista import _validation
+from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 from .app import CLI_APP
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Sequence
+
     from rich.console import Console
     from rich.console import ConsoleOptions
-    from rich.console import Group
 
     from pyvista import DataObject
 
@@ -256,3 +264,144 @@ def read_mesh(
             if on_error == 'exit+hint':
                 msg += '\nUse --skip-unreadable to skip this file.'
             print_error_and_exit(message=msg)
+
+
+# The camera positions which can be named on the command line, as opposed to the fully
+# specified positions which the Python API also accepts. Mirrors the keys of
+# ``Renderer.CAMERA_STR_ATTR_MAP``
+CposView = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+
+# The ways a label size can be worked out, as opposed to the font size which may be
+# named instead. Mirrors the modes of ``pyvista.plot_compare``.
+LabelSize = Literal['best_fit', 'uniform']
+
+# The places a label may be drawn in. Mirrors the places `Plotter.add_text` names,
+# which is what ``pyvista.plot_compare`` draws its labels in.
+LabelPosition = Literal[
+    'lower_left',
+    'lower_right',
+    'upper_left',
+    'upper_right',
+    'lower_edge',
+    'upper_edge',
+    'left_edge',
+    'right_edge',
+]
+
+
+class Groups(StrEnum):
+    """Groups for the arguments of the plotting CLI commands."""
+
+    PLOTTER = 'Plotter init'
+    RENDERING = 'Rendering'
+    SUPP = 'Supplementary'
+    IN = 'Inputs'
+    RETURN = 'Return'
+
+
+def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
+    """Check that a window size is a pair of integers."""
+    if value is not None and len(value) != 2:
+        msg = 'Window size must be a list of two integers.'
+        raise ValueError(msg)
+
+
+def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
+    """Coerce supplementary keyword arguments to Python values."""
+    for token in tokens:
+        # Check hyphen in keyword value
+        if (h := '-') in (key := token.keys[0]):
+            msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
+            CLI_APP.error_console.print(
+                Panel(
+                    msg,
+                    style='magenta',
+                    title='Warning',
+                    title_align='left',
+                )
+            )
+
+        # Coerce using literal_eval with fallback to str value
+        try:
+            return ast.literal_eval(token.value)
+        except (ValueError, SyntaxError):
+            return token.value
+    return None
+
+
+HELP_KWARGS = """\
+Additional keyword arguments passed to ``Plotter.add_mesh`` or ``Plotter.add_volume``.
+See the documentation for more details at https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh
+and https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_volume
+
+Note that contrary to other CLI arguments, hyphens ``-`` are not converted to underscores ``_``
+before being passed to the corresponding plotter method. For example, you need to use
+``--show_edges=True`` instead of ``--show-edges=True`` to show mesh edges in the plotting window.
+
+"""
+
+
+def read_meshes(paths: list[str], *, skip_unreadable: bool) -> list[DataObject]:
+    """Validate and read every path, dropping the unreadable ones when asked to.
+
+    Parameters
+    ----------
+    paths
+        Paths to validate and read.
+
+    skip_unreadable
+        Skip any path which cannot be read instead of exiting.
+
+    Returns
+    -------
+    list[DataObject]
+        Mesh read from each path.
+
+    """
+    valid_paths = validate_paths(paths)
+    # Inform users about --skip-unreadable option when there are multiple inputs
+    on_error: _ReadMeshOptions = 'exit+hint' if len(valid_paths) > 1 else 'exit'
+    meshes = [
+        read_mesh(path, on_error='suppress' if skip_unreadable else on_error)
+        for path in valid_paths
+    ]
+    return [mesh for mesh in meshes if mesh is not None]
+
+
+def call_or_exit(func: Callable[..., Any], /, command: str, **kwargs) -> Any:
+    """Call a plotting function, reporting any exception it raises as a console error.
+
+    Parameters
+    ----------
+    func
+        Function to call.
+
+    command
+        Name of the CLI command, used to print its help along with the error.
+
+    **kwargs
+        Keyword arguments to call ``func`` with.
+
+    Returns
+    -------
+    Any
+        Whatever ``func`` returns.
+
+    """
+    try:
+        return func(**kwargs)
+    except Exception as ex:  # noqa: BLE001
+        # Prevent traceback and output error along with help message
+        CLI_APP.help_print(tokens=command, console=CLI_APP.error_console)
+
+        called = f'pv.{func.__name__}'
+        msg = Group(
+            f':warning: The following exception has been raised when calling [u]{called}[/u]:',
+            NewLine(),
+            Panel(
+                str(ex), title=f'{type(ex).__name__}', title_align='left', style='bold blink red'
+            ),
+            NewLine(),
+            Text('Please check the provided arguments.'),
+        )
+        print_error_and_exit(message=msg)

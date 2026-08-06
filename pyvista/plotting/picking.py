@@ -1010,8 +1010,8 @@ class PickingComponent(_NoNewAttrMixin):
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.

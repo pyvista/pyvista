@@ -46,6 +46,7 @@ from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 from .utilities.writer import BaseWriter
+from .utilities.writer import EnSightWriter
 from .utilities.writer import HDFWriter
 from .utilities.writer import HoudiniPolyDataWriter
 from .utilities.writer import IVWriter
@@ -1963,6 +1964,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
+        '.case': EnSightWriter,
     }
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
