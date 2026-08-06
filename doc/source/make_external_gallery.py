@@ -88,7 +88,7 @@ articles = dict(
     ),
     damavand=Example(
         title='Damavand Volcano',
-        link='https://nbviewer.jupyter.org/github/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb',
+        link='https://nbviewer.org/github/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb',
         image='damavand_volcano.gif',
     ),
     atmos_conv=Example(
