@@ -91,15 +91,15 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+# Distinct, user-facing built-in theme names, for autocomplete only. Excludes
+# 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
+# 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
+# remain valid at runtime as a plain ``str`` — see ``pyvista.registered_themes``.
 ThemeOptions = Literal[
     'dark',
-    'default',
     'document',
-    'document_build',
     'document_pro',
     'paraview',
-    'testing',
-    'vtk',
 ]
 CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']

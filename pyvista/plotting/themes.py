@@ -65,6 +65,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import ThemeOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -109,7 +110,7 @@ def load_theme(filename):
     return Theme.from_dict(theme_dict)
 
 
-def set_plot_theme(theme):
+def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     """Set plotting parameters to a predefined theme using a string or ``Theme``.
 
     Parameters

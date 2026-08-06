@@ -288,11 +288,14 @@ def test_themes(theme):
 
 
 def test_theme_options_literal_matches_native_themes():
-    # ``ThemeOptions`` is a hand-written ``Literal`` that must stay in sync with
-    # ``_NATIVE_THEMES``; use ``__members__`` since iteration skips value-aliases like ``default``.
+    # ``ThemeOptions`` is a hand-written ``Literal`` covering only the distinct,
+    # user-facing built-in themes; it must stay in sync with ``_NATIVE_THEMES``
+    # minus the names deliberately left out (see ``ThemeOptions``'s comment).
+    # Use ``__members__`` since plain iteration skips value-aliases like ``default``.
+    excluded = {'default', 'vtk', 'testing', 'document_build'}
     literal_names = set(get_args(ThemeOptions))
     native_names = set(pv.plotting.themes._NATIVE_THEMES.__members__)
-    assert literal_names == native_names
+    assert literal_names == native_names - excluded
 
 
 def test_invalid_theme():
