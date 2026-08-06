@@ -71,12 +71,15 @@ def _plot(
     border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
     border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
     meshes = read_meshes(paths, skip_unreadable=skip_unreadable)
+    if static:
+        kwargs['static'] = True
     return call_or_exit(
         pv.plot,
         command='plot',
