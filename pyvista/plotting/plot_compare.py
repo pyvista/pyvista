@@ -18,6 +18,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._plot import _add_axes_widget
 from pyvista._plot import _apply_render_options
+from pyvista._plot import _set_background
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.plotting.text import _TEXT_POSITIONS
@@ -987,8 +988,7 @@ def plot_compare(  # noqa: ANN201
         for renderer in renderers:
             renderer.show_bounds()
 
-    if background is not None:
-        pl.set_background(background)
+    _set_background(pl, background)
 
     _apply_render_options(
         pl,

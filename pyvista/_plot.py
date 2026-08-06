@@ -43,6 +43,26 @@ def _add_axes_widget(renderers: Iterable[Renderer], *, show_axes: bool | None, t
             renderer.add_box_axes() if theme.axes.box else renderer.add_axes()
 
 
+def _set_background(pl: pv.Plotter, background: ColorLike | None) -> None:
+    """Set the background `pyvista.plot` and `pyvista.plot_compare` take.
+
+    A color is set as the background of every renderer at once, since `set_background`
+    is a property of the whole collection of them rather than of any one. A path to an
+    image file is shown as a background image instead, behind every subplot alike for
+    the same reason, since `set_background` only takes a color and raises otherwise.
+    """
+    try:
+        pl.set_background(background)
+    except (ValueError, TypeError):
+        if isinstance(background, (str, Path)):
+            path = Path(background)
+            if path.is_file():
+                pl.add_background_image(path)
+        else:
+            msg = f'Background must be color-like or a file path. Got {background} instead.'
+            raise TypeError(msg)
+
+
 def _apply_render_options(
     pl: pv.Plotter,
     renderers: Iterable[Renderer],
@@ -306,17 +326,7 @@ def plot(  # noqa: ANN202, PLR0917
     )
 
     _add_axes_widget([pl.renderer], show_axes=show_axes, theme=pl.theme)
-
-    try:
-        pl.set_background(background)
-    except (ValueError, TypeError):
-        if isinstance(background, (str, Path)):
-            path = Path(background)
-            if path.is_file():
-                pl.add_background_image(path)
-        else:
-            msg = f'Background must be color-like or a file path. Got {background} instead.'
-            raise TypeError(msg)
+    _set_background(pl, background)
 
     # Handle var_item input
     def _handle_list(var_item: list[PlottableType]) -> None:
