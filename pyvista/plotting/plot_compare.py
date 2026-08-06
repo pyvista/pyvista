@@ -643,7 +643,7 @@ def plot_compare(  # noqa: ANN201
     Plot on a dark background by giving the plotter a theme of its own, which
     also decides the color the labels are drawn in.
 
-    >>> pv.plot_compare(blocks, plotter_kwargs={'theme': pv.themes.DarkTheme()})
+    >>> pv.plot_compare(blocks, plotter_kwargs={'theme': 'dark'})
 
     """
     datasets, names = _unpack_datasets(datasets)

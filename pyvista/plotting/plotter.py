@@ -597,8 +597,7 @@ class BasePlotter(_BoundsSizeMixin):
         Use the dark theme for a plotter.
 
         >>> import pyvista as pv
-        >>> from pyvista import themes
-        >>> pl = pv.Plotter(theme=themes.DarkTheme())
+        >>> pl = pv.Plotter(theme='dark')
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
