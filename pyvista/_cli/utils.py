@@ -306,6 +306,27 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
         raise ValueError(msg)
 
 
+# Arguments of `pyvista plot` and `pyvista compare` which mean the same thing in both,
+# declared once so the two commands cannot drift apart from each other. Named after the
+# parameter each stands in for, as `skip_unreadable` above already is, since a command
+# uses one as both the annotation and, shadowing it, the parameter's own name.
+off_screen = Annotated[bool | None, Parameter(group=Groups.PLOTTER)]
+full_screen = Annotated[bool | None, Parameter(group=Groups.RENDERING)]
+screenshot = Annotated[str | None, Parameter(group=Groups.PLOTTER)]
+interactive = Annotated[bool, Parameter(group=Groups.PLOTTER)]
+window_size = Annotated[
+    list[int] | None,
+    Parameter(consume_multiple=True, validator=_validator_window_size, group=Groups.PLOTTER),
+]
+cpos = Annotated[CposView | None, Parameter(group=Groups.RENDERING)]
+show_bounds = Annotated[bool, Parameter(group=Groups.RENDERING)]
+show_axes = Annotated[bool | None, Parameter(group=Groups.RENDERING)]
+zoom = Annotated[float | str | None, Parameter(group=Groups.RENDERING)]
+border = Annotated[bool, Parameter(group=Groups.PLOTTER)]
+border_color = Annotated[str, Parameter(group=Groups.PLOTTER)]
+border_width = Annotated[float, Parameter(group=Groups.PLOTTER)]
+
+
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
     """Coerce supplementary keyword arguments to Python values."""
     for token in tokens:

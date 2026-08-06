@@ -13,13 +13,23 @@ import pyvista as pv
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
-from .utils import CposView
 from .utils import Groups
 from .utils import _kwargs_converter
-from .utils import _validator_window_size
+from .utils import border
+from .utils import border_color
+from .utils import border_width
 from .utils import call_or_exit
+from .utils import cpos
+from .utils import full_screen
+from .utils import interactive
+from .utils import off_screen
 from .utils import read_meshes
+from .utils import screenshot
+from .utils import show_axes
+from .utils import show_bounds
 from .utils import skip_unreadable
+from .utils import window_size
+from .utils import zoom
 
 
 @CLI_APP.command(
@@ -42,21 +52,14 @@ def _plot(
     /,
     *,
     skip_unreadable: skip_unreadable = False,
-    off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
-    full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
-    screenshot: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
-    interactive: Annotated[bool, Parameter(group=Groups.PLOTTER)] = True,
-    window_size: Annotated[
-        list[int] | None,
-        Parameter(
-            consume_multiple=True,
-            validator=_validator_window_size,
-            group=Groups.PLOTTER,
-        ),
-    ] = None,
-    cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
-    show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
-    show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
+    off_screen: off_screen = None,
+    full_screen: full_screen = None,
+    screenshot: screenshot = None,
+    interactive: interactive = True,
+    window_size: window_size = None,
+    cpos: cpos = None,
+    show_bounds: show_bounds = False,
+    show_axes: show_axes = None,
     background: Annotated[str | None, Parameter(group=Groups.RENDERING)] = None,
     text: Annotated[str, Parameter(group=Groups.RENDERING)] = '',
     eye_dome_lighting: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
@@ -66,10 +69,10 @@ def _plot(
     anti_aliasing: Annotated[
         Literal['ssaa', 'msaa', 'fxaa'] | None, Parameter(group=Groups.RENDERING)
     ] = None,
-    zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
-    border: Annotated[bool, Parameter(group=Groups.PLOTTER)] = False,
-    border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
-    border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
+    zoom: zoom = None,
+    border: border = False,
+    border_color: border_color = 'k',
+    border_width: border_width = 2.0,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
