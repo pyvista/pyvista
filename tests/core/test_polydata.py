@@ -1077,6 +1077,15 @@ def test_remove_points_any(sphere):
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
+def test_remove_points_uses_fixed_size_storage(sphere):
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
+    remove_mask[:3] = True
+    sphere_mod, _ = sphere.remove_points(remove_mask, inplace=False, mode='any')
+    assert sphere_mod.is_all_triangles
+    if pv.vtk_version_info >= (9, 6, 2):
+        assert sphere_mod.GetPolys().IsStorageFixedSize()
+
+
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
     sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
