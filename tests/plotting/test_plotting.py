@@ -2618,7 +2618,7 @@ def test_plot_compare_link_clipping_range_fits_every_dataset(verify_image_cache)
         pv.plot_compare(
             {'airplane': airplane, 'ant': ant},
             link=True,
-            dataset_kwargs={'color': 'w'},
+            color='w',
             show_kwargs={'before_close_callback': capture},
         )
 
