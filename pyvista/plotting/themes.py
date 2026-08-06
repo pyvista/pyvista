@@ -55,8 +55,7 @@ from .opts import PointSpriteShape
 from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
-from .theme_registry import _resolve_dotted_path
-from .theme_registry import _resolve_theme
+from .theme_registry import resolve_theme_like
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -164,27 +163,7 @@ def set_plot_theme(theme):
     """
     import pyvista  # noqa: PLC0415
 
-    if isinstance(theme, str):
-        if ':' in theme:
-            cls = _resolve_dotted_path(theme)
-            pyvista.global_theme.load_theme(cls())
-            return
-        resolved = _resolve_theme(theme)
-        if resolved is None:
-            allowed = ', '.join(_available_theme_names())
-            msg = (
-                f'Theme "{theme}" not found. Available themes: {allowed}. '
-                'To load from an arbitrary module use "package.module:ClassName".'
-            )
-            raise ValueError(msg)
-        pyvista.global_theme.load_theme(resolved)
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        msg = (
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
-        raise TypeError(msg)
+    pyvista.global_theme.load_theme(resolve_theme_like(theme))
 
 
 class _LightingConfig(_ConfigBase):

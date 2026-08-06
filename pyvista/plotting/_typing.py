@@ -91,6 +91,16 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+ThemeOptions = Literal[
+    'dark',
+    'default',
+    'document',
+    'document_build',
+    'document_pro',
+    'paraview',
+    'testing',
+    'vtk',
+]
 CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
     | VectorLike[float]
