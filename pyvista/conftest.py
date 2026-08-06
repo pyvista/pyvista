@@ -13,6 +13,12 @@ from pyvista import _vtk
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
 _vtk.import_all()
 
+collect_ignore = [  # Avoid importing deprecated modules
+    'examples/download_3ds.py',
+    'examples/gltf.py',
+    'examples/vrml.py',
+]
+
 
 @pytest.fixture(autouse=True, scope='session')
 def matplotlib_headless():
