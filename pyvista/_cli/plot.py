@@ -70,7 +70,7 @@ def _plot(
         Literal['ssaa', 'msaa', 'fxaa'] | None, Parameter(group=Groups.RENDERING)
     ] = None,
     zoom: zoom = None,
-    border: border = False,
+    border: border = None,
     border_color: border_color = 'k',
     border_width: border_width = 2.0,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,

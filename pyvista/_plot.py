@@ -123,7 +123,7 @@ def plot(  # noqa: ANN202, PLR0917
     theme: Theme | None = None,
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,
-    border: bool = False,  # noqa: FBT001, FBT002
+    border: bool | None = None,  # noqa: FBT001
     border_color: ColorLike = 'k',
     border_width: float = 2.0,
     ssao: bool = False,  # noqa: FBT001, FBT002
@@ -239,8 +239,8 @@ def plot(  # noqa: ANN202, PLR0917
         is a zoom-in, a value less than 1 is a zoom-out.  Must be greater
         than 0.
 
-    border : bool, default: False
-        Draw a border around each render window.
+    border : bool, optional
+        Draw a border around the render window. None is drawn by default.
 
     border_color : ColorLike, default: "k"
         Either a string, rgb list, or hex color string.  For example:

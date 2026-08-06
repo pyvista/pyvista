@@ -322,7 +322,7 @@ cpos = Annotated[CposView | None, Parameter(group=Groups.RENDERING)]
 show_bounds = Annotated[bool, Parameter(group=Groups.RENDERING)]
 show_axes = Annotated[bool | None, Parameter(group=Groups.RENDERING)]
 zoom = Annotated[float | str | None, Parameter(group=Groups.RENDERING)]
-border = Annotated[bool, Parameter(group=Groups.PLOTTER)]
+border = Annotated[bool | None, Parameter(group=Groups.PLOTTER)]
 border_color = Annotated[str, Parameter(group=Groups.PLOTTER)]
 border_width = Annotated[float, Parameter(group=Groups.PLOTTER)]
 
