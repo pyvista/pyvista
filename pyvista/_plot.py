@@ -20,6 +20,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterable
 
     from pyvista.jupyter import JupyterBackendOptions
@@ -126,6 +127,7 @@ def plot(  # noqa: ANN202, PLR0917
     border_color: ColorLike = 'k',
     border_width: float = 2.0,
     ssao: bool = False,  # noqa: FBT001, FBT002
+    before_close_callback: Callable[[pv.Plotter], None] | None = None,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -255,6 +257,15 @@ def plot(  # noqa: ANN202, PLR0917
         Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
 
+    before_close_callback : Callable, optional
+        Callback that is called before the plotter is closed.
+        The function takes a single parameter, which is the plotter object
+        before it closes. An example of use is to capture a screenshot after
+        interaction::
+
+            def fun(plotter):
+                plotter.screenshot('file.png')
+
     **kwargs : dict, optional
         See :func:`pyvista.Plotter.add_mesh` for additional options.
 
@@ -306,9 +317,6 @@ def plot(  # noqa: ANN202, PLR0917
     """
     if jupyter_kwargs is None:
         jupyter_kwargs = {}
-
-    # undocumented kwarg used within pytest to run a function before closing
-    before_close_callback = kwargs.pop('before_close_callback', None)
 
     # pop from kwargs here to avoid including them in add_mesh or add_volume
     eye_dome_lighting = kwargs.pop('edl', eye_dome_lighting)

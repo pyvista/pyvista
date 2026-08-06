@@ -1056,6 +1056,7 @@ def missing_plot_arguments():
         'return_img',
         'jupyter_kwargs',
         'notebook',
+        'before_close_callback',  # a callable, which the command line cannot pass
         'var_item',  # intentionally renamed to 'paths' in the CLI
     }
 
@@ -1110,6 +1111,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     # Test the parameters annotations
 
     # Need to import some types such that inspect eval them using locals()
+    from collections.abc import Callable  # noqa: F401
     from typing import Literal  # noqa: F401
 
     from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
