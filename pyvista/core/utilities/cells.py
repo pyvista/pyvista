@@ -14,6 +14,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import vtk_version_info
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -22,6 +23,8 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
+
+_SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:
@@ -161,9 +164,9 @@ def _fixed_size_cells(
         elem_t, nr_points_per_elem, cells_arr, nr_points=nr_points
     )
     nr_elems = not_flat.shape[0]
-    types = np.array([elem_t] * nr_elems, dtype=np.uint8)
+    types = np.full(nr_elems, elem_t, dtype=np.uint8)
     arr = np.concatenate(
-        [np.ones_like(not_flat[..., :1]) * nr_points_per_elem, not_flat],
+        [np.full_like(not_flat[..., :1], nr_points_per_elem), not_flat],
         axis=-1,
     ).reshape([-1])
     return types, arr
@@ -433,7 +436,7 @@ def get_mixed_cells(
     cell_array = vtkobj.GetCells()
     cell_size = (
         cell_array.IsHomogeneous()
-        if pv.vtk_version_info >= (9, 6, 2) and cell_array.IsStorageFixedSize()
+        if _SUPPORTS_FIXED_SIZE_STORAGE and cell_array.IsStorageFixedSize()
         else -1
     )
     regular_connectivity = connectivity.reshape(nr_cells, cell_size) if cell_size >= 0 else None

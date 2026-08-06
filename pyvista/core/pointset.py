@@ -894,7 +894,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @staticmethod
     def _make_vertex_cells(npoints: int) -> CellArray:
-        connectivity = np.arange(npoints, dtype=pv.ID_TYPE).reshape(-1, 1)
+        connectivity = cast('NumpyArray[int]', np.arange(npoints, dtype=pv.ID_TYPE).reshape(-1, 1))
         return CellArray.from_regular_cells(connectivity)
 
     @property
@@ -1388,11 +1388,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def __or__(self, other_mesh):
         """Compute boolean union of two meshes."""
         return self.boolean_union(other_mesh)
-
-    @property
-    def _offset_array(self) -> NumpyArray[int]:
-        """Return the array used to store cell offsets."""
-        return _get_offset_array(self.GetPolys())
 
     @property
     def _connectivity_array(self) -> NumpyArray[int]:

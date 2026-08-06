@@ -600,14 +600,17 @@ def test_line_segments_from_points():
         assert poly.GetLines().IsStorageFixedSize()
 
 
-def test_lines_from_points():
+@pytest.mark.parametrize('close', [False, True])
+def test_lines_from_points(close):
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-    poly = pv.lines_from_points(points)
-    assert poly.n_cells == 2
+    poly = pv.lines_from_points(points, close=close)
+    assert poly.n_cells == (3 if close else 2)
     assert poly.n_points == 3
     cells = poly.lines
     assert np.allclose(cells[:3], [2, 0, 1])
-    assert np.allclose(cells[3:], [2, 1, 2])
+    assert np.allclose(cells[3:6], [2, 1, 2])
+    if close:
+        assert np.allclose(cells[6:], [2, 2, 0])
     if pv.vtk_version_info >= (9, 6, 2):
         assert poly.GetLines().IsStorageFixedSize()
 

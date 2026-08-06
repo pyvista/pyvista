@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
 
+_SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
+
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:
     """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`."""
@@ -890,7 +892,7 @@ class CellArray(
             cells = np.asarray(cells, dtype=pv.ID_TYPE)
 
         cellarr = cls()
-        if vtk_version_info >= (9, 6, 2):
+        if _SUPPORTS_FIXED_SIZE_STORAGE:
             cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
         else:
             offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
@@ -940,7 +942,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     if len(cells) == 0:
         return cells
 
-    if vtk_version_info >= (9, 6, 2) and cellarr.IsStorageFixedSize():
+    if _SUPPORTS_FIXED_SIZE_STORAGE and cellarr.IsStorageFixedSize():
         cell_size = cellarr.IsHomogeneous()
     else:
         offsets = _get_offset_array(cellarr)

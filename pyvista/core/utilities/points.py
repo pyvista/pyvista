@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -148,12 +149,9 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
         raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
-    lines = np.c_[
-        np.arange(0, n_points - 1, step=2),
-        np.arange(1, n_points + 1, step=2),
-    ]
+    lines = cast('NumpyArray[int]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2))
     poly = pv.PolyData()
-    poly.points = points
+    poly.points = cast('MatrixLike[float]', points)
     poly.lines = pv.CellArray.from_regular_cells(lines)
     return poly
 
@@ -192,12 +190,14 @@ def lines_from_points(
 
     """
     poly = pv.PolyData()
-    poly.points = points
-    cells = np.empty((len(points) - 1, 2), dtype=np.int_)
-    cells[:, 0] = np.arange(0, len(points) - 1, dtype=np.int_)
-    cells[:, 1] = np.arange(1, len(points), dtype=np.int_)
+    poly.points = cast('MatrixLike[float]', points)
+    n_points = len(points)
+    point_ids = np.arange(n_points, dtype=pv.ID_TYPE)
+    cells = np.empty((n_points if close else n_points - 1, 2), dtype=pv.ID_TYPE)
+    cells[: n_points - 1, 0] = point_ids[:-1]
+    cells[: n_points - 1, 1] = point_ids[1:]
     if close:
-        cells = np.append(cells, [[len(points) - 1, 0]], axis=0)
+        cells[-1] = [n_points - 1, 0]
     poly.lines = pv.CellArray.from_regular_cells(cells)
     return poly
 
