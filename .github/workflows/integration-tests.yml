@@ -76,7 +76,7 @@ jobs:
           pyvista: ${{matrix.project != 'pyvistaqt' && matrix.project != 'mne' && matrix.project != 'geovista'}}
           wm: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: |
             3.13
@@ -86,7 +86,7 @@ jobs:
         if: ${{ matrix.project == 'mne' }}
         run: echo MNE_DATA_KEY=$(curl -L https://github.com/mne-tools/mne-testing-data/raw/refs/heads/master/version.txt) | tee -a "$GITHUB_ENV"
 
-      - uses: actions/cache@v6.1.0
+      - uses: actions/cache@v6
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
         with:
           key: mne-data-${{ env.MNE_DATA_KEY }}

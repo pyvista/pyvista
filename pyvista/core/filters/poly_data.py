@@ -894,12 +894,12 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, default: True
-            Flag to control smoothing of boundary edges. When ``True``,
+            Flag to control smoothing of boundary edges. When ``False``,
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
             Flag to control smoothing of feature edges.  When ``True``,
-            boundary edges remain fixed as defined by ``feature_angle`` and
+            feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
         inplace : bool, default: False
@@ -994,12 +994,12 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, default: True
-            Flag to control smoothing of boundary edges. When ``True``,
+            Flag to control smoothing of boundary edges. When ``False``,
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
             Flag to control smoothing of feature edges.  When ``True``,
-            boundary edges remain fixed as defined by ``feature_angle`` and
+            feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
         non_manifold_smoothing : bool, default: False
@@ -1051,23 +1051,17 @@ class PolyDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>> mesh = examples.download_foot_bones().subdivide(2)
         >>> smoothed_mesh = mesh.smooth_taubin()
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> _ = pl.add_mesh(mesh)
-        >>> _ = pl.add_text('Original Mesh')
-        >>> pl.subplot(0, 1)
-        >>> _ = pl.add_mesh(smoothed_mesh)
-        >>> _ = pl.add_text('Smoothed Mesh')
-        >>> pl.show()
+        >>> pv.plot_compare({'Original Mesh': mesh, 'Smoothed Mesh': smoothed_mesh})
 
-        Use :func:`~pyvista.plot_compare_four` to show differences between
-        window functions.
+        Use :func:`~pyvista.plot_compare` to show differences between
+        window functions. The keys of the dict are used as labels.
 
         >>> mesh = examples.download_foot_bones()
-        >>> multi_compare = pv.MultiBlock()
-        >>> multi_compare['nuttall'] = mesh.smooth_taubin(window_function='nuttall')
-        >>> multi_compare['blackman'] = mesh.smooth_taubin(window_function='blackman')
-        >>> multi_compare['hamming'] = mesh.smooth_taubin(window_function='hamming')
-        >>> multi_compare['hanning'] = mesh.smooth_taubin(window_function='hanning')
+        >>> window_functions = ['nuttall', 'blackman', 'hamming', 'hanning']
+        >>> datasets = {
+        ...     window: mesh.smooth_taubin(window_function=window)
+        ...     for window in window_functions
+        ... }
         >>>
         >>> cpos = pv.CameraPosition(
         ...     position=(-0.7780, -12.74, -2.019),
@@ -1075,11 +1069,10 @@ class PolyDataFilters(DataSetFilters):
         ...     viewup=(-0.2696, -0.1070, 0.9570),
         ... )
         >>>
-        >>> pv.plot_compare_four(
-        ...     *multi_compare,
-        ...     display_kwargs={'show_edges': True},
-        ...     labels=multi_compare.keys(),
-        ...     camera_position=cpos,
+        >>> pv.plot_compare(
+        ...     datasets,
+        ...     dataset_kwargs={'show_edges': True},
+        ...     cpos=cpos,
         ... )
 
         See :ref:`surface_smoothing_example` for more examples using this filter.

@@ -285,6 +285,10 @@ def read(  # noqa: PLR0917
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
+    .. note::
+        Reading a file and saving it in another format is also available via
+        command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
+
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
     readers first then tries to use ``meshio``.

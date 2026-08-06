@@ -63,7 +63,9 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
 from pyvista.core.utilities.cell_quality import CellQualityInfo
+from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -1150,6 +1152,7 @@ def test_spherical_to_cartesian():
 def test_linkcode_resolve():
     assert linkcode_resolve('not-py', {}) is None
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
+    assert link.startswith('https://github.com/pyvista/pyvista/')
     assert 'dataobject.py' in link
     assert '#L' in link
 
@@ -1173,6 +1176,113 @@ def test_linkcode_resolve():
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
+
+    # edit mode should still include the line span, just under /edit/ instead
+    # of /blob/, so the edit page opens at the same lines as [source] does
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}, edit=True
+    )
+    assert '/edit/' in link
+    assert '#L' in link
+
+
+def test_fix_edit_link_button_gallery_example():
+    # Gallery examples should point to the source .py file in /examples
+    link = fix_edit_link_button('examples/00-load/create_draped_surface', 'default-link')
+    assert link == (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+
+
+def test_fix_edit_link_button_gallery_index_falls_through():
+    # Gallery index pages are not source examples and should fall through
+    link = fix_edit_link_button('examples/index', 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_autosummary_stub():
+    # Autosummary stubs should resolve to the same location as the page's
+    # [source] button -- same file, same line span -- just in edit mode
+    pagename = 'api/core/_autosummary/pyvista.core.DataObject'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link is not None
+    assert '/edit/' in link
+    assert 'dataobject.py' in link
+    assert '#L' in link
+
+
+def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():
+    # When linkcode can't locate the object -- so the page has no [source]
+    # button either -- fall back to editing the page's own default link
+    pagename = 'api/core/_autosummary/pyvista.not.an.object'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_other_pages_fall_through():
+    # Other pages should return the default link unchanged
+    link = fix_edit_link_button('user-guide/intro', 'default-link')
+    assert link == 'default-link'
+
+
+def _edit_button_context(pagename):
+    # Mimic the context sphinx-book-theme builds for the header buttons
+    default_url = f'https://github.com/pyvista/pyvista/edit/main/doc/source/{pagename}.rst'
+    return {
+        'get_edit_provider_and_url': lambda: ('GitHub', default_url),
+        'header_buttons': [
+            {'type': 'link', 'url': default_url, 'label': 'source-edit-button'},
+            {
+                'type': 'group',
+                'label': 'download-buttons',
+                'buttons': [
+                    {'type': 'link', 'label': 'download-source-button'},
+                    {'type': 'javascript', 'label': 'download-pdf-button'},
+                ],
+            },
+            {'type': 'javascript', 'label': 'fullscreen-button'},
+        ],
+    }
+
+
+def test_pv_html_page_context_patches_edit_button():
+    # The button built by the theme should be rewritten to the .py source file
+    pagename = 'examples/00-load/create_draped_surface'
+    context = _edit_button_context(pagename)
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    expected = (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+    assert context['header_buttons'][0]['url'] == expected
+    assert context['get_edit_provider_and_url']() == ('GitHub', expected)
+
+
+def test_pv_html_page_context_leaves_other_pages_alone():
+    # Pages whose source really is in the repo must keep the theme's link
+    pagename = 'api/core/index'
+    context = _edit_button_context(pagename)
+    default_url = context['header_buttons'][0]['url']
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    assert context['header_buttons'][0]['url'] == default_url
+
+
+def test_pv_html_page_context_without_edit_button():
+    # No-op when the edit button is disabled
+    context = {}
+    pv_html_page_context(None, 'index', 'page.html', context, None)
+    assert context == {}
+
+
+def test_pv_html_page_context_drops_download_button():
+    # The download button offers nothing useful -- .rst 404s and PDF is a
+    # browser feature -- so it is dropped, leaving other buttons untouched
+    context = _edit_button_context('api/core/index')
+    pv_html_page_context(None, 'api/core/index', 'page.html', context, None)
+
+    labels = [button['label'] for button in context['header_buttons']]
+    assert labels == ['source-edit-button', 'fullscreen-button']
 
 
 def test_coerce_point_like_arg():
@@ -3325,3 +3435,20 @@ def test_try_callback_warns_every_time():
     messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
     assert len(messages) == n_calls
     assert 'callback failed' in str(messages[0].message)
+
+
+def test_write_path_of_ensight_writer(tmp_path, hexbeam):
+
+    path = tmp_path / 'hexbeam.case'
+    writer = pv.EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
+    assert writer.path == str(path.parent / path.stem)
+    # written_path is initialized same as path,
+    # but is updated after write() is called
+    assert writer.written_path == path
+
+    writer.write()
+
+    assert writer.path == str(path.parent / path.stem)
+
+    expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
+    assert writer.written_path == expected_path

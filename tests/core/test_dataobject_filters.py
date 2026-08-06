@@ -1610,6 +1610,36 @@ def test_resize_bounds(sphere, bounds, inplace):
     assert (sphere is resized) == inplace
 
 
+def test_resize_bounds_preserve_aspect_ratio(sphere):
+    """Test preserving aspect ratio when resizing bounds."""
+    bounds = (-1, 1, -2, 2, -3, 3)
+
+    resized = sphere.resize(
+        bounds=bounds,
+        preserve_aspect_ratio=True,
+    )
+
+    target_size = np.array([2, 4, 6])
+
+    # Fits within requested bounds
+    assert np.all(np.array(resized.bounds_size) <= target_size + 1e-10)
+
+    # Aspect ratio preserved
+    original_ratio = np.array(sphere.bounds_size) / sphere.length
+    resized_ratio = np.array(resized.bounds_size) / resized.length
+    assert np.allclose(original_ratio, resized_ratio)
+
+    # Center should still match requested bounds center
+    assert np.allclose(
+        resized.center,
+        (
+            (bounds[0] + bounds[1]) / 2,
+            (bounds[2] + bounds[3]) / 2,
+            (bounds[4] + bounds[5]) / 2,
+        ),
+    )
+
+
 @pytest.mark.parametrize('bounds_size', [2.0, (0.5, 2.5, 3.5)])
 @pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
 def test_resize_bounds_size(sphere, bounds_size, center):
@@ -1622,6 +1652,24 @@ def test_resize_bounds_size(sphere, bounds_size, center):
     assert np.allclose(resized.center, expected_center)
 
 
+def test_resize_bounds_size_preserve_aspect_ratio(sphere):
+    """Test preserving aspect ratio when resizing bounds_size."""
+    target_size = (1.0, 2.0, 3.0)
+
+    resized = sphere.resize(
+        bounds_size=target_size,
+        preserve_aspect_ratio=True,
+    )
+
+    # Fits within requested size
+    assert np.all(np.array(resized.bounds_size) <= np.array(target_size) + 1e-10)
+
+    # Aspect ratio preserved
+    original_ratio = np.array(sphere.bounds_size) / sphere.length
+    resized_ratio = np.array(resized.bounds_size) / resized.length
+    assert np.allclose(original_ratio, resized_ratio)
+
+
 @pytest.mark.parametrize('length', [42, 5.0])
 @pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
 def test_resize_length(sphere, length, center):
@@ -1629,9 +1677,13 @@ def test_resize_length(sphere, length, center):
     expected_center = sphere.center if center is None else center
 
     resized = sphere.resize(length=length, center=center)
-    new_length = resized.length
-    assert np.isclose(new_length, length)
+    assert np.isclose(resized.length, length)
     assert np.allclose(resized.center, expected_center)
+
+    # Default preserve_aspect_ratio=None should preserve aspect ratio for length
+    original_ratio = np.array(sphere.bounds_size) / sphere.length
+    resized_ratio = np.array(resized.bounds_size) / resized.length
+    assert np.allclose(original_ratio, resized_ratio)
 
 
 @pytest.mark.parametrize('mesh', [pv.MultiBlock(), pv.PolyData()])
@@ -1669,6 +1721,13 @@ def test_resize_raises(sphere):
         sphere.resize(length=0)
     with pytest.raises(ValueError, match=match.format(name='bounds_size')):
         sphere.resize(bounds_size=[-1, 2, 3])
+
+    match = (
+        '`preserve_aspect_ratio=False` cannot be used with `length` since '
+        '`length` resizing always preserves the aspect ratio.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(length=5, preserve_aspect_ratio=False)
 
 
 def test_resize_zero_extent(plane):

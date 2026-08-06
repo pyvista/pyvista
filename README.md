@@ -91,6 +91,25 @@ conda install -c conda-forge pyvista
 Try PyVista in your browser without installing anything, on
 [MyBinder](https://mybinder.org/v2/gh/pyvista/pyvista-examples/master).
 
+## Command line interface
+
+PyVista also installs a `pyvista` CLI for quick plotting, format conversion,
+and mesh validation, without writing any Python:
+
+```bash
+# Plot a mesh file in an interactive window
+pyvista plot bunny.stl
+
+# Convert a mesh file to another format
+pyvista convert bunny.stl .vtp
+
+# Validate a mesh's data, points, and cells
+pyvista validate bunny.stl
+```
+
+See the [CLI reference](https://docs.pyvista.org/api/cli) for the full
+set of commands and options.
+
 ## Documentation
 
 - [Getting started](https://docs.pyvista.org/getting-started/)
