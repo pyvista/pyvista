@@ -39,11 +39,11 @@ qual = mesh.cell_quality(measures)
 # separately: :func:`~pyvista.DataObjectFilters.cell_quality` makes the measure
 # it computes the active scalars.
 
-dataset_kwargs = dict(cmap='bwr', show_edges=True)
+plot_kwargs = dict(cmap='bwr', show_edges=True)
 
 datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
-pv.plot_compare(datasets, **dataset_kwargs, cpos='xy')
+pv.plot_compare(datasets, **plot_kwargs, cpos='xy')
 
 
 # %%
@@ -106,7 +106,7 @@ measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
 
 datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
-pv.plot_compare(datasets, **dataset_kwargs, cpos='xy')
+pv.plot_compare(datasets, **plot_kwargs, cpos='xy')
 
 # %%
 # .. tags:: filter
