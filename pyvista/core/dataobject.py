@@ -184,6 +184,11 @@ class DataObject(
     ) -> None:
         """Save this vtk object to file.
 
+        .. note::
+            Reading a file and saving it in another format is also available via
+            command-line interface. See :ref:`pyvista convert <cli_convert>` for
+            details.
+
         .. include:: /api/utilities/mesh_io.rst
 
         .. warning::
