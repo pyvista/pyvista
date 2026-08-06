@@ -16,6 +16,8 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._plot import _add_axes_widget
+from pyvista._plot import _apply_render_options
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.plotting.text import _TEXT_POSITIONS
@@ -978,12 +980,8 @@ def plot_compare(  # noqa: ANN201
             for renderer in renderers:
                 renderer.reset_camera()
 
-    if show_axes is None:
-        show_axes = pl.theme.axes.show
-    if show_axes:
-        for renderer in renderers:
-            # Match `pyvista.plot`, which draws box axes when the theme asks for them
-            renderer.add_box_axes() if pl.theme.axes.box else renderer.add_axes()
+    # Shared with `pyvista.plot`, which applies the same options to its one renderer
+    _add_axes_widget(renderers, show_axes=show_axes, theme=pl.theme)
 
     if show_bounds:
         for renderer in renderers:
@@ -992,21 +990,14 @@ def plot_compare(  # noqa: ANN201
     if background is not None:
         pl.set_background(background)
 
-    if anti_aliasing is not None:
-        if anti_aliasing is False:
-            pl.disable_anti_aliasing()
-        elif anti_aliasing is True:
-            pl.enable_anti_aliasing('msaa', multi_samples=pl.theme.multi_samples)
-        else:
-            pl.enable_anti_aliasing(anti_aliasing)
-
-    for renderer in renderers:
-        if eye_dome_lighting:
-            renderer.enable_eye_dome_lighting()
-        if parallel_projection:
-            renderer.enable_parallel_projection()
-        if ssao:
-            renderer.enable_ssao()
+    _apply_render_options(
+        pl,
+        renderers,
+        anti_aliasing=anti_aliasing,
+        eye_dome_lighting=eye_dome_lighting,
+        parallel_projection=parallel_projection,
+        ssao=ssao,
+    )
 
     if zoom is not None:
         # Linked subplots share one camera, so zooming each would compound the zoom

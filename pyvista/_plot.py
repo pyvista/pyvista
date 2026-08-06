@@ -20,11 +20,61 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting.renderer import Renderer
     from pyvista.plotting.themes import Theme
+
+
+def _add_axes_widget(renderers: Iterable[Renderer], *, show_axes: bool | None, theme: Theme) -> None:
+    """Add the axes orientation widget to each of the renderers, as `pyvista.plot` does.
+
+    `show_axes` defaults to the theme, which also decides whether the widget drawn is
+    box axes or the plain orientation widget.
+    """
+    if show_axes is None:
+        show_axes = theme.axes.show
+    if show_axes:
+        for renderer in renderers:
+            renderer.add_box_axes() if theme.axes.box else renderer.add_axes()
+
+
+def _apply_render_options(
+    pl: pv.Plotter,
+    renderers: Iterable[Renderer],
+    *,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None,
+    eye_dome_lighting: bool,
+    parallel_projection: bool,
+    ssao: bool,
+) -> None:
+    """Apply the rendering options `pyvista.plot` takes, in the terms it takes them.
+
+    `anti_aliasing` is a property of the render window, so it is applied once to the
+    plotter. `eye_dome_lighting`, `parallel_projection` and `ssao` are each a
+    renderer's own, so they are applied to every one of `renderers`; a plot with a
+    single renderer gives `[pl.renderer]`.
+    """
+    if anti_aliasing is None:
+        pass
+    elif anti_aliasing is False:
+        pl.disable_anti_aliasing()
+    elif anti_aliasing is True:
+        pl.enable_anti_aliasing('msaa', multi_samples=pl.theme.multi_samples)
+    else:
+        pl.enable_anti_aliasing(anti_aliasing)
+
+    for renderer in renderers:
+        if eye_dome_lighting:
+            renderer.enable_eye_dome_lighting()
+        if parallel_projection:
+            renderer.enable_parallel_projection()
+        if ssao:
+            renderer.enable_ssao()
 
 
 @_deprecate_positional_args(allowed=['var_item'])
@@ -255,21 +305,7 @@ def plot(  # noqa: ANN202, PLR0917
         border_width=border_width,
     )
 
-    if show_axes is None:
-        show_axes = pl.theme.axes.show
-    if show_axes:
-        if pl.theme.axes.box:
-            pl.add_box_axes()
-        else:
-            pl.add_axes()
-
-    if anti_aliasing:
-        if anti_aliasing is True:
-            pl.enable_anti_aliasing('msaa', multi_samples=pv.global_theme.multi_samples)
-        else:
-            pl.enable_anti_aliasing(anti_aliasing)
-    elif anti_aliasing is False:
-        pl.disable_anti_aliasing()
+    _add_axes_widget([pl.renderer], show_axes=show_axes, theme=pl.theme)
 
     try:
         pl.set_background(background)
@@ -323,14 +359,14 @@ def plot(  # noqa: ANN202, PLR0917
     else:
         pl.camera_position = cpos
 
-    if eye_dome_lighting:
-        pl.enable_eye_dome_lighting()
-
-    if parallel_projection:
-        pl.enable_parallel_projection()
-
-    if ssao:
-        pl.enable_ssao()
+    _apply_render_options(
+        pl,
+        [pl.renderer],
+        anti_aliasing=anti_aliasing,
+        eye_dome_lighting=eye_dome_lighting,
+        parallel_projection=parallel_projection,
+        ssao=ssao,
+    )
 
     if zoom is not None:
         pl.camera.zoom(zoom)
