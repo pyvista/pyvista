@@ -318,7 +318,9 @@ def _resolve_theme_like(theme: str | Theme) -> Theme:
         return resolved
     if isinstance(theme, Theme):
         return theme
-    msg = f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+    msg = (  # type: ignore[unreachable]
+        f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+    )
     raise TypeError(msg)
 
 
