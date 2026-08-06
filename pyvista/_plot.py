@@ -31,7 +31,9 @@ if TYPE_CHECKING:
     from pyvista.plotting.themes import Theme
 
 
-def _add_axes_widget(renderers: Iterable[Renderer], *, show_axes: bool | None, theme: Theme) -> None:
+def _add_axes_widget(
+    renderers: Iterable[Renderer], *, show_axes: bool | None, theme: Theme
+) -> None:
     """Add the axes orientation widget to each of the renderers, as `pyvista.plot` does.
 
     `show_axes` defaults to the theme, which also decides whether the widget drawn is
