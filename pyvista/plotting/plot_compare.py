@@ -127,17 +127,52 @@ def _auto_shape(n_datasets: int) -> tuple[int, int]:
     return n_rows, math.ceil(n_datasets / n_rows)
 
 
+def _union_of_bounds(bounds: Sequence[Sequence[float]]) -> tuple[float, ...]:
+    """Return the bounds enclosing every one of the given bounds."""
+    stacked = np.array(bounds)
+    return (
+        stacked[:, 0].min(),
+        stacked[:, 1].max(),
+        stacked[:, 2].min(),
+        stacked[:, 3].max(),
+        stacked[:, 4].min(),
+        stacked[:, 5].max(),
+    )
+
+
 def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
     """Return the bounds enclosing all of the renderers."""
-    bounds = np.array([renderer.bounds for renderer in renderers])
-    return (
-        bounds[:, 0].min(),
-        bounds[:, 1].max(),
-        bounds[:, 2].min(),
-        bounds[:, 3].max(),
-        bounds[:, 4].min(),
-        bounds[:, 5].max(),
-    )
+    return _union_of_bounds([renderer.bounds for renderer in renderers])
+
+
+def _fix_clipping_range_on_render(
+    plotter: pv.Plotter, bounds: tuple[float, ...], n_renderers: int
+) -> None:
+    """Reset the clipping range to the given bounds before every future render.
+
+    Linked renderers share one camera but not one clipping range: an interactor style
+    narrows the range before every render it drives, from `ComputeVisiblePropBounds`
+    of whichever renderer the interaction is in, which is one subplot's worth of
+    bounds where every subplot needs fitting. Undo that here, every time, from the
+    same bounds the camera itself was fit to, rather than from an actor standing in
+    for them, which would leave `renderer.bounds` itself, and anything that relies on
+    it, reporting more than what is actually in each subplot.
+    """
+    # The render window holds this callback for as long as it lives, so hold nothing of
+    # the plotter in return: anything held here would outlive the plot
+    reference = weakref.ref(plotter)
+
+    def fix(*_args: Any) -> None:
+        plotter = reference()
+        render_window = None if plotter is None else plotter.render_window
+        if plotter is None or render_window is None:  # pragma: no cover
+            return
+        for renderer in list(plotter.renderers)[:n_renderers]:
+            renderer.ResetCameraClippingRange(*bounds)
+
+    # `StartEvent` is emitted before each render, ahead of whatever clipping range an
+    # interactor style narrowed it to while handling the interaction that led here
+    plotter.render_window.AddObserver(_vtk.vtkCommand.StartEvent, fix)  # type: ignore[union-attr]
 
 
 # A dataset smaller than this fraction of all of them together is barely visible when
@@ -156,10 +191,20 @@ def _bounds_length(bounds: Sequence[float]) -> float:
     )
 
 
-def _relative_size(renderers: Sequence[Any]) -> float:
-    """Return the size of the smallest dataset relative to all of them together."""
-    union = _bounds_length(_union_bounds(renderers))
-    return min(renderer.length for renderer in renderers) / union if union > 0 else 1.0
+def _relative_size(
+    renderers: Sequence[Any], *, reference_bounds: Sequence[float] | None = None
+) -> float:
+    """Return the size of the smallest dataset relative to all of them together.
+
+    A ``reference_mesh`` is drawn in every subplot alongside its own dataset, so what
+    a subplot actually has to fit is the two together rather than the dataset alone.
+    Give its bounds to size each subplot by that instead.
+    """
+    own_bounds = [renderer.bounds for renderer in renderers]
+    if reference_bounds is not None:
+        own_bounds = [_union_of_bounds([bounds, reference_bounds]) for bounds in own_bounds]
+    union = _bounds_length(_union_of_bounds(own_bounds))
+    return min(_bounds_length(bounds) for bounds in own_bounds) / union if union > 0 else 1.0
 
 
 def _warn_if_dataset_is_too_small(relative_size: float, of_what: str, remedy: str) -> None:
@@ -417,6 +462,10 @@ def plot_compare(  # noqa: ANN201
 ):
     """Plot a grid comparison of any number of data objects.
 
+    .. note::
+        This function is also available via command-line interface. See
+        :ref:`pyvista compare <cli_compare>` for details.
+
     Each data object is shown in its own subplot. By default, the subplots are arranged
     in a compact grid which is never taller than it is wide, e.g. ``(1, 2)`` for two
     datasets, ``(1, 3)`` for three, ``(2, 2)`` for four, and ``(2, 3)`` for five or six.
@@ -529,7 +578,9 @@ def plot_compare(  # noqa: ANN201
         size of all of them together, which means they occupy the same space at a
         comparable scale and one camera suits them all. Datasets which are much
         smaller than the rest, or which are far apart, are not linked, since a
-        shared camera would leave some of them too small to make out.
+        shared camera would leave some of them too small to make out. What each
+        subplot has to fit is the dataset and the ``reference_mesh`` together when
+        one is given, since the same mesh is drawn alongside every dataset.
 
         In every case the camera is only fit when ``cpos`` is ``None`` or a
         string, since a fully-specified camera position is used as given.
@@ -726,21 +777,27 @@ def plot_compare(  # noqa: ANN201
     # Measure the datasets before the reference mesh is added, since it goes in every
     # subplot and would otherwise make them all report the same bounds as each other
     smallest = min(renderer.length for renderer in renderers)
-    linked_on_purpose = link is not None
+    # A reference mesh is drawn in every subplot, so what a subplot has to fit is the
+    # dataset and the reference together, which is what decides whether to link too. An
+    # outline enclosing every dataset, for instance, makes every subplot's own bounds
+    # the same regardless of how different the datasets themselves are, which is
+    # exactly the case linking suits.
+    reference_bounds = None if reference_mesh is None else reference_mesh.bounds
     if link is None:
-        link = _relative_size(renderers) >= _LINK_RELATIVE_SIZE
+        link = _relative_size(renderers, reference_bounds=reference_bounds) >= _LINK_RELATIVE_SIZE
 
     if link:
         pl.link_views()
-        # Linking on its own is only worth warning about when it was asked for, since
-        # datasets which are linked automatically are of a comparable size already
-        if linked_on_purpose:
-            _warn_if_dataset_is_too_small(
-                _relative_size(renderers),
-                'all of the datasets together, which the shared camera has to fit',
-                'Use `link=False` to fit each subplot to its own dataset, or '
-                '`normalize=True` to resize them all to the same size.',
-            )
+        # A dataset which is small beside the others is not made any easier to see by
+        # a reference mesh which happens to be large enough to enclose all of them, so
+        # warn from the size of the datasets on their own, whether linking was asked
+        # for or decided from the reference mesh being one they are all small beside.
+        _warn_if_dataset_is_too_small(
+            _relative_size(renderers),
+            'all of the datasets together, which the shared camera has to fit',
+            'Use `link=False` to fit each subplot to its own dataset, or '
+            '`normalize=True` to resize them all to the same size.',
+        )
 
     if reference_mesh is not None:
         _warn_if_dataset_is_too_small(
@@ -764,7 +821,18 @@ def plot_compare(  # noqa: ANN201
                 # which would both override the fit below and leave the camera pointing
                 # down an axis instead. Setting it also marks the camera as set.
                 pl.camera_position = pl.get_default_cam_pos()
-            pl.renderer.reset_camera(bounds=_union_bounds(renderers))
+            bounds = _union_bounds(renderers)
+            pl.renderer.ResetCamera(*bounds)
+            pl.renderer.ResetCameraClippingRange(*bounds)
+            # `reset_camera` above only reaches this render; an interactor style
+            # narrows the clipping range again before every render it drives, from
+            # `ComputeVisiblePropBounds` of whichever renderer the interaction is in,
+            # which is one subplot's worth of bounds where every subplot needs
+            # fitting. Undo that on every future render too, from the same bounds
+            # rather than an actor standing in for them, which would leave
+            # `renderer.bounds`, and anything relying on it, reporting more than what
+            # is actually in each subplot.
+            _fix_clipping_range_on_render(pl, bounds, n_datasets)
         else:
             # Every renderer has its own camera, so reset each to fit each dataset
             # independently

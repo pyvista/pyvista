@@ -60,18 +60,9 @@ def plot(  # noqa: ANN202, PLR0917
 ):
     """Plot a PyVista, numpy, or vtk object.
 
-    .. versionadded:: 0.47
-
-        ``plot`` can be invoked with the shell command:
-
-        .. code-block:: shell
-
-            pyvista plot <files> --screenshot output.png --off-screen
-
-        Run ``pyvista plot --help`` for more details on available parameters.
-
-        .. note::
-            Providing multiple files renders them inside the same window.
+    .. note::
+        This function is also available via command-line interface. See
+        :ref:`pyvista plot <cli_plot>` for details.
 
     Parameters
     ----------

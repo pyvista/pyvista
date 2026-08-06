@@ -25,7 +25,7 @@ from .utils import skip_unreadable
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} plot PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
-    help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
+    sort_key=0,
 )
 def _plot(
     paths: Annotated[
@@ -71,12 +71,16 @@ def _plot(
     border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
     border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
+    """Plot one or more mesh files in an interactive window."""
     meshes = read_meshes(paths, skip_unreadable=skip_unreadable)
+    if static:
+        kwargs['static'] = True
     return call_or_exit(
         pv.plot,
         command='plot',

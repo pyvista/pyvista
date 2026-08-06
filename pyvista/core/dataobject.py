@@ -184,6 +184,11 @@ class DataObject(
     ) -> None:
         """Save this vtk object to file.
 
+        .. note::
+            Reading a file and saving it in another format is also available via
+            command-line interface. See :ref:`pyvista convert <cli_convert>` for
+            details.
+
         .. include:: /api/utilities/mesh_io.rst
 
         .. warning::
@@ -292,8 +297,8 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext == '.vtkhdf' and binary is False:
-                msg = '.vtkhdf files can only be written in binary format.'
+            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+                msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
             # Save using the writer
@@ -309,8 +314,8 @@ class DataObject(
 
             writer.write()
 
-            if not file_path.exists():
-                msg = f'VTK writer failed to write file: {file_path}'
+            if not writer.written_path.exists():
+                msg = f'VTK writer failed to write file: {writer.written_path}'
                 raise OSError(msg)
 
         elif file_ext in _PICKLE_FILE_EXT:

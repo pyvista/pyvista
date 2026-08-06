@@ -229,7 +229,7 @@ def test_export_vrml(tmpdir, sphere):
 
 
 def test_import_3ds():
-    filename = examples.download_3ds.download_iflamigm()
+    filename = examples.download_flamingo(load=False)
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
@@ -1347,6 +1347,26 @@ def test_left_button_down():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
         pl.left_button_down(None, None)
+    pl.close()
+
+
+def test_left_button_down_pickpoint(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # an empty plotter is enough to reproduce, no mesh is required
+    pl = pv.Plotter()
+    assert pl.pickpoint is None
+
+    pl.show(auto_close=False)  # must start renderer first
+    width, height = pl.window_size
+
+    # pressing 'b' registers ``left_button_down`` for the next left click
+    pl.iren.interactor.SetKeySym('b')
+    pl.iren.interactor.KeyPressEvent()
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+
+    assert pl.pickpoint.shape == (1, 3)
+    assert not np.any(np.isnan(pl.pickpoint))
     pl.close()
 
 
@@ -2560,6 +2580,52 @@ def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_po
     )
 
 
+def test_plot_compare_link_clipping_range_fits_every_dataset(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A shared camera is fit to every dataset, and its clipping range has to be too,
+    # or the far ones are clipped despite being framed. `reset_camera` alone fits the
+    # clipping range to whichever renderer happens to be active, which is one
+    # subplot's worth of bounds where every subplot needs fitting.
+    airplane, ant = examples.load_airplane(), examples.load_ant()
+
+    def far_needed(camera):
+        distance = np.linalg.norm(np.array(camera.position) - np.array(airplane.center))
+        return distance + airplane.length
+
+    captured = {}
+
+    def capture(plotter):
+        camera = plotter.renderer.camera
+        captured['clipping_range'] = camera.clipping_range
+        captured['far_needed'] = far_needed(camera)
+        # An interactor style narrows the clipping range again before every render it
+        # drives, from the bounds of whichever renderer is being interacted with. A
+        # drag inside the small subplot must not undo the fit to every dataset, even
+        # though the drag itself moves the camera and so changes what fits it.
+        plotter.subplot(0, 1)
+        interactor, style = plotter.iren.interactor, plotter.iren.style
+        interactor.SetEventPosition(50, 50)
+        style.OnLeftButtonDown()
+        interactor.SetEventPosition(80, 80)
+        style.OnMouseMove()
+        style.OnLeftButtonUp()
+        plotter.subplot(0, 0)
+        captured['clipping_range_after_drag'] = camera.clipping_range
+        captured['far_needed_after_drag'] = far_needed(camera)
+
+    with pytest.warns(UserWarning, match='too small to make out'):
+        pv.plot_compare(
+            {'airplane': airplane, 'ant': ant},
+            link=True,
+            dataset_kwargs={'color': 'w'},
+            show_kwargs={'before_close_callback': capture},
+        )
+
+    assert captured['clipping_range'][1] >= captured['far_needed']
+    assert captured['clipping_range_after_drag'][1] >= captured['far_needed_after_drag']
+
+
 def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -2579,22 +2645,25 @@ def test_plot_compare_warns_when_a_dataset_is_too_small(verify_image_cache):
         return [name for name, cause in causes.items() if any(cause in m for m in messages)]
 
     # Each subplot is fit to its own dataset when unlinked, and these are not linked
-    # by default, so there is nothing to report
+    # by default without a reference mesh, so there is nothing to report
     assert warned() == []
     assert warned(link=False) == []
 
     # A shared camera has to fit every dataset, so a much smaller one is barely
-    # visible. Only linking on purpose is reported, since datasets which are linked
-    # automatically are of a comparable size already
+    # visible, whether linking was asked for outright...
     assert warned(link=True) == ['linked']
 
-    # Every subplot has to fit the reference mesh as well as its own dataset, so a
-    # dataset much smaller than the reference is barely visible however it is framed
-    assert warned(reference_mesh=reference_mesh) == ['reference']
-    assert warned(reference_mesh=reference_mesh, link=False) == ['reference']
-
-    # Both are reported when both apply
+    # ...or decided automatically because a reference mesh made every subplot's own
+    # bounds the same, which does not make the smaller dataset any easier to see: a
+    # reference mesh large enough to enclose every dataset is reported alongside the
+    # reference regardless of why the views ended up linked
+    assert warned(reference_mesh=reference_mesh) == ['linked', 'reference']
     assert warned(reference_mesh=reference_mesh, link=True) == ['linked', 'reference']
+
+    # Only the reference is reported when linking is declined outright, since each
+    # subplot is fit to its own dataset and the reference rather than to one shared
+    # by every subplot
+    assert warned(reference_mesh=reference_mesh, link=False) == ['reference']
 
 
 @pytest.mark.parametrize('box', [False, True], ids=['arrows', 'box'])
@@ -2691,6 +2760,39 @@ def test_plot_compare_link_auto(datasets, expected, verify_image_cache):
         },
     )
     assert shared == [expected]
+
+
+def test_plot_compare_link_auto_considers_the_reference_mesh(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # The airplane is some forty times the size of the ant, so they are not linked
+    # on their own
+    airplane, ant = examples.load_airplane(), examples.load_ant()
+    datasets = {'airplane': airplane, 'ant': ant}
+
+    def linked(**kwargs):
+        shared = []
+        pv.plot_compare(
+            datasets,
+            show_kwargs={
+                'before_close_callback': lambda pl: shared.append(
+                    len({id(renderer.camera) for renderer in pl.renderers}) == 1
+                )
+            },
+            **kwargs,
+        )
+        return shared[0]
+
+    with pytest.warns(UserWarning, match='too small to make out'):
+        assert linked(link=True) is True
+    assert linked() is False
+
+    # An outline of every dataset together is what each subplot is actually fit to
+    # once it is drawn, and it is the same for each of them, which is what deciding
+    # whether to link is meant to notice
+    outline = pv.MultiBlock([airplane, ant]).outline()
+    with pytest.warns(UserWarning, match='too small to make out'):
+        assert linked(reference_mesh=outline) is True
 
 
 def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify_image_cache):
