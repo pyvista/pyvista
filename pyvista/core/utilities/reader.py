@@ -12,11 +12,13 @@ import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import ForwardRef
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
 from typing import cast
 from typing import get_args
+from typing import get_origin
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -4463,17 +4465,15 @@ def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     class's ``__name__``). Returns ``None`` when the class is not a
     parameterized :class:`BaseReader` subclass.
     """
-    import typing as _typing  # noqa: PLC0415
-
     for base in getattr(cls, '__orig_bases__', ()):
-        origin = _typing.get_origin(base)
+        origin = get_origin(base)
         if origin is None or not (isinstance(origin, type) and issubclass(origin, BaseReader)):
             continue
-        args = _typing.get_args(base)
+        args = get_args(base)
         if not args:
             continue
         arg = args[0]
-        if isinstance(arg, _typing.ForwardRef):
+        if isinstance(arg, ForwardRef):
             return arg.__forward_arg__
         if isinstance(arg, type):
             return arg.__name__
