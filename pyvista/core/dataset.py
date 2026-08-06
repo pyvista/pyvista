@@ -33,6 +33,7 @@ from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -148,11 +149,6 @@ class DataSet(DataSetFilters, DataObject):
         attribute resolution finds the newly-attached accessor
         descriptor.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
-            _resolve_pending_accessor,
-        )
-
         if _resolve_pending_accessor(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)

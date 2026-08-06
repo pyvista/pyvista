@@ -494,13 +494,11 @@ class CompositeAttributes(
 
     def __len__(self):
         """Return the number of blocks in this dataset."""
-        from pyvista import MultiBlock  # avoid circular  # noqa: PLC0415
-
         # start with 1 as there is always a composite dataset and this is the
         # root of the tree
         cc = 1
         for dataset in self._dataset:
-            if isinstance(dataset, MultiBlock):
+            if isinstance(dataset, pv.MultiBlock):
                 cc += len(dataset) + 1  # include the block itself
             else:
                 cc += 1
