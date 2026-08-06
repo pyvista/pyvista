@@ -40,7 +40,7 @@ for std_dev in [2.0, 4.0, 8.0]:
 
 pv.plot_compare(
     datasets,
-    dataset_kwargs={'rgb': True},
+    rgb=True,
     label_size=14,
     cpos=cp,
 )

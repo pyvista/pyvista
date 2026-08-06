@@ -1916,9 +1916,9 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
     assert kwargs['labels'] == ['sphere', 'cube']
     assert kwargs['link'] is None
     assert kwargs['shape'] is None
-    assert kwargs['dataset_kwargs'] == {}
-    assert kwargs['plotter_kwargs']['off_screen'] is None
-    assert kwargs['show_kwargs'] == {'full_screen': None, 'interactive': True}
+    assert kwargs['off_screen'] is None
+    assert kwargs['full_screen'] is None
+    assert kwargs['interactive'] is True
 
 
 @pytest.mark.parametrize(
@@ -2011,10 +2011,9 @@ def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare:
     names = ' '.join(path.name for path in tmp_compare_files)
     main(f'compare {names} --show_edges=True --color=red')
 
-    assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {
-        'show_edges': True,
-        'color': 'red',
-    }
+    kwargs = mock_plot_compare.call_args.kwargs
+    assert kwargs['show_edges'] is True
+    assert kwargs['color'] == 'red'
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -2029,7 +2028,7 @@ def test_compare_kwargs_hyphen_warns(
     assert 'A hyphen `-` has been used as supplementary keyword' in err
     assert '--show_edges=True' in err.replace('\n', '').replace('│', '')
     # The argument is still forwarded, with the hyphenated name
-    assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {'show-edges': True}
+    assert mock_plot_compare.call_args.kwargs['show-edges'] is True
 
 
 def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):

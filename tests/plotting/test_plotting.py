@@ -2302,7 +2302,7 @@ def compare_datasets():
 
 def test_plot_compare(compare_datasets):
     # Really just making sure no errors are thrown
-    pv.plot_compare(compare_datasets, dataset_kwargs={'color': 'w'})
+    pv.plot_compare(compare_datasets, color='w')
 
 
 @pytest.mark.parametrize(
@@ -2318,7 +2318,7 @@ def test_plot_compare_auto_shape(n_datasets, expected, no_images_to_verify):  # 
 def test_plot_compare_n_datasets(compare_datasets):
     # Five datasets are laid out in a 2 by 3 grid, leaving the last subplot empty
     datasets = [compare_datasets[i % len(compare_datasets)] for i in range(5)]
-    pv.plot_compare(datasets, dataset_kwargs={'color': 'w'})
+    pv.plot_compare(datasets, color='w')
 
 
 @pytest.mark.parametrize(
@@ -2333,7 +2333,7 @@ def test_plot_compare_n_datasets(compare_datasets):
 )
 def test_plot_compare_shape(compare_datasets, shape, n_datasets):
     datasets = [compare_datasets[i % len(compare_datasets)] for i in range(n_datasets)]
-    pv.plot_compare(datasets, shape=shape, dataset_kwargs={'color': 'w'})
+    pv.plot_compare(datasets, shape=shape, color='w')
 
 
 @pytest.mark.parametrize('shape', [(4, 1), '3|1'], ids=['grid', 'left_right'])
@@ -2356,12 +2356,12 @@ def test_plot_compare_labels(compare_datasets):
         labels=['one', 'two', 'three', 'four'],
         label_size=24,
         label_kwargs={'color': 'red'},
-        dataset_kwargs={'color': 'w'},
+        color='w',
     )
 
 
 def test_plot_compare_labels_none(compare_datasets):
-    pv.plot_compare(compare_datasets, labels=None, dataset_kwargs={'color': 'w'})
+    pv.plot_compare(compare_datasets, labels=None, color='w')
 
 
 @pytest.fixture
@@ -2394,7 +2394,7 @@ def _drawn_labels(datasets, describe=None, **kwargs):
 
     pv.plot_compare(
         datasets,
-        dataset_kwargs={'color': 'w'},
+        color='w',
         show_kwargs={'before_close_callback': capture},
         **kwargs,
     )
@@ -2407,7 +2407,7 @@ def test_plot_compare_label_size(compare_datasets, compare_labels, label_size):
         compare_datasets,
         labels=compare_labels,
         label_size=label_size,
-        dataset_kwargs={'color': 'w'},
+        color='w',
     )
 
 
@@ -2530,7 +2530,7 @@ def test_plot_compare_label_size_follows_the_window(compare_datasets, verify_ima
     pv.plot_compare(
         compare_datasets,
         labels=['runs/2024-06-01/experiment_alpha/output_mesh.vtk'] * 4,
-        dataset_kwargs={'color': 'w'},
+        color='w',
         show_kwargs={'before_close_callback': resize},
     )
     # The narrower the window, the smaller the label, and the same window size gives
@@ -2576,7 +2576,7 @@ def test_plot_compare_link_and_camera_position(compare_datasets, link, camera_po
         compare_datasets,
         link=link,
         cpos=camera_position,
-        dataset_kwargs={'color': 'w'},
+        color='w',
     )
 
 
@@ -2810,7 +2810,7 @@ def test_plot_compare_link_framing_is_order_independent(compare_datasets, verify
         pv.plot_compare(
             datasets,
             link=link,
-            dataset_kwargs={'color': 'w'},
+            color='w',
             show_kwargs={'before_close_callback': capture},
         )
         return captured
@@ -2833,7 +2833,7 @@ def test_plot_compare_normalize(verify_image_cache):  # noqa: ARG001
     pv.plot_compare(
         {'airplane': examples.load_airplane(), 'ant': examples.load_ant()},
         normalize=True,
-        dataset_kwargs={'color': 'w'},
+        color='w',
     )
 
 
@@ -2855,7 +2855,7 @@ def test_plot_compare_normalize_resizes_every_dataset(verify_image_cache):
         centers.clear()
         pv.plot_compare(
             [airplane, ant],
-            dataset_kwargs={'color': 'w'},
+            color='w',
             show_kwargs={'before_close_callback': capture},
             **kwargs,
         )
@@ -2885,7 +2885,7 @@ def test_plot_compare_normalize_reference_mesh(verify_image_cache):
         [examples.load_airplane(), examples.load_ant()],
         reference_mesh=examples.load_airplane().outline(),
         normalize=True,
-        dataset_kwargs={'color': 'w'},
+        color='w',
         show_kwargs={
             'before_close_callback': lambda pl: lengths.extend(r.length for r in pl.renderers)
         },
@@ -2894,12 +2894,73 @@ def test_plot_compare_normalize_reference_mesh(verify_image_cache):
     assert lengths == pytest.approx([1.0, 1.0], abs=0.5)
 
 
+def test_plot_compare_takes_what_plot_takes(compare_datasets, verify_image_cache):
+    verify_image_cache.skip = True
+
+    seen = {}
+
+    def capture(plotter):
+        renderer = plotter.renderers[0]
+        actor = next(a for a in renderer.actors.values() if isinstance(a, pv.Actor))
+        seen.update(
+            background=renderer.background_color.name,
+            parallel=renderer.camera.parallel_projection,
+            window=tuple(plotter.window_size),
+            edges=actor.prop.show_edges,
+        )
+
+    # The keywords `pv.plot` takes mean the same here, and the ones with nowhere else
+    # to go are the display options of the datasets, as they are for `pv.plot`
+    pv.plot_compare(
+        compare_datasets,
+        color='w',
+        show_edges=True,
+        background='navy',
+        parallel_projection=True,
+        window_size=[640, 480],
+        show_kwargs={'before_close_callback': capture},
+    )
+    assert seen == {
+        'background': 'navy',
+        'parallel': True,
+        'window': (640, 480),
+        'edges': True,
+    }
+
+
+def test_plot_compare_volume(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # Volumes are drawn by `add_volume`, as they are by `pv.plot`
+    volumes = []
+    for _ in range(2):
+        volume = pv.ImageData(dimensions=(8, 8, 8))
+        volume['values'] = range(volume.n_points)
+        volumes.append(volume)
+
+    drawn = []
+    pv.plot_compare(
+        volumes,
+        volume=True,
+        labels=['a', 'b'],
+        show_kwargs={
+            'before_close_callback': lambda pl: drawn.extend(
+                type(actor).__name__
+                for renderer in pl.renderers
+                for actor in renderer.actors.values()
+                if isinstance(actor, (pv.Actor, pv.Volume))
+            )
+        },
+    )
+    assert drawn == ['Volume', 'Volume']
+
+
 def test_plot_compare_reference_mesh(compare_datasets):
     pv.plot_compare(
         compare_datasets,
         reference_mesh=examples.load_uniform().outline(),
         reference_kwargs={'color': 'red', 'line_width': 3},
-        dataset_kwargs={'color': 'w'},
+        color='w',
     )
 
 
@@ -2910,7 +2971,7 @@ def test_plot_compare_reference_kwargs(compare_datasets, verify_image_cache):
     # from the default styling. Neither needs an image of its own to show that
     kwargs = dict(
         reference_mesh=examples.load_uniform().outline(),
-        dataset_kwargs={'color': 'w'},
+        color='w',
         screenshot=True,
         show_kwargs={'return_img': True},
     )
@@ -2924,7 +2985,7 @@ def test_plot_compare_dict(compare_datasets):
     datasets = dict(
         zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
     )
-    pv.plot_compare(datasets, dataset_kwargs={'color': 'w'})
+    pv.plot_compare(datasets, color='w')
 
 
 def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
@@ -2935,7 +2996,7 @@ def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
     datasets = dict(
         zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
     )
-    kwargs = dict(dataset_kwargs={'color': 'w'}, screenshot=True, show_kwargs={'return_img': True})
+    kwargs = dict(color='w', screenshot=True, show_kwargs={'return_img': True})
     assert np.array_equal(
         pv.plot_compare(pv.MultiBlock(datasets), **kwargs), pv.plot_compare(datasets, **kwargs)
     )
@@ -7048,7 +7109,7 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
 
     pv.plot_compare(
         data,
-        dataset_kwargs={'show_edges': True},
+        show_edges=True,
         link=False,
         cpos=pv.CameraPosition(
             position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
@@ -7096,7 +7157,8 @@ def test_sphere_texture_seam(tessellation):
 
     pv.plot_compare(
         data,
-        dataset_kwargs={'texture': texture, 'smooth_shading': True},
+        texture=texture,
+        smooth_shading=True,
         link=False,
         cpos='yz',
     )

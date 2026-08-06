@@ -1071,7 +1071,7 @@ class PolyDataFilters(DataSetFilters):
         >>>
         >>> pv.plot_compare(
         ...     datasets,
-        ...     dataset_kwargs={'show_edges': True},
+        ...     show_edges=True,
         ...     cpos=cpos,
         ... )
 
