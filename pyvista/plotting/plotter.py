@@ -93,7 +93,7 @@ from .text import Text
 from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
-from .theme_registry import resolve_theme_like
+from .theme_registry import _resolve_theme_like
 from .themes import Theme
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
@@ -341,15 +341,8 @@ class BasePlotter(_BoundsSizeMixin):
         * ``'none'``: no light sources at instantiation.
 
     theme : pyvista.plotting.themes.Theme | str, optional
-        Plot-specific theme. Accepts a :class:`~pyvista.plotting.themes.Theme`
-        instance, or a registered theme name as a string. Built-in names
-        include ``'dark'``, ``'default'``, ``'document'``,
-        ``'document_build'``, ``'document_pro'``, ``'paraview'``,
-        ``'testing'``, and ``'vtk'``. Third-party plugins can add more via
-        the ``pyvista.themes`` entry-point group; see
-        :func:`~pyvista.registered_themes` for everything currently
-        available. A ``"package.module:ClassName"`` dotted path to any
-        importable ``Theme`` subclass is also accepted.
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
@@ -419,7 +412,7 @@ class BasePlotter(_BoundsSizeMixin):
             # after creation.
             self._theme.load_theme(pv.global_theme)
         else:
-            self._theme.load_theme(resolve_theme_like(theme))
+            self._theme.load_theme(_resolve_theme_like(theme))
 
         self.image_transparent_background = self._theme.transparent_background
 
@@ -581,11 +574,8 @@ class BasePlotter(_BoundsSizeMixin):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return the theme used for this plotter.
 
-        Set the theme when initializing the plotter instance. A
-        :class:`~pyvista.plotting.themes.Theme` instance, a registered
-        theme name (e.g. ``'dark'``), or a ``"package.module:ClassName"``
-        dotted path are all accepted; see the ``theme`` parameter of
-        :class:`~pyvista.Plotter` for details.
+        Set the theme when initializing the plotter instance; see the
+        ``theme`` parameter of :class:`~pyvista.Plotter`.
 
         Returns
         -------
@@ -8024,15 +8014,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         lights that act like a Light Kit).
 
     theme : pyvista.plotting.themes.Theme | str, optional
-        Plot-specific theme. Accepts a :class:`~pyvista.plotting.themes.Theme`
-        instance, or a registered theme name as a string. Built-in names
-        include ``'dark'``, ``'default'``, ``'document'``,
-        ``'document_build'``, ``'document_pro'``, ``'paraview'``,
-        ``'testing'``, and ``'vtk'``. Third-party plugins can add more via
-        the ``pyvista.themes`` entry-point group; see
-        :func:`~pyvista.registered_themes` for everything currently
-        available. A ``"package.module:ClassName"`` dotted path to any
-        importable ``Theme`` subclass is also accepted.
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be

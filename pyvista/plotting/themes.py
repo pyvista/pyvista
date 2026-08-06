@@ -55,7 +55,7 @@ from .opts import PointSpriteShape
 from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
-from .theme_registry import resolve_theme_like
+from .theme_registry import _resolve_theme_like
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -164,7 +164,7 @@ def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     """
     import pyvista  # noqa: PLC0415
 
-    pyvista.global_theme.load_theme(resolve_theme_like(theme))
+    pyvista.global_theme.load_theme(_resolve_theme_like(theme))
 
 
 class _LightingConfig(_ConfigBase):

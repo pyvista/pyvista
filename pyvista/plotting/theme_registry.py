@@ -294,41 +294,12 @@ def registered_themes() -> tuple[ThemeRegistration, ...]:
     return tuple(sorted(records, key=lambda r: r.name))
 
 
-def resolve_theme_like(theme: str | Theme) -> Theme:
+def _resolve_theme_like(theme: str | Theme) -> Theme:
     """Coerce a theme name, dotted path, or ``Theme`` instance to a ``Theme``.
 
-    Shared by :func:`~pyvista.set_plot_theme` and any API accepting a
-    ``theme`` argument (e.g. :class:`~pyvista.Plotter`) so name resolution
-    stays consistent everywhere.
-
-    Parameters
-    ----------
-    theme : str | Theme
-        Theme to resolve. Accepts:
-
-        * A registered theme name. Built-in names include ``'dark'``,
-          ``'default'``, ``'document'``, ``'document_build'``,
-          ``'document_pro'``, ``'paraview'``, ``'testing'``, and
-          ``'vtk'``. Third-party plugins can add more via the
-          ``pyvista.themes`` entry-point group.
-        * A ``"package.module:ClassName"`` dotted path to any importable
-          :class:`~pyvista.plotting.themes.Theme` subclass.
-        * A :class:`~pyvista.plotting.themes.Theme` instance, returned as-is.
-
-    Returns
-    -------
-    Theme
-        A ``Theme`` instance. Fresh for a name or dotted path; the same
-        object passed in when *theme* is already a ``Theme``.
-
-    Raises
-    ------
-    ValueError
-        If *theme* is a string that does not resolve to any registered
-        theme or importable dotted path.
-    TypeError
-        If *theme* is neither a ``str`` nor a ``Theme``.
-
+    Shared by ``set_plot_theme`` and ``Plotter`` so name resolution and
+    error messages stay consistent. Raises ``ValueError`` for an
+    unresolvable string, ``TypeError`` for any other non-``Theme`` input.
     """
     from .themes import Theme  # local import breaks circular dependency  # noqa: PLC0415
 

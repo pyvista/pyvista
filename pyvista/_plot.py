@@ -160,15 +160,8 @@ def plot(  # noqa: ANN202, PLR0917
         using this keyword.
 
     theme : pyvista.plotting.themes.Theme | str, optional
-        Plot-specific theme. Accepts a :class:`~pyvista.plotting.themes.Theme`
-        instance, or a registered theme name as a string. Built-in names
-        include ``'dark'``, ``'default'``, ``'document'``,
-        ``'document_build'``, ``'document_pro'``, ``'paraview'``,
-        ``'testing'``, and ``'vtk'``. Third-party plugins can add more via
-        the ``pyvista.themes`` entry-point group; see
-        :func:`~pyvista.registered_themes` for everything currently
-        available. A ``"package.module:ClassName"`` dotted path to any
-        importable ``Theme`` subclass is also accepted.
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
