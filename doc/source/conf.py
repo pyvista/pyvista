@@ -938,7 +938,9 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
-    app.connect('html-page-context', pv_html_page_context)
+    # Priority must stay above the 501 used by sphinx-book-theme's
+    # ``add_source_buttons``, which is what builds the "suggest edit" button.
+    app.connect('html-page-context', pv_html_page_context, priority=502)
 
     # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
     app.connect('doctree-read', hoist_docstring_sections, priority=400)
