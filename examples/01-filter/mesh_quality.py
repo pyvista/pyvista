@@ -43,7 +43,7 @@ plot_kwargs = dict(cmap='bwr', show_edges=True)
 
 datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
-pv.plot_compare(datasets, **plot_kwargs, cpos='xy')
+pv.plot_compare(datasets, cpos='xy', **plot_kwargs)
 
 
 # %%
@@ -106,7 +106,7 @@ measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
 
 datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
-pv.plot_compare(datasets, **plot_kwargs, cpos='xy')
+pv.plot_compare(datasets, cpos='xy', **plot_kwargs)
 
 # %%
 # .. tags:: filter
