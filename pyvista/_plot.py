@@ -219,6 +219,12 @@ def plot(  # noqa: ANN202, PLR0917
     widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.
 
+    See Also
+    --------
+    pyvista.plot_compare
+    pyvista.plot_arrows
+    pyvista.Plotter
+
     Examples
     --------
     Plot a simple sphere while showing its edges.

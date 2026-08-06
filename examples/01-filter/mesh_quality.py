@@ -34,28 +34,16 @@ measures = ['area', 'shape', 'min_angle', 'max_angle']
 qual = mesh.cell_quality(measures)
 
 # %%
-# Plot the meshes in subplots for comparison. We define a custom method
-# for adding each mesh to each subplot.
+# Plot the meshes in subplots for comparison with :func:`~pyvista.plot_compare`.
+# Every subplot is drawn with the same arguments, so we compute each measure
+# separately: :func:`~pyvista.DataObjectFilters.cell_quality` makes the measure
+# it computes the active scalars.
 
+dataset_kwargs = dict(cmap='bwr', show_edges=True)
 
-def add_mesh(plotter, mesh, *, scalars=None, cmap='bwr', show_edges=True):
-    # Create a copy to avoid reusing the same mesh in different plots
-    copied = mesh.copy(deep=False)
-    plotter.add_mesh(copied, scalars=scalars, cmap=cmap, show_edges=show_edges)
-    plotter.view_xy()
+datasets = {measure: mesh.cell_quality(measure) for measure in measures}
 
-
-pl = pv.Plotter(shape=(2, 2))
-pl.link_views()
-pl.subplot(0, 0)
-add_mesh(pl, qual, scalars=measures[0])
-pl.subplot(0, 1)
-add_mesh(pl, qual, scalars=measures[1])
-pl.subplot(1, 0)
-add_mesh(pl, qual, scalars=measures[2])
-pl.subplot(1, 1)
-add_mesh(pl, qual, scalars=measures[3])
-pl.show()
+pv.plot_compare(datasets, dataset_kwargs=dataset_kwargs, cpos='xy')
 
 
 # %%
@@ -115,19 +103,10 @@ mesh = examples.download_letter_a()
 # Plot some valid quality measures for tetrahedral cells.
 
 measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
-qual = mesh.cell_quality(measures)
 
-pl = pv.Plotter(shape=(2, 2))
-pl.link_views()
-pl.subplot(0, 0)
-add_mesh(pl, qual, scalars=measures[0])
-pl.subplot(0, 1)
-add_mesh(pl, qual, scalars=measures[1])
-pl.subplot(1, 0)
-add_mesh(pl, qual, scalars=measures[2])
-pl.subplot(1, 1)
-add_mesh(pl, qual, scalars=measures[3])
-pl.show()
+datasets = {measure: mesh.cell_quality(measure) for measure in measures}
+
+pv.plot_compare(datasets, dataset_kwargs=dataset_kwargs, cpos='xy')
 
 # %%
 # .. tags:: filter

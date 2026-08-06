@@ -14,6 +14,7 @@ import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import get_args
+import warnings
 
 import numpy as np
 import pytest
@@ -102,6 +103,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ compare      Compare two or more mesh files side-by-side.          │
         │ convert      Convert a mesh file to another format.                │
         │ plot         Plot one or more mesh files in an interactive window  │
         │              that can be customized with various options.          │
@@ -124,6 +126,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
+    │ compare      Compare two or more mesh files side-by-side.          │
     │ convert      Convert a mesh file to another format.                │
     │ plot         Plot one or more mesh files in an interactive window  │
     │              that can be customized with various options.          │
@@ -134,7 +137,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown command "foo". Available commands: report, convert, plot,  │
-    │ validate.                                                          │
+    │ compare, validate.                                                 │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -1042,8 +1045,8 @@ def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
 
 
-# CLI-only parameters that have no counterpart in pv.plot
-_CLI_ONLY_PARAMS = {'skip_unreadable', 'paths'}
+# CLI-only parameters that have no explicit counterpart in pv.plot
+_CLI_ONLY_PARAMS = {'skip_unreadable', 'paths', 'static'}
 
 
 @fixture
@@ -1055,7 +1058,6 @@ def missing_plot_arguments():
         'theme',
         'return_viewer',
         'return_img',
-        'cpos',
         'jupyter_kwargs',
         'notebook',
         'var_item',  # intentionally renamed to 'paths' in the CLI
@@ -1135,7 +1137,14 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     plot_annotations = {name: plot_annotations[name] for name in cli_annotations}
 
     # Filter the ones which have intentionally different annotations
-    excludes = {'anti_aliasing', 'background', 'border_color', 'var_item', 'screenshot'}
+    excludes = {
+        'anti_aliasing',
+        'background',
+        'border_color',
+        'var_item',
+        'screenshot',
+        'cpos',  # The CLI takes the named camera positions only, not a full one
+    }
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
 
@@ -1143,6 +1152,13 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
 
 class CasesPlot:
+    @parametrize(cpos=['xy', 'iso'])
+    def case_cpos(self, default_plot_kwargs: dict, cpos: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--cpos={cpos}'
+        kwargs.update(cpos=cpos)
+        return tokens, kwargs
+
     @parametrize(offscreen=['True', 'yes', 'y', 'true'])
     def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
         kwargs = default_plot_kwargs
@@ -1218,6 +1234,7 @@ class CasesPlot:
             ('--color=[0.1,1,0]', dict(color=[0.1, 1, 0])),
             ('--clim [0.1,1]', dict(clim=[0.1, 1])),
             ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
+            ('--static', dict(static=True)),
         ]
     )
     @case(tags=['kwargs', 'add_mesh'])
@@ -1608,6 +1625,7 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ compare      Compare two or more mesh files side-by-side.          │
         │ convert      Convert a mesh file to another format.                │
         │ plot         Plot one or more mesh files in an interactive window  │
         │              that can be customized with various options.          │
@@ -1860,3 +1878,267 @@ def test_print(
     out, err = capture_out_err(capsys)
     assert err == ''
     assert out == expected
+
+
+@pytest.fixture
+def mock_plot_compare(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'plot_compare')
+
+
+@pytest.fixture
+def tmp_compare_files(tmp_example_dir: Path) -> list[Path]:
+    """Write two readable meshes to compare, in a directory which is the cwd."""
+    paths = []
+    for name, mesh in [('sphere', pv.Sphere()), ('cube', pv.Cube())]:
+        mesh.save(path := tmp_example_dir / f'{name}.vtp')
+        paths.append(path)
+    return paths
+
+
+def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that pv.plot_compare is called with the expected arguments."""
+    main(f'compare {tmp_compare_files[0].name} {tmp_compare_files[1].name}')
+
+    mock_plot_compare.assert_called_once()
+    kwargs = mock_plot_compare.call_args.kwargs
+    assert len(kwargs['datasets']) == 2
+    # The file names are used as the labels by default
+    assert kwargs['labels'] == ['sphere', 'cube']
+    assert kwargs['link'] is None
+    assert kwargs['shape'] is None
+    assert kwargs['dataset_kwargs'] == {}
+    assert kwargs['plotter_kwargs']['off_screen'] is None
+    assert kwargs['show_kwargs'] == {'full_screen': None, 'interactive': True}
+
+
+@pytest.mark.parametrize(
+    ('tokens', 'argument', 'expected'),
+    [
+        ('', 'link', None),
+        ('--link', 'link', True),
+        ('--no-link', 'link', False),
+        ('--shape 3,1', 'shape', [3, 1]),
+        ('--shape "2 1"', 'shape', [2, 1]),
+        ('--shape 3|1', 'shape', '3|1'),
+        ('--cpos=xy', 'cpos', 'xy'),
+        ('', 'normalize', False),
+        ('--normalize', 'normalize', True),
+        ('', 'label_size', None),
+        ('--label-size 8', 'label_size', 8.0),
+        ('--label-size best_fit', 'label_size', 'best_fit'),
+        ('', 'label_position', None),
+        ('--label-position lower_right', 'label_position', 'lower_right'),
+    ],
+    ids=[
+        'link_default',
+        'link',
+        'no_link',
+        'shape_comma',
+        'shape_space',
+        'shape_descriptor',
+        'cpos',
+        'normalize_default',
+        'normalize',
+        'label_size_default',
+        'label_size_font',
+        'label_size_mode',
+        'label_position_default',
+        'label_position',
+    ],
+)
+def test_compare_forwards_arguments(
+    tmp_compare_files: list[Path],
+    mock_plot_compare: MagicMock,
+    tokens: str,
+    argument: str,
+    expected: Any,
+):
+    """Test that each argument of the command reaches `plot_compare` as it is spelled there."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(shlex.split(f'compare {names} {tokens}'))
+
+    assert mock_plot_compare.call_args.kwargs[argument] == expected
+
+
+@pytest.mark.parametrize(
+    ('files', 'expected'),
+    [
+        # The extension and the directory are noise when they are all the same
+        (['a.vtk', 'b.vtk'], ['a', 'b']),
+        # Neither the stem nor the file name alone tells these apart
+        (['file.vtk', 'file.vtp'], ['file.vtk', 'file.vtp']),
+        (['run1/out.vtk', 'run2/out.vtk'], ['run1/out.vtk', 'run2/out.vtk']),
+        # Nothing tells apart the same path given more than once
+        (['a.vtk', 'a.vtk'], ['a.vtk', 'a.vtk']),
+    ],
+    ids=['stem', 'extension', 'directory', 'duplicate'],
+)
+def test_compare_labels_are_unique(
+    tmp_example_dir: Path, mock_plot_compare: MagicMock, files: list[str], expected: list[str]
+):
+    """Test that each subplot is labelled with enough of its path to tell them apart."""
+    for name in files:
+        (path := tmp_example_dir / name).parent.mkdir(exist_ok=True)
+        pv.Sphere().save(path)
+
+    main(f'compare {" ".join(files)}')
+
+    # A label which needs the directory to tell it apart is spelled the way the
+    # platform spells a path, e.g. `run1\out.vtk` on Windows
+    assert mock_plot_compare.call_args.kwargs['labels'] == [str(Path(name)) for name in expected]
+
+
+def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that explicit labels are used instead of the file names."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} --labels one two')
+
+    assert mock_plot_compare.call_args.kwargs['labels'] == ['one', 'two']
+
+
+def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that supplementary keyword arguments are forwarded to add_mesh."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} --show_edges=True --color=red')
+
+    assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {
+        'show_edges': True,
+        'color': 'red',
+    }
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_compare_kwargs_hyphen_warns(
+    tmp_compare_files: list[Path], mock_plot_compare: MagicMock, capsys: pytest.CaptureFixture
+):
+    """Test that a hyphen in a supplementary keyword argument is pointed out."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} --show-edges=True')
+
+    _, err = capture_out_err(capsys)
+    assert 'A hyphen `-` has been used as supplementary keyword' in err
+    assert '--show_edges=True' in err.replace('\n', '').replace('│', '')
+    # The argument is still forwarded, with the hyphenated name
+    assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {'show-edges': True}
+
+
+def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that the outline drawn in each subplot encloses every mesh."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names}')
+    assert mock_plot_compare.call_args.kwargs['reference_mesh'] is None
+
+    main(f'compare {names} --outline')
+    outline = mock_plot_compare.call_args.kwargs['reference_mesh']
+    meshes = pv.MultiBlock([pv.read(path) for path in tmp_compare_files])
+    assert outline.bounds == meshes.bounds
+
+
+def test_compare_label_positions_are_the_ones_which_can_be_drawn():
+    """Test that the positions offered are the ones a label can be drawn in."""
+    from pyvista._cli.utils import LabelPosition
+    from pyvista.plotting.text import _TEXT_POSITIONS
+
+    assert set(get_args(LabelPosition)) == set(_TEXT_POSITIONS)
+
+
+@pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize(
+    ('tokens', 'remedy'),
+    [
+        ('--outline', 'Omit `--outline`'),
+        # Normalizing is the way to keep the shared camera which was asked for
+        ('--link', 'Use `--no-link` to fit each subplot to its own mesh, or `--normalize`'),
+    ],
+)
+def test_compare_too_small_warning_advises_the_command(
+    tmp_example_dir: Path,
+    capsys: pytest.CaptureFixture,
+    mocker: MockerFixture,
+    tokens: str,
+    remedy: str,
+):
+    """Test that the advice for a barely visible mesh names the options of this command.
+
+    `plot_compare` suggests its own arguments, which are not the ones a command line
+    user has to hand: the outline is drawn by this command rather than given to it.
+    """
+    for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
+        mesh.save(tmp_example_dir / f'{name}.vtp')
+
+    # The comparison itself is drawn for real, warnings and all, but not shown: these
+    # tests are run by a job which does no plotting, as every other one here mocks
+    mocker.patch.object(pv.Plotter, 'show')
+    main(f'compare tiny.vtp huge.vtp {tokens} --off-screen')
+
+    _, err = capture_out_err(capsys)
+    # The message is wrapped and padded to the width of the panel it is printed in
+    flattened = ' '.join(err.replace('│', ' ').split())
+    assert 'too small to make out' in flattened
+    assert remedy in flattened
+    # The arguments of `plot_compare` are not mentioned, since they cannot be given here
+    assert 'reference_mesh' not in flattened
+    assert 'link=False' not in flattened
+
+
+def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):
+    """Test that a warning this command has nothing to add to is still raised."""
+
+    def warn(**kwargs):  # noqa: ARG001
+        warnings.warn('something else entirely', UserWarning, stacklevel=2)
+
+    mocker.patch.object(pv, 'plot_compare', side_effect=warn)
+
+    names = ' '.join(path.name for path in tmp_compare_files)
+    with pytest.warns(UserWarning, match='something else entirely'):
+        main(f'compare {names}')
+
+
+def test_compare_glob_expands_files(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
+    """Test that glob patterns are expanded, as they are for the plot command."""
+    main('compare *.vtp')
+
+    assert len(mock_plot_compare.call_args.kwargs['datasets']) == len(tmp_compare_files)
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_compare_one_file_raises(tmp_compare_files: list[Path], capsys: pytest.CaptureFixture):
+    """Test that comparing a single file points at the plot command instead."""
+    with pytest.raises(SystemExit) as e:
+        main(f'compare {tmp_compare_files[0].name}')
+
+    assert e.value.code == 1
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'At least two readable paths are needed to compare, got 1.' in err
+    assert 'pyvista plot' in err
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_compare_raises(tmp_compare_files: list[Path], capsys: pytest.CaptureFixture):
+    """Test that the compare CLI reports exceptions raised by pv.plot_compare."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    with pytest.raises(SystemExit) as e:
+        main(f'compare {names} --labels only-one')
+
+    assert e.value.code == 1
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'The following exception has been raised when calling  ' in err
+    assert 'pv.plot_compare' in err
+    assert 'Number of labels (1) must match the number of datasets (2).' in err
+
+
+def test_compare_help(capsys: pytest.CaptureFixture):
+    main('compare --help')
+
+    expected = textwrap.dedent(
+        """\
+        Usage: pyvista compare PATH... [OPTIONS]
+
+        Compare two or more mesh files side-by-side.
+        """
+    )
+    out, err = capture_out_err(capsys)
+    assert err == ''
+    assert expected == '\n'.join(out.split('\n')[:4])

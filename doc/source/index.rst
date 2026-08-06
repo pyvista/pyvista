@@ -27,6 +27,13 @@
    </p>
 
 
+.. Register the top-level ``pyvista`` module so that ``:mod:`pyvista``` and the
+   Python module index resolve to this page. This must not be immediately
+   followed by a ``raw`` directive: docutils propagates the empty target's id
+   onto the next node, and a raw node is written verbatim without an ``id``.
+
+.. py:module:: pyvista
+
 Overview
 ********
 
