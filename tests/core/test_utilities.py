@@ -1177,13 +1177,16 @@ def test_linkcode_resolve():
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
 
-    # edit mode should still include the line span, just under /edit/ instead
-    # of /blob/, so the edit page opens at the same lines as [source] does
-    link = linkcode_resolve(
-        'py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}, edit=True
-    )
+    # the blob view highlights the full definition
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    link = linkcode_resolve('py', info)
+    assert re.search(r'#L\d+-L\d+$', link)
+
+    # the edit view only gets the first line: GitHub's editor scrolls to the
+    # bottom of a range rather than the top, landing past the definition
+    link = linkcode_resolve('py', info, edit=True)
     assert '/edit/' in link
-    assert '#L' in link
+    assert re.search(r'#L\d+$', link)
 
 
 def test_fix_edit_link_button_gallery_example():
@@ -1201,14 +1204,15 @@ def test_fix_edit_link_button_gallery_index_falls_through():
 
 
 def test_fix_edit_link_button_autosummary_stub():
-    # Autosummary stubs should resolve to the same location as the page's
-    # [source] button -- same file, same line span -- just in edit mode
+    # Autosummary stubs should resolve to the same file as the page's
+    # [source] button, at its first line only -- not the full range, since
+    # GitHub's edit view scrolls to the bottom of a range rather than the top
     pagename = 'api/core/_autosummary/pyvista.core.DataObject'
     link = fix_edit_link_button(pagename, 'default-link')
     assert link is not None
     assert '/edit/' in link
     assert 'dataobject.py' in link
-    assert '#L' in link
+    assert re.search(r'#L\d+$', link)
 
 
 def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():

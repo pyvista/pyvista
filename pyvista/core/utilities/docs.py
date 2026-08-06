@@ -20,9 +20,11 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         With keys "module" and "fullname".
 
     edit : bool, default=False
-        Link to the GitHub edit page instead of the blob view. The line span
-        is included either way, so the edit page opens with the same lines
-        already scrolled to and selected.
+        Link to the GitHub edit page instead of the blob view. The blob view
+        gets the full line range highlighted; the edit page only gets the
+        first line, since GitHub's editor scrolls to the *bottom* of a range
+        rather than the top, which lands past the definition it's meant to
+        open on.
 
     Returns
     -------
@@ -89,7 +91,14 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     except Exception:  # noqa: BLE001 # pragma: no cover
         lineno = None
 
-    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno else ''
+    if not lineno:
+        linespec = ''
+    elif edit:
+        # GitHub's edit view scrolls to the bottom of a line range, not the
+        # top, so a single line lands on the definition instead of past it.
+        linespec = f'#L{lineno}'
+    else:
+        linespec = f'#L{lineno}-L{lineno + len(source) - 1}'
 
     if 'dev' in pv.__version__:
         kind = 'main'
