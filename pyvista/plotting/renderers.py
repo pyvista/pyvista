@@ -179,9 +179,9 @@ class Renderers(_NoNewAttrMixin):
 
     subplot_seams : bool, optional
         Draw a thin line between neighboring subplots. Defaults to
-        ``True`` when there is more than one subplot (``shape != (1,
-        1)``) and ``False`` otherwise. Has no effect for a single
-        subplot, since there are no neighbors to separate.
+        the plotter's :attr:`~pyvista.Plotter.theme` ``subplot_seams``.
+        Has no effect for a single subplot, since there are no
+        neighbors to separate.
 
     """
 
@@ -209,12 +209,13 @@ class Renderers(_NoNewAttrMixin):
         # the occupied plotting area" -- the same concept whether there's
         # one render window or a grid of them -- so it no longer turns
         # itself on implicitly for multi-subplot layouts. That look now
-        # lives behind `subplot_seams`, which defaults on for grids
-        # since that's the only place seams between neighbors exist.
+        # lives behind `subplot_seams`, which theme.subplot_seams defaults
+        # on -- it only ever has an effect once there's more than one
+        # renderer, so a single subplot is unaffected either way.
         if border is None:
             border = False
         if subplot_seams is None:
-            subplot_seams = shape != (1, 1)
+            subplot_seams = plotter.theme.subplot_seams
         if border_color is None:
             border_color = plotter.theme.border_color
         if border_width is None:

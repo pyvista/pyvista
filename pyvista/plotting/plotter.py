@@ -451,6 +451,8 @@ class BasePlotter(_BoundsSizeMixin):
             border_color = self._theme.border_color
         if border_width is None:
             border_width = self._theme.border_width
+        if subplot_seams is None:
+            subplot_seams = self._theme.subplot_seams
 
         # add renderers
         self.renderers = Renderers(

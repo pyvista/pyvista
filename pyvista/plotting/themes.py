@@ -1821,6 +1821,7 @@ class Theme(_ConfigBase):
         '_slider_styles',
         '_smooth_shading',
         '_split_sharp_edges',
+        '_subplot_seams',
         '_title',
         '_trame',
         '_transparent_background',
@@ -1851,6 +1852,7 @@ class Theme(_ConfigBase):
         self._outline_color = Color('white')
         self._border_color = Color('black')
         self._border_width = 1.0
+        self._subplot_seams = True
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
@@ -2598,6 +2600,27 @@ class Theme(_ConfigBase):
         self._border_width = float(border_width)
 
     @property
+    def subplot_seams(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to draw a line between neighboring subplots by default.
+
+        Used when a ``Plotter`` has more than one subplot and no
+        explicit ``subplot_seams`` is provided. Has no effect on a
+        single-subplot ``Plotter``, since there are no neighbors to
+        separate.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.subplot_seams = False
+
+        """
+        return self._subplot_seams
+
+    @subplot_seams.setter
+    def subplot_seams(self, subplot_seams: bool):
+        self._subplot_seams = bool(subplot_seams)
+
+    @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default floor color.
 
@@ -3183,6 +3206,7 @@ class Theme(_ConfigBase):
             'Edge color': 'edge_color',
             'Border color': 'border_color',
             'Border width': 'border_width',
+            'Subplot seams': 'subplot_seams',
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',
