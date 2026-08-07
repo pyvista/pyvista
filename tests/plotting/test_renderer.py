@@ -240,9 +240,13 @@ def test_add_border_edges_single_side(side):
 
 def _overlay_seam_count(pl):
     overlay = pl.renderers.border_overlay_renderer
-    if overlay is None or overlay._border_actor is None:
+    if overlay is None:
         return 0
-    return overlay._border_actor.GetMapper().GetInput().GetNumberOfLines()
+    count = 0
+    for actor in (overlay._border_actor, overlay._border_actor_secondary):
+        if actor is not None:
+            count += actor.GetMapper().GetInput().GetNumberOfLines()
+    return count
 
 
 def _per_renderer_has_border(pl):
@@ -475,8 +479,18 @@ def test_border_render_outer_frame_only_dark_theme():
     assert not any(100 < c < 200 for group in col_groups for c in group)
 
 
-def test_border_render_outer_frame_and_seams_dark_theme():
-    """``border=True`` layers cleanly on top of the default ``subplot_seams=True``."""
+def test_border_render_outer_frame_and_seams_are_the_same_thickness_dark_theme():
+    """``border=True`` layers cleanly on top of the default ``subplot_seams=True``.
+
+    Regression test: the outer frame sits exactly on the overlay
+    renderer's own 0/1 viewport boundary, where VTK's 2D rasterizer
+    clips away roughly half of a line's width, while an interior seam
+    (e.g. at ``x=0.5``) is unaffected. Left uncompensated, the outer
+    frame renders visibly thinner than the interior seams for the same
+    nominal ``border_width`` -- see :meth:`Renderer.add_border`, which
+    doubles the drawn width of any boundary-touching line to correct
+    for this.
+    """
     width = 10
     pl = pv.Plotter(
         shape=(2, 2),
@@ -491,9 +505,23 @@ def test_border_render_outer_frame_and_seams_dark_theme():
         pl.close()
 
     band_rows, band_cols = _white_band_rows_cols(img)
+    row_groups = _band_groups(band_rows)
+    col_groups = _band_groups(band_cols)
     # Outer-top, interior seam, outer-bottom (and the same across columns).
-    assert len(_band_groups(band_rows)) == 3
-    assert len(_band_groups(band_cols)) == 3
+    assert len(row_groups) == 3
+    assert len(col_groups) == 3
+
+    top, seam, bottom = (len(group) for group in row_groups)
+    left, vseam, right = (len(group) for group in col_groups)
+    # All six bands are the same requested `border_width`, so none of them
+    # should be noticeably thicker or thinner than any other -- in
+    # particular the outer frame (top/bottom/left/right) must match the
+    # interior seam (seam/vseam), not come out at roughly half its
+    # thickness.
+    thicknesses = (top, seam, bottom, left, vseam, right)
+    assert max(thicknesses) <= min(thicknesses) * 1.5
+    for thickness in thicknesses:
+        assert width * 0.7 <= thickness <= width * 1.5
 
 
 def test_border_single_plotter_matches_multi_subplot_outer_frame_dark_theme():
@@ -590,10 +618,11 @@ def test_border_outer_frame_matches_via_top_level_plot_functions_dark_theme(
     assert not any(100 < r < 200 for group in row_groups for r in group)
     assert not any(100 < c < 200 for group in col_groups for c in group)
 
-    # Same edge-clipped thickness in both cases: half of `border_width`,
-    # since the line is centered on the window boundary.
+    # Same thickness in both cases, and tracking the requested `border_width`
+    # (not e.g. half of it, which is what an uncompensated line centered on
+    # the window boundary would render at -- see `add_border`).
     thickness = len(row_groups[0])
-    assert width * 0.3 <= thickness <= width * 0.8
+    assert width * 0.7 <= thickness <= width * 1.5
 
 
 def test_bad_legend_origin_and_size(sphere):
