@@ -20,10 +20,10 @@ from pyvista import examples
 # %%
 # Load Dataset
 # ------------
-# Load a TotalSegmentator dataset. Can be the male
-# (:func:`~pyvista.examples.download_whole_body_ct_male`) or female
-# (:func:`~pyvista.examples.download_whole_body_ct_female`) subjects
-# included with `PyVista`, or any other subject from the
+# Load a TotalSegmentator dataset. Can be the
+# :func:`male <pyvista.examples.download_whole_body_ct_male>` or
+# :func:`female <pyvista.examples.download_whole_body_ct_female>` female
+# subjects included with `PyVista`, or any other subject from the
 # `TotalSegmentator dataset <https://zenodo.org/records/10047292>`_.
 dataset = examples.download_whole_body_ct_female()
 
