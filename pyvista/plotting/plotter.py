@@ -304,10 +304,9 @@ class BasePlotter(_BoundsSizeMixin):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, optional
+    border : bool, default: False
         Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots. Default is ``False``,
-        regardless of ``shape``.
+        around the whole grid of subplots, regardless of ``shape``.
 
         .. versionchanged:: 0.49
 
@@ -8068,10 +8067,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, optional
+    border : bool, default: False
         Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots. Default is ``False``,
-        regardless of ``shape``.
+        around the whole grid of subplots, regardless of ``shape``.
 
         .. versionchanged:: 0.49
 

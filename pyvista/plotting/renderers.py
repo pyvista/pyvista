@@ -164,10 +164,9 @@ class Renderers(_NoNewAttrMixin):
     groups : list, optional
         A list of sequences that defines the grouping of the sub-datasets.
 
-    border : bool, optional
+    border : bool, default: False
         Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots. Default is ``False``,
-        regardless of ``shape``.
+        around the whole grid of subplots, regardless of ``shape``.
 
         .. versionchanged:: 0.49
 
