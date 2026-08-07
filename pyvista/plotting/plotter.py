@@ -65,6 +65,8 @@ from .actor import Actor
 from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
+from .component_registry import _pending_component_names
+from .component_registry import _resolve_pending_component
 from .component_registry import register_plotter_component as _register_plotter_component
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
@@ -305,13 +307,15 @@ class BasePlotter(_BoundsSizeMixin):
     border : bool, default: False
         Draw a border around each render window.
 
-    border_color : ColorLike, default: 'k'
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.
@@ -369,7 +373,7 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         shape: Sequence[int] | str = (1, 1),
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
+        border_color: ColorLike | None = None,
         border_width: float = 2.0,
         title: str | None = None,
         splitting_position: float | None = None,
@@ -504,9 +508,6 @@ class BasePlotter(_BoundsSizeMixin):
         Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
         and dataset extension points present the same lookup contract.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.plotting.component_registry import _resolve_pending_component  # noqa: PLC0415
-
         if _resolve_pending_component(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)
@@ -521,8 +522,6 @@ class BasePlotter(_BoundsSizeMixin):
         completion surface them without paying the plugin import cost
         ahead of time.
         """
-        from pyvista.plotting.component_registry import _pending_component_names  # noqa: PLC0415
-
         return sorted({*super().__dir__(), *_pending_component_names()})
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
@@ -1300,8 +1299,6 @@ class BasePlotter(_BoundsSizeMixin):
 
     def disable_3_lights(self) -> None:
         """Please use ``enable_lightkit``, this method has been deprecated."""
-        from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
 
@@ -2244,6 +2241,21 @@ class BasePlotter(_BoundsSizeMixin):
         Any render callbacks added with
         :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
         and the ``render_event=False`` option set will still execute on any call.
+
+        Examples
+        --------
+        Render scene changes while keeping the plotter open.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Sphere()
+        >>> _ = pl.add_mesh(mesh)
+        >>> text_actor = pl.add_text("Pressing 'q' will shrink the sphere")
+        >>> pl.show(auto_close=False)  # doctest:+SKIP
+        >>> mesh.points *= 0.5  # doctest:+SKIP
+        >>> pl.remove_actor(text_actor)  # doctest:+SKIP
+        >>> pl.show(auto_close=True)  # doctest:+SKIP
+
         """
         if (
             self.render_window is not None
@@ -2422,6 +2434,20 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         increment : float
             Amount to increment point size and line width.
+
+        Examples
+        --------
+        Increase the point size and line width for every actor.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> point_actor = pl.add_points(pv.PointSet([(0.0, 0.0, 0.0)]), point_size=10)
+        >>> line_actor = pl.add_mesh(pv.Line(), line_width=2)
+        >>> pl.increment_point_size_and_line_width(3)
+        >>> point_actor.prop.point_size
+        13.0
+        >>> line_actor.prop.line_width
+        5.0
 
         """
         for renderer in self.renderers:
@@ -6413,6 +6439,23 @@ class BasePlotter(_BoundsSizeMixin):
         :vtk:`vtkActor2D`
             VTK label actor.  Can be used to change properties of the labels.
 
+        Examples
+        --------
+        Label points with their elevation.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=8, phi_resolution=8)
+        >>> mesh['Elevation'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars='Elevation')
+        >>> _ = pl.add_point_scalar_labels(
+        ...     mesh,
+        ...     'Elevation',
+        ...     point_size=20,
+        ...     font_size=20,
+        ... )
+        >>> pl.show()
+
         """
         if not is_pyvista_dataset(points):
             points, _ = _coerce_pointslike_arg(points, copy=False)
@@ -6878,6 +6921,20 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         point : sequence[float]
             Point to fly to in the form of ``(x, y, z)``.
+
+        Examples
+        --------
+        Animate the camera's focal point from the sphere to the cube.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(center=(-1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> text_actor = pl.add_text("Pressing 'q' will center on the cube")
+        >>> pl.show(auto_close=False)  # doctest:+SKIP
+        >>> pl.fly_to((1, 0, 0))  # doctest:+SKIP
+        >>> pl.remove_actor(text_actor)  # doctest:+SKIP
+        >>> pl.show(auto_close=True)  # doctest:+SKIP
 
         """
         self._get_iren_not_none().fly_to(self.renderer, point)
@@ -7987,13 +8044,15 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     border : bool, optional
         Draw a border around each render window.
 
-    border_color : ColorLike, default: "k"
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
@@ -8056,7 +8115,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
+        border_color: ColorLike | None = None,
         border_width: float = 2.0,
         window_size: list[int] | None = None,
         line_smoothing: bool = False,  # noqa: FBT001, FBT002

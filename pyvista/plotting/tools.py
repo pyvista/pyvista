@@ -15,6 +15,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.errors import DeprecationError
 
 from .colors import Color
 
@@ -779,8 +780,6 @@ def check_math_text_support() -> bool:  # pragma: no cover
         Returns False for compatibility.
 
     """
-    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
     # Deprecated on v0.47.0, estimated removal on v0.50.0
     msg = '`check_math_text_support` is now imported from `pyvista.report`'
     DeprecationError(msg)
@@ -797,8 +796,6 @@ def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
         Returns False for compatibility.
 
     """
-    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
     # Deprecated on v0.47.0, estimated removal on v0.50.0
     msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
     DeprecationError(msg)

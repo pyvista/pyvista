@@ -1773,6 +1773,7 @@ class Theme(_ConfigBase):
         '_before_close_callback',
         '_before_close_callback',
         '_below_range_color',
+        '_border_color',
         '_camera',
         '_cmap',
         '_color',
@@ -1847,6 +1848,7 @@ class Theme(_ConfigBase):
         self._line_width = 1.0
         self._point_size = 5.0
         self._outline_color = Color('white')
+        self._border_color = Color('black')
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
@@ -2548,6 +2550,27 @@ class Theme(_ConfigBase):
         self._outline_color = Color(outline_color)
 
     @property
+    def border_color(self) -> Color:  # numpydoc ignore=RT01
+        """Return or set the default border color of subplots.
+
+        .. versionadded:: 0.49
+
+        This is the color of the line(s) drawn between subplots when a
+        plotter has more than one renderer, e.g. via ``shape``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.border_color = 'white'
+
+        """
+        return self._border_color
+
+    @border_color.setter
+    def border_color(self, border_color: ColorLike):
+        self._border_color = Color(border_color)
+
+    @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default floor color.
 
@@ -3132,6 +3155,7 @@ class Theme(_ConfigBase):
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
             'Outline color': 'outline_color',
+            'Border color': 'border_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',
             'Colorbar - horizontal': 'colorbar_horizontal',
@@ -3454,6 +3478,7 @@ class DarkTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'white'
         self.edge_color = 'white'
+        self.border_color = 'white'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
@@ -3490,6 +3515,7 @@ class ParaViewTheme(Theme):
         self.color = 'white'
         self.outline_color = 'white'
         self.edge_color = 'black'
+        self.border_color = 'black'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'gold'
         self.axes.z_color = 'green'
@@ -3537,6 +3563,7 @@ class DocumentTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'black'
         self.edge_color = 'black'
+        self.border_color = 'black'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
