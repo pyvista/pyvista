@@ -406,6 +406,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._charts: Charts | None = None
 
         self._border_actor: _vtk.vtkActor2D | None = None
+        self._border_actor_secondary: _vtk.vtkActor2D | None = None
+        self._border_requested_width: float | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -860,12 +862,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(Color(color).float_rgb)
-        actor.GetProperty().SetLineWidth(width)
+        # Every edge drawn here sits exactly on this renderer's own 0/1
+        # viewport boundary, by construction. VTK's 2D line rasterizer
+        # clips away roughly half of a line's width right at that
+        # boundary, so the drawn width is doubled to compensate -- the
+        # border then actually renders at the requested `width`, e.g.
+        # matching interior lines drawn at the same nominal width.
+        actor.GetProperty().SetLineWidth(width * 2)
 
         self.AddViewProp(actor)
         self.Modified()
 
         self._border_actor = actor
+        self._border_requested_width = width
         return actor
 
     @property
@@ -875,9 +884,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def border_width(self):  # numpydoc ignore=RT01
-        """Return the border width."""
+        """Return the border width.
+
+        This is the width originally requested, not the (doubled) value
+        actually given to VTK to compensate for edge clipping -- see
+        :meth:`add_border`.
+        """
         if self.has_border:
-            return self._border_actor.GetProperty().GetLineWidth()  # type: ignore[union-attr]
+            return self._border_requested_width
         return 0
 
     @property
@@ -888,17 +902,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return None
 
     def _drop_border_actor(self):
-        """Remove this renderer's own border actor, if any.
+        """Remove this renderer's own border actor(s), if any.
 
         Used when subplot seams are being drawn by a shared overlay
         renderer so neighboring renderers don't each rasterize their
         own clipped copy of the boundary line.
         """
         border_actor = self._border_actor
-        if border_actor is None:
+        secondary_actor = self._border_actor_secondary
+        if border_actor is None and secondary_actor is None:
             return
-        self.RemoveViewProp(border_actor)
+        if border_actor is not None:
+            self.RemoveViewProp(border_actor)
+        if secondary_actor is not None:
+            self.RemoveViewProp(secondary_actor)
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self.Modified()
 
     def add_chart(self, chart, *charts):
@@ -3980,6 +4000,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._box_object = None
         self._marker_actor = None
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self.cube_axes_actor = None
         self._render_passes.close()
 
@@ -4037,6 +4059,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self._box_object = None
         # remove reference to parent last
         self.parent = None

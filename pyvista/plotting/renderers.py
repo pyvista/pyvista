@@ -108,6 +108,39 @@ def _collect_seam_segments(
     return segments
 
 
+def _make_seam_line_actor(
+    segments: list[_SeamSegment],
+    *,
+    color,
+    width: float,
+) -> _vtk.vtkActor2D:
+    """Build a 2D actor drawing ``segments`` as lines, in normalized viewport coordinates."""
+    points = _vtk.vtkPoints()
+    lines = _vtk.vtkCellArray()
+    for (x0, y0), (x1, y1) in segments:
+        p0 = points.InsertNextPoint(x0, y0, 0.0)
+        p1 = points.InsertNextPoint(x1, y1, 0.0)
+        lines.InsertNextCell(2)
+        lines.InsertCellPoint(p0)
+        lines.InsertCellPoint(p1)
+    poly = _vtk.vtkPolyData()
+    poly.SetPoints(points)
+    poly.SetLines(lines)
+
+    coordinate = _vtk.vtkCoordinate()
+    coordinate.SetCoordinateSystemToNormalizedViewport()
+
+    mapper = _vtk.vtkPolyDataMapper2D()
+    mapper.SetInputData(poly)
+    mapper.SetTransformCoordinate(coordinate)
+
+    actor = _vtk.vtkActor2D()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(Color(color).float_rgb)
+    actor.GetProperty().SetLineWidth(width)
+    return actor
+
+
 class Renderers(_NoNewAttrMixin):
     """Organize Renderers for ``pyvista.Plotter``.
 
@@ -723,19 +756,28 @@ class Renderers(_NoNewAttrMixin):
     ) -> Renderer | None:
         """Create an overlay renderer that draws every requested line once.
 
-        Each requested edge of a subplot viewport -- interior seams
-        when ``interior`` is true, the outer perimeter when
-        ``exterior`` is true -- is expressed directly in
-        window-normalized coordinates, so both halves of every line
-        rasterize to the same pixel row/column regardless of how any
-        particular neighbor's viewport happens to round.
+        Interior seams are expressed directly in window-normalized
+        coordinates, so both halves of every seam rasterize to the same
+        pixel row/column regardless of how any particular neighbor's
+        viewport happens to round.
+
+        The exterior segments sit exactly on the overlay renderer's own
+        0/1 viewport boundary -- the render window's edge -- where VTK's
+        2D rasterizer clips away roughly half of a line's width. They're
+        drawn from a separate actor at double the requested width to
+        compensate, so the frame actually renders at `border_width`,
+        matching any interior seams drawn at the same nominal width.
+        Two actors are only needed when both kinds of segment are
+        present; either alone still uses one.
         """
-        segments = _collect_seam_segments(
-            [renderer.GetViewport() for renderer in self._renderers],
-            interior=interior,
-            exterior=exterior,
+        viewports = [renderer.GetViewport() for renderer in self._renderers]
+        interior_segments = (
+            _collect_seam_segments(viewports, interior=True, exterior=False) if interior else []
         )
-        if not segments:
+        exterior_segments = (
+            _collect_seam_segments(viewports, interior=False, exterior=True) if exterior else []
+        )
+        if not interior_segments and not exterior_segments:
             return None
 
         overlay = Renderer(self._plotter, border=False)
@@ -744,32 +786,24 @@ class Renderers(_NoNewAttrMixin):
         overlay.SetErase(False)
         overlay.SetBackgroundAlpha(0.0)
 
-        points = _vtk.vtkPoints()
-        lines = _vtk.vtkCellArray()
-        for (x0, y0), (x1, y1) in segments:
-            p0 = points.InsertNextPoint(x0, y0, 0.0)
-            p1 = points.InsertNextPoint(x1, y1, 0.0)
-            lines.InsertNextCell(2)
-            lines.InsertCellPoint(p0)
-            lines.InsertCellPoint(p1)
-        poly = _vtk.vtkPolyData()
-        poly.SetPoints(points)
-        poly.SetLines(lines)
+        primary_actor = None
+        if interior_segments:
+            primary_actor = _make_seam_line_actor(
+                interior_segments, color=border_color, width=border_width
+            )
+            overlay.AddViewProp(primary_actor)
+        if exterior_segments:
+            exterior_actor = _make_seam_line_actor(
+                exterior_segments, color=border_color, width=border_width * 2
+            )
+            overlay.AddViewProp(exterior_actor)
+            if primary_actor is None:
+                primary_actor = exterior_actor
+            else:
+                overlay._border_actor_secondary = exterior_actor
 
-        coordinate = _vtk.vtkCoordinate()
-        coordinate.SetCoordinateSystemToNormalizedViewport()
-
-        mapper = _vtk.vtkPolyDataMapper2D()
-        mapper.SetInputData(poly)
-        mapper.SetTransformCoordinate(coordinate)
-
-        actor = _vtk.vtkActor2D()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetColor(Color(border_color).float_rgb)
-        actor.GetProperty().SetLineWidth(border_width)
-
-        overlay.AddViewProp(actor)
-        overlay._border_actor = actor
+        overlay._border_actor = primary_actor
+        overlay._border_requested_width = border_width
         return overlay
 
     @_deprecate_positional_args(allowed=['color'])
