@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import inspect
 import json
 import locale
 import os
@@ -102,6 +103,22 @@ warnings.filterwarnings(
     'always',
     category=PyVistaDeprecationWarning,
     message='Assigning a theme for a plotter instance is deprecated',
+)
+
+# Autosummary only documents members whose `__module__` matches the scanned
+# module, so `pyvista.examples`'s re-exported `load_*`/`download_*` functions
+# only get documented under their private `.examples`/`.downloads` submodule.
+# Set `__all__` on the live module (not in the package source) so they're
+# also documented at their public `pyvista.examples.*` path -- see
+# `autosummary_ignore_module_all` below.
+pv.examples.__all__ = sorted(
+    name
+    for name, obj in vars(pv.examples).items()
+    if not name.startswith('_')
+    and (
+        (inspect.ismodule(obj) and obj.__name__.startswith('pyvista.examples'))
+        or (inspect.isfunction(obj) and obj.__module__.startswith('pyvista.examples'))
+    )
 )
 
 # -- General configuration ------------------------------------------------
