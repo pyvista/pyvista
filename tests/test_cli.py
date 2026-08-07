@@ -1114,6 +1114,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     from collections.abc import Callable  # noqa: F401
     from typing import Literal  # noqa: F401
 
+    from pyvista import Plotter  # noqa: F401
     from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
     from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
     from pyvista.plotting._typing import ColorLike  # noqa: F401
