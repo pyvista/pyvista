@@ -1846,11 +1846,11 @@ class Theme(_ConfigBase):
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
         self._edge_color = Color('black')
-        self._border_width = 1.0
         self._line_width = 1.0
         self._point_size = 5.0
         self._outline_color = Color('white')
         self._border_color = Color('black')
+        self._border_width = 1.0
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 

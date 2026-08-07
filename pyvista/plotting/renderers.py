@@ -137,9 +137,6 @@ class Renderers(_NoNewAttrMixin):
         if border_width is None:
             border_width = plotter.theme.border_width
 
-        if border_color is None:
-            border_color = self._plotter.theme.border_color
-
         self.groups = np.empty((0, 4), dtype=int)
 
         if isinstance(shape, str):
