@@ -527,6 +527,75 @@ def test_border_single_plotter_matches_multi_subplot_outer_frame_dark_theme():
     assert np.array_equal(img_single, img_multi)
 
 
+@pytest.mark.parametrize(
+    ('func', 'datasets', 'kwargs'),
+    [
+        (
+            pv.plot,
+            [pv.Sphere()],
+            {
+                'theme': pv.themes.DarkTheme(),
+                'window_size': (300, 300),
+                'border': True,
+                'border_color': 'white',
+                'border_width': 10,
+                'return_img': True,
+            },
+        ),
+        (
+            pv.plot_compare,
+            [pv.Sphere(), pv.Cone()],
+            {
+                'plotter_kwargs': {
+                    'theme': pv.themes.DarkTheme(),
+                    'window_size': (300, 300),
+                    'border': True,
+                    'border_color': 'white',
+                    'border_width': 10,
+                    'subplot_seams': False,
+                },
+                'show_kwargs': {'return_img': True},
+            },
+        ),
+    ],
+    ids=['pv.plot (single subplot)', 'pv.plot_compare (multiple subplots)'],
+)
+def test_border_outer_frame_matches_via_top_level_plot_functions_dark_theme(
+    func, datasets, kwargs
+):
+    """``border=True, subplot_seams=False`` draws the same outer frame from the public API.
+
+    Goes through ``pv.plot`` and ``pv.plot_compare`` directly -- the
+    top-level, user-facing entry points -- rather than
+    ``Plotter``/``Renderers`` internals, so the outer border a user
+    actually gets for one subplot and for several can be compared
+    directly. Uses the dark theme and a large ``border_width`` for the
+    same reason as the ``Plotter``-level tests above: a thin line
+    would hide a thickness regression in anti-aliasing noise.
+    """
+    width = 10
+    img = func(datasets, **kwargs)
+
+    band_rows, band_cols = _white_band_rows_cols(img)
+    row_groups = _band_groups(band_rows)
+    col_groups = _band_groups(band_cols)
+
+    # Outer frame only: one band hugging each edge, nothing in the middle.
+    assert len(row_groups) == 2
+    assert len(col_groups) == 2
+    assert row_groups[0][0] == 0
+    assert row_groups[-1][-1] == 299
+    assert col_groups[0][0] == 0
+    assert col_groups[-1][-1] == 299
+    assert not any(100 < r < 200 for group in row_groups for r in group)
+    assert not any(100 < c < 200 for group in col_groups for c in group)
+
+    # Same edge-clipped thickness in both cases: half of `border_width`,
+    # since the line is centered on the window boundary.
+    thickness = len(row_groups[0])
+    assert width * 0.3 <= thickness <= width * 0.8
+
+
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
     pl = pv.Plotter()
