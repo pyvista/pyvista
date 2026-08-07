@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import pyvista as pv
-from pyvista import vtk_version_info
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .opts import InterpolationType
+from .opts import RepresentationType
 
 
 class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
@@ -251,12 +251,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         self.line_width = line_width
         if culling is not None:
             self.culling = culling
-        if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
-            warn_external(
-                '`edge_opacity` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.',
-                UserWarning,
-            )
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
         self.edge_opacity = edge_opacity
@@ -270,6 +264,15 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         * ``'surface'``
         * ``'wireframe'``
         * ``'points'``
+
+        The setter also accepts an integer or a
+        :class:`~pyvista.plotting.opts.RepresentationType` enum member.
+
+        See Also
+        --------
+        representation
+            Equivalent property which returns a
+            :class:`~pyvista.plotting.opts.RepresentationType` enum member.
 
         Examples
         --------
@@ -297,25 +300,50 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRepresentationAsString()
 
     @style.setter
-    def style(self, new_style: str):
-        new_style = new_style.lower()
+    def style(self, new_style: str | int | RepresentationType):
+        self.representation = new_style
 
-        if new_style == 'wireframe':
-            self.SetRepresentationToWireframe()
-            if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
-        elif new_style == 'points':
-            self.SetRepresentationToPoints()
-        elif new_style == 'surface':
-            self.SetRepresentationToSurface()
-        else:
-            msg = (
-                f'Invalid style "{new_style}".  Must be one of the following:\n'
-                '\t"surface"\n'
-                '\t"wireframe"\n'
-                '\t"points"\n'
-            )
-            raise ValueError(msg)
+    @property
+    def representation(self) -> RepresentationType:  # numpydoc ignore=RT01
+        """Return or set the visualization representation of the mesh.
+
+        The setter accepts a string (case insensitive), an integer, or a
+        :class:`~pyvista.plotting.opts.RepresentationType` enum member. One of:
+
+        * ``'points'`` / :attr:`~pyvista.plotting.opts.RepresentationType.POINTS`
+        * ``'wireframe'`` / :attr:`~pyvista.plotting.opts.RepresentationType.WIREFRAME`
+        * ``'surface'`` / :attr:`~pyvista.plotting.opts.RepresentationType.SURFACE`
+
+        See Also
+        --------
+        style
+            Equivalent property which returns the representation as a string.
+
+        Examples
+        --------
+        Get the default representation.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.representation
+        <RepresentationType.SURFACE: 2>
+
+        Set the representation using the enum.
+
+        >>> from pyvista.plotting.opts import RepresentationType
+        >>> prop.representation = RepresentationType.WIREFRAME
+        >>> prop.representation
+        <RepresentationType.WIREFRAME: 1>
+
+        """
+        return RepresentationType.from_any(self.GetRepresentation())
+
+    @representation.setter
+    def representation(self, value: str | int | RepresentationType):
+        value = RepresentationType.from_any(value)
+        self.SetRepresentation(value.value)
+        if value == RepresentationType.WIREFRAME and not self._color_set:
+            self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
@@ -461,16 +489,12 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        if vtk_version_info < (9, 3):
-            return 1.0
-        else:
-            return self.GetEdgeOpacity()
+        return self.GetEdgeOpacity()
 
     @edge_opacity.setter
     def edge_opacity(self, value: float):
         _check_range(value, (0, 1), 'edge_opacity')
-        if vtk_version_info >= (9, 3):
-            self.SetEdgeOpacity(value)
+        self.SetEdgeOpacity(value)
 
     @property
     def show_edges(self) -> bool:  # numpydoc ignore=RT01
@@ -1185,8 +1209,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         return self.GetAnisotropy()
@@ -1194,8 +1216,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     @anisotropy.setter
     def anisotropy(self, value: float):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
@@ -1261,8 +1281,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
-        from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
         ]

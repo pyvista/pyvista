@@ -11,8 +11,8 @@ from typing import overload
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -2385,7 +2385,7 @@ class Transform(
         self: Transform,
         point: VectorLike[float] | None,
         multiply_mode: Literal['pre', 'post'] | None,
-    ) -> tuple[None | Transform, None | Transform]:
+    ) -> tuple[Transform | None, Transform | None]:
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')

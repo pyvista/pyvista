@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import itertools
+
 import pytest
 
 import pyvista as pv
@@ -132,3 +134,22 @@ def test_too_many_scalar_bars():
             mesh = pv.Sphere()
             mesh[str(i)] = range(mesh.n_points)
             pl.add_mesh(mesh)
+
+
+@pytest.mark.parametrize('unique_bar', [True, False])
+@pytest.mark.parametrize('shape', [(1, 1), (2, 2), (3, 3)])
+def test_unique_scalar_bars(sphere, unique_bar: bool, shape: tuple[int, int]):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(shape=shape)
+    pairs = list(itertools.product(range(shape[0]), range(shape[1])))
+    for i, j in pairs:
+        pl.subplot(i, j)
+        pl.add_mesh(sphere, show_scalar_bar=True, scalar_bar_args={'unique_bar': unique_bar})
+
+    key_scalar_bars = [b for b in pl.scalar_bars.values() if b.GetTitle() == KEY]
+
+    if unique_bar:
+        assert len(key_scalar_bars) == shape[0] * shape[1]
+    else:
+        assert len(key_scalar_bars) == 1

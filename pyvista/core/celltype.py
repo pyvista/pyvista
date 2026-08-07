@@ -2,17 +2,65 @@
 
 from __future__ import annotations
 
+from enum import EnumMeta
 from enum import IntEnum
 import textwrap
+from types import MappingProxyType
+from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
+from typing import get_args
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.errors import PyVistaDeprecationWarning
 
+if TYPE_CHECKING:
+    from typing import Any
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
+
+# Canonical dimensions for abstract / placeholder cell types.
+# ``vtkCellTypeUtilities.GetDimension(value)`` returns ``0`` for these on
+# vtk<9.4 AND emits ``vtkGenericCell ERR| Unsupported cell type: N Setting to
+# vtkEmptyCell`` warnings via the ``vtkEmptyCell`` fallback. Using a hardcoded
+# table avoids the warnings and gives the correct dimension on every VTK
+# build. See https://github.com/pyvista/pyvista/issues/8634
+_ABSTRACT_DIMENSIONS: dict[int, _Dimension] = {
+    _vtk.VTK_PARAMETRIC_CURVE: 1,
+    _vtk.VTK_PARAMETRIC_SURFACE: 2,
+    _vtk.VTK_PARAMETRIC_TRI_SURFACE: 2,
+    _vtk.VTK_PARAMETRIC_QUAD_SURFACE: 2,
+    _vtk.VTK_PARAMETRIC_TETRA_REGION: 3,
+    _vtk.VTK_PARAMETRIC_HEX_REGION: 3,
+    _vtk.VTK_HIGHER_ORDER_EDGE: 1,
+    _vtk.VTK_HIGHER_ORDER_TRIANGLE: 2,
+    _vtk.VTK_HIGHER_ORDER_QUAD: 2,
+    _vtk.VTK_HIGHER_ORDER_POLYGON: 2,
+    _vtk.VTK_HIGHER_ORDER_TETRAHEDRON: 3,
+    _vtk.VTK_HIGHER_ORDER_WEDGE: 3,
+    _vtk.VTK_HIGHER_ORDER_PYRAMID: 3,
+    _vtk.VTK_HIGHER_ORDER_HEXAHEDRON: 3,
+    _vtk.VTK_LAGRANGE_PYRAMID: 3,
+    _vtk.VTK_BEZIER_PYRAMID: 3,
+}
+
+_DEPRECATED_CELL_TYPES = {
+    'PARAMETRIC_CURVE',
+    'PARAMETRIC_SURFACE',
+    'PARAMETRIC_TRI_SURFACE',
+    'PARAMETRIC_QUAD_SURFACE',
+    'PARAMETRIC_TETRA_REGION',
+    'PARAMETRIC_HEX_REGION',
+    'HIGHER_ORDER_POLYGON',
+}
+_RENAMED_CELL_TYPES = {
+    'HIGHER_ORDER_QUAD': 'HIGHER_ORDER_QUADRILATERAL',
+    'HIGHER_ORDER_EDGE': 'HIGHER_ORDER_CURVE',
+}
 
 _GRID_TEMPLATE_NO_IMAGE = """
 .. grid:: 1
@@ -38,7 +86,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
+            .. image:: /../_build/pyvista_plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
@@ -485,8 +533,14 @@ _CELL_TYPE_INFO = dict(
     PARAMETRIC_HEX_REGION=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_HEX_REGION),
     ####################################################################################
     # Higher order cells
+    # The name EDGE is deprecated in VTK 9.7, replaced with CURVE, but same value
+    # Update the value to VTK_HIGHER_ORDER_CURVE once 9.7 is the minimum supported version
+    HIGHER_ORDER_CURVE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
     HIGHER_ORDER_EDGE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
     HIGHER_ORDER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TRIANGLE),
+    # The name QUAD is deprecated in VTK 9.7, replaced with QUADRILATERAL, but same value
+    # Update the value to VTK_HIGHER_ORDER_QUADRILATERAL once 9.7 is the minimum supported version
+    HIGHER_ORDER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
     HIGHER_ORDER_QUAD=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
     HIGHER_ORDER_POLYGON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_POLYGON),
     HIGHER_ORDER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TETRAHEDRON),
@@ -608,7 +662,173 @@ _CELL_TYPE_INFO = dict(
 )
 
 
-class CellType(IntEnum):
+def _warn_deprecated_removed(member: CellType) -> None:
+    msg = f'{member!r} is deprecated and will be removed in a future version.'
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+def _warn_deprecated_renamed(name: str) -> None:
+    msg = (
+        f'CellType.{name} is deprecated and has been renamed. '
+        f'Use {_RENAMED_CELL_TYPES[name]} instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+class _CellTypeMeta(EnumMeta):
+    """Metaclass to enable class property definitions for CellType."""
+
+    _dimension_map: ClassVar[dict[_Dimension, frozenset[CellType]]] = {}
+    _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
+        MappingProxyType(_dimension_map)
+    )
+
+    def __getattribute__(cls, name: str) -> Any:
+        member = super().__getattribute__(name)
+        if name in _DEPRECATED_CELL_TYPES:
+            _warn_deprecated_removed(member)
+        elif name in _RENAMED_CELL_TYPES:
+            _warn_deprecated_renamed(name)
+        return member
+
+    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]  # noqa: ANN
+        member = super().__call__(value, *args, **kwargs)  # type: ignore[var-annotated]
+        name = member.name
+        if name in _DEPRECATED_CELL_TYPES:
+            _warn_deprecated_removed(member)
+        return member
+
+    @property
+    def dimension_map(cls) -> MappingProxyType[_Dimension, frozenset[CellType]]:
+        """Return a mapping with sets for all cell types grouped by topological dimension.
+
+        The groupings are derived from each member's :attr:`dimension`.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        dict
+            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            values with the respective :class:`CellType` members.
+
+        See Also
+        --------
+        dimension
+        pyvista.DataSet.max_cell_dimensionality
+        pyvista.DataSet.min_cell_dimensionality
+        pyvista.DataSet.distinct_cell_types
+
+        Examples
+        --------
+        Common 2D cell types such as :attr:`TRIANGLE` and :attr:`TRIANGLE_STRIP`
+        are in the 2D grouping.
+
+        >>> import pyvista as pv
+        >>> two_d = pv.CellType.dimension_map[2]
+        >>> pv.CellType.TRIANGLE in two_d
+        True
+        >>> pv.CellType.TRIANGLE_STRIP in two_d
+        True
+
+        Check whether a mesh contains only 2D cells by combining this with
+        :attr:`~pyvista.DataSet.distinct_cell_types`.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.distinct_cell_types <= pv.CellType.dimension_map[2]
+        True
+
+        Show all 0D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[0])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.EMPTY_CELL: 0>,
+         <CellType.VERTEX: 1>,
+         <CellType.POLY_VERTEX: 2>]
+
+        Show all 1D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[1])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.LINE: 3>,
+         <CellType.POLY_LINE: 4>,
+         <CellType.QUADRATIC_EDGE: 21>,
+         <CellType.CUBIC_LINE: 35>,
+         <CellType.PARAMETRIC_CURVE: 51>,
+         <CellType.HIGHER_ORDER_CURVE: 60>,
+         <CellType.LAGRANGE_CURVE: 68>,
+         <CellType.BEZIER_CURVE: 75>]
+
+        Show all 2D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[2])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TRIANGLE: 5>,
+         <CellType.TRIANGLE_STRIP: 6>,
+         <CellType.POLYGON: 7>,
+         <CellType.PIXEL: 8>,
+         <CellType.QUAD: 9>,
+         <CellType.QUADRATIC_TRIANGLE: 22>,
+         <CellType.QUADRATIC_QUAD: 23>,
+         <CellType.BIQUADRATIC_QUAD: 28>,
+         <CellType.QUADRATIC_LINEAR_QUAD: 30>,
+         <CellType.BIQUADRATIC_TRIANGLE: 34>,
+         <CellType.QUADRATIC_POLYGON: 36>,
+         <CellType.PARAMETRIC_SURFACE: 52>,
+         <CellType.PARAMETRIC_TRI_SURFACE: 53>,
+         <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
+         <CellType.HIGHER_ORDER_TRIANGLE: 61>,
+         <CellType.HIGHER_ORDER_QUADRILATERAL: 62>,
+         <CellType.HIGHER_ORDER_POLYGON: 63>,
+         <CellType.LAGRANGE_TRIANGLE: 69>,
+         <CellType.LAGRANGE_QUADRILATERAL: 70>,
+         <CellType.BEZIER_TRIANGLE: 76>,
+         <CellType.BEZIER_QUADRILATERAL: 77>]
+
+        Show all 3D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[3])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TETRA: 10>,
+         <CellType.VOXEL: 11>,
+         <CellType.HEXAHEDRON: 12>,
+         <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>,
+         <CellType.PENTAGONAL_PRISM: 15>,
+         <CellType.HEXAGONAL_PRISM: 16>,
+         <CellType.QUADRATIC_TETRA: 24>,
+         <CellType.QUADRATIC_HEXAHEDRON: 25>,
+         <CellType.QUADRATIC_WEDGE: 26>,
+         <CellType.QUADRATIC_PYRAMID: 27>,
+         <CellType.TRIQUADRATIC_HEXAHEDRON: 29>,
+         <CellType.QUADRATIC_LINEAR_WEDGE: 31>,
+         <CellType.BIQUADRATIC_QUADRATIC_WEDGE: 32>,
+         <CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON: 33>,
+         <CellType.TRIQUADRATIC_PYRAMID: 37>,
+         <CellType.CONVEX_POINT_SET: 41>,
+         <CellType.POLYHEDRON: 42>,
+         <CellType.PARAMETRIC_TETRA_REGION: 55>,
+         <CellType.PARAMETRIC_HEX_REGION: 56>,
+         <CellType.HIGHER_ORDER_TETRAHEDRON: 64>,
+         <CellType.HIGHER_ORDER_WEDGE: 65>,
+         <CellType.HIGHER_ORDER_PYRAMID: 66>,
+         <CellType.HIGHER_ORDER_HEXAHEDRON: 67>,
+         <CellType.LAGRANGE_TETRAHEDRON: 71>,
+         <CellType.LAGRANGE_HEXAHEDRON: 72>,
+         <CellType.LAGRANGE_WEDGE: 73>,
+         <CellType.LAGRANGE_PYRAMID: 74>,
+         <CellType.BEZIER_TETRAHEDRON: 78>,
+         <CellType.BEZIER_HEXAHEDRON: 79>,
+         <CellType.BEZIER_WEDGE: 80>,
+         <CellType.BEZIER_PYRAMID: 81>]
+
+        """
+        if not (mapping := cls._dimension_map):
+            # Populate dict on first access
+            for dimension in get_args(_Dimension):
+                mapping[dimension] = frozenset(
+                    celltype for celltype in CellType if celltype.dimension == dimension
+                )
+        return cls._dimension_map_proxy
+
+
+class CellType(IntEnum, metaclass=_CellTypeMeta):
     """Define types of cells.
 
     Cells are defined by specifying a type in combination with an ordered list of points.
@@ -789,8 +1009,16 @@ class CellType(IntEnum):
             else getattr(_vtk, _vtk_class_name)
         )
 
-        # Set cell type properties using vtkCellTypeUtilities
-        self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
+        # Set cell type properties using vtkCellTypeUtilities. For abstract
+        # types whose value is in ``_ABSTRACT_DIMENSIONS`` we skip the call
+        # entirely (it returns 0 and emits warnings on vtk<9.4 because there
+        # is no concrete cell class). Unknown abstract types (e.g. anything
+        # vtk 9.7+ adds that we have not catalogued) still go through the
+        # utility.
+        if self._vtk_class is None and value in _ABSTRACT_DIMENSIONS:
+            self._dimension = _ABSTRACT_DIMENSIONS[value]
+        else:
+            self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
         if value == _vtk.VTK_HEXAGONAL_PRISM:
             # Need to fix https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
@@ -891,6 +1119,7 @@ class CellType(IntEnum):
         See Also
         --------
         pyvista.Cell.dimension
+        dimension_map
 
         Examples
         --------
@@ -1155,8 +1384,10 @@ class CellType(IntEnum):
     PARAMETRIC_QUAD_SURFACE = _CELL_TYPE_INFO['PARAMETRIC_QUAD_SURFACE']
     PARAMETRIC_TETRA_REGION = _CELL_TYPE_INFO['PARAMETRIC_TETRA_REGION']
     PARAMETRIC_HEX_REGION = _CELL_TYPE_INFO['PARAMETRIC_HEX_REGION']
+    HIGHER_ORDER_CURVE = _CELL_TYPE_INFO['HIGHER_ORDER_CURVE']
     HIGHER_ORDER_EDGE = _CELL_TYPE_INFO['HIGHER_ORDER_EDGE']
     HIGHER_ORDER_TRIANGLE = _CELL_TYPE_INFO['HIGHER_ORDER_TRIANGLE']
+    HIGHER_ORDER_QUADRILATERAL = _CELL_TYPE_INFO['HIGHER_ORDER_QUADRILATERAL']
     HIGHER_ORDER_QUAD = _CELL_TYPE_INFO['HIGHER_ORDER_QUAD']
     HIGHER_ORDER_POLYGON = _CELL_TYPE_INFO['HIGHER_ORDER_POLYGON']
     HIGHER_ORDER_TETRAHEDRON = _CELL_TYPE_INFO['HIGHER_ORDER_TETRAHEDRON']

@@ -151,6 +151,55 @@ This section provides a guide to how we conduct development in the
 PyVista repository. Please follow the practices outlined here when
 contributing directly to this repository.
 
+Quick Development Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, the most common developer tasks are wrapped as ``make``
+targets in the repository's top-level ``Makefile``. These are the
+recommended entry points for day-to-day development.
+
+Most targets delegate to ``uv``, so ``uv`` must be installed on your
+system first (see https://docs.astral.sh/uv/getting-started/installation/).
+``make`` itself must also be available on your ``PATH``; on Windows it
+can be installed via package managers like ``scoop`` or ``chocolatey``.
+
+.. code-block:: bash
+
+    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
+    make lint           # run pre-commit on all files
+    make typecheck      # run mypy via tox
+    make test           # run the full test suite via tox (matches CI flags)
+    make test-core      # run the core test suite via tox (matches CI)
+    make test-plotting  # run the plotting test suite via tox (matches CI)
+    make doctest        # run all docstring tests via tox (matches CI)
+    make docs           # build the full documentation via tox (matches CI)
+    make docs-test      # test the built documentation via tox (matches CI)
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
+
+``make test``, ``make test-core``, and ``make test-plotting`` all
+invoke tox environments defined in ``tox.ini`` so they run with the
+exact same pytest filters and flags as the corresponding CI jobs. The
+filter definitions live in ``tox.ini`` so they only need to be
+maintained in one place.
+
+Running ``make`` with no target is equivalent to ``make test``.
+
+Additional arguments can be forwarded to ``pytest`` via the ``ARGS``
+variable, for example:
+
+.. code-block:: bash
+
+    make test ARGS="-n 10"               # run tests in parallel with 10 workers
+    make test ARGS="-k filters"          # only run tests matching "filters"
+    make test-core ARGS="-n auto -x"     # core tests, auto parallelism, stop on first failure
+
+These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
+and ``pytest``. If you need more control (e.g., running against a
+specific ``vtk`` or ``numpy`` version, or building documentation), see
+the `Unit Testing`_, `Style Checking`_, and `Building the
+Documentation`_ sections below, which document the underlying tools
+directly.
+
 Guidelines
 ~~~~~~~~~~
 
@@ -517,6 +566,8 @@ Unit Testing
 ~~~~~~~~~~~~
 Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
 or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
+The top-level ``Makefile`` also wraps the most common invocations — see
+`Quick Development Commands`_.
 
 .. tab-set::
     :sync-group: category
@@ -568,8 +619,8 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
 
             .. code-block:: bash
 
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.4.2 and numpy==2.0
 
             By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
             To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
@@ -589,6 +640,14 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
                 tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
 
             For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make sync-deps # install dev dependencies via uv
+            make test      # run the full test suite (equivalent to `tox -e test`)
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
@@ -610,6 +669,13 @@ leverage multiple processes. Example usage:
         .. code-block:: bash
 
             tox run -e py3.11 -- -n <NUMCORE>
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="-n <NUMCORE>"
 
 Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
 such that:
@@ -637,8 +703,16 @@ such that:
 
             .. code-block:: bash
 
-                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
-                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make coverage # pytest -v --cov pyvista
+            make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
@@ -689,22 +763,58 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage (note t
     def test():
         """Test is skipped with a custom message"""
 
-VTK Dev Wheel Testing
-^^^^^^^^^^^^^^^^^^^^^
-Most unit testing is run with stable VTK releases. However, it is sometimes useful to
-run tests with the latest VTK dev wheels. To install these locally, run
+Testing Against VTK master
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Most unit testing is run against stable VTK releases. However, when developing features that depend on upstream VTK
+changes or when investigating regressions, it can be useful to test against the latest VTK development code.
+VTK publishes development wheels to the VTK wheels index, which are snapshots of recent development builds.
+To install them locally, run:
 
 .. code-block:: shell
 
     pip install vtk --upgrade --pre --extra-index-url https://wheels.vtk.org
 
-For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
-the VTK dev wheels. The tests only run when the label is applied.
+For pull requests, applying the ``vtk-dev-testing`` label enables an additional CI job that installs these development
+wheels and runs the unit test suite against them. Although these wheels are official VTK builds, they are only published
+periodically (typically once per week) and may not include the latest commits from the VTK repository. As a result,
+passing ``vtk-dev-testing`` does not guarantee compatibility with the current VTK master branch.
+
+To test against the very latest upstream VTK source, apply the ``vtk-master-testing`` label instead. This enables a CI
+job that clones the VTK repository, builds VTK directly from the current master branch, and runs the unit tests against
+that build. This provides the most up-to-date compatibility testing and is recommended when changes depend on recent VTK
+development.
+
+The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and may be applied separately or together.
 
 .. note::
 
     The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
+
+Garbage Collection Checks
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Every test under ``tests/plotting`` is automatically checked for reference leaks by
+the autouse ``check_gc`` fixture in ``tests/plotting/conftest.py``: no plotter or VTK
+object created by a test may outlive it. A leaking test fails at teardown with a
+rendered chain of what still holds a reference; see the
+`refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
+The cause is usually a reference cycle, and fixing it (e.g. with :mod:`weakref`) is
+preferred over silencing the check with either of these markers:
+
+.. code-block:: python
+
+    @pytest.mark.skip_check_gc
+    def test():
+        """Do not check this test for leaks.
+
+        Use sparingly, with a comment saying why the leak is not fixable here,
+        e.g. an upstream VTK issue or a module-level cache pinning the object.
+        """
+
+
+    @pytest.mark.expect_check_gc_fail
+    def test():
+        """This test is expected to leak; fail if it does *not*."""
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
@@ -742,6 +852,10 @@ To ensure your code meets minimum code styling standards, run::
 
   pip install pre-commit
   pre-commit run --all-files
+
+Alternatively, the top-level ``Makefile`` wraps this invocation::
+
+  make lint
 
 If you have issues related to ``setuptools`` when installing ``pre-commit``, see
 `pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
@@ -820,6 +934,13 @@ example:
 
             tox run -e py3.11 -- tests/plotting --reset_image_cache
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/plotting --reset_image_cache"
+
 Running ``--reset_image_cache`` creates a new image for each test in
 ``tests/plotting/test_plotting.py`` and is not recommended except for
 testing or for potentially a major or minor release. You can use
@@ -878,6 +999,13 @@ For example, the following writes all images generated by ``pytest`` to
         .. code-block:: bash
 
             tox run -e py3.11 -- tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/plotting/ -k volume --generated_image_dir debug_images"
 
 See `pytest-pyvista`_ for more details.
 
@@ -961,6 +1089,13 @@ The tests can be executed with:
         .. code-block:: bash
 
             tox run -e py3.11 -- tests/core/typing
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/core/typing"
 
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
@@ -1087,23 +1222,23 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
         .. code-block:: bash
 
-            pytest tests/doc/tst_doc_build.py::test_static_images
+            pytest --doc_mode
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
-            tox run -e docs-test -- -k test_static_images
+            tox run -e docs-test
 
+    .. tab-item:: make
+        :sync: make
 
-The tests must be executed explicitly with this command. The name of the test
-file is prefixed with ``tst``, and not ``test`` specifically to avoid being
-automatically executed by ``pytest`` (``pytest`` collects all tests prefixed
-with ``test`` by default.) This is done since the tests require building the
-documentation, and are not a primary form of testing.
+        .. code-block:: bash
 
+            make docs-test
+
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
 
 #. Collected from the ``Build Image Directory``.
@@ -1121,7 +1256,7 @@ copies of the images are made as follows:
 #. If the comparison between the two images fails:
 
     - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
@@ -1129,15 +1264,15 @@ copies of the images are made as follows:
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
 
-To resolve failed tests, any images in ``from_build`` or ``from_cache``
+To resolve failed tests, any images in ``from_test`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
 if adding new docstring examples or plots, the test will initially fail,
-and the images in ``from_build`` may be added to the ``Doc Image Cache``.
+and the images in ``from_test`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
@@ -1194,16 +1329,25 @@ To test that interactive plots do not exceed this limit, run:
 
         .. code-block:: bash
 
-            pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+            pytest --doc_mode
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
-            tox run -e docs-test -- -k test_interactive_plot_file_size
+            tox run -e docs-test
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make docs-test
+
+
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
+with the limit being specified by ``max_vtksz_file_size`` in the ``pyproject.toml`` file.
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
@@ -1306,7 +1450,7 @@ For more details see :ref:`add_example_example`.
 Adding a New Dataset
 ^^^^^^^^^^^^^^^^^^^^
 If you have a dataset that you want to feature or want to include as part
-of a full gallery example, add it to `pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_
+of a full gallery example, add it to `pyvista/data <https://github.com/pyvista/data/>`_
 and follow the directions there. You will then need to add a new function to
 download the dataset in ``pyvista/examples/downloads.py``. This might be as easy as:
 
@@ -1666,7 +1810,7 @@ status check label regardless of if it is self hosted.
 
   macOS:
     name: ${{ matrix.job-name }}
-    needs: cache-vtk-data
+    needs: cache-pyvista-data
     strategy:
       fail-fast: false
       matrix:

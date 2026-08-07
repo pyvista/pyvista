@@ -37,9 +37,12 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'sphinx_examples_as_code',
     'sphinx.ext.autosummary',
     'sphinx_design',
 ]
+
+sphinx_examples_as_code_conf = {'base_url': 'https://docs.pyvista.org/'}
 
 # -- Plot directive specific configuration --------------------------------
 plot_setup = plot_cleanup = 'import pyvista as pv'
@@ -66,11 +69,11 @@ del __s_p_t
 """
 plot_cleanup = plot_setup
 
-if value := os.environ.get('PLOT_SKIP'):
-    plot_skip = value.lower() == 'true'
+if value := os.environ.get('PYVISTA_PLOT_SKIP'):
+    pyvista_plot_skip = value.lower() == 'true'
 
-if value := os.environ.get('PLOT_SKIP_OPTIONAL'):
-    plot_skip_optional = value.lower() == 'true'
+if value := os.environ.get('PYVISTA_PLOT_SKIP_OPTIONAL'):
+    pyvista_plot_skip_optional = value.lower() == 'true'
 
 
 def _str_examples(self):
@@ -87,7 +90,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']

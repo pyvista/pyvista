@@ -323,6 +323,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    ...     [f'Point {i}' for i in range(3)],
    ...     font_size=20,
    ...     point_size=20,
+   ...     always_visible=True,
    ... )
    >>> pl.add_point_labels([0.43, 0.2, 0], ['Cell 0'], font_size=20)
    >>> pl.camera_position = 'xy'

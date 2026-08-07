@@ -25,11 +25,11 @@ import warnings
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
@@ -235,20 +235,49 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         exclude_fields: _LiteralMeshValidationFields
         | Sequence[_LiteralMeshValidationFields]
         | None = None,
+        *,
+        name: str | None,
         **cell_validator_kwargs,
     ) -> None:
-        if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
-            validation_fields = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            validation_fields.remove('unused_points')
-
         data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
             validation_fields, exclude_fields
         )
+        # Remove or error on fields unsupported for specific mesh types
+        _unsupported: dict[
+            type[_DataSetOrMultiBlockType], tuple[_LiteralMeshValidationFields, ...]
+        ] = {}
+        if isinstance(mesh, pv.PointSet):
+            _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
+        if isinstance(mesh, pv.Grid):
+            # Avoid vtkCellValidator fields since these may crash: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+            _unsupported[type(mesh)] = (
+                'wrong_number_of_points',
+                'intersecting_edges',
+                'intersecting_faces',
+                'non_contiguous_edges',
+                'non_convex',
+                'inverted_faces',
+                'non_planar_faces',
+                'degenerate_faces',
+                'coincident_points',
+            )
+
+        for mesh_type, unsupported_field in _unsupported.items():
+            for field in unsupported_field:
+                if field in cell_fields or field in point_fields:
+                    if validation_fields is not None:
+                        # User explicitly requested this field (directly or via a group)
+                        kind = 'Point' if field in point_fields else 'Cell'
+                        msg = f'{kind} field {field!r} is not supported for {mesh_type.__name__}.'
+                        raise ValueError(msg)
+                    else:
+                        # Default case: remove unsupported fields without error
+                        cell_fields = tuple(f for f in cell_fields if f != field)
+                        point_fields = tuple(f for f in point_fields if f != field)
+
         self._validation_report = _MeshValidator._generate_report(
             mesh,
+            name=name,
             data_fields=data_fields,
             point_fields=point_fields,
             cell_fields=cell_fields,
@@ -378,6 +407,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _generate_report(
         mesh: _DataSetOrMultiBlockType,
         *,
+        name,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -392,6 +422,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if isinstance(mesh, pv.DataSet):
                 return _MeshValidator._validate_dataset(  # type: ignore[return-value]
                     mesh,
+                    name=name,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -400,6 +431,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
                     mesh,
+                    name=name,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -410,6 +442,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_dataset(
         mesh: _DataSetType,
         *,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -443,11 +476,14 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     message_body.extend(message)
                 else:
                     message_body.append(message)
-
-        header = _MeshValidator._create_message_header(validated_mesh)
-        message_structure = [header, message_body]
+        if message_body:
+            header = _MeshValidator._create_message_header(validated_mesh, name=name)
+            message_structure = [header, message_body]
+        else:
+            message_structure = []
         dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
         return _MeshValidationReport(
+            _name=name,
             _mesh=validated_mesh,
             _message=message_structure,
             _subreports=None,
@@ -459,6 +495,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_multiblock(
         mesh: _MultiBlockType,
         *,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
@@ -475,6 +512,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 report = _MeshValidator._generate_report(
                     block,
+                    name=None,
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
@@ -483,7 +521,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
 
-                if (msg := report._message) is not None:  # type: ignore[attr-defined]
+                if msg := report._message:  # type: ignore[attr-defined]
                     msg = copylib.copy(msg)
                     msg[0] = f'Block id {i} {validated_mesh.get_block_name(i)!r} ' + msg[0]
                     message_body.append(msg)
@@ -501,9 +539,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     invalid_block_ids.append(i)
             dataclass_fields[field] = invalid_block_ids
 
-        header = _MeshValidator._create_message_header(validated_mesh)
-        message = [header, message_body]
+        if message_body:
+            header = _MeshValidator._create_message_header(validated_mesh, name=name)
+            message = [header, message_body]
+        else:
+            message = []
         return _MeshValidationReport(
+            _name=name,
             _mesh=validated_mesh,
             _message=message,
             _subreports=tuple(reports),
@@ -708,8 +750,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _MESH_HAS = 'Mesh has'
 
     @staticmethod
-    def _create_message_header(obj: object) -> str:
-        return f'{obj.__class__.__name__} mesh is not valid:'
+    def _create_message_header(obj: object, *, name: str | None) -> str:
+        name = f' {name!r} ' if name else ' '
+        return f'{obj.__class__.__name__} mesh{name}is not valid:'
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
@@ -734,7 +777,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             string = re.sub(pattern, rf'\1{new}', string)
 
         # Highlight cell types in yellow
-        cell_names = {celltype.name for celltype in CellType}
+        # Reverse sort to ensure we replace things like 'QUADRATIC_HEXAHEDRON' before 'QUAD'
+        cell_names = sorted(celltype.name for celltype in CellType)[::-1]
+        # Ensure single-word cell types are last so that POLY_VERTEX is replaced before VERTEX
+        for name in cell_names.copy():
+            if '_' not in name:
+                cell_names.remove(name)
+                cell_names.append(name)
         string = _format_style(string, cell_names, 'yellow')
 
         # Highlight mesh types in purple
@@ -782,6 +831,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     """Dataclass to report mesh validation results."""
 
     # Non-fields
+    _name: InitVar[str | None]
     _mesh: InitVar[_DataSetOrMultiBlockType]
     _message: InitVar[_NestedStrings | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
@@ -811,15 +861,21 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     def __post_init__(
         self,
+        _name: str | None,
         _mesh: _DataSetOrMultiBlockType,
         _message: _NestedStrings | None,
         _subreports: tuple[_MeshValidationReport[DataSet] | None, ...] | None,
         _report_body: _ReportBodyOptions | None,
     ) -> None:
+        object.__setattr__(self, '_name', _name)
         object.__setattr__(self, '_mesh', _mesh)
         object.__setattr__(self, '_message', _message)
         object.__setattr__(self, '_subreports', _subreports)
         object.__setattr__(self, '_report_body', _report_body)
+
+    @property
+    def name(self) -> str | None:
+        return self._name  # type: ignore[attr-defined]
 
     @property
     def mesh(self) -> _DataSetOrMultiBlockType:
@@ -951,7 +1007,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                 lines.append(f'{indent}{key:<{label_width}} : {value}')
 
         mesh = self.mesh
-        mesh_items: dict[str, str | int] = {'Type': mesh.__class__.__name__}
+        name = self.name
+        mesh_items: dict[str, str | int] = {} if name is None else {'Name': f'{name!r}'}
+        mesh_items['Type'] = mesh.__class__.__name__
         # Set report content based on mesh type
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
@@ -1015,6 +1073,7 @@ class DataObjectFilters:
         *,
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         report_body: _ReportBodyOptions = 'message',
+        name: str | None = None,
         **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
@@ -1090,9 +1149,14 @@ class DataObjectFilters:
           summary of any problems detected, and is formatted for printing to console. This is the
           message used when the ``action`` keyword is set for emitting warnings or raising errors.
           This value is ``None`` if the mesh is valid.
+        - ``name``: The name of the mesh (if provided).
 
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
+
+        .. note::
+            This filter is also available via a command-line interface. See
+            :ref:`pyvista validate <cli_validate>` for details.
 
         .. versionadded:: 0.47
 
@@ -1143,6 +1207,11 @@ class DataObjectFilters:
             and the message includes additional cell type-specific information.
 
             .. versionadded:: 0.48
+
+        name : str, optional
+            Name to use in the validation report and error messages.
+
+            .. versionadded:: 0.49
 
         cell_validator_kwargs
             Keyword arguments passed to :meth:`~pyvista.DataObjectFilters.cell_validator`.
@@ -1408,6 +1477,7 @@ class DataObjectFilters:
             self,
             _convert_cell_status(validation_fields),
             _convert_cell_status(exclude_fields),
+            name=name,
             **cell_validator_kwargs,
         ).validation_report
 
@@ -1622,28 +1692,37 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
-        cell_validator = _vtk.vtkCellValidator()
-        cell_validator.SetInputData(self)
-        cell_validator.SetTolerance(tol)
-        if pv.vtk_version_info >= (9, 6, 0):
-            # vtkCellValidator stores PlanarityTolerance as static class state, so we must
-            # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
-            cell_validator.SetPlanarityTolerance(
-                planarity_tolerance if planarity_tolerance is not None else 0.1
-            )
-        cell_validator.Update()
-        output = _get_output(cell_validator)
+        # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
+        skip_validator = isinstance(self, pv.Grid)
+        if skip_validator:
+            output = self.copy(deep=False)
+        else:
+            cell_validator = _vtk.vtkCellValidator()
+            cell_validator.SetInputData(self)
+            cell_validator.SetTolerance(tol)
+            if pv.vtk_version_info >= (9, 6, 0):
+                # vtkCellValidator stores PlanarityTolerance as static class state, so we must
+                # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
+                cell_validator.SetPlanarityTolerance(
+                    planarity_tolerance if planarity_tolerance is not None else 0.1
+                )
+            cell_validator.Update()
+            output = _get_output(cell_validator)
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
-            validity_state = np.array(
-                mesh.cell_data['ValidityState'],
-                dtype=np.int64,
-                copy=True,
-            )
+            if skip_validator:
+                validity_state = np.zeros(shape=(self.n_cells,), dtype=np.int64)
+            else:
+                validity_state = np.array(
+                    mesh.cell_data['ValidityState'],
+                    dtype=np.int64,
+                    copy=True,
+                )
             mesh.cell_data['validity_state'] = validity_state
-            del mesh.cell_data['ValidityState']
+            if not skip_validator:
+                del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
 
             set_pyvista_validity_state(mesh)
@@ -1679,24 +1758,52 @@ class DataObjectFilters:
             # ZERO_SIZE
             state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
-            # INVALID_POINT_REFERENCES
-            if hasattr(mesh, 'dimensions'):
-                return  # Cell connectivity is explicitly defined and cannot be invalid
+            # COINCIDENT_POINTS
+            # Skip remaining checks for datasets where cell connectivity cannot be invalid
+            # Do not skip types StructuredGrid where coincident points are possible
+            if isinstance(mesh, pv.Grid):
+                return
 
             ugrid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
 
-            # Find invalid connectivity entries
             conn = ugrid.cell_connectivity
+            offset = ugrid.offset
             n_cells = ugrid.n_cells
-            invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
+            n_points = ugrid.n_points
+
+            # VTK's face-based vtkCellValidator never flags 2D cells,
+            # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
+            # check: a cell is coincident if any two of its points are within tol. This
+            # applies to all cell types (also OR-ing the bit into already-caught cases).
+            coincident = np.zeros(n_cells, dtype=bool)
+            n_cell_points = np.diff(offset)
+            valid_conn = (conn >= 0) & (conn < n_points)
+            for size in np.unique(n_cell_points[n_cell_points >= 2]):
+                cells = np.nonzero(n_cell_points == size)[0]
+                # Gather this group's point ids as an (m, size) block via CSR offsets
+                entry_ids = offset[cells, np.newaxis] + np.arange(size)[np.newaxis, :]
+                pids = conn[entry_ids]
+                # Skip cells with invalid connectivity (handled below); clamp for safe
+                # indexing so the gather never raises on out-of-range ids.
+                group_valid = np.all(valid_conn[entry_ids], axis=1)
+                pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
+                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                iu = np.triu_indices(size, k=1)
+                any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
+                coincident[cells] = any_coincident & group_valid
+            state[coincident] |= CellStatus.COINCIDENT_POINTS
+
+            # INVALID_POINT_REFERENCES
+            invalid_conn = ~valid_conn
             if not np.any(invalid_conn):
                 return
 
             # Map invalid connectivity indices to cell IDs
             invalid_conn_ids = np.nonzero(invalid_conn)[0]
-            cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
+            cell_ids = np.searchsorted(offset, invalid_conn_ids, side='right') - 1
 
             # Build per-cell boolean mask
             is_invalid = np.zeros(n_cells, dtype=bool)
@@ -2511,6 +2618,7 @@ class DataObjectFilters:
         bounds_size: float | VectorLike[float] | None = None,
         length: float | None = None,
         center: VectorLike[float] | None = None,
+        preserve_aspect_ratio: bool | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ) -> _MeshType_co:
@@ -2558,6 +2666,21 @@ class DataObjectFilters:
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
             :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` or ``length``
             is specified.
+
+        preserve_aspect_ratio : bool, optional
+            Whether to preserve the dataset's aspect ratio during resizing.
+
+            - If ``True``, a uniform scale factor is applied. For ``bounds`` and
+              ``bounds_size``, the specified values are treated as maximum extents
+              rather than exact targets.
+            - If ``False``, each axis is scaled independently to exactly match the
+              requested ``bounds`` or ``bounds_size``.
+
+            By default, ``bounds`` and ``bounds_size`` use independent axis scaling,
+            while ``length`` preserves the aspect ratio. This parameter can be used to
+            enable aspect ratio preservation for ``bounds`` and ``bounds_size``.
+
+            .. versionadded:: 0.49
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
@@ -2640,6 +2763,22 @@ class DataObjectFilters:
                     z_min = -0.5,
                     z_max =  0.5)
 
+        Normalize it again, but preserve the aspect ratio. Its 1:2:3 x-y-z bounds
+        ratio is preserved.
+
+        >>> resized = mesh.resize(
+        ...     bounds_size=1.0, center=(0.0, 0.0, 0.0), preserve_aspect_ratio=True
+        ... )
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.1666,
+                    x_max =  0.1666,
+                    y_min = -0.3333,
+                    y_max =  0.3333,
+                    z_min = -0.5,
+                    z_max =  0.5)
+        >>> resized.bounds_size
+        (0.3333, 0.6666, 1.0)
+
         """
         if self.is_empty:
             return self.copy()
@@ -2657,6 +2796,13 @@ class DataObjectFilters:
             msg = (
                 'Cannot specify more than one resizing method. Choose either `bounds`, '
                 '`bounds_size`, or `length` independently.'
+            )
+            raise ValueError(msg)
+
+        if preserve_aspect_ratio is False and length_set:
+            msg = (
+                '`preserve_aspect_ratio=False` cannot be used with `length` since '
+                '`length` resizing always preserves the aspect ratio.'
             )
             raise ValueError(msg)
 
@@ -2697,6 +2843,9 @@ class DataObjectFilters:
 
         current_size = self.bounds_size
         scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        if preserve_aspect_ratio:
+            scale_factors = np.full(3, scale_factors.min())
 
         # Apply transformation
         transform = pv.Transform()
@@ -3269,6 +3418,137 @@ class DataObjectFilters:
             clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
+    def clip_slab(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        thickness: float,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        *,
+        origin: VectorLike[float] | None = None,
+        invert: bool = False,
+        progress_bar: bool = False,
+        crinkle: bool = False,
+        plane: PolyData | None = None,
+    ):
+        """Clip a dataset by a slab of finite thickness around a plane.
+
+        The slab is the volumetric region bounded by two parallel planes offset
+        symmetrically by ``thickness / 2`` on each side of ``origin`` along
+        ``normal``. This is sometimes called a "thick slice" because it yields
+        a volumetric subset of the input rather than a 2D cross-section like
+        :meth:`slice`.
+
+        .. versionadded:: 0.48
+
+        Parameters
+        ----------
+        thickness : float
+            Total slab thickness measured perpendicular to ``normal``. Must be
+            strictly positive. Half of ``thickness`` is applied on each side
+            of ``origin``.
+
+        normal : VectorLike[float] | str, optional
+            Length-3 vector defining the slab's normal direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc. The ``'x'``
+            direction is used by default.
+
+        origin : VectorLike[float], optional
+            The center ``(x, y, z)`` coordinate of the slab. The default is
+            the center of the dataset.
+
+        invert : bool, default: False
+            If ``False`` (the default), the slab interior is kept. If
+            ``True``, the slab interior is removed and everything outside the
+            two bounding planes is returned.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        crinkle : bool, default: False
+            Crinkle the clip by extracting the entire cells along the slab
+            boundaries. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the input dataset.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to use for defining the slab orientation.
+            Use this as an alternative to setting ``origin`` and ``normal``.
+            The mean of the plane's normal vectors is used for the ``normal``
+            parameter and the mean of the plane's points is used for the
+            ``origin`` parameter.
+
+        Returns
+        -------
+        pyvista.DataSet | pyvista.MultiBlock
+            Clipped dataset. Output mesh type matches the input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
+
+        Raises
+        ------
+        ValueError
+            If ``thickness`` is not strictly positive, or if ``normal`` is a
+            zero vector.
+
+        See Also
+        --------
+        clip
+        clip_box
+        slice
+
+        Examples
+        --------
+        Extract a thick slab through the center of a sphere along the
+        ``z``-axis.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> slab = sphere.clip_slab(thickness=0.2, normal='z')
+        >>> slab.plot(show_edges=True)
+
+        """
+        if thickness <= 0:
+            msg = f'`thickness` must be strictly positive, got {thickness}.'
+            raise ValueError(msg)
+
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='x'
+        )
+        norm = float(np.linalg.norm(normal_))
+        if norm == 0.0:
+            msg = '`normal` must be a non-zero vector.'
+            raise ValueError(msg)
+        unit_normal = normal_ / norm
+        half = thickness / 2.0
+
+        upper = _vtk.vtkPlane()
+        upper.SetOrigin(*(origin_ + unit_normal * half))
+        upper.SetNormal(*unit_normal)
+
+        lower = _vtk.vtkPlane()
+        lower.SetOrigin(*(origin_ - unit_normal * half))
+        lower.SetNormal(*(-unit_normal))
+
+        slab = _vtk.vtkImplicitBoolean()
+        # vtkImplicitBoolean follows "f < 0 inside" convention and Intersection
+        # takes max(f_a, f_b). max(f_upper, f_lower) is <= 0 only inside the
+        # slab and > 0 anywhere outside it, so clipping with InsideOut=True
+        # (i.e. invert=True to _clip_with_function) keeps the slab interior.
+        slab.SetOperationTypeToIntersection()
+        slab.AddFunction(upper)
+        slab.AddFunction(lower)
+
+        result = self._clip_with_function(
+            slab,
+            invert=not invert,
+            progress_bar=progress_bar,
+            crinkle=crinkle,
+        )
+
+        input_bounds = self.bounds
+        result = _cast_output_to_match_input_type(result, self)
+        return _remove_unused_points_post_clip(result, input_bounds)
+
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3285,11 +3565,23 @@ class DataObjectFilters:
             Specify the implicit function to perform the cutting.
 
         generate_triangles : bool, default: False
-            If this is enabled (``False`` by default), the output will
-            be triangles. Otherwise the output will be the intersection
-            polygons. If the cutting function is not a plane, the
-            output will be 3D polygons, which might be nice to look at
-            but hard to compute with downstream.
+            If ``True``, the output will be triangles. Otherwise the
+            output will be the intersection polygons. If the cutting
+            function is not a plane, the output will be 3D polygons,
+            which might be nice to look at but hard to compute with
+            downstream.
+
+            .. note::
+
+               PyVista's default is ``False``, which differs from
+               :vtk:`vtkCutter`'s default of ``True``. The polygon
+               codepath in :vtk:`vtkCutter` is significantly slower than
+               the triangulation path: on a 1.3M-cell UnstructuredGrid
+               the polygon path measures ~89 ms/op vs ~20 ms/op with
+               ``generate_triangles=True`` (~5x slowdown). Pass
+               ``generate_triangles=True`` for the fast path when the
+               output cell shape is not load-bearing for your downstream
+               code.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
@@ -3374,6 +3666,18 @@ class DataObjectFilters:
             be triangles. Otherwise the output will be the intersection
             polygons.
 
+            .. note::
+
+               PyVista's default is ``False``, which differs from
+               :vtk:`vtkCutter`'s default of ``True``. The polygon
+               codepath in :vtk:`vtkCutter` is significantly slower than
+               the triangulation path: on a 1.3M-cell UnstructuredGrid
+               the polygon path measures ~89 ms/op vs ~20 ms/op with
+               ``generate_triangles=True`` (~5x slowdown). Pass
+               ``generate_triangles=True`` for the fast path when the
+               output cell shape is not load-bearing for your downstream
+               code.
+
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
@@ -3399,6 +3703,7 @@ class DataObjectFilters:
         slice_orthogonal
         slice_along_axis
         slice_along_line
+        clip_slab
         :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
@@ -3456,6 +3761,13 @@ class DataObjectFilters:
         generate_triangles : bool, default: False
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
+
+            .. note::
+
+               PyVista's default differs from :vtk:`vtkCutter` (which
+               defaults to ``True``). The polygon path is ~5x slower on
+               UnstructuredGrids. Pass ``generate_triangles=True`` for
+               the fast path. See :meth:`slice_implicit` for details.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
@@ -3575,6 +3887,13 @@ class DataObjectFilters:
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
 
+            .. note::
+
+               PyVista's default differs from :vtk:`vtkCutter` (which
+               defaults to ``True``). The polygon path is ~5x slower on
+               UnstructuredGrids. Pass ``generate_triangles=True`` for
+               the fast path. See :meth:`slice_implicit` for details.
+
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
@@ -3637,7 +3956,7 @@ class DataObjectFilters:
         elif isinstance(axis, str):
             ax_str = axis.lower()
             if ax_str in labels:
-                ax_label = cast('XYZLiteral', ax_str)
+                ax_label = ax_str
                 ax_index = label_to_index[ax_label]
             else:
                 msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
@@ -3704,6 +4023,13 @@ class DataObjectFilters:
         generate_triangles : bool, default: False
             When ``True``, the output will be triangles. Otherwise the output
             will be the intersection polygons.
+
+            .. note::
+
+               PyVista's default differs from :vtk:`vtkCutter` (which
+               defaults to ``True``). The polygon path is ~5x slower on
+               UnstructuredGrids. Pass ``generate_triangles=True`` for
+               the fast path. See :meth:`slice_implicit` for details.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.

@@ -15,6 +15,7 @@ import platform
 import re
 import shutil
 import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -32,10 +33,10 @@ from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
@@ -44,12 +45,14 @@ from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
+from pyvista.core.utilities import misc
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -60,7 +63,9 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
 from pyvista.core.utilities.cell_quality import CellQualityInfo
+from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -88,6 +93,22 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+HAS_RUNTIME_SMP_BACKEND_SELECTION = hasattr(_vtk, 'vtkSMPTools') and hasattr(
+    _vtk.vtkSMPTools, 'SetBackend'
+)
+
+
+@pytest.fixture
+def reset_smp_tools():
+    """Restore VTK's SMP backend state after a test that mutates it."""
+    if not HAS_RUNTIME_SMP_BACKEND_SELECTION:
+        yield
+        return
+    original_backend = _vtk.vtkSMPTools.GetBackend()
+    original_threads = _vtk.vtkSMPTools.GetEstimatedNumberOfThreads()
+    yield
+    _vtk.vtkSMPTools.SetBackend(original_backend)
+    _vtk.vtkSMPTools.Initialize(original_threads)
 
 
 @pytest.fixture
@@ -166,6 +187,26 @@ def test_raise_not_matching_raises():
         match=re.escape('Number of scalars (1) must match number of rows (0).'),
     ):
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
+
+
+@pytest.mark.parametrize(
+    ('shape', 'association'),
+    [
+        ((2, 3, 4), 'points'),
+        ((1, 2, 3), 'cells'),
+    ],
+)
+def test_raise_not_matching_suggests_flattening(shape, association):
+    grid = pv.ImageData(dimensions=(2, 3, 4))
+    scalars = np.zeros(shape)
+
+    with pytest.raises(ValueError, match='Number of scalars') as exc_info:
+        grid['scalars'] = scalars
+
+    message = str(exc_info.value)
+    assert f'shape {shape}' in message
+    assert f'matches the number of {association}' in message
+    assert "scalars.ravel(order='F')" in message
 
 
 def test_vtk_version_info():
@@ -260,6 +301,8 @@ def test_createvectorpolydata():
         ('/data/mesh.stl', '.stl'),
         ('/data/image.nii.gz', '.nii.gz'),
         ('/data/other.gz', '.gz'),
+        ('/data/can.e.4.0', '.e.4.0'),
+        ('/data/can.n.16.15', '.n.16.15'),
     ],
 )
 def test_get_ext(path, target_ext):
@@ -351,6 +394,23 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
+def test_read_reader_kwargs():
+    file = ex.download_openfoam_tubes(load=False)
+
+    no_kwargs = pv.read(file)
+    with_kwargs = pv.read(file, skip_zero_time=True)
+
+    # Meshes should be different due to zero time skip
+    assert no_kwargs != with_kwargs
+
+    match = (
+        '`POpenFOAMReader.enable_patch_array` is a method, but using kwargs with `pyvista.read` is'
+        ' only\nsupported for attributes. Use `pyvista.get_reader` instead to call reader methods.'
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(file, enable_patch_array=True)
+
+
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -376,14 +436,14 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
-@mock.patch('pyvista.core.utilities.fileio.read_exodus')
-def test_pyvista_read_exodus(read_exodus_mock):
-    # check that reading a file with extension .e calls `read_exodus`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pv.read(ex.globefile, force_ext='.e')
-    args, _kwargs = read_exodus_mock.call_args
-    filename = args[0]
-    assert filename == Path(ex.globefile)
+def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
+    # Simulate meshio being unavailable so the fallback import fails.
+    monkeypatch.setitem(sys.modules, 'meshio', None)
+    monkeypatch.setitem(sys.modules, 'meshio._exceptions', None)
+    fname = tmp_path / 'dummy.nonexistent_ext_xyz'
+    fname.write_bytes(b'not a real mesh file')
+    with pytest.raises(OSError, match='not able to be automatically read'):
+        fileio.read(fname)
 
 
 def test_get_array_cell(hexbeam):
@@ -472,96 +532,18 @@ def test_is_inside_bounds_raises():
         is_inside_bounds(point=None, bounds=(0,))
 
 
-def test_voxelize(uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize(uniform, density=0.5)
-    assert vox.n_cells
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Remove this deprecated function.'
-        raise RuntimeError(msg)
+def test_voxelize_removed(uniform):
+    with pytest.raises(
+        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize` is deprecated'
+    ):
+        pv.voxelize(uniform, density=0.5)
 
 
-def test_voxelize_non_uniform_density(uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
-    assert vox.n_cells
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
-    assert vox.n_cells
-
-
-def test_voxelize_invalid_density(rectilinear):
-    # test error when density is not length-3
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(ValueError, match='not enough values to unpack'):
-            pv.voxelize(rectilinear, density=[0.5, 0.3])
-    # test error when density is not an array-like
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(TypeError, match='expected number or array-like'):
-            pv.voxelize(rectilinear, density={0.5, 0.3})
-
-
-def test_voxelize_throws_point_cloud(hexbeam):
-    mesh = pv.PolyData(hexbeam.points)
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(ValueError, match='must have faces'):
-            pv.voxelize(mesh)
-
-
-def test_voxelize_volume_default_density(uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        actual = pv.voxelize_volume(uniform).n_cells
-    assert actual == expected
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Remove this deprecated function.'
-        raise RuntimeError(msg)
-
-
-def test_voxelize_volume_invalid_density(rectilinear):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(TypeError, match='expected number or array-like'):
-            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
-
-
-def test_voxelize_volume_no_face_mesh(rectilinear):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(ValueError, match='must have faces'):
-            pv.voxelize_volume(pv.PolyData())
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        with pytest.raises(TypeError, match='expected number or array-like'):
-            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
-
-
-@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
-def test_voxelize_enclosed_bounds(function, ant):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = function(ant, density=0.9, enclosed=True)
-
-    assert vox.bounds.x_min <= ant.bounds.x_min
-    assert vox.bounds.y_min <= ant.bounds.y_min
-    assert vox.bounds.z_min <= ant.bounds.z_min
-
-    assert vox.bounds.x_max >= ant.bounds.x_max
-    assert vox.bounds.y_max >= ant.bounds.y_max
-    assert vox.bounds.z_max >= ant.bounds.z_max
-
-
-@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
-def test_voxelize_fit_bounds(function, uniform):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        vox = function(uniform, density=0.9, fit_bounds=True)
-
-    assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
-    assert np.isclose(vox.bounds.y_min, uniform.bounds.y_min)
-    assert np.isclose(vox.bounds.z_min, uniform.bounds.z_min)
-
-    assert np.isclose(vox.bounds.x_max, uniform.bounds.x_max)
-    assert np.isclose(vox.bounds.y_max, uniform.bounds.y_max)
-    assert np.isclose(vox.bounds.z_max, uniform.bounds.z_max)
+def test_voxelize_volume_removed(uniform):
+    with pytest.raises(
+        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize_volume` is deprecated'
+    ):
+        pv.voxelize_volume(uniform, density=0.5)
 
 
 def test_report():
@@ -591,9 +573,11 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
     elif package == 'vtk!':
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
-    elif package == 'jupyter-server-proxy':
-        pytest.xfail('not installed with --test group')
-    assert package in REPORT
+    elif package == 'pyvista-zstd':
+        pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
+    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+        pytest.xfail('package only available on macOS')
+    assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 
 def test_report_downloads():
@@ -844,19 +828,15 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    from vtkmodules.vtkIOLegacy import vtkDataWriter
-
     # vtkWriter.cxx:55     ERR| vtkDataWriter (0x141efbd10): No input provided!
-    writer = vtkDataWriter()
+    writer = _vtk.vtkDataWriter()
     writer.Write()
 
 
 def _generate_vtk_warn():
     """Simple operation which generates a VTK warning."""
-    from vtkmodules.vtkFiltersCore import vtkMergeFilter
-
     # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
-    merge = vtkMergeFilter()
+    merge = _vtk.vtkMergeFilter()
     merge.AddInputData(_vtk.vtkPolyData())
     merge.Update()
 
@@ -927,9 +907,7 @@ def test_vtk_error_catcher():
 
 
 def test_update_alg_raises():
-    from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
-
-    reader = vtkXMLPolyDataReader()
+    reader = _vtk.vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
     with pytest.raises(pv.VTKExecutionError):
         _update_alg(reader)
@@ -1128,9 +1106,7 @@ def test_copy_implicit_vtk_array(plane):
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
     if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-        from vtkmodules.numpy_interface.vtk_implicit_array import VTKImplicitArray
-
-        assert isinstance(vtk_object, VTKImplicitArray)
+        assert isinstance(vtk_object, _vtk.VTKImplicitArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
         assert type(vtk_object) is _vtk.vtkDataArray
@@ -1142,9 +1118,7 @@ def test_copy_implicit_vtk_array(plane):
 
     new_vtk_object = plane['test'].VTKObject
     if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
-        from vtkmodules.numpy_interface.vtk_aos_array import VTKAOSArray
-
-        assert isinstance(new_vtk_object, VTKAOSArray)
+        assert isinstance(new_vtk_object, _vtk.VTKAOSArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
         assert type(new_vtk_object) is _vtk.vtkTypeInt64Array
@@ -1178,6 +1152,7 @@ def test_spherical_to_cartesian():
 def test_linkcode_resolve():
     assert linkcode_resolve('not-py', {}) is None
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
+    assert link.startswith('https://github.com/pyvista/pyvista/')
     assert 'dataobject.py' in link
     assert '#L' in link
 
@@ -1201,6 +1176,113 @@ def test_linkcode_resolve():
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
+
+    # edit mode should still include the line span, just under /edit/ instead
+    # of /blob/, so the edit page opens at the same lines as [source] does
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}, edit=True
+    )
+    assert '/edit/' in link
+    assert '#L' in link
+
+
+def test_fix_edit_link_button_gallery_example():
+    # Gallery examples should point to the source .py file in /examples
+    link = fix_edit_link_button('examples/00-load/create_draped_surface', 'default-link')
+    assert link == (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+
+
+def test_fix_edit_link_button_gallery_index_falls_through():
+    # Gallery index pages are not source examples and should fall through
+    link = fix_edit_link_button('examples/index', 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_autosummary_stub():
+    # Autosummary stubs should resolve to the same location as the page's
+    # [source] button -- same file, same line span -- just in edit mode
+    pagename = 'api/core/_autosummary/pyvista.core.DataObject'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link is not None
+    assert '/edit/' in link
+    assert 'dataobject.py' in link
+    assert '#L' in link
+
+
+def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():
+    # When linkcode can't locate the object -- so the page has no [source]
+    # button either -- fall back to editing the page's own default link
+    pagename = 'api/core/_autosummary/pyvista.not.an.object'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_other_pages_fall_through():
+    # Other pages should return the default link unchanged
+    link = fix_edit_link_button('user-guide/intro', 'default-link')
+    assert link == 'default-link'
+
+
+def _edit_button_context(pagename):
+    # Mimic the context sphinx-book-theme builds for the header buttons
+    default_url = f'https://github.com/pyvista/pyvista/edit/main/doc/source/{pagename}.rst'
+    return {
+        'get_edit_provider_and_url': lambda: ('GitHub', default_url),
+        'header_buttons': [
+            {'type': 'link', 'url': default_url, 'label': 'source-edit-button'},
+            {
+                'type': 'group',
+                'label': 'download-buttons',
+                'buttons': [
+                    {'type': 'link', 'label': 'download-source-button'},
+                    {'type': 'javascript', 'label': 'download-pdf-button'},
+                ],
+            },
+            {'type': 'javascript', 'label': 'fullscreen-button'},
+        ],
+    }
+
+
+def test_pv_html_page_context_patches_edit_button():
+    # The button built by the theme should be rewritten to the .py source file
+    pagename = 'examples/00-load/create_draped_surface'
+    context = _edit_button_context(pagename)
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    expected = (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+    assert context['header_buttons'][0]['url'] == expected
+    assert context['get_edit_provider_and_url']() == ('GitHub', expected)
+
+
+def test_pv_html_page_context_leaves_other_pages_alone():
+    # Pages whose source really is in the repo must keep the theme's link
+    pagename = 'api/core/index'
+    context = _edit_button_context(pagename)
+    default_url = context['header_buttons'][0]['url']
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    assert context['header_buttons'][0]['url'] == default_url
+
+
+def test_pv_html_page_context_without_edit_button():
+    # No-op when the edit button is disabled
+    context = {}
+    pv_html_page_context(None, 'index', 'page.html', context, None)
+    assert context == {}
+
+
+def test_pv_html_page_context_drops_download_button():
+    # The download button offers nothing useful -- .rst 404s and PDF is a
+    # browser feature -- so it is dropped, leaving other buttons untouched
+    context = _edit_button_context('api/core/index')
+    pv_html_page_context(None, 'api/core/index', 'page.html', context, None)
+
+    labels = [button['label'] for button in context['header_buttons']]
+    assert labels == ['source-edit-button', 'fullscreen-button']
 
 
 def test_coerce_point_like_arg():
@@ -1581,6 +1663,64 @@ def test_serial_dict_init():
     serial_dict = _SerializedDictArray(json_dict)
     assert serial_dict['ham'] == 'eggs'
     assert str(serial_dict) == '{"ham": "eggs"}'
+
+
+def test_convert_string_array_roundtrip():
+    """numpy string array <-> vtkStringArray must round-trip without truncation."""
+    arr = np.array(['alpha', 'beta', 'gamma', 'delta-with-much-more-text'])
+    vtk_arr = convert_string_array(arr)
+    assert vtk_arr.GetNumberOfValues() == arr.size
+    assert vtk_arr.GetValue(0) == 'alpha'
+    assert vtk_arr.GetValue(3) == 'delta-with-much-more-text'
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == arr.shape
+    # Width must auto-size to longest value, not get truncated to 1 char.
+    assert out[3] == 'delta-with-much-more-text'
+    assert np.array_equal(out, arr)
+
+
+def test_convert_string_array_scalar_string():
+    """A bare Python str round-trips back to a 0-d numpy array of the original."""
+    vtk_arr = convert_string_array('hello')
+    assert vtk_arr.GetNumberOfValues() == 1
+    assert vtk_arr.GetValue(0) == 'hello'
+    out = convert_string_array(vtk_arr)
+    assert out.ndim == 0
+    assert str(out) == 'hello'
+
+
+def test_convert_string_array_rejects_non_ascii():
+    with pytest.raises(ValueError, match='non-ASCII'):
+        convert_string_array(np.array(['hello', 'wörld']))
+
+
+def test_convert_string_array_with_name():
+    vtk_arr = convert_string_array(np.array(['a', 'b']), name='my_array')
+    assert vtk_arr.GetName() == 'my_array'
+
+
+def test_serial_dict_uses_single_value_storage():
+    """The setter stores the JSON string as a single vtkStringArray value
+    instead of one value per character (the historical encoding).
+    """
+    serial = _SerializedDictArray({'foo': 'bar', 'n': 42})
+    # New format: 1 value, not len(json_string).
+    assert serial.GetNumberOfValues() == 1
+    assert serial.GetValue(0) == '{"foo": "bar", "n": 42}'
+
+
+def test_serial_dict_reads_legacy_char_per_value_format():
+    """Files written with the old char-per-value format must still
+    deserialize correctly. The getter joins all values.
+    """
+    legacy = _SerializedDictArray()
+    # Wipe and manually re-encode the JSON char-by-char (the old behavior).
+    legacy.SetNumberOfValues(0)
+    for ch in '{"hello": "world"}':
+        legacy.InsertNextValue(ch)
+    # The getter joins all values so the read still produces the right string.
+    assert legacy._string == '{"hello": "world"}'
 
 
 def test_serial_dict_as_dict(serial_dict_with_foobar):
@@ -2572,6 +2712,15 @@ def test_vtk_verbosity_set_get():
         pv.vtk_verbosity()
 
 
+def test_vtk_verbosity_logging_disabled():
+    # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
+    # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
+    mock_logger = mock.MagicMock()
+    mock_logger.GetCurrentVerbosityCutoff.return_value = -10
+    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+        assert pv.vtk_verbosity() == 'off'
+
+
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
     match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
@@ -2626,6 +2775,141 @@ def test_allow_new_attributes():
     assert pv.allow_new_attributes() is True
     set_private()
     set_public()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_default_backend(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    pv.enable_smp_tools()
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() >= 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_sets_threads(reset_smp_tools):  # noqa: ARG001
+    pv.enable_smp_tools(n_threads=2)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'error_type', 'match'),
+    [
+        ({'backend': 'invalid'}, ValueError, 'Invalid SMP backend'),
+        ({'backend': 1}, TypeError, '`backend` must be a string.'),
+        ({'n_threads': 0}, ValueError, '`n_threads` must be greater than or equal to 1.'),
+        ({'n_threads': 1.5}, TypeError, '`n_threads` must be an integer.'),
+        ({'n_threads': True}, TypeError, '`n_threads` must be an integer.'),
+    ],
+)
+def test_enable_smp_tools_invalid_input(kwargs, error_type, match):
+    with pytest.raises(error_type, match=re.escape(match)):
+        pv.enable_smp_tools(**kwargs)
+
+
+def test_enable_smp_tools_unsupported_vtk_build(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace())
+
+    match = 'This VTK build does not support runtime SMP backend selection.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_state(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    msg = 'boom'
+    with pytest.raises(RuntimeError, match=msg), pv.enable_smp_tools(n_threads=2):
+        raise RuntimeError(msg)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+        with pv.enable_smp_tools(n_threads=4):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+def test_enable_smp_tools_restores_state_on_unavailable_backend(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    state = {'backend': 'Sequential', 'threads': 3}
+
+    def get_backend() -> str:
+        return state['backend']
+
+    def get_estimated_number_of_threads() -> int:
+        return state['threads']
+
+    def initialize(n_threads: int = 0) -> None:
+        state['threads'] = n_threads or 8
+
+    def set_backend(backend: str) -> bool:
+        if backend == 'TBB':
+            state['backend'] = 'STDThread'
+            return False
+        state['backend'] = backend
+        return True
+
+    fake_smp_tools = SimpleNamespace(
+        GetBackend=get_backend,
+        GetEstimatedNumberOfThreads=get_estimated_number_of_threads,
+        Initialize=initialize,
+        SetBackend=set_backend,
+    )
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace(vtkSMPTools=fake_smp_tools))
+
+    match = 'The requested SMP backend `tbb` is not available in this VTK build.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools('tbb')
+
+    assert get_backend() == 'Sequential'
+    assert get_estimated_number_of_threads() == 3
 
 
 T = TypeVar('T')
@@ -3103,7 +3387,7 @@ def test_fileio_extensions(cls):
     if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
         # These classes are not associated with any extensions
         pytest.xfail()
-    assert len(cls.extensions) > 0
+    assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
 def test_ply_writer(sphere, tmp_path):
@@ -3129,3 +3413,42 @@ def test_ply_writer(sphere, tmp_path):
     assert writer.texture == texture_name
     writer.texture = texture_name
     assert writer.texture == texture_name
+
+
+def test_try_callback_warns_every_time():
+    # A callback bound to a high-frequency event (e.g. ``MouseMoveEvent``)
+    # raises an identical exception at the same call site on every
+    # invocation. ``try_callback`` must surface it every time rather than
+    # letting Python's default filter de-duplicate it to a single message.
+    def failing_callback():
+        msg = 'callback failed'
+        raise RuntimeError(msg)
+
+    n_calls = 3
+    with warnings.catch_warnings(record=True) as log:
+        # Restore the default filter that ``catch_warnings(record=True)``
+        # overrides, so that de-duplication would apply without the fix.
+        warnings.simplefilter('default')
+        for _ in range(n_calls):
+            misc.try_callback(failing_callback)
+
+    messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
+    assert len(messages) == n_calls
+    assert 'callback failed' in str(messages[0].message)
+
+
+def test_write_path_of_ensight_writer(tmp_path, hexbeam):
+
+    path = tmp_path / 'hexbeam.case'
+    writer = pv.EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
+    assert writer.path == str(path.parent / path.stem)
+    # written_path is initialized same as path,
+    # but is updated after write() is called
+    assert writer.written_path == path
+
+    writer.write()
+
+    assert writer.path == str(path.parent / path.stem)
+
+    expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
+    assert writer.written_path == expected_path

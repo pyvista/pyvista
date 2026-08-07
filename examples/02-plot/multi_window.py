@@ -8,8 +8,6 @@ Multi-Window Plot
 Subplotting: having multiple scenes in a single window
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

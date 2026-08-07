@@ -13,8 +13,6 @@ Integrate a vector field to generate streamlines.
 # by experimenting with the data.
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

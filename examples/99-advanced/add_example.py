@@ -86,8 +86,6 @@ typically set up your imports.
 # block, output will be generated and printed to the screen according to its
 # ``__repr__`` method.  Otherwise, you can use ``print()`` to output text.
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -177,8 +175,8 @@ pl.close()
 # %%
 # Adding Example Files
 # ~~~~~~~~~~~~~~~~~~~~
-# PyVista has a variety of example files all stored at `pyvista/vtk_data
-# <https://github.com/pyvista/vtk-data>`_, and you can add the file by
+# PyVista has a variety of example files all stored at `pyvista/data
+# <https://github.com/pyvista/data>`_, and you can add the file by
 # following the directions there.
 #
 # Under the hood, PyVista uses `pooch <https://github.com/fatiando/pooch>`_,

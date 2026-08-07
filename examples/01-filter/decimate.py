@@ -9,8 +9,6 @@ Decimate a mesh
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples
@@ -53,23 +51,18 @@ pro_decimated.plot(cpos=cpos, **dargs)
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-pl = pv.Plotter(shape=(1, 3))
-pl.add_mesh(mesh, **dargs)
-pl.add_text('Input mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.subplot(0, 1)
-pl.add_mesh(decimated, **dargs)
-pl.add_text('Decimated mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.subplot(0, 2)
-pl.add_mesh(pro_decimated, **dargs)
-pl.add_text('Pro Decimated mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.link_views()
-pl.show()
+datasets = {
+    'Input': mesh,
+    'Decimated': decimated,
+    'Pro Decimated': pro_decimated,
+}
+
+pv.plot_compare(
+    datasets,
+    dataset_kwargs=dargs,
+    label_size=24,
+    cpos=cpos,
+)
 
 # %%
 # Decimate Polyline Mesh

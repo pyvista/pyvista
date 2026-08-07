@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
 from pyvista.plotting.texture import numpy_to_texture
 
 
@@ -96,14 +96,32 @@ def test_texture_from_images(image):
 
 def test_skybox_example():
     texture = examples.load_globe_texture()
-    texture.cube_map = False
-    assert texture.cube_map is False
+    skybox = texture.to_skybox()
+    assert isinstance(skybox, _vtk.vtkOpenGLSkybox)
+    assert skybox.GetProjection() == 1
 
     texture.cube_map = True
     assert texture.cube_map is True
 
     skybox = texture.to_skybox()
     assert isinstance(skybox, _vtk.vtkOpenGLSkybox)
+    assert skybox.GetProjection() == 0
+
+
+def test_to_skybox_orients_floor():
+    texture = examples.load_globe_texture()
+    skybox = texture.to_skybox(
+        floor_plane=(0.0, 0.0, 1.0, 0.0),
+        floor_right=(1.0, 0.0, 0.0),
+    )
+    assert skybox.GetFloorPlane() == (0.0, 0.0, 1.0, 0.0)
+    assert skybox.GetFloorRight() == (1.0, 0.0, 0.0)
+
+
+def test_to_skybox_cube_projection_requires_cubemap():
+    texture = examples.load_globe_texture()
+    with pytest.raises(ValueError, match='Cube projection requires a cubemap texture'):
+        texture.to_skybox(projection='cube')
 
 
 def test_flip_x(texture):

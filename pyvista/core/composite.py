@@ -26,11 +26,11 @@ from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_utilities import vtk_version_info
 
-from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject
@@ -2310,10 +2310,7 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-            self.CompositeShallowCopy(to_copy)
-        else:
-            self.ShallowCopy(to_copy)
+        self.CompositeShallowCopy(to_copy)
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks

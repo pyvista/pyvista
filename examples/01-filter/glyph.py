@@ -7,8 +7,6 @@ Plotting Glyphs (Vectors or PolyData)
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-from __future__ import annotations
-
 import math
 
 import numpy as np

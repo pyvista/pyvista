@@ -1,15 +1,20 @@
 Connections
 ===========
 
-PyVista is a powerful tool that researchers can harness to create compelling,
-integrated visualizations of large datasets in an intuitive, Pythonic manner.
+PyVista is used across science and engineering disciplines to visualize 3D
+data and models, generate publication-quality figures, automate analysis
+workflows, and build custom applications on top of PyVista's 3D capabilities.
 
-PyVista is used across science and engineering disciplines by a diverse
-community to visualize data/models in 3D, generate publication-quality
-illustrations, automate analysis workflows, and build custom applications
-leveraging PyVista's 3D capabilities.
+.. admonition:: awesome-pyvista
+   :class: tip
 
-Here are a few open-source projects that leverage PyVista:
+   For a curated, continuously updated list of domain-specific tooling that
+   interoperates with or is built on PyVista, see
+   `awesome-pyvista <https://github.com/pyvista/awesome-pyvista>`_. The list
+   below is a snapshot of selected projects; ``awesome-pyvista`` is the
+   canonical source.
+
+Here are a few open-source projects that build on PyVista:
 
 
 Engineering

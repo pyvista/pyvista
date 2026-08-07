@@ -10,8 +10,6 @@ to highlight part of your plot.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore

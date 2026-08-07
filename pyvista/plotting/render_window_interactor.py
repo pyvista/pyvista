@@ -15,15 +15,14 @@ import weakref
 import numpy as np
 
 import pyvista as pv
-from pyvista import vtk_version_info
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
+from .errors import MismatchedInteractorError
 from .interactor_style_registry import _get_interactor_style_handler
 from .interactor_style_registry import _validate_interactor_style
 from .opts import PickerType
@@ -588,14 +587,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
-        if (
-            vtk_version_info < (9, 3, 0) and scene is not None and len(self._plotter.renderers) > 1
-        ):  # pragma: no cover
-            warn_external(
-                'Interaction with charts is not possible when using multiple subplots.'
-                'Upgrade to VTK 9.3 or newer to enable this feature.',
-            )
-            scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
@@ -1553,6 +1544,19 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if not self.initialized:
             msg = 'Render window interactor must be initialized before processing events.'
             raise RuntimeError(msg)
+        rw = self.interactor.GetRenderWindow()
+        if rw is not None:  # pragma: no cover
+            iren_cls = type(self.interactor).__name__
+            rw_cls = type(rw).__name__
+            del rw
+            if iren_cls == 'vtkXRenderWindowInteractor' and rw_cls != 'vtkXOpenGLRenderWindow':
+                msg = (
+                    f'Cannot process events: {iren_cls} requires an X-backed render window '
+                    f'but got {rw_cls}. This typically happens on headless Linux where VTK '
+                    f'falls back to EGL for rendering but the interactor still expects X. '
+                    f'Use vtkGenericRenderWindowInteractor for headless/EGL contexts.'
+                )
+                raise MismatchedInteractorError(msg)
         self.interactor.ProcessEvents()
 
     @property

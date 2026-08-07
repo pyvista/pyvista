@@ -8,8 +8,6 @@ Using common filters like thresholding and clipping.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -63,29 +61,21 @@ contours = dataset.contour()
 slices = dataset.slice_orthogonal()
 glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
 
-pl = pv.Plotter(shape=(2, 2))
-# Show the threshold
-pl.add_mesh(outline, color='k')
-pl.add_mesh(threshed, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-# Show the contour
-pl.subplot(0, 1)
-pl.add_mesh(outline, color='k')
-pl.add_mesh(contours, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-# Show the slices
-pl.subplot(1, 0)
-pl.add_mesh(outline, color='k')
-pl.add_mesh(slices, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
-# Show the glyphs
-pl.subplot(1, 1)
-pl.add_mesh(outline, color='k')
-pl.add_mesh(glyphs, show_scalar_bar=False)
-pl.camera_position = [-2, 5, 3]
+# Use :func:`~pyvista.plot_compare` to show each result in its own linked subplot with an
+# outline of the original dataset.
+datasets = {
+    'Threshold': threshed,
+    'Contour': contours,
+    'Slices': slices,
+    'Glyphs': glyphs,
+}
 
-pl.link_views()
-pl.show()
+pv.plot_compare(
+    datasets,
+    dataset_kwargs={'show_scalar_bar': False},
+    reference_mesh=outline,
+    cpos=[-2, 5, 3],
+)
 
 # %%
 # Filter Pipeline
@@ -96,13 +86,14 @@ pl.show()
 # filtering pipeline through a chain; attaching each filter to the last filter.
 # In the following example, several filters are chained together:
 #
-# 1. First, and empty ``threshold`` filter to clean out any ``NaN`` values.
+# 1. First, use :func:`~pyvista.DataSetFilters.remove_nan_cells` to drop any
+#    cells whose scalar values are ``NaN``.
 # 2. Use an ``elevation`` filter to generate scalar values corresponding to height.
 # 3. Use the ``clip`` filter to cut the dataset in half.
 # 4. Create three slices along each axial plane using the ``slice_orthogonal`` filter.
 
 # Apply a filtering chain
-result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
+result = dataset.remove_nan_cells().elevation().clip(normal='z').slice_orthogonal()
 
 # %%
 # And to view this filtered data, simply call the ``plot`` method

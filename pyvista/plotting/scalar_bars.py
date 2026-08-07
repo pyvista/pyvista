@@ -9,10 +9,10 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .tools import parse_font_family
 
@@ -41,6 +41,10 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+
+    def __plotter_close__(self) -> None:
+        """Release scalar-bar state when the owning plotter closes."""
+        self.clear()
 
     def __repr__(self):
         """Nice representation of this class."""
@@ -261,6 +265,7 @@ class ScalarBars(_NoNewAttrMixin):
         render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
         unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
+        unique_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -391,6 +396,25 @@ class ScalarBars(_NoNewAttrMixin):
 
             .. versionadded:: 0.44.0
 
+        unique_bar : bool, default: False
+            Whether to create a scalar bar which is unique to the subplot.
+            If ``True``, the scalar bar will be created with a unique key
+            which is not shared with other subplots, even if the input title is the same.
+
+            .. note::
+
+                Scalar bars are managed by a dictionary with the title
+                as the key. By default, if a scalar bar with the same title
+                already exists, the scalar bar will be shared.
+                If ``unique_bar`` is ``True``, the scalar bar will be created
+                with a unique key which is the title suffixed with
+                ``_UNIQUE_ID_{active_renderer_index}``, where ``active_renderer_index``
+                is the index of the active renderer in the plotter.
+                This allows for multiple scalar bars with the same title
+                to be created across different subplots.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkScalarBarActor`
@@ -455,6 +479,10 @@ class ScalarBars(_NoNewAttrMixin):
                 height = theme.colorbar_vertical.height
             else:
                 height = theme.colorbar_horizontal.height
+
+        display_title = title
+        if unique_bar:
+            title = f'{title}_UNIQUE_ID_{self._plotter.renderers.active_index}'
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
@@ -593,7 +621,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_ranges[title] = mapper.scalar_range
         self._scalar_bar_mappers[title] = [mapper]
 
-        scalar_bar.SetTitle(title)
+        scalar_bar.SetTitle(display_title)
         title_text = scalar_bar.GetTitleTextProperty()
 
         title_text.SetJustificationToCentered()

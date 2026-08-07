@@ -15,12 +15,11 @@ import warnings
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
-from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
@@ -426,8 +425,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(  # noqa: PLR0917
-        self,
+    def extract_subset(  # type: ignore[misc] # noqa: PLR0917
+        self: ImageData,
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
@@ -501,11 +500,20 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
+
+        # VTK mutates direction and origin inconsistently, so we fix it up here
+        result.direction_matrix = self.direction_matrix
+        result.origin = self.origin
         if rebase_coordinates:
             # Adjust for the confusing issue with the extents
             #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-            result.origin = result.bounds[::2]
             result.offset = (0, 0, 0)
+            result.origin = (self.index_to_physical_matrix @ (*voi[::2], 1.0))[:3]
+        elif not np.allclose(rate, 1):
+            # Sampling affects the expected offset, so we need to re-encode the original offset
+            # based on its location in physical space, converted back to output coordinates
+            transform = self.index_to_physical_matrix @ result.physical_to_index_matrix
+            result.offset = np.floor((transform @ (*voi[::2], 1.0))[:3])
         return result
 
     @staticmethod
@@ -2323,180 +2331,6 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast('pv.ImageData', wrap(alg.GetOutput()))
 
-    @_deprecate_positional_args
-    def contour_labeled(  # noqa: PLR0917
-        self,
-        n_labels: int | None = None,
-        smoothing: bool = False,  # noqa: FBT001, FBT002
-        smoothing_num_iterations: int = 50,
-        smoothing_relaxation_factor: float = 0.5,
-        smoothing_constraint_distance: float = 1,
-        output_mesh_type: Literal['quads', 'triangles'] = 'quads',
-        output_style: Literal['default', 'boundary'] = 'default',
-        scalars: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> pv.PolyData:
-        """Generate labeled contours from 3D label maps.
-
-        SurfaceNets algorithm is used to extract contours preserving sharp
-        boundaries for the selected labels from the label maps.
-        Optionally, the boundaries can be smoothened to reduce the staircase
-        appearance in case of low resolution input label maps.
-
-        This filter requires that the :class:`ImageData` has integer point
-        scalars, such as multi-label maps generated from image segmentation.
-
-        .. note::
-           Requires ``vtk>=9.3.0``.
-
-        .. deprecated:: 0.45
-            This filter produces unexpected results and is deprecated.
-            Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
-            See https://github.com/pyvista/pyvista/issues/5981 for details.
-
-            To replicate the default behavior from this filter, call `contour_labels`
-            with the following arguments:
-
-            .. code-block:: python
-
-                image.contour_labels(
-                    boundary_style='strict_external',  # old filter strictly uses external polygons
-                    smoothing=False,  # old filter does not apply smoothing
-                    output_mesh_type='quads',  # old filter generates quads
-                    pad_background=False,  # old filter generates open surfaces at input edges
-                    orient_faces=False,  # old filter does not orient faces
-                    simplify_output=False,  # old filter returns multi-component scalars
-                )
-
-        Parameters
-        ----------
-        n_labels : int, optional
-            Number of labels to be extracted (all are extracted if None is given).
-
-        smoothing : bool, default: False
-            Apply smoothing to the meshes.
-
-        smoothing_num_iterations : int, default: 50
-            Number of smoothing iterations.
-
-        smoothing_relaxation_factor : float, default: 0.5
-            Relaxation factor of the smoothing.
-
-        smoothing_constraint_distance : float, default: 1
-            Constraint distance of the smoothing.
-
-        output_mesh_type : str, default: 'quads'
-            Type of the output mesh. Must be either ``'quads'``, or ``'triangles'``.
-
-        output_style : str, default: 'default'
-            Style of the output mesh. Must be either ``'default'`` or ``'boundary'``.
-            When ``'default'`` is specified, the filter produces a mesh with both
-            interior and exterior polygons. When ``'boundary'`` is selected, only
-            polygons on the border with the background are produced (without interior
-            polygons). Note that style ``'selected'`` is currently not implemented.
-
-        scalars : str, optional
-            Name of scalars to process. Defaults to currently active scalars.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            :class:`pyvista.PolyData` Labeled mesh with the segments labeled.
-
-        References
-        ----------
-        Sarah F. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation
-        of Sharp Boundaries, Journal of Computer Graphics Techniques (JCGT), vol. 11,
-        no. 1, 34-54, 2022. Available online http://jcgt.org/published/0011/01/03/
-
-        https://www.kitware.com/really-fast-isocontouring/
-
-        Examples
-        --------
-        See :ref:`contouring_example` for a full example using this filter.
-
-        See Also
-        --------
-        pyvista.DataSetFilters.contour
-            Generalized contouring method which uses MarchingCubes or FlyingEdges.
-
-        pyvista.DataSetFilters.pack_labels
-            Function used internally by SurfaceNets to generate contiguous label data.
-
-        """
-        warn_external(
-            'This filter produces unexpected results and is deprecated. '
-            'Use `contour_labels` instead.'
-            '\nRefer to the documentation for `contour_labeled` for details on how to '
-            'transition to the new filter.'
-            '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
-            PyVistaDeprecationWarning,
-        )
-
-        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
-            raise VTKVersionError(msg)
-
-        alg = _vtk.vtkSurfaceNets3D()
-        if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-            if field != FieldAssociation.POINT:
-                msg = 'If `scalars` not given, active scalars must be point array.'
-                raise ValueError(msg)
-        else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
-            if field != FieldAssociation.POINT:
-                msg = (
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
-                )
-                raise ValueError(msg)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
-        )  # args: (idx, port, connection, field, name)
-        alg.SetInputData(self)
-        if n_labels is not None:
-            alg.GenerateLabels(n_labels, 1, n_labels)
-        if output_mesh_type == 'quads':
-            alg.SetOutputMeshTypeToQuads()
-        elif output_mesh_type == 'triangles':
-            alg.SetOutputMeshTypeToTriangles()
-        else:
-            msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'  # type: ignore[unreachable]
-            raise ValueError(msg)
-        if output_style == 'default':
-            alg.SetOutputStyleToDefault()
-        elif output_style == 'boundary':
-            alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':  # type: ignore[unreachable]
-            msg = f'Output style "{output_style}" is not implemented'
-            raise NotImplementedError(msg)
-        else:
-            msg = f'Invalid output style "{output_style}", use "default" or "boundary"'
-            raise ValueError(msg)
-        if smoothing:
-            alg.SmoothingOn()
-            alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
-            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
-            alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
-        else:
-            alg.SmoothingOff()
-        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pv.vtk_verbosity('off'):
-            _update_alg(
-                alg, progress_bar=progress_bar, message='Performing Labeled Surface Extraction'
-            )
-        return wrap(alg.GetOutput())
-
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
         boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
@@ -2549,10 +2383,6 @@ class ImageDataFilters(DataSetFilters):
         only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
 
-        .. note::
-
-            This filter requires VTK version ``9.3.0`` or greater.
-
         .. versionadded:: 0.45
 
         Parameters
@@ -2572,9 +2402,7 @@ class ImageDataFilters(DataSetFilters):
             The ``'strict_external'`` style can be used as a fast alternative to
             ``'external'``. This style `strictly` generates external polygons and does
             not compute or consider internal boundaries. This computation is fast, but
-            also results in jagged, non-smooth boundaries between regions. The
-            ``select_inputs`` and ``select_outputs`` options cannot be used with this
-            style.
+            also results in jagged, non-smooth boundaries between regions.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -2911,13 +2739,12 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
-        temp_scalars_name = '_PYVISTA_TEMP'
 
-        def _get_unique_labels_no_background(
-            array: NumpyArray[int], background: int
-        ) -> NumpyArray[int]:
-            unique = np.unique(array)
-            return unique[unique != background]
+        def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
+            if selection is None:
+                return np.array([], dtype=int)
+            unique = np.unique(np.atleast_1d(selection))
+            return unique[unique != background_value]
 
         def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             if scalars_ is None:
@@ -2926,31 +2753,14 @@ class ImageDataFilters(DataSetFilters):
             else:
                 field = image.get_array_association(scalars_, preference='point')
 
-            return (
+            image = (
                 image
                 if field == FieldAssociation.POINT
                 else image.cells_to_points(scalars=scalars_, copy=False)
             )
-
-        def _process_select_inputs(
-            image: ImageData,
-            select_inputs_: int | VectorLike[int],
-            scalars_: pyvista_ndarray,
-        ) -> NumpyArray[int]:
-            select_inputs = np.atleast_1d(select_inputs_)
-            # Remove non-selected label ids from the input. We do this by setting
-            # non-selected ids to the background value to remove them from the input
-            temp_scalars = scalars_.copy()
-            input_ids = _get_unique_labels_no_background(temp_scalars, background_value)
-            keep_labels = [*select_inputs, background_value]
-            for label in input_ids:
-                if label not in keep_labels:
-                    temp_scalars[temp_scalars == label] = background_value
-
-            image.point_data[temp_scalars_name] = temp_scalars
-            image.set_active_scalars(temp_scalars_name, preference='point')
-
-            return input_ids
+            if input_ids.size > 0:
+                return image.select_values(input_ids)
+            return image
 
         def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D):
             if output_mesh_type is None:
@@ -2964,57 +2774,11 @@ class ImageDataFilters(DataSetFilters):
             alg_: _vtk.vtkSurfaceNets3D,
             *,
             array_: pyvista_ndarray,
-            select_inputs_: int | VectorLike[int] | None,
-            select_outputs_: int | VectorLike[int] | None,
         ):
-            # WARNING: Setting the output style to default or boundary does not really work
-            # as expected. Specifically, `SetOutputStyleToDefault` by itself will not actually
-            # produce meshes with interior faces at the boundaries between foreground regions
-            # (even though this is what is suggested by the docs). Instead, simply calling
-            # `SetLabels` below will enable internal boundaries, regardless of the value of
-            # `OutputStyle`. Also, using `SetOutputStyleToBoundary` generates jagged/rough
-            # 'lines' between two exterior regions; enabling internal boundaries fixes this.
-            input_ids = (
-                _process_select_inputs(alg_input, select_inputs_, array_)
-                if select_inputs_ is not None
-                else None
-            )
-            alg_.SetOutputStyleToSelected()
-            if select_outputs_ is not None:
-                # Use selected outputs
-                output_ids = _get_unique_labels_no_background(
-                    np.atleast_1d(select_outputs_),
-                    background_value,
-                )
-            elif input_ids is not None:
-                # Set outputs to be same as inputs
-                output_ids = input_ids
-            else:
-                # Output all labels
-                output_ids = _get_unique_labels_no_background(
-                    array_,
-                    background_value,
-                )
-            output_ids = output_ids.astype(float)
-
-            # Add selected outputs
-            [alg.AddSelectedLabel(label_id) for label_id in output_ids]  # type: ignore[func-returns-value]
-
-            # The following logic enables the generation of internal boundaries
-            if input_ids is not None:
-                # Generate internal boundaries for selected inputs only
-                internal_ids: NumpyArray[int] = input_ids
-            elif select_outputs is None:
-                # No inputs or outputs selected, so generate internal
-                # boundaries for all labels in input array
-                internal_ids = output_ids
-            else:
-                internal_ids = _get_unique_labels_no_background(
-                    array_,
-                    background_value,
-                )
-
-            [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
+            # Always output all labels for surface nets; user-selected outputs are filtered later
+            ids = np.unique(array_)
+            ids = ids[ids != background_value]
+            [alg_.SetLabel(int(val), float(val)) for val in ids]  # type: ignore[func-returns-value]
 
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
@@ -3049,12 +2813,6 @@ class ImageDataFilters(DataSetFilters):
             else:
                 alg_.SmoothingOff()
 
-        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
-            raise VTKVersionError(msg)
-
         if orient_faces is None:
             orient_faces = bool(pv.vtk_version_info < (9, 6, 0))
         else:
@@ -3075,6 +2833,7 @@ class ImageDataFilters(DataSetFilters):
             must_contain=output_mesh_type,
             name='output_mesh_type',
         )
+        input_ids = _validate_selection(select_inputs)
 
         alg_input = _get_alg_input(self, scalars)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
@@ -3090,17 +2849,10 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        if boundary_style == 'strict_external':
-            # Use default alg parameters
-            if select_inputs is not None or select_outputs is not None:
-                msg = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-                raise TypeError(msg)
-        else:
+        if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
                 array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
-                select_inputs_=select_inputs,
-                select_outputs_=select_outputs,
             )
         _configure_smoothing(
             alg,
@@ -3118,11 +2870,17 @@ class ImageDataFilters(DataSetFilters):
 
         output: pv.PolyData = _get_output(alg)
 
-        (  # Clear temp scalars from input
-            alg_input.point_data.remove(temp_scalars_name)
-            if temp_scalars_name in alg_input.point_data
-            else None
-        )
+        if select_outputs is not None:
+            output_ids = _validate_selection(select_outputs)
+            ugrid = output.extract_values(
+                output_ids,
+                component_mode='any',
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+            output = ugrid.extract_surface(
+                algorithm='geometry', pass_cellid=False, pass_pointid=False
+            )
 
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
@@ -3160,17 +2918,6 @@ class ImageDataFilters(DataSetFilters):
 
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
-
-        if select_outputs is not None:
-            # This option generates unused points
-            # Use clean to remove these points (without merging points)
-            output.clean(
-                point_merging=False,
-                lines_to_points=False,
-                polys_to_lines=False,
-                strips_to_polys=False,
-                inplace=True,
-            )
 
         if orient_faces and output.n_cells > 0:
             if pv.vtk_version_info >= (9, 4):
@@ -3701,7 +3448,6 @@ class ImageDataFilters(DataSetFilters):
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar: bool = False,
-        pad_singleton_dims: bool | None = None,
     ) -> ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
@@ -3774,16 +3520,6 @@ class ImageDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        pad_singleton_dims : bool, optional
-            Control whether to pad singleton dimensions.
-
-            .. deprecated:: 0.45.0
-                Deprecated, use ``dimensionality='preserve'`` instead of
-                ``pad_singleton_dims=True`` and ``dimensionality='3D'`` instead of
-                ``pad_singleton_dims=False``.
-
-                Estimated removal on v0.48.0.
-
         Returns
         -------
         pyvista.ImageData
@@ -3817,20 +3553,20 @@ class ImageDataFilters(DataSetFilters):
         ...     actor = vtk.vtkImageActor()
         ...     actor.GetMapper().SetInputData(image)
         ...     actor.GetProperty().SetInterpolationTypeToNearest()
-        ...     plot = pv.Plotter()
-        ...     plot.add_actor(actor)
-        ...     plot.view_xy()
-        ...     plot.camera.tight()
-        ...     return plot
+        ...     pl = pv.Plotter()
+        ...     pl.add_actor(actor)
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
         >>>
-        >>> plot = grayscale_image_plotter(padded)
-        >>> plot.show()
+        >>> pl = grayscale_image_plotter(padded)
+        >>> pl.show()
 
         Pad only the x-axis with a white border.
 
         >>> padded = gray_image.pad_image(pad_value=255, pad_size=(200, 0))
-        >>> plot = grayscale_image_plotter(padded)
-        >>> plot.show()
+        >>> pl = grayscale_image_plotter(padded)
+        >>> pl.show()
 
         Pad with wrapping.
 
@@ -3869,19 +3605,6 @@ class ImageDataFilters(DataSetFilters):
         >>> padded.plot(**plot_kwargs)
 
         """
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        if pad_singleton_dims is not None:
-            if pad_singleton_dims:
-                msg = (
-                    'Use of `pad_singleton_dims=True` is deprecated. '
-                    'Use `dimensionality="3D"` instead'
-                )
-            else:
-                msg = (
-                    'Use of `pad_singleton_dims=False` is deprecated. '
-                    'Use `dimensionality="preserve"` instead'
-                )
-            raise DeprecationError(msg)
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]
@@ -4239,7 +3962,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = (unique_scalars[1], unique_scalars[-1])
             else:
-                scalar_range = _validation.validate_data_range(scalar_range)  # type: ignore[arg-type]
+                scalar_range = _validation.validate_data_range(scalar_range)
             alg.SetScalarRange(*scalar_range)
 
         scalars_casted_to_float = False
@@ -4416,7 +4139,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)
             except ValueError:
                 msg = (
                     f'`{operation_mask}` is not a valid `operation_mask`.'
@@ -4516,8 +4239,9 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
 
-            Singleton dimensions are not resampled by this filter, e.g. 2D images
-            will remain 2D.
+            Singleton input dimensions are not resampled by this filter, e.g. 2D
+            images will remain 2D. An output dimension may be reduced to a singleton,
+            however, e.g. to flatten a 3D volume into a single 2D slice.
 
         .. versionadded:: 0.45
 
@@ -5039,8 +4763,19 @@ class ImageDataFilters(DataSetFilters):
 
         resize_filter = _vtk.vtkImageResize()
         resize_filter.SetInputData(input_image)
-        resize_filter.SetResizeMethodToMagnificationFactors()
-        resize_filter.SetMagnificationFactors(*magnification_factors)
+        # Reducing a non-singleton axis to a single point requires a magnification
+        # factor of zero, but `vtkImageResize` silently ignores zero factors and
+        # leaves the axis unchanged. Set the output dimensions explicitly in that
+        # case so that e.g. flattening a 3D volume to a 2D slice is honored.
+        target_dimensions = np.maximum(np.rint(new_dimensions).astype(int), 1)
+        if np.any((target_dimensions == 1) & ~singleton_dims):
+            # Preserve input singleton dimensions (these are never resampled).
+            target_dimensions[singleton_dims] = old_dimensions[singleton_dims]
+            resize_filter.SetResizeMethodToOutputDimensions()
+            resize_filter.SetOutputDimensions(*(int(d) for d in target_dimensions))
+        else:
+            resize_filter.SetResizeMethodToMagnificationFactors()
+            resize_filter.SetMagnificationFactors(*magnification_factors)
 
         # Set interpolation mode
         interpolator: _vtk.vtkAbstractImageInterpolator
@@ -5223,9 +4958,10 @@ class ImageDataFilters(DataSetFilters):
                 - ``[0, float('inf')]`` to select values greater than or equal to zero.
                 - ``[float('-inf'), 0]`` to select values less than or equal to zero.
 
-        fill_value : float | VectorLike[float], default: 0
+        fill_value : float | VectorLike[float] | None, default: 0
             Value used to fill the image. Can be a single value or a multi-component
-            vector. Non-selected parts of the image will have this value.
+            vector. Non-selected parts of the image will have this value. Set this to
+            ``None`` to keep the input array's original values for non-selected regions.
 
         replacement_value : float | VectorLike[float], optional
             Replacement value for the output array. Can be a single value or a
@@ -5426,6 +5162,35 @@ class ImageDataFilters(DataSetFilters):
         fill_value,
         replacement_value,
     ):
+        # Fast path: a single range over single-component point data with scalar
+        # replacement/fill values is equivalent to ``image_threshold``, which is
+        # implemented as a VTK image filter and is substantially faster than the
+        # generic numpy-based path below. ``image_threshold`` cannot represent
+        # multi-component replacement/fill values, and only sees the full input
+        # array (so we cannot use it when the threshold is on an extracted
+        # component of a multi-component array).
+        input_array = cast(
+            'pv.pyvista_ndarray',
+            get_array(self, name=array_name, preference=association),
+        )
+        if (
+            input_array.ndim == 1
+            and association == FieldAssociation.POINT
+            and not invert
+            and values is None
+            and ranges is not None
+            and len(ranges) == 1
+            and not isinstance(replacement_value, (list, tuple, np.ndarray))
+            and not isinstance(fill_value, (list, tuple, np.ndarray))
+        ):
+            return self.image_threshold(
+                ranges[0],
+                in_value=replacement_value,
+                out_value=fill_value,
+                scalars=array_name,
+                preference=association,
+            )
+
         id_mask = self._apply_component_logic_to_array(
             values=values,
             ranges=ranges,
@@ -5435,11 +5200,11 @@ class ImageDataFilters(DataSetFilters):
         )
 
         # Generate output array
-        input_array = cast(
-            'pv.pyvista_ndarray',
-            get_array(self, name=array_name, preference=association),
+        array_out = (
+            input_array.copy()
+            if fill_value is None
+            else np.full_like(input_array, fill_value=fill_value)
         )
-        array_out = np.full_like(input_array, fill_value=fill_value)
         replacement_values = (
             input_array[id_mask] if replacement_value is None else replacement_value
         )

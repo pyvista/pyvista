@@ -1,3 +1,14 @@
+.. tip::
+
+   A native ``.pv`` binary format with ``zstd`` compression is
+   available via the `pyvista-zstd
+   <https://github.com/pyvista/pyvista-zstd>`_ companion package,
+   included in the ``io`` extra (``pip install pyvista[io]``). It is
+   a compact, multi-threaded alternative to the built-in VTK formats
+   below when file size or I/O latency matters.  Third-party
+   packages can register additional custom writers via
+   :func:`pyvista.register_writer`.
+
 .. dropdown:: :class:`~pyvista.ImageData` File Formats
 
     .. include:: /api/utilities/io_table/ImageData_io_table.rst
@@ -17,6 +28,10 @@
 .. dropdown:: :class:`~pyvista.UnstructuredGrid` File Formats
 
     .. include:: /api/utilities/io_table/UnstructuredGrid_io_table.rst
+
+.. dropdown:: :class:`~pyvista.ExplicitStructuredGrid` File Formats
+
+    .. include:: /api/utilities/io_table/ExplicitStructuredGrid_io_table.rst
 
 .. dropdown:: :class:`~pyvista.MultiBlock` File Formats
 

@@ -12,12 +12,16 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import TypeVar
+import warnings
 
 import numpy as np
 from typing_extensions import Self
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
     from typing import Any
@@ -29,6 +33,14 @@ if TYPE_CHECKING:
     _T = TypeVar('_T')
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
+
+_SMPBackendOptions = Literal['stdthread', 'tbb', 'openmp', 'sequential']
+_SMP_BACKEND_NAMES: dict[str, str] = {
+    'stdthread': 'STDThread',
+    'tbb': 'TBB',
+    'openmp': 'OpenMP',
+    'sequential': 'Sequential',
+}
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -211,6 +223,138 @@ def has_module(module_name: str) -> bool:
     return module_spec is not None
 
 
+class _SMPToolsContext:
+    """Context manager that restores VTK SMP backend state on exit."""
+
+    def __init__(self, original_backend: str, original_threads: int) -> None:
+        self._original_backend = original_backend
+        self._original_threads = original_threads
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        _vtk.vtkSMPTools.SetBackend(self._original_backend)
+        _vtk.vtkSMPTools.Initialize(self._original_threads)
+
+
+def enable_smp_tools(
+    backend: _SMPBackendOptions = 'stdthread',
+    n_threads: int | None = None,
+) -> _SMPToolsContext:
+    """Enable a VTK SMP backend for filters that support shared-memory parallelism.
+
+    VTK's Python wheels currently default to the sequential SMP backend. This
+    helper switches to a parallel backend and optionally configures the maximum
+    number of threads used by VTK filters that rely on :vtk:`vtkSMPTools`.
+
+    The backend is applied immediately, so calling this function by itself
+    enables the chosen backend for the rest of the process. The return value is
+    also a context manager, so using it with a ``with`` statement will restore
+    the previous backend and thread count on exit.
+
+    Parameters
+    ----------
+    backend : str, default: 'stdthread'
+        SMP backend to enable. Acceptable values are:
+
+        - ``'stdthread'``: Enable VTK's ``std::thread`` backend. This is the
+          default and is available in the current VTK wheels.
+        - ``'tbb'``: Enable Intel oneTBB when available in the current VTK
+          build.
+        - ``'openmp'``: Enable OpenMP when available in the current VTK build.
+        - ``'sequential'``: Use VTK's sequential backend.
+
+    n_threads : int, optional
+        Maximum number of threads to use. If not provided, VTK resets to its
+        default maximum thread count and honors the ``VTK_SMP_MAX_THREADS``
+        environment variable when it is set.
+
+    Returns
+    -------
+    contextlib.AbstractContextManager
+        A context manager that restores the previous SMP backend and thread
+        count when exited. The return value may be discarded when the change
+        should apply for the remainder of the process.
+
+    Raises
+    ------
+    TypeError
+        If ``backend`` is not a string or if ``n_threads`` is not an integer.
+
+    ValueError
+        If ``backend`` is invalid or if ``n_threads`` is less than ``1``.
+
+    RuntimeError
+        If this VTK build does not support runtime SMP backend selection, or if
+        the requested backend is unavailable.
+
+    Examples
+    --------
+    Enable the wheel-supported ``stdthread`` backend for the rest of the
+    process.
+
+    >>> import pyvista as pv
+    >>> pv.enable_smp_tools()  # doctest:+SKIP
+
+    Configure the backend before running a contour filter.
+
+    >>> from pyvista import examples
+    >>> pv.enable_smp_tools(n_threads=8)  # doctest:+SKIP
+    >>> grid = examples.download_fea_bracket()  # doctest:+SKIP
+    >>> _ = grid.contour(5, scalars='Equivalent Stress')  # doctest:+SKIP
+
+    Scope the backend change to a ``with`` block. The previous backend and
+    thread count are restored on exit, even if an exception is raised.
+
+    >>> with pv.enable_smp_tools(n_threads=8):  # doctest:+SKIP
+    ...     _ = grid.contour(5, scalars='Equivalent Stress')
+
+    """
+    if not isinstance(backend, str):
+        msg = '`backend` must be a string.'  # type: ignore[unreachable]
+        raise TypeError(msg)
+
+    backend_key = backend.lower()
+    vtk_backend = _SMP_BACKEND_NAMES.get(backend_key)
+    if vtk_backend is None:
+        valid_backends = ', '.join(f'`{name}`' for name in _SMP_BACKEND_NAMES)
+        msg = f'Invalid SMP backend `{backend}`. Valid options are: {valid_backends}.'
+        raise ValueError(msg)
+
+    if n_threads is not None:
+        if isinstance(n_threads, bool) or not isinstance(n_threads, (int, np.integer)):
+            msg = '`n_threads` must be an integer.'
+            raise TypeError(msg)
+        if n_threads < 1:
+            msg = '`n_threads` must be greater than or equal to 1.'
+            raise ValueError(msg)
+        n_threads_ = int(n_threads)
+    else:
+        n_threads_ = None
+
+    if not hasattr(_vtk, 'vtkSMPTools') or not hasattr(_vtk.vtkSMPTools, 'SetBackend'):
+        msg = 'This VTK build does not support runtime SMP backend selection.'
+        raise RuntimeError(msg)
+
+    original_backend = _vtk.vtkSMPTools.GetBackend()
+    original_threads = _vtk.vtkSMPTools.GetEstimatedNumberOfThreads()
+
+    available = _vtk.vtkSMPTools.SetBackend(vtk_backend)
+    if not available:
+        _vtk.vtkSMPTools.SetBackend(original_backend)
+        _vtk.vtkSMPTools.Initialize(original_threads)
+        msg = f'The requested SMP backend `{backend_key}` is not available in this VTK build.'
+        raise RuntimeError(msg)
+
+    if n_threads_ is None:
+        _vtk.vtkSMPTools.Initialize()
+    else:
+        _vtk.vtkSMPTools.Initialize(n_threads_)
+
+    return _SMPToolsContext(original_backend, original_threads)
+
+
 def try_callback(func, *args) -> None:  # noqa: ANN001
     """Wrap a given callback in a try statement.
 
@@ -231,7 +375,14 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warn_external(formatted_exception)
+        # Force the warning to always be shown. Otherwise, callbacks bound to
+        # high-frequency events (e.g. ``MouseMoveEvent``) emit an identical
+        # warning at the same call site on every invocation, and Python's
+        # default filter de-duplicates it to a single message per session,
+        # making callback errors appear to be silently swallowed.
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warn_external(formatted_exception)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -306,6 +457,26 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
     """Metaclass to combine automatic attribute freezing with ABC support."""
 
 
+class _DataObjectMeta(_AutoFreezeABCMeta):
+    """Metaclass for ``DataObject`` that resolves accessor entry-points on class access.
+
+    Without this hook, class-level attribute access (e.g. ``pv.PolyData.manifold``)
+    bypasses lazy loading of ``pyvista.accessors`` entry-point plugins and raises
+    ``AttributeError`` until the plugin happens to be imported some other way.
+    Instance access is handled by ``DataObject.__getattr__``.
+    """
+
+    def __getattr__(cls, name: str) -> Any:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is None:  # pragma: no cover
+            return None  # type: ignore[unreachable]
+
+        if _resolve_pending_accessor(name):
+            return getattr(cls, name)
+        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)
+
+
 def _hasattr_static(obj: Any, attr: str) -> bool:
     """Replicate behavior of hasattr using static lookup."""
     try:
@@ -331,12 +502,18 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     def _check_new_attribute(self, key: str) -> None:
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is not None:
-            # Get mode for setting new attributes
-            try:
-                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-            except ImportError:
-                # Circular import, set to False to disallow new attributes during initial import
-                _ALLOW_NEW_ATTRIBUTES_MODE = False
+            # Get mode for setting new attributes. Read straight out of the module
+            # dict: this runs on every __setattr__, and going through the import
+            # machinery (or getattr, which would hit pyvista's module-level
+            # __getattr__) is needless overhead. ``pyvista.core`` is imported
+            # before ``_ALLOW_NEW_ATTRIBUTES_MODE`` is defined, so a missing key
+            # means we are still mid-import: disallow new attributes, as before.
+            pyvista_module = sys.modules.get('pyvista')
+            _ALLOW_NEW_ATTRIBUTES_MODE = (
+                False
+                if pyvista_module is None
+                else pyvista_module.__dict__.get('_ALLOW_NEW_ATTRIBUTES_MODE', False)
+            )
 
             # Check if setting a new attribute is allowed
             if not (
@@ -509,7 +686,7 @@ class _BoundsSizeMixin:
 
         Examples
         --------
-        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        Get the size of a cube. The cube has edge lengths of ``(1.0, 1.0, 1.0)``
         by default.
 
         >>> import pyvista as pv

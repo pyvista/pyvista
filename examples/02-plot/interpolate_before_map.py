@@ -18,8 +18,6 @@ For more details, please see `What is InterpolateScalarsBeforeMapping in VTK?
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

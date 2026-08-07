@@ -11,11 +11,10 @@ import matplotlib as mpl
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import colors
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
-from pyvista.plotting import _vtk
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
@@ -530,19 +529,11 @@ def test_plotter_theme_attribute_setter():
         'Set the theme when initializing the plotter instance instead.'
     )
 
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
+    with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
-
-    if pyvista.version_info >= (0, 49):
-        pytest.fail('Turn the warning to error')
 
     if pyvista.version_info >= (0, 50):
         pytest.fail('Remove the `theme` setter')
-
-    assert pl.theme.color == my_theme.color
-
-    assert pl.theme != pv.global_theme
-    assert pl.theme == my_theme
 
 
 @pytest.mark.filterwarnings(
@@ -759,6 +750,39 @@ def test_trame_config():
     trame_config.jupyter_extension_enabled = False
     assert not trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
+
+
+@pytest.mark.parametrize(
+    ('service', 'prefix', 'expected'),
+    [
+        ('/user/afie/', '/proxy/', '/user/afie/proxy/'),
+        ('/user/afie/', 'proxy/', '/user/afie/proxy/'),
+        ('/user/afie', '/proxy', '/user/afie/proxy/'),
+        ('/user/afie/', '/proxy/port/', '/user/afie/proxy/port/'),
+    ],
+)
+def test_trame_config_server_proxy_prefix_jupyterhub(monkeypatch, service, prefix, expected):
+    # Regression test for #7595: when running under JupyterHub, the trame
+    # server proxy prefix must be joined with JUPYTERHUB_SERVICE_PREFIX and
+    # end with a trailing slash. See PR #7390 for the regression that #7595
+    # hotfixed.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', service)
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', prefix)
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == expected
+
+
+def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
+    # When PYVISTA_TRAME_SERVER_PROXY_PREFIX is an absolute http(s) URL,
+    # JUPYTERHUB_SERVICE_PREFIX must not be prepended.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', '/user/afie/')
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', 'https://example.com/proxy/')
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == 'https://example.com/proxy/'
 
 
 def test_box_axes(default_theme):

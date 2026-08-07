@@ -9,12 +9,10 @@ https://en.wikipedia.org/wiki/VRML
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
-sextant_file = examples.vrml.download_sextant()
+sextant_file = examples.download_sextant(load=False)
 
 
 # %%

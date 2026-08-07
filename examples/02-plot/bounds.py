@@ -10,8 +10,6 @@ using :func:`show_grid() <pyvista.Plotter.show_grid>`
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

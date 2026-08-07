@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from itertools import product
+import re
 from weakref import proxy
 
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .background_renderer import BackgroundRenderer
 from .colors import Color
 from .renderer import Renderer
@@ -100,7 +101,9 @@ class Renderers(_NoNewAttrMixin):
         Whether or not a border should be added around each subplot.
 
     border_color : str, optional
-        The color of the border around each subplot.
+        The color of the border around each subplot. Defaults to
+        the plotter's :attr:`~pyvista.Plotter.theme`
+        ``border_color``.
 
     border_width : float, optional
         The width of the border around each subplot.
@@ -134,17 +137,29 @@ class Renderers(_NoNewAttrMixin):
         if border_width is None:
             border_width = plotter.theme.border_width
 
+        if border_color is None:
+            border_color = self._plotter.theme.border_color
+
         self.groups = np.empty((0, 4), dtype=int)
 
         if isinstance(shape, str):
-            if '|' in shape:
-                n = int(shape.split('|')[0])
-                m = int(shape.split('|')[1])
+            descriptor = re.fullmatch(r'(\d+)([|/])(\d+)', shape)
+            if descriptor is None:
+                msg = (
+                    '"shape" string descriptor must be two integers separated by '
+                    f'"|" or "/", for example "3|1" or "4/2". Got {shape!r}.'
+                )
+                raise ValueError(msg)
+            first, separator, second = int(descriptor[1]), descriptor[2], int(descriptor[3])
+            if first <= 0 or second <= 0:
+                msg = f'"shape" must contain only positive integers. Got {shape!r}.'
+                raise ValueError(msg)
+            if separator == '|':
+                n, m = first, second
                 rangen = reversed(range(n))
                 rangem = reversed(range(m))
             else:
-                m = int(shape.split('/')[0])
-                n = int(shape.split('/')[1])
+                m, n = first, second
                 rangen = range(n)  # type: ignore[assignment]
                 rangem = range(m)  # type: ignore[assignment]
 
@@ -319,7 +334,7 @@ class Renderers(_NoNewAttrMixin):
             )
 
         # each render will also have an associated background renderer
-        self._background_renderers: list[None | BackgroundRenderer] = [
+        self._background_renderers: list[BackgroundRenderer | None] = [
             None for _ in range(len(self))
         ]
 

@@ -7,8 +7,10 @@ import sys
 from typing import Literal
 from typing import NamedTuple
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core.config import global_config
+from pyvista.core.errors import VTKVersionError
 
 
 class VersionInfo(NamedTuple):
@@ -53,8 +55,6 @@ def _get_vtk_version():
 class VTKVersionInfo(VersionInfo):
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = (
                 f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
                 f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
@@ -79,7 +79,7 @@ class VTKVersionInfo(VersionInfo):
 
 
 vtk_version_info = VTKVersionInfo(*_get_vtk_version())
-_MIN_SUPPORTED_VTK_VERSION = (9, 2, 2)
+_MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
 
 
 class vtkPyVistaOverride:  # noqa: N801
@@ -108,6 +108,10 @@ class vtkPyVistaOverride:  # noqa: N801
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
+# VTK only exposes the snake_case API from 9.4 on, so below that there is nothing
+# to check for. `check_attribute` runs on every attribute access, so bind it once here.
+_VTK_SNAKE_CASE_MIN_VERSION_MET = vtk_version_info >= (9, 4)
+
 
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
@@ -116,11 +120,11 @@ class DisableVtkSnakeCase:
     def check_attribute(target, attr):
         # Skip check and exit early if possible
         if (
-            _VTK_SNAKE_CASE_STATE == 'allow'
+            not _VTK_SNAKE_CASE_MIN_VERSION_MET
+            or _VTK_SNAKE_CASE_STATE == 'allow'
             or not attr
             or not attr[0].islower()
             or attr in ('__class__', '__init__')
-            or vtk_version_info < (9, 4)
         ):
             return
 
@@ -143,6 +147,39 @@ class DisableVtkSnakeCase:
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)
         return object.__getattribute__(self, item)
+
+    def __dir__(self) -> list[str]:
+        """Return a filtered attribute listing for :func:`dir` and tab-completion.
+
+        VTK-inherited names are hidden by default so PyVista objects present
+        a curated public surface in data-science IDEs (Positron Variables
+        pane, VS Code Jupyter extension, ...) and in IPython / Jupyter
+        tab-completion. VTK methods remain fully callable; only their
+        enumeration is suppressed.
+
+        - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, ...) are
+          hidden unless :attr:`pyvista.global_config.show_vtk_api` is
+          ``True``.
+        - snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+          hidden unless VTK snake_case is allowed via
+          :func:`pyvista.vtk_snake_case`, since they would otherwise raise
+          ``PyVistaAttributeError`` on access.
+        """
+        cls: type = type(self)
+        listing = super().__dir__()
+        show_camel = global_config.show_vtk_api
+        show_snake = _VTK_SNAKE_CASE_STATE == 'allow'
+        if show_camel and show_snake:
+            return sorted(listing)
+
+        def keep(attr: str) -> bool:
+            if not _is_vtk_attribute_cached(cls, attr):
+                return True
+            if attr and attr[0].islower():
+                return show_snake
+            return show_camel
+
+        return sorted(attr for attr in listing if keep(attr))
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01

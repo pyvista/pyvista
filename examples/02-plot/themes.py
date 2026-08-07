@@ -10,8 +10,6 @@ set default plotting parameters. This example shows how to use the
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

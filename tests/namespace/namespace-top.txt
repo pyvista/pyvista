@@ -164,7 +164,7 @@ VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
 VTKPDataSetReader, <class 'pyvista.utilities.reader.VTKPDataSetReader'>
 VtkErrorCatcher, <class 'pyvista.utilities.errors.VtkErrorCatcher'>
 Wavelet, <function Wavelet at 0x1641c08b0>
-WidgetHelper, <class 'pyvista.plotting.widgets.WidgetHelper'>
+WidgetComponent, <class 'pyvista.plotting.widgets.WidgetComponent'>
 XMLImageDataReader, <class 'pyvista.utilities.reader.XMLImageDataReader'>
 XMLMultiBlockDataReader, <class 'pyvista.utilities.reader.XMLMultiBlockDataReader'>
 XMLPImageDataReader, <class 'pyvista.utilities.reader.XMLPImageDataReader'>
@@ -233,6 +233,7 @@ create_grid, <function create_grid at 0x1641b3790>
 # cube_axes_actor, <module 'pyvista.plotting.cube_axes_actor' from 'pyvista/pyvista/plotting/cube_axes_actor.py'>
 cubemap, <function cubemap at 0x163f41430>
 cubemap_from_filenames, <function cubemap_from_filenames at 0x163f414c0>
+enable_smp_tools
 # dataobject, <module 'pyvista.core.dataobject' from 'pyvista/pyvista/core/dataobject.py'>
 # dataset, <module 'pyvista.core.dataset' from 'pyvista/pyvista/core/dataset.py'>
 # datasetattributes, <module 'pyvista.core.datasetattributes' from 'pyvista/pyvista/core/datasetattributes.py'>
@@ -319,7 +320,7 @@ set_jupyter_backend, <function set_jupyter_backend at 0x1645b2f70>
 set_pickle_format, <function set_pickle_format at 0x163f3e3a0>
 set_plot_theme, <function set_plot_theme at 0x1647a4670>
 # sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/pyvista/utilities/sphinx_gallery.py'>
-start_xvfb, <function start_xvfb at 0x1641c8ca0>
+# start_xvfb, <function start_xvfb at 0x1641c8ca0>
 surface_from_para, <function surface_from_para at 0x1641c8670>
 system_supports_plotting, <function system_supports_plotting at 0x1641af550>
 # texture, <module 'pyvista.core.texture' from 'pyvista/pyvista/core/texture.py'>

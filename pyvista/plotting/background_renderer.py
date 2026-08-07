@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .renderer import Renderer
@@ -31,12 +32,9 @@ class BackgroundRenderer(Renderer):
         self, parent, image_path, scale=1, view_port=None
     ):
         """Initialize BackgroundRenderer with an image."""
-        # avoiding circular import
-        from . import _vtk  # noqa: PLC0415
-
         # read the image first as we don't need to create a render if
         # the image path is invalid
-        image_data = pv.read(image_path)
+        image_data = pv.read(image_path, cls=pv.ImageData)
 
         super().__init__(parent, border=False)
         self.SetLayer(0)
@@ -68,6 +66,9 @@ class BackgroundRenderer(Renderer):
         if self.parent is None:  # when deleted
             return
         if self.parent.render_window is None:  # BasePlotter
+            return
+
+        if self._actors is None:  # the renderer has been closed
             return
 
         if self._prior_window_size != self.parent.window_size:
