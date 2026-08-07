@@ -65,6 +65,8 @@ from .actor import Actor
 from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
+from .component_registry import _pending_component_names
+from .component_registry import _resolve_pending_component
 from .component_registry import register_plotter_component as _register_plotter_component
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
@@ -501,9 +503,6 @@ class BasePlotter(_BoundsSizeMixin):
         Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
         and dataset extension points present the same lookup contract.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.plotting.component_registry import _resolve_pending_component  # noqa: PLC0415
-
         if _resolve_pending_component(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)
@@ -518,8 +517,6 @@ class BasePlotter(_BoundsSizeMixin):
         completion surface them without paying the plugin import cost
         ahead of time.
         """
-        from pyvista.plotting.component_registry import _pending_component_names  # noqa: PLC0415
-
         return sorted({*super().__dir__(), *_pending_component_names()})
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
@@ -1297,8 +1294,6 @@ class BasePlotter(_BoundsSizeMixin):
 
     def disable_3_lights(self) -> None:
         """Please use ``enable_lightkit``, this method has been deprecated."""
-        from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
 
