@@ -21,10 +21,9 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     edit : bool, default=False
         Link to the GitHub edit page instead of the blob view. The blob view
-        gets the full line range highlighted; the edit page only gets the
-        first line, since GitHub's editor scrolls to the *bottom* of a range
-        rather than the top, which lands past the definition it's meant to
-        open on.
+        gets the full line range highlighted; the edit page gets a short,
+        two-line range starting at the same line -- a single-line anchor
+        doesn't reliably scroll the edit view there on first load.
 
     Returns
     -------
@@ -94,9 +93,10 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     if not lineno:
         linespec = ''
     elif edit:
-        # GitHub's edit view scrolls to the bottom of a line range, not the
-        # top, so a single line lands on the definition instead of past it.
-        linespec = f'#L{lineno}'
+        # A single-line #Lxx anchor doesn't reliably scroll GitHub's edit
+        # view on first load (it opens at the top until the page is
+        # refreshed); a short range seems to work, so use the smallest one.
+        linespec = f'#L{lineno}-L{lineno + 1}'
     else:
         linespec = f'#L{lineno}-L{lineno + len(source) - 1}'
 
