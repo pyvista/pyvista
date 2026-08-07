@@ -96,6 +96,7 @@ test = [
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
   'sphinx-design<0.7.0',
+  'sphinx-examples-as-code<0.3.0',
   'sphinx-gallery<0.22.0',
   'sphinx<8.3.0',
   'sympy<1.15.0',
@@ -140,6 +141,7 @@ docs = [
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
   'sphinx-design==0.6.1',
+  'sphinx-examples-as-code==0.2.1',
   'sphinx-gallery==0.21.0',
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.9.0',
@@ -535,9 +537,9 @@ pyvista = "pv"
 
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
+'*/conf.py' = ['E402']
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
-'doc/source/conf.py' = ['E402']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -664,7 +666,6 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
-'tests/plotting/tinypages/conf.py' = ['E402']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3
