@@ -169,6 +169,12 @@ class Renderers(_NoNewAttrMixin):
         around the whole grid of subplots. Default is ``False``,
         regardless of ``shape``.
 
+        .. versionchanged:: 0.49
+
+            Now draws a single frame around the whole plotting area,
+            rather than a frame around each subplot individually. Use
+            ``subplot_seams`` for lines between subplots instead.
+
     border_color : str, optional
         The color of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_color

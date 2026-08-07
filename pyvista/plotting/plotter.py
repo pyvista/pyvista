@@ -309,6 +309,12 @@ class BasePlotter(_BoundsSizeMixin):
         around the whole grid of subplots. Default is ``False``,
         regardless of ``shape``.
 
+        .. versionchanged:: 0.49
+
+            Now draws a single frame around the whole plotting area,
+            rather than a frame around each subplot individually. Use
+            ``subplot_seams`` for lines between subplots instead.
+
     border_color : ColorLike, optional
         Color of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_color
@@ -8006,6 +8012,12 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Draw a frame around the outer edge of the plotting area, i.e.
         around the whole grid of subplots. Default is ``False``,
         regardless of ``shape``.
+
+        .. versionchanged:: 0.49
+
+            Now draws a single frame around the whole plotting area,
+            rather than a frame around each subplot individually. Use
+            ``subplot_seams`` for lines between subplots instead.
 
     border_color : ColorLike, optional
         Color of the border and/or subplot seams. Defaults to
