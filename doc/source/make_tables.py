@@ -1837,14 +1837,7 @@ def _get_doc(func: Callable[[], Any]) -> str | None:
 
 def _get_fullname(typ: type[Any]) -> str:
     """Return the fully qualified name of the given type object."""
-    modname = typ.__module__
-    # `load_*`/`download_*` functions are re-exported from the private
-    # `pyvista.examples.examples`/`pyvista.examples.downloads` submodules and
-    # are documented (and cross-referenceable) at the public
-    # `pyvista.examples` location instead, see `pyvista/examples/__init__.py`.
-    if modname in {'pyvista.examples.examples', 'pyvista.examples.downloads'}:
-        modname = 'pyvista.examples'
-    return f'{modname}.{typ.__qualname__}'
+    return f'{typ.__module__}.{typ.__qualname__}'
 
 
 def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
