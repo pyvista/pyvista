@@ -472,7 +472,7 @@ def plot_compare(  # noqa: ANN201
     notebook: bool | None = None,
     window_size: list[int] | None = None,
     border: bool | None = None,
-    border_color: ColorLike = 'k',
+    border_color: ColorLike | None = None,
     border_width: float = 2.0,
     theme: Theme | None = None,
     screenshot: str | bool | None = None,
@@ -669,13 +669,15 @@ def plot_compare(  # noqa: ANN201
         whenever there is more than one, which every comparison has, and is
         not otherwise. Set to ``False`` to never draw one.
 
-    border_color : ColorLike, default: "k"
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.

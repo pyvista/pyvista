@@ -208,7 +208,7 @@ def _compare(
     show_axes: show_axes = None,
     zoom: zoom = None,
     border: border = None,
-    border_color: border_color = 'k',
+    border_color: border_color = None,
     border_width: border_width = 2.0,
     **kwargs: Annotated[
         Any,

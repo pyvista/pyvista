@@ -307,13 +307,15 @@ class BasePlotter(_BoundsSizeMixin):
     border : bool, default: False
         Draw a border around each render window.
 
-    border_color : ColorLike, default: 'k'
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.
@@ -371,7 +373,7 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         shape: Sequence[int] | str = (1, 1),
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
+        border_color: ColorLike | None = None,
         border_width: float = 2.0,
         title: str | None = None,
         splitting_position: float | None = None,
@@ -7982,13 +7984,15 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     border : bool, optional
         Draw a border around each render window.
 
-    border_color : ColorLike, default: "k"
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
@@ -8051,7 +8055,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
+        border_color: ColorLike | None = None,
         border_width: float = 2.0,
         window_size: list[int] | None = None,
         line_smoothing: bool = False,  # noqa: FBT001, FBT002
