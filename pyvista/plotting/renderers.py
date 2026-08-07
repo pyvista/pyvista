@@ -38,31 +38,65 @@ def _merge_intervals(
     return merged
 
 
-def _collect_interior_seams(
+def _collect_seam_segments(
     viewports: list[tuple[float, float, float, float]],
+    *,
+    interior: bool = True,
+    exterior: bool = False,
 ) -> list[_SeamSegment]:
-    """Return the unique interior seam line segments for a set of viewports.
+    """Return line segments describing the requested viewport edges.
 
-    Every edge of every viewport that lies strictly inside the render
-    window ``(0, 1) x (0, 1)`` is contributed to either a vertical or
-    horizontal group keyed by its axial coordinate. Each group's
-    intervals are then merged, so adjacent cells sharing a seam
-    produce a single continuous line rather than one segment per
-    contributor. The resulting segments are drawn once from a single
-    overlay actor so that every seam rasterizes to a single pixel
-    row/column regardless of neighbor viewport rounding.
+    Every edge of every viewport is either *interior* (it lies
+    strictly inside the render window ``(0, 1) x (0, 1)``, i.e. it's
+    shared with a neighboring viewport) or *exterior* (it lies on the
+    outer perimeter of the render window, at ``0`` or ``1``). Edges
+    are contributed to a vertical or horizontal group keyed by their
+    axial coordinate, and each group's intervals are then merged, so
+    adjacent cells sharing an edge produce a single continuous line
+    rather than one segment per contributor — this applies just as
+    much to the outer perimeter (each side is typically touched by
+    several renderers) as it does to interior seams. The resulting
+    segments are meant to be drawn once from a single overlay actor
+    so that every line rasterizes to a single pixel row/column
+    regardless of how any one neighbor's viewport happens to round.
+
+    Parameters
+    ----------
+    viewports : list[tuple[float, float, float, float]]
+        ``(xmin, ymin, xmax, ymax)`` viewport of every renderer, in
+        normalized viewport coordinates.
+
+    interior : bool, default: True
+        Include seams shared between neighboring viewports.
+
+    exterior : bool, default: False
+        Include the outer perimeter of the occupied plotting area.
+
+    Returns
+    -------
+    list[_SeamSegment]
+        Line segments in normalized viewport coordinates.
+
     """
     vertical: dict[float, list[tuple[float, float]]] = {}
     horizontal: dict[float, list[tuple[float, float]]] = {}
     for xmin, ymin, xmax, ymax in viewports:
-        if xmax < 1.0:
+        if interior and xmax < 1.0:
             vertical.setdefault(xmax, []).append((ymin, ymax))
-        if xmin > 0.0:
+        if interior and xmin > 0.0:
             vertical.setdefault(xmin, []).append((ymin, ymax))
-        if ymax < 1.0:
+        if interior and ymax < 1.0:
             horizontal.setdefault(ymax, []).append((xmin, xmax))
-        if ymin > 0.0:
+        if interior and ymin > 0.0:
             horizontal.setdefault(ymin, []).append((xmin, xmax))
+        if exterior and xmax == 1.0:
+            vertical.setdefault(1.0, []).append((ymin, ymax))
+        if exterior and xmin == 0.0:
+            vertical.setdefault(0.0, []).append((ymin, ymax))
+        if exterior and ymax == 1.0:
+            horizontal.setdefault(1.0, []).append((xmin, xmax))
+        if exterior and ymin == 0.0:
+            horizontal.setdefault(0.0, []).append((xmin, xmax))
 
     segments: list[_SeamSegment] = []
     for x, intervals in vertical.items():
@@ -98,15 +132,23 @@ class Renderers(_NoNewAttrMixin):
         A list of sequences that defines the grouping of the sub-datasets.
 
     border : bool, optional
-        Whether or not a border should be added around each subplot.
+        Draw a frame around the outer edge of the plotting area, i.e.
+        around the whole grid of subplots. Default is ``False``,
+        regardless of ``shape``.
 
     border_color : str, optional
-        The color of the border around each subplot. Defaults to
+        The color of the border and/or subplot seams. Defaults to
         the plotter's :attr:`~pyvista.Plotter.theme`
         ``border_color``.
 
     border_width : float, optional
-        The width of the border around each subplot.
+        The width of the border and/or subplot seams.
+
+    subplot_seams : bool, optional
+        Draw a thin line between neighboring subplots. Defaults to
+        ``True`` when there is more than one subplot (``shape != (1,
+        1)``) and ``False`` otherwise. Has no effect for a single
+        subplot, since there are no neighbors to separate.
 
     """
 
@@ -122,6 +164,7 @@ class Renderers(_NoNewAttrMixin):
         border=None,
         border_color=None,
         border_width=None,
+        subplot_seams=None,
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
@@ -129,9 +172,16 @@ class Renderers(_NoNewAttrMixin):
         self._renderers = []
         self._shadow_renderer = None
 
-        # by default add border for multiple plots
+        # `border` always means "draw a frame around the outer edge of
+        # the occupied plotting area" -- the same concept whether there's
+        # one render window or a grid of them -- so it no longer turns
+        # itself on implicitly for multi-subplot layouts. That look now
+        # lives behind `subplot_seams`, which defaults on for grids
+        # since that's the only place seams between neighbors exist.
         if border is None:
-            border = shape != (1, 1)
+            border = False
+        if subplot_seams is None:
+            subplot_seams = shape != (1, 1)
         if border_color is None:
             border_color = plotter.theme.border_color
         if border_width is None:
@@ -316,18 +366,20 @@ class Renderers(_NoNewAttrMixin):
 
         # For multi-subplot layouts, replace each renderer's own
         # border with a single shared overlay that draws every
-        # interior seam exactly once. Having each neighbor rasterize
-        # its own copy of the boundary line caused seams to sometimes
-        # appear thicker in one direction or disappear entirely
-        # because the boundary falls right at each viewport's clip
-        # edge and rounds inconsistently.
+        # requested line -- interior seams and/or the outer frame --
+        # exactly once. Having each neighbor rasterize its own copy of
+        # a boundary line caused it to sometimes appear thicker in one
+        # direction or disappear entirely, because the boundary falls
+        # right at each viewport's clip edge and rounds inconsistently.
         self._border_overlay_renderer: Renderer | None = None
-        if border and len(self._renderers) > 1:
+        if len(self._renderers) > 1 and (border or subplot_seams):
             for renderer in self._renderers:
                 renderer._drop_border_actor()
             self._border_overlay_renderer = self._build_border_overlay_renderer(
                 border_color=border_color,
                 border_width=border_width,
+                interior=subplot_seams,
+                exterior=border,
             )
 
         # each render will also have an associated background renderer
@@ -663,19 +715,25 @@ class Renderers(_NoNewAttrMixin):
 
     @property
     def border_overlay_renderer(self) -> Renderer | None:  # numpydoc ignore=RT01
-        """Overlay renderer that draws interior subplot seams, if any."""
+        """Overlay renderer that draws the border and/or subplot seams, if any."""
         return self._border_overlay_renderer
 
-    def _build_border_overlay_renderer(self, *, border_color, border_width) -> Renderer | None:
-        """Create an overlay renderer that draws every interior seam once.
+    def _build_border_overlay_renderer(
+        self, *, border_color, border_width, interior, exterior
+    ) -> Renderer | None:
+        """Create an overlay renderer that draws every requested line once.
 
-        Each interior edge of a subplot viewport is expressed directly
-        in window-normalized coordinates, so both halves of every seam
+        Each requested edge of a subplot viewport -- interior seams
+        when ``interior`` is true, the outer perimeter when
+        ``exterior`` is true -- is expressed directly in
+        window-normalized coordinates, so both halves of every line
         rasterize to the same pixel row/column regardless of how any
         particular neighbor's viewport happens to round.
         """
-        segments = _collect_interior_seams(
-            [renderer.GetViewport() for renderer in self._renderers]
+        segments = _collect_seam_segments(
+            [renderer.GetViewport() for renderer in self._renderers],
+            interior=interior,
+            exterior=exterior,
         )
         if not segments:
             return None
