@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterable
 
+    from pyvista import Plotter
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
@@ -46,7 +47,7 @@ def _add_axes_widget(
             renderer.add_box_axes() if theme.axes.box else renderer.add_axes()
 
 
-def _set_background(pl: pv.Plotter, background: ColorLike | None) -> None:
+def _set_background(pl: Plotter, background: ColorLike | None) -> None:
     """Set the background `pyvista.plot` and `pyvista.plot_compare` take.
 
     A color is set as the background of every renderer at once, since `set_background`
@@ -67,7 +68,7 @@ def _set_background(pl: pv.Plotter, background: ColorLike | None) -> None:
 
 
 def _apply_render_options(
-    pl: pv.Plotter,
+    pl: Plotter,
     renderers: Iterable[Renderer],
     *,
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None,
@@ -129,7 +130,7 @@ def plot(  # noqa: ANN202, PLR0917
     border_color: ColorLike | None = None,
     border_width: float = 2.0,
     ssao: bool = False,  # noqa: FBT001, FBT002
-    before_close_callback: Callable[[pv.Plotter], None] | None = None,
+    before_close_callback: Callable[[Plotter], None] | None = None,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.

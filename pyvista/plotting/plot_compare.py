@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
+    from pyvista import Plotter
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
@@ -153,7 +154,7 @@ def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
 
 
 def _fix_clipping_range_on_render(
-    plotter: pv.Plotter, bounds: tuple[float, ...], n_renderers: int
+    plotter: Plotter, bounds: tuple[float, ...], n_renderers: int
 ) -> None:
     """Reset the clipping range to the given bounds before every future render.
 
@@ -390,7 +391,7 @@ def _fit_labels(
 
 
 def _fit_labels_on_render(
-    plotter: pv.Plotter,
+    plotter: Plotter,
     labels: Sequence[str],
     *,
     name: str,
@@ -483,7 +484,7 @@ def plot_compare(  # noqa: ANN201
     return_viewer: bool = False,
     jupyter_backend: JupyterBackendOptions | None = None,
     jupyter_kwargs: dict[str, Any] | None = None,
-    before_close_callback: Callable[[pv.Plotter], None] | None = None,
+    before_close_callback: Callable[[Plotter], None] | None = None,
     **kwargs: Any,
 ):
     """Plot a grid comparison of any number of data objects.
