@@ -129,6 +129,7 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
+    'sphinx_codeautolink',  # Add hyperlinks inside docstring/page code blocks to pyvista methods
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
