@@ -327,8 +327,8 @@ class BasePlotter(_BoundsSizeMixin):
 
     subplot_seams : bool, optional
         Draw a thin line between neighboring subplots. Defaults to
-        ``True`` when the plotter has more than one subplot
-        (``shape != (1, 1)``) and ``False`` otherwise. Has no effect
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
         for a single subplot, since there are no neighbors to
         separate.
 
@@ -8025,9 +8025,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     subplot_seams : bool, optional
         Draw a thin line between neighboring subplots. Defaults to
-        ``True`` when the plotter has more than one subplot and
-        ``False`` otherwise. Has no effect for a single subplot,
-        since there are no neighbors to separate.
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
+        for a single subplot, since there are no neighbors to
+        separate.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless

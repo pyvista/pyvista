@@ -2603,6 +2603,8 @@ class Theme(_ConfigBase):
     def subplot_seams(self) -> bool:  # numpydoc ignore=RT01
         """Return or set whether to draw a line between neighboring subplots by default.
 
+        .. versionadded:: 0.49
+
         Used when a ``Plotter`` has more than one subplot and no
         explicit ``subplot_seams`` is provided. Has no effect on a
         single-subplot ``Plotter``, since there are no neighbors to

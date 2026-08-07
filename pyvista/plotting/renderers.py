@@ -171,17 +171,20 @@ class Renderers(_NoNewAttrMixin):
 
     border_color : str, optional
         The color of the border and/or subplot seams. Defaults to
-        the plotter's :attr:`~pyvista.Plotter.theme`
-        ``border_color``.
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`.
 
     border_width : float, optional
-        The width of the border and/or subplot seams.
+        The width of the border and/or subplot seams. Defaults to
+        :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
 
     subplot_seams : bool, optional
         Draw a thin line between neighboring subplots. Defaults to
-        the plotter's :attr:`~pyvista.Plotter.theme` ``subplot_seams``.
-        Has no effect for a single subplot, since there are no
-        neighbors to separate.
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
+        for a single subplot, since there are no neighbors to
+        separate.
 
     """
 
