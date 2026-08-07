@@ -5,8 +5,8 @@ Visualize Anatomical Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example visualizes different anatomical groups using the segmentation
 labels available from the downloadable datasets
-:func:`~pyvista.examples.downloads.download_whole_body_ct_female` and
-:func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+:func:`~pyvista.examples.download_whole_body_ct_female` and
+:func:`~pyvista.examples.download_whole_body_ct_male`.
 
 These datasets include labels for 117 anatomical structures. In this example,
 the labels are grouped by filtering the list of labels and coloring the
@@ -21,8 +21,8 @@ from pyvista import examples
 # Load Dataset
 # ------------
 # Load a TotalSegmentator dataset. Can be the
-# :func:`male <pyvista.examples.downloads.download_whole_body_ct_male>` or
-# :func:`female <pyvista.examples.downloads.download_whole_body_ct_female>` female
+# :func:`male <pyvista.examples.download_whole_body_ct_male>` or
+# :func:`female <pyvista.examples.download_whole_body_ct_female>` female
 # subjects included with `PyVista`, or any other subject from the
 # `TotalSegmentator dataset <https://zenodo.org/records/10047292>`_.
 dataset = examples.download_whole_body_ct_female()

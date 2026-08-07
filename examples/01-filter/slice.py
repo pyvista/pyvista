@@ -185,7 +185,7 @@ pl.show()
 # :meth:`~pyvista.ImageDataFilters.slice_index` filter supports this use case.
 #
 # Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
-# :func:`~pyvista.examples.examples.load_frog_tissues`.
+# :func:`~pyvista.examples.load_frog_tissues`.
 
 mask = examples.load_frog_tissues()
 sliced = mask.slice_index(k=50)

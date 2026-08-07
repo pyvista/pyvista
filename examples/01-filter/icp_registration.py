@@ -17,7 +17,7 @@ from pyvista import examples
 # %%
 # Load a reference surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~
-# The :func:`~pyvista.examples.downloads.download_action_figure` scan is an
+# The :func:`~pyvista.examples.download_action_figure` scan is an
 # asymmetric reference mesh.
 
 target = examples.download_action_figure()

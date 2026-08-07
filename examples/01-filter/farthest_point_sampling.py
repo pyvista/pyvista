@@ -27,7 +27,7 @@ from pyvista import examples
 # %%
 # Load a point cloud
 # ~~~~~~~~~~~~~~~~~~
-# :func:`~pyvista.examples.downloads.download_horse_points` returns a scanned
+# :func:`~pyvista.examples.download_horse_points` returns a scanned
 # horse with uneven point density.
 
 cloud = examples.download_horse_points()

@@ -36,7 +36,7 @@ def download_teapot():
     software for 50 years and is conventionally treated as public domain.
 
     .. deprecated:: 0.49
-        Use :func:`pyvista.examples.downloads.download_teapot_vrml` instead.
+        Use :func:`pyvista.examples.download_teapot_vrml` instead.
 
     Returns
     -------
@@ -56,7 +56,7 @@ def download_sextant():
     """Download the sextant example.
 
     .. deprecated:: 0.49
-        Use :func:`pyvista.examples.downloads.download_sextant` instead.
+        Use :func:`pyvista.examples.download_sextant` instead.
 
     Returns
     -------
@@ -77,7 +77,7 @@ def download_grasshopper():
     .. versionadded:: 0.45
 
     .. deprecated:: 0.49
-        Use :func:`pyvista.examples.downloads.download_grasshopper` instead.
+        Use :func:`pyvista.examples.download_grasshopper` instead.
 
     Returns
     -------

@@ -426,6 +426,13 @@ autosummary_context = {
     'skipmethods': ['__init__', 'override'],
 }
 
+# Respect `__all__` when deciding which re-exported members to document.
+# Needed so `pyvista.examples`'s `load_*`/`download_*` re-exports are
+# documented (and cross-referenceable) at their public `pyvista.examples.*`
+# path. No other documented module defines `__all__` today, so this is
+# effectively scoped to that one case.
+autosummary_ignore_module_all = False
+
 # The suffix(es) of source filenames.
 source_suffix = '.rst'
 

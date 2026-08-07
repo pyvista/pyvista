@@ -7559,7 +7559,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> labels_plotter(colored_labels, color_dict).show()
 
-        Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
+        Load the :func:`~pyvista.examples.download_foot_bones` dataset.
 
         >>> dataset = examples.download_foot_bones()
 

@@ -28,7 +28,7 @@ from pyvista import examples
 # * :func:`pyvista.Cube` (implemented via a different filter)
 #
 # Let's generate all the Platonic solids, along with the :func:`teapotahedron
-# <pyvista.examples.downloads.download_teapot>`.
+# <pyvista.examples.download_teapot>`.
 
 kinds = [
     'tetrahedron',

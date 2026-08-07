@@ -16,7 +16,7 @@ from pyvista import examples
 
 # %%
 # Load a dataset with a CT image and corresponding segmentation labels. Here we load
-# :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+# :func:`~pyvista.examples.download_whole_body_ct_male`.
 
 dataset = examples.download_whole_body_ct_male()
 

@@ -23,7 +23,7 @@ from pyvista import examples
 # ---------------------
 # Load a :class:`~pyvista.PolyData` mesh and :meth:`~pyvista.PolyDataFilters.decimate`
 # it to show coarse :attr:`~pyvista.CellType.TRIANGLE` cells for the example.
-# Here we use :meth:`~pyvista.examples.downloads.download_cow`.
+# Here we use :meth:`~pyvista.examples.download_cow`.
 
 mesh = examples.download_cow().triangulate().decimate(0.7)
 
@@ -95,7 +95,7 @@ pl.show()
 # Tetrahedron Cell Quality
 # ------------------------
 # Load a mesh with :attr:`~pyvista.CellType.TETRA` cells. Here we use
-# :meth:`~pyvista.examples.downloads.download_letter_a`.
+# :meth:`~pyvista.examples.download_letter_a`.
 
 mesh = examples.download_letter_a()
 

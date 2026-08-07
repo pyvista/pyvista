@@ -15,7 +15,7 @@ from pyvista import examples
 # %%
 # Load a point cloud
 # ~~~~~~~~~~~~~~~~~~
-# The :func:`~pyvista.examples.downloads.download_horse_points` dataset is a
+# The :func:`~pyvista.examples.download_horse_points` dataset is a
 # dense scan of a horse statue. Subsample it to keep the hull geometry light.
 
 full_cloud = examples.download_horse_points()

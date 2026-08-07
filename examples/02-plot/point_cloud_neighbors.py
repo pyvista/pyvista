@@ -15,7 +15,7 @@ from pyvista import examples
 # %%
 # Load a cosmological point cloud
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# :func:`~pyvista.examples.downloads.download_cloud_dark_matter` returns a
+# :func:`~pyvista.examples.download_cloud_dark_matter` returns a
 # sampled N-body simulation. Pick a point near the middle of the cloud as
 # the query seed.
 

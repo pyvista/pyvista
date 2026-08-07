@@ -275,7 +275,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     .. seealso::
 
-        :func:`~pyvista.examples.examples.load_globe_texture`
+        :func:`~pyvista.examples.load_globe_texture`
             Download the surface of the Earth.
 
         :ref:`planets_example`

@@ -11,7 +11,7 @@ datasets.
 Built-In
 --------
 Several built-in datasets are included and are available for offline use.
-For example, load the built-in :func:`~pyvista.examples.examples.load_random_hills`
+For example, load the built-in :func:`~pyvista.examples.load_random_hills`
 dataset:
 
 .. pyvista-plot::
@@ -31,7 +31,7 @@ Downloads
 ---------
 Many datasets are too large to be included with PyVista, but can be
 downloaded and cached locally. For example, we can download the
-:func:`~pyvista.examples.downloads.download_turbine_blade` dataset:
+:func:`~pyvista.examples.download_turbine_blade` dataset:
 
 .. pyvista-plot::
 
@@ -138,8 +138,8 @@ at runtime with:
    '/home/user/.cache/pyvista_3'
 
 
-You can clear out the local cache with :func:`examples.delete_downloads()
-<pyvista.examples.downloads.delete_downloads>` if needed.
+You can clear out the local cache with :func:`~pyvista.examples.delete_downloads`
+if needed.
 
 If you want to override this local cache path, set the
 ``PYVISTA_USERDATA_PATH`` environment variable. This path must be writable.

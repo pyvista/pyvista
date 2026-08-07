@@ -17,7 +17,7 @@ from pyvista import examples
 # %%
 # Load and tilt a point cloud
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Subsample the :func:`~pyvista.examples.downloads.download_horse_points`
+# Subsample the :func:`~pyvista.examples.download_horse_points`
 # scan and rotate the copy off the world axes so the recovered orientation
 # is non-trivial.
 

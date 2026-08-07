@@ -20,9 +20,9 @@ values at depth). With these data, you'll have a 2D image/array of your data
 values and 3D coordinates of where that line/profile is in 3D space (often
 where you collected the data on the surface of topography). This example uses:
 
-#. :func:`~pyvista.examples.downloads.download_gpr_path`
+#. :func:`~pyvista.examples.download_gpr_path`
    with XYZ coordinates of a GPR path, and
-#. :func:`~pyvista.examples.downloads.download_gpr_data_array`
+#. :func:`~pyvista.examples.download_gpr_data_array`
    with a 2D array of data values produced from the GPR.
 
 The data here are wacky (it's difficult to get shareable data of decent

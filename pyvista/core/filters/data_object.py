@@ -1290,7 +1290,7 @@ class DataObjectFilters:
             Wrong number of points   : []
             Zero size                : []
 
-        Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.downloads.download_cow`
+        Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.download_cow`
         and validate it. Use ``'cells'`` to only validate the cells specifically.
 
         >>> mesh = examples.download_cow()

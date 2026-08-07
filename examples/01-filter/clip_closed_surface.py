@@ -16,7 +16,7 @@ from pyvista import examples
 # %%
 # Load a closed surface
 # ~~~~~~~~~~~~~~~~~~~~~
-# The :func:`~pyvista.examples.downloads.download_lucy` scan is a watertight,
+# The :func:`~pyvista.examples.download_lucy` scan is a watertight,
 # manifold PolyData surface with no open edges.
 
 surface = examples.download_lucy().triangulate()

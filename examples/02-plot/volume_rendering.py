@@ -204,8 +204,8 @@ pl.show()
 # +++++++++++++++++++++++++++++
 # Visualize a medical image with a corresponding binary segmentation mask.
 #
-# For this example, we use :func:`~pyvista.examples.downloads.download_whole_body_ct_male`
-# though :func:`~pyvista.examples.downloads.download_whole_body_ct_female`, or any
+# For this example, we use :func:`~pyvista.examples.download_whole_body_ct_male`
+# though :func:`~pyvista.examples.download_whole_body_ct_female`, or any
 # other dataset with a corresponding label or mask may be used.
 
 # %%

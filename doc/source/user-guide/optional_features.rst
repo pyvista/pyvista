@@ -62,7 +62,7 @@ Project to Finite Plane
 ~~~~~~~~~~~~~~~~~~~~~~~
 The following example expands on the vectorized ray tracing example by
 projecting the :func:`load_random_hills()
-<pyvista.examples.examples.load_random_hills>` example data to a triangular
+<pyvista.examples.load_random_hills>` example data to a triangular
 plane.
 
 .. code-block:: python

@@ -3460,7 +3460,7 @@ class DataSet(DataSetFilters, DataObject):
         1
 
         A curvilinear :class:`~pyvista.StructuredGrid` such as the one from
-        :func:`~pyvista.examples.downloads.download_wavy` has 2D cells.
+        :func:`~pyvista.examples.download_wavy` has 2D cells.
 
         >>> mesh = examples.download_wavy()[0]
         >>> mesh.max_cell_dimensionality
@@ -3475,7 +3475,7 @@ class DataSet(DataSetFilters, DataObject):
         3
 
         The dimensionality can vary if there are mixed cell types. E.g. load
-        :func:`~pyvista.examples.downloads.download_prostar`.
+        :func:`~pyvista.examples.download_prostar`.
 
         >>> mesh = examples.download_prostar()
         >>> sorted(mesh.distinct_cell_types)  # doctest:+NORMALIZE_WHITESPACE

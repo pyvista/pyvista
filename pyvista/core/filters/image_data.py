@@ -1605,7 +1605,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
+        Load a grayscale image :func:`~pyvista.examples.download_chest()` and show it
         for context.
 
         >>> from pyvista import examples
@@ -1711,7 +1711,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+        Load a binary image: :func:`~pyvista.examples.download_yinyang()`.
 
         >>> from pyvista import examples
         >>> im = examples.download_yinyang()
@@ -4561,8 +4561,8 @@ class ImageDataFilters(DataSetFilters):
 
         Use a reference image to control the resampling instead. Here we load two
         images with different dimensions:
-        :func:`~pyvista.examples.downloads.download_bird` and
-        :func:`~pyvista.examples.downloads.download_gourds`.
+        :func:`~pyvista.examples.download_bird` and
+        :func:`~pyvista.examples.download_gourds`.
 
         >>> bird = examples.download_bird()
         >>> bird.dimensions
@@ -5022,7 +5022,7 @@ class ImageDataFilters(DataSetFilters):
         Examples
         --------
         Load a CT image. Here we load
-        :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+        :func:`~pyvista.examples.download_whole_body_ct_male`.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -5077,7 +5077,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl.camera.up = (0, 0, 1)
         >>> pl.show()
 
-        Load a color image. Here we load :func:`~pyvista.examples.downloads.download_beach`.
+        Load a color image. Here we load :func:`~pyvista.examples.download_beach`.
 
         >>> image = examples.download_beach()
         >>> plot_kwargs = dict(
@@ -5322,7 +5322,7 @@ class ImageDataFilters(DataSetFilters):
         .. pyvista-plot::
             :force_static:
 
-            Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
+            Load a 2D image: :func:`~pyvista.examples.download_beach`.
 
             >>> import pyvista as pv
             >>> from pyvista import examples
@@ -5357,7 +5357,7 @@ class ImageDataFilters(DataSetFilters):
             the ``mode`` keyword to enable concatenation with mismatched dimensions.
 
             Load a second 2D image with different dimensions:
-            :func:`~pyvista.examples.downloads.download_bird`.
+            :func:`~pyvista.examples.download_bird`.
 
             >>> bird = examples.download_bird()
             >>> bird.dimensions
@@ -5478,7 +5478,7 @@ class ImageDataFilters(DataSetFilters):
             (558, 342, 1)
             >>> concatenated.plot(**plot_kwargs)
 
-            Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+            Load a binary image: :func:`~pyvista.examples.download_yinyang()`.
 
             >>> yinyang = examples.download_yinyang()
 

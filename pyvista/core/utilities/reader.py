@@ -2305,7 +2305,7 @@ class DICOMReader(BaseReader['ImageData']):
         The example dataset is the CPTAC-SAR collection from The Cancer
         Imaging Archive, distributed under CC BY 3.0 and subject to the
         TCIA Data Usage Policy. See
-        :func:`~pyvista.examples.downloads.download_dicom_stack` for the
+        :func:`~pyvista.examples.download_dicom_stack` for the
         required attribution and usage terms.
 
     """

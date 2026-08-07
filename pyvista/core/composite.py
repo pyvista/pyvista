@@ -2580,7 +2580,7 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_cgns_multi`.
+        :func:`~pyvista.examples.download_cgns_multi`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_cgns_multi()
@@ -2616,7 +2616,7 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_cgns_multi`.
+        :func:`~pyvista.examples.download_cgns_multi`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_cgns_multi()
@@ -2651,7 +2651,7 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_cgns_multi`.
+        :func:`~pyvista.examples.download_cgns_multi`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_cgns_multi()
@@ -2684,7 +2684,7 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_mug`.
+        :func:`~pyvista.examples.download_mug`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_mug()
