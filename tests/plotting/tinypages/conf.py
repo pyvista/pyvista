@@ -37,9 +37,12 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'sphinx_examples_as_code',
     'sphinx.ext.autosummary',
     'sphinx_design',
 ]
+
+sphinx_examples_as_code_conf = {'base_url': 'https://docs.pyvista.org/'}
 
 # -- Plot directive specific configuration --------------------------------
 plot_setup = plot_cleanup = 'import pyvista as pv'

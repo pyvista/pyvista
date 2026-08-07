@@ -58,6 +58,93 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
     assert actor.prop.render_lines_as_tubes
 
 
+@pytest.mark.parametrize('static', [False, True])
+@pytest.mark.parametrize('style', ['surface', 'points_gaussian'])
+def test_plotter_add_mesh_static(sphere, static, style):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, style=style, static=static, render=False)
+    assert actor.mapper.static == static
+
+
+@pytest.mark.parametrize('style', ['surface', 'points_gaussian'])
+def test_plotter_add_mesh_static_initializes_scalars(sphere, style):
+    scalars = sphere.points[:, 2]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars=scalars, style=style, static=True, render=False)
+
+    mapper_input = pv.wrap(actor.mapper.GetInputDataObject(0, 0))
+    assert mapper_input.n_points == sphere.n_points
+    if style == 'points_gaussian':
+        assert mapper_input.active_scalars.shape == (sphere.n_points, 4)
+    else:
+        assert np.array_equal(mapper_input.active_scalars, scalars)
+
+
+def test_plotter_add_mesh_static_dataset_swap(sphere):
+    replacement = sphere.copy(deep=False)
+    replacement.points = replacement.points + np.array([1, 0, 0])
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, static=True, render=False)
+    actor.mapper.dataset = replacement
+
+    assert actor.mapper.static
+    assert actor.mapper.dataset is replacement
+    assert actor.mapper.GetInputDataObject(0, 0) is replacement
+
+
+def test_plotter_add_mesh_static_dataset_swap_with_scalars(sphere):
+    sphere['values'] = sphere.points[:, 2]
+    replacement = sphere.copy(deep=False)
+    replacement.points = replacement.points + np.array([1, 0, 0])
+    replacement['values'] = replacement.points[:, 2]
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='values', static=True, render=False)
+    actor.mapper.dataset = replacement
+
+    mapper_input = pv.wrap(actor.mapper.GetInputDataObject(0, 0))
+    assert actor.mapper.static
+    assert mapper_input.n_points == replacement.n_points
+    assert np.array_equal(mapper_input.points, replacement.points)
+    assert np.array_equal(mapper_input.active_scalars, replacement['values'])
+
+
+def test_plotter_add_mesh_static_silhouette_remains_dynamic(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, color='white', static=True, silhouette=True, render=False)
+
+    assert actor.mapper.static
+    static_states = sorted(item.mapper.static for item in pl.renderer.actors.values())
+    assert static_states == [False, True]
+
+
+def test_plotter_add_mesh_static_show_vertices(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, color='white', static=True, show_vertices=True, render=False)
+
+    assert actor.mapper.static
+    assert all(item.mapper.static for item in pl.renderer.actors.values())
+
+
+@pytest.mark.parametrize('static', [False, True])
+def test_plotter_add_composite_static(static):
+    pl = pv.Plotter()
+    actor, mapper = pl.add_composite(
+        pv.MultiBlock([pv.Cube(), pv.Sphere()]),
+        static=static,
+        render=False,
+    )
+    assert actor.mapper is mapper
+    assert mapper.static == static
+
+
+def test_plotter_add_mesh_multiblock_static():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.MultiBlock([pv.Cube(), pv.Sphere()]), static=True, render=False)
+    assert actor.mapper.static
+
+
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_screenshot_fail_suppressed_rendering():
     pl = pv.Plotter()

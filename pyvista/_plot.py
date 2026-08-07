@@ -53,25 +53,16 @@ def plot(  # noqa: ANN202, PLR0917
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,
     border: bool = False,  # noqa: FBT001, FBT002
-    border_color: ColorLike = 'k',
+    border_color: ColorLike | None = None,
     border_width: float = 2.0,
     ssao: bool = False,  # noqa: FBT001, FBT002
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
 
-    .. versionadded:: 0.47
-
-        ``plot`` can be invoked with the shell command:
-
-        .. code-block:: shell
-
-            pyvista plot <files> --screenshot output.png --off-screen
-
-        Run ``pyvista plot --help`` for more details on available parameters.
-
-        .. note::
-            Providing multiple files renders them inside the same window.
+    .. note::
+        This function is also available via command-line interface. See
+        :ref:`pyvista plot <cli_plot>` for details.
 
     Parameters
     ----------
@@ -179,13 +170,15 @@ def plot(  # noqa: ANN202, PLR0917
     border : bool, default: False
         Draw a border around each render window.
 
-    border_color : ColorLike, default: "k"
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.
@@ -218,6 +211,12 @@ def plot(  # noqa: ANN202, PLR0917
 
     widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.
+
+    See Also
+    --------
+    pyvista.plot_compare
+    pyvista.plot_arrows
+    pyvista.Plotter
 
     Examples
     --------

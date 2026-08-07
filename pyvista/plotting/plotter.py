@@ -65,6 +65,8 @@ from .actor import Actor
 from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
+from .component_registry import _pending_component_names
+from .component_registry import _resolve_pending_component
 from .component_registry import register_plotter_component as _register_plotter_component
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
@@ -87,8 +89,10 @@ from .renderer import Renderer
 from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
+from .text import _TEXT_POSITIONS
 from .text import CornerAnnotation
 from .text import Text
+from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
@@ -303,13 +307,15 @@ class BasePlotter(_BoundsSizeMixin):
     border : bool, default: False
         Draw a border around each render window.
 
-    border_color : ColorLike, default: 'k'
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.
@@ -367,7 +373,7 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         shape: Sequence[int] | str = (1, 1),
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
+        border_color: ColorLike | None = None,
         border_width: float = 2.0,
         title: str | None = None,
         splitting_position: float | None = None,
@@ -398,6 +404,8 @@ class BasePlotter(_BoundsSizeMixin):
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
         self.ren_win: _vtk.vtkRenderWindow | None = None
+        # 3D location of the last click registered by ``left_button_down``
+        self.pickpoint: NumpyArray[float] | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -473,6 +481,7 @@ class BasePlotter(_BoundsSizeMixin):
         log.debug('BasePlotter init stop')
 
         self._image_depth_null: NumpyArray[bool] | None = None
+        self._window_size_unset = False
         self.last_image_depth: pv.pyvista_ndarray | None = None
         self.last_image: pv.pyvista_ndarray | None = None
         self.last_vtksz: str | Path | None = None
@@ -499,9 +508,6 @@ class BasePlotter(_BoundsSizeMixin):
         Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
         and dataset extension points present the same lookup contract.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.plotting.component_registry import _resolve_pending_component  # noqa: PLC0415
-
         if _resolve_pending_component(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)
@@ -516,8 +522,6 @@ class BasePlotter(_BoundsSizeMixin):
         completion surface them without paying the plugin import cost
         ahead of time.
         """
-        from pyvista.plotting.component_registry import _pending_component_names  # noqa: PLC0415
-
         return sorted({*super().__dir__(), *_pending_component_names()})
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
@@ -705,9 +709,9 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> download_3ds_file = examples.download_3ds.download_iflamigm()
+        >>> file_3ds = examples.download_flamingo(load=False)
         >>> pl = pv.Plotter()
-        >>> pl.import_3ds(download_3ds_file)
+        >>> pl.import_3ds(file_3ds)
         >>> pl.show()
 
         """
@@ -1295,8 +1299,6 @@ class BasePlotter(_BoundsSizeMixin):
 
     def disable_3_lights(self) -> None:
         """Please use ``enable_lightkit``, this method has been deprecated."""
-        from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
 
@@ -2239,6 +2241,21 @@ class BasePlotter(_BoundsSizeMixin):
         Any render callbacks added with
         :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
         and the ``render_event=False`` option set will still execute on any call.
+
+        Examples
+        --------
+        Render scene changes while keeping the plotter open.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> mesh = pv.Sphere()
+        >>> _ = pl.add_mesh(mesh)
+        >>> text_actor = pl.add_text("Pressing 'q' will shrink the sphere")
+        >>> pl.show(auto_close=False)  # doctest:+SKIP
+        >>> mesh.points *= 0.5  # doctest:+SKIP
+        >>> pl.remove_actor(text_actor)  # doctest:+SKIP
+        >>> pl.show(auto_close=True)  # doctest:+SKIP
+
         """
         if (
             self.render_window is not None
@@ -2417,6 +2434,20 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         increment : float
             Amount to increment point size and line width.
+
+        Examples
+        --------
+        Increase the point size and line width for every actor.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> point_actor = pl.add_points(pv.PointSet([(0.0, 0.0, 0.0)]), point_size=10)
+        >>> line_actor = pl.add_mesh(pv.Line(), line_width=2)
+        >>> pl.increment_point_size_and_line_width(3)
+        >>> point_actor.prop.point_size
+        13.0
+        >>> line_actor.prop.line_width
+        5.0
 
         """
         for renderer in self.renderers:
@@ -2720,6 +2751,7 @@ class BasePlotter(_BoundsSizeMixin):
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         component: int | None = None,
         color_missing_with_nan: bool = False,  # noqa: FBT001, FBT002
         copy_mesh: bool = False,  # noqa: FBT001, FBT002
@@ -2966,6 +2998,15 @@ class BasePlotter(_BoundsSizeMixin):
         render : bool, default: True
             Force a render when ``True``.
 
+        static : bool, default: False
+            If ``True``, the mapper assumes the input data is static and skips
+            checking its input pipeline for updates when rendering. The mapper's
+            input may still be replaced explicitly. Keeping the topology unchanged
+            between replacements may allow the rendering backend to reuse index
+            buffers while updating vertex attributes.
+
+            .. versionadded:: 0.49
+
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
@@ -3189,6 +3230,10 @@ class BasePlotter(_BoundsSizeMixin):
         if show_scalar_bar and scalars is not None and isinstance(scalar_bar_args, Mapping):
             self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
+        if static:
+            mapper.update()
+        mapper.static = static
+
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
             reset_camera = not self._first_time and not self.camera_set
@@ -3206,6 +3251,7 @@ class BasePlotter(_BoundsSizeMixin):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                static=static,
                 show_vertices=False,
             )
 
@@ -3271,6 +3317,7 @@ class BasePlotter(_BoundsSizeMixin):
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,  # noqa: FBT001, FBT002
+        static: bool = False,  # noqa: FBT001, FBT002
         user_matrix: TransformLike | None = None,
         component: int | None = None,
         emissive: bool | None = None,  # noqa: FBT001
@@ -3593,6 +3640,15 @@ class BasePlotter(_BoundsSizeMixin):
 
         render : bool, default: True
             Force a render when ``True``.
+
+        static : bool, default: False
+            If ``True``, the mapper assumes the input data is static and skips
+            checking its input pipeline for updates when rendering. The mapper's
+            input may still be replaced explicitly. Keeping the topology unchanged
+            between replacements may allow the rendering backend to reuse index
+            buffers while updating vertex attributes.
+
+            .. versionadded:: 0.49
 
         user_matrix : TransformLike, default: np.eye(4)
             Matrix passed to the Actor class before rendering. This affects the
@@ -3922,6 +3978,7 @@ class BasePlotter(_BoundsSizeMixin):
                 metallic=metallic,
                 roughness=roughness,
                 render=render,
+                static=static,
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
                 remove_existing_actor=remove_existing_actor,
@@ -4198,6 +4255,10 @@ class BasePlotter(_BoundsSizeMixin):
         else:
             mapper.scalar_visibility = False
 
+        if static:
+            mapper.update()
+        mapper.static = static
+
         # Set actor properties ================================================
         prop_kwargs = dict(
             theme=self._theme,
@@ -4279,6 +4340,7 @@ class BasePlotter(_BoundsSizeMixin):
                 opacity=vertex_opacity,
                 lighting=lighting,
                 render=False,
+                static=static,
                 show_vertices=False,
             )
 
@@ -5549,6 +5611,118 @@ class BasePlotter(_BoundsSizeMixin):
         self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return actor
 
+    def _add_text_actor(
+        self,
+        text: str,
+        *,
+        position: TextPositionOptions | Sequence[float] = 'upper_left',
+        font_size: float | None = None,
+        color: ColorLike | None = None,
+        font: FontFamilyOptions | None = None,
+        shadow: bool = False,
+        name: str | None = None,
+        viewport: bool = False,
+        orientation: float = 0.0,
+        font_file: str | None = None,
+        render: bool = True,
+    ) -> Text:
+        """Add text drawn by a text actor, wherever it is placed.
+
+        Takes the same arguments as :meth:`add_text` and does the same thing, except
+        that a named ``position`` is drawn by a :class:`~pyvista.Text` as well, rather
+        than by a :class:`~pyvista.CornerAnnotation`.
+
+        An annotation works out a font size of its own from the size of the viewport,
+        which is what makes it convenient, but also means that it does not draw text
+        at the size it is given, that the size it draws at changes as the window is
+        resized, and that it draws nothing at all when it is made to use a size larger
+        than the one it works out. A text actor draws text at the size it is given,
+        which is what a caller which works out a size of its own needs of it.
+
+        Parameters
+        ----------
+        text : str
+            The text to draw.
+
+        position : str | sequence[float], default: 'upper_left'
+            Where to draw the text. Either one of the names :meth:`add_text` accepts,
+            which places the text in that part of the viewport, or a coordinate,
+            which is used as it is.
+
+        font_size : float, optional
+            Size of the font, defaulting to the size the theme asks for.
+
+        color : ColorLike, optional
+            Color of the text, defaulting to the color the theme asks for.
+
+        font : str, optional
+            Font family, one of ``'courier'``, ``'times'`` or ``'arial'``. Ignored
+            when ``font_file`` is given.
+
+        shadow : bool, default: False
+            Draw a black shadow behind the text.
+
+        name : str, optional
+            Name to track the actor by, replacing any actor of the same name.
+
+        viewport : bool, default: False
+            Read a ``position`` given as a coordinate as a fraction of the size of the
+            viewport rather than as pixels. A named ``position`` is always placed as a
+            fraction of it.
+
+        orientation : float, default: 0.0
+            Angle to draw the text at, counterclockwise in degrees.
+
+        font_file : str, optional
+            Path to a font file to draw the text with.
+
+        render : bool, default: True
+            Render right away.
+
+        Returns
+        -------
+        pyvista.Text
+            The text actor which was added.
+
+        """
+        if font_size is None:
+            font_size = self.theme.font.size
+        prop = TextProperty(
+            # A text property left to fill in the color and the font family itself
+            # takes them from the global theme rather than from the theme of the
+            # plotter it is drawn by, which draws black text on the black background
+            # of a plotter given a dark theme of its own
+            color=Color(color, default_color=self.theme.font.color),
+            font_family=self.theme.font.family if font is None else font,
+            orientation=orientation,
+            font_file=font_file,
+            shadow=shadow,
+        )
+        # `add_text` draws a text actor at twice the font size it is given, which this
+        # keeps to, so that the same font size means the same thing to both of them
+        prop.font_size = int(font_size * 2)
+
+        named = isinstance(position, str)
+        if named:
+            if position not in _TEXT_POSITIONS:
+                positions = ', '.join(repr(name) for name in _TEXT_POSITIONS)
+                msg = f'Position {position!r} is not a coordinate or one of {positions}.'
+                raise ValueError(msg)
+            x, y, horizontal, vertical = _TEXT_POSITIONS[position]
+            position = (x, y)
+            # Anchor the text to the part of the viewport it is placed in, so that it
+            # stays there whatever size it is drawn at
+            prop.justification_horizontal = horizontal
+            prop.justification_vertical = vertical
+
+        actor = Text(text=text, position=position)
+        if named or viewport:
+            actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+            actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+        actor.prop = prop
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
+
     def open_movie(
         self, filename: str | Path, framerate: int = 24, quality: int = 5, **kwargs
     ) -> None:
@@ -6265,6 +6439,23 @@ class BasePlotter(_BoundsSizeMixin):
         :vtk:`vtkActor2D`
             VTK label actor.  Can be used to change properties of the labels.
 
+        Examples
+        --------
+        Label points with their elevation.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(theta_resolution=8, phi_resolution=8)
+        >>> mesh['Elevation'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars='Elevation')
+        >>> _ = pl.add_point_scalar_labels(
+        ...     mesh,
+        ...     'Elevation',
+        ...     point_size=20,
+        ...     font_size=20,
+        ... )
+        >>> pl.show()
+
         """
         if not is_pyvista_dataset(points):
             points, _ = _coerce_pointslike_arg(points, copy=False)
@@ -6730,6 +6921,20 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         point : sequence[float]
             Point to fly to in the form of ``(x, y, z)``.
+
+        Examples
+        --------
+        Animate the camera's focal point from the sphere to the cube.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere(center=(-1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> text_actor = pl.add_text("Pressing 'q' will center on the cube")
+        >>> pl.show(auto_close=False)  # doctest:+SKIP
+        >>> pl.fly_to((1, 0, 0))  # doctest:+SKIP
+        >>> pl.remove_actor(text_actor)  # doctest:+SKIP
+        >>> pl.show(auto_close=True)  # doctest:+SKIP
 
         """
         self._get_iren_not_none().fly_to(self.renderer, point)
@@ -7839,13 +8044,15 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     border : bool, optional
         Draw a border around each render window.
 
-    border_color : ColorLike, default: "k"
+    border_color : ColorLike, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
+
+        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
@@ -7878,6 +8085,12 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     stereo : StereoType | bool, optional
         Enable stereo rendering. If True, defaults to Anaglyph.
 
+    See Also
+    --------
+    pyvista.plot
+    pyvista.plot_compare
+    pyvista.plot_arrows
+
     Examples
     --------
     >>> import pyvista as pv
@@ -7902,7 +8115,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
+        border_color: ColorLike | None = None,
         border_width: float = 2.0,
         window_size: list[int] | None = None,
         line_smoothing: bool = False,  # noqa: FBT001, FBT002
