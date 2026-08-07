@@ -2553,15 +2553,17 @@ class Theme(_ConfigBase):
 
     @property
     def border_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set the default border color of subplots.
+        """Return or set the default border color of a plotter.
 
         .. versionadded:: 0.49
 
-        This is the color of the line(s) drawn between subplots when a
-        plotter has more than one renderer, e.g. via ``shape``. The color
-        is used when a ``Plotter`` is constructed with ``border=True``
-        (implicit for multi-subplot layouts) and no explicit
-        ``border_color`` is provided.
+        This is the color of the frame drawn around the outer edge of
+        the plotting area when a ``Plotter`` is constructed with
+        ``border=True``, and/or of the line(s) drawn between subplots
+        when a plotter has more than one renderer and
+        ``subplot_seams=True`` (the default for multi-subplot
+        layouts). Used whenever no explicit ``border_color`` is
+        provided.
 
         Examples
         --------
@@ -2577,10 +2579,11 @@ class Theme(_ConfigBase):
 
     @property
     def border_width(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the default subplot border width in pixels.
+        """Return or set the default border/subplot seam width in pixels.
 
         Used when a ``Plotter`` is constructed with ``border=True``
-        and no explicit ``border_width`` is provided.
+        or ``subplot_seams=True`` and no explicit ``border_width`` is
+        provided.
 
         Examples
         --------
