@@ -322,6 +322,211 @@ def test_interior_border_preserves_full_border_on_explicit_single():
         pl.close()
 
 
+@pytest.mark.parametrize(
+    ('border', 'subplot_seams', 'expected_lines'),
+    [
+        (None, None, 2),  # defaults: no outer frame, interior seams only
+        (False, None, 2),  # same as above, spelled out explicitly
+        (True, None, 6),  # outer frame (4) + interior seams (2)
+        (True, False, 4),  # outer frame only
+        (False, True, 2),  # interior seams only, spelled out explicitly
+        (False, False, 0),  # nothing at all
+    ],
+)
+def test_border_and_subplot_seams_are_independent(border, subplot_seams, expected_lines):
+    """``border`` (outer frame) and ``subplot_seams`` (interior lines) are orthogonal.
+
+    Neither flag depends on the other for a 2x2 grid: every one of the
+    four combinations (plus the all-``None`` defaults) should draw
+    exactly the union of what each flag independently requests.
+    """
+    pl = pv.Plotter(shape=(2, 2), border=border, subplot_seams=subplot_seams)
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 4
+        assert _overlay_seam_count(pl) == expected_lines
+    finally:
+        pl.close()
+
+
+def test_subplot_seams_default_is_shape_dependent():
+    """``subplot_seams`` defaults to ``shape != (1, 1)``, mirroring the old ``border`` default."""
+    pl_single = pv.Plotter()
+    pl_multi = pv.Plotter(shape=(1, 2))
+    try:
+        assert pl_single.renderers.border_overlay_renderer is None
+        assert pl_multi.renderers.border_overlay_renderer is not None
+    finally:
+        pl_single.close()
+        pl_multi.close()
+
+
+def test_border_default_is_always_false_regardless_of_shape():
+    """Unlike the old implicit default, ``border`` defaults to ``False`` for every shape."""
+    pl_single = pv.Plotter()
+    pl_multi = pv.Plotter(shape=(2, 2))
+    try:
+        assert not pl_single.renderer.has_border
+        # Multi-subplot: nothing but the (default-on) interior seams, i.e. no
+        # exterior segments were folded into the overlay.
+        assert _overlay_seam_count(pl_multi) == 2
+    finally:
+        pl_single.close()
+        pl_multi.close()
+
+
+def _white_band_rows_cols(img, threshold=0.8):
+    """Return the row/col indices of near-fully-white scanlines in ``img``.
+
+    A row (or column) counts as a "band" -- part of a solid border or
+    seam line -- once at least ``threshold`` of its pixels are close
+    to white. Locating lines this way (rather than checking individual
+    pixel coordinates) is robust to a pixel or two of anti-aliasing at
+    each edge.
+    """
+    white_mask = np.all(img > 200, axis=-1)
+    height, width = white_mask.shape
+    band_rows = np.nonzero(white_mask.sum(axis=1) > threshold * width)[0]
+    band_cols = np.nonzero(white_mask.sum(axis=0) > threshold * height)[0]
+    return band_rows, band_cols
+
+
+def _band_groups(indices):
+    """Split sorted indices into contiguous runs, e.g. [0,1,2,10,11] -> [[0,1,2],[10,11]]."""
+    groups = []
+    for idx in indices:
+        if groups and idx == groups[-1][-1] + 1:
+            groups[-1].append(idx)
+        else:
+            groups.append([idx])
+    return groups
+
+
+def test_border_render_seams_only_matches_multi_subplot_default_dark_theme():
+    """Default 2x2 rendering draws only the interior seams, at their full requested width.
+
+    Uses the dark theme (white border/seam lines on a black
+    background) for contrast, and a deliberately large
+    ``border_width`` so a regression that doubles or halves the seam
+    thickness -- the original bug the shared overlay renderer exists
+    to fix, since two neighbors independently drawing "their half" of
+    a seam is exactly how that thickness bug happened -- shows up
+    unambiguously instead of being lost in a 1-2px line's
+    anti-aliasing noise.
+    """
+    width = 10
+    pl = pv.Plotter(
+        shape=(2, 2),
+        theme=pv.themes.DarkTheme(),
+        window_size=(300, 300),
+        border_width=width,
+    )
+    try:
+        img = pl.screenshot(return_img=True)
+    finally:
+        pl.close()
+
+    band_rows, band_cols = _white_band_rows_cols(img)
+    row_groups = _band_groups(band_rows)
+    col_groups = _band_groups(band_cols)
+
+    # Exactly one interior seam in each direction, no outer frame.
+    assert len(row_groups) == 1
+    assert len(col_groups) == 1
+    seam_row_thickness = len(row_groups[0])
+    seam_col_thickness = len(col_groups[0])
+    # Thickness should track `border_width`, not e.g. double it (two
+    # neighbors each rasterizing their own copy of the seam) or halve it.
+    assert width * 0.7 <= seam_row_thickness <= width * 1.5
+    assert width * 0.7 <= seam_col_thickness <= width * 1.5
+    # And it should sit in the middle of the window, not at an edge.
+    assert 100 < row_groups[0][0] < 200
+    assert 100 < col_groups[0][0] < 200
+
+
+def test_border_render_outer_frame_only_dark_theme():
+    """``border=True, subplot_seams=False`` draws only the outer frame, no interior seams."""
+    width = 10
+    pl = pv.Plotter(
+        shape=(2, 2),
+        theme=pv.themes.DarkTheme(),
+        window_size=(300, 300),
+        border=True,
+        subplot_seams=False,
+        border_width=width,
+    )
+    try:
+        img = pl.screenshot(return_img=True)
+    finally:
+        pl.close()
+
+    band_rows, band_cols = _white_band_rows_cols(img)
+    row_groups = _band_groups(band_rows)
+    col_groups = _band_groups(band_cols)
+
+    # One band hugging each edge of the window: top+bottom, left+right.
+    assert len(row_groups) == 2
+    assert len(col_groups) == 2
+    assert row_groups[0][0] == 0
+    assert row_groups[-1][-1] == 299
+    assert col_groups[0][0] == 0
+    assert col_groups[-1][-1] == 299
+    # No interior seam in the middle of the window.
+    assert not any(100 < r < 200 for group in row_groups for r in group)
+    assert not any(100 < c < 200 for group in col_groups for c in group)
+
+
+def test_border_render_outer_frame_and_seams_dark_theme():
+    """``border=True`` layers cleanly on top of the default ``subplot_seams=True``."""
+    width = 10
+    pl = pv.Plotter(
+        shape=(2, 2),
+        theme=pv.themes.DarkTheme(),
+        window_size=(300, 300),
+        border=True,
+        border_width=width,
+    )
+    try:
+        img = pl.screenshot(return_img=True)
+    finally:
+        pl.close()
+
+    band_rows, band_cols = _white_band_rows_cols(img)
+    # Outer-top, interior seam, outer-bottom (and the same across columns).
+    assert len(_band_groups(band_rows)) == 3
+    assert len(_band_groups(band_cols)) == 3
+
+
+def test_border_single_plotter_matches_multi_subplot_outer_frame_dark_theme():
+    """A single plotter's ``border=True`` box matches the multi-subplot outer frame exactly.
+
+    Both are meant to draw exactly the outer perimeter of the plotting
+    area -- a lone renderer's own rectangle in the 1x1 case, the shared
+    overlay's exterior segments in the NxM case -- so ``border`` means
+    the same thing regardless of ``shape`` and the two renders should
+    be pixel-for-pixel identical.
+    """
+    width = 10
+    kwargs = {
+        'theme': pv.themes.DarkTheme(),
+        'window_size': (300, 300),
+        'border_width': width,
+    }
+
+    pl_single = pv.Plotter(border=True, **kwargs)
+    try:
+        img_single = pl_single.screenshot(return_img=True)
+    finally:
+        pl_single.close()
+
+    pl_multi = pv.Plotter(shape=(2, 2), border=True, subplot_seams=False, **kwargs)
+    try:
+        img_multi = pl_multi.screenshot(return_img=True)
+    finally:
+        pl_multi.close()
+
+    assert np.array_equal(img_single, img_multi)
+
+
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
     pl = pv.Plotter()
