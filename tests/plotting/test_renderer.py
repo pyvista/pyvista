@@ -352,6 +352,31 @@ def test_border_and_subplot_seams_are_independent(border, subplot_seams, expecte
         pl.close()
 
 
+def test_drop_border_actor_removes_both_primary_and_secondary_actor():
+    """``_drop_border_actor`` removes the secondary actor too, when one exists.
+
+    A secondary actor only ever exists on the shared overlay renderer,
+    and only when both interior seams and the exterior frame are drawn
+    together (they need different line widths, so they can't share one
+    actor -- see ``Renderers._build_border_overlay_renderer``). No
+    other renderer ever has one, so exercising this on the overlay is
+    the only way to cover the branch that removes it.
+    """
+    pl = pv.Plotter(shape=(2, 2), border=True)  # subplot_seams defaults True too
+    try:
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay._border_actor is not None
+        assert overlay._border_actor_secondary is not None
+
+        overlay._drop_border_actor()
+
+        assert overlay._border_actor is None
+        assert overlay._border_actor_secondary is None
+    finally:
+        pl.close()
+
+
 def test_subplot_seams_default_is_shape_dependent():
     """``subplot_seams`` defaults to ``shape != (1, 1)``, mirroring the old ``border`` default."""
     pl_single = pv.Plotter()
