@@ -205,8 +205,8 @@ def _compare(
     show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
     zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
     border: Annotated[bool, Parameter(group=Groups.PLOTTER)] = False,
-    border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
-    border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
+    border_color: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
+    border_width: Annotated[float | None, Parameter(group=Groups.PLOTTER)] = None,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
