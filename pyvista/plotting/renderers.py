@@ -44,7 +44,9 @@ class Renderers(_NoNewAttrMixin):
         Whether or not a border should be added around each subplot.
 
     border_color : str, optional
-        The color of the border around each subplot.
+        The color of the border around each subplot. Defaults to
+        the plotter's :attr:`~pyvista.Plotter.theme`
+        ``border_color``.
 
     border_width : float, optional
         The width of the border around each subplot.
@@ -61,7 +63,7 @@ class Renderers(_NoNewAttrMixin):
         col_weights=None,
         groups=None,
         border=None,
-        border_color='k',
+        border_color=None,
         border_width=2.0,
     ):
         """Initialize renderers."""
@@ -73,6 +75,9 @@ class Renderers(_NoNewAttrMixin):
         # by default add border for multiple plots
         if border is None:
             border = shape != (1, 1)
+
+        if border_color is None:
+            border_color = self._plotter.theme.border_color
 
         self.groups = np.empty((0, 4), dtype=int)
 
