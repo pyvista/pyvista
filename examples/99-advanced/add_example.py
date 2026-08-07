@@ -192,8 +192,8 @@ filename
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # While it's possible to simply download a file and then read it in, it's
 # better for you to write a wrapped ``download_<example_dataset>()`` within
-# ``/pyvista/examples/downloads.py``. For example :func:`download_bunny()
-# <pyvista.examples.download_bunny>` downloads and reads with
+# ``/pyvista/examples/downloads.py``. For example
+# :func:`~pyvista.examples.download_bunny` downloads and reads with
 # :func:`pyvista.read`.
 #
 # If you intend on adding an example file, you should add a new function in

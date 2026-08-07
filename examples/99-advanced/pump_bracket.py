@@ -28,8 +28,8 @@ from pyvista import examples
 # %%
 # Load the dataset
 # ~~~~~~~~~~~~~~~~
-# Start by loading the dataset using :func:`download_pump_bracket()
-# <pyvista.examples.download_pump_bracket>`.
+# Start by loading the dataset using
+# :func:`~pyvista.examples.download_pump_bracket`.
 #
 # This example demonstrates the visualization of the pump bracket's mode shape,
 # the representation of its magnitude, and an animation of its displacement. The
