@@ -106,10 +106,11 @@ warnings.filterwarnings(
 )
 
 # Autosummary only documents members whose `__module__` matches the scanned
-# module, so `pyvista.examples`'s re-exported `load_*`/`download_*` functions
-# only get documented under their private `.examples`/`.downloads` submodule.
-# Set `__all__` on the live module (not in the package source) so they're
-# also documented at their public `pyvista.examples.*` path -- see
+# module, so without `__all__`, `pyvista.examples`'s re-exported
+# `load_*`/`download_*` functions would only be documented under the
+# `.examples`/`.downloads` submodule they're actually defined in, not at
+# their `pyvista.examples.*` path. Set `__all__` on the live module (not in
+# the package source) so they're documented there instead -- see
 # `autosummary_ignore_module_all` below.
 pv.examples.__all__ = sorted(
     name

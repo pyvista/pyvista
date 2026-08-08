@@ -2,7 +2,7 @@
 
 .. deprecated:: 0.49
     This module is deprecated and will be removed in a future version.
-    Use :mod:`pyvista.examples.downloads` instead.
+    Use :mod:`pyvista.examples` instead.
 
 """
 

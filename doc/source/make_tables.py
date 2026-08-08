@@ -1837,7 +1837,14 @@ def _get_doc(func: Callable[[], Any]) -> str | None:
 
 def _get_fullname(typ: type[Any]) -> str:
     """Return the fully qualified name of the given type object."""
-    return f'{typ.__module__}.{typ.__qualname__}'
+    modname = typ.__module__
+    # `load_*`/`download_*` functions are only documented at their
+    # `pyvista.examples` path (see doc/source/api/examples/index.rst), not
+    # at the `pyvista.examples.examples`/`pyvista.examples.downloads`
+    # submodules they're actually defined in.
+    if modname in {'pyvista.examples.examples', 'pyvista.examples.downloads'}:
+        modname = 'pyvista.examples'
+    return f'{modname}.{typ.__qualname__}'
 
 
 def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
@@ -3253,7 +3260,7 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     name = 'builtin_carousel'
     doc = (
         'Built-in datasets that ship with pyvista. Available through '
-        ':mod:`examples <pyvista.examples.examples>` module.'
+        ':mod:`pyvista.examples`.'
     )
     badge = ModuleBadge('Built-in', ref='modules_gallery')
 
@@ -3266,7 +3273,7 @@ class DownloadsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the downloads module."""
 
     name = 'downloads_carousel'
-    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
+    doc = 'Datasets from :mod:`pyvista.examples`.'
     badge = ModuleBadge('Downloads', ref='modules_gallery')
 
     @classmethod

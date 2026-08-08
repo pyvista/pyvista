@@ -20,12 +20,8 @@ dataset:
    >>> hills = examples.load_random_hills()
    >>> hills.plot()
 
-See the API reference for more examples:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.examples
+See the :ref:`examples_functions_reference` below for the full list of
+built-in examples.
 
 Downloads
 ---------
@@ -39,12 +35,21 @@ downloaded and cached locally. For example, we can download the
    >>> blade_mesh = examples.download_turbine_blade()
    >>> blade_mesh.plot()
 
-See the API reference for more downloads:
+See the :ref:`examples_functions_reference` below for the full list of
+downloadable datasets.
+
+.. _examples_functions_reference:
+
+Functions
+---------
+Every built-in and downloadable dataset loader shown above is available
+directly on :mod:`pyvista.examples`. See the API reference for the full
+list:
 
 .. autosummary::
    :toctree: _autosummary
 
-   examples.downloads
+   examples
 
 Demos
 -----
