@@ -184,7 +184,6 @@ numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
 sphinx_examples_as_code_conf = {
-    'base_url': 'https://docs.pyvista.org/',
     # Replace sphinx-gallery's own per-example download footer/note with
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
