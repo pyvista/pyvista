@@ -1,3 +1,3 @@
-.. _developer_notes:
+.. _contributing:
 
 .. include:: ../../CONTRIBUTING.rst

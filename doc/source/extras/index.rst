@@ -7,7 +7,7 @@ rich headless plotting on remote servers. You can also package
 PyVista using `pyinstaller`_ to be used within a standalone
 application.
 
-See the :ref:`developer_notes` section for details on contributing
+See the :ref:`contributing` section for details on contributing
 and how you can help develop PyVista.
 
 .. toctree::
