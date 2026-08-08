@@ -307,20 +307,37 @@ class BasePlotter(_BoundsSizeMixin):
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, default: False
-        Draw a border around each render window.
+        Draw a frame around the outer edge of the plotting area, i.e.
+        around the whole grid of subplots, regardless of ``shape``.
+
+        .. versionchanged:: 0.49
+
+            Now draws a single frame around the whole plotting area,
+            rather than a frame around each subplot individually. Use
+            ``subplot_seams`` for lines between subplots instead.
 
     border_color : ColorLike, optional
-        Either a string, rgb list, or hex color string.  For example:
+        Color of the border and/or subplot seams. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
-        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
+    border_width : float, optional
+        Width of the border and/or subplot seams in pixels, when
+        enabled. Defaults to :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
 
-    border_width : float, default: 2.0
-        Width of the border in pixels when enabled.
+    subplot_seams : bool, optional
+        Draw a thin line between neighboring subplots. Defaults to
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
+        for a single subplot, since there are no neighbors to
+        separate.
 
     title : str, optional
         Window title.
@@ -376,7 +393,8 @@ class BasePlotter(_BoundsSizeMixin):
         shape: Sequence[int] | str = (1, 1),
         border: bool | None = None,  # noqa: FBT001
         border_color: ColorLike | None = None,
-        border_width: float = 2.0,
+        border_width: float | None = None,
+        subplot_seams: bool | None = None,  # noqa: FBT001
         title: str | None = None,
         splitting_position: float | None = None,
         groups: Sequence[int] | None = None,
@@ -430,6 +448,13 @@ class BasePlotter(_BoundsSizeMixin):
             title = self._theme.title
         self.title = str(title)
 
+        if border_color is None:
+            border_color = self._theme.border_color
+        if border_width is None:
+            border_width = self._theme.border_width
+        if subplot_seams is None:
+            subplot_seams = self._theme.subplot_seams
+
         # add renderers
         self.renderers = Renderers(
             self,
@@ -441,6 +466,7 @@ class BasePlotter(_BoundsSizeMixin):
             border=border,
             border_color=border_color,
             border_width=border_width,
+            subplot_seams=subplot_seams,
         )
 
         # track if the camera has been set up
@@ -626,11 +652,11 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
-        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
+        >>> helmet_file = examples.download_damaged_helmet(load=False)  # doctest:+SKIP
+        >>> texture = examples.download_dikhololo_night()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
-        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.set_environment_texture(texture)  # doctest:+SKIP
         >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
@@ -668,7 +694,7 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
+        >>> sextant_file = examples.download_sextant(load=False)  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
@@ -8037,18 +8063,38 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, optional
-        Draw a border around each render window.
+    border : bool, default: False
+        Draw a frame around the outer edge of the plotting area, i.e.
+        around the whole grid of subplots, regardless of ``shape``.
+
+        .. versionchanged:: 0.49
+
+            Now draws a single frame around the whole plotting area,
+            rather than a frame around each subplot individually. Use
+            ``subplot_seams`` for lines between subplots instead.
 
     border_color : ColorLike, optional
-        Either a string, rgb list, or hex color string.  For example:
+        Color of the border and/or subplot seams. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        Defaults to the theme's :attr:`~pyvista.plotting.themes.Theme.border_color`.
+    border_width : float, optional
+        Width of the border and/or subplot seams in pixels, when
+        enabled. Defaults to :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
+
+    subplot_seams : bool, optional
+        Draw a thin line between neighboring subplots. Defaults to
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
+        for a single subplot, since there are no neighbors to
+        separate.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
@@ -8113,7 +8159,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         col_weights: Sequence[int] | None = None,
         border: bool | None = None,  # noqa: FBT001
         border_color: ColorLike | None = None,
-        border_width: float = 2.0,
+        border_width: float | None = None,
+        subplot_seams: bool | None = None,  # noqa: FBT001
         window_size: list[int] | None = None,
         line_smoothing: bool = False,  # noqa: FBT001, FBT002
         point_smoothing: bool = False,  # noqa: FBT001, FBT002
@@ -8131,6 +8178,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             border=border,
             border_color=border_color,
             border_width=border_width,
+            subplot_seams=subplot_seams,
             groups=groups,
             row_weights=row_weights,
             col_weights=col_weights,
@@ -8185,6 +8233,17 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.render_window.AddRenderer(self.renderers.shadow_renderer)  # type: ignore[union-attr]
         self.renderers.shadow_renderer.SetLayer(current_layer + 1)
         self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
+
+        # Border overlay renderer draws the outer frame and/or interior
+        # subplot seams in window-normalized coordinates from a single
+        # actor so that neighboring subplots can't render inconsistent
+        # copies of the same boundary line.
+        border_overlay = self.renderers.border_overlay_renderer
+        if border_overlay is not None:
+            number_or_layers = self.render_window.GetNumberOfLayers()  # type: ignore[union-attr]
+            self.render_window.SetNumberOfLayers(number_or_layers + 1)  # type: ignore[union-attr]
+            self.render_window.AddRenderer(border_overlay)  # type: ignore[union-attr]
+            border_overlay.SetLayer(number_or_layers)
 
         if self.off_screen:
             self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]

@@ -39,6 +39,7 @@ extensions = [
     'pyvista.ext.viewer_directive',
     'sphinx_examples_as_code',
     'sphinx.ext.autosummary',
+    'sphinx_codeautolink',
     'sphinx_design',
 ]
 
