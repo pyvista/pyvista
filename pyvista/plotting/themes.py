@@ -3569,7 +3569,7 @@ class ParaViewTheme(Theme):
         self.color = 'white'
         self.outline_color = 'white'
         self.edge_color = 'black'
-        self.border_color = 'gray'
+        self.border_color = 'black'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'gold'
         self.axes.z_color = 'green'
@@ -3691,6 +3691,7 @@ class _TestingTheme(Theme):
         super().__init__()
         self.multi_samples = 1
         self.window_size = [400, 400]
+        self.border_color = 'black'
         self.axes.show = False
         self.return_cpos = False
         self.resample_environment_texture = True
