@@ -9,3 +9,34 @@ force = true
 from = "/version/dev/*"
 status = 301
 to = "https://dev.pyvista.org/:splat"
+
+# pyvista.examples.load_*/download_* used to only be documented at
+# pyvista.examples.examples.load_*/pyvista.examples.downloads.download_*;
+# those pages no longer exist, so send old links to the public path they're
+# now documented at instead.
+[[redirects]]
+force = true
+from = "/api/examples/_autosummary/pyvista.examples.examples.*"
+status = 301
+to = "/api/examples/_autosummary/pyvista.examples.:splat"
+
+[[redirects]]
+force = true
+from = "/api/examples/_autosummary/pyvista.examples.downloads.*"
+status = 301
+to = "/api/examples/_autosummary/pyvista.examples.:splat"
+
+# Same for these two specifically -- unlike the rest of
+# pyvista.examples.cells (which still has its own pages), these are also
+# re-exported and now only documented at the public path.
+[[redirects]]
+force = true
+from = "/api/examples/_autosummary/pyvista.examples.cells.generate_cell_blocks*"
+status = 301
+to = "/api/examples/_autosummary/pyvista.examples.generate_cell_blocks:splat"
+
+[[redirects]]
+force = true
+from = "/api/examples/_autosummary/pyvista.examples.cells.plot_cell*"
+status = 301
+to = "/api/examples/_autosummary/pyvista.examples.plot_cell:splat"
