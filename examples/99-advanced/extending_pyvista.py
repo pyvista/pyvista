@@ -34,7 +34,9 @@ pv.set_plot_theme('document')
 # furthest along in the (1, 0, 1) direction.
 
 
-class FooData(pv.PolyData):  # noqa: D101
+class FooData(pv.PolyData):
+    """Example ``PolyData`` subclass with a custom point property."""
+
     @property
     def max_point(self):
         """Returns index of point that is furthest along (1, 0, 1) direction."""
