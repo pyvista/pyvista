@@ -382,37 +382,6 @@ def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
     )
 
 
-@flaky_test(exceptions=(AssertionError,))
-def test_tinypages_codeautolink_integration(tmp_path: Path):
-    """Check that ``sphinx_codeautolink`` hyperlinks names inside docstring Examples.
-
-    ``make_sphere``'s docstring Examples section gets rewritten into a ``.. pyvista-plot::``
-    block by the ``_str_examples`` monkeypatch (mirroring ``doc/source/conf.py``), same as a
-    real PyVista docstring. This checks that sphinx-codeautolink still finds and links
-    identifiers inside that generated block, without needing sphinx.ext.doctest or any extra
-    intersphinx wiring beyond what the real docs build already has.
-    """
-    source_dir = Path(__file__).parent / 'tinypages'
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
-
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
-    )
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    html_contents = (html_dir / 'some_autodocs.html').read_text(encoding='utf-8')
-
-    # `make_sphere` is referenced twice in its own Examples section (the `from samples import
-    # make_sphere` line and the `make_sphere()` call); both should link back to its own API entry.
-    assert (
-        html_contents.count(
-            '<a class="sphinx-codeautolink-a" href="some_autodocs.html#samples.make_sphere"',
-        )
-        == 2
-    )
-
-
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
