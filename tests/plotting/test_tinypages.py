@@ -405,9 +405,12 @@ def test_tinypages_codeautolink_integration(tmp_path: Path):
 
     # `make_sphere` is referenced twice in its own Examples section (the `from samples import
     # make_sphere` line and the `make_sphere()` call); both should link back to its own API entry.
-    assert html_contents.count(
-        '<a class="sphinx-codeautolink-a" href="some_autodocs.html#samples.make_sphere"',
-    ) == 2
+    assert (
+        html_contents.count(
+            '<a class="sphinx-codeautolink-a" href="some_autodocs.html#samples.make_sphere"',
+        )
+        == 2
+    )
 
 
 @pytest.mark.needs_playwright
