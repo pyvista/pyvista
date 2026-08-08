@@ -590,6 +590,13 @@ suppress_warnings = [
     'codeautolink.match_block',
 ]
 
+# Without this, sphinx-codeautolink treats each `>>>` group in a docstring's Examples
+# section as its own isolated scope, so an `import pyvista as pv` in an earlier group
+# (a very common numpydoc pattern: several short examples separated by prose) doesn't
+# carry over to later ones, and `pv` ends up undefined -- nothing after the first group
+# resolves. This makes all groups on a page share one running scope instead.
+codeautolink_concat_default = True
+
 import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
@@ -790,6 +797,7 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
+    'codeautolink.css',  # style sphinx-codeautolink links like sphinx-gallery's
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
