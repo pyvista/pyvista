@@ -28,6 +28,7 @@ from .utils import screenshot
 from .utils import show_axes
 from .utils import show_bounds
 from .utils import skip_unreadable
+from .utils import volume
 from .utils import window_size
 from .utils import zoom
 
@@ -63,7 +64,7 @@ def _plot(
     background: Annotated[str | None, Parameter(group=Groups.RENDERING)] = None,
     text: Annotated[str, Parameter(group=Groups.RENDERING)] = '',
     eye_dome_lighting: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
-    volume: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    volume: volume = False,
     parallel_projection: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     return_cpos: Annotated[bool, Parameter(group=Groups.RETURN)] = False,
     anti_aliasing: Annotated[

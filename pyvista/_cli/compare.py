@@ -35,6 +35,7 @@ from .utils import show_axes
 from .utils import show_bounds
 from .utils import skip_unreadable
 from .utils import validate_paths
+from .utils import volume
 from .utils import window_size
 from .utils import zoom
 
@@ -211,6 +212,7 @@ def _compare(
     show_bounds: show_bounds = False,
     show_axes: show_axes = None,
     zoom: zoom = None,
+    volume: volume = False,
     border: border = None,
     border_color: border_color = None,
     border_width: border_width = None,
@@ -256,6 +258,7 @@ def _compare(
             show_bounds=show_bounds,
             show_axes=show_axes,
             zoom=zoom,
+            volume=volume,
             screenshot=screenshot,
             off_screen=off_screen,
             window_size=window_size,
