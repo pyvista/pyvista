@@ -1850,7 +1850,7 @@ class Theme(_ConfigBase):
         self._line_width = 1.0
         self._point_size = 5.0
         self._outline_color = Color('white')
-        self._border_color = Color('black')
+        self._border_color = Color('gray')
         self._border_width = 1.0
         self._subplot_seams = True
         self._floor_color = Color('gray')
@@ -3532,7 +3532,7 @@ class DarkTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'white'
         self.edge_color = 'white'
-        self.border_color = 'white'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
@@ -3569,7 +3569,7 @@ class ParaViewTheme(Theme):
         self.color = 'white'
         self.outline_color = 'white'
         self.edge_color = 'black'
-        self.border_color = 'black'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'gold'
         self.axes.z_color = 'green'
@@ -3617,7 +3617,7 @@ class DocumentTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'black'
         self.edge_color = 'black'
-        self.border_color = 'black'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
