@@ -95,7 +95,6 @@ test = [
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
-  'sphinx-codeautolink<0.20.0',
   'sphinx-design<0.7.0',
   'sphinx-examples-as-code<0.4',
   'sphinx-gallery<0.22.0',
