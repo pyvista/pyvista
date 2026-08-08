@@ -72,7 +72,7 @@ def _plot(
     zoom: zoom = None,
     border: border = None,
     border_color: border_color = None,
-    border_width: border_width = 2.0,
+    border_width: border_width = None,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[

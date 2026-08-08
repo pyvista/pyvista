@@ -209,7 +209,7 @@ def _compare(
     zoom: zoom = None,
     border: border = None,
     border_color: border_color = None,
-    border_width: border_width = 2.0,
+    border_width: border_width = None,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
