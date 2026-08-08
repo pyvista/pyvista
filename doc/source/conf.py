@@ -747,11 +747,6 @@ html_theme_options = {
             'icon': 'fa fa-comment fa-fw',
         },
         {
-            'name': 'Contributing',
-            'url': 'https://docs.pyvista.org/developer_notes',
-            'icon': 'fa fa-gavel fa-fw',
-        },
-        {
             'name': 'The Paper',
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
