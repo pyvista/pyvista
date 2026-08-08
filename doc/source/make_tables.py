@@ -3258,10 +3258,7 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
     name = 'builtin_carousel'
-    doc = (
-        'Built-in datasets that ship with pyvista. Available through '
-        ':mod:`pyvista.examples`.'
-    )
+    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`pyvista.examples`.'
     badge = ModuleBadge('Built-in', ref='modules_gallery')
 
     @classmethod
