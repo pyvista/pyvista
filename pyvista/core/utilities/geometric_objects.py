@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import product
+import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -937,7 +937,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
         negative_axis = False
 
     # rest of points with theta changing quickest
-    for ir, iphi in product(radius, phi):
+    for ir, iphi in itertools.product(radius, phi):
         points.extend(_spherical_to_cartesian(ir, iphi, theta))
 
     cells = []
@@ -985,7 +985,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 celltypes.append(pv.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
-        for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
+        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
             cells.append(5)
             cells.extend(
                 [
@@ -1008,7 +1008,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
     if positive_axis:
-        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
             axis0 = ir + 1 if include_origin else ir
             axis1 = ir + 2 if include_origin else ir + 1
 
@@ -1029,7 +1029,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     # now go downwards
     if negative_axis:
-        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
 
@@ -1051,7 +1051,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
+    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
         cells.append(8)
         cells.extend(
             [

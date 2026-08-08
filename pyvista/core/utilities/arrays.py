@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import Sequence
-import enum
-from itertools import product
+from enum import Enum
+import itertools
 import json
 from typing import TYPE_CHECKING
 from typing import Any
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
-class FieldAssociation(enum.Enum):
+class FieldAssociation(Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
     POINT = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)
@@ -792,7 +792,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
         )
         raise TypeError(msg)
     array = np.zeros(shape)
-    for i, j in product(range(shape[0]), range(shape[1])):
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
         array[i, j] = matrix.GetElement(i, j)
     return array
 
@@ -822,7 +822,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
         msg = f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).'
         raise ValueError(msg)
     m, n = array.shape
-    for i, j in product(range(m), range(n)):
+    for i, j in itertools.product(range(m), range(n)):
         matrix.SetElement(i, j, array[i, j])
     return matrix
 

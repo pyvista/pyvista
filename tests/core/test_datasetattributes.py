@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import re
-from string import ascii_letters
-from string import digits
-from string import whitespace
+import string
 import sys
 
 from hypothesis import HealthCheck
@@ -413,7 +411,9 @@ def test_set_array_scalar_value_should_give_array(scalar, hexbeam_point_attribut
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
+@given(
+    arr=lists(text(alphabet=string.ascii_letters + string.digits + string.whitespace), max_size=16)
+)
 def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert arr == hexbeam_field_attributes['string_arr'].tolist()

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from re import escape
+import re
 import sys
 from typing import NamedTuple
 from typing import Union
@@ -77,7 +77,7 @@ def test_validate_transform4x4(transform_like):
 
 
 def test_validate_transform4x4_raises():
-    with pytest.raises(ValueError, match=escape('Shape must be one of [(3, 3), (4, 4)].')):
+    with pytest.raises(ValueError, match=re.escape('Shape must be one of [(3, 3), (4, 4)].')):
         validate_transform4x4(np.array([1, 2, 3]))
     with pytest.raises(TypeError, match='Input transform must be one of'):
         validate_transform4x4('abc')
@@ -107,7 +107,7 @@ def test_validate_transform3x3_raises():
         '\n\tscipy.spatial.transform.Rotation'
         "\nGot array([1, 2, 3]) with type <class 'numpy.ndarray'> instead."
     )
-    with pytest.raises(TypeError, match=escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         validate_transform3x3(np.array([1, 2, 3]))
     match = (
         'Input transform must be one of:'
@@ -134,7 +134,7 @@ def test_check_subdtype():
         "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least "
         "one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     )
-    with pytest.raises(TypeError, match=escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
@@ -153,7 +153,7 @@ def test_validate_number():
         "Parameter 'must_have_shape' cannot be set for function `validate_number`.\n"
         'Its value is automatically set to `()`.'
     )
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_number(1, must_have_shape=2, reshape=False)
 
 
@@ -168,7 +168,7 @@ def test_validate_data_range():
     assert type(rng) is np.ndarray
 
     match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_data_range((1, 0))
 
     match = (
@@ -213,11 +213,11 @@ def test_check_shape():
     check_shape((1, 2, 3), -1)
 
     match = 'Input has shape (3,) which is not allowed. Shape must be 0.'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_shape((1, 2, 3), 0, name='Input')
 
     match = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_shape((1, 2, 3), [(), (4, 5)])
 
 
@@ -228,17 +228,17 @@ def test_check_ndim():
     check_ndim([[1, 2, 3]], (0, 2))
 
     match = 'Input has the incorrect number of dimensions. Got 1, expected 0.'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_ndim((1, 2, 3), 0, name='Input')
 
     match = 'Array has the incorrect number of dimensions. Got 1, expected one of [4, 5].'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_ndim((1, 2, 3), [4, 5])
 
 
 def test_validate_shape_value():
     match = '`None` is not a valid shape. Use `()` instead.'
-    with pytest.raises(TypeError, match=escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         _validate_shape_value(None)
     shape = _validate_shape_value(())
     assert shape == ()
@@ -259,7 +259,7 @@ def test_validate_shape_value():
         "Shape must be an instance of any type (<class 'int'>, <class 'tuple'>). "
         "Got <class 'float'> instead."
     )
-    with pytest.raises(TypeError, match=escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         _validate_shape_value(1.0)
 
     match = 'Shape values must all be greater than or equal to -1.'
@@ -279,7 +279,7 @@ def test_validate_arrayNx3(reshape):  # noqa: N802
 
     if not reshape:
         match = 'Array has shape (3,) which is not allowed. Shape must be (-1, 3).'
-        with pytest.raises(ValueError, match=escape(match)):
+        with pytest.raises(ValueError, match=re.escape(match)):
             validate_arrayNx3((1, 2, 3), reshape=False)
 
     arr = validate_arrayNx3([(1, 2, 3), (4, 5, 6)], reshape=reshape)
@@ -289,10 +289,10 @@ def test_validate_arrayNx3(reshape):  # noqa: N802
         "Parameter 'must_have_shape' cannot be set for function `validate_arrayNx3`.\n"
         'Its value is automatically set to `[3, (-1, 3)]`.'
     )
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_arrayNx3((1, 2, 3), must_have_shape=1)
     match = 'Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_arrayNx3(0)
     with pytest.raises(ValueError, match='_input'):
         validate_arrayNx3([1, 2, 3, 4], name='_input')
@@ -312,11 +312,11 @@ def test_validate_arrayN(reshape):  # noqa: N802
 
     if not reshape:
         match = 'Array has shape () which is not allowed. Shape must be -1.'
-        with pytest.raises(ValueError, match=escape(match)):
+        with pytest.raises(ValueError, match=re.escape(match)):
             validate_arrayN(0, reshape=False)
 
         match = 'Array has shape (1, 3) which is not allowed. Shape must be -1.'
-        with pytest.raises(ValueError, match=escape(match)):
+        with pytest.raises(ValueError, match=re.escape(match)):
             validate_arrayN([[1, 2, 3]], reshape=False)
 
     arr = validate_arrayN((1, 2, 3, 4, 5, 6), reshape=reshape)
@@ -326,11 +326,11 @@ def test_validate_arrayN(reshape):  # noqa: N802
         "Parameter 'must_have_shape' cannot be set for function `validate_arrayN`.\n"
         'Its value is automatically set to `[(), -1, (1, -1)]`.'
     )
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_arrayN((1, 2, 3), must_have_shape=1)
 
     match = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1)].'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_arrayN(((1, 2), (3, 4)))
     with pytest.raises(ValueError, match='_input'):
         validate_arrayN(((1, 2), (3, 4)), name='_input')
@@ -373,17 +373,17 @@ def test_validate_array3(reshape):
     if not reshape:
         # test check fails with 2D input and no reshape
         match = 'Array has shape (1, 3) which is not allowed. Shape must be (3,).'
-        with pytest.raises(ValueError, match=escape(match)):
+        with pytest.raises(ValueError, match=re.escape(match)):
             validate_array3([[1, 2, 3]], reshape=reshape)
 
         # test correct shape with broadcast and no reshape
         match = 'Shape must be one of [(3,), (), (1,)].'
-        with pytest.raises(ValueError, match=escape(match)):
+        with pytest.raises(ValueError, match=re.escape(match)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
     else:
         # test error match shows correct shape with broadcast and with reshape
         match = 'Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]'
-        with pytest.raises(ValueError, match=escape(match)):
+        with pytest.raises(ValueError, match=re.escape(match)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
 
     # test shape cannot be overridden
@@ -391,7 +391,7 @@ def test_validate_array3(reshape):
         "Parameter 'must_have_shape' cannot be set for function `validate_array3`.\n"
         'Its value is automatically set to `[(3,), (1, 3), (3, 1)]`.'
     )
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         validate_array3((1, 2, 3), must_have_shape=3)
 
 
@@ -751,7 +751,7 @@ def test_check_length():
     with pytest.raises(ValueError, match=match):
         check_length((1, 2), exact_length=1, name='_input')
     match = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_length((1, 2), exact_length=[3, 4], name='_input')
 
     match = '_input must have a maximum length of 1. Got length 2 instead.'
@@ -763,7 +763,7 @@ def test_check_length():
         check_length((1,), min_length=2, name='_input')
 
     match = 'Range with 2 elements must be sorted in ascending order. Got:\n    array([4, 2])'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_length(
             (
                 1,
@@ -775,7 +775,7 @@ def test_check_length():
         )
 
     match = 'Shape must be -1.'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_length(((1, 2), (3, 4)), must_be_1d=True)
 
 
@@ -865,7 +865,7 @@ def test_check_iterable_items():
     match = (
         "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
     )
-    with pytest.raises(TypeError, match=escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         check_iterable_items(['abc', 1], str)
     with pytest.raises(TypeError, match='All items of _input'):
         check_iterable_items(['abc', 1], str, name='_input')
@@ -888,10 +888,10 @@ def test_check_number():
 def test_check_contains():
     check_contains(['foo', 'bar'], must_contain='foo')
     match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_contains(['cat', 'bar'], must_contain='foo')
     match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         check_contains(range(4), must_contain=5, name='_input')
 
 
@@ -1148,7 +1148,7 @@ def test_validate_dimensionality(dimensionality, reshape, expected_dimensionalit
     ],
 )
 def test_validate_dimensionality_errors(dimensionality, message):
-    with pytest.raises(ValueError, match=escape(message)):
+    with pytest.raises(ValueError, match=re.escape(message)):
         validate_dimensionality(dimensionality)
 
 

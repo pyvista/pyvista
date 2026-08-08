@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import wraps
+import functools
 import inspect
 import itertools
 import re
@@ -126,7 +126,7 @@ class DocSubs:
     def _wrap_member(member):
         if callable(member):
 
-            @wraps(member)
+            @functools.wraps(member)
             def mem_sub(*args, **kwargs):
                 return member(*args, **kwargs)
 

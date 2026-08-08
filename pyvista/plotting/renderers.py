@@ -3,18 +3,142 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from itertools import product
+import itertools
 import re
-from weakref import proxy
+import weakref
 
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
+from .colors import Color
 from .renderer import Renderer
+
+_SeamSegment = tuple[tuple[float, float], tuple[float, float]]
+
+
+def _merge_intervals(
+    intervals: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    """Merge a list of ``(start, end)`` intervals that touch or overlap."""
+    if not intervals:
+        return []
+    intervals = sorted(intervals)
+    merged: list[tuple[float, float]] = [intervals[0]]
+    for start, end in intervals[1:]:
+        last_start, last_end = merged[-1]
+        if start <= last_end:
+            merged[-1] = (last_start, max(last_end, end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _collect_seam_segments(
+    viewports: list[tuple[float, float, float, float]],
+    *,
+    interior: bool = True,
+    exterior: bool = False,
+) -> list[_SeamSegment]:
+    """Return line segments describing the requested viewport edges.
+
+    Every edge of every viewport is either *interior* (it lies
+    strictly inside the render window ``(0, 1) x (0, 1)``, i.e. it's
+    shared with a neighboring viewport) or *exterior* (it lies on the
+    outer perimeter of the render window, at ``0`` or ``1``). Edges
+    are contributed to a vertical or horizontal group keyed by their
+    axial coordinate, and each group's intervals are then merged, so
+    adjacent cells sharing an edge produce a single continuous line
+    rather than one segment per contributor — this applies just as
+    much to the outer perimeter (each side is typically touched by
+    several renderers) as it does to interior seams. The resulting
+    segments are meant to be drawn once from a single overlay actor
+    so that every line rasterizes to a single pixel row/column
+    regardless of how any one neighbor's viewport happens to round.
+
+    Parameters
+    ----------
+    viewports : list[tuple[float, float, float, float]]
+        ``(xmin, ymin, xmax, ymax)`` viewport of every renderer, in
+        normalized viewport coordinates.
+
+    interior : bool, default: True
+        Include seams shared between neighboring viewports.
+
+    exterior : bool, default: False
+        Include the outer perimeter of the occupied plotting area.
+
+    Returns
+    -------
+    list[_SeamSegment]
+        Line segments in normalized viewport coordinates.
+
+    """
+    vertical: dict[float, list[tuple[float, float]]] = {}
+    horizontal: dict[float, list[tuple[float, float]]] = {}
+    for xmin, ymin, xmax, ymax in viewports:
+        if interior and xmax < 1.0:
+            vertical.setdefault(xmax, []).append((ymin, ymax))
+        if interior and xmin > 0.0:
+            vertical.setdefault(xmin, []).append((ymin, ymax))
+        if interior and ymax < 1.0:
+            horizontal.setdefault(ymax, []).append((xmin, xmax))
+        if interior and ymin > 0.0:
+            horizontal.setdefault(ymin, []).append((xmin, xmax))
+        if exterior and xmax == 1.0:
+            vertical.setdefault(1.0, []).append((ymin, ymax))
+        if exterior and xmin == 0.0:
+            vertical.setdefault(0.0, []).append((ymin, ymax))
+        if exterior and ymax == 1.0:
+            horizontal.setdefault(1.0, []).append((xmin, xmax))
+        if exterior and ymin == 0.0:
+            horizontal.setdefault(0.0, []).append((xmin, xmax))
+
+    segments: list[_SeamSegment] = []
+    for x, intervals in vertical.items():
+        for y0, y1 in _merge_intervals(intervals):
+            segments.append(((x, y0), (x, y1)))
+    for y, intervals in horizontal.items():
+        for x0, x1 in _merge_intervals(intervals):
+            segments.append(((x0, y), (x1, y)))
+    return segments
+
+
+def _make_seam_line_actor(
+    segments: list[_SeamSegment],
+    *,
+    color,
+    width: float,
+) -> _vtk.vtkActor2D:
+    """Build a 2D actor drawing ``segments`` as lines, in normalized viewport coordinates."""
+    points = _vtk.vtkPoints()
+    lines = _vtk.vtkCellArray()
+    for (x0, y0), (x1, y1) in segments:
+        p0 = points.InsertNextPoint(x0, y0, 0.0)
+        p1 = points.InsertNextPoint(x1, y1, 0.0)
+        lines.InsertNextCell(2)
+        lines.InsertCellPoint(p0)
+        lines.InsertCellPoint(p1)
+    poly = _vtk.vtkPolyData()
+    poly.SetPoints(points)
+    poly.SetLines(lines)
+
+    coordinate = _vtk.vtkCoordinate()
+    coordinate.SetCoordinateSystemToNormalizedViewport()
+
+    mapper = _vtk.vtkPolyDataMapper2D()
+    mapper.SetInputData(poly)
+    mapper.SetTransformCoordinate(coordinate)
+
+    actor = _vtk.vtkActor2D()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(Color(color).float_rgb)
+    actor.GetProperty().SetLineWidth(width)
+    return actor
 
 
 class Renderers(_NoNewAttrMixin):
@@ -40,16 +164,32 @@ class Renderers(_NoNewAttrMixin):
     groups : list, optional
         A list of sequences that defines the grouping of the sub-datasets.
 
-    border : bool, optional
-        Whether or not a border should be added around each subplot.
+    border : bool, default: False
+        Draw a frame around the outer edge of the plotting area, i.e.
+        around the whole grid of subplots, regardless of ``shape``.
+
+        .. versionchanged:: 0.49
+
+            Now draws a single frame around the whole plotting area,
+            rather than a frame around each subplot individually. Use
+            ``subplot_seams`` for lines between subplots instead.
 
     border_color : str, optional
-        The color of the border around each subplot. Defaults to
-        the plotter's :attr:`~pyvista.Plotter.theme`
-        ``border_color``.
+        The color of the border and/or subplot seams. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`.
 
     border_width : float, optional
-        The width of the border around each subplot.
+        The width of the border and/or subplot seams. Defaults to
+        :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
+
+    subplot_seams : bool, optional
+        Draw a thin line between neighboring subplots. Defaults to
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
+        for a single subplot, since there are no neighbors to
+        separate.
 
     """
 
@@ -64,20 +204,30 @@ class Renderers(_NoNewAttrMixin):
         groups=None,
         border=None,
         border_color=None,
-        border_width=2.0,
+        border_width=None,
+        subplot_seams=None,
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
-        self._plotter = proxy(plotter)
+        self._plotter = weakref.proxy(plotter)
         self._renderers = []
         self._shadow_renderer = None
 
-        # by default add border for multiple plots
+        # `border` always means "draw a frame around the outer edge of
+        # the occupied plotting area" -- the same concept whether there's
+        # one render window or a grid of them -- so it no longer turns
+        # itself on implicitly for multi-subplot layouts. That look now
+        # lives behind `subplot_seams`, which theme.subplot_seams defaults
+        # on -- it only ever has an effect once there's more than one
+        # renderer, so a single subplot is unaffected either way.
         if border is None:
-            border = shape != (1, 1)
-
+            border = False
+        if subplot_seams is None:
+            subplot_seams = plotter.theme.subplot_seams
         if border_color is None:
-            border_color = self._plotter.theme.border_color
+            border_color = plotter.theme.border_color
+        if border_width is None:
+            border_width = plotter.theme.border_width
 
         self.groups = np.empty((0, 4), dtype=int)
 
@@ -212,7 +362,7 @@ class Renderers(_NoNewAttrMixin):
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i, j in product(
+                    for i, j in itertools.product(
                         range(norm_group[0], norm_group[2] + 1),
                         range(norm_group[1], norm_group[3] + 1),
                     ):
@@ -224,7 +374,7 @@ class Renderers(_NoNewAttrMixin):
                         axis=0,
                     )
             # Create subplot renderers
-            for row, col in product(range(shape[0]), range(shape[1])):
+            for row, col in itertools.product(range(shape[0]), range(shape[1])):
                 group = self.loc_to_group((row, col))
                 nb_rows = None
                 nb_cols = None
@@ -255,6 +405,24 @@ class Renderers(_NoNewAttrMixin):
                         self.groups[group, 0],
                         self.groups[group, 1],
                     ]
+
+        # For multi-subplot layouts, replace each renderer's own
+        # border with a single shared overlay that draws every
+        # requested line -- interior seams and/or the outer frame --
+        # exactly once. Having each neighbor rasterize its own copy of
+        # a boundary line caused it to sometimes appear thicker in one
+        # direction or disappear entirely, because the boundary falls
+        # right at each viewport's clip edge and rounds inconsistently.
+        self._border_overlay_renderer: Renderer | None = None
+        if len(self._renderers) > 1 and (border or subplot_seams):
+            for renderer in self._renderers:
+                renderer._drop_border_actor()
+            self._border_overlay_renderer = self._build_border_overlay_renderer(
+                border_color=border_color,
+                border_width=border_width,
+                interior=subplot_seams,
+                exterior=border,
+            )
 
         # each render will also have an associated background renderer
         self._background_renderers: list[BackgroundRenderer | None] = [
@@ -480,6 +648,8 @@ class Renderers(_NoNewAttrMixin):
             renderer.deep_clean()
         if self._shadow_renderer is not None:
             self._shadow_renderer.deep_clean()
+        if self._border_overlay_renderer is not None:
+            self._border_overlay_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
             for renderer in self._background_renderers:
                 if renderer is not None:
@@ -561,6 +731,9 @@ class Renderers(_NoNewAttrMixin):
 
         self._shadow_renderer.close()  # type: ignore[union-attr]
 
+        if self._border_overlay_renderer is not None:
+            self._border_overlay_renderer.close()
+
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.close()
@@ -581,6 +754,66 @@ class Renderers(_NoNewAttrMixin):
 
         """
         return self._shadow_renderer
+
+    @property
+    def border_overlay_renderer(self) -> Renderer | None:  # numpydoc ignore=RT01
+        """Overlay renderer that draws the border and/or subplot seams, if any."""
+        return self._border_overlay_renderer
+
+    def _build_border_overlay_renderer(
+        self, *, border_color, border_width, interior, exterior
+    ) -> Renderer | None:
+        """Create an overlay renderer that draws every requested line once.
+
+        Interior seams are expressed directly in window-normalized
+        coordinates, so both halves of every seam rasterize to the same
+        pixel row/column regardless of how any particular neighbor's
+        viewport happens to round.
+
+        The exterior segments sit exactly on the overlay renderer's own
+        0/1 viewport boundary -- the render window's edge -- where VTK's
+        2D rasterizer clips away roughly half of a line's width. They're
+        drawn from a separate actor at double the requested width to
+        compensate, so the frame actually renders at `border_width`,
+        matching any interior seams drawn at the same nominal width.
+        Two actors are only needed when both kinds of segment are
+        present; either alone still uses one.
+        """
+        viewports = [renderer.GetViewport() for renderer in self._renderers]
+        interior_segments = (
+            _collect_seam_segments(viewports, interior=True, exterior=False) if interior else []
+        )
+        exterior_segments = (
+            _collect_seam_segments(viewports, interior=False, exterior=True) if exterior else []
+        )
+        if not interior_segments and not exterior_segments:
+            return None
+
+        overlay = Renderer(self._plotter, border=False)
+        overlay.viewport = (0, 0, 1, 1)
+        overlay.SetInteractive(False)
+        overlay.SetErase(False)
+        overlay.SetBackgroundAlpha(0.0)
+
+        primary_actor = None
+        if interior_segments:
+            primary_actor = _make_seam_line_actor(
+                interior_segments, color=border_color, width=border_width
+            )
+            overlay.AddViewProp(primary_actor)
+        if exterior_segments:
+            exterior_actor = _make_seam_line_actor(
+                exterior_segments, color=border_color, width=border_width * 2
+            )
+            overlay.AddViewProp(exterior_actor)
+            if primary_actor is None:
+                primary_actor = exterior_actor
+            else:
+                overlay._border_actor_secondary = exterior_actor
+
+        overlay._border_actor = primary_actor
+        overlay._border_requested_width = border_width
+        return overlay
 
     @_deprecate_positional_args(allowed=['color'])
     def set_background(  # noqa: PLR0917
@@ -748,3 +981,4 @@ class Renderers(_NoNewAttrMixin):
     def __del__(self):
         """Destructor."""
         self._shadow_renderer = None
+        self._border_overlay_renderer = None

@@ -35,8 +35,8 @@ from __future__ import annotations
 from enum import Enum
 import json
 import os
-import pathlib
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -1416,7 +1416,7 @@ class _TrameConfig(_ConfigBase):
             # JupyterHub service prefixes are URL paths, not filesystem paths,
             # so use PurePosixPath to force forward-slash joining on Windows.
             self._server_proxy_prefix = (
-                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+                str(PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
             )
             self._server_proxy_enabled = True
         else:
@@ -1774,6 +1774,7 @@ class Theme(_ConfigBase):
         '_before_close_callback',
         '_below_range_color',
         '_border_color',
+        '_border_width',
         '_camera',
         '_cmap',
         '_color',
@@ -1820,6 +1821,7 @@ class Theme(_ConfigBase):
         '_slider_styles',
         '_smooth_shading',
         '_split_sharp_edges',
+        '_subplot_seams',
         '_title',
         '_trame',
         '_transparent_background',
@@ -1848,7 +1850,9 @@ class Theme(_ConfigBase):
         self._line_width = 1.0
         self._point_size = 5.0
         self._outline_color = Color('white')
-        self._border_color = Color('black')
+        self._border_color = Color('gray')
+        self._border_width = 1.0
+        self._subplot_seams = True
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
@@ -2551,12 +2555,17 @@ class Theme(_ConfigBase):
 
     @property
     def border_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set the default border color of subplots.
+        """Return or set the default border color of a plotter.
 
         .. versionadded:: 0.49
 
-        This is the color of the line(s) drawn between subplots when a
-        plotter has more than one renderer, e.g. via ``shape``.
+        This is the color of the frame drawn around the outer edge of
+        the plotting area when a ``Plotter`` is constructed with
+        ``border=True``, and/or of the line(s) drawn between subplots
+        when a plotter has more than one renderer and
+        ``subplot_seams=True`` (the default for multi-subplot
+        layouts). Used whenever no explicit ``border_color`` is
+        provided.
 
         Examples
         --------
@@ -2569,6 +2578,49 @@ class Theme(_ConfigBase):
     @border_color.setter
     def border_color(self, border_color: ColorLike):
         self._border_color = Color(border_color)
+
+    @property
+    def border_width(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the default border/subplot seam width in pixels.
+
+        Used when a ``Plotter`` is constructed with ``border=True``
+        or ``subplot_seams=True`` and no explicit ``border_width`` is
+        provided.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.border_width = 2.0
+
+        """
+        return self._border_width
+
+    @border_width.setter
+    def border_width(self, border_width: float):
+        self._border_width = float(border_width)
+
+    @property
+    def subplot_seams(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to draw a line between neighboring subplots by default.
+
+        .. versionadded:: 0.49
+
+        Used when a ``Plotter`` has more than one subplot and no
+        explicit ``subplot_seams`` is provided. Has no effect on a
+        single-subplot ``Plotter``, since there are no neighbors to
+        separate.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.subplot_seams = False
+
+        """
+        return self._subplot_seams
+
+    @subplot_seams.setter
+    def subplot_seams(self, subplot_seams: bool):
+        self._subplot_seams = bool(subplot_seams)
 
     @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
@@ -3154,8 +3206,10 @@ class Theme(_ConfigBase):
             'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
-            'Outline color': 'outline_color',
             'Border color': 'border_color',
+            'Border width': 'border_width',
+            'Subplot seams': 'subplot_seams',
+            'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',
             'Colorbar - horizontal': 'colorbar_horizontal',
@@ -3436,11 +3490,11 @@ class Theme(_ConfigBase):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: str | pathlib.Path | None):
+    def logo_file(self, logo_file: str | Path | None):
         if logo_file is None:
             path = None
         else:
-            if not pathlib.Path(logo_file).exists():
+            if not Path(logo_file).exists():
                 msg = f'Logo file ({logo_file}) not found.'
                 raise FileNotFoundError(msg)
             path = str(logo_file)
@@ -3478,7 +3532,7 @@ class DarkTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'white'
         self.edge_color = 'white'
-        self.border_color = 'white'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
@@ -3563,7 +3617,7 @@ class DocumentTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'black'
         self.edge_color = 'black'
-        self.border_color = 'black'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
@@ -3637,6 +3691,7 @@ class _TestingTheme(Theme):
         super().__init__()
         self.multi_samples = 1
         self.window_size = [400, 400]
+        self.border_color = 'black'
         self.axes.show = False
         self.return_cpos = False
         self.resample_environment_texture = True

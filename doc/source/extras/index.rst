@@ -17,6 +17,7 @@ and how you can help develop PyVista.
    pyinstaller
    plot_directive
    vtk_role
+   examples_as_code
    pytest_plugin
    pyvista_data
    extending_pyvista

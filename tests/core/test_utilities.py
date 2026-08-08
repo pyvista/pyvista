@@ -20,7 +20,8 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import get_args
-from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 import warnings
 
 from hypothesis import given
@@ -385,9 +386,9 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type_)
 
 
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
-@mock.patch('pyvista.BaseReader.show_progress')
+@patch('pyvista.BaseReader.read')
+@patch('pyvista.BaseReader.reader')
+@patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
@@ -1177,13 +1178,22 @@ def test_linkcode_resolve():
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
 
-    # edit mode should still include the line span, just under /edit/ instead
-    # of /blob/, so the edit page opens at the same lines as [source] does
-    link = linkcode_resolve(
-        'py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}, edit=True
-    )
-    assert '/edit/' in link
-    assert '#L' in link
+    # the blob view highlights the full definition
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    blob_link = linkcode_resolve('py', info)
+    blob_match = re.search(r'#L(\d+)-L(\d+)$', blob_link)
+    assert blob_match is not None
+    start, end = int(blob_match[1]), int(blob_match[2])
+    assert end > start + 1  # DataObject spans many lines
+
+    # the edit view gets a short two-line range at the same starting line: a
+    # single-line #Lxx anchor doesn't reliably scroll the edit view there
+    edit_link = linkcode_resolve('py', info, edit=True)
+    assert '/edit/' in edit_link
+    edit_match = re.search(r'#L(\d+)-L(\d+)$', edit_link)
+    assert edit_match is not None
+    assert int(edit_match[1]) == start
+    assert int(edit_match[2]) == start + 1
 
 
 def test_fix_edit_link_button_gallery_example():
@@ -1201,14 +1211,17 @@ def test_fix_edit_link_button_gallery_index_falls_through():
 
 
 def test_fix_edit_link_button_autosummary_stub():
-    # Autosummary stubs should resolve to the same location as the page's
-    # [source] button -- same file, same line span -- just in edit mode
+    # Autosummary stubs should resolve to the same file and starting line as
+    # the page's [source] button, in a short two-line range rather than the
+    # full one -- a single-line anchor doesn't reliably scroll the edit view
     pagename = 'api/core/_autosummary/pyvista.core.DataObject'
     link = fix_edit_link_button(pagename, 'default-link')
     assert link is not None
     assert '/edit/' in link
     assert 'dataobject.py' in link
-    assert '#L' in link
+    match = re.search(r'#L(\d+)-L(\d+)$', link)
+    assert match is not None
+    assert int(match[2]) == int(match[1]) + 1
 
 
 def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():
@@ -2715,9 +2728,9 @@ def test_vtk_verbosity_set_get():
 def test_vtk_verbosity_logging_disabled():
     # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
     # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
-    mock_logger = mock.MagicMock()
+    mock_logger = MagicMock()
     mock_logger.GetCurrentVerbosityCutoff.return_value = -10
-    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+    with patch.object(_vtk, 'vtkLogger', mock_logger):
         assert pv.vtk_verbosity() == 'off'
 
 

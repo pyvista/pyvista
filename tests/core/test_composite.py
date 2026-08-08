@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import itertools
-import pathlib
+from pathlib import Path
 import re
 import weakref
 
@@ -436,7 +436,7 @@ def test_multi_block_io(
 ):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
-        pathlib.Path(filename)
+        Path(filename)
 
     # Use non-nested multiblock with no None types for vtkhdf case
     # these cases are tested separately

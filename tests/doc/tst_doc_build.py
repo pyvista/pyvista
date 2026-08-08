@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-from xml.etree.ElementTree import parse
+from xml.etree import ElementTree as ET
 
 import pytest
 
@@ -28,7 +28,7 @@ def load_test_cases() -> list[dict[str, str]]:
     """
     if not XML_FILE.is_file():
         return []
-    return [dict(case.attrib) for case in parse(XML_FILE).getroot().iterfind('testcase')]
+    return [dict(case.attrib) for case in ET.parse(XML_FILE).getroot().iterfind('testcase')]
 
 
 test_cases = load_test_cases()

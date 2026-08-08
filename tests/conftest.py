@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import faulthandler
 import functools
-from importlib import metadata
-from inspect import BoundArguments
-from inspect import Parameter
-from inspect import Signature
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import requires
+from importlib.metadata import version
+import inspect
 import os
 import platform
 import re
@@ -355,7 +355,7 @@ def pytest_addoption(parser):
     )
 
 
-def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
+def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
     try:
@@ -373,8 +373,8 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
 
 def _get_min_max_vtk_version(
     item_mark: pytest.Mark,
-    sig: Signature,
-) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    sig: inspect.Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, inspect.BoundArguments]:
     bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
 
     def _pad_version(val: tuple[int] | None):
@@ -423,28 +423,28 @@ def pytest_runtest_setup(item: pytest.Item):
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     'args',
-                    kind=Parameter.VAR_POSITIONAL,
+                    kind=inspect.Parameter.VAR_POSITIONAL,
                     annotation=int | tuple[int],
                 ),
-                Parameter(
+                inspect.Parameter(
                     'at_least',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     annotation=tuple[int] | None,
                     default=None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'less_than',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=tuple[int] | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'reason',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -490,11 +490,11 @@ def pytest_runtest_setup(item: pytest.Item):
                 pytest.skip(reason=reason)
 
     if item_mark := item.get_closest_marker('skip_egl'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails when using OSMesa/EGL VTK build',
                     annotation=str,
                 )
@@ -506,11 +506,11 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_windows'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on Windows',
                     annotation=str,
                 )
@@ -522,23 +522,23 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on MacOS',
                     annotation=str,
                 ),
-                Parameter(
+                inspect.Parameter(
                     p := 'processor',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     m := 'machine',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -570,7 +570,7 @@ def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}
-    for item in metadata.requires('pyvista'):
+    for item in requires('pyvista'):
         pkg_name = re.findall(r'[a-z0-9_\-]+', item, re.IGNORECASE)[0]
         if pkg_name == 'pyvista':
             continue
@@ -587,9 +587,9 @@ def pytest_report_header(config):  # noqa: ARG001
     items = []
     for name in required:
         try:
-            version = metadata.version(name)
-            items.append(f'{name}-{version}')
-        except metadata.PackageNotFoundError:
+            pkg_version = version(name)
+            items.append(f'{name}-{pkg_version}')
+        except PackageNotFoundError:
             items.append(f'{name} (not found)')
     lines.append('required packages: ' + ', '.join(items))
 
@@ -598,9 +598,9 @@ def pytest_report_header(config):  # noqa: ARG001
         installed = []
         for name in extra[pkg_extra]:
             try:
-                version = metadata.version(name)
-                installed.append(f'{name}-{version}')
-            except metadata.PackageNotFoundError:
+                pkg_version = version(name)
+                installed.append(f'{name}-{pkg_version}')
+            except PackageNotFoundError:
                 not_found.append(name)
         if installed:
             plrl = 's' if len(installed) != 1 else ''
