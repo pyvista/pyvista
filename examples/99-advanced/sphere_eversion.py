@@ -52,7 +52,7 @@ def sphere_to_cylinder(theta, phi):
     return h, phi
 
 
-def cylinder_to_wormhole(*, h, phi, t, p, q):
+def cylinder_to_wormhole(h, phi, t, p, q):
     """
     Map from a cylinder to an open wormhole using Eq. (4).
 
@@ -69,7 +69,7 @@ def cylinder_to_wormhole(*, h, phi, t, p, q):
     return x, y, z
 
 
-def close_wormhole(*, x0, y0, z0, eta, xi, alpha):
+def close_wormhole(x0, y0, z0, eta, xi, alpha):
     """
     Close the wormhole using Eqs. (7)-(8).
 
@@ -107,7 +107,7 @@ def close_wormhole(*, x0, y0, z0, eta, xi, alpha):
     return x2, y2, z2
 
 
-def unfold_sphere(*, theta, phi, t, q, eta, lamda):
+def unfold_sphere(theta, phi, t, q, eta, lamda):
     """
     Unfold the sphere using Eqs. (12), (15), (10).
 
@@ -191,52 +191,52 @@ eta = 1
 theta, phi = np.mgrid[-np.pi / 2 : np.pi / 2 : 200j, -np.pi : np.pi : 400j]
 h, phi = sphere_to_cylinder(theta, phi)
 for lamda in np.linspace(0, 1, n_steps, endpoint=False):
-    x2, y2, z2 = unfold_sphere(theta=theta, phi=phi, t=t, q=q, eta=eta, lamda=lamda)
+    x2, y2, z2 = unfold_sphere(theta, phi, t, q, eta, lamda)
     save_frame(x2, y2, z2)
 
 # inverted wormhole -> unfolded wormhole
-x, y, z = cylinder_to_wormhole(h=h, phi=phi, t=t, p=p, q=q)
+x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(0, 1, n_steps)
 alphas = np.linspace(0, alpha_final, n_steps)
 etas = np.linspace(1, eta_final, n_steps)
 for xi, alpha, eta in zip(xis, alphas, etas, strict=True):
-    x2, y2, z2 = close_wormhole(x0=x, y0=y, z0=z, eta=eta, xi=xi, alpha=alpha)
+    x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
 # unfolded wormhole -> closed wormhole
 for q in np.linspace(Q, 0, n_steps):
     p = 1 - abs(q * t)
-    x, y, z = cylinder_to_wormhole(h=h, phi=phi, t=t, p=p, q=q)
-    x2, y2, z2 = close_wormhole(x0=x, y0=y, z0=z, eta=eta, xi=xi, alpha=alpha)
+    x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
+    x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
 # closed wormhole turned inside out (flip sign of time)
 # unfolded wormhole -> closed wormhole
 for t in np.linspace(-1 / Q, 1 / Q, n_steps):
     p = 1 - abs(q * t)
-    x, y, z = cylinder_to_wormhole(h=h, phi=phi, t=t, p=p, q=q)
-    x2, y2, z2 = close_wormhole(x0=x, y0=y, z0=z, eta=eta, xi=xi, alpha=alpha)
+    x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
+    x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
 # closed wormhole -> unfolded wormhole
 for q in np.linspace(0, Q, n_steps + 1)[1:]:
     p = 1 - abs(q * t)
-    x, y, z = cylinder_to_wormhole(h=h, phi=phi, t=t, p=p, q=q)
-    x2, y2, z2 = close_wormhole(x0=x, y0=y, z0=z, eta=eta, xi=xi, alpha=alpha)
+    x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
+    x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
 # unfolded wormhole -> inverted wormhole
-x, y, z = cylinder_to_wormhole(h=h, phi=phi, t=t, p=p, q=q)
+x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(1, 0, n_steps + 1)[1:]
 alphas = np.linspace(alpha_final, 0, n_steps + 1)[1:]
 etas = np.linspace(eta_final, 1, n_steps + 1)[1:]
 for xi, alpha in zip(xis, alphas, strict=True):
-    x2, y2, z2 = close_wormhole(x0=x, y0=y, z0=z, eta=eta, xi=xi, alpha=alpha)
+    x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
 # inverted wormhole -> sphere
 for lamda in np.linspace(1, 0, n_steps + 1)[1:]:
-    x2, y2, z2 = unfold_sphere(theta=theta, phi=phi, t=t, q=q, eta=eta, lamda=lamda)
+    x2, y2, z2 = unfold_sphere(theta, phi, t, q, eta, lamda)
     save_frame(x2, y2, z2)
 
 pl.close()
@@ -257,7 +257,7 @@ xi = p = 1
 eta = eta_final
 alpha = alpha_final
 
-x, y, z = cylinder_to_wormhole(h=h, phi=phi, t=t, p=p, q=q)
+x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
 
 pl = pv.Plotter(window_size=(512, 512))
