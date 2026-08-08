@@ -126,12 +126,21 @@ pv.examples.__all__ = sorted(
 # included in `pv.examples.__all__` above, so they're now documented at
 # their `pyvista.examples.*` path too. Exclude just those two from
 # `pyvista.examples.cells`'s own page so they aren't documented (and their
-# `.. pyvista-plot::` examples doctest-run) a second time there; every other
-# `pyvista.examples.cells` member is still documented there as before.
+# `.. pyvista-plot::` examples doctest-run) a second time there.
+#
+# Without `__all__`, autosummary only shows members actually defined in the
+# module being scanned (see the comment on `pv.examples.__all__` above), so
+# `cells.py`'s own imports (`np`, `UnstructuredGrid`, `CellType`, etc.) are
+# correctly hidden today. Setting `__all__` turns that filtering off
+# entirely for the whole page, so it has to be reproduced explicitly here --
+# every other `pyvista.examples.cells` member is still documented there as
+# before, and nothing new (like those imports) leaks in.
 pv.examples.cells.__all__ = sorted(
     name
-    for name in dir(pv.examples.cells)
-    if not name.startswith('_') and name not in {'generate_cell_blocks', 'plot_cell'}
+    for name, obj in vars(pv.examples.cells).items()
+    if not name.startswith('_')
+    and getattr(obj, '__module__', None) == pv.examples.cells.__name__
+    and name not in {'generate_cell_blocks', 'plot_cell'}
 )
 
 # -- General configuration ------------------------------------------------
