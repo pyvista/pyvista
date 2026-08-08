@@ -2292,23 +2292,8 @@ def test_array_volume_rendering(uniform, verify_image_cache):
 @pytest.mark.parametrize(
     ('func', 'datasets', 'kwargs'),
     [
-        (
-            pv.plot,
-            [pv.Sphere()],
-            {'border': True, 'border_color': 'red', 'border_width': 10},
-        ),
-        (
-            pv.plot_compare,
-            [pv.Sphere(), pv.Cone()],
-            {
-                'plotter_kwargs': {
-                    'border': True,
-                    'border_color': 'red',
-                    'border_width': 10,
-                    'subplot_seams': False,
-                },
-            },
-        ),
+        (pv.plot, [pv.Sphere()], {}),
+        (pv.plot_compare, [pv.Sphere(), pv.Cone()], {'subplot_seams': False}),
     ],
     ids=['pv.plot (single subplot)', 'pv.plot_compare (multiple subplots)'],
 )
@@ -2323,7 +2308,7 @@ def test_border_outer_frame_top_level_plot_functions(func, datasets, kwargs):
     has plenty of coverage elsewhere: the other multi-subplot tests in
     this file, and the doc gallery's own image regression tests.
     """
-    func(datasets, **kwargs)
+    func(datasets, border=True, border_color='red', border_width=10, **kwargs)
 
 
 @pytest.mark.usefixtures('verify_image_cache')

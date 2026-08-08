@@ -85,6 +85,10 @@ draws them all at the size of the one which has to be smallest to fit. By defaul
 ``uniform`` is used when the subplots are all the same size, and ``best_fit`` otherwise.
 """
 
+_HELP_SUBPLOT_SEAMS = """\
+Draw a thin line between neighboring subplots.
+"""
+
 # What to do about a dataset which is too small to make out, in terms of the options
 # this command has rather than the arguments of `plot_compare`, which it does not
 _REMEDIES = {
@@ -210,6 +214,9 @@ def _compare(
     border: border = None,
     border_color: border_color = None,
     border_width: border_width = None,
+    subplot_seams: Annotated[
+        bool | None, Parameter(help=_HELP_SUBPLOT_SEAMS, group=Groups.PLOTTER)
+    ] = None,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
@@ -255,6 +262,7 @@ def _compare(
             border=border,
             border_color=border_color,
             border_width=border_width,
+            subplot_seams=subplot_seams,
             full_screen=full_screen,
             interactive=interactive,
             **kwargs,
