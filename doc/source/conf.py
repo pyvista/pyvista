@@ -582,7 +582,13 @@ sphinx_gallery_conf = {
     'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache', 'image.not_readable']
+suppress_warnings = [
+    'config.cache',
+    'image.not_readable',
+    # sphinx-codeautolink fails to match any line with a `# doctest: +OPTION` comment
+    # back to its rendered HTML; it just skips linking that one block, harmlessly.
+    'codeautolink.match_block',
+]
 
 import re
 
