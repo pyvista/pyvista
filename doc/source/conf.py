@@ -122,6 +122,18 @@ pv.examples.__all__ = sorted(
     )
 )
 
+# `generate_cell_blocks`/`plot_cell` are re-exported the same way and are
+# included in `pv.examples.__all__` above, so they're now documented at
+# their `pyvista.examples.*` path too. Exclude just those two from
+# `pyvista.examples.cells`'s own page so they aren't documented (and their
+# `.. pyvista-plot::` examples doctest-run) a second time there; every other
+# `pyvista.examples.cells` member is still documented there as before.
+pv.examples.cells.__all__ = sorted(
+    name
+    for name in dir(pv.examples.cells)
+    if not name.startswith('_') and name not in {'generate_cell_blocks', 'plot_cell'}
+)
+
 # -- General configuration ------------------------------------------------
 numfig = False
 html_logo = './_static/pyvista_logo.svg'
