@@ -1835,15 +1835,25 @@ def _get_doc(func: Callable[[], Any]) -> str | None:
     return doc.splitlines()[0] if doc else None
 
 
+def _normalize_examples_modname(modname: str) -> str:
+    """Collapse the examples/downloads submodule names to the pyvista.examples one.
+
+    `load_*`/`download_*` functions are only documented at their
+    `pyvista.examples` path (see doc/source/api/examples/index.rst), not at
+    the `pyvista.examples.examples`/`pyvista.examples.downloads` submodules
+    they're actually defined in -- and the doc_image_cache/generated image
+    filenames are named to match. Anything deriving a module name or path
+    from one of these two submodules (directly or via `__module__`) needs to
+    go through this first.
+    """
+    if modname in {'pyvista.examples.examples', 'pyvista.examples.downloads'}:
+        return 'pyvista.examples'
+    return modname
+
+
 def _get_fullname(typ: type[Any]) -> str:
     """Return the fully qualified name of the given type object."""
-    modname = typ.__module__
-    # `load_*`/`download_*` functions are only documented at their
-    # `pyvista.examples` path (see doc/source/api/examples/index.rst), not
-    # at the `pyvista.examples.examples`/`pyvista.examples.downloads`
-    # submodules they're actually defined in.
-    if modname in {'pyvista.examples.examples', 'pyvista.examples.downloads'}:
-        modname = 'pyvista.examples'
+    modname = _normalize_examples_modname(typ.__module__)
     return f'{modname}.{typ.__qualname__}'
 
 
@@ -2191,7 +2201,7 @@ class DatasetCard:
             self.dataset_name,
         )
         # Get thumbnail image path
-        module_name = self.loader._module.__name__.replace('.', '-')
+        module_name = _normalize_examples_modname(self.loader._module.__name__).replace('.', '-')
         ext = DATASET_GALLERY_IMAGE_EXT_DICT.get(self.dataset_name, '.png')
         if ext is None:
             img_path = self._create_default_image()
