@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import argparse
 import ast
-from html import escape
+import html
 import logging
 from pathlib import Path
 import re
@@ -150,7 +150,7 @@ def write_simple_index(wheels_root: Path, wheel: Path) -> None:
     project_dir = wheels_root / 'simple' / 'pyvista'
     project_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(wheel, project_dir / wheel.name)
-    link = f'    <a href="{escape(wheel.name)}">{escape(wheel.name)}</a><br>'
+    link = f'    <a href="{html.escape(wheel.name)}">{html.escape(wheel.name)}</a><br>'
     (project_dir / 'index.html').write_text(
         SIMPLE_PROJECT_TMPL.format(project='pyvista', links=link),
     )
@@ -190,7 +190,7 @@ def main() -> int:
 
     write_simple_index(wheels_root, wheel)
     (wheels_root / 'index.html').write_text(
-        LANDING_TMPL.format(wheel=escape(wheel.name), sha=escape(sha)),
+        LANDING_TMPL.format(wheel=html.escape(wheel.name), sha=html.escape(sha)),
     )
     shutil.rmtree(build_dir, ignore_errors=True)
 

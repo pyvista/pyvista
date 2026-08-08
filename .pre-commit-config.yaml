@@ -93,6 +93,15 @@ repos:
         language: pygrep
         entry: '^\s*(?:>>>|\.\.\.)?\s*(?:plotter|p|plot|plt|pltr)\s*=\s*pv\.Plotter\('
         types_or: [python, rst, markdown]
+      # Stdlib modules that must be member-imported (`from pathlib import Path`).
+      # Counterpart: 'banned-from' under [tool.ruff.lint.flake8-import-conventions]
+      # in pyproject.toml. See "Import Conventions" in CONTRIBUTING.rst for the
+      # rule and how they interact. Aliased imports are an intentional escape hatch.
+      - id: namespace-stdlib-imports
+        name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
+        language: pygrep
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
+        types_or: [python, rst, markdown]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.1

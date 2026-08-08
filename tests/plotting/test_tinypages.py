@@ -5,8 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from subprocess import PIPE
-from subprocess import Popen
+import subprocess
 import sys
 
 import pytest
@@ -57,10 +56,10 @@ def _sphinx_build_cmd(
 
 def _run_sphinx_build(cmd: list[str]) -> tuple[int, str, str]:
     """Run sphinx-build and return returncode, stdout, and stderr."""
-    proc = Popen(
+    proc = subprocess.Popen(
         cmd,
-        stdout=PIPE,
-        stderr=PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         universal_newlines=True,
         env={**os.environ, 'MPLBACKEND': ''},
         encoding='utf8',
@@ -386,7 +385,7 @@ def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
     from http.server import ThreadingHTTPServer
-    from threading import Thread
+    import threading
 
     from playwright.sync_api import sync_playwright
 
@@ -402,7 +401,7 @@ def test_interactive_plot_moves(tmp_path: Path):
     os.chdir(html_dir)
 
     server = ThreadingHTTPServer(('127.0.0.1', 0), SimpleHTTPRequestHandler)
-    thread = Thread(target=server.serve_forever, daemon=True)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
     try:

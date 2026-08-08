@@ -8,20 +8,18 @@ from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
-from contextlib import contextmanager
-from contextlib import suppress
-from copy import deepcopy
+import copy
 import ctypes
-from functools import wraps
-import io
-from itertools import cycle
+import functools
+from io import BytesIO
+from io import StringIO
+import itertools
 import logging
 import os
 from pathlib import Path
 import sys
 import textwrap
-from threading import Event
-from threading import Thread
+import threading
 import time
 from typing import TYPE_CHECKING
 from typing import Any
@@ -445,8 +443,8 @@ class BasePlotter(_BoundsSizeMixin):
         self.__before_close_callback = None
         # background thread (and its cancellation event) started by a threaded
         # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
-        self._orbit_thread: Thread | None = None
-        self._orbit_stop_event: Event | None = None
+        self._orbit_thread: threading.Thread | None = None
+        self._orbit_stop_event: threading.Event | None = None
         self.mesh: MultiBlock | DataSet | None = None
         if title is None:
             title = self._theme.title
@@ -804,7 +802,7 @@ class BasePlotter(_BoundsSizeMixin):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def export_html(self, filename: str | Path | None) -> io.StringIO | None:
+    def export_html(self, filename: str | Path | None) -> StringIO | None:
         """Export this plotter as an interactive scene to a HTML file.
 
         Parameters
@@ -1228,24 +1226,24 @@ class BasePlotter(_BoundsSizeMixin):
         """
         self.renderers.set_active_renderer(index_row, index_column)
 
-    @wraps(Renderer.add_ruler)
+    @functools.wraps(Renderer.add_ruler)
     def add_ruler(self, *args, **kwargs) -> _vtk.vtkAxisActor2D:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_ruler``."""
         return self.renderer.add_ruler(*args, **kwargs)
 
-    @wraps(Renderer.add_legend_scale)
+    @functools.wraps(Renderer.add_legend_scale)
     def add_legend_scale(
         self, *args, **kwargs
     ) -> tuple[_vtk.vtkActor, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend_scale``."""
         return self.renderer.add_legend_scale(*args, **kwargs)
 
-    @wraps(Renderer.add_legend)
+    @functools.wraps(Renderer.add_legend)
     def add_legend(self, *args, **kwargs) -> _vtk.vtkLegendBoxActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend``."""
         return self.renderer.add_legend(*args, **kwargs)
 
-    @wraps(Renderer.remove_legend)
+    @functools.wraps(Renderer.remove_legend)
     def remove_legend(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_legend``."""
         return self.renderer.remove_legend(*args, **kwargs)
@@ -1265,12 +1263,12 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.renderer.legend
 
-    @wraps(Renderer.add_floor)
+    @functools.wraps(Renderer.add_floor)
     def add_floor(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_floor``."""
         return self.renderer.add_floor(*args, **kwargs)
 
-    @wraps(Renderer.remove_floors)
+    @functools.wraps(Renderer.remove_floors)
     def remove_floors(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
@@ -1494,7 +1492,7 @@ class BasePlotter(_BoundsSizeMixin):
         else:
             self.renderer.disable_anti_aliasing()
 
-    @wraps(Renderer.set_focus)
+    @functools.wraps(Renderer.set_focus)
     def set_focus(self, *args, render: bool = True, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_focus``."""
         log.debug('set_focus: %s, %s', str(args), str(kwargs))
@@ -1502,7 +1500,7 @@ class BasePlotter(_BoundsSizeMixin):
         if render:
             self.render()
 
-    @wraps(Renderer.set_position)
+    @functools.wraps(Renderer.set_position)
     def set_position(
         self, *args, render: bool = True, **kwargs
     ) -> None:  # numpydoc ignore=PR01,RT01
@@ -1511,7 +1509,7 @@ class BasePlotter(_BoundsSizeMixin):
         if render:
             self.render()
 
-    @wraps(Renderer.set_viewup)
+    @functools.wraps(Renderer.set_viewup)
     def set_viewup(
         self,
         *args,
@@ -1523,14 +1521,14 @@ class BasePlotter(_BoundsSizeMixin):
         if render:
             self.render()
 
-    @wraps(Renderer.add_orientation_widget)
+    @functools.wraps(Renderer.add_orientation_widget)
     def add_orientation_widget(
         self, *args, **kwargs
     ) -> _vtk.vtkOrientationMarkerWidget:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_orientation_widget``."""
         return self.renderer.add_orientation_widget(*args, **kwargs)
 
-    @wraps(Renderer.add_axes)
+    @functools.wraps(Renderer.add_axes)
     def add_axes(
         self, *args, **kwargs
     ) -> (
@@ -1539,83 +1537,83 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
 
-    @wraps(Renderer.add_box_axes)
+    @functools.wraps(Renderer.add_box_axes)
     def add_box_axes(
         self, *args, **kwargs
     ) -> _vtk.vtkAnnotatedCubeActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_box_axes``."""
         return self.renderer.add_box_axes(*args, **kwargs)
 
-    @wraps(Renderer.add_north_arrow_widget)
+    @functools.wraps(Renderer.add_north_arrow_widget)
     def add_north_arrow_widget(
         self, *args, **kwargs
     ) -> _vtk.vtkOrientationMarkerWidget:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_north_arrow_widget``."""
         return self.renderer.add_north_arrow_widget(*args, **kwargs)
 
-    @wraps(Renderer.hide_axes)
+    @functools.wraps(Renderer.hide_axes)
     def hide_axes(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.hide_axes``."""
         return self.renderer.hide_axes(*args, **kwargs)
 
-    @wraps(Renderer.show_axes)
+    @functools.wraps(Renderer.show_axes)
     def show_axes(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_axes``."""
         return self.renderer.show_axes(*args, **kwargs)
 
-    @wraps(Renderer.update_bounds_axes)
+    @functools.wraps(Renderer.update_bounds_axes)
     def update_bounds_axes(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.update_bounds_axes``."""
         return self.renderer.update_bounds_axes(*args, **kwargs)
 
-    @wraps(Renderer.add_chart)
+    @functools.wraps(Renderer.add_chart)
     def add_chart(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_chart``."""
         return self.renderer.add_chart(*args, **kwargs)
 
-    @wraps(Renderer.remove_chart)
+    @functools.wraps(Renderer.remove_chart)
     def remove_chart(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_chart``."""
         return self.renderer.remove_chart(*args, **kwargs)
 
-    @wraps(Renderers.set_chart_interaction)
+    @functools.wraps(Renderers.set_chart_interaction)
     def set_chart_interaction(self, *args, **kwargs) -> list[Chart]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_chart_interaction``."""
         return self.renderers.set_chart_interaction(*args, **kwargs)
 
-    @wraps(Renderer.add_actor)
+    @functools.wraps(Renderer.add_actor)
     def add_actor(
         self, *args, **kwargs
     ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
-    @wraps(Renderer.enable_parallel_projection)
+    @functools.wraps(Renderer.enable_parallel_projection)
     def enable_parallel_projection(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_parallel_projection``."""
         return self.renderer.enable_parallel_projection(*args, **kwargs)
 
-    @wraps(Renderer.disable_parallel_projection)
+    @functools.wraps(Renderer.disable_parallel_projection)
     def disable_parallel_projection(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
-    @wraps(Renderer.enable_ssao)
+    @functools.wraps(Renderer.enable_ssao)
     def enable_ssao(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_ssao``."""
         return self.renderer.enable_ssao(*args, **kwargs)
 
-    @wraps(Renderer.disable_ssao)
+    @functools.wraps(Renderer.disable_ssao)
     def disable_ssao(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_ssao``."""
         return self.renderer.disable_ssao(*args, **kwargs)
 
-    @wraps(Renderer.enable_shadows)
+    @functools.wraps(Renderer.enable_shadows)
     def enable_shadows(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_shadows``."""
         return self.renderer.enable_shadows(*args, **kwargs)
 
-    @wraps(Renderer.disable_shadows)
+    @functools.wraps(Renderer.disable_shadows)
     def disable_shadows(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_shadows``."""
         return self.renderer.disable_shadows(*args, **kwargs)
@@ -1638,135 +1636,135 @@ class BasePlotter(_BoundsSizeMixin):
     def parallel_scale(self, value: float) -> None:
         self.renderer.parallel_scale = value
 
-    @wraps(Renderer.add_axes_at_origin)
+    @functools.wraps(Renderer.add_axes_at_origin)
     def add_axes_at_origin(
         self, *args, **kwargs
     ) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
-    @wraps(Renderer.show_bounds)
+    @functools.wraps(Renderer.show_bounds)
     def show_bounds(self, *args, **kwargs) -> CubeAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_bounds``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
-    @wraps(Renderer.add_bounding_box)
+    @functools.wraps(Renderer.add_bounding_box)
     def add_bounding_box(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_bounding_box``."""
         return self.renderer.add_bounding_box(*args, **kwargs)
 
-    @wraps(Renderer.remove_bounding_box)
+    @functools.wraps(Renderer.remove_bounding_box)
     def remove_bounding_box(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_bounding_box``."""
         return self.renderer.remove_bounding_box(*args, **kwargs)
 
-    @wraps(Renderer.remove_bounds_axes)
+    @functools.wraps(Renderer.remove_bounds_axes)
     def remove_bounds_axes(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_bounds_axes``."""
         return self.renderer.remove_bounds_axes(*args, **kwargs)
 
-    @wraps(Renderer.show_grid)
+    @functools.wraps(Renderer.show_grid)
     def show_grid(self, *args, **kwargs) -> CubeAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_grid``."""
         return self.renderer.show_grid(*args, **kwargs)
 
-    @wraps(Renderer.set_scale)
+    @functools.wraps(Renderer.set_scale)
     def set_scale(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_scale``."""
         return self.renderer.set_scale(*args, **kwargs)
 
-    @wraps(Renderer.enable_depth_of_field)
+    @functools.wraps(Renderer.enable_depth_of_field)
     def enable_depth_of_field(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_depth_of_field``."""
         return self.renderer.enable_depth_of_field(*args, **kwargs)
 
-    @wraps(Renderer.disable_depth_of_field)
+    @functools.wraps(Renderer.disable_depth_of_field)
     def disable_depth_of_field(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_depth_of_field``."""
         return self.renderer.disable_depth_of_field(*args, **kwargs)
 
-    @wraps(Renderer.add_blurring)
+    @functools.wraps(Renderer.add_blurring)
     def add_blurring(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_blurring``."""
         return self.renderer.add_blurring(*args, **kwargs)
 
-    @wraps(Renderer.remove_blurring)
+    @functools.wraps(Renderer.remove_blurring)
     def remove_blurring(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
 
-    @wraps(Renderer.enable_eye_dome_lighting)
+    @functools.wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_eye_dome_lighting``."""
         return self.renderer.enable_eye_dome_lighting(*args, **kwargs)
 
-    @wraps(Renderer.disable_eye_dome_lighting)
+    @functools.wraps(Renderer.disable_eye_dome_lighting)
     def disable_eye_dome_lighting(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_eye_dome_lighting``."""
         self.renderer.disable_eye_dome_lighting(*args, **kwargs)
 
-    @wraps(Renderer.reset_camera)
+    @functools.wraps(Renderer.reset_camera)
     def reset_camera(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.reset_camera``."""
         self.renderer.reset_camera(*args, **kwargs)
         self.render()
 
-    @wraps(Renderer.isometric_view)
+    @functools.wraps(Renderer.isometric_view)
     def isometric_view(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.isometric_view``."""
         self.renderer.isometric_view(*args, **kwargs)
 
-    @wraps(Renderer.view_isometric)
+    @functools.wraps(Renderer.view_isometric)
     def view_isometric(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_isometric``."""
         self.renderer.view_isometric(*args, **kwarg)
 
-    @wraps(Renderer.view_vector)
+    @functools.wraps(Renderer.view_vector)
     def view_vector(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_vector``."""
         self.renderer.view_vector(*args, **kwarg)
 
-    @wraps(Renderer.view_xy)
+    @functools.wraps(Renderer.view_xy)
     def view_xy(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_xy``."""
         self.renderer.view_xy(*args, **kwarg)
 
-    @wraps(Renderer.view_yx)
+    @functools.wraps(Renderer.view_yx)
     def view_yx(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_yx``."""
         self.renderer.view_yx(*args, **kwarg)
 
-    @wraps(Renderer.view_xz)
+    @functools.wraps(Renderer.view_xz)
     def view_xz(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_xz``."""
         self.renderer.view_xz(*args, **kwarg)
 
-    @wraps(Renderer.view_zx)
+    @functools.wraps(Renderer.view_zx)
     def view_zx(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_zx``."""
         self.renderer.view_zx(*args, **kwarg)
 
-    @wraps(Renderer.view_yz)
+    @functools.wraps(Renderer.view_yz)
     def view_yz(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_yz``."""
         self.renderer.view_yz(*args, **kwarg)
 
-    @wraps(Renderer.view_zy)
+    @functools.wraps(Renderer.view_zy)
     def view_zy(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.view_zy``."""
         self.renderer.view_zy(*args, **kwarg)
 
-    @wraps(Renderer.disable)
+    @functools.wraps(Renderer.disable)
     def disable(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable``."""
         self.renderer.disable(*args, **kwarg)
 
-    @wraps(Renderer.enable)
+    @functools.wraps(Renderer.enable)
     def enable(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable``."""
         self.renderer.enable(*args, **kwarg)
 
-    @wraps(Renderer.enable_depth_peeling)
+    @functools.wraps(Renderer.enable_depth_peeling)
     def enable_depth_peeling(self, *args, **kwargs) -> bool | None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_depth_peeling``."""
         if self.render_window is not None:
@@ -1776,7 +1774,7 @@ class BasePlotter(_BoundsSizeMixin):
             return result
         return None  # pragma: no cover
 
-    @wraps(Renderer.disable_depth_peeling)
+    @functools.wraps(Renderer.disable_depth_peeling)
     def disable_depth_peeling(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable_depth_peeling``."""
         if self.render_window is not None:
@@ -1784,24 +1782,24 @@ class BasePlotter(_BoundsSizeMixin):
             return self.renderer.disable_depth_peeling()
         return None  # pragma: no cover
 
-    @wraps(Renderer.get_default_cam_pos)
+    @functools.wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(self, *args, **kwargs) -> CameraPosition:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
-    @wraps(Renderer.remove_actor)
+    @functools.wraps(Renderer.remove_actor)
     def remove_actor(self, *args, **kwargs) -> bool:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_actor``."""
         for renderer in self.renderers:
             renderer.remove_actor(*args, **kwargs)
         return True
 
-    @wraps(Renderer.set_environment_texture)
+    @functools.wraps(Renderer.set_environment_texture)
     def set_environment_texture(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_environment_texture``."""
         return self.renderer.set_environment_texture(*args, **kwargs)
 
-    @wraps(Renderer.remove_environment_texture)
+    @functools.wraps(Renderer.remove_environment_texture)
     def remove_environment_texture(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_environment_texture``."""
         return self.renderer.remove_environment_texture(*args, **kwargs)
@@ -1893,7 +1891,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.renderer.bounds
 
-    @wraps(Renderer.compute_bounds)
+    @functools.wraps(Renderer.compute_bounds)
     def compute_bounds(self, *args, **kwargs) -> BoundsTuple:  # numpydoc ignore=PR01,RT01
         """Return the bounds of actors present in the renderer."""
         return self.renderer.compute_bounds(*args, **kwargs)
@@ -2073,7 +2071,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._window_size_unset = False
         self.render()
 
-    @contextmanager
+    @contextlib.contextmanager
     def window_size_context(
         self, window_size: Sequence[int] | None = None
     ) -> Iterator[BasePlotter]:
@@ -2241,7 +2239,7 @@ class BasePlotter(_BoundsSizeMixin):
             raise ValueError(msg)
         self._image_scale = value
 
-    @contextmanager
+    @contextlib.contextmanager
     def image_scale_context(self, scale: int | None = None) -> Iterator[BasePlotter]:
         """Set the image scale in an isolated context.
 
@@ -2327,19 +2325,19 @@ class BasePlotter(_BoundsSizeMixin):
             renderer.RemoveObservers(_vtk.vtkCommand.RenderEvent)
         self._on_render_callbacks = set()
 
-    @wraps(RenderWindowInteractor.add_key_event)
+    @functools.wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_key_event."""
         if self.iren is not None:
             self.iren.add_key_event(*args, **kwargs)
 
-    @wraps(RenderWindowInteractor.add_timer_event)
+    @functools.wraps(RenderWindowInteractor.add_timer_event)
     def add_timer_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_timer_event."""
         if self.iren is not None:
             self.iren.add_timer_event(*args, **kwargs)
 
-    @wraps(RenderWindowInteractor.clear_events_for_key)
+    @functools.wraps(RenderWindowInteractor.clear_events_for_key)
     def clear_events_for_key(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
         if self.iren is not None:
@@ -2368,12 +2366,12 @@ class BasePlotter(_BoundsSizeMixin):
         """Stop tracking the mouse position."""
         self._get_iren_not_none().untrack_mouse_position()
 
-    @wraps(RenderWindowInteractor.track_click_position)
+    @functools.wraps(RenderWindowInteractor.track_click_position)
     def track_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.track_click_position."""
         self._get_iren_not_none().track_click_position(*args, **kwargs)
 
-    @wraps(RenderWindowInteractor.untrack_click_position)
+    @functools.wraps(RenderWindowInteractor.untrack_click_position)
     def untrack_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Stop tracking the click position."""
         self._get_iren_not_none().untrack_click_position(*args, **kwargs)
@@ -2522,7 +2520,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))  # type: ignore[arg-type]
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))  # type: ignore[arg-type]
 
-    @wraps(RenderWindowInteractor.key_press_event)
+    @functools.wraps(RenderWindowInteractor.key_press_event)
     def key_press_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.key_press_event."""
         self._get_iren_not_none().key_press_event(*args, **kwargs)
@@ -2548,64 +2546,64 @@ class BasePlotter(_BoundsSizeMixin):
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
 
-    @wraps(RenderWindowInteractor.enable_trackball_style)
+    @functools.wraps(RenderWindowInteractor.enable_trackball_style)
     def enable_trackball_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self._get_iren_not_none().enable_trackball_style()
 
-    @wraps(RenderWindowInteractor.enable_interactor_style)
+    @functools.wraps(RenderWindowInteractor.enable_interactor_style)
     def enable_interactor_style(
         self, style: str | None = None
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_interactor_style."""
         self._get_iren_not_none().enable_interactor_style(style)
 
-    @wraps(RenderWindowInteractor.enable_custom_trackball_style)
+    @functools.wraps(RenderWindowInteractor.enable_custom_trackball_style)
     def enable_custom_trackball_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
         self._get_iren_not_none().enable_custom_trackball_style(*args, **kwargs)
 
-    @wraps(RenderWindowInteractor.enable_trackball_actor_style)
+    @functools.wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
         self._get_iren_not_none().enable_trackball_actor_style()
 
-    @wraps(RenderWindowInteractor.enable_image_style)
+    @functools.wraps(RenderWindowInteractor.enable_image_style)
     def enable_image_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_image_style."""
         self._get_iren_not_none().enable_image_style()
 
-    @wraps(RenderWindowInteractor.enable_joystick_style)
+    @functools.wraps(RenderWindowInteractor.enable_joystick_style)
     def enable_joystick_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_style."""
         self._get_iren_not_none().enable_joystick_style()
 
-    @wraps(RenderWindowInteractor.enable_joystick_actor_style)
+    @functools.wraps(RenderWindowInteractor.enable_joystick_actor_style)
     def enable_joystick_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
         self._get_iren_not_none().enable_joystick_actor_style()
 
-    @wraps(RenderWindowInteractor.enable_zoom_style)
+    @functools.wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_zoom_style."""
         self._get_iren_not_none().enable_zoom_style()
 
-    @wraps(RenderWindowInteractor.enable_terrain_style)
+    @functools.wraps(RenderWindowInteractor.enable_terrain_style)
     def enable_terrain_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_terrain_style."""
         self._get_iren_not_none().enable_terrain_style(*args, **kwargs)
 
-    @wraps(RenderWindowInteractor.enable_rubber_band_style)
+    @functools.wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_style."""
         self._get_iren_not_none().enable_rubber_band_style()
 
-    @wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
+    @functools.wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
     def enable_rubber_band_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self._get_iren_not_none().enable_rubber_band_2d_style()
 
-    @wraps(RenderWindowInteractor.enable_2d_style)
+    @functools.wraps(RenderWindowInteractor.enable_2d_style)
     def enable_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_2d_style."""
         self._get_iren_not_none().enable_2d_style()
@@ -4332,7 +4330,7 @@ class BasePlotter(_BoundsSizeMixin):
                 backface_prop = backface_params
             elif isinstance(backface_params, dict):
                 # preserve omitted kwargs from frontface
-                backface_kwargs = deepcopy(prop_kwargs)
+                backface_kwargs = copy.deepcopy(prop_kwargs)
                 backface_kwargs.update(backface_params)
                 backface_prop = Property(**backface_kwargs)
             else:
@@ -4787,7 +4785,7 @@ class BasePlotter(_BoundsSizeMixin):
             name = f'{type(volume).__name__}({volume.memory_address})'
 
         if isinstance(volume, pv.MultiBlock):
-            cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
+            cycler = itertools.cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx, block in enumerate(volume):
@@ -5288,7 +5286,7 @@ class BasePlotter(_BoundsSizeMixin):
             msg = f'Expected type is None, int, list or tuple: {type(views)} is given'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-    @wraps(ScalarBars.add_scalar_bar)
+    @functools.wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(
         self, title: str = '', **kwargs
     ) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
@@ -5461,7 +5459,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         # end movie
         if self.mwriter is not None:
-            with suppress(BaseException):
+            with contextlib.suppress(BaseException):
                 self.mwriter.close()
             self.mwriter = None
 
@@ -6108,7 +6106,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)  # type: ignore[arg-type]
         return actor
 
-    @wraps(ScalarBars.remove_scalar_bar)
+    @functools.wraps(ScalarBars.remove_scalar_bar)
     def remove_scalar_bar(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
@@ -6635,7 +6633,7 @@ class BasePlotter(_BoundsSizeMixin):
     @staticmethod
     def _save_image(
         image: pv.pyvista_ndarray,
-        filename: str | Path | io.BytesIO | bool | None,  # noqa: FBT001
+        filename: str | Path | BytesIO | bool | None,  # noqa: FBT001
         return_img: bool,  # noqa: FBT001
     ) -> pv.pyvista_ndarray | None:
         """Save to file and/or return a NumPy image array.
@@ -6647,7 +6645,7 @@ class BasePlotter(_BoundsSizeMixin):
             msg = 'Empty image. Have you run plot() first?'
             raise ValueError(msg)
         # write screenshot to file if requested
-        if isinstance(filename, (str, Path, io.BytesIO)):
+        if isinstance(filename, (str, Path, BytesIO)):
             from PIL import Image  # noqa: PLC0415
 
             if isinstance(filename, (str, Path)):
@@ -6754,7 +6752,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917
         self,
-        filename: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
+        filename: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
         transparent_background: bool | None = None,  # noqa: FBT001
         return_img: bool = True,  # noqa: FBT001, FBT002
         window_size: Sequence[int] | None = None,
@@ -6868,16 +6866,16 @@ class BasePlotter(_BoundsSizeMixin):
 
         if self.last_image is None:
             return None
-        buf = io.BytesIO()
+        buf = BytesIO()
         PIL.Image.fromarray(self.last_image).save(buf, format='PNG')
         return buf.getvalue()
 
-    @wraps(Renderers.set_background)
+    @functools.wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_background``."""
         self.renderers.set_background(*args, **kwargs)
 
-    @wraps(Renderers.set_color_cycler)
+    @functools.wraps(Renderers.set_color_cycler)
     def set_color_cycler(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_color_cycler``."""
         self.renderers.set_color_cycler(*args, **kwargs)
@@ -7052,7 +7050,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         # Lets a threaded orbit be cancelled from `close()` so the background
         # thread stops touching this plotter's VTK objects once they're torn down.
-        stop_event = Event() if threaded else None
+        stop_event = threading.Event() if threaded else None
 
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
@@ -7089,7 +7087,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         if threaded:
             self._orbit_stop_event = stop_event
-            thread = Thread(target=orbit)
+            thread = threading.Thread(target=orbit)
             self._orbit_thread = thread
             thread.start()
         else:
@@ -7217,7 +7215,7 @@ class BasePlotter(_BoundsSizeMixin):
         if auto_resize:  # pragma: no cover
             self._get_iren_not_none().add_observer('ModifiedEvent', renderer.resize)
 
-    @wraps(Renderers.remove_background_image)
+    @functools.wraps(Renderers.remove_background_image)
     def remove_background_image(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.remove_background_image``."""
         self.renderers.remove_background_image()
@@ -7363,32 +7361,32 @@ class BasePlotter(_BoundsSizeMixin):
     # Picking — forwarding shims for plotter.picking component.
     # =======================================================================
 
-    @wraps(PickingComponent.disable_picking)
+    @functools.wraps(PickingComponent.disable_picking)
     def disable_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.disable_picking`."""
         return self.picking.disable_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.get_pick_position)
+    @functools.wraps(PickingComponent.get_pick_position)
     def get_pick_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.get_pick_position`."""
         return self.picking.get_pick_position(*args, **kwargs)
 
-    @wraps(PickingComponent.pick_click_position)
+    @functools.wraps(PickingComponent.pick_click_position)
     def pick_click_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.pick_click_position`."""
         return self.picking.pick_click_position(*args, **kwargs)
 
-    @wraps(PickingComponent.pick_mouse_position)
+    @functools.wraps(PickingComponent.pick_mouse_position)
     def pick_mouse_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.pick_mouse_position`."""
         return self.picking.pick_mouse_position(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_point_picking)
+    @functools.wraps(PickingComponent.enable_point_picking)
     def enable_point_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_point_picking`."""
         return self.picking.enable_point_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_rectangle_picking)
+    @functools.wraps(PickingComponent.enable_rectangle_picking)
     def enable_rectangle_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_rectangle_picking`.
 
@@ -7397,7 +7395,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.picking.enable_rectangle_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_surface_point_picking)
+    @functools.wraps(PickingComponent.enable_surface_point_picking)
     def enable_surface_point_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to ``PickingComponent.enable_surface_point_picking``.
 
@@ -7406,12 +7404,12 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.picking.enable_surface_point_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_mesh_picking)
+    @functools.wraps(PickingComponent.enable_mesh_picking)
     def enable_mesh_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_mesh_picking`."""
         return self.picking.enable_mesh_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_rectangle_through_picking)
+    @functools.wraps(PickingComponent.enable_rectangle_through_picking)
     def enable_rectangle_through_picking(
         self, *args, **kwargs
     ) -> Any:  # numpydoc ignore=PR01,RT01
@@ -7422,7 +7420,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.picking.enable_rectangle_through_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_rectangle_visible_picking)
+    @functools.wraps(PickingComponent.enable_rectangle_visible_picking)
     def enable_rectangle_visible_picking(
         self, *args, **kwargs
     ) -> Any:  # numpydoc ignore=PR01,RT01
@@ -7433,22 +7431,22 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.picking.enable_rectangle_visible_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_cell_picking)
+    @functools.wraps(PickingComponent.enable_cell_picking)
     def enable_cell_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_cell_picking`."""
         return self.picking.enable_cell_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_element_picking)
+    @functools.wraps(PickingComponent.enable_element_picking)
     def enable_element_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_element_picking`."""
         return self.picking.enable_element_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_block_picking)
+    @functools.wraps(PickingComponent.enable_block_picking)
     def enable_block_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_block_picking`."""
         return self.picking.enable_block_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_fly_to_right_click)
+    @functools.wraps(PickingComponent.enable_fly_to_right_click)
     def enable_fly_to_right_click(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_fly_to_right_click`.
 
@@ -7457,17 +7455,17 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.picking.enable_fly_to_right_click(*args, **kwargs)
 
-    @wraps(PickingComponent.fly_to_mouse_position)
+    @functools.wraps(PickingComponent.fly_to_mouse_position)
     def fly_to_mouse_position(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.fly_to_mouse_position`."""
         return self.picking.fly_to_mouse_position(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_path_picking)
+    @functools.wraps(PickingComponent.enable_path_picking)
     def enable_path_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_path_picking`."""
         return self.picking.enable_path_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_geodesic_picking)
+    @functools.wraps(PickingComponent.enable_geodesic_picking)
     def enable_geodesic_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_geodesic_picking`.
 
@@ -7476,7 +7474,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.picking.enable_geodesic_picking(*args, **kwargs)
 
-    @wraps(PickingComponent.enable_horizon_picking)
+    @functools.wraps(PickingComponent.enable_horizon_picking)
     def enable_horizon_picking(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.picking.PickingComponent.enable_horizon_picking`."""
         return self.picking.enable_horizon_picking(*args, **kwargs)
@@ -7557,47 +7555,47 @@ class BasePlotter(_BoundsSizeMixin):
     # Widgets — forwarding shims for plotter.widgets component.
     # =======================================================================
 
-    @wraps(WidgetComponent.add_box_widget)
+    @functools.wraps(WidgetComponent.add_box_widget)
     def add_box_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_box_widget`."""
         return self.widgets.add_box_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_box_widgets)
+    @functools.wraps(WidgetComponent.clear_box_widgets)
     def clear_box_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_box_widgets`."""
         return self.widgets.clear_box_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_clip_box)
+    @functools.wraps(WidgetComponent.add_mesh_clip_box)
     def add_mesh_clip_box(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_clip_box`."""
         return self.widgets.add_mesh_clip_box(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_plane_widget)
+    @functools.wraps(WidgetComponent.add_plane_widget)
     def add_plane_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_plane_widget`."""
         return self.widgets.add_plane_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_plane_widgets)
+    @functools.wraps(WidgetComponent.clear_plane_widgets)
     def clear_plane_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_plane_widgets`."""
         return self.widgets.clear_plane_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_clip_plane)
+    @functools.wraps(WidgetComponent.add_mesh_clip_plane)
     def add_mesh_clip_plane(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_clip_plane`."""
         return self.widgets.add_mesh_clip_plane(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_volume_clip_plane)
+    @functools.wraps(WidgetComponent.add_volume_clip_plane)
     def add_volume_clip_plane(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_volume_clip_plane`."""
         return self.widgets.add_volume_clip_plane(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_slice)
+    @functools.wraps(WidgetComponent.add_mesh_slice)
     def add_mesh_slice(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_slice`."""
         return self.widgets.add_mesh_slice(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_slice_orthogonal)
+    @functools.wraps(WidgetComponent.add_mesh_slice_orthogonal)
     def add_mesh_slice_orthogonal(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_slice_orthogonal`.
 
@@ -7606,77 +7604,77 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.widgets.add_mesh_slice_orthogonal(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_line_widget)
+    @functools.wraps(WidgetComponent.add_line_widget)
     def add_line_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_line_widget`."""
         return self.widgets.add_line_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_line_widgets)
+    @functools.wraps(WidgetComponent.clear_line_widgets)
     def clear_line_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_line_widgets`."""
         return self.widgets.clear_line_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_text_slider_widget)
+    @functools.wraps(WidgetComponent.add_text_slider_widget)
     def add_text_slider_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_text_slider_widget`."""
         return self.widgets.add_text_slider_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_slider_widget)
+    @functools.wraps(WidgetComponent.add_slider_widget)
     def add_slider_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_slider_widget`."""
         return self.widgets.add_slider_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_slider_widgets)
+    @functools.wraps(WidgetComponent.clear_slider_widgets)
     def clear_slider_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_slider_widgets`."""
         return self.widgets.clear_slider_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_threshold)
+    @functools.wraps(WidgetComponent.add_mesh_threshold)
     def add_mesh_threshold(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_threshold`."""
         return self.widgets.add_mesh_threshold(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_isovalue)
+    @functools.wraps(WidgetComponent.add_mesh_isovalue)
     def add_mesh_isovalue(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_isovalue`."""
         return self.widgets.add_mesh_isovalue(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_spline_widget)
+    @functools.wraps(WidgetComponent.add_spline_widget)
     def add_spline_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_spline_widget`."""
         return self.widgets.add_spline_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_spline_widgets)
+    @functools.wraps(WidgetComponent.clear_spline_widgets)
     def clear_spline_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_spline_widgets`."""
         return self.widgets.clear_spline_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_mesh_slice_spline)
+    @functools.wraps(WidgetComponent.add_mesh_slice_spline)
     def add_mesh_slice_spline(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_mesh_slice_spline`."""
         return self.widgets.add_mesh_slice_spline(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_measurement_widget)
+    @functools.wraps(WidgetComponent.add_measurement_widget)
     def add_measurement_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_measurement_widget`."""
         return self.widgets.add_measurement_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_measure_widgets)
+    @functools.wraps(WidgetComponent.clear_measure_widgets)
     def clear_measure_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_measure_widgets`."""
         return self.widgets.clear_measure_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_sphere_widget)
+    @functools.wraps(WidgetComponent.add_sphere_widget)
     def add_sphere_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_sphere_widget`."""
         return self.widgets.add_sphere_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_sphere_widgets)
+    @functools.wraps(WidgetComponent.clear_sphere_widgets)
     def clear_sphere_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_sphere_widgets`."""
         return self.widgets.clear_sphere_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_affine_transform_widget)
+    @functools.wraps(WidgetComponent.add_affine_transform_widget)
     def add_affine_transform_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to ``WidgetComponent.add_affine_transform_widget``.
 
@@ -7685,7 +7683,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.widgets.add_affine_transform_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_checkbox_button_widget)
+    @functools.wraps(WidgetComponent.add_checkbox_button_widget)
     def add_checkbox_button_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_checkbox_button_widget`.
 
@@ -7694,12 +7692,12 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.widgets.add_checkbox_button_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_radio_button_widget)
+    @functools.wraps(WidgetComponent.add_radio_button_widget)
     def add_radio_button_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_radio_button_widget`."""
         return self.widgets.add_radio_button_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_radio_button_widgets)
+    @functools.wraps(WidgetComponent.clear_radio_button_widgets)
     def clear_radio_button_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_radio_button_widgets`.
 
@@ -7708,7 +7706,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.widgets.clear_radio_button_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_camera_orientation_widget)
+    @functools.wraps(WidgetComponent.add_camera_orientation_widget)
     def add_camera_orientation_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to ``WidgetComponent.add_camera_orientation_widget``.
 
@@ -7717,32 +7715,32 @@ class BasePlotter(_BoundsSizeMixin):
         """
         return self.widgets.add_camera_orientation_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_camera_widgets)
+    @functools.wraps(WidgetComponent.clear_camera_widgets)
     def clear_camera_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_camera_widgets`."""
         return self.widgets.clear_camera_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_button_widgets)
+    @functools.wraps(WidgetComponent.clear_button_widgets)
     def clear_button_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_button_widgets`."""
         return self.widgets.clear_button_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_logo_widget)
+    @functools.wraps(WidgetComponent.add_logo_widget)
     def add_logo_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_logo_widget`."""
         return self.widgets.add_logo_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_logo_widgets)
+    @functools.wraps(WidgetComponent.clear_logo_widgets)
     def clear_logo_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_logo_widgets`."""
         return self.widgets.clear_logo_widgets(*args, **kwargs)
 
-    @wraps(WidgetComponent.add_camera3d_widget)
+    @functools.wraps(WidgetComponent.add_camera3d_widget)
     def add_camera3d_widget(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.add_camera3d_widget`."""
         return self.widgets.add_camera3d_widget(*args, **kwargs)
 
-    @wraps(WidgetComponent.clear_camera3d_widgets)
+    @functools.wraps(WidgetComponent.clear_camera3d_widgets)
     def clear_camera3d_widgets(self, *args, **kwargs) -> Any:  # numpydoc ignore=PR01,RT01
         """Forward to :meth:`~pyvista.plotting.widgets.WidgetComponent.clear_camera3d_widgets`."""
         return self.widgets.clear_camera3d_widgets(*args, **kwargs)
@@ -8320,7 +8318,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         auto_close: bool | None = None,  # noqa: FBT001
         interactive_update: bool = False,  # noqa: FBT001, FBT002
         full_screen: bool | None = None,  # noqa: FBT001
-        screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
+        screenshot: str | Path | BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
         cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | str | None = None,
@@ -8576,7 +8574,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if pv.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
-            with suppress(ImportError):
+            with contextlib.suppress(ImportError):
                 self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270

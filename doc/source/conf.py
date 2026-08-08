@@ -310,6 +310,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*BytesIO'),
     (r'py:.*', '.*StringIO'),
     (r'py:.*', '.*Path'),
     (r'py:.*', '.*UserDict'),

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
 from enum import IntEnum
-import pathlib
+from pathlib import Path
 import re
 from typing import TYPE_CHECKING
 from typing import Any
@@ -150,7 +150,7 @@ class _FRDParser:
 
     def parse(self) -> _FRDData:
         frd_data = _FRDData()
-        with pathlib.Path(self._filename).open(errors='replace') as file_stream:
+        with Path(self._filename).open(errors='replace') as file_stream:
             lines = _LineTrackingStream(file_stream)
             for line in lines:
                 s = line.strip()

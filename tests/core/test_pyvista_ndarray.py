@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import gc
 import re
-from unittest import mock
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -46,8 +46,8 @@ def test_modifying_modifies_dataset():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
 
-    dataset_modified = mock.Mock()
-    array_modified = mock.Mock()
+    dataset_modified = Mock()
+    array_modified = Mock()
     dataset.AddObserver(_vtk.vtkCommand.ModifiedEvent, dataset_modified)
     points.AddObserver(_vtk.vtkCommand.ModifiedEvent, array_modified)
 

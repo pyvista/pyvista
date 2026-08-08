@@ -471,6 +471,65 @@ unfixable = ['F401', 'PLC0415']
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
+[tool.ruff.lint.flake8-import-conventions]
+# Stdlib modules that must be namespace-imported (`re.escape`, not `escape`).
+# Counterpart: the 'namespace-stdlib-imports' hook in .pre-commit-config.yaml.
+# See "Import Conventions" in CONTRIBUTING.rst for the rule and how they interact.
+banned-from = [
+  'argparse',
+  'ast',
+  'asyncio',
+  'atexit',
+  'colorsys',
+  'contextlib',
+  'copy',
+  'ctypes',
+  'datetime',
+  'doctest',
+  'faulthandler',
+  'functools',
+  'gc',
+  'glob',
+  'hashlib',
+  'html',
+  'importlib',
+  'importlib.util',
+  'inspect',
+  'itertools',
+  'json',
+  'locale',
+  'logging',
+  'math',
+  'multiprocessing',
+  'numbers',
+  'operator',
+  'os',
+  'os.path',
+  'pickle',
+  'platform',
+  're',
+  'reprlib',
+  'shlex',
+  'shutil',
+  'signal',
+  'string',
+  'subprocess',
+  'sys',
+  'tempfile',
+  'textwrap',
+  'threading',
+  'time',
+  'tomllib',
+  'traceback',
+  'unittest',
+  'urllib',
+  'urllib.parse',
+  'uuid',
+  'warnings',
+  'weakref',
+  'xml',
+]
+
 [tool.ruff.lint.flake8-import-conventions.aliases]
 pyvista = "pv"
 
