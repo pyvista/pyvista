@@ -10,68 +10,55 @@ from = "/version/dev/*"
 status = 301
 to = "https://dev.pyvista.org/:splat"
 
-# pyvista.examples.load_*/download_* used to only be documented at
-# pyvista.examples.examples.load_*/pyvista.examples.downloads.download_*;
-# those pages no longer exist, so send old links to the public path they're
-# now documented at instead.
+# Handle changes to documented links for examples
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.examples.*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.downloads.*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.:splat"
 
-# pyvista.examples.vrml/download_3ds/gltf were deprecated and are no longer
-# documented at all; redirect their old pages to the functions in
-# pyvista.examples.downloads (now pyvista.examples) that replace them. There
-# is no replacement for gltf.download_sheen_chair (removed, not renamed).
+# pyvista.examples.vrml/download_3ds/gltf were deprecated and are now linked
+# through pyvista.examples instead.
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.vrml.download_teapot*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_teapot_vrml:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.vrml.download_sextant*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_sextant:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.vrml.download_grasshopper*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_grasshopper:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.download_3ds.download_iflamigm*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_flamingo:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.gltf.download_damaged_helmet*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_damaged_helmet:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.gltf.download_gearbox*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_gearbox:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.gltf.download_avocado*"
 status = 301
 to = "/api/examples/_autosummary/pyvista.examples.download_avocado:splat"
-
 [[redirects]]
 force = true
 from = "/api/examples/_autosummary/pyvista.examples.gltf.download_milk_truck*"
