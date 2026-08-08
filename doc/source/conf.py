@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
-import inspect
 import json
 import locale
 import os
@@ -105,42 +104,26 @@ warnings.filterwarnings(
     message='Assigning a theme for a plotter instance is deprecated',
 )
 
-# Autosummary only documents members whose `__module__` matches the scanned
-# module, so without `__all__`, `pyvista.examples`'s re-exported
-# `load_*`/`download_*` functions would only be documented under the
-# `.examples`/`.downloads` submodule they're actually defined in, not at
-# their `pyvista.examples.*` path. Set `__all__` on the live module (not in
-# the package source) so they're documented there instead -- see
-# `autosummary_ignore_module_all` below.
-pv.examples.__all__ = sorted(
-    name
-    for name, obj in vars(pv.examples).items()
-    if not name.startswith('_')
-    and (
-        (inspect.ismodule(obj) and obj.__name__.startswith('pyvista.examples'))
-        or (inspect.isfunction(obj) and obj.__module__.startswith('pyvista.examples'))
-    )
-)
 
-# `generate_cell_blocks`/`plot_cell` are re-exported the same way and are
-# included in `pv.examples.__all__` above, so they're now documented at
-# their `pyvista.examples.*` path too. Exclude just those two from
-# `pyvista.examples.cells`'s own page so they aren't documented (and their
-# `.. pyvista-plot::` examples doctest-run) a second time there.
-#
-# Without `__all__`, autosummary only shows members actually defined in the
-# module being scanned (see the comment on `pv.examples.__all__` above), so
-# `cells.py`'s own imports (`np`, `UnstructuredGrid`, `CellType`, etc.) are
-# correctly hidden today. Setting `__all__` turns that filtering off
-# entirely for the whole page, so it has to be reproduced explicitly here --
-# every other `pyvista.examples.cells` member is still documented there as
-# before, and nothing new (like those imports) leaks in.
-pv.examples.cells.__all__ = sorted(
-    name
-    for name, obj in vars(pv.examples.cells).items()
-    if not name.startswith('_')
-    and getattr(obj, '__module__', None) == pv.examples.cells.__name__
-    and name not in {'generate_cell_blocks', 'plot_cell'}
+# Autosummary hides re-exports (a member whose __module__/__name__ doesn't
+# match the module being scanned) unless that module defines __all__. Set it
+# on these live modules (not in the package source) so pyvista.examples's
+# re-exported load_*/download_*/generate_cell_blocks/plot_cell are
+# documented at their pyvista.examples.* path -- and excluded from
+# pyvista.examples.cells's own page, so they're not documented there too.
+def _examples_public_names(module, *, exclude=()):
+    return sorted(
+        name
+        for name, obj in vars(module).items()
+        if not name.startswith('_')
+        and name not in exclude
+        and getattr(obj, '__module__', getattr(obj, '__name__', '')).startswith(module.__name__)
+    )
+
+
+pv.examples.__all__ = _examples_public_names(pv.examples)
+pv.examples.cells.__all__ = _examples_public_names(
+    pv.examples.cells, exclude={'generate_cell_blocks', 'plot_cell'}
 )
 
 # -- General configuration ------------------------------------------------
