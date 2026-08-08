@@ -2362,7 +2362,7 @@ def compare_datasets():
 
 def test_plot_compare(compare_datasets):
     # Really just making sure no errors are thrown
-    pv.plot_compare(compare_datasets, color='w')
+    pv.plot_compare(compare_datasets, color='w', jupyter_kwargs={})
 
 
 @pytest.mark.parametrize(
