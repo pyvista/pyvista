@@ -138,6 +138,8 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
         not need rewriting or whose source could not be resolved.
 
     """
+    if pagename == 'contributing':
+        return 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst'
     if pagename.startswith('examples') and 'index' not in pagename:
         # Gallery example. The ``examples`` segment in ``pagename`` matches
         # the ``examples`` directory in the repo, so we can use it directly.

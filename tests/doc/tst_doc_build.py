@@ -145,3 +145,8 @@ def test_docstring_sections_hoisted_across_api_pages():
     ]
 
     assert len(pages_with_sections) > MIN_PAGES_WITH_HOISTED_SECTIONS
+
+
+def test_contributing_edit_button_points_to_contributing():
+    html = (Path(HTML_DIR) / 'contributing.html').read_text(encoding='utf-8')
+    assert 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst' in html
