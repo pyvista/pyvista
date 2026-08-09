@@ -125,10 +125,10 @@ jobs:
           # Who to @-mention when a given integration breaks; leave empty to not ping anyone
           declare -A maintainers=(
             [mne]="@larsoner"
-            [trame]=""
+            [trame]="@user27182"
             [pyvistaqt]="@larsoner"
             [geovista]=""
-            [playwright]=""
+            [playwright]="@user27182"
           )
 
           # The matrix job names are just the project names (see `name:` above)
