@@ -51,7 +51,7 @@ Use PyVista for figures in papers and presentations, interactive analysis in
 notebooks, and as the visualization layer of larger Python tools.
 
 
-Built for production
+Built for Production
 ~~~~~~~~~~~~~~~~~~~~
 
 3D code has to keep working when the underlying graphics stack changes.
@@ -68,7 +68,7 @@ what science and engineering teams reach for when code written today has to
 still produce the same picture two years from now.
 
 
-Built to extend
+Built to Extend
 ~~~~~~~~~~~~~~~
 
 Downstream libraries build on PyVista through a small, lazily evaluated
@@ -115,6 +115,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    examples/index
    api/index
    extras/index
+   contributing
 
 
 Brief Examples
