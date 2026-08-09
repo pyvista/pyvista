@@ -57,6 +57,9 @@ pinned = [ # Pinned versions of core dependencies
   'typing-extensions<4.17.0',
 ]
 
+# Deliberately empty: integration envs use the target project's test deps, not ours (see tox.ini)
+integration = []
+
 typing = [
   'meshio<5.4.0',
   'mypy<2.4.0',

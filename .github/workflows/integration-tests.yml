@@ -111,6 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      actions: read # to look up which matrix jobs failed
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
@@ -118,14 +119,46 @@ jobs:
       - name: Report integration test failure
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
           REF: ${{ github.ref }}
         run: |
+          # Who to @-mention when a given integration breaks; leave empty to not ping anyone
+          declare -A maintainers=(
+            [mne]="@larsoner"
+            [trame]=""
+            [pyvistaqt]="@larsoner"
+            [geovista]=""
+            [playwright]=""
+          )
+
+          # The matrix job names are just the project names (see `name:` above)
+          failed=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+
+          projects=""
+          pings=""
+          while IFS=$'\t' read -r project url; do
+            [ -n "$project" ] || continue
+            who="${maintainers[$project]:-}"
+            projects+="- [\`${project}\`](${url})${who:+ — ${who}}"$'\n'
+            case " $pings " in
+              *" $who "*) ;;
+              *) pings+="${who:+$who }" ;;
+            esac
+          done <<< "$failed"
+
+          [ -n "$projects" ] || projects="- (could not determine which jobs failed, see the run)"$'\n'
+
           body=$(cat <<EOF
           ### Integration Test Failure
 
           **Date:** $(date -u +%Y-%m-%d)
           **Run:** ${RUN_URL}
           **Ref:** \`${REF}\`
+
+          **Failing integrations:**
+          ${projects}
+          ${pings:+${pings}please take a look.}
           EOF
           )
 
