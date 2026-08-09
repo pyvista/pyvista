@@ -115,7 +115,6 @@ repos:
         entry: '#\s*(?:noqa|ruff)'
         files: ^examples/
         types: [python]
-        exclude: pyvista/_warn_external.py
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.9.6
