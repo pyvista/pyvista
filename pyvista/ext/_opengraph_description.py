@@ -121,12 +121,11 @@ def _set_description(  # noqa: PLR0917
         return
 
     fields['og:description'] = description
-    if app.config.ogp_enable_meta_description and 'name="description"' not in context.get(
-        'metatags', ''
-    ):
+    metatags = context.get('metatags', '')
+    if app.config.ogp_enable_meta_description and 'name="description"' not in metatags:
         # ``sphinxext-opengraph`` only fills this in from its own parser, so write it
         # here to keep the plain description and ``og:description`` in agreement
-        context['metatags'] += f'\n<meta name="description" content="{description}" />'
+        context['metatags'] = f'{metatags}\n<meta name="description" content="{description}" />'
 
 
 def _description_length(app: Sphinx, fields: dict[str, str]) -> int:
