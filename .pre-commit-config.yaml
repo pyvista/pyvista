@@ -105,7 +105,7 @@ repos:
       - id: no-import-error-skip
         name: "Ensure tests are not skipped based on ImportError."
         language: pygrep
-        entry: '^\s*(?:>>>|\.\.\.)?.*(?:\bexcept\s*\(?\s*(?:ImportError|ModuleNotFoundError)\b|\bimportorskip\b)'
+        entry: '^\s*(?:>>>|\.\.\.)?.*(?:\bexcept\s*\(?\s*(?:ImportError|ModuleNotFoundError)\b|\bimportorskip\b|\bsuppress\s*\(\s*(?:ImportError|ModuleNotFoundError)\b)'
         files: ^tests/
         types: [python]
 
