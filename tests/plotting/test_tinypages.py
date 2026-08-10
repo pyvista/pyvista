@@ -102,7 +102,6 @@ def _write_opengraph_project(source_dir: Path, index: str, *, gallery: bool = Fa
 
 def test_plot_directive_opengraph_thumbnail_selection(tmp_path: Path):
     """Use a selected plot-directive image as the per-page Open Graph image."""
-    pytest.importorskip('sphinxext.opengraph')
     source_dir = tmp_path / 'source'
     _write_opengraph_project(
         source_dir,
@@ -134,8 +133,6 @@ Open Graph plots
 
 def test_sphinx_gallery_opengraph_uses_gallery_thumbnail(tmp_path: Path):
     """Use the Sphinx-Gallery thumbnail, including its configured image number."""
-    pytest.importorskip('sphinx_gallery')
-    pytest.importorskip('sphinxext.opengraph')
     source_dir = tmp_path / 'source'
     _write_opengraph_project(
         source_dir,
@@ -169,8 +166,6 @@ plt.plot([3, 2, 1])
 
 def test_sphinx_gallery_rejects_pyvista_opengraph_selector(tmp_path: Path):
     """Reject PyVista selectors in gallery examples in favor of gallery syntax."""
-    pytest.importorskip('sphinx_gallery')
-    pytest.importorskip('sphinxext.opengraph')
     source_dir = tmp_path / 'source'
     _write_opengraph_project(source_dir, 'Gallery\n=======\n', gallery=True)
     example_dir = source_dir / 'examples'
