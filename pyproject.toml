@@ -669,6 +669,8 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
+# Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
+'tests/plotting/tinypages/gallery_src/*' = ['I002']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

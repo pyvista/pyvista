@@ -157,8 +157,8 @@ def test_contributing_edit_button_points_to_contributing():
 # -- Open Graph link previews -------------------------------------------------
 # Sanity checks against the real documentation for the three page shapes PyVista
 # generates: hand-written prose, an autodoc API page, and a Sphinx-Gallery example.
-# `tests/plotting/test_tinypages.py` covers the behaviour itself; these only confirm
-# it survives the full build.
+# `tests/plotting/test_tinypages.py` and `tests/plotting/test_opengraph_description.py`
+# cover the behaviour itself; these only confirm it survives the full build.
 
 # Same value as `ogp_site_url` in `conf.py`
 OGP_SITE_URL = 'https://docs.pyvista.org/'
@@ -191,6 +191,7 @@ def page_images(page: Path) -> list[str]:
 class OpenGraphPage:
     id: str
     path: str
+    description: str
     #: One-based position of the expected preview among the images the page shows.
     #: Update this rather than a filename when a page's thumbnail selection changes;
     #: plot directive filenames are content hashes and cannot be written down.
@@ -201,18 +202,33 @@ OPENGRAPH_PAGES = (
     OpenGraphPage(
         id='prose',
         path='user-guide/what-is-a-mesh.html',
+        description='In PyVista, a mesh is any spatially referenced information',
     ),
     OpenGraphPage(
         id='api',
+        # Described by its docstring summary rather than by its Examples section
         path='api/core/_autosummary/pyvista.ImageDataFilters.resample.html',
+        description='Resample the image to modify its dimensions and spacing.',
     ),
     OpenGraphPage(
         id='gallery',
         path='examples/00-load/create_circular_arc.html',
+        description='Generate arc geometry with pyvista.CircularArc()',
         # Set by the example's ``# sphinx_gallery_thumbnail_number = 2``
         image_number=2,
     ),
 )
+
+
+@pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)
+def test_opengraph_description(page: OpenGraphPage):
+    path = Path(HTML_DIR) / page.path
+    assert path.is_file(), f'{path} not found. Build the documentation first.'
+
+    description = meta_tags(path).get('og:description')
+
+    assert description is not None, f'{page.path} has no og:description'
+    assert description.startswith(page.description)
 
 
 @pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)

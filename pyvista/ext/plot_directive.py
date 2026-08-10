@@ -89,8 +89,10 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 When `sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_
 is enabled, every page that renders at least one ``pyvista-plot`` image also gets
-that image as its ``og:image`` link preview. This requires no configuration beyond
-the usual ``ogp_site_url``; see ``pyvista_plot_opengraph`` below to opt out.
+that image as its ``og:image`` link preview, and every page gets its leading prose
+as its ``og:description``. This requires no configuration beyond the usual
+``ogp_site_url``; see ``pyvista_plot_opengraph`` and
+``pyvista_opengraph_description`` below to opt out.
 
 By default the *first* image rendered on the page is used. Use the
 ``pyvista-plot-thumbnail`` directive to pick a different one::
@@ -167,6 +169,12 @@ The plot directive has the following configuration options:
         page. When ``None``, this is enabled automatically if ``sphinxext.opengraph``
         is enabled. Set to ``True`` or ``False`` to explicitly opt in or out.
 
+    pyvista_opengraph_description : bool or None, default: None
+        Set each page's Open Graph ``og:description`` from the page's leading
+        prose. When ``None``, this is enabled automatically if
+        ``sphinxext.opengraph`` is enabled. Set to ``True`` or ``False`` to
+        explicitly opt in or out.
+
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
@@ -193,8 +201,8 @@ that indexed is incompatible with parallel builds due to race conditions.
     to reliably locate this directive's generated code within a page.
 
 .. versionadded:: 0.49
-    Open Graph link previews. See ``pyvista_plot_opengraph`` and the
-    ``pyvista-plot-thumbnail`` directive.
+    Open Graph link previews. See ``pyvista_plot_opengraph``,
+    ``pyvista_opengraph_description`` and the ``pyvista-plot-thumbnail`` directive.
 
 """
 
@@ -224,6 +232,7 @@ from sphinx.util import logging
 # enable offscreen to hide figures when generating them.
 import pyvista as pv
 from pyvista.ext import _opengraph
+from pyvista.ext import _opengraph_description
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -427,6 +436,7 @@ def setup(app: Sphinx):
     _opengraph.add_auto_config_value(app, 'pyvista_plot_opengraph')
     # Must run before ``sphinxext.opengraph`` renders its tags at the default priority
     app.connect('html-page-context', _set_opengraph_image, priority=400)
+    _opengraph_description.setup(app)
 
     app.add_config_value('pyvista_plot_use_counter', False, 'env')
     app.add_config_value('pyvista_plot_include_source', True, False)
