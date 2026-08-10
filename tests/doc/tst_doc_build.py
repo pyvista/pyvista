@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+import html
 from pathlib import Path
 import re
 from xml.etree import ElementTree as ET
@@ -150,3 +152,74 @@ def test_docstring_sections_hoisted_across_api_pages():
 def test_contributing_edit_button_points_to_contributing():
     html = (Path(HTML_DIR) / 'contributing.html').read_text(encoding='utf-8')
     assert 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst' in html
+
+
+# -- Open Graph link previews -------------------------------------------------
+# Sanity checks against the real documentation for the three page shapes PyVista
+# generates: hand-written prose, an autodoc API page, and a Sphinx-Gallery example.
+# `tests/plotting/test_tinypages.py` covers the behaviour itself; these only confirm
+# it survives the full build.
+
+# Same value as `ogp_site_url` in `conf.py`
+OGP_SITE_URL = 'https://docs.pyvista.org/'
+
+_META_TAG = re.compile(r'<meta\b[^>]*>')
+_META_KEY = re.compile(r'\b(?:property|name)="([^"]+)"')
+_META_CONTENT = re.compile(r'\bcontent="([^"]*)"')
+_PAGE_IMAGE = re.compile(r'src="[^"]*/_images/([^"]+)"')
+
+
+def meta_tags(page: Path) -> dict[str, str]:
+    """Return a built page's ``<meta>`` tags, keyed by ``property`` or ``name``."""
+    tags: dict[str, str] = {}
+    for tag in _META_TAG.findall(page.read_text(encoding='utf-8')):
+        key = _META_KEY.search(tag)
+        content = _META_CONTENT.search(tag)
+        if key is not None and content is not None:
+            tags.setdefault(key.group(1), html.unescape(content.group(1)))
+    return tags
+
+
+def page_images(page: Path) -> list[str]:
+    """Return the filenames of the images a page shows, in the order it shows them."""
+    images = _PAGE_IMAGE.findall(page.read_text(encoding='utf-8'))
+    assert images, f'{page} shows no images'
+    return images
+
+
+@dataclass(frozen=True)
+class OpenGraphPage:
+    id: str
+    path: str
+    #: One-based position of the expected preview among the images the page shows.
+    #: Update this rather than a filename when a page's thumbnail selection changes;
+    #: plot directive filenames are content hashes and cannot be written down.
+    image_number: int = 1
+
+
+OPENGRAPH_PAGES = (
+    OpenGraphPage(
+        id='prose',
+        path='user-guide/what-is-a-mesh.html',
+    ),
+    OpenGraphPage(
+        id='api',
+        path='api/core/_autosummary/pyvista.ImageDataFilters.resample.html',
+    ),
+    OpenGraphPage(
+        id='gallery',
+        path='examples/00-load/create_circular_arc.html',
+        # Set by the example's ``# sphinx_gallery_thumbnail_number = 2``
+        image_number=2,
+    ),
+)
+
+
+@pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)
+def test_opengraph_image(page: OpenGraphPage):
+    path = Path(HTML_DIR) / page.path
+    assert path.is_file(), f'{path} not found. Build the documentation first.'
+
+    expected = page_images(path)[page.image_number - 1]
+
+    assert meta_tags(path).get('og:image') == f'{OGP_SITE_URL}_images/{expected}'
