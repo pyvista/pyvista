@@ -196,10 +196,15 @@ _OPENGRAPH_THUMBNAIL_COMMENT = re.compile(
     r'^\s*#\s*pyvista_plot_thumbnail_number\s*=\s*(-?\d+)\s*$',
     re.MULTILINE,
 )
-_OPENGRAPH_GALLERY_ERROR = (
-    "PyVista Open Graph thumbnail selectors cannot be used in Sphinx-Gallery examples. "
-    "Use '# sphinx_gallery_thumbnail_number = 1' instead."
-)
+
+
+def _opengraph_gallery_error(thumbnail_number: str | None = None) -> str:
+    """Return guidance for choosing a Sphinx-Gallery thumbnail."""
+    number = thumbnail_number or '<number>'
+    return (
+        'PyVista Open Graph thumbnail selectors cannot be used in Sphinx-Gallery examples. '
+        f"Use '# sphinx_gallery_thumbnail_number = {number}' instead."
+    )
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -391,7 +396,8 @@ def _parse_opengraph_thumbnail_comment(app: Sphinx, docname: str, source: list[s
     is_gallery = _is_sphinx_gallery_document(app, docname)
     if is_gallery:
         if thumbnail_comments or re.search(r'^\s*:opengraph:\s*$', text, re.MULTILINE):
-            raise ExtensionError(_OPENGRAPH_GALLERY_ERROR)
+            number = thumbnail_comments[0] if thumbnail_comments else None
+            raise ExtensionError(_opengraph_gallery_error(number))
         if app.config.pyvista_plot_opengraph:
             thumbnail = _gallery_thumbnail(app, docname)
             if thumbnail:
@@ -784,7 +790,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     if 'opengraph' in options and _is_sphinx_gallery_document(
         setup.app, document.settings.env.docname
     ):
-        raise ExtensionError(_OPENGRAPH_GALLERY_ERROR)
+        raise ExtensionError(_opengraph_gallery_error())
     nofigs = 'nofigs' in options
     optional = 'optional' in options
     force_static = 'force_static' in options

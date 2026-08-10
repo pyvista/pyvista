@@ -180,14 +180,14 @@ def test_sphinx_gallery_rejects_pyvista_opengraph_selector(tmp_path: Path):
 
 \"\"\"
 
-# pyvista_plot_thumbnail_number = 1
+# pyvista_plot_thumbnail_number = 4
 """,
         encoding='utf-8',
     )
     html_dir = tmp_path / 'html'
     returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
     assert returncode != 0
-    assert 'sphinx_gallery_thumbnail_number = 1' in f'{out}\n{err}'
+    assert 'sphinx_gallery_thumbnail_number = 4' in f'{out}\n{err}'
 
 
 ENVIRONMENT_HOOKS = ('PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL', 'PYVISTA_PLOT_USE_COUNTER')
