@@ -17,11 +17,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-# `tomllib` is Python 3.11+, and this project supports 3.10. The convention
-# guard only needs to run on one interpreter to be effective, so skip rather
-# than take on a `tomli` dependency for the oldest supported version.
-tomllib = pytest.importorskip('tomllib', reason='tomllib requires Python 3.11+')
-
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -48,6 +43,10 @@ def _iter_source_files() -> Iterator[Path]:
 
 def _namespace_modules() -> set[str]:
     """Modules ruff requires to be namespace-imported."""
+    if sys.version_info < (3, 11):
+        pytest.skip('tomllib requires Python 3.11+')
+    import tomllib
+
     with (REPO_ROOT / 'pyproject.toml').open('rb') as file:
         config = tomllib.load(file)
     conventions = config['tool']['ruff']['lint']['flake8-import-conventions']

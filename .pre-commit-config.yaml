@@ -102,6 +102,12 @@ repos:
         language: pygrep
         entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
+      - id: no-import-error-skip
+        name: "Ensure tests are not skipped based on ImportError."
+        language: pygrep
+        entry: '^\s*(?:>>>|\.\.\.)?.*(?:\bexcept\s*\(?\s*(?:ImportError|ModuleNotFoundError)\b|\bimportorskip\b)'
+        files: ^tests/
+        types: [python]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.1
