@@ -68,131 +68,6 @@ def _run_sphinx_build(cmd: list[str]) -> tuple[int, str, str]:
     return proc.returncode, out, err
 
 
-def _write_opengraph_project(source_dir: Path, index: str, *, gallery: bool = False) -> None:
-    """Write a minimal documentation project for Open Graph integration tests."""
-    source_dir.mkdir()
-    extensions = ["'pyvista.ext.plot_directive'", "'sphinxext.opengraph'"]
-    if gallery:
-        extensions.append("'sphinx_gallery.gen_gallery'")
-    gallery_config = (
-        '\nsphinx_gallery_conf = {\n'
-        "    'examples_dirs': 'examples',\n"
-        "    'gallery_dirs': 'gallery',\n"
-        "    'filename_pattern': r'\\.py',\n"
-        "    'image_scrapers': ('matplotlib',),\n"
-        '}\n'
-        if gallery
-        else ''
-    )
-    (source_dir / 'conf.py').write_text(
-        'extensions = [' + ', '.join(extensions) + ']\n'
-        "root_doc = 'index'\n"
-        "ogp_site_url = 'https://docs.example.org/'\n"
-        'pyvista_plot_use_counter = True\n'
-        "exclude_patterns = ['examples']\n" + gallery_config,
-        encoding='utf-8',
-    )
-    (source_dir / 'index.rst').write_text(index, encoding='utf-8')
-    if gallery:
-        examples_dir = source_dir / 'examples'
-        examples_dir.mkdir()
-        (examples_dir / 'README.rst').write_text('Examples\n========\n', encoding='utf-8')
-
-
-def test_plot_directive_opengraph_thumbnail_selection(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    """Use a selected plot-directive image as the per-page Open Graph image."""
-    for hook in ENVIRONMENT_HOOKS:
-        monkeypatch.delenv(hook, raising=False)
-
-    source_dir = tmp_path / 'source'
-    _write_opengraph_project(
-        source_dir,
-        """# pyvista_plot_thumbnail_number = 2
-
-Open Graph plots
-================
-
-.. pyvista-plot::
-   :include-source: false
-   :force_static:
-
-   >>> import pyvista as pv
-   >>> pv.Sphere().plot()
-
-.. pyvista-plot::
-   :include-source: false
-   :force_static:
-
-   >>> import pyvista as pv
-   >>> pv.Cube().plot()
-""",
-    )
-    html_dir = tmp_path / 'html'
-    returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    html = (html_dir / 'index.html').read_text(encoding='utf-8')
-    assert 'https://docs.example.org/_images/index-2_00_00.png' in html
-    assert '# pyvista_plot_thumbnail_number' not in html
-
-
-def test_sphinx_gallery_opengraph_uses_gallery_thumbnail(tmp_path: Path):
-    """Use the Sphinx-Gallery thumbnail, including its configured image number."""
-    source_dir = tmp_path / 'source'
-    _write_opengraph_project(
-        source_dir,
-        'Gallery\n=======\n\n.. toctree::\n\n   gallery/example\n',
-        gallery=True,
-    )
-    example_dir = source_dir / 'examples'
-    (example_dir / 'example.py').write_text(
-        """\"\"\"Gallery preview
-===============
-
-\"\"\"
-
-# sphinx_gallery_thumbnail_number = 2
-
-import matplotlib.pyplot as plt
-
-plt.plot([1, 2, 3])
-plt.figure()
-plt.plot([3, 2, 1])
-""",
-        encoding='utf-8',
-    )
-    html_dir = tmp_path / 'html'
-    returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    html = (html_dir / 'gallery' / 'example.html').read_text(encoding='utf-8')
-    assert 'https://docs.example.org/_images/sphx_glr_example_thumb.png' in html
-
-
-def test_sphinx_gallery_rejects_pyvista_opengraph_selector(tmp_path: Path):
-    """Reject PyVista selectors in gallery examples in favor of gallery syntax."""
-    source_dir = tmp_path / 'source'
-    _write_opengraph_project(source_dir, 'Gallery\n=======\n', gallery=True)
-    example_dir = source_dir / 'examples'
-    (example_dir / 'example.py').write_text(
-        """\"\"\"Gallery preview
-===============
-
-\"\"\"
-
-# pyvista_plot_thumbnail_number = 4
-""",
-        encoding='utf-8',
-    )
-    html_dir = tmp_path / 'html'
-    returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
-    assert returncode != 0
-    assert 'sphinx_gallery_thumbnail_number = 4' in f'{out}\n{err}'
-
-
 ENVIRONMENT_HOOKS = ('PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL', 'PYVISTA_PLOT_USE_COUNTER')
 
 
@@ -573,3 +448,128 @@ def test_interactive_plot_moves(tmp_path: Path):
         server.shutdown()
         server.server_close()
         os.chdir(old_cwd)
+
+
+def _write_opengraph_project(source_dir: Path, index: str, *, gallery: bool = False) -> None:
+    """Write a minimal documentation project for Open Graph integration tests."""
+    source_dir.mkdir()
+    extensions = ["'pyvista.ext.plot_directive'", "'sphinxext.opengraph'"]
+    if gallery:
+        extensions.append("'sphinx_gallery.gen_gallery'")
+    gallery_config = (
+        '\nsphinx_gallery_conf = {\n'
+        "    'examples_dirs': 'examples',\n"
+        "    'gallery_dirs': 'gallery',\n"
+        "    'filename_pattern': r'\\.py',\n"
+        "    'image_scrapers': ('matplotlib',),\n"
+        '}\n'
+        if gallery
+        else ''
+    )
+    (source_dir / 'conf.py').write_text(
+        'extensions = [' + ', '.join(extensions) + ']\n'
+        "root_doc = 'index'\n"
+        "ogp_site_url = 'https://docs.example.org/'\n"
+        'pyvista_plot_use_counter = True\n'
+        "exclude_patterns = ['examples']\n" + gallery_config,
+        encoding='utf-8',
+    )
+    (source_dir / 'index.rst').write_text(index, encoding='utf-8')
+    if gallery:
+        examples_dir = source_dir / 'examples'
+        examples_dir.mkdir()
+        (examples_dir / 'README.rst').write_text('Examples\n========\n', encoding='utf-8')
+
+
+def test_plot_directive_opengraph_thumbnail_selection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Use a selected plot-directive image as the per-page Open Graph image."""
+    for hook in ENVIRONMENT_HOOKS:
+        monkeypatch.delenv(hook, raising=False)
+
+    source_dir = tmp_path / 'source'
+    _write_opengraph_project(
+        source_dir,
+        """# pyvista_plot_thumbnail_number = 2
+
+Open Graph plots
+================
+
+.. pyvista-plot::
+   :include-source: false
+   :force_static:
+
+   >>> import pyvista as pv
+   >>> pv.Sphere().plot()
+
+.. pyvista-plot::
+   :include-source: false
+   :force_static:
+
+   >>> import pyvista as pv
+   >>> pv.Cube().plot()
+""",
+    )
+    html_dir = tmp_path / 'html'
+    returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'index.html').read_text(encoding='utf-8')
+    assert 'https://docs.example.org/_images/index-2_00_00.png' in html
+    assert '# pyvista_plot_thumbnail_number' not in html
+
+
+def test_sphinx_gallery_opengraph_uses_gallery_thumbnail(tmp_path: Path):
+    """Use the Sphinx-Gallery thumbnail, including its configured image number."""
+    source_dir = tmp_path / 'source'
+    _write_opengraph_project(
+        source_dir,
+        'Gallery\n=======\n\n.. toctree::\n\n   gallery/example\n',
+        gallery=True,
+    )
+    example_dir = source_dir / 'examples'
+    (example_dir / 'example.py').write_text(
+        """\"\"\"Gallery preview
+===============
+
+\"\"\"
+
+# sphinx_gallery_thumbnail_number = 2
+
+import matplotlib.pyplot as plt
+
+plt.plot([1, 2, 3])
+plt.figure()
+plt.plot([3, 2, 1])
+""",
+        encoding='utf-8',
+    )
+    html_dir = tmp_path / 'html'
+    returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'gallery' / 'example.html').read_text(encoding='utf-8')
+    assert 'https://docs.example.org/_images/sphx_glr_example_thumb.png' in html
+
+
+def test_sphinx_gallery_rejects_pyvista_opengraph_selector(tmp_path: Path):
+    """Reject PyVista selectors in gallery examples in favor of gallery syntax."""
+    source_dir = tmp_path / 'source'
+    _write_opengraph_project(source_dir, 'Gallery\n=======\n', gallery=True)
+    example_dir = source_dir / 'examples'
+    (example_dir / 'example.py').write_text(
+        """\"\"\"Gallery preview
+===============
+
+\"\"\"
+
+# pyvista_plot_thumbnail_number = 4
+""",
+        encoding='utf-8',
+    )
+    html_dir = tmp_path / 'html'
+    returncode, out, err = _run_sphinx_build(_sphinx_build_cmd(source_dir, html_dir))
+    assert returncode != 0
+    assert 'sphinx_gallery_thumbnail_number = 4' in f'{out}\n{err}'
