@@ -80,6 +80,10 @@ The ``pyvista-plot`` directive supports the following options:
         directive is executed is controlled by the ``pyvista_plot_skip_optional``
         boolean variable in :file:`conf.py`.
 
+    opengraph : None
+        Use this directive's first generated image as the page's Open Graph
+        image. This requires ``pyvista_plot_opengraph`` to be enabled.
+
 Additionally, this directive supports all the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
@@ -120,6 +124,11 @@ The plot directive has the following configuration options:
     pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
+    pyvista_plot_opengraph : bool or None, default: None
+        Generate Open Graph image metadata from plot directive images. When
+        ``None``, this is enabled automatically when ``sphinxext.opengraph``
+        is enabled. Set to ``True`` or ``False`` to explicitly opt in or out.
+
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
@@ -159,11 +168,13 @@ import textwrap
 import traceback
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from urllib.parse import urljoin
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
+from sphinx.errors import ExtensionError
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
@@ -181,6 +192,14 @@ pv.OFF_SCREEN = True
 
 # CSS class marking the ``.. container::`` node that wraps this directive's generated source code
 _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
+_OPENGRAPH_THUMBNAIL_COMMENT = re.compile(
+    r'^\s*#\s*pyvista_plot_thumbnail_number\s*=\s*(-?\d+)\s*$',
+    re.MULTILINE,
+)
+_OPENGRAPH_GALLERY_ERROR = (
+    "PyVista Open Graph thumbnail selectors cannot be used in Sphinx-Gallery examples. "
+    "Use '# sphinx_gallery_thumbnail_number = 1' instead."
+)
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -232,6 +251,7 @@ class PlotDirective(Directive):
         'force_static': directives.flag,
         'skip': _option_boolean,
         'optional': directives.flag,
+        'opengraph': directives.flag,
     }
 
     def run(self):
@@ -298,6 +318,24 @@ def setup(app: Sphinx):
     # Connect the new function to the 'config-inited' event
     app.connect('config-inited', check_counter_for_parallel_build)
 
+    def configure_opengraph(app: Sphinx, config: Config) -> None:
+        """Enable Open Graph support when its extension is enabled."""
+        enabled = config.pyvista_plot_opengraph
+        has_opengraph = 'sphinxext.opengraph' in app.extensions
+        if enabled is None:
+            config.pyvista_plot_opengraph = has_opengraph
+        elif enabled and not has_opengraph:
+            msg = (
+                "'pyvista_plot_opengraph = True' requires the 'sphinxext.opengraph' "
+                "extension. Add 'sphinxext.opengraph' to extensions or set "
+                "'pyvista_plot_opengraph = False'."
+            )
+            raise ExtensionError(msg)
+
+    app.connect('config-inited', configure_opengraph)
+    app.connect('source-read', _parse_opengraph_thumbnail_comment)
+    app.connect('doctree-read', _set_opengraph_thumbnail)
+
     app.add_config_value('pyvista_plot_use_counter', False, 'env')
     app.add_config_value('pyvista_plot_include_source', True, False)
     app.add_config_value('pyvista_plot_basedir', None, True)
@@ -307,11 +345,124 @@ def setup(app: Sphinx):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
+    app.add_config_value(
+        name='pyvista_plot_opengraph',
+        default=None,
+        rebuild='env',
+    )
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
         'version': pv.__version__,
     }
+
+
+def _is_sphinx_gallery_document(app: Sphinx, docname: str) -> bool:
+    """Return whether *docname* is a generated Sphinx-Gallery example."""
+    gallery_conf = getattr(app.config, 'sphinx_gallery_conf', None)
+    if not gallery_conf:
+        return False
+
+    gallery_dirs = gallery_conf.get('gallery_dirs', ())
+    if isinstance(gallery_dirs, str):
+        gallery_dirs = (gallery_dirs,)
+    return any(
+        docname == directory or docname.startswith(f'{directory}/') for directory in gallery_dirs
+    )
+
+
+def _gallery_thumbnail(app: Sphinx, docname: str) -> str | None:
+    """Return the public filename of a Sphinx-Gallery example thumbnail."""
+    source_path = Path(app.env.doc2path(docname))
+    thumbnail_dir = source_path.parent / 'images' / 'thumb'
+    thumbnail = next(thumbnail_dir.glob(f'sphx_glr_{source_path.stem}_thumb.*'), None)
+    return None if thumbnail is None else thumbnail.name
+
+
+def _opengraph_image_url(config: Config, image_name: str) -> str:
+    """Build an absolute Open Graph URL for an image copied by Sphinx."""
+    return urljoin(config.ogp_site_url, f'_images/{image_name}')
+
+
+def _parse_opengraph_thumbnail_comment(app: Sphinx, docname: str, source: list[str]) -> None:
+    """Parse and remove PyVista's per-page thumbnail selector comment."""
+    text = source[0]
+    thumbnail_comments = _OPENGRAPH_THUMBNAIL_COMMENT.findall(text)
+    is_gallery = _is_sphinx_gallery_document(app, docname)
+    if is_gallery:
+        if thumbnail_comments or re.search(r'^\s*:opengraph:\s*$', text, re.MULTILINE):
+            raise ExtensionError(_OPENGRAPH_GALLERY_ERROR)
+        if app.config.pyvista_plot_opengraph:
+            thumbnail = _gallery_thumbnail(app, docname)
+            if thumbnail:
+                app.env.metadata.setdefault(docname, {})['og:image'] = _opengraph_image_url(
+                    app.config, thumbnail
+                )
+        return
+
+    if len(thumbnail_comments) > 1:
+        msg = (
+            "Only one '# pyvista_plot_thumbnail_number = <int>' comment is allowed "
+            'per page.'
+        )
+        raise ExtensionError(msg)
+    if thumbnail_comments:
+        number = int(thumbnail_comments[0])
+        if number == 0:
+            msg = "'pyvista_plot_thumbnail_number' must not be zero."
+            raise ExtensionError(msg)
+        app.env.metadata.setdefault(docname, {})['_pyvista_plot_opengraph_thumbnail_number'] = (
+            number
+        )
+        source[0] = _OPENGRAPH_THUMBNAIL_COMMENT.sub('', text)
+
+
+def _set_opengraph_thumbnail(app: Sphinx, doctree) -> None:
+    """Set the ``og:image`` metadata after all plot directives have run."""
+    if not app.config.pyvista_plot_opengraph:
+        return
+
+    docname = app.env.current_document.docname
+    if _is_sphinx_gallery_document(app, docname):
+        return
+
+    metadata = app.env.metadata.setdefault(docname, {})
+    thumbnail_number = metadata.pop('_pyvista_plot_opengraph_thumbnail_number', None)
+    data = doctree.get('_pyvista_plot_opengraph', {})
+    images = data.get('images', [])
+    explicit_directives = data.get('explicit_directives', [])
+
+    if thumbnail_number is not None and explicit_directives:
+        msg = (
+            "'# pyvista_plot_thumbnail_number' cannot be used with a "
+            "':opengraph:' pyvista-plot directive option."
+        )
+        raise ExtensionError(msg)
+    if len(explicit_directives) > 1:
+        msg = "Only one pyvista-plot directive may specify the ':opengraph:' option per page."
+        raise ExtensionError(msg)
+
+    if explicit_directives:
+        if not explicit_directives[0]:
+            msg = "The ':opengraph:' pyvista-plot directive did not generate an image."
+            raise ExtensionError(msg)
+        image = explicit_directives[0][0]
+    elif thumbnail_number is not None:
+        index = thumbnail_number - 1 if thumbnail_number > 0 else thumbnail_number
+        try:
+            image = images[index]
+        except IndexError as err:
+            msg = (
+                f"'pyvista_plot_thumbnail_number = {thumbnail_number}' does not "
+                f"match any plot directive image in {docname!r}."
+            )
+            raise ExtensionError(msg) from err
+    elif images:
+        image = images[0]
+    else:
+        return
+
+    metadata['og:image'] = _opengraph_image_url(app.config, image)
 
 
 # -----------------------------------------------------------------------------
@@ -630,6 +781,10 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config
+    if 'opengraph' in options and _is_sphinx_gallery_document(
+        setup.app, document.settings.env.docname
+    ):
+        raise ExtensionError(_OPENGRAPH_GALLERY_ERROR)
     nofigs = 'nofigs' in options
     optional = 'optional' in options
     force_static = 'force_static' in options
@@ -761,6 +916,22 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     caption = (
         '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
     )
+
+    if config.pyvista_plot_opengraph:
+        opengraph_data = document.attributes.setdefault(
+            '_pyvista_plot_opengraph', {'images': [], 'explicit_directives': []}
+        )
+        directive_images = []
+        for _, images in results:
+            for image in images:
+                # Interactive scenes render their static PNG alongside the VTKJS asset.
+                if image.extension == 'vtksz':
+                    directive_images.append(f'{image.stem}.png')
+                else:
+                    directive_images.append(image.basename)
+        opengraph_data['images'].extend(directive_images)
+        if 'opengraph' in options:
+            opengraph_data['explicit_directives'].append(directive_images)
 
     # generate output restructuredtext
     total_lines = []
