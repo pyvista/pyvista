@@ -100,6 +100,7 @@ test = [
   'sphinx-examples-as-code<0.4',
   'sphinx-gallery<0.22.0',
   'sphinx<8.3.0',
+  'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
   'tqdm<4.70.0',
   'trame-pyvista<0.2.0',

@@ -75,22 +75,21 @@ def _write_opengraph_project(source_dir: Path, index: str, *, gallery: bool = Fa
     if gallery:
         extensions.append("'sphinx_gallery.gen_gallery'")
     gallery_config = (
-        "\nsphinx_gallery_conf = {\n"
+        '\nsphinx_gallery_conf = {\n'
         "    'examples_dirs': 'examples',\n"
         "    'gallery_dirs': 'gallery',\n"
         "    'filename_pattern': r'\\.py',\n"
         "    'image_scrapers': ('matplotlib',),\n"
-        "}\n"
+        '}\n'
         if gallery
         else ''
     )
     (source_dir / 'conf.py').write_text(
-        "extensions = [" + ', '.join(extensions) + "]\n"
+        'extensions = [' + ', '.join(extensions) + ']\n'
         "root_doc = 'index'\n"
         "ogp_site_url = 'https://docs.example.org/'\n"
-        "pyvista_plot_use_counter = True\n"
-        "exclude_patterns = ['examples']\n"
-        + gallery_config,
+        'pyvista_plot_use_counter = True\n'
+        "exclude_patterns = ['examples']\n" + gallery_config,
         encoding='utf-8',
     )
     (source_dir / 'index.rst').write_text(index, encoding='utf-8')
@@ -100,8 +99,14 @@ def _write_opengraph_project(source_dir: Path, index: str, *, gallery: bool = Fa
         (examples_dir / 'README.rst').write_text('Examples\n========\n', encoding='utf-8')
 
 
-def test_plot_directive_opengraph_thumbnail_selection(tmp_path: Path):
+def test_plot_directive_opengraph_thumbnail_selection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
     """Use a selected plot-directive image as the per-page Open Graph image."""
+    for hook in ENVIRONMENT_HOOKS:
+        monkeypatch.delenv(hook, raising=False)
+
     source_dir = tmp_path / 'source'
     _write_opengraph_project(
         source_dir,
@@ -112,13 +117,16 @@ Open Graph plots
 
 .. pyvista-plot::
    :include-source: false
+   :force_static:
 
    >>> import pyvista as pv
    >>> pv.Sphere().plot()
 
 .. pyvista-plot::
    :include-source: false
+   :force_static:
 
+   >>> import pyvista as pv
    >>> pv.Cube().plot()
 """,
     )

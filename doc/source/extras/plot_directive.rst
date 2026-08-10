@@ -142,12 +142,12 @@ public site URL:
 
 .. code-block:: python
 
-   extensions = [
-       "pyvista.ext.plot_directive",
-       "sphinxext.opengraph",
-   ]
+    extensions = [
+        "pyvista.ext.plot_directive",
+        "sphinxext.opengraph",
+    ]
 
-   ogp_site_url = "https://docs.example.org/"
+    ogp_site_url = "https://docs.example.org/"
 
 ``pyvista_plot_opengraph`` defaults to ``None``. With this default, PyVista
 enables Open Graph plot previews whenever ``sphinxext.opengraph`` is in

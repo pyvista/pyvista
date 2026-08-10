@@ -168,7 +168,7 @@ import textwrap
 import traceback
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from urllib.parse import urljoin
+import urllib
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
@@ -205,6 +205,7 @@ def _opengraph_gallery_error(thumbnail_number: str | None = None) -> str:
         'PyVista Open Graph thumbnail selectors cannot be used in Sphinx-Gallery examples. '
         f"Use '# sphinx_gallery_thumbnail_number = {number}' instead."
     )
+
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -350,11 +351,7 @@ def setup(app: Sphinx):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
-    app.add_config_value(
-        name='pyvista_plot_opengraph',
-        default=None,
-        rebuild='env',
-    )
+    app.add_config_value(name='pyvista_plot_opengraph', default=None, rebuild='env')
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -386,7 +383,7 @@ def _gallery_thumbnail(app: Sphinx, docname: str) -> str | None:
 
 def _opengraph_image_url(config: Config, image_name: str) -> str:
     """Build an absolute Open Graph URL for an image copied by Sphinx."""
-    return urljoin(config.ogp_site_url, f'_images/{image_name}')
+    return urllib.parse.urljoin(config.ogp_site_url, f'_images/{image_name}')
 
 
 def _parse_opengraph_thumbnail_comment(app: Sphinx, docname: str, source: list[str]) -> None:
@@ -407,10 +404,7 @@ def _parse_opengraph_thumbnail_comment(app: Sphinx, docname: str, source: list[s
         return
 
     if len(thumbnail_comments) > 1:
-        msg = (
-            "Only one '# pyvista_plot_thumbnail_number = <int>' comment is allowed "
-            'per page.'
-        )
+        msg = "Only one '# pyvista_plot_thumbnail_number = <int>' comment is allowed per page."
         raise ExtensionError(msg)
     if thumbnail_comments:
         number = int(thumbnail_comments[0])
@@ -460,7 +454,7 @@ def _set_opengraph_thumbnail(app: Sphinx, doctree) -> None:
         except IndexError as err:
             msg = (
                 f"'pyvista_plot_thumbnail_number = {thumbnail_number}' does not "
-                f"match any plot directive image in {docname!r}."
+                f'match any plot directive image in {docname!r}.'
             )
             raise ExtensionError(msg) from err
     elif images:
