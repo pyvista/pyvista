@@ -202,54 +202,45 @@ class OpenGraphPage:
 OPENGRAPH_PAGES = (
     OpenGraphPage(
         id='prose',
+        # A hand-written page selecting its image with ``.. autoopengraph_thumbnail::``
         path='user-guide/what-is-a-mesh.html',
         description='In PyVista, a mesh is any spatially referenced information',
-        # Set by ``.. autoopengraph_thumbnail:: 7``, rather than the default first
-        # image (a sparse point cloud, not representative of the page)
         image_number=7,
     ),
     OpenGraphPage(
         id='api',
-        # Described by its docstring summary rather than by its Examples section
+        # Described by its docstring summary rather than its Examples section, and
+        # selects its image with ``.. autoopengraph_thumbnail::``
         path='api/core/_autosummary/pyvista.ImageDataFilters.resample.html',
         description='Resample the image to modify its dimensions and spacing.',
-        # Set by ``.. autoopengraph_thumbnail:: 9``, rather than the default first
-        # image (a tiny synthetic 3x2 grayscale gradient)
         image_number=9,
     ),
     OpenGraphPage(
         id='gallery',
+        # A gallery example selecting its image with ``sphinx_gallery_thumbnail_number``
         path='examples/00-load/create_circular_arc.html',
         description='Generate arc geometry with pyvista.CircularArc()',
-        # Set by the example's ``# sphinx_gallery_thumbnail_number = 2``
         image_number=2,
     ),
     OpenGraphPage(
         id='autoopengraph-thumbnail-explicit-directive',
-        # A page with a ``.. autoopengraph-thumbnail::`` selection next to an
-        # explicit ``.. pyvista-plot::`` directive, rather than one numpydoc wraps
+        # ``.. autoopengraph_thumbnail::`` next to an explicit ``.. pyvista-plot::``
         path='api/core/_autosummary/pyvista.ImageDataFilters.dilate.html',
         description='Morphologically dilate grayscale or binary data.',
         image_number=3,
     ),
     OpenGraphPage(
         id='autoopengraph-thumbnail-numpydoc-wrapped',
-        # A page with a ``.. autoopengraph-thumbnail::`` selection nested inside a
-        # ``pyvista-plot`` directive that numpydoc wraps its ``Examples`` section in.
-        # The first image is only the page's own docstring calling itself "for
-        # context" -- the actual crop only shows up starting with the second.
+        # ``.. autoopengraph_thumbnail::`` inside an Examples section numpydoc wraps
+        # in ``.. pyvista-plot::`` on its own
         path='api/core/_autosummary/pyvista.ImageDataFilters.crop.html',
         description='Crop this image to remove points at its boundaries.',
         image_number=4,
     ),
     OpenGraphPage(
         id='autoenum-gallery',
-        # ``pyvista.CellType`` isn't rendered by the plot directive at all: its images
-        # are plain ``.. image::`` directives pointing at ``pyvista.examples.cells``'
-        # already-built output, resolved from an ``IMAGE-HASH-PLACEHOLDER`` at write
-        # time. Selecting image 13 (WEDGE) instead of the default first (a single,
-        # nearly invisible VERTEX point) is the reason ``autoopengraph-thumbnail``
-        # counts image *nodes*, not anything specific to the plot directive.
+        # Images are plain ``.. image::`` directives rather than the plot directive,
+        # to confirm selection counts image nodes generically
         path='api/utilities/_autosummary/pyvista.CellType.html',
         description='Define types of cells.',
         image_number=13,
