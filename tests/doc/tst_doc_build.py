@@ -251,7 +251,7 @@ def test_opengraph_image(page: OpenGraphPage):
 def test_opengraph_image_root_page_uses_the_site_wide_default():
     """The root page opts out of selecting one of its own images.
 
-    It has real content images below the fold, but ``.. autoopengraph_thumbnail:: 0``
+    It has real content images below the fold, but ``.. autoopengraph_thumbnail:: none``
     keeps its preview as the curated site banner (``ogp_image`` in ``conf.py``)
     rather than an arbitrary one of those.
     """

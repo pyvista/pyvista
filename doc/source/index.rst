@@ -1,6 +1,6 @@
 .. title:: PyVista
 
-.. autoopengraph_thumbnail:: 0
+.. autoopengraph_thumbnail:: none
 
 .. raw:: html
 
