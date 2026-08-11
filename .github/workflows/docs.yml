@@ -177,6 +177,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: tox r -e docs-test
 
+      - name: Test Documentation Images
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test-images
+
       - name: Upload Images for Failed Tests
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
