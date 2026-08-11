@@ -1,16 +1,20 @@
 .. _opengraph_docs:
 
-Open Graph link previews
+Open Graph Link Previews
 =========================
 
-When a documentation link is shared, the preview that appears alongside it comes
-from the page's `Open Graph <https://ogp.me>`_ metadata. PyVista fills that in
-automatically for every page: the image is an image the page shows, and the
-description is the page's own leading prose.
+When someone shares a link to your documentation -- on social media, in a chat
+app, anywhere that unfurls links -- the preview card that appears is built from
+the page's `Open Graph <https://ogp.me>`_ metadata. PyVista fills that metadata
+in for you, so every page previews with an image it actually shows and a
+description written from its own opening prose, instead of the site-wide
+defaults you would otherwise get on every page alike.
 
-This needs no configuration beyond enabling
-`sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_ and
-telling it where the documentation is published:
+Enabling
+---------
+
+Add both extensions to your ``conf.py`` and tell ``sphinxext-opengraph`` where
+your documentation is published:
 
 .. code-block:: python
 
@@ -21,20 +25,35 @@ telling it where the documentation is published:
 
     ogp_site_url = "https://docs.example.org/"
 
-Both features follow ``sphinxext.opengraph``: ``pyvista_opengraph_image`` and
-``pyvista_opengraph_description`` default to ``None``, which means "on if
-``sphinxext.opengraph`` is enabled". Set either to ``True`` to require it -- the
-build then fails if ``sphinxext.opengraph`` is missing -- or to ``False`` to opt
-out. Enabling :mod:`pyvista's plot directive <pyvista.ext.plot_directive>` turns
-both on by default, but neither depends on it: a page previews whichever image it
-shows, from any source, and its description is built the same way whether or not
-the page uses the plot directive at all.
+Both extensions are required. ``pyvista.ext.plot_directive`` is what installs
+these features, and
+`sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_ is
+what writes the tags they fill in -- without it PyVista does nothing here.
 
-Choosing the preview image
+You do **not** have to use the ``.. pyvista-plot::`` directive anywhere to
+benefit. Enabling ``pyvista.ext.plot_directive`` is enough; the image a page
+previews is chosen from every image on that page, whatever produced it -- a
+``.. pyvista-plot::``, a plain ``.. image::``, a Sphinx-Gallery example, or
+anything else. Likewise, descriptions are taken from ordinary prose and work on
+pages with no images at all.
+
+Nothing else needs configuring. If you would rather keep one half of the
+integration and not the other, turn either off individually:
+
+.. code-block:: python
+
+    pyvista_opengraph_image = False
+    pyvista_opengraph_description = False
+
+Left unset, both follow ``sphinxext.opengraph``: enabled whenever it is. Setting
+either to ``True`` without ``sphinxext.opengraph`` in ``extensions`` is an error
+rather than a silent no-op.
+
+Choosing the Preview Image
 ---------------------------
 
-By default a page previews the first image it shows. Pages where the first image
-is only scene-setting can select another one with the
+By default a page previews the first image it shows. When the first image is
+only scene-setting, pick a different one with the
 ``pyvista-opengraph-thumbnail`` directive:
 
 .. code-block:: rst
@@ -42,15 +61,13 @@ is only scene-setting can select another one with the
    .. pyvista-opengraph-thumbnail:: 2
 
 The argument is the one-based position of the image among *all* images on the
-page, in the order they appear -- it does not matter what produced them, so this
-works the same next to a ``pyvista-plot``, a plain ``.. image::``, or anything
-else. It counts images, not files, so it is unaffected by how the generated
-filenames happen to be numbered. Negative values count backwards from the last
-image.
+page, in the order they appear. It counts images, not files, so it is unaffected
+by how generated filenames happen to be numbered. Negative values count
+backwards from the last image.
 
-The directive renders nothing and can go anywhere on the page, which means it can
-sit next to the code it refers to instead of at the top. In a docstring the natural
-place is the start of the ``Examples`` section:
+The directive renders nothing and can go anywhere on the page, so you can put it
+next to the code it refers to rather than at the top. In a docstring, the
+natural place is the start of the ``Examples`` section:
 
 .. code-block:: rst
 
@@ -67,44 +84,49 @@ place is the start of the ``Examples`` section:
 
    >>> pv.Sphere().clip().plot()
 
-A page has a single ``<head>``, so it has a single link preview -- section anchors
-cannot have their own. Using the directive twice on one page therefore warns and
-keeps the first selection. This can happen without either docstring being wrong, on
-pages that document several objects at once with ``:members:``.
+Two things to be aware of when using it:
 
-Selecting an image the page does not have also warns, and falls back to the first
-image. That is silent while PyVista's own ``pyvista_plot_skip`` or
-``pyvista_plot_skip_optional`` is enabled, since those builds deliberately render
-fewer images.
+- A page has a single ``<head>``, so it gets a single link preview -- section
+  anchors cannot have their own. Using the directive twice on one page warns and
+  keeps the first selection. This can happen without either docstring being
+  wrong, on pages that document several objects at once with ``:members:``.
+- Selecting an image the page does not have also warns, and falls back to the
+  first image. That warning is suppressed while ``pyvista_plot_skip`` or
+  ``pyvista_plot_skip_optional`` is enabled, since those builds deliberately
+  render fewer images.
 
-Sphinx-Gallery examples
+Pages with no images at all keep whatever site-wide ``ogp_image`` you have
+configured.
+
+Sphinx-Gallery Examples
 ------------------------
 
-Gallery examples already have a thumbnail, and their preview always matches it, so
-that a shared link shows the same picture as the gallery. PyVista uses the full
-resolution version of that image rather than the gallery's own thumbnail file, which
-is too small to preview well.
+Gallery examples already have a thumbnail, and their preview always matches it,
+so a shared link shows the same picture as the gallery. PyVista uses the full
+resolution version of that image rather than the gallery's own thumbnail file,
+which is too small to preview well.
 
-Using ``pyvista-opengraph-thumbnail`` in a gallery example is an error. Use
-Sphinx-Gallery's own selector instead:
+Using ``pyvista-opengraph-thumbnail`` in a gallery example is an error. Select
+the image with Sphinx-Gallery's own comment instead:
 
 .. code-block:: python
 
    # sphinx_gallery_thumbnail_number = 2
 
-Preview descriptions
+Preview Descriptions
 ----------------------
 
-``sphinxext-opengraph`` builds its description from every piece of text on a page
-until it has enough characters, which works poorly for generated pages. Autodoc
-output is invisible to it -- Sphinx wraps docstrings in a node it treats as an
-admonition and skips -- so API pages end up described by whatever sits outside that
-node, or not described at all. Sphinx-Gallery pages pick up download links, the
-timing footer and the "Gallery generated by Sphinx-Gallery" signature.
+PyVista describes each page with its leading paragraphs of real prose, up to
+``ogp_description_length`` characters, skipping signatures, parameter tables,
+code blocks, admonitions, download links, captions and navigation. For a
+docstring that is its summary and the paragraphs following it; for a gallery
+example it is the example's introduction. The plain ``description`` meta tag is
+set to match, unless ``ogp_enable_meta_description`` is disabled.
 
-PyVista instead uses the page's leading paragraphs of actual prose, up to
-``ogp_description_length`` characters, skipping signatures, parameter tables, code
-blocks, admonitions, download links, captions and navigation. For a docstring that
-is its summary and the paragraphs following it; for a gallery example it is the
-example's introduction. The plain ``description`` meta tag is set to match, unless
-``ogp_enable_meta_description`` is disabled.
+This replaces ``sphinxext-opengraph``'s own description, which is built from
+every piece of text on a page until it has enough characters. That works poorly
+for generated pages: autodoc output is invisible to it, because Sphinx wraps
+docstrings in a node it treats as an admonition and skips, so API pages end up
+described by whatever sits outside that node -- or not described at all.
+Sphinx-Gallery pages instead pick up download links, the timing footer and the
+"Gallery generated by Sphinx-Gallery" signature.
