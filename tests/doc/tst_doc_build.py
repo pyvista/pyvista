@@ -155,11 +155,7 @@ def test_contributing_edit_button_points_to_contributing():
 
 
 # -- Open Graph link previews -------------------------------------------------
-# Sanity checks against the real documentation for the three page shapes PyVista
-# generates: hand-written prose, an autodoc API page, and a Sphinx-Gallery example.
-# `sphinx-autoopengraph`'s own test suite (https://github.com/user27182/sphinx-autoopengraph)
-# covers the extension's behaviour itself; these only confirm it survives the full build,
-# together with the rest of PyVista's own Sphinx extensions.
+# Sanity checks against the real documentation build.
 
 # Same value as `ogp_site_url` in `conf.py`
 OGP_SITE_URL = 'https://docs.pyvista.org/'
@@ -167,7 +163,7 @@ OGP_SITE_URL = 'https://docs.pyvista.org/'
 _META_TAG = re.compile(r'<meta\b[^>]*>')
 _META_KEY = re.compile(r'\b(?:property|name)="([^"]+)"')
 _META_CONTENT = re.compile(r'\bcontent="([^"]*)"')
-_PAGE_IMAGE = re.compile(r'src="[^"]*/_images/([^"]+)"')
+_PAGE_IMAGE = re.compile(r'<img\b[^>]*\bsrc="[^"]*/_images/([^"]+)"')
 
 
 def meta_tags(page: Path) -> dict[str, str]:
@@ -194,8 +190,6 @@ class OpenGraphPage:
     path: str
     description: str
     #: One-based position of the expected preview among the images the page shows.
-    #: Update this rather than a filename when a page's thumbnail selection changes;
-    #: plot directive filenames are content hashes and cannot be written down.
     image_number: int = 1
 
 
