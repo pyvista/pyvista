@@ -455,8 +455,15 @@ def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
-    """Check that the ``sphinx_examples_as_code`` extension is wired into the real docs build."""
+def test_tinypages_all_extensions_integration(tmp_path: Path):
+    """Check that every PyVista-authored Sphinx extension builds together without conflict.
+
+    ``sphinx_examples_as_code``, the plot directive, Sphinx-Gallery and
+    ``sphinx_autoopengraph`` are all enabled at once here, the same as the real docs
+    build. This does not re-check any one extension's own behaviour in detail --
+    each has its own tests for that -- only that the full stack produces a working
+    build with none of them stepping on each other.
+    """
     source_dir = copy_tinypages(tmp_path)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
@@ -465,6 +472,12 @@ def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
         _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    # Sanity check only: ``sphinx_autoopengraph`` still produces sensible tags on an
+    # autodoc page alongside ``sphinx_examples_as_code``'s own download-link rewriting.
+    tags = meta_tags(html_dir / 'some_autodocs.html')
+    assert tags.get('og:image')
+    assert tags.get('og:description')
 
     downloads_dir = html_dir / '_downloads'
     assert downloads_dir.is_dir(), 'expected examples_download to produce a _downloads dir'
@@ -561,139 +574,7 @@ def test_interactive_plot_moves(tmp_path: Path):
         os.chdir(old_cwd)
 
 
-def _append(path: Path, text: str) -> None:
-    with path.open('a', encoding='utf-8') as file:
-        file.write(text)
-
-
-@flaky_test(exceptions=(AssertionError,))
-def test_autoopengraph_thumbnail_rejected_in_gallery_example(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """Gallery examples must use the gallery's own thumbnail selector."""
-    for hook in ENVIRONMENT_HOOKS:
-        monkeypatch.delenv(hook, raising=False)
-    # Plots are irrelevant here and the selector is rejected while parsing
-    monkeypatch.setenv('PYVISTA_PLOT_SKIP', 'true')
-
-    source_dir = copy_tinypages(tmp_path)
-    _append(
-        source_dir / 'gallery_src' / 'plot_gallery_default.py',
-        '\n# %%\n# .. autoopengraph_thumbnail:: 4\n',
-    )
-
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, tmp_path / 'html', tmp_path / 'doctrees'),
-    )
-
-    assert returncode != 0
-    # The guidance keeps the number the author asked for
-    assert '# sphinx_gallery_thumbnail_number = 4' in f'{out}\n{err}'
-
-
-@flaky_test(exceptions=(AssertionError,))
-def test_autoopengraph_thumbnail_selected_twice_warns(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """A page has one link preview, so a second selection is reported and ignored."""
-    for hook in ENVIRONMENT_HOOKS:
-        monkeypatch.delenv(hook, raising=False)
-    monkeypatch.setenv('PYVISTA_PLOT_SKIP', 'true')
-
-    source_dir = copy_tinypages(tmp_path)
-    # ``samples.make_sphere`` already selects image 2 of this page
-    _append(source_dir / 'some_autodocs.rst', '\n.. autoopengraph_thumbnail:: 3\n')
-
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, tmp_path / 'html', tmp_path / 'doctrees'),
-    )
-
-    # Only fatal because tinypages builds with ``-W``
-    assert returncode != 0
-    output = f'{out}\n{err}'
-    assert 'already selects image 2' in output
-    assert 'Ignoring this selection of image 3' in output
-
-
-@flaky_test(exceptions=(AssertionError,))
-def test_autoopengraph_thumbnail_out_of_range_warns(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """Selecting an image the page does not render falls back to its first one."""
-    for hook in ENVIRONMENT_HOOKS:
-        monkeypatch.delenv(hook, raising=False)
-
-    source_dir = copy_tinypages(tmp_path)
-    # ``some_plots.rst`` renders many images, but nowhere near this many
-    _append(source_dir / 'some_plots.rst', '\n.. autoopengraph_thumbnail:: 999\n')
-
-    html_dir = tmp_path / 'html'
-    returncode, out, err = _run_sphinx_build(
-        # Without ``-W`` the warning does not end the build, so the fallback is observable
-        _sphinx_build_cmd(source_dir, html_dir, tmp_path / 'doctrees', ('--keep-going',)),
-    )
-
-    assert returncode != 0  # ``--keep-going`` still reports the warning at the end
-    assert "'autoopengraph_thumbnail' selects image 999" in f'{out}\n{err}'
-    assert meta_tags(html_dir / 'some_plots.html').get('og:image') == (
-        f'{OPENGRAPH_SITE_URL}_images/some_plots-1_00_00.png'
-    )
-
-
-def test_autoopengraph_extension_works_standalone(tmp_path: Path):
-    """``sphinx_autoopengraph`` needs neither the plot directive nor PyVista plots.
-
-    It has to work for a project that renders no PyVista content at all: nothing
-    about image or description selection is specific to the plot directive.
-    """
-    source_dir = tmp_path / 'source'
-    source_dir.mkdir()
-    (source_dir / 'conf.py').write_text(
-        "extensions = ['sphinx_autoopengraph', 'sphinxext.opengraph']\n"
-        "root_doc = 'index'\n"
-        "ogp_site_url = 'https://docs.example.org/'\n",
-        encoding='utf-8',
-    )
-    (source_dir / 'index.rst').write_text(
-        'Standalone\n==========\n\n'
-        '.. image:: https://docs.example.org/_static/photo.png\n\n'
-        'A plain page with an ordinary image and its own leading prose.\n',
-        encoding='utf-8',
-    )
-
-    html_dir = tmp_path / 'html'
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, tmp_path / 'doctrees'),
-    )
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    tags = meta_tags(html_dir / 'index.html')
-    assert tags.get('og:image') == 'https://docs.example.org/_static/photo.png'
-    assert tags.get('og:description') == (
-        'A plain page with an ordinary image and its own leading prose.'
-    )
-
-
-def test_autoopengraph_image_can_be_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """``autoopengraph_image = False`` leaves ``sphinxext-opengraph`` alone.
-
-    Distinct from disabling ``sphinx_autoopengraph`` entirely: the description
-    half stays on, only the image selection turns off.
-    """
-    for hook in ENVIRONMENT_HOOKS:
-        monkeypatch.delenv(hook, raising=False)
-    source_dir = copy_tinypages(tmp_path)
-    with (source_dir / 'conf.py').open('a', encoding='utf-8') as conf:
-        conf.write('\nautoopengraph_image = False\n')
-
-    html_dir = tmp_path / 'html'
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, tmp_path / 'doctrees'),
-    )
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    tags = meta_tags(html_dir / 'some_plots.html')
-    # Falls back to the site-wide default rather than the page's own first image
-    assert tags.get('og:image') == OPENGRAPH_FALLBACK_IMAGE
-    # The description half is unaffected
-    assert 'og:description' in tags
+# Extension-internal behaviour (thumbnail selection, gallery rejection, config toggles,
+# standalone operation, description parsing) is covered by ``sphinx-autoopengraph``'s own
+# test suite: https://github.com/user27182/sphinx-autoopengraph. The tests below only check
+# that it resolves correctly against PyVista's own plot directive and its image naming.

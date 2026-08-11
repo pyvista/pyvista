@@ -157,8 +157,9 @@ def test_contributing_edit_button_points_to_contributing():
 # -- Open Graph link previews -------------------------------------------------
 # Sanity checks against the real documentation for the three page shapes PyVista
 # generates: hand-written prose, an autodoc API page, and a Sphinx-Gallery example.
-# `tests/plotting/test_tinypages.py` and `tests/plotting/test_opengraph_description.py`
-# cover the behaviour itself; these only confirm it survives the full build.
+# `sphinx-autoopengraph`'s own test suite (https://github.com/user27182/sphinx-autoopengraph)
+# covers the extension's behaviour itself; these only confirm it survives the full build,
+# together with the rest of PyVista's own Sphinx extensions.
 
 # Same value as `ogp_site_url` in `conf.py`
 OGP_SITE_URL = 'https://docs.pyvista.org/'
