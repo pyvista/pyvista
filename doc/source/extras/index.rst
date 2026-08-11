@@ -16,6 +16,7 @@ and how you can help develop PyVista.
    docker
    pyinstaller
    plot_directive
+   opengraph
    vtk_role
    examples_as_code
    pytest_plugin

@@ -508,6 +508,7 @@ banned-from = [
   'os.path',
   'pickle',
   'platform',
+  'posixpath',
   're',
   'reprlib',
   'shlex',

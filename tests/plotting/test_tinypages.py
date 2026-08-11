@@ -225,7 +225,7 @@ OPENGRAPH_GALLERY_IMAGES = {
 }
 
 # ``some_plots.rst`` makes no selection, so it previews its first image.
-# ``samples.make_sphere`` uses ``.. pyvista-plot-thumbnail:: 2``, so ``some_autodocs``
+# ``samples.make_sphere`` uses ``.. pyvista-opengraph-thumbnail:: 2``, so ``some_autodocs``
 # previews the second image of the page rather than that directive's own image.
 OPENGRAPH_PLOT_IMAGES_SERIAL = {
     'some_plots.html': 'some_plots-1_00_00.png',
@@ -567,7 +567,7 @@ def _append(path: Path, text: str) -> None:
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_plot_thumbnail_rejected_in_gallery_example(
+def test_opengraph_thumbnail_rejected_in_gallery_example(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     """Gallery examples must use the gallery's own thumbnail selector."""
@@ -579,7 +579,7 @@ def test_plot_thumbnail_rejected_in_gallery_example(
     source_dir = copy_tinypages(tmp_path)
     _append(
         source_dir / 'gallery_src' / 'plot_gallery_default.py',
-        '\n# %%\n# .. pyvista-plot-thumbnail:: 4\n',
+        '\n# %%\n# .. pyvista-opengraph-thumbnail:: 4\n',
     )
 
     returncode, out, err = _run_sphinx_build(
@@ -592,7 +592,7 @@ def test_plot_thumbnail_rejected_in_gallery_example(
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_plot_thumbnail_selected_twice_warns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_opengraph_thumbnail_selected_twice_warns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """A page has one link preview, so a second selection is reported and ignored."""
     for hook in ENVIRONMENT_HOOKS:
         monkeypatch.delenv(hook, raising=False)
@@ -600,7 +600,7 @@ def test_plot_thumbnail_selected_twice_warns(tmp_path: Path, monkeypatch: pytest
 
     source_dir = copy_tinypages(tmp_path)
     # ``samples.make_sphere`` already selects image 2 of this page
-    _append(source_dir / 'some_autodocs.rst', '\n.. pyvista-plot-thumbnail:: 3\n')
+    _append(source_dir / 'some_autodocs.rst', '\n.. pyvista-opengraph-thumbnail:: 3\n')
 
     returncode, out, err = _run_sphinx_build(
         _sphinx_build_cmd(source_dir, tmp_path / 'html', tmp_path / 'doctrees'),
@@ -609,19 +609,19 @@ def test_plot_thumbnail_selected_twice_warns(tmp_path: Path, monkeypatch: pytest
     # Only fatal because tinypages builds with ``-W``
     assert returncode != 0
     output = f'{out}\n{err}'
-    assert 'already selects plot image 2' in output
+    assert 'already selects image 2' in output
     assert 'Ignoring this selection of image 3' in output
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_plot_thumbnail_out_of_range_warns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_opengraph_thumbnail_out_of_range_warns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Selecting an image the page does not render falls back to its first one."""
     for hook in ENVIRONMENT_HOOKS:
         monkeypatch.delenv(hook, raising=False)
 
     source_dir = copy_tinypages(tmp_path)
     # ``some_plots.rst`` renders many images, but nowhere near this many
-    _append(source_dir / 'some_plots.rst', '\n.. pyvista-plot-thumbnail:: 999\n')
+    _append(source_dir / 'some_plots.rst', '\n.. pyvista-opengraph-thumbnail:: 999\n')
 
     html_dir = tmp_path / 'html'
     returncode, out, err = _run_sphinx_build(
@@ -630,7 +630,7 @@ def test_plot_thumbnail_out_of_range_warns(tmp_path: Path, monkeypatch: pytest.M
     )
 
     assert returncode != 0  # ``--keep-going`` still reports the warning at the end
-    assert "'pyvista-plot-thumbnail' selects image 999" in f'{out}\n{err}'
+    assert "'pyvista-opengraph-thumbnail' selects image 999" in f'{out}\n{err}'
     assert meta_tags(html_dir / 'some_plots.html').get('og:image') == (
         f'{OPENGRAPH_SITE_URL}_images/some_plots-1_00_00.png'
     )

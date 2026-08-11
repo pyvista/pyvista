@@ -87,46 +87,11 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 **Open Graph previews**
 
-When `sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_
-is enabled, every page that renders at least one ``pyvista-plot`` image also gets
-that image as its ``og:image`` link preview, and every page gets its leading prose
-as its ``og:description``. This requires no configuration beyond the usual
-``ogp_site_url``; see ``pyvista_plot_opengraph`` and
-``pyvista_opengraph_description`` below to opt out.
-
-By default the *first* image rendered on the page is used. Use the
-``pyvista-plot-thumbnail`` directive to pick a different one::
-
-    .. pyvista-plot-thumbnail:: 2
-
-The argument is the one-based position of the image among *all* plot images on
-the page, counting in document order and ignoring how the underlying files
-happen to be named. Negative values count backwards from the last image. Unlike
-``sphinxext-opengraph``'s own ``:og:image:`` field, this directive is not
-restricted to the top of the page, so it can be written next to the code it
-refers to. In a docstring the natural place is the start of the ``Examples``
-section::
-
-    .. pyvista-plot-thumbnail:: 2
-
-    Create a sphere.
-
-    >>> import pyvista as pv
-    >>> pv.Sphere().plot()
-
-    And a cube, which is the image used for link previews.
-
-    >>> pv.Cube().plot()
-
-The directive renders nothing. Open Graph metadata is per-document, so a page can
-only have one link preview: using the directive more than once on a page warns and
-keeps the first selection. This can happen without either docstring being wrong,
-on pages that document several objects at once via ``:members:``.
-
-Sphinx-Gallery examples are handled separately: their ``og:image`` always follows
-the gallery's own thumbnail selection -- the full resolution version of it -- so
-that link previews match the gallery. Using ``pyvista-plot-thumbnail`` in a gallery
-example is an error; use ``# sphinx_gallery_thumbnail_number = <number>`` instead.
+Pages built with this directive get a sensible Open Graph link preview for free --
+see :mod:`pyvista.ext._opengraph_image` and :mod:`pyvista.ext._opengraph_description`,
+or :ref:`opengraph_docs` for the user-facing documentation. Nothing about that
+support is specific to this directive; it is wired up here only so that a project
+enabling ``pyvista.ext.plot_directive`` does not have to enable it separately.
 
 
 **Configuration options**
@@ -164,16 +129,9 @@ The plot directive has the following configuration options:
     pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
-    pyvista_plot_opengraph : bool or None, default: None
-        Set each page's Open Graph ``og:image`` from the images rendered on that
-        page. When ``None``, this is enabled automatically if ``sphinxext.opengraph``
-        is enabled. Set to ``True`` or ``False`` to explicitly opt in or out.
-
-    pyvista_opengraph_description : bool or None, default: None
-        Set each page's Open Graph ``og:description`` from the page's leading
-        prose. When ``None``, this is enabled automatically if
-        ``sphinxext.opengraph`` is enabled. Set to ``True`` or ``False`` to
-        explicitly opt in or out.
+See :ref:`opengraph_docs` for ``pyvista_opengraph_image`` and
+``pyvista_opengraph_description``, which this directive enables by default but
+which are not specific to it.
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
@@ -201,8 +159,8 @@ that indexed is incompatible with parallel builds due to race conditions.
     to reliably locate this directive's generated code within a page.
 
 .. versionadded:: 0.49
-    Open Graph link previews. See ``pyvista_plot_opengraph``,
-    ``pyvista_opengraph_description`` and the ``pyvista-plot-thumbnail`` directive.
+    Open Graph link previews for any page built with this directive. See
+    :ref:`opengraph_docs`.
 
 """
 
@@ -212,31 +170,26 @@ import doctest
 import hashlib
 import os
 from pathlib import Path
-import posixpath
 import re
 import shutil
 import textwrap
 import traceback
 from typing import TYPE_CHECKING
 from typing import ClassVar
-import urllib.parse
 
-from docutils import nodes
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
-from sphinx.util import logging
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista as pv
-from pyvista.ext import _opengraph
 from pyvista.ext import _opengraph_description
+from pyvista.ext import _opengraph_image
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from collections.abc import Iterator
 
     from sphinx.application import Sphinx
     from sphinx.config import Config
@@ -245,18 +198,8 @@ if TYPE_CHECKING:
 pv.BUILDING_GALLERY = True
 pv.OFF_SCREEN = True
 
-logger = logging.getLogger(__name__)
-
 # CSS class marking the ``.. container::`` node that wraps this directive's generated source code
 _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
-
-# Name of the directory this directive renders its images into. Sphinx rewrites image
-# URIs at write time, but keeps the original path in ``image['candidates']``, which is
-# how the Open Graph integration tells this directive's images apart from any others.
-_PLOT_BUILD_DIRNAME = 'pyvista_plot_directive'
-
-# Document attribute holding the ``pyvista-plot-thumbnail`` argument for the page
-_THUMBNAIL_NUMBER = '_pyvista_plot_thumbnail_number'
 
 
 # -----------------------------------------------------------------------------
@@ -326,70 +269,12 @@ class PlotDirective(Directive):
             raise self.error(str(e))
 
 
-class PlotThumbnailDirective(Directive):
-    """The ``.. pyvista-plot-thumbnail::`` directive.
-
-    Selects which of the page's plot images is used as its Open Graph image. See
-    the module's docstring.
-    """
-
-    has_content = False
-    required_arguments = 1
-    optional_arguments = 0
-    final_argument_whitespace = False
-
-    def run(self):
-        """Record the page's thumbnail number and render nothing."""
-        document = self.state_machine.document
-        env = document.settings.env
-        argument = self.arguments[0].strip()
-        try:
-            number = int(argument)
-        except ValueError:
-            msg = f"'pyvista-plot-thumbnail' expects an integer, got {argument!r}."
-            raise self.error(msg)
-        if number == 0:
-            msg = (
-                "'pyvista-plot-thumbnail' is one-based, so 0 is not a valid image number. "
-                'Use 1 for the first image, or -1 for the last one.'
-            )
-            raise self.error(msg)
-        if _is_sphinx_gallery_document(env.app, env.docname):
-            raise self.error(_gallery_thumbnail_error(number))
-        if _THUMBNAIL_NUMBER in document.attributes:
-            # A warning rather than an error: Open Graph metadata is per-document, so a
-            # page documenting several objects collides even when each of their
-            # docstrings is correct on its own generated page.
-            logger.warning(
-                'this page already selects plot image %d as its Open Graph image, and a '
-                'page can only have one. Ignoring this selection of image %d.',
-                document.attributes[_THUMBNAIL_NUMBER],
-                number,
-                location=(env.docname, self.lineno),
-                type='pyvista',
-                subtype='plot_thumbnail',
-            )
-            return []
-        document.attributes[_THUMBNAIL_NUMBER] = number
-        return []
-
-
-def _gallery_thumbnail_error(number: int) -> str:
-    """Return guidance for choosing a Sphinx-Gallery example's thumbnail."""
-    return (
-        "'pyvista-plot-thumbnail' cannot be used in a Sphinx-Gallery example, because its "
-        'Open Graph image always follows the gallery thumbnail. '
-        f"Use '# sphinx_gallery_thumbnail_number = {number}' instead."
-    )
-
-
 def setup(app: Sphinx):
     """Set up the plot directive."""
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
-    app.add_directive('pyvista-plot-thumbnail', PlotThumbnailDirective)
 
     legacy_keys = [
         'plot_include_source',
@@ -433,9 +318,7 @@ def setup(app: Sphinx):
     # Connect the new function to the 'config-inited' event
     app.connect('config-inited', check_counter_for_parallel_build)
 
-    _opengraph.add_auto_config_value(app, 'pyvista_plot_opengraph')
-    # Must run before ``sphinxext.opengraph`` renders its tags at the default priority
-    app.connect('html-page-context', _set_opengraph_image, priority=400)
+    _opengraph_image.setup(app)
     _opengraph_description.setup(app)
 
     app.add_config_value('pyvista_plot_use_counter', False, 'env')
@@ -452,159 +335,6 @@ def setup(app: Sphinx):
         'parallel_write_safe': True,
         'version': pv.__version__,
     }
-
-
-# -----------------------------------------------------------------------------
-# Open Graph images
-# -----------------------------------------------------------------------------
-
-
-def _set_opengraph_image(  # noqa: PLR0917
-    app: Sphinx,
-    pagename: str,
-    templatename: str,  # noqa: ARG001
-    context: dict,
-    doctree: nodes.document | None,
-) -> None:
-    """Point the page's ``og:image`` at the plot it renders.
-
-    This runs at write time rather than while reading, because that is the first
-    point at which an image's final ``_images`` filename is known: hash-based
-    naming, parallel reads and Sphinx's own de-duplication all mean a directive
-    cannot predict where its output ends up.
-    """
-    if doctree is None or not app.config.pyvista_plot_opengraph:
-        return
-    fields = _opengraph.page_fields(app, context)
-    if fields is None or 'og:image' in fields:
-        return
-
-    if _is_sphinx_gallery_document(app, pagename):
-        image = _gallery_opengraph_image(app, pagename, doctree)
-    else:
-        image = _plot_opengraph_image(app, pagename, doctree)
-    if image is not None:
-        fields['og:image'] = image
-
-
-def _plot_opengraph_image(app: Sphinx, docname: str, doctree: nodes.document) -> str | None:
-    """Return the URL of the plot image selected by a page."""
-    images = [image for image in _image_nodes(doctree) if _is_plot_directive_image(image)]
-    if not images:
-        return None
-
-    number = doctree.get(_THUMBNAIL_NUMBER, 1)
-    index = number - 1 if number > 0 else number
-    if not -len(images) <= index < len(images):
-        # Not fatal: a build that skips plots legitimately renders fewer images than
-        # the page selects from, so fall back to the first image either way
-        if not (app.config.pyvista_plot_skip or app.config.pyvista_plot_skip_optional):
-            logger.warning(
-                "'pyvista-plot-thumbnail' selects image %d, but this page only renders "
-                '%d plot image(s). Using the first one.',
-                number,
-                len(images),
-                location=docname,
-                type='pyvista',
-                subtype='plot_thumbnail',
-            )
-        index = 0
-    # Sphinx has already rewritten the URI to the image's path relative to this page
-    return _absolute_url(app, docname, images[index]['uri'])
-
-
-def _gallery_opengraph_image(app: Sphinx, docname: str, doctree: nodes.document) -> str | None:
-    """Return the URL of the image Sphinx-Gallery uses as an example's thumbnail.
-
-    The full resolution image is preferred over the gallery's own thumbnail file,
-    which is too small to make a good link preview, but it is always the same image
-    the gallery shows.
-    """
-    source = Path(app.env.doc2path(docname))
-    number, path = _gallery_thumbnail_selection(source.with_suffix('.py'))
-    if path is None:
-        prefix = f'sphx_glr_{source.stem}_'
-        images = [
-            image
-            for image in _image_nodes(doctree)
-            if posixpath.basename(image['uri']).startswith(prefix)
-        ]
-        index = number - 1 if number > 0 else number
-        if -len(images) <= index < len(images):
-            # Sphinx-Gallery copies its images into the output verbatim
-            return _absolute_url(app, docname, _output_image_path(app, images[index]['uri']))
-
-    # ``sphinx_gallery_thumbnail_path`` and failed examples both leave a thumbnail with
-    # no full resolution counterpart on the page
-    thumbnails = (source.parent / 'images' / 'thumb').glob(f'sphx_glr_{source.stem}_thumb.*')
-    thumbnail = next(thumbnails, None)
-    if thumbnail is None:
-        return None
-    return _absolute_url(app, docname, _output_image_path(app, thumbnail.name))
-
-
-def _gallery_thumbnail_selection(source: Path) -> tuple[int, str | None]:
-    """Return the ``sphinx_gallery_thumbnail_{number,path}`` chosen by an example."""
-    try:
-        from sphinx_gallery.py_source_parser import extract_file_config  # noqa: PLC0415
-    except ImportError:  # pragma: no cover
-        return 1, None
-    try:
-        file_conf = extract_file_config(source.read_text(encoding='utf-8'))
-    except OSError:
-        # Gallery index pages and ``sg_execution_times`` have no example source
-        return 1, None
-    # A number always wins over a path, matching ``sphinx_gallery.gen_rst.save_thumbnail``
-    number = file_conf.get('thumbnail_number')
-    if number is None:
-        path = file_conf.get('thumbnail_path')
-        return 1, None if path is None else str(path)
-    return int(number), None
-
-
-def _image_nodes(doctree: nodes.document) -> Iterator[nodes.Element]:
-    """Yield every image-bearing node of a page, in document order.
-
-    Sphinx-Gallery renders its images as ``imgsgnode`` rather than
-    :class:`docutils.nodes.image`, so nodes are matched on carrying a ``uri``.
-    """
-    for node in doctree.findall(nodes.Element):
-        if node.get('uri'):
-            yield node
-
-
-def _is_plot_directive_image(node: nodes.Element) -> bool:
-    """Return whether an image node was rendered by the plot directive."""
-    # ``candidates`` keeps the pre-rewrite path, which still names the build directory
-    original = (node.get('candidates') or {}).get('*') or node.get('uri', '')
-    return _PLOT_BUILD_DIRNAME in original.replace(os.sep, '/').split('/')
-
-
-def _output_image_path(app: Sphinx, name: str) -> str:
-    """Return the path of an output image, relative to the page being written."""
-    return posixpath.join(app.builder.imgpath, posixpath.basename(name))
-
-
-def _absolute_url(app: Sphinx, docname: str, path: str) -> str:
-    """Return the public URL of *path*, which is relative to *docname*."""
-    site_url = app.config.ogp_canonical_url or app.config.ogp_site_url
-    page_url = urllib.parse.urljoin(site_url, app.builder.get_target_uri(docname))
-    return urllib.parse.urljoin(page_url, path)
-
-
-def _is_sphinx_gallery_document(app: Sphinx, docname: str) -> bool:
-    """Return whether *docname* is a generated Sphinx-Gallery document."""
-    gallery_conf = getattr(app.config, 'sphinx_gallery_conf', None)
-    if not gallery_conf:
-        return False
-
-    gallery_dirs = gallery_conf.get('gallery_dirs', ())
-    if isinstance(gallery_dirs, str):
-        gallery_dirs = (gallery_dirs,)
-    directories = [Path(directory).as_posix().strip('/') for directory in gallery_dirs]
-    return any(
-        docname == directory or docname.startswith(f'{directory}/') for directory in directories
-    )
 
 
 # -----------------------------------------------------------------------------
