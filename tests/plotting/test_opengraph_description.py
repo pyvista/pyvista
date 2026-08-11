@@ -113,6 +113,68 @@ def test_description_fits_the_configured_length(html_dir: Path, page: str):
     assert len(description(html_dir, page)) <= DESCRIPTION_LENGTH
 
 
+# The description Sphinx-Gallery's own furniture would otherwise leak into
+GALLERY_DEFAULT_DESCRIPTION = (
+    'Draw two lines without selecting a thumbnail, so the gallery uses the first. '
+    'The first image is the gallery thumbnail by default. The second image is never '
+    'used as a thumbnail.'
+)
+
+
+def test_gallery_description_excludes_raw_download_note(html_dir: Path):
+    """Sphinx-Gallery's own "go to the end to download" banner never leaks in.
+
+    ``tinypages`` does not configure ``sphinx-examples-as-code``'s
+    ``gallery_downloads`` (see ``test_gallery_description_with_examples_as_code``
+    for that), so this is Sphinx-Gallery's default download banner, not the one
+    ``sphinx-examples-as-code`` inserts in its place when enabled.
+    """
+    page = html_dir / 'gallery' / 'plot_gallery_default.html'
+    html = page.read_text(encoding='utf-8')
+    # Not a vacuous check: the banner actually is on the page, just not in the description
+    assert 'sphx-glr-download-link-note' in html
+    assert 'download the full example code' in html
+
+    assert description(html_dir, 'gallery/plot_gallery_default.html') == (
+        GALLERY_DEFAULT_DESCRIPTION
+    )
+
+
+def test_gallery_description_with_examples_as_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """The description agrees whether or not ``sphinx-examples-as-code`` overrides the page.
+
+    With ``gallery_downloads`` enabled, ``sphinx-examples-as-code`` removes
+    Sphinx-Gallery's own download banner and replaces it with its own "Download
+    Python source code | Download Jupyter notebook" links -- also not in the
+    description, and via an entirely different node structure (a plain paragraph of
+    ``download_reference`` nodes, not a ``sphx-glr-download-link-note`` admonition).
+    """
+    for hook in ENVIRONMENT_HOOKS:
+        monkeypatch.delenv(hook, raising=False)
+    source_dir = copy_tinypages(tmp_path)
+    with (source_dir / 'conf.py').open('a', encoding='utf-8') as conf:
+        conf.write("\nsphinx_examples_as_code_conf['gallery_downloads'] = True\n")
+
+    html_dir = tmp_path / 'html'
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, tmp_path / 'doctrees'),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    page = html_dir / 'gallery' / 'plot_gallery_default.html'
+    html = page.read_text(encoding='utf-8')
+    # Not a vacuous check: the override actually took effect
+    assert 'sphx-glr-download-link-note' not in html
+    assert 'Download Python source code' in html
+    assert 'Download Jupyter notebook' in html
+
+    assert description(html_dir, 'gallery/plot_gallery_default.html') == (
+        GALLERY_DEFAULT_DESCRIPTION
+    )
+
+
 @pytest.mark.parametrize('page', ['index.html', 'some_plots.html', 'some_autodocs.html'])
 def test_plain_meta_description_matches(html_dir: Path, page: str):
     """The plain ``description`` meta tag says the same thing as ``og:description``."""
