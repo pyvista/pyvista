@@ -209,6 +209,9 @@ OPENGRAPH_PAGES = (
         # Described by its docstring summary rather than by its Examples section
         path='api/core/_autosummary/pyvista.ImageDataFilters.resample.html',
         description='Resample the image to modify its dimensions and spacing.',
+        # Set by ``.. autoopengraph_thumbnail:: 9``, rather than the default first
+        # image (a tiny synthetic 3x2 grayscale gradient)
+        image_number=9,
     ),
     OpenGraphPage(
         id='gallery',
