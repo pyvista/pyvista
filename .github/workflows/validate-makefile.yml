@@ -70,7 +70,7 @@ jobs:
 
       # `tox -e test -- --collect-only` forwards `--collect-only` to pytest,
       # validating the tox env, the Makefile target, and the pytest CLI in
-      # one go. `test-core`, `test-plotting`, `doctest`, `docs`, `docs-test`,
+      # one go. `test-core`, `test-plotting`, `doctest`, `docs`, `docs-test-build`,
       # `docs-test-images`, and `integration` use the same
       # `tox -e <env> -- $(ARGS)` pattern, so `make -n` is enough to catch
       # recipe drift without rebuilding each tox env.
@@ -83,7 +83,7 @@ jobs:
           make -n test-plotting
           make -n doctest
           make -n docs
-          make -n docs-test
+          make -n docs-test-build
           make -n docs-test-images
           make -n integration PROJECT=trame
 
@@ -91,7 +91,7 @@ jobs:
       - name: Check tox env names
         run: |
           uv run tox list | tee tox-envs.txt
-          for env in test test-core test-plotting mypy docs-build docs-test \
+          for env in test test-core test-plotting mypy docs-build docs-test-build \
                      docs-test-images integration-trame integration-geovista \
                      integration-mne integration-pyvistaqt doctest-modules \
                      doctest-local; do

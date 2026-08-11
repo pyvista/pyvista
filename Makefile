@@ -2,7 +2,7 @@
 
 .DEFAULT_GOAL := test
 
-.PHONY: all clean coverage coverage-xml coverage-html coverage-docs docstyle sync-deps lint typecheck test test-core test-plotting doctest docs docs-test docs-test-images integration
+.PHONY: all clean coverage coverage-xml coverage-html coverage-docs docstyle sync-deps lint typecheck test test-core test-plotting doctest docs docs-test-build docs-test-images integration
 
 # `all` is a POSIX convention; alias it to the default test target.
 all: test
@@ -83,11 +83,11 @@ docs:
 	@echo "Building documentation (matches CI)"
 	@uv run tox -e docs-build -- $(ARGS)
 
-# Test the built documentation (matches CI `tox -e docs-test`).
+# Test the built documentation (matches CI `tox -e docs-test-build`).
 # Requires `make docs` to have been run first.
-docs-test:
+docs-test-build:
 	@echo "Testing built documentation (matches CI)"
-	@uv run tox -e docs-test -- $(ARGS)
+	@uv run tox -e docs-test-build -- $(ARGS)
 
 # Compare documentation-embedded images against cached baselines (matches CI
 # `tox -e docs-test-images`). Requires `make docs` to have been run first.
