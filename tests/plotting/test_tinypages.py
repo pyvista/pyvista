@@ -87,12 +87,6 @@ def _sphinx_build_cmd(
 
     cmd.extend([str(source_dir), str(html_dir)])
 
-    if sys.platform == 'win32':
-        # matplotlib's plot directive fails to render images on Windows CI, resulting in Sphinx
-        # warnings that are fatal errors under ``-W``. Seems like a genuine bug with matplotlib
-        # and not PyVista, so we ignore the warnings.
-        cmd += ['-D', 'suppress_warnings=image.not_readable,download.not_readable']
-
     return cmd
 
 
@@ -377,17 +371,6 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
     # Sphinx auto-copies to `_images`. Expect matplotlib's directive output to exist as well
     images_dir = html_dir / '_images'
     actual_html_images = {p.name for p in images_dir.rglob('*') if p.is_file()}
-
-    if sys.platform == 'win32':
-        # Bug with matplotlib not generating files on Windows. Assert the expected files don't
-        # exist, then patch the output to pretend like they exist to work around this bug
-        assert not (case.expected_images_matplotlib & actual_html_images), (
-            "matplotlib's plot unexpectedly rendered on Windows, "
-            'the workaround below can likely be removed.'
-        )
-        for missing in case.expected_images_matplotlib:
-            (images_dir / missing).touch()
-        actual_html_images = {p.name for p in images_dir.rglob('*') if p.is_file()}
 
     expected_images = case.expected_images | case.expected_images_matplotlib
     assert actual_html_images == expected_images
