@@ -190,7 +190,6 @@ pv.OFF_SCREEN = True
 # CSS class marking the ``.. container::`` node that wraps this directive's generated source code
 _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
 
-
 # -----------------------------------------------------------------------------
 # Registration hook
 # -----------------------------------------------------------------------------
