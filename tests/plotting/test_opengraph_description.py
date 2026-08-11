@@ -121,9 +121,25 @@ def test_plain_meta_description_matches(html_dir: Path, page: str):
     assert tags.get('description') == tags['og:description']
 
 
-def test_description_can_be_disabled(tmp_path: Path):
-    """``pyvista_opengraph_description = False`` leaves ``sphinxext-opengraph`` alone."""
-    html_dir = _build(tmp_path, 'pyvista_opengraph_description = False')
+def test_description_requires_sphinxext_opengraph(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Enabling ``pyvista.ext.opengraph`` is a no-op without ``sphinxext.opengraph``.
+
+    There is no config value to opt out while both are enabled: listing
+    ``pyvista.ext.opengraph`` -- here, indirectly, through the plot directive -- is
+    itself the opt-in, so the only way to get nothing is to not also enable
+    ``sphinxext.opengraph``.
+    """
+    for hook in ENVIRONMENT_HOOKS:
+        monkeypatch.delenv(hook, raising=False)
+    source_dir = copy_tinypages(tmp_path)
+    conf = source_dir / 'conf.py'
+    conf.write_text(conf.read_text(encoding='utf-8').replace("'sphinxext.opengraph',\n", ''))
+
+    html_dir = tmp_path / 'html'
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, tmp_path / 'doctrees'),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     # Without PyVista's parser, the ``desc`` node hides the whole docstring
     assert 'og:description' not in meta_tags(html_dir / 'some_autodocs.html')

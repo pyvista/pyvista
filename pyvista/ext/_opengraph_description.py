@@ -41,8 +41,6 @@ if TYPE_CHECKING:
 
     from sphinx.application import Sphinx
 
-CONFIG_VALUE = 'pyvista_opengraph_description'
-
 # Whole subtrees that never contain page prose.
 _SKIP_NODES: tuple[type[nodes.Node], ...] = (
     nodes.Invisible,  # comments, targets, ``currentmodule``, index entries, ...
@@ -96,7 +94,6 @@ def setup(app: Sphinx) -> None:
     Called by :mod:`pyvista.ext.plot_directive`; this module is not a Sphinx
     extension of its own.
     """
-    _opengraph.add_auto_config_value(app, CONFIG_VALUE)
     # Must run before ``sphinxext.opengraph`` renders its tags at the default priority
     app.connect('html-page-context', _set_description, priority=400)
 
@@ -109,7 +106,7 @@ def _set_description(  # noqa: PLR0917
     doctree: nodes.document | None,
 ) -> None:
     """Override ``og:description`` with the page's leading prose."""
-    if doctree is None or not getattr(app.config, CONFIG_VALUE):
+    if doctree is None or not _opengraph.is_enabled(app):
         return
     fields = _opengraph.page_fields(app, context)
     if fields is None or 'og:description' in fields:

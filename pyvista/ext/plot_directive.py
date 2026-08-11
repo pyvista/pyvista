@@ -129,9 +129,8 @@ The plot directive has the following configuration options:
     pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
-See :ref:`opengraph_docs` for ``pyvista_opengraph_image`` and
-``pyvista_opengraph_description``, which this directive enables by default but
-which are not specific to it.
+See :ref:`opengraph_docs` for the Open Graph integration this directive enables
+by default, which has no configuration of its own and is not specific to it.
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.

@@ -1,10 +1,16 @@
 """Shared plumbing for PyVista's ``sphinxext-opengraph`` integration.
 
 Both halves of the integration -- the ``og:image`` support in
-:mod:`pyvista.ext.plot_directive` and the ``og:description`` support in
+:mod:`pyvista.ext._opengraph_image` and the ``og:description`` support in
 :mod:`pyvista.ext._opengraph_description` -- are meant to be transparent: a
-project only has to enable ``sphinxext.opengraph`` and set ``ogp_site_url``.
-This module holds the small amount of machinery they share to make that work.
+project only has to enable both ``pyvista.ext.opengraph`` and
+``sphinxext.opengraph``, and set ``ogp_site_url``. This module holds the small
+amount of machinery they share to make that work.
+
+There is deliberately no config value to turn either feature off while both
+extensions are enabled: enabling ``pyvista.ext.opengraph`` (directly, or via
+``pyvista.ext.plot_directive``) is itself the opt-in. A project that does not
+want it should not enable it.
 
 """
 
@@ -13,38 +19,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
-from sphinx.errors import ExtensionError
-
 if TYPE_CHECKING:
     from sphinx.application import Sphinx
-    from sphinx.config import Config
 
 #: The extension PyVista integrates with. Both features are no-ops without it.
 EXTENSION = 'sphinxext.opengraph'
 
 
-def add_auto_config_value(app: Sphinx, name: str) -> None:
-    """Register a tri-state ``True``/``False``/``None`` opt-out config value.
-
-    ``None`` means "follow ``sphinxext.opengraph``", which is resolved to a plain
-    boolean once the configuration is known.
-    """
-    app.add_config_value(name, default=None, rebuild='html', types=frozenset({bool, type(None)}))
-    app.connect('config-inited', lambda app, config: _resolve(app, config, name))
-
-
-def _resolve(app: Sphinx, config: Config, name: str) -> None:
-    """Replace a ``None`` config value with whether ``sphinxext.opengraph`` is enabled."""
-    enabled = getattr(config, name)
-    available = EXTENSION in app.extensions
-    if enabled is None:
-        setattr(config, name, available)
-    elif enabled and not available:
-        msg = (
-            f"'{name} = True' requires the '{EXTENSION}' extension. Add '{EXTENSION}' to "
-            f"'extensions' in your conf.py, or set '{name} = False'."
-        )
-        raise ExtensionError(msg)
+def is_enabled(app: Sphinx) -> bool:
+    """Return whether ``sphinxext.opengraph`` is enabled for this build."""
+    return EXTENSION in app.extensions
 
 
 def page_fields(app: Sphinx, context: dict[str, Any]) -> dict[str, str] | None:

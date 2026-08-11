@@ -1,7 +1,7 @@
 .. _opengraph_docs:
 
 Open Graph Link Previews
-=========================
+========================
 
 When someone shares a link to your documentation -- on social media, in a chat
 app, anywhere that unfurls links -- the preview card that appears is built from
@@ -11,7 +11,7 @@ description written from its own opening prose, instead of the site-wide
 defaults you would otherwise get on every page alike.
 
 Enabling
----------
+--------
 
 Nothing here is specific to plotting, or to any particular directive. Enable it on
 its own and tell ``sphinxext-opengraph`` where your documentation is published:
@@ -25,31 +25,21 @@ its own and tell ``sphinxext-opengraph`` where your documentation is published:
 
     ogp_site_url = "https://docs.example.org/"
 
-Both extensions are required: ``pyvista.ext.opengraph`` is what chooses each
-page's image and description, and
+Both extensions are required, deliberately with no config value to turn either
+off while both are enabled: ``pyvista.ext.opengraph`` is what chooses each page's
+image and description, and
 `sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_ is
-what writes the tags -- without it, PyVista does nothing here. Nothing else needs
-configuring; a page's preview image is chosen from whatever images it has, from
-any source, and its description from its own prose, whether or not the page has
-any images at all.
+what writes the tags -- without it, PyVista does nothing here. Listing both
+extensions is itself the opt-in; there is nothing else to configure. A page's
+preview image is chosen from whatever images it has, from any source, and its
+description from its own prose, whether or not the page has any images at all.
 
 If you also use :mod:`pyvista's plot directive <pyvista.ext.plot_directive>`, it
-enables this extension for you -- you do not need to list both.
-
-If you would rather keep one half of the integration and not the other, turn
-either off individually:
-
-.. code-block:: python
-
-    pyvista_opengraph_image = False
-    pyvista_opengraph_description = False
-
-Left unset, both follow ``sphinxext.opengraph``: enabled whenever it is. Setting
-either to ``True`` without ``sphinxext.opengraph`` in ``extensions`` is an error
-rather than a silent no-op.
+enables this extension for you -- you do not need to list both. If you would
+rather not have it, that is the one to remove; there is no separate switch.
 
 Choosing the Preview Image
----------------------------
+--------------------------
 
 By default a page previews the first image it shows. When the first image is
 only scene-setting, pick a different one with the
@@ -98,7 +88,7 @@ Pages with no images at all keep whatever site-wide ``ogp_image`` you have
 configured.
 
 Sphinx-Gallery Examples
-------------------------
+-----------------------
 
 Gallery examples already have a thumbnail, and their preview always matches it,
 so a shared link shows the same picture as the gallery. PyVista uses the full
@@ -113,7 +103,7 @@ the image with Sphinx-Gallery's own comment instead:
    # sphinx_gallery_thumbnail_number = 2
 
 Preview Descriptions
-----------------------
+--------------------
 
 PyVista describes each page with its leading paragraphs of real prose, up to
 ``ogp_description_length`` characters, skipping signatures, parameter tables,
@@ -132,7 +122,7 @@ Sphinx-Gallery pages instead pick up download links, the timing footer and the
 
 
 API Reference
-==============
+=============
 
 .. automodule::
    pyvista.ext.opengraph

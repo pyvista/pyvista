@@ -39,8 +39,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-CONFIG_VALUE = 'pyvista_opengraph_image'
-
 #: Document attribute holding the ``pyvista-opengraph-thumbnail`` argument for the page
 _THUMBNAIL_NUMBER = '_pyvista_opengraph_thumbnail_number'
 
@@ -117,7 +115,6 @@ def setup(app: Sphinx) -> None:
     directive either.
     """
     app.add_directive('pyvista-opengraph-thumbnail', OpenGraphThumbnailDirective)
-    _opengraph.add_auto_config_value(app, CONFIG_VALUE)
     # Must run before ``sphinxext.opengraph`` renders its tags at the default priority
     app.connect('html-page-context', _set_image, priority=400)
 
@@ -136,7 +133,7 @@ def _set_image(  # noqa: PLR0917
     naming, parallel reads and Sphinx's own de-duplication all mean a page cannot
     predict where its own output ends up while it is still being parsed.
     """
-    if doctree is None or not getattr(app.config, CONFIG_VALUE):
+    if doctree is None or not _opengraph.is_enabled(app):
         return
     fields = _opengraph.page_fields(app, context)
     if fields is None or 'og:image' in fields:
