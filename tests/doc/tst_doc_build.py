@@ -215,14 +215,7 @@ OPENGRAPH_PAGES = (
         image_number=2,
     ),
     OpenGraphPage(
-        id='autoopengraph-thumbnail-explicit-directive',
-        # ``.. autoopengraph_thumbnail::`` next to an explicit ``.. pyvista-plot::``
-        path='api/core/_autosummary/pyvista.ImageDataFilters.dilate.html',
-        description='Morphologically dilate grayscale or binary data.',
-        image_number=3,
-    ),
-    OpenGraphPage(
-        id='autoopengraph-thumbnail-numpydoc-wrapped',
+        id='api',
         # ``.. autoopengraph_thumbnail::`` inside an Examples section numpydoc wraps
         # in ``.. pyvista-plot::`` on its own
         path='api/core/_autosummary/pyvista.ImageDataFilters.crop.html',
