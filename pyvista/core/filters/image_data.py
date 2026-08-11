@@ -694,6 +694,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. pyvista-opengraph-thumbnail:: 4
+
         Load a grayscale image.
 
         >>> import numpy as np
@@ -1318,6 +1320,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. pyvista-opengraph-thumbnail:: 3
+
         .. pyvista-plot::
             :force_static:
 

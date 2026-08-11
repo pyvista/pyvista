@@ -3289,6 +3289,8 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. pyvista-opengraph-thumbnail:: 2
+
         First, generate 30 points on circle and plot them.
 
         >>> import pyvista as pv

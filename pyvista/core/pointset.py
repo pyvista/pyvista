@@ -674,6 +674,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Examples
     --------
+    .. pyvista-opengraph-thumbnail:: 3
+
     >>> import vtk
     >>> import numpy as np
     >>> from pyvista import examples
