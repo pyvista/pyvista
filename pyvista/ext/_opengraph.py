@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 EXTENSION = 'sphinxext.opengraph'
 
 
-def is_enabled(app: Sphinx) -> bool:
+def is_enabled(app: Sphinx) -> bool:  # numpydoc ignore=RT01
     """Return whether ``sphinxext.opengraph`` is enabled for this build."""
     return EXTENSION in app.extensions
 
