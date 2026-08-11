@@ -546,4 +546,3 @@ def test_interactive_plot_moves(tmp_path: Path):
         server.shutdown()
         server.server_close()
         os.chdir(old_cwd)
-
