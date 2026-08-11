@@ -189,11 +189,10 @@ Homepage = 'https://github.com/pyvista/pyvista'
 [project.scripts]
 pyvista = "pyvista.__main__:main"
 
-[tool.uv.workspace]
-members = ['sphinx-autoopengraph']
-
 [tool.uv.sources]
-sphinx-autoopengraph = { workspace = true }
+# TODO: switch to a PyPI release (or at least a pinned tag/commit) once
+# https://github.com/user27182/sphinx-autoopengraph has one.
+sphinx-autoopengraph = { git = "https://github.com/user27182/sphinx-autoopengraph.git", branch = "main" }
 
 [tool.setuptools.dynamic]
 version = { attr = 'pyvista._version.__version__' }
@@ -516,7 +515,6 @@ banned-from = [
   'os.path',
   'pickle',
   'platform',
-  'posixpath',
   're',
   'reprlib',
   'shlex',

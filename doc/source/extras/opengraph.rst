@@ -5,68 +5,31 @@ Open Graph Link Previews
 
 When someone shares a link to your documentation -- on social media, in a chat
 app, anywhere that unfurls links -- the preview card that appears is built from
-the page's `Open Graph <https://ogp.me>`_ metadata. ``sphinx-autoopengraph``
-fills that metadata in for you, so every page previews with an image it
-actually shows and a description written from its own opening prose, instead
-of the site-wide defaults you would otherwise get on every page alike.
+the page's `Open Graph <https://ogp.me>`_ metadata. PyVista's documentation uses
+`sphinx-autoopengraph <https://github.com/user27182/sphinx-autoopengraph>`_ for
+this, so every page previews with an image it actually shows and a description
+written from its own opening prose, instead of the same site-wide defaults on
+every page alike.
 
-Enabling
---------
-
-Nothing here is specific to plotting, or to any particular directive. Enable it
-on its own and tell ``sphinxext-opengraph`` where your documentation is
-published:
+It is a separate, independent extension -- nothing about it is specific to
+PyVista or to :mod:`pyvista.ext.plot_directive`, and enabling one does not
+enable the other, so a project using the plot directive that wants this too
+has to add both:
 
 .. code-block:: python
 
     extensions = [
+        "pyvista.ext.plot_directive",
         "sphinx_autoopengraph",
         "sphinxext.opengraph",
     ]
 
     ogp_site_url = "https://docs.example.org/"
 
-Both extensions are required: ``sphinx_autoopengraph`` is what chooses each
-page's image and description, and
-`sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_ is
-what writes the tags -- without it, ``sphinx_autoopengraph`` does nothing.
-Listing both extensions is itself the opt-in. A page's preview image is chosen
-from whatever images it has, regardless of source. Its description is built
-from its own prose, whether or not the page has any images at all.
-
-Nothing here is specific to :mod:`PyVista's plot directive <pyvista.ext.plot_directive>`
-either. The two are independent extensions -- enabling one does not enable the
-other -- but are meant to be used together: if you use the plot directive and
-want Open Graph previews too, add both to ``extensions``.
-
-Either half can be turned off on its own:
-
-.. code-block:: python
-
-    autoopengraph_image = False
-    autoopengraph_description = False
-
-Both default to ``True``.
-
-Choosing the Preview Image
---------------------------
-
-By default a page previews the first image it shows. When the first image is
-only scene-setting, pick a different one with the ``autoopengraph_thumbnail``
-directive:
-
-.. code-block:: rst
-
-   .. autoopengraph_thumbnail:: 2
-
-The argument is the one-based position of the image among *all* images on the
-page, in the order they appear. It counts images, not files, so it is unaffected
-by how generated filenames happen to be numbered. Negative values count
-backwards from the last image.
-
-The directive renders nothing and can go anywhere on the page, so you can put it
-next to the code it refers to rather than at the top. In a docstring, the
-natural place is the start of the ``Examples`` section:
+By default a page previews the first image it shows. Pick a different one with
+the ``autoopengraph_thumbnail`` directive, which can go anywhere on the page
+and renders nothing -- in a docstring, the natural place is the start of the
+``Examples`` section:
 
 .. code-block:: rst
 
@@ -83,56 +46,8 @@ natural place is the start of the ``Examples`` section:
 
    >>> pv.Sphere().clip().plot()
 
-Two things to be aware of when using it:
-
-- A page has a single ``<head>``, so it gets a single link preview -- section
-  anchors cannot have their own. Using the directive twice on one page warns and
-  keeps the first selection. This can happen without either docstring being
-  wrong, on pages that document several objects at once with ``:members:``.
-- Selecting an image the page does not have also warns, and falls back to the
-  first image. That warning is suppressed while PyVista's own ``pyvista_plot_skip``
-  or ``pyvista_plot_skip_optional`` is enabled, since those builds deliberately
-  render fewer images.
-
-Pages with no images at all keep whatever site-wide ``ogp_image`` you have
-configured.
-
-Sphinx-Gallery Examples
------------------------
-
-Gallery examples already have a thumbnail, and their preview always matches it,
-so a shared link shows the same picture as the gallery. The full resolution
-version of that image is used rather than the gallery's own thumbnail file,
-which is too small to preview well.
-
-Using ``autoopengraph_thumbnail`` in a gallery example is an error. Select
-the image with Sphinx-Gallery's own comment instead:
-
-.. code-block:: python
-
-    # sphinx_gallery_thumbnail_number = 2
-
-Preview Descriptions
---------------------
-
-Each page is described by its leading paragraphs of real prose, up to
-``ogp_description_length`` characters, skipping signatures, parameter tables,
-code blocks, admonitions, download links, captions and navigation. For a
-docstring that is its summary and the paragraphs following it; for a gallery
-example it is the example's introduction. The plain ``description`` meta tag is
-set to match, unless ``ogp_enable_meta_description`` is disabled.
-
-This replaces ``sphinxext-opengraph``'s own description, which is built from
-every piece of text on a page until it has enough characters. That works poorly
-for generated pages: autodoc output is invisible to it, because Sphinx wraps
-docstrings in a node it treats as an admonition and skips, so API pages end up
-described by whatever sits outside that node -- or not described at all.
-Sphinx-Gallery pages instead pick up download links, the timing footer and the
-"Gallery generated by Sphinx-Gallery" signature.
-
-
-API Reference
-=============
-
-.. automodule::
-   sphinx_autoopengraph
+See the `sphinx-autoopengraph README
+<https://github.com/user27182/sphinx-autoopengraph#readme>`_ for full
+documentation: configuration, the two independent ``autoopengraph_image`` /
+``autoopengraph_description`` switches, and how Sphinx-Gallery examples are
+handled.
