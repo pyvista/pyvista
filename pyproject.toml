@@ -97,6 +97,7 @@ test = [
   'sphinx-book-theme<1.2.0',
   'sphinx-codeautolink<0.20.0',
   'sphinx-design<0.7.0',
+  'sphinx-autoopengraph',
   'sphinx-examples-as-code<0.4',
   'sphinx-gallery<0.22.0',
   'sphinx<8.3.0',
@@ -146,6 +147,7 @@ docs = [
   'sphinx-design==0.6.1',
   'sphinx-examples-as-code==0.3.3',
   'sphinx-gallery==0.21.0',
+  'sphinx-autoopengraph',
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
@@ -186,6 +188,12 @@ Homepage = 'https://github.com/pyvista/pyvista'
 
 [project.scripts]
 pyvista = "pyvista.__main__:main"
+
+[tool.uv.workspace]
+members = ['sphinx-autoopengraph']
+
+[tool.uv.sources]
+sphinx-autoopengraph = { workspace = true }
 
 [tool.setuptools.dynamic]
 version = { attr = 'pyvista._version.__version__' }

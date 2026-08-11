@@ -1,10 +1,10 @@
 """Open Graph images chosen by position, independent of what rendered them.
 
-This is deliberately not specific to :mod:`pyvista.ext.plot_directive`: it numbers
-every image on a page -- in document order, regardless of whether a
-``pyvista-plot`` directive, a plain ``.. image::``, or anything else produced it --
-and lets a page point at the one it wants as its ``og:image``. The default is the
-first image, which is what most pages want without any selection at all.
+This is not specific to any plot-generating extension: it numbers every image
+on a page -- in document order, regardless of whether a plot directive, a plain
+``.. image::``, or anything else produced it -- and lets a page point at the one
+it wants as its ``og:image``. The default is the first image, which is what most
+pages want without any selection at all.
 
 Sphinx-Gallery pages are handled separately, since they already have a thumbnail:
 their ``og:image`` always matches the gallery's own selection, using the full
@@ -29,7 +29,7 @@ from docutils import nodes
 from docutils.parsers.rst import Directive
 from sphinx.util import logging
 
-from pyvista.ext import _opengraph
+from . import _shared
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -39,12 +39,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-#: Document attribute holding the ``pyvista-opengraph-thumbnail`` argument for the page
-_THUMBNAIL_NUMBER = '_pyvista_opengraph_thumbnail_number'
+CONFIG_VALUE = 'autoopengraph_image'
+
+#: Document attribute holding the ``autoopengraph_thumbnail`` argument for the page
+_THUMBNAIL_NUMBER = '_autoopengraph_thumbnail_number'
 
 
 class OpenGraphThumbnailDirective(Directive):
-    """The ``.. pyvista-opengraph-thumbnail::`` directive.
+    """The ``.. autoopengraph_thumbnail::`` directive.
 
     Selects which of the page's images is used as its Open Graph image. See this
     module's docstring.
@@ -55,7 +57,7 @@ class OpenGraphThumbnailDirective(Directive):
     optional_arguments = 0
     final_argument_whitespace = False
 
-    def run(self):
+    def run(self) -> list[nodes.Node]:
         """Record the page's thumbnail number and render nothing.
 
         Returns
@@ -70,11 +72,11 @@ class OpenGraphThumbnailDirective(Directive):
         try:
             number = int(argument)
         except ValueError:
-            msg = f"'pyvista-opengraph-thumbnail' expects an integer, got {argument!r}."
+            msg = f"'autoopengraph_thumbnail' expects an integer, got {argument!r}."
             raise self.error(msg)
         if number == 0:
             msg = (
-                "'pyvista-opengraph-thumbnail' is one-based, so 0 is not a valid image "
+                "'autoopengraph_thumbnail' is one-based, so 0 is not a valid image "
                 'number. Use 1 for the first image, or -1 for the last one.'
             )
             raise self.error(msg)
@@ -90,8 +92,8 @@ class OpenGraphThumbnailDirective(Directive):
                 document.attributes[_THUMBNAIL_NUMBER],
                 number,
                 location=(env.docname, self.lineno),
-                type='pyvista',
-                subtype='opengraph_thumbnail',
+                type='autoopengraph',
+                subtype='thumbnail',
             )
             return []
         document.attributes[_THUMBNAIL_NUMBER] = number
@@ -101,7 +103,7 @@ class OpenGraphThumbnailDirective(Directive):
 def _gallery_thumbnail_error(number: int) -> str:
     """Return guidance for choosing a Sphinx-Gallery example's thumbnail."""
     return (
-        "'pyvista-opengraph-thumbnail' cannot be used in a Sphinx-Gallery example, "
+        "'autoopengraph_thumbnail' cannot be used in a Sphinx-Gallery example, "
         'because its Open Graph image always follows the gallery thumbnail. '
         f"Use '# sphinx_gallery_thumbnail_number = {number}' instead."
     )
@@ -110,11 +112,11 @@ def _gallery_thumbnail_error(number: int) -> str:
 def setup(app: Sphinx) -> None:
     """Wire up Open Graph images.
 
-    Called by :mod:`pyvista.ext.plot_directive`; this module is not a Sphinx
-    extension of its own, though nothing about it is specific to the plot
-    directive either.
+    Called by :mod:`sphinx_autoopengraph`; this module is not a Sphinx extension
+    of its own.
     """
-    app.add_directive('pyvista-opengraph-thumbnail', OpenGraphThumbnailDirective)
+    app.add_directive('autoopengraph_thumbnail', OpenGraphThumbnailDirective)
+    app.add_config_value(CONFIG_VALUE, default=True, rebuild='html', types=bool)
     # Must run before ``sphinxext.opengraph`` renders its tags at the default priority
     app.connect('html-page-context', _set_image, priority=400)
 
@@ -133,9 +135,9 @@ def _set_image(  # noqa: PLR0917
     naming, parallel reads and Sphinx's own de-duplication all mean a page cannot
     predict where its own output ends up while it is still being parsed.
     """
-    if doctree is None or not _opengraph.is_enabled(app):
+    if doctree is None or not getattr(app.config, CONFIG_VALUE) or not _shared.is_enabled(app):
         return
-    fields = _opengraph.page_fields(app, context)
+    fields = _shared.page_fields(app, context)
     if fields is None or 'og:image' in fields:
         return
 
@@ -161,13 +163,13 @@ def _numbered_image(app: Sphinx, docname: str, doctree: nodes.document) -> str |
         # selects from, so fall back to the first image either way
         if not _skips_rendering(app.config):
             logger.warning(
-                "'pyvista-opengraph-thumbnail' selects image %d, but this page only "
+                "'autoopengraph_thumbnail' selects image %d, but this page only "
                 'has %d image(s). Using the first one.',
                 number,
                 len(images),
                 location=docname,
-                type='pyvista',
-                subtype='opengraph_thumbnail',
+                type='autoopengraph',
+                subtype='thumbnail',
             )
         index = 0
     # Sphinx has already rewritten the URI to the image's path relative to this page
@@ -177,7 +179,7 @@ def _numbered_image(app: Sphinx, docname: str, doctree: nodes.document) -> str |
 def _skips_rendering(config: Config) -> bool:
     """Return whether a build is known to deliberately render fewer images.
 
-    Soft dependency on :mod:`pyvista.ext.plot_directive`'s own configuration: this
+    Soft dependency on PyVista's ``pyvista.ext.plot_directive`` configuration: this
     module works without it, it just cannot explain a mismatch as well.
     """
     return bool(

@@ -15,7 +15,7 @@ def make_sphere():
     this whole section in a ``pyvista-plot`` directive, so this also covers the
     directive being nested inside another one.
 
-    .. pyvista-opengraph-thumbnail:: 2
+    .. autoopengraph_thumbnail:: 2
 
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
     >>> from samples import make_sphere

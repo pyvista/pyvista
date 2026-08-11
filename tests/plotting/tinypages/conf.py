@@ -35,9 +35,9 @@ pygments_style = 'sphinx'
 extensions = [
     'numpydoc',
     'matplotlib.sphinxext.plot_directive',
-    'pyvista.ext.opengraph',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'sphinx_autoopengraph',
     'sphinx_examples_as_code',
     'sphinx.ext.autosummary',
     'sphinx_codeautolink',
@@ -66,8 +66,8 @@ sphinx_gallery_conf = {
 }
 
 # -- Open Graph -----------------------------------------------------------
-# PyVista's integration needs no configuration of its own; ``ogp_site_url`` is the
-# only thing ``sphinxext-opengraph`` requires to emit absolute URLs.
+# No configuration of ``sphinx_autoopengraph`` itself is required; ``ogp_site_url``
+# is the only thing ``sphinxext-opengraph`` requires to emit absolute URLs.
 ogp_site_url = 'https://docs.example.org/'
 ogp_image = 'https://docs.example.org/_static/fallback.png'
 

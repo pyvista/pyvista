@@ -277,7 +277,7 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Examples
     --------
-    .. pyvista-opengraph-thumbnail:: 2
+    .. autoopengraph_thumbnail:: 2
 
     Fit a plane to a random point cloud.
 
@@ -442,7 +442,7 @@ def fit_line_to_points(
 
     Examples
     --------
-    .. pyvista-opengraph-thumbnail:: 2
+    .. autoopengraph_thumbnail:: 2
 
     Download a point cloud. The points trace a path along topographical surface.
 

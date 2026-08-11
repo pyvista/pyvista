@@ -87,7 +87,7 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 **Open Graph previews**
 
-Add :mod:`pyvista.ext.opengraph` to ``extensions`` for a sensible Open Graph link
+Add ``sphinx_autoopengraph`` to ``extensions`` for a sensible Open Graph link
 preview on every page. It is a separate, independent extension -- nothing about
 it is specific to plotting, and it is not enabled by enabling this directive.
 See :ref:`opengraph_docs`.

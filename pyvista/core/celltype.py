@@ -888,7 +888,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
     Examples
     --------
-    .. pyvista-opengraph-thumbnail:: 13
+    .. autoopengraph_thumbnail:: 13
 
     Create a single cube. Notice how the cell type is defined using the
     ``CellType``.

@@ -973,7 +973,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
-        .. pyvista-opengraph-thumbnail:: 3
+        .. autoopengraph_thumbnail:: 3
 
         Get the default point size and visualize it.
 

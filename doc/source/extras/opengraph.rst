@@ -5,51 +5,59 @@ Open Graph Link Previews
 
 When someone shares a link to your documentation -- on social media, in a chat
 app, anywhere that unfurls links -- the preview card that appears is built from
-the page's `Open Graph <https://ogp.me>`_ metadata. PyVista fills that metadata
-in for you, so every page previews with an image it actually shows and a
-description written from its own opening prose, instead of the site-wide
-defaults you would otherwise get on every page alike.
+the page's `Open Graph <https://ogp.me>`_ metadata. ``sphinx-autoopengraph``
+fills that metadata in for you, so every page previews with an image it
+actually shows and a description written from its own opening prose, instead
+of the site-wide defaults you would otherwise get on every page alike.
 
 Enabling
 --------
 
-Nothing here is specific to plotting, or to any particular directive. Enable it on
-its own and tell ``sphinxext-opengraph`` where your documentation is published:
+Nothing here is specific to plotting, or to any particular directive. Enable it
+on its own and tell ``sphinxext-opengraph`` where your documentation is
+published:
 
 .. code-block:: python
 
     extensions = [
-        "pyvista.ext.opengraph",
+        "sphinx_autoopengraph",
         "sphinxext.opengraph",
     ]
 
     ogp_site_url = "https://docs.example.org/"
 
-Both extensions are required, deliberately with no config value to turn either
-off while both are enabled: ``pyvista.ext.opengraph`` is what chooses each page's
-image and description, and
+Both extensions are required: ``sphinx_autoopengraph`` is what chooses each
+page's image and description, and
 `sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_ is
-what writes the tags -- without it, PyVista does nothing here. Listing both
-extensions is itself the opt-in; there is nothing else to configure. A page's
-preview image is chosen from whatever images it has, regardless of source, and its
-description is built from its own prose whether or not the page has any images at
-all.
+what writes the tags -- without it, ``sphinx_autoopengraph`` does nothing.
+Listing both extensions is itself the opt-in. A page's preview image is chosen
+from whatever images it has, regardless of source. Its description is built
+from its own prose, whether or not the page has any images at all.
 
-Nothing here is specific to :mod:`pyvista's plot directive <pyvista.ext.plot_directive>`
+Nothing here is specific to :mod:`PyVista's plot directive <pyvista.ext.plot_directive>`
 either. The two are independent extensions -- enabling one does not enable the
-other -- but are meant to be used together: if you use the plot directive and want
-Open Graph previews too, add both to ``extensions``.
+other -- but are meant to be used together: if you use the plot directive and
+want Open Graph previews too, add both to ``extensions``.
+
+Either half can be turned off on its own:
+
+.. code-block:: python
+
+    autoopengraph_image = False
+    autoopengraph_description = False
+
+Both default to ``True``.
 
 Choosing the Preview Image
 --------------------------
 
 By default a page previews the first image it shows. When the first image is
-only scene-setting, pick a different one with the
-``pyvista-opengraph-thumbnail`` directive:
+only scene-setting, pick a different one with the ``autoopengraph_thumbnail``
+directive:
 
 .. code-block:: rst
 
-   .. pyvista-opengraph-thumbnail:: 2
+   .. autoopengraph_thumbnail:: 2
 
 The argument is the one-based position of the image among *all* images on the
 page, in the order they appear. It counts images, not files, so it is unaffected
@@ -64,7 +72,7 @@ natural place is the start of the ``Examples`` section:
 
    Examples
    --------
-   .. pyvista-opengraph-thumbnail:: 2
+   .. autoopengraph_thumbnail:: 2
 
    Create a sphere.
 
@@ -82,8 +90,8 @@ Two things to be aware of when using it:
   keeps the first selection. This can happen without either docstring being
   wrong, on pages that document several objects at once with ``:members:``.
 - Selecting an image the page does not have also warns, and falls back to the
-  first image. That warning is suppressed while ``pyvista_plot_skip`` or
-  ``pyvista_plot_skip_optional`` is enabled, since those builds deliberately
+  first image. That warning is suppressed while PyVista's own ``pyvista_plot_skip``
+  or ``pyvista_plot_skip_optional`` is enabled, since those builds deliberately
   render fewer images.
 
 Pages with no images at all keep whatever site-wide ``ogp_image`` you have
@@ -93,11 +101,11 @@ Sphinx-Gallery Examples
 -----------------------
 
 Gallery examples already have a thumbnail, and their preview always matches it,
-so a shared link shows the same picture as the gallery. PyVista uses the full
-resolution version of that image rather than the gallery's own thumbnail file,
+so a shared link shows the same picture as the gallery. The full resolution
+version of that image is used rather than the gallery's own thumbnail file,
 which is too small to preview well.
 
-Using ``pyvista-opengraph-thumbnail`` in a gallery example is an error. Select
+Using ``autoopengraph_thumbnail`` in a gallery example is an error. Select
 the image with Sphinx-Gallery's own comment instead:
 
 .. code-block:: python
@@ -107,7 +115,7 @@ the image with Sphinx-Gallery's own comment instead:
 Preview Descriptions
 --------------------
 
-PyVista describes each page with its leading paragraphs of real prose, up to
+Each page is described by its leading paragraphs of real prose, up to
 ``ogp_description_length`` characters, skipping signatures, parameter tables,
 code blocks, admonitions, download links, captions and navigation. For a
 docstring that is its summary and the paragraphs following it; for a gallery
@@ -127,4 +135,4 @@ API Reference
 =============
 
 .. automodule::
-   pyvista.ext.opengraph
+   sphinx_autoopengraph

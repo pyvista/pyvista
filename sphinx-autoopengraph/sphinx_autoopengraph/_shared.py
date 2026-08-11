@@ -1,16 +1,16 @@
-"""Shared plumbing for PyVista's ``sphinxext-opengraph`` integration.
+"""Shared plumbing for this extension's ``sphinxext-opengraph`` integration.
 
 Both halves of the integration -- the ``og:image`` support in
-``pyvista.ext._opengraph_image`` and the ``og:description`` support in
-``pyvista.ext._opengraph_description`` -- are meant to be transparent: a
-project only has to enable both ``pyvista.ext.opengraph`` and
+``sphinx_autoopengraph._image`` and the ``og:description`` support in
+``sphinx_autoopengraph._description`` -- are meant to be transparent: a
+project only has to enable both ``sphinx_autoopengraph`` and
 ``sphinxext.opengraph``, and set ``ogp_site_url``. This module holds the small
 amount of machinery they share to make that work.
 
-There is deliberately no config value to turn either feature off while both
-extensions are enabled: enabling ``pyvista.ext.opengraph`` (directly, or via
-``pyvista.ext.plot_directive``) is itself the opt-in. A project that does not
-want it should not enable it.
+Enabling ``sphinx_autoopengraph`` is itself the opt-in, independent of any other
+extension. Each of the two features can be turned off individually with
+``autoopengraph_image`` / ``autoopengraph_description`` (both default ``True``);
+a project that wants neither should not enable this extension at all.
 
 """
 
@@ -22,7 +22,7 @@ from typing import Any
 if TYPE_CHECKING:
     from sphinx.application import Sphinx
 
-#: The extension PyVista integrates with. Both features are no-ops without it.
+#: The extension this integrates with. Both features are no-ops without it.
 EXTENSION = 'sphinxext.opengraph'
 
 

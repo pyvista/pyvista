@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from sphinx_autoopengraph._description import _truncate
 
-from pyvista.ext._opengraph_description import _truncate
 from pyvista.plotting import system_supports_plotting
 from tests.plotting.test_tinypages import ENVIRONMENT_HOOKS
 from tests.plotting.test_tinypages import _run_sphinx_build
@@ -183,13 +183,25 @@ def test_plain_meta_description_matches(html_dir: Path, page: str):
     assert tags.get('description') == tags['og:description']
 
 
-def test_description_requires_sphinxext_opengraph(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """Enabling ``pyvista.ext.opengraph`` is a no-op without ``sphinxext.opengraph``.
+def test_description_can_be_disabled(tmp_path: Path):
+    """``autoopengraph_description = False`` leaves ``sphinxext-opengraph`` alone.
 
-    There is no config value to opt out while both are enabled: listing
-    ``pyvista.ext.opengraph`` -- here, indirectly, through the plot directive -- is
-    itself the opt-in, so the only way to get nothing is to not also enable
-    ``sphinxext.opengraph``.
+    Distinct from disabling ``sphinx_autoopengraph`` entirely: the image half
+    stays on, only the description parser turns off.
+    """
+    html_dir = _build(tmp_path, 'autoopengraph_description = False')
+
+    # Without our own parser, the `desc` node hides the whole docstring
+    assert 'og:description' not in meta_tags(html_dir / 'some_autodocs.html')
+    # The image half is unaffected
+    assert 'og:image' in meta_tags(html_dir / 'some_autodocs.html')
+
+
+def test_description_requires_sphinxext_opengraph(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Enabling ``sphinx_autoopengraph`` is a no-op without ``sphinxext.opengraph``.
+
+    Listing ``sphinx_autoopengraph`` is itself the opt-in, so the only way to get
+    nothing is to not also enable ``sphinxext.opengraph``.
     """
     for hook in ENVIRONMENT_HOOKS:
         monkeypatch.delenv(hook, raising=False)

@@ -2,8 +2,8 @@
 
 ``sphinxext-opengraph`` derives ``og:description`` by walking every leaf node of a
 page until it has enough characters. That works for hand-written prose pages, but
-produces poor results for the two page shapes that make up most of PyVista's
-documentation:
+produces poor results for two common page shapes, generated API references and
+Sphinx-Gallery examples chief among them:
 
 * API pages. Sphinx wraps autodoc output in a ``desc`` node, which subclasses
   :class:`docutils.nodes.Admonition`, and ``sphinxext-opengraph`` skips all
@@ -34,12 +34,14 @@ from typing import Any
 from docutils import nodes
 from sphinx import addnodes
 
-from pyvista.ext import _opengraph
+from . import _shared
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from sphinx.application import Sphinx
+
+CONFIG_VALUE = 'autoopengraph_description'
 
 # Whole subtrees that never contain page prose.
 _SKIP_NODES: tuple[type[nodes.Node], ...] = (
@@ -91,9 +93,10 @@ _SKIP_CLASSES = frozenset(
 def setup(app: Sphinx) -> None:
     """Wire up Open Graph descriptions.
 
-    Called by :mod:`pyvista.ext.plot_directive`; this module is not a Sphinx
-    extension of its own.
+    Called by :mod:`sphinx_autoopengraph`; this module is not a Sphinx extension
+    of its own.
     """
+    app.add_config_value(CONFIG_VALUE, default=True, rebuild='html', types=bool)
     # Must run before ``sphinxext.opengraph`` renders its tags at the default priority
     app.connect('html-page-context', _set_description, priority=400)
 
@@ -106,9 +109,9 @@ def _set_description(  # noqa: PLR0917
     doctree: nodes.document | None,
 ) -> None:
     """Override ``og:description`` with the page's leading prose."""
-    if doctree is None or not _opengraph.is_enabled(app):
+    if doctree is None or not getattr(app.config, CONFIG_VALUE) or not _shared.is_enabled(app):
         return
-    fields = _opengraph.page_fields(app, context)
+    fields = _shared.page_fields(app, context)
     if fields is None or 'og:description' in fields:
         return
 

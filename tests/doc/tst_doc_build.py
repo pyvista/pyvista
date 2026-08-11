@@ -218,16 +218,16 @@ OPENGRAPH_PAGES = (
         image_number=2,
     ),
     OpenGraphPage(
-        id='pyvista-opengraph-thumbnail-explicit-directive',
-        # A page with a ``.. pyvista-opengraph-thumbnail::`` selection next to an
+        id='autoopengraph-thumbnail-explicit-directive',
+        # A page with a ``.. autoopengraph-thumbnail::`` selection next to an
         # explicit ``.. pyvista-plot::`` directive, rather than one numpydoc wraps
         path='api/core/_autosummary/pyvista.ImageDataFilters.dilate.html',
         description='Morphologically dilate grayscale or binary data.',
         image_number=3,
     ),
     OpenGraphPage(
-        id='pyvista-opengraph-thumbnail-numpydoc-wrapped',
-        # A page with a ``.. pyvista-opengraph-thumbnail::`` selection nested inside a
+        id='autoopengraph-thumbnail-numpydoc-wrapped',
+        # A page with a ``.. autoopengraph-thumbnail::`` selection nested inside a
         # ``pyvista-plot`` directive that numpydoc wraps its ``Examples`` section in.
         # The first image is only the page's own docstring calling itself "for
         # context" -- the actual crop only shows up starting with the second.
@@ -241,7 +241,7 @@ OPENGRAPH_PAGES = (
         # are plain ``.. image::`` directives pointing at ``pyvista.examples.cells``'
         # already-built output, resolved from an ``IMAGE-HASH-PLACEHOLDER`` at write
         # time. Selecting image 13 (WEDGE) instead of the default first (a single,
-        # nearly invisible VERTEX point) is the reason ``pyvista-opengraph-thumbnail``
+        # nearly invisible VERTEX point) is the reason ``autoopengraph-thumbnail``
         # counts image *nodes*, not anything specific to the plot directive.
         path='api/utilities/_autosummary/pyvista.CellType.html',
         description='Define types of cells.',

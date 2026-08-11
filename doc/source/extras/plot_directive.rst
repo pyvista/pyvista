@@ -136,7 +136,7 @@ browser by navigating to ``http://localhost:11000``.
 Open Graph link previews
 ========================
 
-Add ``pyvista.ext.opengraph`` to your ``extensions`` for a sensible Open Graph
+Add ``sphinx_autoopengraph`` to your ``extensions`` for a sensible Open Graph
 link preview on every page, images from this directive included. It is a
 separate, independent extension -- nothing about it is specific to plotting, and
 enabling this directive does not enable it. See :ref:`opengraph_docs`.

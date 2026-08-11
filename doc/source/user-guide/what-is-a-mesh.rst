@@ -1,6 +1,6 @@
 .. _what_is_a_mesh:
 
-.. pyvista-opengraph-thumbnail:: 7
+.. autoopengraph_thumbnail:: 7
 
 What is a Mesh?
 ===============
