@@ -120,6 +120,7 @@ extensions = [
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext.opengraph',
     'pyvista.ext.plot_directive',
     'sphinx_examples_as_code',
     'pyvista.ext.viewer_directive',

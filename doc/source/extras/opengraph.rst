@@ -35,9 +35,10 @@ preview image is chosen from whatever images it has, regardless of source, and i
 description is built from its own prose whether or not the page has any images at
 all.
 
-If you also use :mod:`pyvista's plot directive <pyvista.ext.plot_directive>`, it
-enables this extension for you -- you do not need to list both. If you would
-rather not have it, that is the one to remove; there is no separate switch.
+Nothing here is specific to :mod:`pyvista's plot directive <pyvista.ext.plot_directive>`
+either. The two are independent extensions -- enabling one does not enable the
+other -- but are meant to be used together: if you use the plot directive and want
+Open Graph previews too, add both to ``extensions``.
 
 Choosing the Preview Image
 --------------------------

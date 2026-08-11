@@ -14,13 +14,13 @@ default repeated on every page:
 
     ogp_site_url = 'https://docs.example.org/'
 
-Nothing here is specific to PyVista or to ``pyvista.ext.plot_directive``: image
-selection numbers whatever images a page has, from any source, and description
-extraction works on any page of prose. Enabling ``pyvista.ext.plot_directive``
-enables this too, so a project using it does not need to add this extension
-separately -- see ``pyvista.ext._opengraph_image`` and
-``pyvista.ext._opengraph_description`` for the two halves, and
-:ref:`opengraph_docs` for the user-facing documentation.
+Nothing here is specific to PyVista or to :mod:`pyvista.ext.plot_directive`. Image
+selection numbers whatever images a page has, regardless of source. Description
+extraction works on any page of prose. The two extensions are independent --
+enabling one does not enable the other -- but they are meant to be used together:
+a project using the plot directive that wants this too has to add both. See
+``pyvista.ext._opengraph_image`` and ``pyvista.ext._opengraph_description`` for
+the two halves, and :ref:`opengraph_docs` for the user-facing documentation.
 
 """
 

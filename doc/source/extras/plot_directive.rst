@@ -136,9 +136,10 @@ browser by navigating to ``http://localhost:11000``.
 Open Graph link previews
 ========================
 
-Any page built with this directive also gets a sensible Open Graph link preview,
-covered separately in :ref:`opengraph_docs` since none of it is specific to this
-directive.
+Add ``pyvista.ext.opengraph`` to your ``extensions`` for a sensible Open Graph
+link preview on every page, images from this directive included. It is a
+separate, independent extension -- nothing about it is specific to plotting, and
+enabling this directive does not enable it. See :ref:`opengraph_docs`.
 
 
 API Reference

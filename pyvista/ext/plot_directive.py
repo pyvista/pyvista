@@ -87,11 +87,10 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 **Open Graph previews**
 
-Enabling this directive also enables :mod:`pyvista.ext.opengraph`, which is a
-separate, self-contained extension with nothing in it specific to plotting or to
-this directive -- see its docstring, or :ref:`opengraph_docs` for the user-facing
-documentation. It is enabled here only for convenience, so that a project already
-using this directive does not have to list a second extension to get it.
+Add :mod:`pyvista.ext.opengraph` to ``extensions`` for a sensible Open Graph link
+preview on every page. It is a separate, independent extension -- nothing about
+it is specific to plotting, and it is not enabled by enabling this directive.
+See :ref:`opengraph_docs`.
 
 
 **Configuration options**
@@ -129,9 +128,6 @@ The plot directive has the following configuration options:
     pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
-See :ref:`opengraph_docs` for the Open Graph integration this directive enables
-by default, which has no configuration of its own and is not specific to it.
-
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
@@ -156,10 +152,6 @@ that indexed is incompatible with parallel builds due to race conditions.
     node. This has no effect on rendering, but allows other independent tooling
     (e.g. the https://github.com/pyvista/sphinx-examples-as-code Sphinx extension)
     to reliably locate this directive's generated code within a page.
-
-.. versionadded:: 0.49
-    Open Graph link previews for any page built with this directive. See
-    :ref:`opengraph_docs`.
 
 """
 
@@ -314,9 +306,6 @@ def setup(app: Sphinx):
 
     # Connect the new function to the 'config-inited' event
     app.connect('config-inited', check_counter_for_parallel_build)
-
-    # Idempotent: a no-op if the project also lists 'pyvista.ext.opengraph' itself
-    app.setup_extension('pyvista.ext.opengraph')
 
     app.add_config_value('pyvista_plot_use_counter', False, 'env')
     app.add_config_value('pyvista_plot_include_source', True, False)
