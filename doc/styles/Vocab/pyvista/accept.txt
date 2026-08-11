@@ -104,8 +104,8 @@ codecov
 colorcet
 colormap
 colormaps
-config
 conda
+config
 data's
 dataclass
 dataframes
