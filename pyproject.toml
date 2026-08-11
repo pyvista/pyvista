@@ -574,6 +574,10 @@ pyvista = "pv"
   'T20',
   'TID251',
 ]
+'examples/02-plot/composite_picking.py' = ['ARG001']
+'examples/02-plot/distance_measurement.py' = ['ARG001']
+'examples/99-advanced/customize_trame_toolbar.py' = ['ARG001']
+'examples/99-advanced/sphere_eversion.py' = ['PLR0917']
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'hooks/*' = ['INP001']
 'pyvista/__init__.py' = ['ANN']

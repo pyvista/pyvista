@@ -73,6 +73,13 @@ repos:
         files: ^context7\.json$
         args: ["--schemafile", ".github/schemas/context7.json"]
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.1
+    hooks:
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix, --show-fixes]
+
   - repo: local
     hooks:
       - id: warn_external
@@ -102,13 +109,12 @@ repos:
         language: pygrep
         entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
-    hooks:
-      - id: ruff-format
-      - id: ruff-check
-        args: [--fix, --show-fixes]
+      - id: no-lint-suppression-comments
+        name: "No lint suppression comments (fix it, or use pyproject.toml per-file-ignores)"
+        language: pygrep
+        entry: '#\s*(?:noqa|ruff)'
+        files: ^examples/
+        types: [python]
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.9.6
