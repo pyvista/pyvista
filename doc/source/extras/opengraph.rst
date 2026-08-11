@@ -6,7 +6,7 @@ Open Graph Link Previews
 When someone shares a link to your documentation -- on social media, in a chat
 app, anywhere that unfurls links -- the preview card that appears is built from
 the page's `Open Graph <https://ogp.me>`_ metadata. PyVista's documentation uses
-`sphinx-autoopengraph <https://github.com/user27182/sphinx-autoopengraph>`_ for
+`sphinx-autoopengraph <https://github.com/pyvista/sphinx-autoopengraph>`_ for
 this, so every page previews with an image it actually shows and a description
 written from its own opening prose, instead of the same site-wide defaults on
 every page alike.
@@ -47,7 +47,7 @@ and renders nothing -- in a docstring, the natural place is the start of the
    >>> pv.Sphere().clip().plot()
 
 See the `sphinx-autoopengraph README
-<https://github.com/user27182/sphinx-autoopengraph#readme>`_ for full
+<https://github.com/pyvista/sphinx-autoopengraph#readme>`_ for full
 documentation: configuration, the two independent ``autoopengraph_image`` /
 ``autoopengraph_description`` switches, and how Sphinx-Gallery examples are
 handled.
