@@ -456,14 +456,7 @@ def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
 
 @flaky_test(exceptions=(AssertionError,))
 def test_tinypages_all_extensions_integration(tmp_path: Path):
-    """Check that every PyVista-authored Sphinx extension builds together without conflict.
-
-    ``sphinx_examples_as_code``, the plot directive, Sphinx-Gallery and
-    ``sphinx_autoopengraph`` are all enabled at once here, the same as the real docs
-    build. This does not re-check any one extension's own behaviour in detail --
-    each has its own tests for that -- only that the full stack produces a working
-    build with none of them stepping on each other.
-    """
+    """Check that every PyVista-authored Sphinx extension builds together."""
     source_dir = copy_tinypages(tmp_path)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
@@ -473,8 +466,6 @@ def test_tinypages_all_extensions_integration(tmp_path: Path):
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
-    # Sanity check only: ``sphinx_autoopengraph`` still produces sensible tags on an
-    # autodoc page alongside ``sphinx_examples_as_code``'s own download-link rewriting.
     tags = meta_tags(html_dir / 'some_autodocs.html')
     assert tags.get('og:image')
     assert tags.get('og:description')
@@ -573,8 +564,3 @@ def test_interactive_plot_moves(tmp_path: Path):
         server.server_close()
         os.chdir(old_cwd)
 
-
-# Extension-internal behaviour (thumbnail selection, gallery rejection, config toggles,
-# standalone operation, description parsing) is covered by ``sphinx-autoopengraph``'s own
-# test suite: https://github.com/user27182/sphinx-autoopengraph. The tests below only check
-# that it resolves correctly against PyVista's own plot directive and its image naming.
