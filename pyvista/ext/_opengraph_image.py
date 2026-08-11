@@ -46,8 +46,8 @@ _THUMBNAIL_NUMBER = '_pyvista_opengraph_thumbnail_number'
 class OpenGraphThumbnailDirective(Directive):
     """The ``.. pyvista-opengraph-thumbnail::`` directive.
 
-    Selects which of the page's images is used as its Open Graph image. See
-    :mod:`pyvista.ext._opengraph_image`.
+    Selects which of the page's images is used as its Open Graph image. See this
+    module's docstring.
     """
 
     has_content = False

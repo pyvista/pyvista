@@ -1,8 +1,8 @@
 """Shared plumbing for PyVista's ``sphinxext-opengraph`` integration.
 
 Both halves of the integration -- the ``og:image`` support in
-:mod:`pyvista.ext._opengraph_image` and the ``og:description`` support in
-:mod:`pyvista.ext._opengraph_description` -- are meant to be transparent: a
+``pyvista.ext._opengraph_image`` and the ``og:description`` support in
+``pyvista.ext._opengraph_description`` -- are meant to be transparent: a
 project only has to enable both ``pyvista.ext.opengraph`` and
 ``sphinxext.opengraph``, and set ``ogp_site_url``. This module holds the small
 amount of machinery they share to make that work.

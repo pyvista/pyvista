@@ -18,8 +18,8 @@ Nothing here is specific to PyVista or to ``pyvista.ext.plot_directive``: image
 selection numbers whatever images a page has, from any source, and description
 extraction works on any page of prose. Enabling ``pyvista.ext.plot_directive``
 enables this too, so a project using it does not need to add this extension
-separately -- see :mod:`pyvista.ext._opengraph_image` and
-:mod:`pyvista.ext._opengraph_description` for the two halves, and
+separately -- see ``pyvista.ext._opengraph_image`` and
+``pyvista.ext._opengraph_description`` for the two halves, and
 :ref:`opengraph_docs` for the user-facing documentation.
 
 """

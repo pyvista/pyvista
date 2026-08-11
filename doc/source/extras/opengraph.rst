@@ -31,8 +31,9 @@ image and description, and
 `sphinxext-opengraph <https://github.com/wpilibsuite/sphinxext-opengraph>`_ is
 what writes the tags -- without it, PyVista does nothing here. Listing both
 extensions is itself the opt-in; there is nothing else to configure. A page's
-preview image is chosen from whatever images it has, from any source, and its
-description from its own prose, whether or not the page has any images at all.
+preview image is chosen from whatever images it has, regardless of source, and its
+description is built from its own prose whether or not the page has any images at
+all.
 
 If you also use :mod:`pyvista's plot directive <pyvista.ext.plot_directive>`, it
 enables this extension for you -- you do not need to list both. If you would
@@ -100,7 +101,7 @@ the image with Sphinx-Gallery's own comment instead:
 
 .. code-block:: python
 
-   # sphinx_gallery_thumbnail_number = 2
+    # sphinx_gallery_thumbnail_number = 2
 
 Preview Descriptions
 --------------------
