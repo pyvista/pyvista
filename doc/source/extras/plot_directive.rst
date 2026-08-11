@@ -132,7 +132,6 @@ browser by navigating to ``http://localhost:11000``.
     # Start a local server for the interactive scene
     python -m http.server 11000 --directory _build/html
 
-
 API Reference
 =============
 
