@@ -246,3 +246,16 @@ def test_opengraph_image(page: OpenGraphPage):
     expected = page_images(path)[page.image_number - 1]
 
     assert meta_tags(path).get('og:image') == f'{OGP_SITE_URL}_images/{expected}'
+
+
+def test_opengraph_image_root_page_uses_the_site_wide_default():
+    """The root page opts out of selecting one of its own images.
+
+    It has real content images below the fold, but ``.. autoopengraph_thumbnail:: 0``
+    keeps its preview as the curated site banner (``ogp_image`` in ``conf.py``)
+    rather than an arbitrary one of those.
+    """
+    path = Path(HTML_DIR) / 'index.html'
+    assert path.is_file(), f'{path} not found. Build the documentation first.'
+
+    assert meta_tags(path).get('og:image') == f'{OGP_SITE_URL}_static/pyvista_banner_small.png'

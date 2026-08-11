@@ -1,5 +1,7 @@
 .. title:: PyVista
 
+.. autoopengraph_thumbnail:: 0
+
 .. raw:: html
 
     <div class="banner">
