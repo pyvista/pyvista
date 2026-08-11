@@ -208,14 +208,6 @@ OPENGRAPH_PAGES = (
         image_number=7,
     ),
     OpenGraphPage(
-        id='api',
-        # Described by its docstring summary rather than its Examples section, and
-        # selects its image with ``.. autoopengraph_thumbnail::``
-        path='api/core/_autosummary/pyvista.ImageDataFilters.resample.html',
-        description='Resample the image to modify its dimensions and spacing.',
-        image_number=9,
-    ),
-    OpenGraphPage(
         id='gallery',
         # A gallery example selecting its image with ``sphinx_gallery_thumbnail_number``
         path='examples/00-load/create_circular_arc.html',
