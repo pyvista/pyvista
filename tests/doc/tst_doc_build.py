@@ -204,6 +204,9 @@ OPENGRAPH_PAGES = (
         id='prose',
         path='user-guide/what-is-a-mesh.html',
         description='In PyVista, a mesh is any spatially referenced information',
+        # Set by ``.. autoopengraph_thumbnail:: 7``, rather than the default first
+        # image (a sparse point cloud, not representative of the page)
+        image_number=7,
     ),
     OpenGraphPage(
         id='api',
