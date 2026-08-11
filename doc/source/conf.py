@@ -597,6 +597,17 @@ suppress_warnings = [
 # resolves. This makes all groups on a page share one running scope instead.
 codeautolink_concat_default = True
 
+# TEMPORARY diagnostic: pages that should have plenty of resolvable names (pv.Sphere,
+# .plot(), .resample(), ...) are showing zero sphinx-codeautolink links on the real,
+# full site, with nothing in sphinx_warnings.txt to explain why -- these default to
+# off, so failures have been entirely silent. Turn them on to see what's actually
+# happening. This build promotes warnings to errors (-W), so expect the docs-build job
+# to report failure while these are on; the warnings file and HTML are still produced
+# either way (both later steps run unconditionally). Revert once diagnosed.
+codeautolink_warn_on_failed_resolve = True
+codeautolink_warn_on_missing_inventory = True
+codeautolink_warn_on_default_parse_fail = True
+
 import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
