@@ -634,3 +634,37 @@ def test_opengraph_thumbnail_out_of_range_warns(tmp_path: Path, monkeypatch: pyt
     assert meta_tags(html_dir / 'some_plots.html').get('og:image') == (
         f'{OPENGRAPH_SITE_URL}_images/some_plots-1_00_00.png'
     )
+
+
+def test_opengraph_extension_works_standalone(tmp_path: Path):
+    """``pyvista.ext.opengraph`` needs neither the plot directive nor PyVista plots.
+
+    It has to work for a project that renders no PyVista content at all: nothing
+    about image or description selection is specific to the plot directive.
+    """
+    source_dir = tmp_path / 'source'
+    source_dir.mkdir()
+    (source_dir / 'conf.py').write_text(
+        "extensions = ['pyvista.ext.opengraph', 'sphinxext.opengraph']\n"
+        "root_doc = 'index'\n"
+        "ogp_site_url = 'https://docs.example.org/'\n",
+        encoding='utf-8',
+    )
+    (source_dir / 'index.rst').write_text(
+        'Standalone\n==========\n\n'
+        '.. image:: https://docs.example.org/_static/photo.png\n\n'
+        'A plain page with an ordinary image and its own leading prose.\n',
+        encoding='utf-8',
+    )
+
+    html_dir = tmp_path / 'html'
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, tmp_path / 'doctrees'),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    tags = meta_tags(html_dir / 'index.html')
+    assert tags.get('og:image') == 'https://docs.example.org/_static/photo.png'
+    assert tags.get('og:description') == (
+        'A plain page with an ordinary image and its own leading prose.'
+    )

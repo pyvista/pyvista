@@ -87,11 +87,11 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 **Open Graph previews**
 
-Pages built with this directive get a sensible Open Graph link preview for free --
-see :mod:`pyvista.ext._opengraph_image` and :mod:`pyvista.ext._opengraph_description`,
-or :ref:`opengraph_docs` for the user-facing documentation. Nothing about that
-support is specific to this directive; it is wired up here only so that a project
-enabling ``pyvista.ext.plot_directive`` does not have to enable it separately.
+Enabling this directive also enables :mod:`pyvista.ext.opengraph`, which is a
+separate, self-contained extension with nothing in it specific to plotting or to
+this directive -- see its docstring, or :ref:`opengraph_docs` for the user-facing
+documentation. It is enabled here only for convenience, so that a project already
+using this directive does not have to list a second extension to get it.
 
 
 **Configuration options**
@@ -185,8 +185,6 @@ import jinja2  # Sphinx dependency.
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista as pv
-from pyvista.ext import _opengraph_description
-from pyvista.ext import _opengraph_image
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -318,8 +316,8 @@ def setup(app: Sphinx):
     # Connect the new function to the 'config-inited' event
     app.connect('config-inited', check_counter_for_parallel_build)
 
-    _opengraph_image.setup(app)
-    _opengraph_description.setup(app)
+    # Idempotent: a no-op if the project also lists 'pyvista.ext.opengraph' itself
+    app.setup_extension('pyvista.ext.opengraph')
 
     app.add_config_value('pyvista_plot_use_counter', False, 'env')
     app.add_config_value('pyvista_plot_include_source', True, False)
