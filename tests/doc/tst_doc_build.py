@@ -190,7 +190,11 @@ class OpenGraphPage:
     path: str
     description: str
     #: One-based position of the expected preview among the images the page shows.
+    #: Ignored when `image` is set.
     image_number: int = 1
+    #: Exact expected `og:image` URL, for a page whose preview isn't one of its
+    #: own images (e.g. the root page's `ogp_image` fallback).
+    image: str | None = None
 
 
 OPENGRAPH_PAGES = (
@@ -224,6 +228,18 @@ OPENGRAPH_PAGES = (
         description='Define types of cells.',
         image_number=13,
     ),
+    OpenGraphPage(
+        id='root',
+        # Opts out of selecting one of its own images with
+        # ``.. autoopengraph_thumbnail:: none``, so its preview is the site-wide
+        # default rather than one of its own real content images below the fold
+        path='index.html',
+        description=(
+            'PyVista is the foundational Python library for 3D visualization and mesh '
+            'analysis in scientific computing and engineering.'
+        ),
+        image=f'{OGP_SITE_URL}_static/pyvista_banner_small.png',
+    ),
 )
 
 
@@ -243,19 +259,9 @@ def test_opengraph_image(page: OpenGraphPage):
     path = Path(HTML_DIR) / page.path
     assert path.is_file(), f'{path} not found. Build the documentation first.'
 
-    expected = page_images(path)[page.image_number - 1]
+    if page.image is not None:
+        expected = page.image
+    else:
+        expected = f'{OGP_SITE_URL}_images/{page_images(path)[page.image_number - 1]}'
 
-    assert meta_tags(path).get('og:image') == f'{OGP_SITE_URL}_images/{expected}'
-
-
-def test_opengraph_image_root_page_uses_the_site_wide_default():
-    """The root page opts out of selecting one of its own images.
-
-    It has real content images below the fold, but ``.. autoopengraph_thumbnail:: none``
-    keeps its preview as the curated site banner (``ogp_image`` in ``conf.py``)
-    rather than an arbitrary one of those.
-    """
-    path = Path(HTML_DIR) / 'index.html'
-    assert path.is_file(), f'{path} not found. Build the documentation first.'
-
-    assert meta_tags(path).get('og:image') == f'{OGP_SITE_URL}_static/pyvista_banner_small.png'
+    assert meta_tags(path).get('og:image') == expected
