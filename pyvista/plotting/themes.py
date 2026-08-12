@@ -35,8 +35,8 @@ from __future__ import annotations
 from enum import Enum
 import json
 import os
-import pathlib
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -55,8 +55,7 @@ from .opts import PointSpriteShape
 from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
-from .theme_registry import _resolve_dotted_path
-from .theme_registry import _resolve_theme
+from .theme_registry import _resolve_theme_like
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -66,6 +65,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import ThemeOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -110,7 +110,7 @@ def load_theme(filename):
     return Theme.from_dict(theme_dict)
 
 
-def set_plot_theme(theme):
+def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     """Set plotting parameters to a predefined theme using a string or ``Theme``.
 
     Parameters
@@ -164,27 +164,7 @@ def set_plot_theme(theme):
     """
     import pyvista  # noqa: PLC0415
 
-    if isinstance(theme, str):
-        if ':' in theme:
-            cls = _resolve_dotted_path(theme)
-            pyvista.global_theme.load_theme(cls())
-            return
-        resolved = _resolve_theme(theme)
-        if resolved is None:
-            allowed = ', '.join(_available_theme_names())
-            msg = (
-                f'Theme "{theme}" not found. Available themes: {allowed}. '
-                'To load from an arbitrary module use "package.module:ClassName".'
-            )
-            raise ValueError(msg)
-        pyvista.global_theme.load_theme(resolved)
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        msg = (
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
-        raise TypeError(msg)
+    pyvista.global_theme.load_theme(_resolve_theme_like(theme))
 
 
 class _LightingConfig(_ConfigBase):
@@ -1416,7 +1396,7 @@ class _TrameConfig(_ConfigBase):
             # JupyterHub service prefixes are URL paths, not filesystem paths,
             # so use PurePosixPath to force forward-slash joining on Windows.
             self._server_proxy_prefix = (
-                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+                str(PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
             )
             self._server_proxy_enabled = True
         else:
@@ -3490,11 +3470,11 @@ class Theme(_ConfigBase):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: str | pathlib.Path | None):
+    def logo_file(self, logo_file: str | Path | None):
         if logo_file is None:
             path = None
         else:
-            if not pathlib.Path(logo_file).exists():
+            if not Path(logo_file).exists():
                 msg = f'Logo file ({logo_file}) not found.'
                 raise FileNotFoundError(msg)
             path = str(logo_file)

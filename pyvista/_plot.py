@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting._typing import ThemeOptions
     from pyvista.plotting.renderer import Renderer
     from pyvista.plotting.themes import Theme
 
@@ -123,7 +124,7 @@ def plot(  # noqa: ANN202, PLR0917
     return_viewer: bool = False,  # noqa: FBT001, FBT002
     return_cpos: bool = False,  # noqa: FBT001, FBT002
     jupyter_kwargs: dict | None = None,  # type: ignore[type-arg]
-    theme: Theme | None = None,
+    theme: Theme | ThemeOptions | str | None = None,
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,
     border: bool | None = None,  # noqa: FBT001
@@ -224,8 +225,9 @@ def plot(  # noqa: ANN202, PLR0917
         See :ref:`customize_trame_toolbar_example` for an example
         using this keyword.
 
-    theme : pyvista.plotting.themes.Theme, optional
-        Plot-specific theme.
+    theme : pyvista.plotting.themes.Theme | str, optional
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,

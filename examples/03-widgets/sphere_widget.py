@@ -116,12 +116,12 @@ from scipy.interpolate import griddata
 
 def get_colors(n):
     """Get n colors."""
-    from itertools import cycle
+    import itertools
 
     import matplotlib as mpl
 
     cycler = mpl.rcParams['axes.prop_cycle']
-    colors = cycle(cycler)
+    colors = itertools.cycle(cycler)
     return [next(colors)['color'] for i in range(n)]
 
 

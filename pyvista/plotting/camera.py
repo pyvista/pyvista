@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from weakref import proxy
+import weakref
 import xml.dom.minidom as md
 from xml.etree import ElementTree as ET
 
@@ -54,7 +54,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             if not isinstance(renderer, pv.Renderer):
                 msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 raise TypeError(msg)
-            self._renderer = proxy(renderer)
+            self._renderer = weakref.proxy(renderer)
         else:
             self._renderer = None  # type: ignore[assignment]
 

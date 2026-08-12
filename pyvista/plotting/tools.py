@@ -5,9 +5,7 @@ from __future__ import annotations
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE
-from subprocess import Popen
-from subprocess import TimeoutExpired
+import subprocess
 import sys
 
 import numpy as np
@@ -118,10 +116,15 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
     # mac case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = subprocess.Popen(
+            ['pgrep', '-qx', 'Finder'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        )
         try:
             proc.communicate(timeout=10)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             return False
         if proc.returncode == 0:
             return True
@@ -134,9 +137,11 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
         return True
 
     try:
-        proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = subprocess.Popen(
+            ['xset', '-q'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+        )
         proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):  # pragma: no cover
+    except (OSError, subprocess.TimeoutExpired):  # pragma: no cover
         # possible we have EGL support
         return supports_open_gl()
     else:  # pragma: no cover
