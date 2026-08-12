@@ -1,15 +1,14 @@
 """This test module tests any functionality that requires plotting.
 
-See the image regression notes in doc/extras/developer_notes.rst
+See the image regression notes in CONTRIBUTING.rst
 
 """
 
 from __future__ import annotations
 
 import inspect
-import io
+from io import BytesIO
 import os
-import pathlib
 from pathlib import Path
 import re
 import time
@@ -21,6 +20,7 @@ from typing import TypeVar
 from typing import get_args
 import warnings
 
+import imageio
 import numpy as np
 from PIL import Image
 import pytest
@@ -58,25 +58,7 @@ if TYPE_CHECKING:
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
 
-
-HAS_IMAGEIO = True
-try:
-    import imageio
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
-
-try:
-    import imageio_ffmpeg
-
-    imageio_ffmpeg.get_ffmpeg_exe()
-except ImportError:
-    if HAS_IMAGEIO:
-        imageio.plugins.ffmpeg.download()
-    else:
-        raise
-
-
-THIS_PATH = pathlib.Path(__file__).parent.absolute()
+THIS_PATH = Path(__file__).parent.absolute()
 
 
 def using_mesa():
@@ -453,14 +435,14 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     assert Path(filename).is_file()
 
     verify_image_cache.skip = True
-    filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
+    filename = Path(str(tmp_dir.join('tmp2.png')))
     pv.plot(sphere, screenshot=filename)
 
     # Ensure it added a PNG extension by default
     assert filename.with_suffix('.png').is_file()
 
     # test invalid extension
-    filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
+    filename = Path(str(tmp_dir.join('tmp3.foo')))
     with pytest.raises(ValueError):  # noqa: PT011
         pv.plot(sphere, screenshot=filename)
 
@@ -1099,14 +1081,12 @@ def test_add_lines_invalid():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_open_gif_invalid():
     pl = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
         pl.open_gif('file.abs')
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
 
@@ -1560,7 +1540,7 @@ def test_screenshot_altered_window_size(sphere):
 
 def test_screenshot_bytes():
     # Test screenshot to bytes object
-    buffer = io.BytesIO()
+    buffer = BytesIO()
     pl = pv.Plotter(off_screen=True)
     pl.add_mesh(pv.Sphere())
     pl.show(screenshot=buffer)
@@ -1584,7 +1564,7 @@ def test_repr_png_after_show(verify_image_cache):
     pl.show()
     png = pl._repr_png_()
     assert isinstance(png, bytes)
-    im = Image.open(io.BytesIO(png))
+    im = Image.open(BytesIO(png))
     assert im.format == 'PNG'
 
 
@@ -1596,7 +1576,7 @@ def test_repr_png_after_close(verify_image_cache):
     pl.close()
     png = pl._repr_png_()
     assert isinstance(png, bytes)
-    im = Image.open(io.BytesIO(png))
+    im = Image.open(BytesIO(png))
     assert im.format == 'PNG'
 
 
@@ -1618,7 +1598,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     pl.add_mesh(sphere)
     pl.screenshot(filename)
     assert Path(filename).is_file()
-    assert pathlib.Path(filename).stat().st_size
+    assert Path(filename).stat().st_size
 
 
 def test_scalars_by_name(verify_image_cache):
@@ -1663,7 +1643,6 @@ def test_plot_texture():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
     globe = examples.load_globe()
@@ -1672,7 +1651,6 @@ def test_plot_numpy_texture():
     pl.add_mesh(globe, texture=texture_np)
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -2287,6 +2265,66 @@ def test_array_volume_rendering(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     arr = uniform['Spatial Point Data'].reshape(uniform.dimensions)
     pv.plot(arr, volume=True, opacity='linear')
+
+
+@pytest.mark.parametrize(
+    ('func', 'datasets', 'kwargs'),
+    [
+        (
+            pv.plot,
+            [pv.Sphere()],
+            {'border': True, 'border_color': 'red', 'border_width': 10},
+        ),
+        (
+            pv.plot_compare,
+            [pv.Sphere(), pv.Cone()],
+            {
+                'plotter_kwargs': {
+                    'border': True,
+                    'border_color': 'red',
+                    'border_width': 10,
+                    'subplot_seams': False,
+                },
+            },
+        ),
+    ],
+    ids=['pv.plot (single subplot)', 'pv.plot_compare (multiple subplots)'],
+)
+@pytest.mark.usefixtures('verify_image_cache')
+def test_border_outer_frame_top_level_plot_functions(func, datasets, kwargs):
+    """``border=True`` draws the same kind of outer frame from ``pv.plot`` and ``pv.plot_compare``.
+
+    Exercises the public, top-level plotting entry points directly --
+    rather than ``Plotter``/``Renderers`` internals -- with
+    ``subplot_seams`` off so only the outer frame shows. Default
+    appearance (border/seam styling with no explicit kwargs) already
+    has plenty of coverage elsewhere: the other multi-subplot tests in
+    this file, and the doc gallery's own image regression tests.
+    """
+    func(datasets, **kwargs)
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_border_outer_frame_and_seams_dark_theme():
+    """``border=True`` layers on top of the default ``subplot_seams=True``.
+
+    Regression test: the outer frame sits exactly on the shared
+    overlay renderer's own viewport boundary, where roughly half of a
+    line's width gets clipped away, while an interior seam is
+    unaffected. Left uncompensated, the outer frame rendered visibly
+    thinner than the interior seams for the same nominal
+    ``border_width`` -- see ``Renderer.add_border``, which doubles the
+    drawn width of any boundary-touching line to correct for it.
+    """
+    pl = pv.Plotter(
+        shape=(2, 2),
+        theme=pv.themes.DarkTheme(),
+        window_size=(300, 300),
+        border=True,
+        border_color='red',
+        border_width=10,
+    )
+    pl.show()
 
 
 @pytest.fixture
@@ -4075,7 +4113,6 @@ def test_pointset_plot_as_points_vtk():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))

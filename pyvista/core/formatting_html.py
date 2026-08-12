@@ -8,8 +8,8 @@ Works in Jupyter Notebook, JupyterLab, VS Code, Colab, and nbviewer.
 
 from __future__ import annotations
 
-from functools import lru_cache
-from html import escape
+import functools
+import html
 from importlib.resources import files as _resources_files
 from typing import TYPE_CHECKING
 import uuid
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-@lru_cache(None)
+@functools.lru_cache(None)
 def _load_css() -> str:
     """Load the CSS stylesheet (cached)."""
     return (
@@ -26,7 +26,7 @@ def _load_css() -> str:
     )
 
 
-@lru_cache(None)
+@functools.lru_cache(None)
 def _load_pyvista_logo() -> str:
     """Load the PyVista brand mark SVG (cached)."""
     return (
@@ -46,7 +46,7 @@ _MESH_TYPE_ICONS: dict[str, str] = {
 }
 
 
-@lru_cache(None)
+@functools.lru_cache(None)
 def _load_mesh_icon(mesh_type: str) -> str | None:
     """Load a mesh-type SVG icon, or ``None`` if unavailable."""
     filename = _MESH_TYPE_ICONS.get(mesh_type)
@@ -97,7 +97,7 @@ def collapsible_section(
     collapsed_attr = '' if collapsed or not has_items else ' checked'
     tip = " title='Expand/collapse section'" if enabled_attr == '' else ''
 
-    html = (
+    section_html = (
         f"<input id='{data_id}' class='pv-section-summary-in'"
         f" type='checkbox'{enabled_attr}{collapsed_attr} />"
         f"<label for='{data_id}' class='pv-section-summary'{tip}>"
@@ -105,13 +105,13 @@ def collapsible_section(
         f"<div class='pv-section-inline-details'>{inline_details}</div>"
     )
     if details:
-        html += f"<div class='pv-section-details'>{details}</div>"
-    return html
+        section_html += f"<div class='pv-section-details'>{details}</div>"
+    return section_html
 
 
 def _badge(label: str, css_class: str) -> str:
     """Return a small colored badge ``<span>``."""
-    return f" <span class='pv-badge {css_class}'>{escape(label)}</span>"
+    return f" <span class='pv-badge {css_class}'>{html.escape(label)}</span>"
 
 
 def _copy_btn(text: str) -> str:
@@ -125,7 +125,7 @@ def _copy_btn(text: str) -> str:
     """
     return (
         f"<button class='pv-copy-btn' title='Copy to clipboard'"
-        f" data-copy='{escape(text)}'"
+        f" data-copy='{html.escape(text)}'"
         f''' onclick="navigator.clipboard.writeText(this.dataset.copy)"'''
         f'>\u29c9</button>'
     )
@@ -142,16 +142,16 @@ def _summarize_array(
     range_str: str = '',
 ) -> str:
     """Format a single data-array row for the grid layout."""
-    safe_name = escape(name)
-    dims_str = escape(shape) if shape else f'{ncomp} comp' if ncomp > 1 else 'scalar'
+    safe_name = html.escape(name)
+    dims_str = html.escape(shape) if shape else f'{ncomp} comp' if ncomp > 1 else 'scalar'
     active_cls = ' pv-var-name-active' if is_active else ''
     copy = _copy_btn(name)
 
     return (
         f"<div class='pv-var-name{active_cls}'><span>{safe_name}</span>{copy}</div>"
         f"<div class='pv-var-dims'>{dims_str}</div>"
-        f"<div class='pv-var-dtype'>{escape(dtype)}</div>"
-        f"<div class='pv-var-range'>{escape(range_str)}</div>"
+        f"<div class='pv-var-dtype'>{html.escape(dtype)}</div>"
+        f"<div class='pv-var-range'>{html.escape(range_str)}</div>"
         f"<div class='pv-var-badges'>{badges}</div>"
     )
 
@@ -242,7 +242,7 @@ def _data_array_section(
     # Show active scalar name inline when collapsed
     inline = ''
     if active_scalars and any(name == active_scalars for name, _, _, _, _ in arrays):
-        inline = f'{escape(active_scalars)}{_badge("active", "pv-badge-active")}'
+        inline = f'{html.escape(active_scalars)}{_badge("active", "pv-badge-active")}'
 
     return collapsible_section(
         f'{title}:',
@@ -274,14 +274,14 @@ def _metadata_html(
     for label, items, copy_text in rows:
         entries = ''.join(
             f"<span class='pv-meta-entry'>"
-            f"<span class='pv-meta-label'>{escape(k)}</span> {escape(v)}"
+            f"<span class='pv-meta-label'>{html.escape(k)}</span> {html.escape(v)}"
             f'</span>'
             for k, v in items
         )
         copy_html = _copy_btn(copy_text) if copy_text else ''
         row_parts.append(
             f"<div class='pv-meta-row pv-copyable'>"
-            f"<span class='pv-meta-row-label'>{escape(label)}</span>"
+            f"<span class='pv-meta-row-label'>{html.escape(label)}</span>"
             f'{copy_html}{entries}'
             f'</div>'
         )
@@ -319,9 +319,9 @@ def _children_section(
 
     """
     items_li = ''.join(
-        f"<li><span class='pv-child-name'>{escape(name)}</span>"
-        f"<span class='pv-child-type'>{escape(ctype)}</span>"
-        f"<span class='pv-child-detail'>{escape(detail)}</span></li>"
+        f"<li><span class='pv-child-name'>{html.escape(name)}</span>"
+        f"<span class='pv-child-type'>{html.escape(ctype)}</span>"
+        f"<span class='pv-child-detail'>{html.escape(detail)}</span></li>"
         for name, ctype, detail in children
     )
     details = f"<ul class='pv-children-list'>{items_li}</ul>"
@@ -385,21 +385,21 @@ def build_repr_html(
 
     # Header badges
     badges_html = ''.join(
-        f" <span class='pv-header-badge'>{escape(b)}</span>" for b in header_badges
+        f" <span class='pv-header-badge'>{html.escape(b)}</span>" for b in header_badges
     )
 
     header = (
         "<div class='pv-header'>"
         f'{icon_html}'
         "<div class='pv-header-text'>"
-        f"<div class='pv-obj-type'>{escape(obj_type)}{badges_html}</div>"
+        f"<div class='pv-obj-type'>{html.escape(obj_type)}{badges_html}</div>"
         '</div>'
         f'{pv_logo_html}'
         '</div>'
     )
 
     meta_html = _metadata_html(list(metadata)) if metadata else ''
-    text_fallback = escape(text_repr)
+    text_fallback = html.escape(text_repr)
 
     return (
         '<div>'

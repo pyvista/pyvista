@@ -121,6 +121,8 @@ extensions = [
     'notfound.extension',
     'numpydoc',
     'pyvista.ext.plot_directive',
+    'sphinx_autoopengraph',
+    'sphinx_examples_as_code',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -128,6 +130,7 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
+    'sphinx_codeautolink',  # Add hyperlinks inside docstring/page code blocks to pyvista methods
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -180,6 +183,12 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+
+sphinx_examples_as_code_conf = {
+    # Replace sphinx-gallery's own per-example download footer/note with
+    # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
+    'gallery_downloads': True,
+}
 
 # Warn if target links or references cannot be found
 nitpicky = True
@@ -301,6 +310,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*BytesIO'),
     (r'py:.*', '.*StringIO'),
     (r'py:.*', '.*Path'),
     (r'py:.*', '.*UserDict'),
@@ -573,7 +583,20 @@ sphinx_gallery_conf = {
     'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache', 'image.not_readable']
+suppress_warnings = [
+    'config.cache',
+    'image.not_readable',
+    # sphinx-codeautolink fails to match any line with a `# doctest: +OPTION` comment
+    # back to its rendered HTML; it just skips linking that one block, harmlessly.
+    'codeautolink.match_block',
+]
+
+# Without this, sphinx-codeautolink treats each `>>>` group in a docstring's Examples
+# section as its own isolated scope, so an `import pyvista as pv` in an earlier group
+# (a very common numpydoc pattern: several short examples separated by prose) doesn't
+# carry over to later ones, and `pv` ends up undefined -- nothing after the first group
+# resolves. This makes all groups on a page share one running scope instead.
+codeautolink_concat_default = True
 
 import re
 
@@ -725,11 +748,6 @@ html_theme_options = {
             'icon': 'fa fa-comment fa-fw',
         },
         {
-            'name': 'Contributing',
-            'url': 'https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst',
-            'icon': 'fa fa-gavel fa-fw',
-        },
-        {
             'name': 'The Paper',
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
@@ -775,6 +793,7 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
+    'codeautolink.css',  # style sphinx-codeautolink links like sphinx-gallery's
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------

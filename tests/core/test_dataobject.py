@@ -5,7 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
-from unittest import mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -532,7 +532,7 @@ def test_raise_error_when_output_directory_is_missing(tmp_path):
 def test_raise_error_when_writing_is_failed(tmp_path):
     cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
 
-    with mock.patch.object(
+    with patch.object(
         BaseWriter,
         'write',
         return_value=None,

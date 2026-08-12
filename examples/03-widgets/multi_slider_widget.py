@@ -21,7 +21,9 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 
 
-class MyCustomRoutine:  # noqa: D101
+class MyCustomRoutine:
+    """Stateful callback for updating a mesh from slider parameters."""
+
     def __init__(self, mesh):
         self.output = mesh  # Expected PyVista mesh type
         # default parameters

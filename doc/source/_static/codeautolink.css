@@ -1,0 +1,15 @@
+/* sphinx-codeautolink's own stylesheet intentionally makes its links blend into
+   the syntax-highlighted code (color: inherit, no underline) until hovered, so
+   they're easy to miss. Give them the theme's normal link color and an
+   underline -- like sphinx-gallery's (unstyled, theme-colored) backref links --
+   so they read as clickable at a glance. */
+.sphinx-codeautolink-a,
+.sphinx-codeautolink-a:link,
+.sphinx-codeautolink-a:visited {
+  color: var(--pst-color-link);
+  text-decoration: underline;
+}
+
+.sphinx-codeautolink-a:hover {
+  color: var(--pst-color-link-hover);
+}

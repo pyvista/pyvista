@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from collections.abc import Sequence
-import enum
-from functools import cache
+from enum import Enum
+import functools
 import importlib
-from inspect import getattr_static
+import inspect
 import sys
 import threading
 import traceback
@@ -21,6 +21,7 @@ from typing_extensions import Self
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
     from typing import Any
@@ -44,7 +45,6 @@ _SMP_BACKEND_NAMES: dict[str, str] = {
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
-    from enum import Enum
 
     class StrEnum(str, Enum):  # noqa: D101
         def __str__(self) -> str:
@@ -134,7 +134,7 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     return cls_
 
 
-class AnnotatedIntEnum(int, enum.Enum):
+class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 
     annotation: str
@@ -203,7 +203,7 @@ class AnnotatedIntEnum(int, enum.Enum):
             raise TypeError(msg)
 
 
-@cache
+@functools.cache
 def has_module(module_name: str) -> bool:
     """Return if a module can be imported.
 
@@ -470,10 +470,6 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
         if sys.meta_path is None:  # pragma: no cover
             return None  # type: ignore[unreachable]
 
-        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
-            _resolve_pending_accessor,
-        )
-
         if _resolve_pending_accessor(name):
             return getattr(cls, name)
         msg = f'type object {cls.__name__!r} has no attribute {name!r}'
@@ -483,7 +479,7 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
 def _hasattr_static(obj: Any, attr: str) -> bool:
     """Replicate behavior of hasattr using static lookup."""
     try:
-        getattr_static(obj, attr)
+        inspect.getattr_static(obj, attr)
     except AttributeError:
         return False
     return True
@@ -505,12 +501,18 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     def _check_new_attribute(self, key: str) -> None:
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is not None:
-            # Get mode for setting new attributes
-            try:
-                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-            except ImportError:
-                # Circular import, set to False to disallow new attributes during initial import
-                _ALLOW_NEW_ATTRIBUTES_MODE = False
+            # Get mode for setting new attributes. Read straight out of the module
+            # dict: this runs on every __setattr__, and going through the import
+            # machinery (or getattr, which would hit pyvista's module-level
+            # __getattr__) is needless overhead. ``pyvista.core`` is imported
+            # before ``_ALLOW_NEW_ATTRIBUTES_MODE`` is defined, so a missing key
+            # means we are still mid-import: disallow new attributes, as before.
+            pyvista_module = sys.modules.get('pyvista')
+            _ALLOW_NEW_ATTRIBUTES_MODE = (
+                False
+                if pyvista_module is None
+                else pyvista_module.__dict__.get('_ALLOW_NEW_ATTRIBUTES_MODE', False)
+            )
 
             # Check if setting a new attribute is allowed
             if not (

@@ -16,7 +16,7 @@ from typing import TextIO
 from typing import TypeVar
 from typing import cast
 from typing import overload
-from urllib.parse import urlparse
+import urllib.parse
 
 import numpy as np
 
@@ -464,7 +464,7 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and has_scheme(filename):
-        uri_ext = get_ext(urlparse(filename).path)
+        uri_ext = get_ext(urllib.parse.urlparse(filename).path)
         if uri_ext.lower() in _PICKLE_FILE_EXT:
             _raise_pickle_removed()
         # If a custom reader is registered for this extension, try it

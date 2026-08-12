@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
-from itertools import count
-from itertools import islice
+import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
@@ -40,11 +39,11 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
     """
     consumer: deque[NumpyArray[int]] = deque(maxlen=0)
     it = cells.flat
-    for n_cells in count():  # noqa: B007
+    for n_cells in itertools.count():  # noqa: B007
         skip = next(it, None)
         if skip is None:
             break
-        consumer.extend(islice(it, skip))  # type: ignore[arg-type]
+        consumer.extend(itertools.islice(it, skip))  # type: ignore[arg-type]
     return n_cells
 
 

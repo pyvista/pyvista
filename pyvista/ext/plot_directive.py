@@ -85,6 +85,14 @@ directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
 
+**Open Graph previews**
+
+Add ``sphinx_autoopengraph`` to ``extensions`` for a sensible Open Graph link
+preview on every page. It is a separate, independent extension -- nothing about
+it is specific to plotting, and it is not enabled by enabling this directive.
+See :ref:`opengraph_docs`.
+
+
 **Configuration options**
 
 .. versionchanged:: 0.45
@@ -138,6 +146,13 @@ that indexed is incompatible with parallel builds due to race conditions.
 
 .. versionchanged:: 0.47
     Hash-based image naming is now used by default.
+
+.. versionchanged:: 0.49
+    Generated source code is now wrapped in a ``.. container:: pyvista-plot-source``
+    node. This has no effect on rendering, but allows other independent tooling
+    (e.g. the https://github.com/pyvista/sphinx-examples-as-code Sphinx extension)
+    to reliably locate this directive's generated code within a page.
+
 """
 
 from __future__ import annotations
@@ -145,7 +160,6 @@ from __future__ import annotations
 import doctest
 import hashlib
 import os
-from os.path import relpath
 from pathlib import Path
 import re
 import shutil
@@ -172,6 +186,9 @@ if TYPE_CHECKING:
 
 pv.BUILDING_GALLERY = True
 pv.OFF_SCREEN = True
+
+# CSS class marking the ``.. container::`` node that wraps this directive's generated source code
+_PLOT_SOURCE_CLASS = 'pyvista-plot-source'
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -380,8 +397,17 @@ def _show_or_plot_in_string(string):
 # Template
 # -----------------------------------------------------------------------------
 
-TEMPLATE = """
+TEMPLATE = (
+    """
+{% if source_code %}
+.. container:: """
+    + _PLOT_SOURCE_CLASS
+    + """
+
+   {{ source_code | indent(3, first=True) }}
+{% else %}
 {{ source_code }}
+{% endif %}
 
 .. only:: html
 
@@ -414,6 +440,7 @@ TEMPLATE = """
    {% endfor %}
 
 """
+)
 
 exception_template = """
 .. only:: html
@@ -687,7 +714,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = relpath(source_file_name, setup.confdir)
+    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
@@ -703,9 +730,9 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = Path(relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
+    dest_dir_link = Path(os.path.relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
     try:
-        build_dir_link = relpath(build_dir, rst_dir)
+        build_dir_link = os.path.relpath(build_dir, rst_dir)
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives

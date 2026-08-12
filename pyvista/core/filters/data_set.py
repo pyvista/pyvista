@@ -1381,8 +1381,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation  # noqa: PLC0415
-
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()

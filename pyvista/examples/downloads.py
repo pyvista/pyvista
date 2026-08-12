@@ -4881,9 +4881,12 @@ def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
 
 
 def _embryo_load_func(dataset):  # noqa: ANN001
-    # cleanup artifact
-    mask = dataset['SLCImage'] == 255
-    dataset['SLCImage'][mask] = 0
+    # This file's RLE stream is one byte short on every plane, and vtkSLCReader copies a full
+    # plane out of an uninitialized buffer, so the last voxel of each plane is heap garbage.
+    # It varies per read and lands in the z=75 slice used by the slice_orthogonal example,
+    # where a value above 195 silently rescales the color mapping.
+    nx, ny, nz = dataset.dimensions
+    dataset['SLCImage'].reshape(nz, ny, nx)[:, -1, -1] = 0
     return dataset
 
 

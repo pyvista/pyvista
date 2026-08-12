@@ -5,9 +5,7 @@ from __future__ import annotations
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE
-from subprocess import Popen
-from subprocess import TimeoutExpired
+import subprocess
 import sys
 
 import numpy as np
@@ -15,6 +13,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.errors import DeprecationError
 
 from .colors import Color
 
@@ -117,10 +116,15 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
     # mac case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = subprocess.Popen(
+            ['pgrep', '-qx', 'Finder'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        )
         try:
             proc.communicate(timeout=10)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             return False
         if proc.returncode == 0:
             return True
@@ -133,9 +137,11 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
         return True
 
     try:
-        proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = subprocess.Popen(
+            ['xset', '-q'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+        )
         proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):  # pragma: no cover
+    except (OSError, subprocess.TimeoutExpired):  # pragma: no cover
         # possible we have EGL support
         return supports_open_gl()
     else:  # pragma: no cover
@@ -779,8 +785,6 @@ def check_math_text_support() -> bool:  # pragma: no cover
         Returns False for compatibility.
 
     """
-    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
     # Deprecated on v0.47.0, estimated removal on v0.50.0
     msg = '`check_math_text_support` is now imported from `pyvista.report`'
     DeprecationError(msg)
@@ -797,8 +801,6 @@ def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
         Returns False for compatibility.
 
     """
-    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
     # Deprecated on v0.47.0, estimated removal on v0.50.0
     msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
     DeprecationError(msg)

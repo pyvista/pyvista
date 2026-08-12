@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import contextlib
 import importlib.util
-import io
+from io import BytesIO
 from pathlib import Path
 import re
 import subprocess
 import sys
-import types
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from unittest.mock import patch
 import warnings
@@ -307,8 +307,8 @@ def test_s3_without_fsspec_raises():
 
 def test_download_uri_uses_fsspec_and_tracks_temp_file():
     payload = b'custom-reader-data'
-    fake_fsspec = types.SimpleNamespace(
-        open=MagicMock(return_value=contextlib.nullcontext(io.BytesIO(payload))),
+    fake_fsspec = SimpleNamespace(
+        open=MagicMock(return_value=contextlib.nullcontext(BytesIO(payload))),
     )
 
     with patch.dict('sys.modules', {'fsspec': fake_fsspec}):
@@ -320,7 +320,7 @@ def test_download_uri_uses_fsspec_and_tracks_temp_file():
 
 
 def test_download_uri_wraps_fsspec_errors():
-    fake_fsspec = types.SimpleNamespace(
+    fake_fsspec = SimpleNamespace(
         open=MagicMock(side_effect=OSError('bucket unavailable')),
     )
 

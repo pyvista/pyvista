@@ -2792,6 +2792,8 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 11
+
     Generate a single :attr:`~pyvista.CellType.TRIANGLE` cell.
 
     >>> import pyvista as pv
