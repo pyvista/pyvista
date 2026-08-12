@@ -51,6 +51,7 @@ from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
+from pyvista.ext.autoenum import metaclass_property_names
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -115,11 +116,11 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'enum_tools.autoenum',
     'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext.autoenum',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -426,6 +427,9 @@ autosummary_context = {
     # __init__ should be documented in the class docstring
     # override is a VTK method
     'skipmethods': ['__init__', 'override'],
+    # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
+    # for the `enum` objtype the way it does for `class`, so enum.rst asks this directly.
+    'metaclass_property_names': metaclass_property_names,
 }
 
 # The suffix(es) of source filenames.
