@@ -88,13 +88,22 @@ def _format_value(value: Any, *, as_hex: bool) -> str:
 class MetaclassPropertyDocumenter(PropertyDocumenter):
     """Documents a ``property`` defined on a class's metaclass.
 
-    Constructed directly by :class:`EnumDocumenter`, not resolved via member dispatch.
-    Only ``import_object`` needs to change from stock ``PropertyDocumenter``: fetch the
-    property itself rather than its (eagerly evaluated) value.
+    Constructed directly by :class:`EnumDocumenter` -- never registered as an
+    autodocumenter, and ``can_document_member`` always declines, so it never competes
+    with stock ``PropertyDocumenter`` for ordinary properties. Only ``import_object``
+    needs to change from stock ``PropertyDocumenter``: fetch the property itself rather
+    than its (eagerly evaluated) value.
     """
 
     objtype = 'metaclassproperty'
     directivetype = 'property'
+
+    @classmethod
+    def can_document_member(
+        cls: type[PropertyDocumenter], member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:  # numpydoc ignore=RT01
+        """Decline always: only ever constructed directly by :class:`EnumDocumenter`."""
+        return False
 
     def import_object(self, raiseerror: bool = False) -> bool:  # numpydoc ignore=RT01
         """Resolve ``self.object`` to the metaclass property itself, not its evaluated value."""
@@ -198,9 +207,14 @@ class EnumDocumenter(ClassDocumenter):
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
-    """Register the ``autoenum`` directive."""
+    """Register the ``autoenum`` directive.
+
+    ``MetaclassPropertyDocumenter`` is deliberately not registered here: it's only ever
+    constructed directly by :class:`EnumDocumenter`, never resolved via Sphinx's generic
+    member-dispatch machinery -- registering it would put it in competition with the
+    stock ``PropertyDocumenter`` for every ordinary property in the whole project.
+    """
     app.add_autodocumenter(EnumDocumenter)
-    app.add_autodocumenter(MetaclassPropertyDocumenter)
     return {
         'version': '0.1',
         'parallel_read_safe': True,
