@@ -168,12 +168,14 @@ import jinja2  # Sphinx dependency.
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista as pv
+from pyvista.ext import _autolink
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from sphinx.application import Sphinx
     from sphinx.config import Config
+    from sphinx.environment import BuildEnvironment
 
 
 pv.BUILDING_GALLERY = True
@@ -255,6 +257,7 @@ def setup(app: Sphinx):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
+    _autolink.setup(app)
 
     legacy_keys = [
         'plot_include_source',
@@ -518,12 +521,17 @@ def render_figures(
     function_name,
     config,
     force_static,
+    env: BuildEnvironment | None = None,
 ):
     """Run a pyplot script and save the images in *output_dir*.
 
     Save the images under *output_dir* with file names derived from
     *output_base*. Closed plotters are ignored if they were never
     rendered.
+
+    If *env* is given, the code's identifiers are also recorded, once, for
+    :mod:`pyvista.ext._autolink` to hyperlink -- against the *same* run this
+    function already has to do to produce the figures, never a second one.
     """
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ```pyvista-plot::``
@@ -538,6 +546,7 @@ def render_figures(
     # Otherwise, we didn't find the files, so build them
     results = []
     ns = plot_context if context else {}
+    clean_pieces = []
 
     # Check for setup and teardown code for plots
     code_setup = config.pyvista_plot_setup
@@ -549,8 +558,10 @@ def render_figures(
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
+            clean_piece = doctest.script_from_examples(code_piece) if is_doctest else code_piece
+            clean_pieces.append(clean_piece)
             _run_code(
-                code=doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code=clean_piece,
                 code_path=code_path,
                 ns=ns,
                 function_name=function_name,
@@ -591,6 +602,11 @@ def render_figures(
             pv.close_all()  # close and clear all plotters
 
             results.append((code_piece, images))
+
+        if env is not None and clean_pieces:
+            _autolink.record_namespace(
+                env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
+            )
     finally:
         if code_cleanup:
             _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
@@ -746,6 +762,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 function_name=function_name,
                 config=config,
                 force_static=force_static,
+                env=document.settings.env,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter

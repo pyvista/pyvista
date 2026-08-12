@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -379,6 +380,55 @@ def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
     assert generated_ipynb == expected_ipynb, (
         f'expected notebook downloads {expected_ipynb}, got {generated_ipynb}'
     )
+
+
+@flaky_test(exceptions=(AssertionError,))
+def test_autolink(tmp_path: Path):
+    """Check that ``pyvista.ext._autolink`` hyperlinks identifiers resolved from execution.
+
+    ``autolink_samples`` (see ``tinypages_autolink/autolink_samples/``) exercises the cases that
+    tripped up the previous static-analysis-based extension: a function returning a Union
+    type, a method inherited from a class documented under a different (internal) module
+    than where it's implemented, state carried across separate ``>>>`` groups on one page,
+    and a function reached only via an attribute of an imported submodule.
+    """
+    # A separate, minimal site from ``tinypages`` -- see tinypages_autolink/conf.py's
+    # module docstring for why it can't just be another page inside ``tinypages``.
+    source_dir = Path(__file__).parent / 'tinypages_autolink'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'index.html').read_text(encoding='utf-8')
+
+    # no doubly-nested anchors from overlapping/duplicate substitution passes
+    assert (
+        re.search(r'pyvista-autolink-a" href="[^"]*"><a class="pyvista-autolink-a"', html) is None
+    )
+
+    expected_targets = {
+        '#autolink_samples.make_widget_or_string',
+        '#autolink_samples.Widget',
+        '#autolink_samples.Widget.draw',
+        '#autolink_samples.make_derived',
+        '#autolink_samples.Derived',
+        '#autolink_samples.Derived.meth',
+        '#autolink_samples.sub.make',
+    }
+    found_targets = set(re.findall(r'pyvista-autolink-a" href="([^"]*)"', html))
+    assert expected_targets <= found_targets, (
+        f'missing expected autolink targets: {expected_targets - found_targets}'
+    )
+
+    # Widget.draw is called in two separate ``>>>`` groups on the page (see
+    # ``multi_block_examples``), so the state-carrying, final-namespace-only capture should
+    # produce two links to it, not just one from the first group. Scoped to our own anchor
+    # class: Sphinx's own TOC and ``headerlink`` permalink also point at this same anchor.
+    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 2
 
 
 @pytest.mark.needs_playwright
