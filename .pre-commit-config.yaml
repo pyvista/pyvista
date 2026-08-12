@@ -115,6 +115,12 @@ repos:
         entry: '#\s*(?:noqa|ruff)'
         files: ^examples/
         types: [python]
+      - id: no-import-error-skip
+        name: "Tests must not be skipped based on ImportError"
+        language: pygrep
+        entry: '^\s*(?:>>>|\.\.\.)?.*(?:\bexcept\s*\(?\s*(?:ImportError|ModuleNotFoundError)\b|\bimportorskip\b|\bsuppress\s*\(\s*(?:ImportError|ModuleNotFoundError)\b)'
+        files: ^tests/
+        types: [python]
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.9.6

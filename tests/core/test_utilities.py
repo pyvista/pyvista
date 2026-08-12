@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-import contextlib
 import inspect
 import itertools
 import json
@@ -86,9 +85,6 @@ from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
-
-with contextlib.suppress(ImportError):
-    import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -238,6 +234,8 @@ def test_vtk_version_info_raises(operation):
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_min_supported_vtk_version_matches_pyproject():
+    import tomllib
+
     def get_min_vtk_version_from_pyproject():
         # locate pyproject.toml relative to package
         root = Path(
@@ -3330,6 +3328,8 @@ def test_deprecate_positional_args_decorator_not_needed():
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_max_positional_args_matches_pyproject():
+    import tomllib
+
     root = Path(
         os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
     )  # to make the test work when pyvista is installed via tox

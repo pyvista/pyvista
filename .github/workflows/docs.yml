@@ -175,7 +175,11 @@ jobs:
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
-        run: tox r -e docs-test
+        run: tox r -e docs-test-build
+
+      - name: Test Documentation Images
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test-images
 
       - name: Upload Images for Failed Tests
         if: ${{ !cancelled() }}

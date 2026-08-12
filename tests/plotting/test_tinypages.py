@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from dataclasses import field
+import html
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 
@@ -14,15 +17,51 @@ import pytest
 from pyvista.plotting import system_supports_plotting
 from tests.conftest import flaky_test
 
-pytest.importorskip('sphinx')
-
 # skip all tests if unable to render
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
+TINYPAGES_DIR = Path(__file__).parent / 'tinypages'
+
+_META_TAG = re.compile(r'<meta\b[^>]*>')
+_META_KEY = re.compile(r'\b(?:property|name)="([^"]+)"')
+_META_CONTENT = re.compile(r'\bcontent="([^"]*)"')
+
 
 def _filter_suffix(files: set[str], suffix) -> set[str]:
     return {file for file in files if file.endswith(suffix)}
+
+
+def copy_tinypages(tmp_path: Path) -> Path:
+    """Return a throwaway copy of the ``tinypages`` project.
+
+    Sphinx-Gallery generates its ``gallery`` pages into the source tree, so the
+    checked-in project is never built in place.
+    """
+    source_dir = tmp_path / 'tinypages'
+    # ``flaky_test`` reruns share a ``tmp_path``, so start from a clean tree each time
+    shutil.rmtree(source_dir, ignore_errors=True)
+    shutil.copytree(
+        TINYPAGES_DIR,
+        source_dir,
+        ignore=shutil.ignore_patterns('__pycache__', '_build', 'gallery'),
+    )
+    return source_dir
+
+
+def meta_tags(page: Path) -> dict[str, str]:
+    """Return a built page's ``<meta>`` tags, keyed by ``property`` or ``name``.
+
+    The HTML theme rewrites pages with an HTML parser, which does not preserve the
+    order attributes were written in, so the tags cannot be matched as plain text.
+    """
+    tags: dict[str, str] = {}
+    for tag in _META_TAG.findall(page.read_text(encoding='utf-8')):
+        key = _META_KEY.search(tag)
+        content = _META_CONTENT.search(tag)
+        if key is not None and content is not None:
+            tags.setdefault(key.group(1), html.unescape(content.group(1)))
+    return tags
 
 
 def _sphinx_build_cmd(
@@ -45,12 +84,6 @@ def _sphinx_build_cmd(
         cmd.extend(['-d', str(doctree_dir)])
 
     cmd.extend([str(source_dir), str(html_dir)])
-
-    if sys.platform == 'win32':
-        # matplotlib's plot directive fails to render images on Windows CI, resulting in Sphinx
-        # warnings that are fatal errors under ``-W``. Seems like a genuine bug with matplotlib
-        # and not PyVista, so we ignore the warnings.
-        cmd += ['-D', 'suppress_warnings=image.not_readable,download.not_readable']
 
     return cmd
 
@@ -159,6 +192,38 @@ ALL_EXPECTED_PY_FILES_SERIAL = _filter_suffix(ALL_EXPECTED_FILES_SERIAL, '.py')
 IMAGES_NEVER_SKIPPED = {'some_plots-16_00_00.png', 'some_plots-16_00_00.vtksz'}  # Uses :skip: no
 IMAGES_OPTIONAL = {'some_plots-18_00_00.png', 'some_plots-18_00_00.vtksz'}  # Uses :optional:
 
+# Sphinx-Gallery renders its own images regardless of how the plot directive is
+# configured, and copies them straight into the output image directory
+GALLERY_EXPECTED_IMAGES = {
+    'sphx_glr_plot_gallery_default_001.png',
+    'sphx_glr_plot_gallery_default_002.png',
+    'sphx_glr_plot_gallery_default_thumb.png',
+    'sphx_glr_plot_gallery_thumbnail_001.png',
+    'sphx_glr_plot_gallery_thumbnail_002.png',
+    'sphx_glr_plot_gallery_thumbnail_thumb.png',
+}
+
+# Set in the tinypages ``conf.py``; used by pages that render no plot of their own
+OPENGRAPH_SITE_URL = 'https://docs.example.org/'
+OPENGRAPH_FALLBACK_IMAGE = f'{OPENGRAPH_SITE_URL}_static/fallback.png'
+
+# Every gallery example's preview is the full resolution version of its own gallery
+# thumbnail, so these hold whichever image the gallery itself selected
+OPENGRAPH_GALLERY_IMAGES = {
+    # ``# sphinx_gallery_thumbnail_number = 2``
+    'gallery/plot_gallery_thumbnail.html': 'sphx_glr_plot_gallery_thumbnail_002.png',
+    # no selection, so the gallery uses the first image
+    'gallery/plot_gallery_default.html': 'sphx_glr_plot_gallery_default_001.png',
+}
+
+# ``some_plots.rst`` makes no selection, so it previews its first image.
+# ``samples.make_sphere`` uses ``.. autoopengraph_thumbnail:: 2``, so ``some_autodocs``
+# previews the second image of the page rather than that directive's own image.
+OPENGRAPH_PLOT_IMAGES_SERIAL = {
+    'some_plots.html': 'some_plots-1_00_00.png',
+    'some_autodocs.html': 'some_autodocs-2_00_00.png',
+}
+
 
 @dataclass(frozen=True)
 class TinyPagesCase:
@@ -166,6 +231,7 @@ class TinyPagesCase:
     env: dict[str, str]
     expected_files: set[str]
     expected_images_matplotlib: set[str]
+    expected_opengraph_images: dict[str, str] = field(default_factory=dict)
     parallel: bool = False
     sphinx_args: tuple[str, ...] = ()
 
@@ -175,11 +241,25 @@ class TinyPagesCase:
             _filter_suffix(self.expected_files, '.png')
             | _filter_suffix(self.expected_files, '.gif')
             | _filter_suffix(self.expected_files, '.vtksz')
-        )
+        ) | GALLERY_EXPECTED_IMAGES
 
     @property
     def expected_py_files(self) -> set[str]:
         return _filter_suffix(self.expected_files, '.py')
+
+    @property
+    def expected_opengraph(self) -> dict[str, str]:
+        """Return the ``og:image`` URL expected for each page that pins one."""
+        pages = {
+            # Renders no plots, so ``ogp_image`` from ``conf.py`` is left in place
+            'index.html': OPENGRAPH_FALLBACK_IMAGE,
+            **OPENGRAPH_GALLERY_IMAGES,
+            **self.expected_opengraph_images,
+        }
+        return {
+            page: image if image.startswith('http') else f'{OPENGRAPH_SITE_URL}_images/{image}'
+            for page, image in pages.items()
+        }
 
 
 CASES = (
@@ -188,30 +268,46 @@ CASES = (
         env={},
         expected_files=ALL_EXPECTED_FILES_SERIAL,
         expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_SERIAL,
+        expected_opengraph_images=OPENGRAPH_PLOT_IMAGES_SERIAL,
     ),
     TinyPagesCase(
         id='plot_skip_false',
         env={'PYVISTA_PLOT_SKIP': 'false'},
         expected_files=ALL_EXPECTED_FILES_SERIAL,
         expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_SERIAL,
+        expected_opengraph_images=OPENGRAPH_PLOT_IMAGES_SERIAL,
     ),
     TinyPagesCase(
         id='plot_skip_true',
         env={'PYVISTA_PLOT_SKIP': 'true'},
         expected_files=IMAGES_NEVER_SKIPPED | ALL_EXPECTED_PY_FILES_SERIAL,
         expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_SERIAL,
+        expected_opengraph_images={
+            # Only the ``:skip: no`` directive still renders
+            'some_plots.html': 'some_plots-16_00_00.png',
+            # Nothing renders, so the page keeps the configured fallback even though
+            # it selects an image that no longer exists
+            'some_autodocs.html': OPENGRAPH_FALLBACK_IMAGE,
+        },
     ),
     TinyPagesCase(
         id='plot_skip_optional_true',
         env={'PYVISTA_PLOT_SKIP_OPTIONAL': 'true'},
         expected_files=ALL_EXPECTED_FILES_SERIAL - IMAGES_OPTIONAL,
         expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_SERIAL,
+        expected_opengraph_images=OPENGRAPH_PLOT_IMAGES_SERIAL,
     ),
     TinyPagesCase(
         id='parallel',
         env={'PYVISTA_PLOT_USE_COUNTER': 'false'},
         expected_files=ALL_EXPECTED_FILES_PARALLEL,
         expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_PARALLEL,
+        # Parallel builds name images by content hash instead of by counter, so the
+        # preview has to be resolved from the rendered page rather than predicted
+        expected_opengraph_images={
+            page: _PYVISTA_PLOT_DIRECTIVE_OUTPUT_MAP[image]
+            for page, image in OPENGRAPH_PLOT_IMAGES_SERIAL.items()
+        },
         parallel=True,
         sphinx_args=('-j2',),
     ),
@@ -232,7 +328,7 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
-    source_dir = Path(__file__).parent / 'tinypages'
+    source_dir = copy_tinypages(tmp_path)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 
@@ -274,17 +370,6 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
     images_dir = html_dir / '_images'
     actual_html_images = {p.name for p in images_dir.rglob('*') if p.is_file()}
 
-    if sys.platform == 'win32':
-        # Bug with matplotlib not generating files on Windows. Assert the expected files don't
-        # exist, then patch the output to pretend like they exist to work around this bug
-        assert not (case.expected_images_matplotlib & actual_html_images), (
-            "matplotlib's plot unexpectedly rendered on Windows, "
-            'the workaround below can likely be removed.'
-        )
-        for missing in case.expected_images_matplotlib:
-            (images_dir / missing).touch()
-        actual_html_images = {p.name for p in images_dir.rglob('*') if p.is_file()}
-
     expected_images = case.expected_images | case.expected_images_matplotlib
     assert actual_html_images == expected_images
 
@@ -321,12 +406,18 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
     # check matplotlib plot exists
     assert b'This is a matplotlib plot.' in html_contents
 
+    # Each page previews the plot it renders, or keeps the configured fallback
+    actual_opengraph = {
+        page: meta_tags(html_dir / page).get('og:image') for page in case.expected_opengraph
+    }
+    assert actual_opengraph == case.expected_opengraph
+
 
 @flaky_test(exceptions=(AssertionError,))
 def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure that labeling image serial fails."""
     monkeypatch.delenv('PYVISTA_PLOT_USE_COUNTER', raising=False)
-    source_dir = Path(__file__).parent / 'tinypages'
+    source_dir = copy_tinypages(tmp_path)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 
@@ -345,9 +436,9 @@ def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
-    """Check that the ``sphinx_examples_as_code`` extension is wired into the real docs build."""
-    source_dir = Path(__file__).parent / 'tinypages'
+def test_tinypages_all_extensions_integration(tmp_path: Path):
+    """Check that every PyVista-authored Sphinx extension builds together."""
+    source_dir = copy_tinypages(tmp_path)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 
@@ -355,6 +446,10 @@ def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
         _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    tags = meta_tags(html_dir / 'some_autodocs.html')
+    assert tags.get('og:image')
+    assert tags.get('og:description')
 
     downloads_dir = html_dir / '_downloads'
     assert downloads_dir.is_dir(), 'expected examples_download to produce a _downloads dir'
@@ -432,7 +527,7 @@ def test_interactive_plot_moves(tmp_path: Path):
 
     from playwright.sync_api import sync_playwright
 
-    source_dir = Path(__file__).parent / 'tinypages'
+    source_dir = copy_tinypages(tmp_path)
     html_dir = tmp_path / '_build'
 
     returncode, out, err = _run_sphinx_build(

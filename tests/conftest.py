@@ -131,13 +131,10 @@ def global_variables_reset():
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
-    try:
-        import matplotlib as mpl
-    except ImportError:
-        pass
-    else:
-        mpl.rcdefaults()
-        mpl.use('agg', force=True)
+    import matplotlib as mpl
+
+    mpl.rcdefaults()
+    mpl.use('agg', force=True)
 
 
 @pytest.fixture(autouse=True)
