@@ -122,7 +122,7 @@ The plot directive has the following configuration options:
 
     pyvista_plot_autolink : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
-        targets. See :mod:`pyvista.ext._autolink`.
+        targets.
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
@@ -534,8 +534,7 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
 
-    If *env* is given, also records the code's identifiers for
-    :mod:`pyvista.ext._autolink` to hyperlink.
+    If *env* is given, also records the code's identifiers to hyperlink.
     """
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ```pyvista-plot::``
