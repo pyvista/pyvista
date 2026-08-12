@@ -65,16 +65,24 @@ def metaclass_property_names(module: str, objname: str) -> list[str]:  # numpydo
 
 
 def _is_bitmask_like(cls: type[Enum]) -> bool:
-    """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two)."""
+    """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two).
+
+    Only ``int``-valued enums (``IntEnum``, ``IntFlag``, ...) can look like bit flags --
+    ``int(member.value)`` would raise for e.g. a ``str``-valued ``Enum``.
+    """
     if issubclass(cls, Flag):
         return True
+    if not issubclass(cls, int):
+        return False
     values = [int(member.value) for member in cls]
     return bool(values) and all(v == 0 or (v & (v - 1)) == 0 for v in values)
 
 
-def _format_value(value: int, *, as_hex: bool) -> str:
+def _format_value(value: Any, *, as_hex: bool) -> str:
     """Format an enum member's value the way it should appear after ``:value:``."""
-    return hex(value) if as_hex else str(value)
+    if as_hex:
+        return hex(value)
+    return repr(value) if isinstance(value, str) else str(value)
 
 
 class MetaclassPropertyDocumenter(PropertyDocumenter):
@@ -159,7 +167,7 @@ class EnumDocumenter(ClassDocumenter):
             for member in cls:
                 self.add_line(f'.. py:attribute:: {cls.__name__}.{member.name}', sourcename)
                 self.add_line(
-                    f'   :value: {_format_value(int(member.value), as_hex=as_hex)}',
+                    f'   :value: {_format_value(member.value, as_hex=as_hex)}',
                     sourcename,
                 )
                 self.add_line('', sourcename)

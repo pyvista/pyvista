@@ -96,6 +96,13 @@ def test_is_bitmask_like_true_for_flag_regardless_of_values():
     assert autoenum._is_bitmask_like(NotReallyBits)
 
 
+def test_is_bitmask_like_false_for_non_int_enum():
+    class Shape(str, Enum):
+        CIRCLE = 'circle'
+
+    assert not autoenum._is_bitmask_like(Shape)
+
+
 @pytest.mark.parametrize(
     ('value', 'as_hex', 'expected'),
     [
@@ -107,3 +114,7 @@ def test_is_bitmask_like_true_for_flag_regardless_of_values():
 )
 def test_format_value(value, as_hex, expected):
     assert autoenum._format_value(value, as_hex=as_hex) == expected
+
+
+def test_format_value_str():
+    assert autoenum._format_value('circle', as_hex=False) == "'circle'"
