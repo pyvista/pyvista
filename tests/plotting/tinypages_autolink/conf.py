@@ -43,6 +43,9 @@ numpydoc_show_class_members = False
 # -- pyvista configuration ------------------------------------------------
 pv.BUILDING_GALLERY = True
 
+# Opt-in, like sphinx-gallery's own backreferences_dir -- this site exists to test it.
+pyvista_plot_autolink = True
+
 # -- .. pyvista-plot:: directive, wrapping numpydoc's Examples sections ---
 from numpydoc.docscrape_sphinx import SphinxDocString
 

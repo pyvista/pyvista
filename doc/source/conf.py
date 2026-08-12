@@ -601,6 +601,9 @@ del __s_p_t
 """
 pyvista_plot_cleanup = pyvista_plot_setup
 
+# Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
+pyvista_plot_autolink = True
+
 
 def _str_examples(self):
     examples_str = '\n'.join(self['Examples'])
@@ -781,7 +784,6 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
-    'pyvista-autolink.css',  # style pyvista.ext._autolink's links like sphinx-gallery's
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------

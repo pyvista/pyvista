@@ -120,6 +120,11 @@ The plot directive has the following configuration options:
     pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
+    pyvista_plot_autolink : bool, default: False
+        Hyperlink identifiers in the rendered output to their documented
+        targets. Opt-in, like sphinx-gallery's ``backreferences_dir``. See
+        :mod:`pyvista.ext._autolink`.
+
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
@@ -310,6 +315,7 @@ def setup(app: Sphinx):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_autolink', default=False, rebuild='html')
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -603,7 +609,7 @@ def render_figures(
 
             results.append((code_piece, images))
 
-        if env is not None and clean_pieces:
+        if env is not None and clean_pieces and config.pyvista_plot_autolink:
             _autolink.record_namespace(
                 env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
             )
