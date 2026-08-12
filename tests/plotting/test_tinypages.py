@@ -519,6 +519,25 @@ def test_autolink(tmp_path: Path):
     assert '__qualname__' not in err
 
 
+@flaky_test(exceptions=(AssertionError,))
+def test_autolink_idempotent_rebuild(tmp_path: Path):
+    """Rebuilding into the same output dir must not nest a second anchor."""
+    source_dir = Path(__file__).parent / 'tinypages_autolink'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+    cmd = _sphinx_build_cmd(source_dir, html_dir, doctree_dir)
+
+    for _ in range(2):
+        returncode, out, err = _run_sphinx_build(cmd)
+        assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'index.html').read_text(encoding='utf-8')
+    assert (
+        re.search(r'pyvista-autolink-a" href="[^"]*"><a class="pyvista-autolink-a"', html) is None
+    )
+    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 3
+
+
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
