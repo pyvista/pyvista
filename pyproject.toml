@@ -82,6 +82,7 @@ test = [
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
+  'polars<=1.44',
   'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',

@@ -20,6 +20,7 @@ from typing import TypeVar
 from typing import get_args
 import warnings
 
+import imageio
 import numpy as np
 from PIL import Image
 import pytest
@@ -56,24 +57,6 @@ if TYPE_CHECKING:
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
-
-
-HAS_IMAGEIO = True
-try:
-    import imageio
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
-
-try:
-    import imageio_ffmpeg
-
-    imageio_ffmpeg.get_ffmpeg_exe()
-except ImportError:
-    if HAS_IMAGEIO:
-        imageio.plugins.ffmpeg.download()
-    else:
-        raise
-
 
 THIS_PATH = Path(__file__).parent.absolute()
 
@@ -1098,14 +1081,12 @@ def test_add_lines_invalid():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_open_gif_invalid():
     pl = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
         pl.open_gif('file.abs')
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
 
@@ -1662,7 +1643,6 @@ def test_plot_texture():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
     globe = examples.load_globe()
@@ -1671,7 +1651,6 @@ def test_plot_numpy_texture():
     pl.add_mesh(globe, texture=texture_np)
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -4134,7 +4113,6 @@ def test_pointset_plot_as_points_vtk():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
     path = str(tmpdir.join(basename))
