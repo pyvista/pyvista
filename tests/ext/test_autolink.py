@@ -17,6 +17,13 @@ def test_accessed_names_call_chain_not_rooted_in_name():
     assert _autolink._accessed_names('pv.Sphere().plot()') == {'pv.Sphere'}
 
 
+def test_dotted_name_not_rooted_in_name():
+    import ast
+
+    call_node = ast.parse('a()', mode='eval').body
+    assert _autolink._dotted_name(call_node) is None
+
+
 def test_module_path_candidates_no_module():
     class Foo:
         pass
@@ -66,6 +73,12 @@ def test_candidate_names_module_attribute_is_module():
     assert _autolink._candidate_names('pv.examples', {'pv': pv}) == ['pyvista.examples']
 
 
+def test_candidate_names_bare_module():
+    import pyvista as pv
+
+    assert _autolink._candidate_names('pv', {'pv': pv}) == ['pyvista']
+
+
 def test_call_chains_no_intermediate_variable():
     assert _autolink._call_chains('pv.Sphere().plot()') == {('pv.Sphere', ('plot',))}
 
@@ -108,6 +121,22 @@ def test_call_return_type_no_annotation():
     assert _autolink._call_return_type(plain, {}) is None
 
 
+def test_call_return_type_already_a_type():
+    def make_thing():
+        return None
+
+    # e.g. a function defined without `from __future__ import annotations`.
+    make_thing.__annotations__['return'] = str
+    assert _autolink._call_return_type(make_thing, {}) is str
+
+
+def test_call_return_type_unresolvable_name():
+    def make_thing() -> NonexistentClassXYZ:  # noqa: F821
+        return None
+
+    assert _autolink._call_return_type(make_thing, {}) is None
+
+
 def test_call_chain_candidates():
     import pyvista as pv
 
@@ -117,6 +146,16 @@ def test_call_chain_candidates():
 
 def test_call_chain_candidates_unresolvable_target():
     assert _autolink._call_chain_candidates('undefined', ('plot',), {}) == []
+
+
+def test_call_chain_candidates_unresolvable_return_type():
+    def make_thing():
+        return None
+
+    candidates = _autolink._call_chain_candidates(
+        'make_thing', ('attr',), {'make_thing': make_thing}
+    )
+    assert candidates == []
 
 
 def test_intersphinx_inventory():
@@ -272,3 +311,78 @@ def test_embed_links_call_chain_and_plain_candidate_coexist(tmp_path):
     assert 'href="api2#pyvista.Sphere"' in result
     assert 'href="api#pyvista.PolyData.plot"' in result
     assert re.search(r'<a\b[^>]*><a\b', result) is None
+
+
+def test_embed_links_call_chain_dedup(tmp_path):
+    html = (
+        '<pre><span class="n">pv</span><span class="o">.</span><span class="n">Sphere</span>'
+        '<span class="p">()</span><span class="o">.</span><span class="n">plot</span>'
+        '<span class="p">()</span></pre>'
+    )
+    out_file = tmp_path / 'index.html'
+    out_file.write_text(html)
+
+    env = _fake_env()
+    env.domains['py'].objects['pyvista.PolyData.plot'] = SimpleNamespace(
+        docname='api', node_id='pyvista.PolyData.plot'
+    )
+    # recorded twice, e.g. referenced from two documented functions on the same page.
+    setattr(
+        env,
+        _autolink._ENV_ATTR,
+        {
+            'index': [
+                _autolink._CallCandidate('pv.Sphere', ('plot',), ('pyvista.PolyData.plot',)),
+                _autolink._CallCandidate('pv.Sphere', ('plot',), ('pyvista.PolyData.plot',)),
+            ]
+        },
+    )
+    app = SimpleNamespace(
+        builder=SimpleNamespace(
+            format='html',
+            get_target_uri=lambda docname: f'{docname}.html',
+            get_relative_uri=lambda _from, to: to,
+        ),
+        outdir=str(tmp_path),
+        env=env,
+    )
+    _autolink._embed_links(app, None)
+    result = out_file.read_text()
+
+    assert result.count('href="api#pyvista.PolyData.plot"') == 1
+    assert re.search(r'<a\b[^>]*><a\b', result) is None
+
+
+def test_embed_links_call_chain_already_linked(tmp_path):
+    # Sphere()...plot already wrapped in one anchor, e.g. by another extension --
+    # unlike our own wrap, the `)` stays adjacent to `.plot`, so the pattern still
+    # matches, and the already-linked check has to catch it instead.
+    html = (
+        '<pre><span class="n">pv</span><span class="o">.</span>'
+        '<a class="other-extension-a" href="somewhere">'
+        '<span class="n">Sphere</span><span class="p">()</span>'
+        '<span class="o">.</span><span class="n">plot</span></a><span class="p">()</span></pre>'
+    )
+    out_file = tmp_path / 'index.html'
+    out_file.write_text(html)
+
+    env = _fake_env()
+    env.domains['py'].objects['pyvista.PolyData.plot'] = SimpleNamespace(
+        docname='api', node_id='pyvista.PolyData.plot'
+    )
+    setattr(
+        env,
+        _autolink._ENV_ATTR,
+        {'index': [_autolink._CallCandidate('pv.Sphere', ('plot',), ('pyvista.PolyData.plot',))]},
+    )
+    app = SimpleNamespace(
+        builder=SimpleNamespace(
+            format='html',
+            get_target_uri=lambda docname: f'{docname}.html',
+            get_relative_uri=lambda _from, to: to,
+        ),
+        outdir=str(tmp_path),
+        env=env,
+    )
+    _autolink._embed_links(app, None)
+    assert out_file.read_text() == html
