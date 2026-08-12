@@ -1,14 +1,22 @@
-"""Unit tests for pyvista.ext._autoenum internals, without a full Sphinx build."""
+"""Tests for pyvista.ext._autoenum: unit tests, plus a real build of tinypages_autoenum."""
 
 from __future__ import annotations
 
 from enum import Enum
 from enum import Flag
 from enum import IntEnum
+from enum import IntFlag
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
 
 import pytest
 
 from pyvista.ext import _autoenum as autoenum
+
+TINYPAGES_AUTOENUM_DIR = Path(__file__).parent / 'tinypages_autoenum'
 
 
 def test_is_enum():
@@ -18,6 +26,16 @@ def test_is_enum():
     assert autoenum._is_enum(Color)
     assert not autoenum._is_enum(int)
     assert not autoenum._is_enum(Color.RED)  # an instance, not the class itself
+
+
+def test_resolve_single_part():
+    assert autoenum._resolve('enum', 'IntFlag') is IntFlag
+
+
+def test_resolve_dotted_path():
+    import os
+
+    assert autoenum._resolve('os', 'path.sep') == os.path.sep
 
 
 def test_metaclass_properties_finds_only_metaclass_properties():
@@ -75,6 +93,37 @@ def test_metaclass_properties_first_definition_wins_in_mro():
     assert props['shared'] is SubMeta.__dict__['shared']
 
 
+def test_instance_properties_finds_only_public_properties():
+    class Widget:
+        @property
+        def visible(self):
+            return True
+
+        @property
+        def _hidden(self):
+            return False
+
+        constant = 1
+
+    props = autoenum._instance_properties(Widget)
+    assert set(props) == {'visible'}
+    assert props['visible'] is Widget.__dict__['visible']
+
+
+def test_instance_property_names_on_celltype():
+    names = autoenum.instance_property_names('pyvista', 'CellType')
+    assert names == [
+        'dimension',
+        'is_composite',
+        'is_linear',
+        'n_edges',
+        'n_faces',
+        'n_points',
+        'vtk_class',
+    ]
+    assert 'dimension_map' not in names  # that one's a metaclass property, not an instance one
+
+
 @pytest.mark.parametrize(
     ('values', 'expected'),
     [
@@ -118,3 +167,110 @@ def test_format_value(value, as_hex, expected):
 
 def test_format_value_str():
     assert autoenum._format_value('circle', as_hex=False) == "'circle'"
+
+
+def test_enum_documenter_can_document_member():
+    class Color(Enum):
+        RED = 1
+
+    assert autoenum.EnumDocumenter.can_document_member(Color, 'Color', False, None)
+    assert not autoenum.EnumDocumenter.can_document_member(object(), 'obj', False, None)
+
+
+def test_metaclass_property_documenter_can_document_member_always_declines():
+    # Never resolved via generic dispatch -- only via an explicit ``.. autometaclassproperty::``
+    # (see setup()) -- so this must decline regardless of what it's asked about.
+    assert not autoenum.MetaclassPropertyDocumenter.can_document_member(
+        object(), 'anything', True, object()
+    )
+
+
+# --- Integration: build tinypages_autoenum for real, with sphinx-build -------------------
+
+
+def _build_tinypages_autoenum(
+    tmp_path: Path, extra_pages: dict[str, str] | None = None
+) -> tuple[subprocess.CompletedProcess, Path]:
+    """Build a throwaway copy of tinypages_autoenum; return (process, html build dir).
+
+    ``extra_pages`` adds ``{filename: content}`` .rst files, each linked from a toctree.
+    """
+    source_dir = tmp_path / 'tinypages_autoenum'
+    shutil.rmtree(source_dir, ignore_errors=True)
+    shutil.copytree(
+        TINYPAGES_AUTOENUM_DIR, source_dir, ignore=shutil.ignore_patterns('__pycache__')
+    )
+
+    if extra_pages:
+        for filename, content in extra_pages.items():
+            (source_dir / filename).write_text(content, encoding='utf-8')
+        stems = '\n   '.join(Path(filename).stem for filename in extra_pages)
+        with (source_dir / 'index.rst').open('a', encoding='utf-8') as f:
+            f.write(f'\n.. toctree::\n\n   {stems}\n')
+
+    build_dir = tmp_path / 'build'
+    proc = subprocess.run(
+        [sys.executable, '-msphinx', '-b', 'html', str(source_dir), str(build_dir)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc, build_dir / '_autosummary'
+
+
+def _text(html_path: Path) -> str:
+    """Strip tags from a built HTML page, collapsing whitespace."""
+    return re.sub(r'<[^>]+>', ' ', html_path.read_text(encoding='utf-8'))
+
+
+def test_tinypages_autoenum_build(tmp_path):
+    proc, autosummary_dir = _build_tinypages_autoenum(tmp_path)
+    assert proc.returncode == 0, proc.stderr
+
+    # #1: every property -- instance and metaclass alike -- is listed, not just the
+    # metaclass one.
+    celltype_text = _text(autosummary_dir / 'pyvista.CellType.html')
+    for name in (
+        'dimension',
+        'is_composite',
+        'is_linear',
+        'n_edges',
+        'n_faces',
+        'n_points',
+        'vtk_class',
+        'dimension_map',
+    ):
+        assert f'CellType.{name}' in celltype_text
+
+    # #2: dimension_map gets its own page, showing its docstring -- not a repr dump.
+    dimension_map_html = (autosummary_dir / 'pyvista.CellType.dimension_map.html').read_text(
+        encoding='utf-8'
+    )
+    assert 'mappingproxy(' not in dimension_map_html
+    assert 'topological dimension' in dimension_map_html  # from its docstring
+
+    # #3: enum members render under their own rubric heading, flat (no blockquote wrapper).
+    celltype_html = (autosummary_dir / 'pyvista.CellType.html').read_text(encoding='utf-8')
+    assert '<p class="rubric">Enum Members</p>' in celltype_html
+    assert 'blockquote' not in celltype_html
+
+    # CellStatus: hex-formatted values.
+    cellstatus_text = _text(autosummary_dir / 'pyvista.CellStatus.html')
+    assert '0x1' in cellstatus_text
+
+    # A str-valued Enum (not int-based) does not crash and reprs its value.
+    shape_text = _text(autosummary_dir / 'pyvista.plotting.opts.PointSpriteShape.html')
+    assert "'circle'" in shape_text
+
+
+def test_metaclassproperty_documenter_warns_on_non_metaclass_property(tmp_path):
+    """A misuse of the directive (naming something that isn't a metaclass property) warns
+    and produces no content, rather than crashing.
+    """
+    misuse_rst = (
+        'Misuse\n======\n\n.. currentmodule:: pyvista\n\n'
+        '.. autometaclassproperty:: CellType.EMPTY_CELL\n'
+    )
+    proc, _ = _build_tinypages_autoenum(tmp_path, extra_pages={'misuse.rst': misuse_rst})
+    assert proc.returncode == 0, proc.stderr
+    assert 'is not a metaclass property of' in proc.stderr
