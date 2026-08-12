@@ -19,6 +19,24 @@ class Widget:
         """Draw the widget."""
 
 
+def make_widget() -> Widget:
+    """Return a ``Widget``."""
+    return Widget()
+
+
+def call_chain_example():
+    """Test a call with no intermediate variable resolving its trailing attribute.
+
+    Examples
+    --------
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
+    >>> from autolink_samples import make_widget
+    >>> make_widget().draw()
+
+    """
+    return
+
+
 def make_widget_or_string(as_string=False):
     """Return either a ``Widget`` or a ``str``.
 

@@ -497,6 +497,7 @@ def test_autolink(tmp_path: Path):
     )
 
     expected_targets = {
+        '#autolink_samples.make_widget',
         '#autolink_samples.make_widget_or_string',
         '#autolink_samples.Widget',
         '#autolink_samples.Widget.draw',
@@ -510,9 +511,20 @@ def test_autolink(tmp_path: Path):
         f'missing expected autolink targets: {expected_targets - found_targets}'
     )
 
-    # Widget.draw is referenced from three places: two >>> groups in multi_block_examples,
-    # plus make_partial_method's partial(widget.draw).
-    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 3
+    # Widget.draw is referenced from four places: two >>> groups in multi_block_examples,
+    # make_partial_method's partial(widget.draw), and call_chain_example's
+    # make_widget().draw() (no intermediate variable).
+    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 4
+
+    # make_widget() -- no intermediate variable -- links twice: once for the call
+    # itself, and separately for .draw on its result, each in its own anchor with
+    # the call's `()` sitting outside both.
+    assert (
+        '<a class="pyvista-autolink-a" href="#autolink_samples.make_widget">'
+        '<span class="n">make_widget</span></a><span class="p">()</span>'
+        '<a class="pyvista-autolink-a" href="#autolink_samples.Widget.draw">'
+        '<span class="o">.</span><span class="n">draw</span></a>' in html
+    )
 
     # functools.partial instances used to crash the resolver (see make_partial_method).
     assert '__qualname__' not in out
@@ -535,7 +547,7 @@ def test_autolink_idempotent_rebuild(tmp_path: Path):
     assert (
         re.search(r'pyvista-autolink-a" href="[^"]*"><a class="pyvista-autolink-a"', html) is None
     )
-    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 3
+    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 4
 
 
 @pytest.mark.needs_playwright

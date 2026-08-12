@@ -12,6 +12,10 @@ Dynamic Autolink Testing
 
 .. automethod:: Derived.meth
 
+.. autofunction:: make_widget
+
+.. autofunction:: call_chain_example
+
 .. autofunction:: make_widget_or_string
 
 .. autofunction:: make_derived
