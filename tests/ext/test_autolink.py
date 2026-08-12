@@ -41,8 +41,7 @@ def test_candidate_names_property():
 
 
 def test_candidate_names_getattr_raises():
-    # `object()` has no `.nonexistent` attribute -- the same situation as a variable
-    # reassigned to a different type between two accesses.
+    # object() has no .nonexistent attribute -- like a variable reassigned mid-script.
     namespace = {'x': object()}
     assert _autolink._candidate_names('x.nonexistent.deep', namespace) == list(
         _autolink._module_path_candidates(object, [])
@@ -50,8 +49,7 @@ def test_candidate_names_getattr_raises():
 
 
 def test_candidate_names_module_reexported_function():
-    # `pyvista.examples.load_uniform` is the public path; `load_uniform` is actually
-    # defined in (and documented under) `pyvista.examples.examples`.
+    # load_uniform is documented at pyvista.examples.examples, not the public path.
     from pyvista import examples
 
     candidates = _autolink._candidate_names('examples.load_uniform', {'examples': examples})
@@ -91,9 +89,7 @@ def test_resolve_object():
 def test_call_return_type_resolves_via_fallback_namespace():
     import pyvista as pv
 
-    # pv.Sphere's return annotation is a bare string, 'PolyData', absent from its own
-    # defining module's globals (a TYPE_CHECKING-only import there) but present on the
-    # pyvista package itself, already bound in the namespace as 'pv'.
+    # 'PolyData' isn't in Sphere's own module globals (TYPE_CHECKING-only there), but is on pv.
     assert 'PolyData' not in pv.Sphere.__globals__
     assert _autolink._call_return_type(pv.Sphere, {'pv': pv}) is pv.PolyData
 

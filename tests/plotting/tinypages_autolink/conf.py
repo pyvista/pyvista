@@ -1,10 +1,8 @@
 """Minimal Sphinx site for testing ``pyvista.ext._autolink`` in isolation.
 
-Kept separate from ``tests/plotting/tinypages``: that site's
-``test_tinypages`` asserts an exact set of generated
-``pyvista_plot_directive`` output filenames, keyed in part on a counter
-that increments globally, in document order, across the whole build.
-Adding pages here would shift those filenames.
+Kept separate from ``tests/plotting/tinypages``: that site's ``test_tinypages``
+asserts an exact set of output filenames keyed on a global counter; another
+page here would shift them.
 """
 
 from __future__ import annotations
@@ -30,8 +28,7 @@ extensions = [
     'pyvista.ext.plot_directive',
 ]
 
-# Otherwise numpydoc appends an autosummary Methods table to autoclass'd classes,
-# expecting toctree-generated stub pages that don't exist here.
+# Otherwise numpydoc appends an autosummary Methods table with no stub pages to link to.
 numpydoc_show_class_members = False
 
 # -- pyvista configuration ------------------------------------------------

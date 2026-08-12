@@ -511,14 +511,10 @@ def test_autolink(tmp_path: Path):
         f'missing expected autolink targets: {expected_targets - found_targets}'
     )
 
-    # Widget.draw is referenced from four places: two >>> groups in multi_block_examples,
-    # make_partial_method's partial(widget.draw), and call_chain_example's
-    # make_widget().draw() (no intermediate variable).
+    # Widget.draw is referenced 4x: 2 >>> groups, partial(widget.draw), and make_widget().draw().
     assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 4
 
-    # make_widget() -- no intermediate variable -- links twice: once for the call
-    # itself, and separately for .draw on its result, each in its own anchor with
-    # the call's `()` sitting outside both.
+    # make_widget() and .draw() on its result link separately, with `()` outside both.
     assert (
         '<a class="pyvista-autolink-a" href="#autolink_samples.make_widget">'
         '<span class="n">make_widget</span></a><span class="p">()</span>'

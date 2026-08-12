@@ -1,26 +1,11 @@
 """Dynamic hyperlinking of identifiers inside ``.. pyvista-plot::`` output.
 
-Resolves each accessed identifier against the real namespace it executed
-in, rather than inferring its type statically (cf. ``sphinx-codeautolink``).
-Wired into :mod:`pyvista.ext.plot_directive`; opt-in via
-``pyvista_plot_autolink``. Never executes code itself.
+Resolves each identifier against the real namespace it executed in. Wired
+into :mod:`pyvista.ext.plot_directive`; opt-in via ``pyvista_plot_autolink``.
 
-Two phases:
-
-1. :func:`record_namespace` -- walks the executed source with :mod:`ast`
-   and resolves each accessed name to a list of candidate documented names.
-2. :func:`_embed_links` (``build-finished``) -- matches candidates against
-   the local Python domain and intersphinx inventories, and rewrites the
-   built HTML.
-
-Limitations:
-
-- Only the final namespace state is used: a variable reassigned to a
-  different type resolves against its last type everywhere it's used.
-- A one-off chain with no intermediate variable (``pv.Sphere().plot()``)
-  resolves its trailing attribute (``.plot``) only if the called function's
-  return annotation is a plain, resolvable class name -- not a string
-  expression (``Widget | str``), and only one call deep.
+Limitations: only the final namespace state is used, and a call with no
+intermediate variable (``pv.Sphere().plot()``) only resolves its trailing
+attribute when the call's return annotation is a plain, resolvable class name.
 """
 
 from __future__ import annotations
@@ -45,13 +30,11 @@ _ENV_ATTR = 'pyvista_autolink_records'
 #: Matches any anchor tag, ours or another extension's.
 _ANCHOR_RE = re.compile(r'<a\b[^>]*>.*?</a>', re.DOTALL)
 
-# Pygments token classes for bare identifiers (``n`` plain names, ``nn``/``nc``/...
-# more specific guesses, e.g. module names in an ``import`` line). Dots render as ``o``.
+# Pygments token classes: ``n``/``nn``/``nc``/... for names, ``o`` for dots.
 _NAME_SPAN = '<span class="n[a-zA-Z]{{0,2}}">{}</span>'
 _DOT_SPAN = '<span class="o">.</span>'
 
-#: A call's closing paren -- either its own token (``foo(x)``) or merged with the
-#: opening one for a no-argument call (``foo()``).
+#: A call's closing paren: ``)``, or merged ``()`` for a no-arg call.
 _CALL_END = r'<span class="p">\(?\)</span>'
 
 
@@ -83,8 +66,7 @@ class _CallCandidate:
 
 
 # ---------------------------------------------------------------------------
-# Phase 1: collect accessed names from source, resolve each against the
-# namespace it executed in to a list of candidate documented names.
+# Phase 1: collect accessed names, resolve each against the executed namespace.
 # ---------------------------------------------------------------------------
 
 
@@ -106,8 +88,7 @@ class _NameCollector(ast.NodeVisitor):
 
     def __init__(self) -> None:
         self.accessed: set[str] = set()
-        #: (call target, trailing attrs), e.g. ``('pv.Sphere', ('plot',))``
-        #: for ``pv.Sphere().plot``.
+        #: e.g. ``('pv.Sphere', ('plot',))`` for ``pv.Sphere().plot``.
         self.call_chains: set[tuple[str, tuple[str, ...]]] = set()
 
     def visit_Name(self, node: ast.Name) -> None:
@@ -144,6 +125,7 @@ def _call_chains(source: str) -> set[tuple[str, tuple[str, ...]]]:
 
 
 def _collect(source: str) -> _NameCollector:
+    """Parse ``source`` and return its populated name collector."""
     collector = _NameCollector()
     try:
         tree = ast.parse(source)
@@ -154,16 +136,10 @@ def _collect(source: str) -> _NameCollector:
 
 
 def _module_path_candidates(thing: type | Any, method: list[str]) -> Iterator[str]:
-    """Yield ``thing``'s qualified name at every module-path truncation depth.
-
-    E.g. ``pyvista.core.pointset.PolyData``, ``pyvista.core.PolyData``,
-    ``pyvista.PolyData``, ... so whichever depth is actually documented
-    gets found.
-    """
+    """Yield ``thing``'s qualified name at every module-path truncation depth."""
     qualname = getattr(thing, '__qualname__', None)
     if qualname is None:
-        # e.g. a functools.partial instance: isroutine() is true (it's a
-        # method descriptor), but it has no qualified name of its own.
+        # e.g. functools.partial: isroutine() is true but there's no qualname.
         return
     module = inspect.getmodule(thing)
     if module is None:
@@ -188,9 +164,8 @@ def _class_candidates(cls: type, method: list[str]) -> list[str]:
 def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
     """Return candidate documented names for one dotted name access.
 
-    Tries every prefix of ``accessed`` against ``namespace``; the longest
-    prefix bound to a real object wins, then walks the remaining attributes
-    on that live object.
+    Tries every prefix of ``accessed`` against ``namespace``; the longest match
+    wins, then walks the remaining attributes on that live object.
     """
     parts = accessed.split('.')
     for split in range(len(parts)):
@@ -222,9 +197,7 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
                 break
 
         if inspect.ismodule(obj):
-            # `obj` is itself a (sub)module reached via attribute access
-            # (e.g. `pv.examples`) -- not further resolved into a class,
-            # function, or method, so nothing built below applies to it.
+            # obj is itself a (sub)module (e.g. pv.examples) -- nothing below applies.
             return [obj.__name__]
 
         is_class = inspect.isclass(obj)
@@ -238,8 +211,7 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
     return []
 
 
-#: Bare, dotted class name -- e.g. ``PolyData`` or ``pyvista.PolyData`` -- rejecting
-#: anything that isn't (``Widget | str``, ``list[int]``, ...).
+#: Matches a bare dotted class name (``PolyData``); rejects ``Widget | str``, ``list[int]``.
 _SIMPLE_NAME_RE = re.compile(r'[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\Z')
 
 
@@ -263,10 +235,8 @@ def _resolve_object(accessed: str, namespace: dict[str, Any]) -> Any | None:
 def _call_return_type(func: Any, namespace: dict[str, Any]) -> type | None:
     """Return ``func``'s return type, if its annotation names one plain, resolvable class.
 
-    Checked against ``func``'s own module first, then every module already
-    present in ``namespace`` -- covering re-exported aliases (e.g.
-    ``pyvista.PolyData``) that ``func``'s own module never actually imports,
-    only references under ``TYPE_CHECKING``.
+    Checked against ``func``'s own module first, then every module already in
+    ``namespace`` -- covers aliases ``func``'s module only imports under ``TYPE_CHECKING``.
     """
     annotation = getattr(func, '__annotations__', {}).get('return')
     if isinstance(annotation, type):
@@ -396,8 +366,7 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
         if not out_file.exists():
             continue
 
-        # Deduplicate: the same accessed name, or the same call chain, can be
-        # recorded once per documented function that references it.
+        # Dedup: the same accessed name or call chain can be recorded multiple times.
         resolved_names: dict[str, str] = {}
         resolved_calls: dict[tuple[str, tuple[str, ...]], str] = {}
         for candidate in candidates:
@@ -421,10 +390,8 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
         if not resolved_names and not resolved_calls:
             continue
 
-        # One combined pattern, longest name first, so `mesh` can't match -- and get
-        # wrapped again -- inside a `mesh.plot` match's own text. Each call-chain
-        # pattern gets a nested `w{i}` group marking the part to actually wrap, since
-        # its leading closing-paren context must stay outside the link.
+        # One pattern, longest name first (avoids re-wrapping `mesh` inside `mesh.plot`);
+        # call chains get a nested `w{i}` group so only the trailing attrs get wrapped.
         group_kind: dict[int, str] = {}
         group_link: dict[int, str] = {}
         sources: list[str] = []
@@ -445,8 +412,7 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
 
         html = out_file.read_text(encoding='utf-8')
 
-        # Skip matches already inside an anchor (ours, from an unchanged
-        # incremental rebuild, or another extension's).
+        # Skip matches already inside an anchor (ours or another extension's).
         already_linked = [m.span() for m in _ANCHOR_RE.finditer(html)]
 
         def _wrap(  # noqa: PLR0917
