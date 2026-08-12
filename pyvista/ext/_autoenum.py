@@ -88,7 +88,8 @@ class MetaclassPropertyDocumenter(PropertyDocumenter):
     objtype = 'metaclassproperty'
     directivetype = 'property'
 
-    def import_object(self, raiseerror: bool = False) -> bool:
+    def import_object(self, raiseerror: bool = False) -> bool:  # numpydoc ignore=RT01
+        """Resolve ``self.object`` to the metaclass property itself, not its evaluated value."""
         ClassLevelDocumenter.import_object(self, raiseerror=False)
         if self.parent is None:
             return False
@@ -115,16 +116,17 @@ class EnumDocumenter(ClassDocumenter):
     @classmethod
     def can_document_member(
         cls: type[ClassDocumenter], member: Any, membername: str, isattr: bool, parent: Any
-    ) -> bool:
+    ) -> bool:  # numpydoc ignore=RT01
+        """Return whether ``member`` is an ``Enum`` subclass."""
         return _is_enum(member)
 
     def filter_members(
         self, members: ObjectMembers, want_all: bool
-    ) -> list[tuple[str, Any, bool]]:
+    ) -> list[tuple[str, Any, bool]]:  # numpydoc ignore=RT01
+        """Drop enum members and metaclass properties; both are documented by hand instead."""
         if not _is_enum(self.object):
             return super().filter_members(members, want_all)
 
-        # Enum members and metaclass properties are documented by hand in add_content.
         skip_names = set(self.object.__members__) | set(_metaclass_properties(self.object))
         kept = [
             member
@@ -135,6 +137,7 @@ class EnumDocumenter(ClassDocumenter):
         return super().filter_members(kept, want_all)
 
     def add_content(self, more_content: Any) -> None:
+        """Add the docstring, then (for enums) the member values and metaclass properties."""
         super().add_content(more_content)
         if not _is_enum(self.object):
             return
@@ -143,6 +146,7 @@ class EnumDocumenter(ClassDocumenter):
         self._document_metaclass_properties(sourcename)
 
     def _document_members(self, sourcename: str) -> None:
+        """Write out each enum member's value and (if any) docstring."""
         cls = self.object
         as_hex = _is_bitmask_like(cls)
 
@@ -169,6 +173,7 @@ class EnumDocumenter(ClassDocumenter):
             self.indent = self.indent[: -len(self.content_indent)]
 
     def _document_metaclass_properties(self, sourcename: str) -> None:
+        """Document each metaclass property inline, via a nested property documenter."""
         names = sorted(_metaclass_properties(self.object))
         if not names:
             return
