@@ -228,7 +228,7 @@ heart_array = np.full_like(ct_image.active_scalars, -1000)
 # to mask the CT image to only extract the intensities of interest.
 ct_image_array = ct_image.active_scalars
 heart_mask_array = heart_mask.active_scalars
-heart_array[heart_mask_array == True] = ct_image_array[heart_mask_array == True]  # noqa: E712
+heart_array[heart_mask_array == np.True_] = ct_image_array[heart_mask_array == np.True_]
 
 # %%
 # Add the masked array to the CT image as a new set of scalar values.

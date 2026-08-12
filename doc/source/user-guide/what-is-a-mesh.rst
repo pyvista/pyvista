@@ -1,5 +1,7 @@
 .. _what_is_a_mesh:
 
+.. autoopengraph_thumbnail:: 7
+
 What is a Mesh?
 ===============
 In PyVista, a mesh is any spatially referenced information and usually

@@ -289,6 +289,83 @@ PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
 
+Import Conventions
+^^^^^^^^^^^^^^^^^^
+
+Standard library imports follow one rule: **import the name that carries its
+own meaning at the call site.**
+
+Modules that export *types* are imported by member. "Type" here means a name
+that appears in a type position -- an annotation, a base class, or a
+class-defining decorator -- where the module prefix is pure noise:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from collections.abc import Sequence
+    from dataclasses import dataclass
+
+
+    @dataclass
+    class Config:
+        path: Path
+        names: Sequence[str]
+
+Everything else keeps the namespace prefix, because the module name supplies
+the domain that makes the call readable:
+
+.. code-block:: python
+
+    import functools
+    import re
+
+    pattern = re.escape(text)  # not `escape` -- shell? HTML? regex?
+
+
+    @functools.wraps(func)  # not `wraps` -- wraps what?
+    def wrapper(*args, **kwargs): ...
+
+
+Some member imports also shadow their own module (``from time import time``,
+``from glob import glob``), which the namespace form avoids.
+
+The unit is the module, not the name. ``argparse`` exports ``ArgumentParser``
+but is namespace-imported, because one type does not make a type module;
+``argparse.ArgumentParser`` reads fine. The member list is closed and short:
+``__future__``, ``abc``, ``collections``, ``collections.abc``, ``dataclasses``,
+``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
+``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
+
+How this is enforced
+""""""""""""""""""""
+
+Two lists, because ``ruff`` can only express one direction:
+
+* ``banned-from`` under ``[tool.ruff.lint.flake8-import-conventions]`` in
+  ``pyproject.toml`` rejects ``from re import escape`` (``ICN003``).
+* the ``namespace-stdlib-imports`` pygrep hook in ``.pre-commit-config.yaml``
+  rejects ``import pathlib``. Ruff cannot do this direction --
+  ``flake8-tidy-imports``' ``banned-api`` matches the resolved symbol, so
+  banning ``pathlib`` would reject ``from pathlib import Path`` too.
+
+``tests/test_import_conventions.py`` asserts the lists stay disjoint and
+jointly govern every standard library module the repository imports, so a
+module governed by neither fails CI instead of settling into whichever form its
+first author picked. When it fails, add the module to the matching list.
+
+Two details:
+
+* ``banned-from`` does not match submodules -- banning ``importlib`` still
+  permits ``from importlib.metadata import entry_points``. Govern the submodule
+  explicitly when it is used directly.
+* Aliased imports (``import xml.dom.minidom as md``) are an intentional escape
+  hatch and neither list matches them.
+
+Prefer fixing the code over adding a waiver: a local variable shadowing a
+module is a reason to rename the variable. The sole exception in the tree is
+``contextlib.AbstractContextManager``, a type in a base-class position inside
+an otherwise action-shaped module, carrying a ``# noqa: ICN003``.
+
 Documentation Style
 ^^^^^^^^^^^^^^^^^^^
 

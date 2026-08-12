@@ -7,12 +7,12 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
-from colorsys import rgb_to_hls
+import colorsys
 from dataclasses import dataclass
 from enum import auto
 import inspect
-import io
-from itertools import starmap
+from io import StringIO
+import itertools
 import os
 from pathlib import Path
 import re
@@ -150,7 +150,7 @@ class DocTable:
         data = cls.fetch_data()
         assert data is not None, f'No data was fetched by {cls}.'
 
-        with io.StringIO() as fnew:
+        with StringIO() as fnew:
             fnew.write(cls.get_header(data))
             for i, row_data in enumerate(data):
                 row = cls.get_row(i, row_data)
@@ -1657,7 +1657,7 @@ class ColormapTable(DocTable):
                 return colors[order]
 
             else:  # sort_by == 'hue':
-                hls = np.array(list(starmap(rgb_to_hls, colors)))
+                hls = np.array(list(itertools.starmap(colorsys.rgb_to_hls, colors)))
                 hue_sorted_indices = np.argsort(hls[:, 0])
                 return colors[hue_sorted_indices]
 
@@ -1675,7 +1675,7 @@ class ColormapTable(DocTable):
                 xyz = colour.sRGB_to_XYZ(rgb_sampled)
                 return colour.XYZ_to_CAM02UCS(xyz)
             else:  # sort_by == 'hue':
-                hls = np.array(list(starmap(rgb_to_hls, rgb_sampled)))
+                hls = np.array(list(itertools.starmap(colorsys.rgb_to_hls, rgb_sampled)))
                 return hls[:, 0]
 
         def compute_delta_between_swatches(swatch1, swatch2, weights):
@@ -2497,7 +2497,7 @@ class DatasetCard:
 
         Any fields with a `None` value are completely excluded from the block.
         """
-        field_grids = list(starmap(DatasetCard._generate_field_grid, fields))
+        field_grids = list(itertools.starmap(DatasetCard._generate_field_grid, fields))
         block = '\n'.join([grid for grid in field_grids if grid])
         return _indent_multi_line_string(block, indent_level=indent_level)
 

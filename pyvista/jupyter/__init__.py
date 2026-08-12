@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# noqa-reason: ``Callable`` is used in the ``JupyterBackendRegistration``
+# ``Callable`` is used in the ``JupyterBackendRegistration``
 # NamedTuple field annotations and must be available at runtime so that
 # ``typing.get_type_hints`` (called by Sphinx autodoc) can resolve them.
 from collections.abc import Callable  # noqa: TC003

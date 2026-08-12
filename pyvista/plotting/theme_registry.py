@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib import import_module
+import importlib
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
@@ -336,7 +336,7 @@ def _resolve_dotted_path(spec: str) -> type[Theme]:
         msg = f'Invalid theme spec "{spec}".'
         raise ValueError(msg)
     try:
-        module = import_module(module_path)
+        module = importlib.import_module(module_path)
     except ImportError as exc:
         msg = f'Cannot import "{module_path}" from theme spec "{spec}": {exc}'
         raise ValueError(msg) from exc

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from itertools import permutations
+import itertools
 import re
 
 from hypothesis import given
@@ -756,7 +756,7 @@ def test_rectangle(points):
     )
 
     # Test all possible orders of the points
-    for pt_tuples in permutations(rotated, 4):
+    for pt_tuples in itertools.permutations(rotated, 4):
         mesh = pv.Rectangle(list(pt_tuples[0:3]))
         assert mesh.n_points
         assert mesh.n_cells

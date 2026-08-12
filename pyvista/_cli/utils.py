@@ -6,8 +6,8 @@ Mostly contains converters, validators, console error helper and help formatters
 
 from __future__ import annotations
 
-from ast import literal_eval
-from glob import glob
+import ast
+import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
@@ -129,7 +129,7 @@ def _expand_globs(values: list[str]) -> list[str]:
     for v in values:
         v = str(Path(v).expanduser())  # noqa: PLW2901
         if any(c in v for c in _GLOB_CHARS):
-            matches = sorted(glob(v, recursive=True))  # noqa: PTH207
+            matches = sorted(glob.glob(v, recursive=True))  # noqa: PTH207
             if matches:
                 expanded.extend(matches)
             else:
@@ -323,7 +323,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
 
         # Coerce using literal_eval with fallback to str value
         try:
-            return literal_eval(token.value)
+            return ast.literal_eval(token.value)
         except (ValueError, SyntaxError):
             return token.value
     return None

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from copy import deepcopy
-from functools import cached_property
-from functools import partial
+import copy
+import functools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -936,8 +935,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if deep:
-            self._association_complex_names = deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
+            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
@@ -3085,7 +3084,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        method = partial(self.cell_neighbors, connections=connections)
+        method = functools.partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def _get_levels_neihgbors(
@@ -3741,22 +3740,22 @@ class DataSet(DataSetFilters, DataObject):
         r2 = grid.GetCell(0).ComputeBoundingSphere(center)
         return float(r2**0.5), (center[0], center[1], center[2])
 
-    @cached_property
+    @functools.cached_property
     def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkStaticCellLocator)
 
-    @cached_property
+    @functools.cached_property
     def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkCellTreeLocator)
 
-    @cached_property
+    @functools.cached_property
     def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkPointLocator)
 
-    @cached_property
+    @functools.cached_property
     def _obb_tree(self) -> _vtk.vtkOBBTree:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         msg = (

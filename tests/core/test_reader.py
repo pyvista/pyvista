@@ -9,6 +9,7 @@ from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import imageio
 import numpy as np
 import pytest
 
@@ -22,12 +23,6 @@ from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-
-HAS_IMAGEIO = True
-try:
-    import imageio
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
 
 
 def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
@@ -1276,7 +1271,6 @@ def test_xdmf_reader():
         reader.set_active_time_value(1000.0)
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))

@@ -121,6 +121,7 @@ extensions = [
     'notfound.extension',
     'numpydoc',
     'pyvista.ext.plot_directive',
+    'sphinx_autoopengraph',
     'sphinx_examples_as_code',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
@@ -184,7 +185,6 @@ numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
 sphinx_examples_as_code_conf = {
-    'base_url': 'https://docs.pyvista.org/',
     # Replace sphinx-gallery's own per-example download footer/note with
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
@@ -310,6 +310,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*BytesIO'),
     (r'py:.*', '.*StringIO'),
     (r'py:.*', '.*Path'),
     (r'py:.*', '.*UserDict'),
@@ -745,11 +746,6 @@ html_theme_options = {
             'name': 'Support',
             'url': 'https://github.com/pyvista/pyvista/discussions',
             'icon': 'fa fa-comment fa-fw',
-        },
-        {
-            'name': 'Contributing',
-            'url': 'https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst',
-            'icon': 'fa fa-gavel fa-fw',
         },
         {
             'name': 'The Paper',

@@ -691,7 +691,7 @@ class _CellTypeMeta(EnumMeta):
             _warn_deprecated_renamed(name)
         return member
 
-    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]  # noqa: ANN
+    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]
         member = super().__call__(value, *args, **kwargs)  # type: ignore[var-annotated]
         name = member.name
         if name in _DEPRECATED_CELL_TYPES:
@@ -888,6 +888,8 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 13
+
     Create a single cube. Notice how the cell type is defined using the
     ``CellType``.
 

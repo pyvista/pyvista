@@ -20,9 +20,10 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         With keys "module" and "fullname".
 
     edit : bool, default=False
-        Link to the GitHub edit page instead of the blob view. The line span
-        is included either way, so the edit page opens with the same lines
-        already scrolled to and selected.
+        Link to the GitHub edit page instead of the blob view. The blob view
+        gets the full line range highlighted; the edit page gets a short,
+        two-line range starting at the same line -- a single-line anchor
+        doesn't reliably scroll the edit view there on first load.
 
     Returns
     -------
@@ -89,7 +90,15 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     except Exception:  # noqa: BLE001 # pragma: no cover
         lineno = None
 
-    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno else ''
+    if not lineno:
+        linespec = ''
+    elif edit:
+        # A single-line #Lxx anchor doesn't reliably scroll GitHub's edit
+        # view on first load (it opens at the top until the page is
+        # refreshed); a short range seems to work, so use the smallest one.
+        linespec = f'#L{lineno}-L{lineno + 1}'
+    else:
+        linespec = f'#L{lineno}-L{lineno + len(source) - 1}'
 
     if 'dev' in pv.__version__:
         kind = 'main'
@@ -129,6 +138,8 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
         not need rewriting or whose source could not be resolved.
 
     """
+    if pagename == 'contributing':
+        return 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst'
     if pagename.startswith('examples') and 'index' not in pagename:
         # Gallery example. The ``examples`` segment in ``pagename`` matches
         # the ``examples`` directory in the repo, so we can use it directly.
