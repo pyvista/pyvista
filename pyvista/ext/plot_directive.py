@@ -130,7 +130,10 @@ The plot directive has the following configuration options:
 
     pyvista_plot_autolink : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
-        targets.
+        targets. Equivalent to Sphinx-Gallery's ``reference_url`` for gallery
+        examples, but for docstring output.
+
+        .. versionadded:: 0.49
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
