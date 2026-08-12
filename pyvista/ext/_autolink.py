@@ -36,7 +36,12 @@ Design, two phases, closely modeled on ``sphinx_gallery.backreferences``:
    inventory is actually known): for each page with recorded candidates,
    checks each candidate against the local Python domain and intersphinx
    inventories, and rewrites the already-built HTML to wrap whichever
-   candidate matched (if any) in a hyperlink.
+   candidate matched (if any) in a hyperlink. Never wraps text already
+   inside an anchor tag -- its own, from a page an incremental rebuild left
+   untouched on disk, or another extension's (e.g. ``sphinx-codeautolink``,
+   if still active on the same site) -- so re-running this, or running
+   alongside another autolinker, never nests a second ``<a>`` inside one
+   already there.
 
 Known limitations, matching Sphinx-Gallery's own resolver rather than
 improving on it (see the "Namespace capture" design decision):
@@ -69,10 +74,10 @@ if TYPE_CHECKING:
 #: ``env`` attribute holding recorded candidates, keyed by docname.
 _ENV_ATTR = 'pyvista_autolink_records'
 
-#: ``app`` attribute holding the set of docnames actually (re)written to HTML
-#: this build. See :func:`_track_written_page` for why this lives on ``app``
-#: rather than ``env``.
-_WRITTEN_ATTR = 'pyvista_autolink_written_pages'
+#: Matches any already-rendered anchor tag, ours or another extension's
+#: (e.g. ``sphinx-codeautolink``'s). Used to skip re-wrapping text that's
+#: already inside a link -- see :func:`_embed_links`.
+_ANCHOR_RE = re.compile(r'<a\b[^>]*>.*?</a>', re.DOTALL)
 
 # Pygments token classes seen in practice for bare identifiers across the
 # python/pycon lexers (``n`` for plain names, ``nn``/``nc``/... for names
@@ -273,32 +278,6 @@ def _purge_doc(app: Sphinx, env: BuildEnvironment, docname: str) -> None:  # noq
     getattr(env, _ENV_ATTR, {}).pop(docname, None)
 
 
-def _track_written_page(  # noqa: PLR0917
-    app: Sphinx,
-    pagename: str,
-    templatename: str,  # noqa: ARG001
-    context: dict[str, Any],  # noqa: ARG001
-    doctree: Any,  # noqa: ARG001
-) -> None:
-    """Record that ``pagename``'s HTML was actually (re)written this build.
-
-    On an incremental build, ``env`` -- and the candidates recorded on it --
-    can be loaded straight from an on-disk pickle for a page Sphinx decided
-    not to re-render this run, because nothing about it changed. Without
-    this check, :func:`_embed_links` would still find that page's stale
-    candidates and rewrite its (already-linked, from a previous build) HTML
-    a second time, nesting a fresh ``<a>`` inside the one already there.
-    ``app`` itself, unlike ``env``, is a fresh object for every
-    ``sphinx-build`` invocation, so a set stored here never leaks state from
-    an earlier build into this one.
-    """
-    written: set[str] | None = getattr(app, _WRITTEN_ATTR, None)
-    if written is None:
-        written = set()
-        setattr(app, _WRITTEN_ATTR, written)
-    written.add(pagename)
-
-
 # ---------------------------------------------------------------------------
 # Phase 2: once the whole site's objects are known, match candidates against
 # the real inventory and rewrite the already-built HTML.
@@ -357,17 +336,10 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
     if not records:
         return
 
-    # Restrict to pages actually (re)written this build -- see
-    # `_track_written_page` for why a stale, unfiltered record here would
-    # corrupt already-linked HTML left over from a previous build.
-    written: set[str] = getattr(app, _WRITTEN_ATTR, set())
-
     local = _local_inventory(app)
     external = _intersphinx_inventory(app)
 
     for docname, candidates in records.items():
-        if docname not in written:
-            continue
         out_file = Path(app.outdir) / (app.builder.get_target_uri(docname))
         if not out_file.exists():
             continue
@@ -395,14 +367,27 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
             '|'.join(f'(?P<n{i}>{_name_pattern_source(name)})' for i, name in enumerate(names))
         )
 
-        def _wrap(
-            match: re.Match[str], names: list[str] = names, resolved: dict[str, str] = resolved
+        html = out_file.read_text(encoding='utf-8')
+
+        # Positions already inside *any* anchor -- ours from a previous,
+        # unchanged incremental build that left this exact file on disk, or
+        # another extension's (e.g. sphinx-codeautolink, if still active on
+        # the same site) that already linked this name. Either way, nothing
+        # here should be wrapped a second time.
+        already_linked = [m.span() for m in _ANCHOR_RE.finditer(html)]
+
+        def _wrap(  # noqa: PLR0917
+            match: re.Match[str],
+            names: list[str] = names,
+            resolved: dict[str, str] = resolved,
+            already_linked: list[tuple[int, int]] = already_linked,
         ) -> str:
+            if any(start <= match.start() < end for start, end in already_linked):
+                return match.group(0)
             link = resolved[names[int(match.lastgroup[1:])]]
             return f'<a class="pyvista-autolink-a" href="{link}">{match.group(0)}</a>'
 
-        html = combined.sub(_wrap, out_file.read_text(encoding='utf-8'))
-        out_file.write_text(html, encoding='utf-8')
+        out_file.write_text(combined.sub(_wrap, html), encoding='utf-8')
 
 
 def setup(app: Sphinx) -> None:
@@ -413,5 +398,4 @@ def setup(app: Sphinx) -> None:
     """
     app.connect('env-merge-info', _merge_records)
     app.connect('env-purge-doc', _purge_doc)
-    app.connect('html-page-context', _track_written_page)
     app.connect('build-finished', _embed_links)
