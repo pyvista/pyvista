@@ -502,6 +502,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.case'])
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista does not ship vtkEnSightWriter')
 def test_ensight_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     if not binary:

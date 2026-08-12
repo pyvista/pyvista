@@ -476,6 +476,9 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
         pv.Sphere().save('foo.vtp')
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista stores indices as int32 (smaller, less compressible)'
+)
 def test_save_compression(sphere, tmp_path):
     path = tmp_path / 'tmp.vtp'
     sphere.save(path, compression='zlib')

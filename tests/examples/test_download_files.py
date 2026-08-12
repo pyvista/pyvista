@@ -974,6 +974,7 @@ def test_download_dolfin():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista does not ship vtkIOXdmf2')
 def test_download_meshio_xdmf():
     dataset = examples.download_meshio_xdmf()
     assert isinstance(dataset, pv.MultiBlock)

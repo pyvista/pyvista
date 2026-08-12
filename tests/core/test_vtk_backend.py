@@ -6,6 +6,7 @@ import importlib.util
 
 import pytest
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista._vtk import _resolve_vtk_root
 
@@ -62,6 +63,22 @@ def test_unmapped_name_raises_attribute_error():
 def test_mapped_name_resolves():
     """A mapped class resolves on whichever backend is active."""
     assert _vtk.vtkPolyData.__name__ == 'vtkPolyData'
+
+
+def test_vtk_backend_reports_the_active_build():
+    """``vtk_backend()`` names the build, using 'vtk' for stock VTK.
+
+    This is the public escape hatch: it lets user code branch on -- or raise a
+    clear error for -- a feature the active build does not provide, without
+    reaching into ``_vtk`` internals.
+    """
+    backend = pv.vtk_backend()
+    assert isinstance(backend, str)
+    if _vtk._VTK_ROOT == 'vtkmodules':
+        # Reported as the familiar distribution name, not the package name.
+        assert backend == 'vtk'
+    else:
+        assert backend == _vtk._VTK_ROOT
 
 
 # Classes PyVista maps whose hosting module differs between stock VTK and cvista

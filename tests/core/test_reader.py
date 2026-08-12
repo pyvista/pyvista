@@ -236,6 +236,9 @@ def test_get_reader_fail(tmp_path):
         'mesh.N.12.11',
     ],
 )
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
+)
 def test_get_reader_pexodus_pattern(tmp_path, filename):
     path = tmp_path / filename
     path.touch()
@@ -246,6 +249,9 @@ def test_get_reader_pexodus_pattern(tmp_path, filename):
 @pytest.mark.parametrize(
     ('force_ext', 'reader_type'),
     [('.e', pv.ExodusIIReader), ('.e.4.0', pv.PExodusIIReader)],
+)
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
 )
 def test_get_reader_pexodus_pattern_force_ext(tmp_path, force_ext, reader_type):
     path = tmp_path / 'mesh.e.4.0'
@@ -619,6 +625,9 @@ def test_facetreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPlot3DMetaReader)'
+)
 def test_plot3dmetareader():
     filename = download_file('multi.p3d')
     download_file('multi-bin.xyz')
@@ -634,6 +643,9 @@ def test_plot3dmetareader():
         assert all([m.n_points, m.n_cells])
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkMultiBlockPLOT3DReader)'
+)
 def test_multiblockplot3dreader():
     filename = download_file('multi-bin.xyz')
     q_filename = download_file('multi-bin.q')
@@ -800,6 +812,9 @@ def get_cavity_reader():
     return pv.get_reader(filename)
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoamreader_arrays_time():
     reader = get_cavity_reader()
     assert isinstance(reader, pv.OpenFOAMReader)
@@ -811,6 +826,9 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoamreader_active_time():
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -826,6 +844,9 @@ def test_openfoamreader_active_time():
         reader.set_active_time_value(1000)
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoamreader_read_data_time_value():
     reader = get_cavity_reader()
 
@@ -854,6 +875,9 @@ def test_openfoamreader_read_data_time_value():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoamreader_read_data_time_point():
     reader = get_cavity_reader()
 
@@ -882,6 +906,9 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoam_skip_zero_time():
     reader = get_cavity_reader()
 
@@ -900,6 +927,9 @@ def test_openfoam_skip_zero_time():
     assert 0.0 not in reader.time_values
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
@@ -920,6 +950,9 @@ def test_openfoam_cell_to_point_default():
     assert mesh[0].n_arrays == 4
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoam_patch_arrays():
     patch_array_key = 'boundary'
     reader_patch_prefix = 'patch/'
@@ -971,6 +1004,9 @@ def test_openfoam_patch_arrays():
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_openfoam_case_type():
     reader = get_cavity_reader()
     reader.case_type = 'decomposed'
@@ -981,6 +1017,9 @@ def test_openfoam_case_type():
         reader.case_type = 'wrong_value'
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOCGNSReader (vtkCGNSReader)'
+)
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
@@ -1225,6 +1264,7 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista does not ship vtkIOXdmf2')
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -1276,6 +1316,9 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallelXML (vtkXMLPartitionedDataSetWriter)'
+)
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
     partitions = pv.PartitionedDataSet(
@@ -1492,6 +1535,9 @@ def test_erdgcl_reader_properties():
     assert isinstance(mesh, pv.ExplicitStructuredGrid)
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkNek5000Reader)'
+)
 def test_nek5000_reader():
     # load nek5000 file
     filename = examples.download_nek5000(load=False)
@@ -1892,6 +1938,9 @@ def test_exodus_blocks():
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
+)
 def test_parallel_exodus_reader():
     reader = pv.get_reader(examples.download_parallel_exodus(load=False))
     assert isinstance(reader, pv.PExodusIIReader)

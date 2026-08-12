@@ -119,6 +119,7 @@ def test_pyvista_oo_flag():
     assert result.returncode == 0, f'PyVista failed with -OO flag. stderr: {result.stderr}'
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason='module loads under the cvista namespace')
 def test_plotting_import_loads_context_opengl2():
     code = (
         'import pyvista.plotting\n'

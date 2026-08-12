@@ -87,6 +87,46 @@ vtk_version_info = VTKVersionInfo(*_get_vtk_version())
 _MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
 
 
+def vtk_backend() -> str:
+    """Return the name of the VTK build PyVista is running against.
+
+    PyVista resolves its VTK imports against one of several builds. ``'vtk'`` is
+    stock VTK (the default). ``'cvista'`` is the community fork, selected by
+    installing ``pyvista[cvista]`` or by setting the ``PYVISTA_VTK_BACKEND``
+    environment variable before importing PyVista.
+
+    Builds differ in which VTK modules they ship, so use this to branch on -- or
+    raise a clear error for -- a feature the active build does not provide,
+    rather than letting an import fail somewhere deeper.
+
+    Returns
+    -------
+    str
+        Name of the active backend: ``'vtk'`` for stock VTK, otherwise the
+        backend's package name (e.g. ``'cvista'``).
+
+    Examples
+    --------
+    The value depends on which build is installed, so this example is not run.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_backend()  # doctest: +SKIP
+    'vtk'
+
+    Raise a clear error for a build that cannot support a feature:
+
+    >>> if pv.vtk_backend() != 'vtk':  # doctest: +SKIP
+    ...     msg = (
+    ...         f'This feature is not supported on the {pv.vtk_backend()} backend.'
+    ...     )
+    ...     raise RuntimeError(msg)
+
+    """
+    # `_VTK_ROOT` is the import root; report the familiar distribution name for
+    # stock VTK rather than leaking the `vtkmodules` package name.
+    return 'vtk' if _vtk._VTK_ROOT == 'vtkmodules' else _vtk._VTK_ROOT
+
+
 class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 

@@ -2402,6 +2402,7 @@ def test_cell_validator():
 
 
 @pytest.mark.needs_vtk_version(9, 6, 0)
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista diverges on vtkCellStatus enum exposure')
 def test_cell_status():
     expected_pyvista_values = list(pv.CellStatus)
     expected_vtk_values = list(vars(_vtk.vtkCellStatus).values())

@@ -2746,6 +2746,7 @@ def test_vtk_verbosity_invalid_input(value):
 
 
 @pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista omits the VTK snake_case wrapper API')
 def test_vtk_snake_case():
     assert pv.vtk_snake_case() == 'error'
     match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
@@ -3127,6 +3128,7 @@ def test_cell_quality_info_raises():
 
 
 @pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista omits the VTK snake_case wrapper API')
 def test_is_vtk_attribute():
     assert is_vtk_attribute(pv.ImageData(), 'GetCells')
     assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')

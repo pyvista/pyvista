@@ -358,6 +358,9 @@ def test_to_from_trimesh_empty_mesh():
     assert isinstance(pvmesh, pv.PolyData)
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista stores connectivity as int32 (no zero-copy share)'
+)
 def test_to_from_trimesh_points_faces(ant):
     ant.points_to_double()
     tmesh = pv.to_trimesh(ant)

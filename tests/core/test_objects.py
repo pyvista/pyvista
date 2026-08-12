@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOInfovis (vtkDelimitedTextReader)'
+)
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.csv'))

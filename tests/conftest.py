@@ -617,77 +617,32 @@ def _get_min_max_vtk_version(
     return _pad_version(_min), _pad_version(_max), bounds
 
 
-# Tests that intentionally diverge under the cvista backend (an alternative VTK
-# build). cvista omits the VTK 9.4+ snake_case wrapper API by design and ships a
-# trimmed module set with int32-default storage. Keyed by test function name;
-# skipped only when the active backend is cvista.
-_CVISTA_DIVERGENT_TESTS = {
-    # cvista omits the VTK snake_case wrapper API (by design)
-    'test_vtk_snake_case_api_is_disabled': 'cvista omits the VTK snake_case wrapper API',
-    'test_dir_snake_case_visible_when_allowed': 'cvista omits the VTK snake_case wrapper API',
-    'test_is_vtk_attribute': 'cvista omits the VTK snake_case wrapper API',
-    'test_vtk_snake_case': 'cvista omits the VTK snake_case wrapper API',
-    'test_vtk_class_does_not_exist': 'cvista wraps a trimmed VTK class set',
-    'test_vtk_module_does_not_exist': 'cvista wraps a trimmed VTK module set',
-    'test_plotting_import_loads_context_opengl2': 'module loads under the cvista namespace',
-    # cvista ships a trimmed module set and uses narrower container widths
-    'test_xdmf_reader': 'cvista does not ship vtkIOXdmf2',
-    'test_download_meshio_xdmf': 'cvista does not ship vtkIOXdmf2',
-    'test_cell_status': 'cvista diverges on vtkCellStatus enum exposure',
-    'test_save_compression': 'cvista stores indices as int32 (smaller, less compressible)',
-    'test_to_from_trimesh_points_faces': (
-        'cvista stores connectivity as int32 (no zero-copy share)'
-    ),
-    # Readers/writers in VTK modules cvista's tiered build does not ship. Each was
-    # confirmed absent from the backend itself (the class is not in cvista's
-    # generated name index at all), so these are build-scope divergences rather
-    # than resolution failures.
-    'test_read_cgns': 'cvista does not ship vtkIOCGNSReader (vtkCGNSReader)',
-    'test_table_init': 'cvista does not ship vtkIOInfovis (vtkDelimitedTextReader)',
-    'test_ensight_save': 'cvista does not ship vtkEnSightWriter',
-    'test_xmlpartitioneddatasetreader': (
-        'cvista does not ship vtkIOParallelXML (vtkXMLPartitionedDataSetWriter)'
-    ),
-    'test_nek5000_reader': 'cvista does not ship vtkIOParallel (vtkNek5000Reader)',
-    'test_multiblockplot3dreader': (
-        'cvista does not ship vtkIOParallel (vtkMultiBlockPLOT3DReader)'
-    ),
-    'test_plot3dmetareader': 'cvista does not ship vtkIOParallel (vtkPlot3DMetaReader)',
-    'test_parallel_exodus_reader': 'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)',
-    'test_get_reader_pexodus_pattern': (
-        'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
-    ),
-    'test_get_reader_pexodus_pattern_force_ext': (
-        'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
-    ),
-    # The OpenFOAM reader resolves, but its parallel variant (vtkPOpenFOAMReader,
-    # vtkIOParallel) does not, and PyVista's reader wraps the parallel class.
-    'test_openfoam_case_type': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
-    'test_openfoam_cell_to_point_default': (
-        'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
-    ),
-    'test_openfoam_patch_arrays': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
-    'test_openfoam_skip_zero_time': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
-    'test_openfoamreader_active_time': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
-    'test_openfoamreader_arrays_time': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
-    'test_openfoamreader_read_data_time_point': (
-        'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
-    ),
-    'test_openfoamreader_read_data_time_value': (
-        'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
-    ),
-}
-
-
 def pytest_runtest_setup(item: pytest.Item):
     """Custom setup to handle skips based on VTK version.
 
     See custom marks in pyproject.toml.
     """
-    if pv._vtk._VTK_ROOT == 'cvista':
-        reason = _CVISTA_DIVERGENT_TESTS.get(getattr(item, 'originalname', '') or item.name)
-        if reason is not None:
-            pytest.skip(f'cvista backend: {reason}')
+    if item_mark := item.get_closest_marker('skip_vtk_backend'):
+        sig = inspect.Signature(
+            [
+                inspect.Parameter(
+                    b := 'backend',
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=str,
+                ),
+                inspect.Parameter(
+                    r := 'reason',
+                    kind=inspect.Parameter.KEYWORD_ONLY,
+                    default='Test diverges on this VTK backend',
+                    annotation=str,
+                ),
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        backend = bounds.arguments[b]
+        if pv.vtk_backend() == backend:
+            pytest.skip(f'{backend} backend: {bounds.arguments[r]}')
 
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
