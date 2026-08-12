@@ -48,6 +48,25 @@ def test_candidate_names_getattr_raises():
     )
 
 
+def test_candidate_names_module_reexported_function():
+    # `pyvista.examples.load_uniform` is the public path; `load_uniform` is actually
+    # defined in (and documented under) `pyvista.examples.examples`.
+    from pyvista import examples
+
+    candidates = _autolink._candidate_names('examples.load_uniform', {'examples': examples})
+    assert candidates == [
+        'pyvista.examples.examples.load_uniform',
+        'pyvista.examples.load_uniform',
+        'pyvista.load_uniform',
+    ]
+
+
+def test_candidate_names_module_attribute_is_module():
+    import pyvista as pv
+
+    assert _autolink._candidate_names('pv.examples', {'pv': pv}) == ['pyvista.examples']
+
+
 def test_intersphinx_inventory():
     env = SimpleNamespace(
         intersphinx_cache={},

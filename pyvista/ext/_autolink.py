@@ -141,8 +141,8 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
         obj = namespace[head]
         remainder = parts[split + 1 :]
 
-        if inspect.ismodule(obj):
-            return ['.'.join([obj.__name__, *remainder])]
+        if inspect.ismodule(obj) and not remainder:
+            return [obj.__name__]
 
         is_class_attr = False
         method: list[str] = []
@@ -161,6 +161,12 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
                 obj = owner
                 is_class_attr, method = True, [level]
                 break
+
+        if inspect.ismodule(obj):
+            # `obj` is itself a (sub)module reached via attribute access
+            # (e.g. `pv.examples`) -- not further resolved into a class,
+            # function, or method, so nothing built below applies to it.
+            return [obj.__name__]
 
         is_class = inspect.isclass(obj)
         if is_class or is_class_attr:
