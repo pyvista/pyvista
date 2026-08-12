@@ -97,8 +97,8 @@ docs-test-images:
 
 # Run an integration test env (matches CI `tox -e integration-<project>`).
 # Specify project via PROJECT, e.g. `make integration PROJECT=trame`.
-# Supported projects: trame, geovista, mne, pyvistaqt, playwright
+# Supported projects: trame, geovista, mne, pyvistaqt, playwright, cvista
 integration:
-	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright)"; exit 1; }
+	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright|cvista)"; exit 1; }
 	@echo "Running integration-$(PROJECT) tests (matches CI)"
 	@uv run tox -e integration-$(PROJECT) -- $(ARGS)

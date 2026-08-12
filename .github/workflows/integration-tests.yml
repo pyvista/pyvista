@@ -55,6 +55,8 @@ jobs:
             timeout: 16 # usually takes ~5
           - project: playwright
             timeout: 6 # usually takes ~2
+          - project: cvista
+            timeout: 25 # a full run of the suite against a second VTK build
     runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
