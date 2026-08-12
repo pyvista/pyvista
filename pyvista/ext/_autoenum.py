@@ -1,4 +1,4 @@
-"""Sphinx autodoc documenter for ``enum.Enum`` subclasses, replacing ``enum_tools.autoenum``.
+"""Sphinx autodoc documenter for ``Enum`` subclasses, replacing ``enum_tools.autoenum``.
 
 Modeled on
 https://www.sphinx-doc.org/en/master/development/tutorials/autodoc_ext.html
@@ -6,7 +6,9 @@ https://www.sphinx-doc.org/en/master/development/tutorials/autodoc_ext.html
 
 from __future__ import annotations
 
-import enum
+from enum import Enum
+from enum import EnumMeta
+from enum import Flag
 import inspect
 from typing import TYPE_CHECKING
 from typing import Any
@@ -23,12 +25,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_SKIP_METACLASSES = (type, enum.EnumMeta)
+_SKIP_METACLASSES = (type, EnumMeta)
 
 
 def _is_enum(obj: Any) -> bool:
     """Return whether ``obj`` is an ``Enum`` subclass."""
-    return isinstance(obj, type) and issubclass(obj, enum.Enum)
+    return isinstance(obj, type) and issubclass(obj, Enum)
 
 
 def _metaclass_properties(cls: type) -> dict[str, property]:
@@ -62,9 +64,9 @@ def metaclass_property_names(module: str, objname: str) -> list[str]:
     return sorted(_metaclass_properties(cls))
 
 
-def _is_bitmask_like(cls: type[enum.Enum]) -> bool:
+def _is_bitmask_like(cls: type[Enum]) -> bool:
     """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two)."""
-    if issubclass(cls, enum.Flag):
+    if issubclass(cls, Flag):
         return True
     values = [int(member.value) for member in cls]
     return bool(values) and all(v == 0 or (v & (v - 1)) == 0 for v in values)

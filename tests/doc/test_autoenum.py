@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-import enum
+from enum import Enum
+from enum import Flag
+from enum import IntEnum
 
 import pytest
 
@@ -10,7 +12,7 @@ from pyvista.ext import _autoenum as autoenum
 
 
 def test_is_enum():
-    class Color(enum.Enum):
+    class Color(Enum):
         RED = 1
 
     assert autoenum._is_enum(Color)
@@ -35,14 +37,14 @@ def test_metaclass_properties_finds_only_metaclass_properties():
 
 
 def test_metaclass_properties_empty_for_plain_enum():
-    class Color(enum.Enum):
+    class Color(Enum):
         RED = 1
 
     assert autoenum._metaclass_properties(Color) == {}
 
 
 def test_metaclass_properties_skips_enummeta_itself():
-    class Color(enum.Enum):
+    class Color(Enum):
         RED = 1
 
     assert autoenum._metaclass_properties(type(Color)) == {}
@@ -64,7 +66,7 @@ def test_metaclass_properties_first_definition_wins_in_mro():
 
     class SubMeta(BaseMeta):
         @property
-        def shared(cls):
+        def shared(self):
             return 'sub'
 
     class Widget(metaclass=SubMeta): ...
@@ -83,12 +85,12 @@ def test_metaclass_properties_first_definition_wins_in_mro():
     ],
 )
 def test_is_bitmask_like(values, expected):
-    Bits = enum.IntEnum('Bits', {f'V{i}': v for i, v in enumerate(values)})
+    Bits = IntEnum('Bits', {f'V{i}': v for i, v in enumerate(values)})
     assert autoenum._is_bitmask_like(Bits) is expected
 
 
 def test_is_bitmask_like_true_for_flag_regardless_of_values():
-    class NotReallyBits(enum.Flag):
+    class NotReallyBits(Flag):
         A = 3  # not a power of two, but Flag membership alone is enough to opt in
 
     assert autoenum._is_bitmask_like(NotReallyBits)
