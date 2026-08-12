@@ -86,6 +86,9 @@ jobs:
         with:
           python-version: 3.14
 
+      - name: Install Vale Dependencies
+        run: pip install docutils<0.22
+
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
       # GHA SHA is pinned to a reviewdog branch commit
