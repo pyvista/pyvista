@@ -37,6 +37,7 @@ from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
@@ -596,7 +597,7 @@ def test_line_segments_from_points():
     cells = poly.lines
     assert np.allclose(cells[:3], [2, 0, 1])
     assert np.allclose(cells[3:], [2, 2, 3])
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert poly.GetLines().IsStorageFixedSize()
 
 
@@ -611,7 +612,7 @@ def test_lines_from_points(close):
     assert np.allclose(cells[3:6], [2, 1, 2])
     if close:
         assert np.allclose(cells[6:], [2, 2, 0])
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert poly.GetLines().IsStorageFixedSize()
 
 

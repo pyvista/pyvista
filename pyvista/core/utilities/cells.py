@@ -14,7 +14,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
-
-_SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:

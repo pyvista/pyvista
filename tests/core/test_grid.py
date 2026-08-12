@@ -17,6 +17,7 @@ import pyvista as pv
 from pyvista import CellType
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
@@ -219,7 +220,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     assert np.all(grid.offset == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
-    if not multiple_cell_types and pv.vtk_version_info >= (9, 6, 2):
+    if not multiple_cell_types and _SUPPORTS_FIXED_SIZE_STORAGE:
         assert grid.GetCells().IsStorageFixedSize()
     assert np.all(grid.cells == vtk_cell_format)
     assert np.allclose(
@@ -297,7 +298,7 @@ def test_init_from_dict_variable_length():
     assert grid.celltypes[0] == CellType.LAGRANGE_TRIANGLE
     assert grid.get_cell(0).n_points == 10
     assert np.all(grid.cells_dict[CellType.LAGRANGE_TRIANGLE] == conn)
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert grid.GetCells().IsStorageFixedSize()
 
     # Ragged polygons (a triangle and a pentagon) passed as a sequence of index
@@ -1812,7 +1813,7 @@ def test_explicit_structured_grid_init():
     grid = pv.ExplicitStructuredGrid(dims, cells, points)
     assert grid.n_cells == 2
     assert grid.n_points == 16
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert grid.GetCells().IsStorageFixedSize()
 
 

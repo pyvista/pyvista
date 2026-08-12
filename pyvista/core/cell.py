@@ -10,8 +10,8 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
 from ._typing_core import BoundsTuple
@@ -33,8 +33,6 @@ if TYPE_CHECKING:
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
-
-_SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:

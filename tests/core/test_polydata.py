@@ -12,6 +12,7 @@ import trimesh
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaFutureWarning
@@ -177,7 +178,7 @@ def test_init_as_points_from_list():
 
 def test_init_as_points_uses_fixed_size_storage():
     mesh = pv.PolyData(np.zeros((3, 3)))
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert mesh.GetVerts().IsStorageFixedSize()
 
 
@@ -1082,7 +1083,7 @@ def test_remove_points_uses_fixed_size_storage(sphere):
     remove_mask[:3] = True
     sphere_mod, _ = sphere.remove_points(remove_mask, inplace=False, mode='any')
     assert sphere_mod.is_all_triangles
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert sphere_mod.GetPolys().IsStorageFixedSize()
 
 
@@ -1403,7 +1404,7 @@ def test_regular_faces(deep):
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
     assert np.array_equal(mesh.faces, expected_faces)
     assert np.array_equal(mesh.regular_faces, faces)
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert mesh.GetPolys().IsStorageFixedSize()
 
 

@@ -10,6 +10,7 @@ import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.core.celltype import _RENAMED_CELL_TYPES
@@ -548,14 +549,14 @@ def test_init_cell_array_from_regular_cells(cells, deep):
     cell_array = pv.core.cell.CellArray.from_regular_cells(cells, deep=deep)
     assert np.array_equal(np.array(cells), cell_array.regular_cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
-    if pv.vtk_version_info >= (9, 6, 2):
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert cell_array.IsStorageFixedSize()
 
 
 def test_init_cell_array_from_regular_cells_preserves_int32():
     cells = np.array(REGULAR_CELL_LIST, np.int32)
     cell_array = pv.CellArray.from_regular_cells(cells)
-    expected_dtype = np.int32 if pv.vtk_version_info >= (9, 6, 2) else pv.ID_TYPE
+    expected_dtype = np.int32 if _SUPPORTS_FIXED_SIZE_STORAGE else pv.ID_TYPE
     assert cell_array.connectivity_array.dtype == expected_dtype
 
 
