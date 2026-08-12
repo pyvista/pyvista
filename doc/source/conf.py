@@ -51,7 +51,7 @@ from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
-from pyvista.ext.autoenum import metaclass_property_names
+from pyvista.ext._autoenum import metaclass_property_names
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -120,7 +120,7 @@ extensions = [
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
-    'pyvista.ext.autoenum',
+    'pyvista.ext._autoenum',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',

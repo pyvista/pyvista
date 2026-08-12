@@ -1,4 +1,4 @@
-"""Unit tests for pyvista.ext.autoenum internals, without a full Sphinx build."""
+"""Unit tests for pyvista.ext._autoenum internals, without a full Sphinx build."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import enum
 
 import pytest
 
-from pyvista.ext import autoenum
+from pyvista.ext import _autoenum as autoenum
 
 
 def test_is_enum():
@@ -42,8 +42,6 @@ def test_metaclass_properties_empty_for_plain_enum():
 
 
 def test_metaclass_properties_skips_enummeta_itself():
-    # EnumMeta/EnumType defines no properties that matter here, but this guards against a
-    # regression where every Enum subclass picks up noise from its own, non-custom metaclass.
     class Color(enum.Enum):
         RED = 1
 
@@ -51,14 +49,10 @@ def test_metaclass_properties_skips_enummeta_itself():
 
 
 def test_metaclass_property_names_sorted():
-    # metaclass_property_names takes the same module/objname strings autosummary template
-    # context provides -- not a live object -- and imports the class itself.
     assert autoenum.metaclass_property_names('enum', 'IntFlag') == []
 
 
 def test_metaclass_property_names_on_celltype():
-    # pyvista.CellType.dimension_map is the real, motivating example: a property defined on
-    # CellType's metaclass, not on CellType itself.
     assert 'dimension_map' in autoenum.metaclass_property_names('pyvista', 'CellType')
 
 
