@@ -1,4 +1,4 @@
-"""Fixtures for :mod:`pyvista.ext._autolink`.
+"""Fixtures for ``pyvista.ext._autolink``.
 
 Self-contained: nothing here depends on pyvista's own API being documented.
 Each Examples section imports pyvista solely to trigger ``conf.py``'s
