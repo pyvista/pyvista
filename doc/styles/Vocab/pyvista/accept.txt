@@ -105,6 +105,7 @@ colorcet
 colormap
 colormaps
 conda
+config
 data's
 dataclass
 dataframes
