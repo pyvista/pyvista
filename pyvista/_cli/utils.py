@@ -32,6 +32,7 @@ from rich.text import Text
 import pyvista as pv
 from pyvista import _validation
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
+from pyvista.plotting._typing import ThemeOptions
 
 from .app import CLI_APP
 
@@ -326,6 +327,15 @@ volume = Annotated[bool, Parameter(group=Groups.RENDERING)]
 border = Annotated[bool | None, Parameter(group=Groups.PLOTTER)]
 border_color = Annotated[str | None, Parameter(group=Groups.PLOTTER)]
 border_width = Annotated[float | None, Parameter(group=Groups.PLOTTER)]
+theme = Annotated[ThemeOptions | str | None, Parameter(group=Groups.PLOTTER)]
+background = Annotated[str | None, Parameter(group=Groups.RENDERING)]
+eye_dome_lighting = Annotated[bool, Parameter(group=Groups.RENDERING)]
+parallel_projection = Annotated[bool, Parameter(group=Groups.RENDERING)]
+anti_aliasing = Annotated[
+    Literal['ssaa', 'msaa', 'fxaa'] | None, Parameter(group=Groups.RENDERING)
+]
+ssao = Annotated[bool, Parameter(group=Groups.RENDERING)]
+return_cpos = Annotated[bool, Parameter(group=Groups.RETURN)]
 
 
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001

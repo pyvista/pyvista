@@ -1052,7 +1052,6 @@ def missing_plot_arguments():
     `pv.cli.plot._plot` function."""
     return {
         'jupyter_backend',
-        'theme',
         'return_viewer',
         'return_img',
         'jupyter_kwargs',
@@ -1145,6 +1144,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
         'var_item',
         'screenshot',
         'cpos',  # The CLI takes the named camera positions only, not a full one
+        'theme',  # The CLI takes a theme by name only, not a `Theme` instance
     }
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}

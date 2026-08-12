@@ -20,20 +20,27 @@ from .utils import Groups
 from .utils import LabelPosition
 from .utils import LabelSize
 from .utils import _kwargs_converter
+from .utils import anti_aliasing
+from .utils import background
 from .utils import border
 from .utils import border_color
 from .utils import border_width
 from .utils import call_or_exit
 from .utils import cpos
+from .utils import eye_dome_lighting
 from .utils import full_screen
 from .utils import interactive
 from .utils import off_screen
+from .utils import parallel_projection
 from .utils import print_error_and_exit
 from .utils import read_meshes
+from .utils import return_cpos
 from .utils import screenshot
 from .utils import show_axes
 from .utils import show_bounds
 from .utils import skip_unreadable
+from .utils import ssao
+from .utils import theme
 from .utils import validate_paths
 from .utils import volume
 from .utils import window_size
@@ -211,14 +218,22 @@ def _compare(
     ] = None,
     show_bounds: show_bounds = False,
     show_axes: show_axes = None,
+    background: background = None,
+    eye_dome_lighting: eye_dome_lighting = False,
+    parallel_projection: parallel_projection = False,
+    return_cpos: return_cpos = False,
+    anti_aliasing: anti_aliasing = None,
     zoom: zoom = None,
     volume: volume = False,
+    ssao: ssao = False,
     border: border = None,
     border_color: border_color = None,
     border_width: border_width = None,
+    theme: theme = None,
     subplot_seams: Annotated[
         bool | None, Parameter(help=_HELP_SUBPLOT_SEAMS, group=Groups.PLOTTER)
     ] = None,
+    static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
@@ -235,6 +250,9 @@ def _compare(
 
     # Label each subplot with the name of the file it was read from
     names = labels if labels is not None else _label_paths(validate_paths(paths))
+
+    if static:
+        kwargs['static'] = True
 
     with warnings.catch_warnings():
         warnings.simplefilter('always')
@@ -257,14 +275,21 @@ def _compare(
             label_position=label_position,
             show_bounds=show_bounds,
             show_axes=show_axes,
+            background=background,
+            eye_dome_lighting=eye_dome_lighting,
+            parallel_projection=parallel_projection,
+            return_cpos=return_cpos,
+            anti_aliasing=anti_aliasing,
             zoom=zoom,
             volume=volume,
+            ssao=ssao,
             screenshot=screenshot,
             off_screen=off_screen,
             window_size=window_size,
             border=border,
             border_color=border_color,
             border_width=border_width,
+            theme=theme,
             subplot_seams=subplot_seams,
             full_screen=full_screen,
             interactive=interactive,

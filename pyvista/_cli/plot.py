@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Annotated
 from typing import Any
-from typing import Literal
 
 from cyclopts import Parameter
 
@@ -15,19 +14,26 @@ from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
 from .utils import Groups
 from .utils import _kwargs_converter
+from .utils import anti_aliasing
+from .utils import background
 from .utils import border
 from .utils import border_color
 from .utils import border_width
 from .utils import call_or_exit
 from .utils import cpos
+from .utils import eye_dome_lighting
 from .utils import full_screen
 from .utils import interactive
 from .utils import off_screen
+from .utils import parallel_projection
 from .utils import read_meshes
+from .utils import return_cpos
 from .utils import screenshot
 from .utils import show_axes
 from .utils import show_bounds
 from .utils import skip_unreadable
+from .utils import ssao
+from .utils import theme
 from .utils import volume
 from .utils import window_size
 from .utils import zoom
@@ -61,20 +67,19 @@ def _plot(
     cpos: cpos = None,
     show_bounds: show_bounds = False,
     show_axes: show_axes = None,
-    background: Annotated[str | None, Parameter(group=Groups.RENDERING)] = None,
+    background: background = None,
     text: Annotated[str, Parameter(group=Groups.RENDERING)] = '',
-    eye_dome_lighting: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    eye_dome_lighting: eye_dome_lighting = False,
     volume: volume = False,
-    parallel_projection: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
-    return_cpos: Annotated[bool, Parameter(group=Groups.RETURN)] = False,
-    anti_aliasing: Annotated[
-        Literal['ssaa', 'msaa', 'fxaa'] | None, Parameter(group=Groups.RENDERING)
-    ] = None,
+    parallel_projection: parallel_projection = False,
+    return_cpos: return_cpos = False,
+    anti_aliasing: anti_aliasing = None,
     zoom: zoom = None,
     border: border = None,
     border_color: border_color = None,
     border_width: border_width = None,
-    ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    theme: theme = None,
+    ssao: ssao = False,
     static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
@@ -108,6 +113,7 @@ def _plot(
         border=border,
         border_color=border_color,
         border_width=border_width,
+        theme=theme,
         ssao=ssao,
         **kwargs,
     )
