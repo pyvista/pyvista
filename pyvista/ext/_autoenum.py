@@ -50,7 +50,7 @@ def _metaclass_properties(cls: type) -> dict[str, property]:
     return properties
 
 
-def metaclass_property_names(module: str, objname: str) -> list[str]:
+def metaclass_property_names(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
     """Return the sorted metaclass property names of ``module.objname``.
 
     Takes strings, not the live object, since that's all ``enum.rst`` (via
@@ -184,7 +184,7 @@ class EnumDocumenter(ClassDocumenter):
             documenter.generate(all_members=True, real_modname=real_modname, check_module=False)
 
 
-def setup(app: Sphinx) -> dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
     """Register the ``autoenum`` directive."""
     app.add_autodocumenter(EnumDocumenter)
     app.add_autodocumenter(MetaclassPropertyDocumenter)
