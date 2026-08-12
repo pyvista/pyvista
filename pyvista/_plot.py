@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 
 import numpy as np
@@ -123,7 +124,7 @@ def plot(  # noqa: ANN202, PLR0917
     jupyter_backend: JupyterBackendOptions | None = None,
     return_viewer: bool = False,  # noqa: FBT001, FBT002
     return_cpos: bool = False,  # noqa: FBT001, FBT002
-    jupyter_kwargs: dict | None = None,  # type: ignore[type-arg]
+    jupyter_kwargs: dict[str, Any] | None = None,
     theme: Theme | ThemeOptions | str | None = None,
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,

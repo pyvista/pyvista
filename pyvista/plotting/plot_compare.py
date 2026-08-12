@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting._typing import ThemeOptions
     from pyvista.plotting.text import TextPositionOptions
     from pyvista.plotting.themes import Theme
 
@@ -461,7 +462,7 @@ def plot_compare(  # noqa: ANN201
     normalize: bool = False,
     link: bool | None = None,
     cpos: CameraPositionOptions | None = None,
-    zoom: float | str | None = None,
+    zoom: str | float | None = None,
     show_axes: bool | None = None,
     show_bounds: bool = False,
     background: ColorLike | None = None,
@@ -476,7 +477,7 @@ def plot_compare(  # noqa: ANN201
     border_color: ColorLike | None = None,
     border_width: float | None = None,
     subplot_seams: bool | None = None,
-    theme: Theme | None = None,
+    theme: Theme | ThemeOptions | str | None = None,
     screenshot: str | bool | None = None,
     full_screen: bool | None = None,
     interactive: bool = True,
@@ -686,14 +687,14 @@ def plot_compare(  # noqa: ANN201
         enabled. Defaults to :attr:`pyvista.global_theme.border_width
         <pyvista.plotting.themes.Theme.border_width>`.
 
-
     subplot_seams : bool, optional
         Draw a thin line between neighboring subplots. Defaults to
         :attr:`pyvista.global_theme.subplot_seams
         <pyvista.plotting.themes.Theme.subplot_seams>`.
 
-    theme : pyvista.plotting.themes.Theme, optional
-        Plot-specific theme.
+    theme : pyvista.plotting.themes.Theme | str, optional
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     screenshot : str | bool, optional
         File name or path to save screenshot of the plot, or ``True`` to return
@@ -819,7 +820,7 @@ def plot_compare(  # noqa: ANN201
     Plot on a dark background by giving the plotter a theme of its own, which
     also decides the color the labels are drawn in.
 
-    >>> pv.plot_compare(blocks, plotter_kwargs={'theme': 'dark'})
+    >>> pv.plot_compare(blocks, theme='dark')
 
     """
     datasets, names = _unpack_datasets(datasets)
