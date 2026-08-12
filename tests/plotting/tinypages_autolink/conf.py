@@ -1,14 +1,10 @@
 """Minimal Sphinx site for testing :mod:`pyvista.ext._autolink` in isolation.
 
-Deliberately kept separate from ``tests/plotting/tinypages`` -- that site's
-own tests (``test_tinypages``) assert an *exact* set of generated
-``pyvista_plot_directive`` output files, including, for the default
-(non-parallel) case, filenames derived from a counter that increments
-globally across every ``.. pyvista-plot::`` block in the whole build, in
-document-processing order. Adding another page with its own such blocks
-there would shift that counter for every page processed after it, breaking
-those assertions for reasons unrelated to what they're actually testing.
-Building this as its own tiny site avoids that coupling entirely.
+Kept separate from ``tests/plotting/tinypages``: that site's
+``test_tinypages`` asserts an exact set of generated
+``pyvista_plot_directive`` output filenames, keyed in part on a counter
+that increments globally, in document order, across the whole build.
+Adding pages here would shift those filenames.
 """
 
 from __future__ import annotations
@@ -34,16 +30,12 @@ extensions = [
     'pyvista.ext.plot_directive',
 ]
 
-# Without this, numpydoc auto-appends a Methods/Attributes autosummary table to
-# every autoclass'd class, expecting toctree-generated stub pages for each member.
-# ``autolink_samples`` documents members individually with .. automethod:: instead,
-# so that table has nothing to link to and just warns. Matches doc/source/conf.py.
+# Otherwise numpydoc appends an autosummary Methods table to autoclass'd classes,
+# expecting toctree-generated stub pages that don't exist here.
 numpydoc_show_class_members = False
 
 # -- pyvista configuration ------------------------------------------------
 pv.BUILDING_GALLERY = True
-
-# Opt-in, like sphinx-gallery's own backreferences_dir -- this site exists to test it.
 pyvista_plot_autolink = True
 
 # -- .. pyvista-plot:: directive, wrapping numpydoc's Examples sections ---

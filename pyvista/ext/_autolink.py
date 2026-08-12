@@ -1,58 +1,25 @@
 """Dynamic hyperlinking of identifiers inside ``.. pyvista-plot::`` output.
 
-This is a from-scratch, PyVista-specific replacement for the static-analysis
-approach of ``sphinx-codeautolink``, which cannot correctly resolve most
-method chains (``mesh.warp_by_scalar(...).extract_surface()``) since it has
-to *guess* a call's return type from static annotations. This module instead
-mirrors how Sphinx-Gallery's own ``reference_url`` feature resolves names --
-by looking at what an identifier *actually* evaluated to once the code
-already ran, rather than inferring it -- which sidesteps that whole class of
-problem for free: a real executed object always has exactly one real type.
+Resolves each accessed identifier against the real namespace it executed
+in, rather than inferring its type statically (cf. ``sphinx-codeautolink``).
+Wired into :mod:`pyvista.ext.plot_directive`; opt-in via
+``pyvista_plot_autolink``. Never executes code itself.
 
-Scope (v1): wired directly into :mod:`pyvista.ext.plot_directive`, which
-already executes every docstring example to render its figures. This module
-never executes anything itself; it only analyses the namespace the plot
-directive produces, once, right after it runs -- so nothing is ever run
-twice. It is not (yet) usable by projects that don't already have their own
-execution step; see ``setup()`` for wiring, or the module docstring section
-below for what would need to change to make this a standalone extension.
+Two phases:
 
-Design, two phases, closely modeled on ``sphinx_gallery.backreferences``:
+1. :func:`record_namespace` -- walks the executed source with :mod:`ast`
+   and resolves each accessed name to a list of candidate documented names.
+2. :func:`_embed_links` (``build-finished``) -- matches candidates against
+   the local Python domain and intersphinx inventories, and rewrites the
+   built HTML.
 
-1. :func:`record_namespace` (called by the plot directive, once per page,
-   right after it finishes executing a docstring's examples): walks the
-   source with :mod:`ast`, and for every accessed dotted name
-   (``mesh.warp_by_scalar``), resolves it against the *live* namespace the
-   code just ran in. Since the object is real, its true class -- and every
-   one of that class's base classes -- gives a set of *candidate* documented
-   names, by trying the object's module path at every truncation depth
-   (``pyvista.core.dataset.DataSet.plot``, ``pyvista.core.DataSet.plot``,
-   ``pyvista.DataSet.plot``, ...). Only plain strings are stored on the
-   build environment here -- never the namespace or any live object, which
-   may not be picklable (a live VTK object almost certainly isn't) and
-   wouldn't survive Sphinx's parallel-build worker merging.
+Limitations:
 
-2. :func:`_embed_links` (``build-finished``, once the whole site's object
-   inventory is actually known): for each page with recorded candidates,
-   checks each candidate against the local Python domain and intersphinx
-   inventories, and rewrites the already-built HTML to wrap whichever
-   candidate matched (if any) in a hyperlink. Never wraps text already
-   inside an anchor tag -- its own, from a page an incremental rebuild left
-   untouched on disk, or another extension's (e.g. ``sphinx-codeautolink``,
-   if still active on the same site) -- so re-running this, or running
-   alongside another autolinker, never nests a second ``<a>`` inside one
-   already there.
-
-Known limitations, matching Sphinx-Gallery's own resolver rather than
-improving on it (see the "Namespace capture" design decision):
-
-- Only the *final* state of the namespace is used, so a variable reused
-  both before and after being reassigned to a different type resolves
-  against its last type everywhere it's used.
-- Only chains rooted at a plain name are followed (``mesh.plot()``, where
-  ``mesh`` is a variable) -- a one-off chain with no intermediate variable
-  (``pv.Sphere().plot()``) only resolves its first hop, since there is
-  nothing in the namespace to look the call's result up under.
+- Only the final namespace state is used: a variable reassigned to a
+  different type resolves against its last type everywhere it's used.
+- Only chains rooted at a plain name are resolved (``mesh.plot()``); a
+  one-off chain with no intermediate variable (``pv.Sphere().plot()``)
+  only resolves its first hop.
 """
 
 from __future__ import annotations
@@ -74,16 +41,11 @@ if TYPE_CHECKING:
 #: ``env`` attribute holding recorded candidates, keyed by docname.
 _ENV_ATTR = 'pyvista_autolink_records'
 
-#: Matches any already-rendered anchor tag, ours or another extension's
-#: (e.g. ``sphinx-codeautolink``'s). Used to skip re-wrapping text that's
-#: already inside a link -- see :func:`_embed_links`.
+#: Matches any anchor tag, ours or another extension's.
 _ANCHOR_RE = re.compile(r'<a\b[^>]*>.*?</a>', re.DOTALL)
 
-# Pygments token classes seen in practice for bare identifiers across the
-# python/pycon lexers (``n`` for plain names, ``nn``/``nc``/... for names
-# Pygments has a more specific guess for, e.g. ``nn`` for a module named in
-# an ``import`` line). The dot between attribute parts is consistently
-# rendered as ``o``.
+# Pygments token classes for bare identifiers (``n`` plain names, ``nn``/``nc``/...
+# more specific guesses, e.g. module names in an ``import`` line). Dots render as ``o``.
 _NAME_SPAN = '<span class="n[a-zA-Z]{{0,2}}">{}</span>'
 _DOT_SPAN = '<span class="o">.</span>'
 
@@ -109,12 +71,7 @@ class _Candidate:
 
 
 class _NameCollector(ast.NodeVisitor):
-    """Collect every dotted name accessed in a chain rooted at a plain name.
-
-    Ported from ``sphinx_gallery.backreferences.NameFinder``: only ``a.b.c``
-    forms are collected, not ``a().b`` -- the result of a call that isn't
-    stored in a variable has nothing to look up in the namespace afterwards.
-    """
+    """Collect every dotted name accessed in a chain rooted at a plain name."""
 
     def __init__(self) -> None:
         self.accessed: set[str] = set()
@@ -134,9 +91,7 @@ class _NameCollector(ast.NodeVisitor):
             parts.append(cursor.id)
             self.accessed.add('.'.join(reversed(parts)))
         else:
-            # e.g. `pv.Sphere().plot` -- nothing to look up for the call
-            # result, but keep walking in case the call's own arguments
-            # reference something resolvable.
+            # e.g. `pv.Sphere().plot` -- keep walking the call's own arguments.
             self.visit(cursor)
 
 
@@ -154,20 +109,14 @@ def _accessed_names(source: str) -> set[str]:
 def _module_path_candidates(thing: type | Any, method: list[str]) -> Iterator[str]:
     """Yield ``thing``'s qualified name at every module-path truncation depth.
 
-    ``thing`` is a class, or a plain function/builtin reached without going
-    through a bound instance method. Either way, it's documented under its
-    public re-exported path (``pyvista.PolyData``, ``pyvista.Sphere``), but
-    usually lives, at runtime, several packages deeper
-    (``pyvista.core.pointset.PolyData``) than where it's documented. Trying
-    every prefix, rather than only the full or only the top-level one, means
-    whichever one is actually documented gets found without having to know
-    in advance how many packages were re-exported through.
+    E.g. ``pyvista.core.pointset.PolyData``, ``pyvista.core.PolyData``,
+    ``pyvista.PolyData``, ... so whichever depth is actually documented
+    gets found.
     """
     qualname = getattr(thing, '__qualname__', None)
     if qualname is None:
-        # e.g. a functools.partial instance: inspect.isroutine() considers it
-        # a routine (it's a method descriptor), but it has no qualified name
-        # of its own to document a link under.
+        # e.g. a functools.partial instance: isroutine() is true (it's a
+        # method descriptor), but it has no qualified name of its own.
         return
     module = inspect.getmodule(thing)
     if module is None:
@@ -180,13 +129,9 @@ def _module_path_candidates(thing: type | Any, method: list[str]) -> Iterator[st
 def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
     """Return candidate documented names for one dotted name access.
 
-    Tries every prefix of ``accessed`` against ``namespace`` -- the longest
-    prefix bound to a real object wins -- then walks the remaining
-    attributes on that live object. A module resolves directly to its own
-    name. Otherwise, whatever the walk lands on (and, if it's an inherited
-    method or property, every base class it might actually be documented
-    on) is turned into module-path-truncated candidates by
-    :func:`_module_path_candidates`.
+    Tries every prefix of ``accessed`` against ``namespace``; the longest
+    prefix bound to a real object wins, then walks the remaining attributes
+    on that live object.
     """
     parts = accessed.split('.')
     for split in range(len(parts)):
@@ -211,10 +156,6 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
             try:
                 obj = getattr(obj, level)
             except Exception:  # noqa: BLE001
-                # be as lenient as the object under inspection demands --
-                # attribute access on arbitrary live objects can raise
-                # anything, not just AttributeError. The chain is broken
-                # either way, so there's nothing further to walk.
                 break
             if inspect.ismethod(obj):
                 obj = owner
@@ -233,10 +174,6 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
             return [name for cc in classes for name in _module_path_candidates(cc, method)]
 
         if inspect.isroutine(obj):
-            # A plain function/builtin reached without going through a bound
-            # instance method -- e.g. `pv.Sphere` itself, not `mesh.plot`.
-            # Its own module + qualname is what's documented, not
-            # `type(obj)` (which would just be `builtins.function`).
             return list(_module_path_candidates(obj, []))
 
         return list(_module_path_candidates(obj.__class__, []))
@@ -246,12 +183,7 @@ def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
 def record_namespace(
     *, env: BuildEnvironment, docname: str, source: str, namespace: dict[str, Any]
 ) -> None:
-    """Record candidate documented names for every identifier in ``source``.
-
-    Called once per page, right after :mod:`pyvista.ext.plot_directive`
-    finishes executing that page's docstring examples. Stores only plain
-    strings -- see the module docstring for why.
-    """
+    """Record candidate documented names for every identifier in ``source``."""
     all_records: dict[str, list[_Candidate]] | None = getattr(env, _ENV_ATTR, None)
     if all_records is None:
         all_records = {}
@@ -269,10 +201,7 @@ def _merge_records(  # noqa: PLR0917
     docnames: list[str],  # noqa: ARG001
     other: BuildEnvironment,
 ) -> None:
-    """Merge records collected in a parallel-reading worker process.
-
-    Signature fixed by Sphinx's ``env-merge-info`` event.
-    """
+    """Merge records collected in a parallel-reading worker process."""
     ours = getattr(env, _ENV_ATTR, {})
     theirs = getattr(other, _ENV_ATTR, {})
     ours.update(theirs)
@@ -328,13 +257,7 @@ def _resolve_link(
 
 
 def _embed_links(app: Sphinx, exception: Exception | None) -> None:
-    """Rewrite built HTML pages with links for every resolved recorded name.
-
-    ``build-finished`` handler: the whole site's objects (and every
-    intersphinx inventory) are only fully known once every page has been
-    read, so this is the earliest point at which candidates collected by
-    :func:`record_namespace` can actually be checked against real targets.
-    """
+    """Rewrite built HTML pages with links for every resolved recorded name."""
     if exception is not None or app.builder.format != 'html':
         return
 
@@ -350,8 +273,8 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
         if not out_file.exists():
             continue
 
-        # Deduplicate first: the same accessed name can be recorded once for
-        # every documented function that happens to reference it.
+        # Deduplicate: the same accessed name can be recorded once per
+        # documented function that references it.
         resolved: dict[str, str] = {}
         for candidate in candidates:
             if candidate.accessed in resolved:
@@ -364,10 +287,8 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
         if not resolved:
             continue
 
-        # One combined pattern, longest name first, rather than one `.sub()`
-        # call per name: a sequence of separate passes would let `mesh`
-        # alone match -- and get wrapped a second time -- inside text a
-        # longer `mesh.plot` pass already wrapped a link around.
+        # One combined pattern, longest name first, so `mesh` can't match --
+        # and get wrapped again -- inside a `mesh.plot` match's own text.
         names = sorted(resolved, key=len, reverse=True)
         combined = re.compile(
             '|'.join(f'(?P<n{i}>{_name_pattern_source(name)})' for i, name in enumerate(names))
@@ -375,11 +296,8 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
 
         html = out_file.read_text(encoding='utf-8')
 
-        # Positions already inside *any* anchor -- ours from a previous,
-        # unchanged incremental build that left this exact file on disk, or
-        # another extension's (e.g. sphinx-codeautolink, if still active on
-        # the same site) that already linked this name. Either way, nothing
-        # here should be wrapped a second time.
+        # Skip matches already inside an anchor (ours, from an unchanged
+        # incremental rebuild, or another extension's).
         already_linked = [m.span() for m in _ANCHOR_RE.finditer(html)]
 
         def _wrap(  # noqa: PLR0917
@@ -397,11 +315,7 @@ def _embed_links(app: Sphinx, exception: Exception | None) -> None:
 
 
 def setup(app: Sphinx) -> None:
-    """Wire up dynamic autolinking.
-
-    Called by :mod:`pyvista.ext.plot_directive`; this module is not a
-    Sphinx extension of its own.
-    """
+    """Wire up dynamic autolinking. Called by :mod:`pyvista.ext.plot_directive`."""
     app.connect('env-merge-info', _merge_records)
     app.connect('env-purge-doc', _purge_doc)
     app.connect('build-finished', _embed_links)

@@ -1,9 +1,4 @@
-"""Where the real implementations live.
-
-Deliberately a *different* module than where they're documented (see
-``__init__.py``), the same as pyvista's own ``pyvista.core.dataset`` module
-holding ``DataSet``, which is only ever documented as ``pyvista.DataSet``.
-"""
+"""Real implementations, documented under a different module (see ``__init__.py``)."""
 
 from __future__ import annotations
 

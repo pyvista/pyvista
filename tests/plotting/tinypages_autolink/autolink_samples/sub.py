@@ -1,9 +1,4 @@
-"""A genuinely public submodule, accessed as an attribute of its package.
-
-Mirrors ``pyvista.examples``: a real, user-facing submodule whose functions
-are what a reader actually wants linked, reached via ``import package.sub``
-or ``from package import sub`` rather than a direct import of the function.
-"""
+"""A public submodule, accessed as an attribute of its package."""
 
 from __future__ import annotations
 

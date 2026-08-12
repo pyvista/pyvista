@@ -384,16 +384,7 @@ def test_tinypages_sphinx_examples_as_code_integration(tmp_path: Path):
 
 @flaky_test(exceptions=(AssertionError,))
 def test_autolink(tmp_path: Path):
-    """Check that ``pyvista.ext._autolink`` hyperlinks identifiers resolved from execution.
-
-    ``autolink_samples`` (see ``tinypages_autolink/autolink_samples/``) exercises the cases that
-    tripped up the previous static-analysis-based extension: a function returning a Union
-    type, a method inherited from a class documented under a different (internal) module
-    than where it's implemented, state carried across separate ``>>>`` groups on one page,
-    and a function reached only via an attribute of an imported submodule.
-    """
-    # A separate, minimal site from ``tinypages`` -- see tinypages_autolink/conf.py's
-    # module docstring for why it can't just be another page inside ``tinypages``.
+    """Check that ``pyvista.ext._autolink`` hyperlinks identifiers resolved from execution."""
     source_dir = Path(__file__).parent / 'tinypages_autolink'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
@@ -405,7 +396,7 @@ def test_autolink(tmp_path: Path):
 
     html = (html_dir / 'index.html').read_text(encoding='utf-8')
 
-    # no doubly-nested anchors from overlapping/duplicate substitution passes
+    # no nested anchors from overlapping substitution passes
     assert (
         re.search(r'pyvista-autolink-a" href="[^"]*"><a class="pyvista-autolink-a"', html) is None
     )
@@ -424,15 +415,11 @@ def test_autolink(tmp_path: Path):
         f'missing expected autolink targets: {expected_targets - found_targets}'
     )
 
-    # Widget.draw is referenced from three separate places on the page (two ``>>>`` groups in
-    # ``multi_block_examples``, plus ``make_partial_method``'s ``partial(widget.draw)``), so the
-    # state-carrying, final-namespace-only capture should produce three links to it, not just
-    # one. Scoped to our own anchor class: Sphinx's own TOC and ``headerlink`` permalink also
-    # point at this same anchor.
+    # Widget.draw is referenced from three places: two >>> groups in multi_block_examples,
+    # plus make_partial_method's partial(widget.draw).
     assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 3
 
-    # A functools.partial instance (see ``make_partial_method``) passes inspect.isroutine() but
-    # has no __qualname__, which used to crash the resolver outright rather than just skip it.
+    # functools.partial instances used to crash the resolver (see make_partial_method).
     assert '__qualname__' not in out
     assert '__qualname__' not in err
 
