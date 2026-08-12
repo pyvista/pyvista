@@ -91,6 +91,26 @@ def multi_block_examples():
     return
 
 
+def make_partial_method():
+    """Reference a ``functools.partial`` wrapping a bound method.
+
+    ``functools.partial`` instances pass ``inspect.isroutine`` (they're
+    method descriptors) but have no ``__qualname__``, which used to crash
+    the resolver outright instead of just yielding no link for them.
+
+    Examples
+    --------
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
+    >>> from functools import partial
+    >>> from autolink_samples import make_widget_or_string
+    >>> widget = make_widget_or_string()
+    >>> method = partial(widget.draw)
+    >>> method()
+
+    """
+    return
+
+
 def module_attribute_chain():
     """Test a function reached as an attribute of an imported submodule.
 

@@ -424,11 +424,17 @@ def test_autolink(tmp_path: Path):
         f'missing expected autolink targets: {expected_targets - found_targets}'
     )
 
-    # Widget.draw is called in two separate ``>>>`` groups on the page (see
-    # ``multi_block_examples``), so the state-carrying, final-namespace-only capture should
-    # produce two links to it, not just one from the first group. Scoped to our own anchor
-    # class: Sphinx's own TOC and ``headerlink`` permalink also point at this same anchor.
-    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 2
+    # Widget.draw is referenced from three separate places on the page (two ``>>>`` groups in
+    # ``multi_block_examples``, plus ``make_partial_method``'s ``partial(widget.draw)``), so the
+    # state-carrying, final-namespace-only capture should produce three links to it, not just
+    # one. Scoped to our own anchor class: Sphinx's own TOC and ``headerlink`` permalink also
+    # point at this same anchor.
+    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 3
+
+    # A functools.partial instance (see ``make_partial_method``) passes inspect.isroutine() but
+    # has no __qualname__, which used to crash the resolver outright rather than just skip it.
+    assert '__qualname__' not in out
+    assert '__qualname__' not in err
 
 
 @pytest.mark.needs_playwright

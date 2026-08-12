@@ -18,6 +18,8 @@ Dynamic Autolink Testing
 
 .. autofunction:: multi_block_examples
 
+.. autofunction:: make_partial_method
+
 .. autofunction:: module_attribute_chain
 
 .. currentmodule:: autolink_samples.sub

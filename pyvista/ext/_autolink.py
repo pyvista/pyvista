@@ -163,12 +163,18 @@ def _module_path_candidates(thing: type | Any, method: list[str]) -> Iterator[st
     whichever one is actually documented gets found without having to know
     in advance how many packages were re-exported through.
     """
+    qualname = getattr(thing, '__qualname__', None)
+    if qualname is None:
+        # e.g. a functools.partial instance: inspect.isroutine() considers it
+        # a routine (it's a method descriptor), but it has no qualified name
+        # of its own to document a link under.
+        return
     module = inspect.getmodule(thing)
     if module is None:
         return
     module_parts = module.__name__.split('.')
     for depth in range(len(module_parts), 0, -1):
-        yield '.'.join([*module_parts[:depth], thing.__qualname__, *method])
+        yield '.'.join([*module_parts[:depth], qualname, *method])
 
 
 def _candidate_names(accessed: str, namespace: dict[str, Any]) -> list[str]:
