@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from math import pi
-import pathlib
+import math
 from pathlib import Path
 import re
 from unittest.mock import patch
@@ -359,23 +358,30 @@ def test_ray_trace_origin():
 
 def test_vtk_obb_tree_raises():
     poly = pv.PolyData()
-    match = 'Building the OBB tree requires PolyData with points and cells.'
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    match = 'Building vtkOBBTree requires a dataset with points and cells.'
+    match_warn = (
+        'The obbTree property is deprecated. This property is primarily for internal use only,'
+        '\nand the vtkOBBTree locator does not reliably find intersections in some cases.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
     poly = pv.PolyData()
     poly.points = [[0.0, 0.0, 0.0]]
     assert poly.n_points == 1
     assert poly.n_cells == 0
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
     poly = pv.PolyData()
     poly.faces = [3, 0, 0, 0]
     assert poly.n_points == 0
     assert poly.n_cells == 1
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
 
 def test_polydata_subclass_del():
@@ -763,7 +769,7 @@ def test_save(sphere, extension, binary, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
+    path = Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     sphere.save(path)
     assert path.is_file()
 
@@ -1044,7 +1050,7 @@ def test_clean(sphere):
 
 def test_area(sphere_dense, cube_dense):
     radius = 0.5
-    ideal_area = 4 * pi * radius**2
+    ideal_area = 4 * math.pi * radius**2
     assert np.isclose(sphere_dense.area, ideal_area, rtol=1e-3)
 
     ideal_area = 6 * np.cbrt(cube_dense.volume) ** 2
@@ -1052,7 +1058,7 @@ def test_area(sphere_dense, cube_dense):
 
 
 def test_volume(sphere_dense):
-    ideal_volume = (4 / 3.0) * pi * radius**3
+    ideal_volume = (4 / 3.0) * math.pi * radius**3
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 

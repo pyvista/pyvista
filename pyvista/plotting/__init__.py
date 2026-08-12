@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-# Magic vtk imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
-# Routed through the selected VTK backend (vtkmodules or cvista); see pyvista._vtk.
-import importlib
+# isort: off
+# Must come first: registers the VTK rendering factories (and LaTeX support) via
+# the active backend before any rendering class below is imported.
+from . import _rendering_imports as _rendering_imports
 
-from pyvista import _vtk
-
-for _name in ('vtkRenderingFreeType', 'vtkRenderingContextOpenGL2', 'vtkRenderingMatplotlib'):
-    importlib.import_module(f'{_vtk._VTK_BACKEND}.{_name}')
-del _name
+# isort: on
 
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
@@ -65,6 +62,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolum
 from .opts import PointSpriteShape as PointSpriteShape
 from .opts import ShaderType as ShaderType
 from .picking import PickingComponent as PickingComponent
+from .plot_compare import plot_compare as plot_compare
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter

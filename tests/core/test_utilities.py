@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-import contextlib
 import importlib.util
 import inspect
 import itertools
@@ -21,7 +20,8 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import get_args
-from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 import warnings
 
 from hypothesis import given
@@ -64,7 +64,9 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
 from pyvista.core.utilities.cell_quality import CellQualityInfo
+from pyvista.core.utilities.docs import fix_edit_link_button
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -84,9 +86,6 @@ from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
-
-with contextlib.suppress(ImportError):
-    import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -188,6 +187,26 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
+@pytest.mark.parametrize(
+    ('shape', 'association'),
+    [
+        ((2, 3, 4), 'points'),
+        ((1, 2, 3), 'cells'),
+    ],
+)
+def test_raise_not_matching_suggests_flattening(shape, association):
+    grid = pv.ImageData(dimensions=(2, 3, 4))
+    scalars = np.zeros(shape)
+
+    with pytest.raises(ValueError, match='Number of scalars') as exc_info:
+        grid['scalars'] = scalars
+
+    message = str(exc_info.value)
+    assert f'shape {shape}' in message
+    assert f'matches the number of {association}' in message
+    assert "scalars.ravel(order='F')" in message
+
+
 def test_vtk_version_info():
     ver = _vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
@@ -216,6 +235,8 @@ def test_vtk_version_info_raises(operation):
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_min_supported_vtk_version_matches_pyproject():
+    import tomllib
+
     def get_min_vtk_version_from_pyproject():
         # locate pyproject.toml relative to package
         root = Path(
@@ -280,6 +301,8 @@ def test_createvectorpolydata():
         ('/data/mesh.stl', '.stl'),
         ('/data/image.nii.gz', '.nii.gz'),
         ('/data/other.gz', '.gz'),
+        ('/data/can.e.4.0', '.e.4.0'),
+        ('/data/can.n.16.15', '.n.16.15'),
     ],
 )
 def test_get_ext(path, target_ext):
@@ -362,9 +385,9 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type_)
 
 
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
-@mock.patch('pyvista.BaseReader.show_progress')
+@patch('pyvista.BaseReader.read')
+@patch('pyvista.BaseReader.reader')
+@patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
@@ -421,16 +444,6 @@ def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
     fname.write_bytes(b'not a real mesh file')
     with pytest.raises(OSError, match='not able to be automatically read'):
         fileio.read(fname)
-
-
-@mock.patch('pyvista.core.utilities.fileio.read_exodus')
-def test_pyvista_read_exodus(read_exodus_mock):
-    # check that reading a file with extension .e calls `read_exodus`
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pv.read(ex.globefile, force_ext='.e')
-    args, _kwargs = read_exodus_mock.call_args
-    filename = args[0]
-    assert filename == Path(ex.globefile)
 
 
 def test_get_array_cell(hexbeam):
@@ -562,13 +575,13 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'pyvista-zstd':
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
-    elif package == 'fvtk' and importlib.util.find_spec('fvtk') is None:
-        # fvtk is an alternative VTK backend. It shares stock VTK's library
-        # SONAMEs, so the two cannot be imported in the same process and fvtk is
-        # not installed in the stock test environments. The report covers it in
-        # the dedicated vtk_fvtk CI env, where fvtk is installed and active.
-        pytest.skip('fvtk (alternative VTK backend) is not installed in this environment')
-    assert package in REPORT
+    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+        pytest.xfail('package only available on macOS')
+    elif package == 'cvista' and importlib.util.find_spec('cvista') is None:
+        # cvista is an alternative VTK backend, installed only in the dedicated
+        # vtk_cvista CI env (see tox.ini). The report covers it there.
+        pytest.skip('cvista (alternative VTK backend) is not installed in this environment')
+    assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 
 def test_report_downloads():
@@ -1143,6 +1156,7 @@ def test_spherical_to_cartesian():
 def test_linkcode_resolve():
     assert linkcode_resolve('not-py', {}) is None
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
+    assert link.startswith('https://github.com/pyvista/pyvista/')
     assert 'dataobject.py' in link
     assert '#L' in link
 
@@ -1166,6 +1180,125 @@ def test_linkcode_resolve():
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
+
+    # the blob view highlights the full definition
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    blob_link = linkcode_resolve('py', info)
+    blob_match = re.search(r'#L(\d+)-L(\d+)$', blob_link)
+    assert blob_match is not None
+    start, end = int(blob_match[1]), int(blob_match[2])
+    assert end > start + 1  # DataObject spans many lines
+
+    # the edit view gets a short two-line range at the same starting line: a
+    # single-line #Lxx anchor doesn't reliably scroll the edit view there
+    edit_link = linkcode_resolve('py', info, edit=True)
+    assert '/edit/' in edit_link
+    edit_match = re.search(r'#L(\d+)-L(\d+)$', edit_link)
+    assert edit_match is not None
+    assert int(edit_match[1]) == start
+    assert int(edit_match[2]) == start + 1
+
+
+def test_fix_edit_link_button_gallery_example():
+    # Gallery examples should point to the source .py file in /examples
+    link = fix_edit_link_button('examples/00-load/create_draped_surface', 'default-link')
+    assert link == (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+
+
+def test_fix_edit_link_button_gallery_index_falls_through():
+    # Gallery index pages are not source examples and should fall through
+    link = fix_edit_link_button('examples/index', 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_autosummary_stub():
+    # Autosummary stubs should resolve to the same file and starting line as
+    # the page's [source] button, in a short two-line range rather than the
+    # full one -- a single-line anchor doesn't reliably scroll the edit view
+    pagename = 'api/core/_autosummary/pyvista.core.DataObject'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link is not None
+    assert '/edit/' in link
+    assert 'dataobject.py' in link
+    match = re.search(r'#L(\d+)-L(\d+)$', link)
+    assert match is not None
+    assert int(match[2]) == int(match[1]) + 1
+
+
+def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():
+    # When linkcode can't locate the object -- so the page has no [source]
+    # button either -- fall back to editing the page's own default link
+    pagename = 'api/core/_autosummary/pyvista.not.an.object'
+    link = fix_edit_link_button(pagename, 'default-link')
+    assert link == 'default-link'
+
+
+def test_fix_edit_link_button_other_pages_fall_through():
+    # Other pages should return the default link unchanged
+    link = fix_edit_link_button('user-guide/intro', 'default-link')
+    assert link == 'default-link'
+
+
+def _edit_button_context(pagename):
+    # Mimic the context sphinx-book-theme builds for the header buttons
+    default_url = f'https://github.com/pyvista/pyvista/edit/main/doc/source/{pagename}.rst'
+    return {
+        'get_edit_provider_and_url': lambda: ('GitHub', default_url),
+        'header_buttons': [
+            {'type': 'link', 'url': default_url, 'label': 'source-edit-button'},
+            {
+                'type': 'group',
+                'label': 'download-buttons',
+                'buttons': [
+                    {'type': 'link', 'label': 'download-source-button'},
+                    {'type': 'javascript', 'label': 'download-pdf-button'},
+                ],
+            },
+            {'type': 'javascript', 'label': 'fullscreen-button'},
+        ],
+    }
+
+
+def test_pv_html_page_context_patches_edit_button():
+    # The button built by the theme should be rewritten to the .py source file
+    pagename = 'examples/00-load/create_draped_surface'
+    context = _edit_button_context(pagename)
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    expected = (
+        'https://github.com/pyvista/pyvista/edit/main/examples/00-load/create_draped_surface.py'
+    )
+    assert context['header_buttons'][0]['url'] == expected
+    assert context['get_edit_provider_and_url']() == ('GitHub', expected)
+
+
+def test_pv_html_page_context_leaves_other_pages_alone():
+    # Pages whose source really is in the repo must keep the theme's link
+    pagename = 'api/core/index'
+    context = _edit_button_context(pagename)
+    default_url = context['header_buttons'][0]['url']
+    pv_html_page_context(None, pagename, 'page.html', context, None)
+
+    assert context['header_buttons'][0]['url'] == default_url
+
+
+def test_pv_html_page_context_without_edit_button():
+    # No-op when the edit button is disabled
+    context = {}
+    pv_html_page_context(None, 'index', 'page.html', context, None)
+    assert context == {}
+
+
+def test_pv_html_page_context_drops_download_button():
+    # The download button offers nothing useful -- .rst 404s and PDF is a
+    # browser feature -- so it is dropped, leaving other buttons untouched
+    context = _edit_button_context('api/core/index')
+    pv_html_page_context(None, 'api/core/index', 'page.html', context, None)
+
+    labels = [button['label'] for button in context['header_buttons']]
+    assert labels == ['source-edit-button', 'fullscreen-button']
 
 
 def test_coerce_point_like_arg():
@@ -2598,9 +2731,9 @@ def test_vtk_verbosity_set_get():
 def test_vtk_verbosity_logging_disabled():
     # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
     # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
-    mock_logger = mock.MagicMock()
+    mock_logger = MagicMock()
     mock_logger.GetCurrentVerbosityCutoff.return_value = -10
-    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+    with patch.object(_vtk, 'vtkLogger', mock_logger):
         assert pv.vtk_verbosity() == 'off'
 
 
@@ -3200,6 +3333,8 @@ def test_deprecate_positional_args_decorator_not_needed():
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_max_positional_args_matches_pyproject():
+    import tomllib
+
     root = Path(
         os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
     )  # to make the test work when pyvista is installed via tox
@@ -3270,7 +3405,7 @@ def test_fileio_extensions(cls):
     if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
         # These classes are not associated with any extensions
         pytest.xfail()
-    assert len(cls.extensions) > 0
+    assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
 def test_ply_writer(sphere, tmp_path):
@@ -3296,3 +3431,42 @@ def test_ply_writer(sphere, tmp_path):
     assert writer.texture == texture_name
     writer.texture = texture_name
     assert writer.texture == texture_name
+
+
+def test_try_callback_warns_every_time():
+    # A callback bound to a high-frequency event (e.g. ``MouseMoveEvent``)
+    # raises an identical exception at the same call site on every
+    # invocation. ``try_callback`` must surface it every time rather than
+    # letting Python's default filter de-duplicate it to a single message.
+    def failing_callback():
+        msg = 'callback failed'
+        raise RuntimeError(msg)
+
+    n_calls = 3
+    with warnings.catch_warnings(record=True) as log:
+        # Restore the default filter that ``catch_warnings(record=True)``
+        # overrides, so that de-duplication would apply without the fix.
+        warnings.simplefilter('default')
+        for _ in range(n_calls):
+            misc.try_callback(failing_callback)
+
+    messages = [w for w in log if 'Encountered issue in callback' in str(w.message)]
+    assert len(messages) == n_calls
+    assert 'callback failed' in str(messages[0].message)
+
+
+def test_write_path_of_ensight_writer(tmp_path, hexbeam):
+
+    path = tmp_path / 'hexbeam.case'
+    writer = pv.EnSightWriter(tmp_path / 'hexbeam.case', hexbeam)
+    assert writer.path == str(path.parent / path.stem)
+    # written_path is initialized same as path,
+    # but is updated after write() is called
+    assert writer.written_path == path
+
+    writer.write()
+
+    assert writer.path == str(path.parent / path.stem)
+
+    expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
+    assert writer.written_path == expected_path

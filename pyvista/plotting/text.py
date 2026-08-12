@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -32,6 +31,19 @@ if TYPE_CHECKING:
 
 HorizontalOptions = Literal['left', 'center', 'right']
 VerticalOptions = Literal['bottom', 'center', 'top']
+
+# The places `Plotter.add_text` names to draw text in, as opposed to the coordinate it
+# also accepts
+TextPositionOptions = Literal[
+    'lower_left',
+    'lower_right',
+    'upper_left',
+    'upper_right',
+    'lower_edge',
+    'upper_edge',
+    'left_edge',
+    'right_edge',
+]
 
 
 class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
@@ -176,7 +188,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     ----------
     text : str, optional
         Text string to be displayed.
-        "\n" is recognized as a carriage return/linefeed (line separator).
+        ``\n`` is recognized as a carriage return/linefeed (line separator).
         The characters must be in the UTF-8 encoding.
 
     position : Sequence[float], optional
@@ -222,7 +234,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         -------
         str
             Text string to be displayed.
-            "\n" is recognized as a carriage return/linefeed (line separator).
+            ``\n`` is recognized as a carriage return/linefeed (line separator).
             The characters must be in the UTF-8 encoding.
 
         """
@@ -760,7 +772,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
             Font file path.
 
         """
-        path = pathlib.Path(font_file)
+        path = Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
             msg = f'Unable to locate {path}'
@@ -872,3 +884,21 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
         """
         self.ShallowCopy(to_copy)
+
+
+# Where each of the positions `Plotter.add_text` accepts sits in a viewport, and how
+# text is anchored to it, as a fraction of the size of the viewport
+_TEXT_MARGIN = 0.02
+
+_TextPlacement = tuple[float, float, HorizontalOptions, VerticalOptions]
+
+_TEXT_POSITIONS: dict[TextPositionOptions, _TextPlacement] = {
+    'lower_left': (_TEXT_MARGIN, _TEXT_MARGIN, 'left', 'bottom'),
+    'lower_right': (1 - _TEXT_MARGIN, _TEXT_MARGIN, 'right', 'bottom'),
+    'upper_left': (_TEXT_MARGIN, 1 - _TEXT_MARGIN, 'left', 'top'),
+    'upper_right': (1 - _TEXT_MARGIN, 1 - _TEXT_MARGIN, 'right', 'top'),
+    'lower_edge': (0.5, _TEXT_MARGIN, 'center', 'bottom'),
+    'upper_edge': (0.5, 1 - _TEXT_MARGIN, 'center', 'top'),
+    'left_edge': (_TEXT_MARGIN, 0.5, 'left', 'center'),
+    'right_edge': (1 - _TEXT_MARGIN, 0.5, 'right', 'center'),
+}

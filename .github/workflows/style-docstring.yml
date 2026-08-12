@@ -35,12 +35,12 @@ jobs:
       TOX_COLORED: "yes"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -49,14 +49,14 @@ jobs:
         if: runner.os == 'Windows'
         uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
 
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         if: runner.os == 'Linux'
         with:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
@@ -77,19 +77,17 @@ jobs:
     name: Vale
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.14
 
-      - name: Install test dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
+      - name: Install Vale Dependencies
+        run: pip install 'docutils<0.22'
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples

@@ -21,6 +21,8 @@ from pyvista.typing.mypy_plugin import promote_type
 
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.accessor_registry import _pending_accessor_names
+from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
@@ -115,9 +117,6 @@ class DataObject(
         attribute resolution finds the newly-attached accessor
         descriptor.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
-
         if _resolve_pending_accessor(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)
@@ -131,9 +130,6 @@ class DataObject(
         / Jupyter / REPL tab completion surface them without paying the
         plugin import cost ahead of time.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.core.utilities.accessor_registry import _pending_accessor_names
-
         return sorted({*super().__dir__(), *_pending_accessor_names()})
 
     def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
@@ -183,6 +179,11 @@ class DataObject(
         **writer_kwargs: Any,
     ) -> None:
         """Save this vtk object to file.
+
+        .. note::
+            Reading a file and saving it in another format is also available via
+            command-line interface. See :ref:`pyvista convert <cli_convert>` for
+            details.
 
         .. include:: /api/utilities/mesh_io.rst
 
@@ -292,8 +293,8 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext == '.vtkhdf' and binary is False:
-                msg = '.vtkhdf files can only be written in binary format.'
+            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+                msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
             # Save using the writer
@@ -309,8 +310,8 @@ class DataObject(
 
             writer.write()
 
-            if not file_path.exists():
-                msg = f'VTK writer failed to write file: {file_path}'
+            if not writer.written_path.exists():
+                msg = f'VTK writer failed to write file: {writer.written_path}'
                 raise OSError(msg)
 
         elif file_ext in _PICKLE_FILE_EXT:
@@ -891,7 +892,12 @@ class DataObject(
 
         # Add this object's data to the state dictionary
         state_dict = serialized[1][0]
-        state_dict['_PYVISTA_STATE_DICT'] = self.__dict__.copy()
+        data_dict = self.__dict__.copy()
+        # Any cached vtk objects (e.g. vtkLocator objects) must be removed since
+        # these cannot be serialized
+        _clear_vtk_objects_from_dict(data_dict)
+
+        state_dict['_PYVISTA_STATE_DICT'] = data_dict
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
@@ -1077,3 +1083,14 @@ class DataObject(
         alg.SetInputDataObject(self)
         alg.Update()
         return wrap(alg.GetOutput())  # type:ignore[return-value]
+
+    def __del__(self) -> None:
+        """Delete the object."""
+        # Delete any cached vtk objects (locators, glyph geom, etc.)
+        _clear_vtk_objects_from_dict(self.__dict__)
+
+
+def _clear_vtk_objects_from_dict(dict_: dict[str, Any]) -> None:
+    for attr, value in tuple(dict_.items()):
+        if isinstance(value, _vtk.vtkObjectBase):
+            del dict_[attr]

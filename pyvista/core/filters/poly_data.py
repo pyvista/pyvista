@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -893,12 +894,12 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, default: True
-            Flag to control smoothing of boundary edges. When ``True``,
+            Flag to control smoothing of boundary edges. When ``False``,
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
             Flag to control smoothing of feature edges.  When ``True``,
-            boundary edges remain fixed as defined by ``feature_angle`` and
+            feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
         inplace : bool, default: False
@@ -958,6 +959,7 @@ class PolyDataFilters(DataSetFilters):
         feature_smoothing: bool = False,  # noqa: FBT001, FBT002
         non_manifold_smoothing: bool = False,  # noqa: FBT001, FBT002
         normalize_coordinates: bool = False,  # noqa: FBT001, FBT002
+        window_function: Literal['blackman', 'hamming', 'hanning', 'nuttall'] | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -992,12 +994,12 @@ class PolyDataFilters(DataSetFilters):
             Feature angle for sharp edge identification.
 
         boundary_smoothing : bool, default: True
-            Flag to control smoothing of boundary edges. When ``True``,
+            Flag to control smoothing of boundary edges. When ``False``,
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
             Flag to control smoothing of feature edges.  When ``True``,
-            boundary edges remain fixed as defined by ``feature_angle`` and
+            feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
         non_manifold_smoothing : bool, default: False
@@ -1010,6 +1012,13 @@ class PolyDataFilters(DataSetFilters):
             position coordinates to within the unit cube ``[-1, 1]``, perform the
             smoothing, and translate and scale the position coordinates back to
             the original coordinate frame.
+
+        window_function : str, optional
+            Window function used by the underlying
+            :vtk:`vtkWindowedSincPolyDataFilter`. Accepted values are
+            ``'blackman'``, ``'hamming'``, ``'hanning'``, and ``'nuttall'``.
+            ``'nuttall'`` is used by default when available. This option
+            requires VTK 9.4.0 or later.
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -1042,13 +1051,29 @@ class PolyDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>> mesh = examples.download_foot_bones().subdivide(2)
         >>> smoothed_mesh = mesh.smooth_taubin()
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> _ = pl.add_mesh(mesh)
-        >>> _ = pl.add_text('Original Mesh')
-        >>> pl.subplot(0, 1)
-        >>> _ = pl.add_mesh(smoothed_mesh)
-        >>> _ = pl.add_text('Smoothed Mesh')
-        >>> pl.show()
+        >>> pv.plot_compare({'Original Mesh': mesh, 'Smoothed Mesh': smoothed_mesh})
+
+        Use :func:`~pyvista.plot_compare` to show differences between
+        window functions. The keys of the dict are used as labels.
+
+        >>> mesh = examples.download_foot_bones()
+        >>> window_functions = ['nuttall', 'blackman', 'hamming', 'hanning']
+        >>> datasets = {
+        ...     window: mesh.smooth_taubin(window_function=window)
+        ...     for window in window_functions
+        ... }
+        >>>
+        >>> cpos = pv.CameraPosition(
+        ...     position=(-0.7780, -12.74, -2.019),
+        ...     focal_point=(1.257, -1.716, -0.2136),
+        ...     viewup=(-0.2696, -0.1070, 0.9570),
+        ... )
+        >>>
+        >>> pv.plot_compare(
+        ...     datasets,
+        ...     dataset_kwargs={'show_edges': True},
+        ...     cpos=cpos,
+        ... )
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
@@ -1063,6 +1088,29 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
+        if window_function is not None and pv.vtk_version_info < (9, 4, 0):
+            msg = '`window_function` requires VTK 9.4.0 or later.'
+            raise pv.VTKVersionError(msg)
+
+        if pv.vtk_version_info >= (9, 4, 0):
+            window_functions = {
+                'blackman': alg.SetWindowFunctionToBlackman,
+                'hamming': alg.SetWindowFunctionToHamming,
+                'hanning': alg.SetWindowFunctionoHanning,
+                'nuttall': alg.SetWindowFunctionToNuttall,
+            }
+
+            window_function_ = 'nuttall' if window_function is None else window_function.lower()
+            try:
+                set_window_function = window_functions[window_function_]
+            except KeyError as err:
+                msg = (
+                    f"Invalid window_function '{window_function}'. "
+                    f'Expected one of: {", ".join(window_functions)}.'
+                )
+                raise ValueError(msg) from err
+
+            set_window_function()
         _update_alg(
             alg, progress_bar=progress_bar, message='Smoothing Mesh using Taubin Smoothing'
         )
@@ -1731,14 +1779,12 @@ class PolyDataFilters(DataSetFilters):
         boundary_constraints: bool, default: False
             Use the legacy weighting by boundary_edge_length instead of by
             boundary_edge_length^2 for backwards compatibility.
-            It requires vtk>=9.3.0.
 
             .. versionadded:: 0.45.0
 
         boundary_weight: float, default: 1.0
             A floating point factor to weigh the boundary quadric constraints
             by: higher factors further constrain the boundary.
-            It requires vtk>=9.3.0.
 
             .. versionadded:: 0.45.0
 
@@ -1832,12 +1878,8 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            if boundary_constraints:
-                warn_external('`boundary_constraints` requires vtk >= 9.3.')
-        else:
-            alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
-            alg.SetBoundaryWeightFactor(boundary_weight)
+        alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
+        alg.SetBoundaryWeightFactor(boundary_weight)
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
@@ -2520,6 +2562,12 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
+        PolyDataFilters.multi_ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
         :ref:`ray_trace_moeller_example`
             Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
 
@@ -2542,20 +2590,13 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`ray_trace_example` for more examples using this filter.
 
         """
-        points = _vtk.vtkPoints()
-        cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(list(origin), list(end_point), points, cell_ids)
+        intersection_points, intersection_cells = self.intersect_with_line(
+            origin, end_point, deduplicate_points=True
+        )
 
-        intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
         if first_point and has_intersection:
             intersection_points = intersection_points[0]
-
-        intersection_cells = []
-        if has_intersection:
-            ncells = 1 if first_point else cell_ids.GetNumberOfIds()
-            intersection_cells = [cell_ids.GetId(i) for i in range(ncells)]
-        intersection_cells = np.array(intersection_cells)  # type: ignore[assignment]
 
         if plot:
             pl = pv.Plotter(off_screen=off_screen)
@@ -2618,6 +2659,15 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
+
+        See Also
+        --------
+        PolyDataFilters.ray_trace
+        DataSet.intersect_with_line
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -3239,6 +3289,8 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 2
+
         First, generate 30 points on circle and plot them.
 
         >>> import pyvista as pv

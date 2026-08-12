@@ -7,7 +7,7 @@ Parametric Geometric Objects
 Creating parametric objects from :ref:`parametric_api`.
 """
 
-from math import pi
+import math
 
 # sphinx_gallery_thumbnail_number = 12
 import pyvista as pv
@@ -43,7 +43,7 @@ cpos = pv.CameraPosition(
 
 
 # half ellipsoid
-part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=pi / 2)
+part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=math.pi / 2)
 part_ellipsoid.plot(color='lightblue', smooth_shading=True, cpos=cpos)
 
 

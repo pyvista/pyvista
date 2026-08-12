@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
 import itertools
-import pathlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -180,7 +180,7 @@ class MultiBlock(
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
                 for key, block in args[0].items():
@@ -2310,10 +2310,7 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-            self.CompositeShallowCopy(to_copy)
-        else:
-            self.ShallowCopy(to_copy)
+        self.CompositeShallowCopy(to_copy)
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks

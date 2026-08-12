@@ -16,7 +16,7 @@ based rendering and VTK v9 supports high dynamic range textures.
 import pyvista as pv
 from pyvista import examples
 
-helmet_file = examples.gltf.download_damaged_helmet()
+helmet_file = examples.download_damaged_helmet(load=False)
 texture = examples.download_dikhololo_night()
 
 

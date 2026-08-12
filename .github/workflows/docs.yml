@@ -58,22 +58,22 @@ jobs:
       TOX_COLORED: "yes"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.14
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime xvfb
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
@@ -122,14 +122,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: docs-build
-          path:
-            | # Only vtksz files in 'doc/_build/html/_images/' are used. Exclude all others since these files may be large.
-            doc/_build/html/
-            !doc/_build/html/index-*.vtksz
-            !doc/_build/html/api/**/*.vtksz
-            !doc/_build/html/extras/**/*.vtksz
-            !doc/_build/html/getting-started/**/*.vtksz
-            !doc/_build/html/user-guide/**/*.vtksz
+          path: doc/_build/html/
 
       - name: Upload non-interactive HTML documentation
         if: ${{ !cancelled() }}
@@ -163,11 +156,11 @@ jobs:
     env:
       TOX_COLORED: "yes"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.14
           cache: "pip"
@@ -182,7 +175,11 @@ jobs:
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
-        run: tox r -e docs-test
+        run: tox r -e docs-test-build
+
+      - name: Test Documentation Images
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test-images
 
       - name: Upload Images for Failed Tests
         if: ${{ !cancelled() }}
@@ -208,10 +205,10 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.14
       - name: Install Dependencies

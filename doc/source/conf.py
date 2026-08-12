@@ -8,13 +8,17 @@ import json
 import locale
 import os
 from pathlib import Path
+import shutil
 import sys
 from typing import TYPE_CHECKING
 import warnings
 
+from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
+from sphinx import addnodes
 
 if TYPE_CHECKING:
+    from docutils.nodes import Element
     from sphinx.application import Sphinx
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
@@ -43,10 +47,14 @@ import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
 
 # Manage errors
 pv.set_error_output_file('errors.txt')
@@ -63,6 +71,14 @@ if not Path(pv.FIGURE_PATH).exists():
 # necessary when building the sphinx gallery
 pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+
+# Copy contents of `pyvista/examples` dir so that we have actual mesh files
+# we can run CLI commands on locally without polluting the source dir
+HERE = Path(__file__).parent
+src = HERE.parent.parent / 'pyvista' / 'examples'
+dst = HERE / '_local_examples'
+shutil.rmtree(dst, ignore_errors=True)
+shutil.copytree(src, dst)
 
 # SG warnings
 import warnings
@@ -100,10 +116,13 @@ sys.path.append(str(Path('./_ext').resolve()))
 # ones.
 extensions = [
     'enum_tools.autoenum',
+    'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
     'pyvista.ext.plot_directive',
+    'sphinx_autoopengraph',
+    'sphinx_examples_as_code',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -111,10 +130,12 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
+    'sphinx_codeautolink',  # Add hyperlinks inside docstring/page code blocks to pyvista methods
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
+    'sphinxcontrib.programoutput',
     'sphinx_togglebutton',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -122,7 +143,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
-    'vtk_xref',
+    'sphinx_vtk_xref',
 ]
 
 
@@ -145,6 +166,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
+programoutput_use_ansi = True
+
 # Needed to address a code-block parsing error by sphinx for an example
 autodoc_mock_imports = ['example']
 
@@ -159,6 +183,12 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+
+sphinx_examples_as_code_conf = {
+    # Replace sphinx-gallery's own per-example download footer/note with
+    # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
+    'gallery_downloads': True,
+}
 
 # Warn if target links or references cannot be found
 nitpicky = True
@@ -280,6 +310,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*BytesIO'),
     (r'py:.*', '.*StringIO'),
     (r'py:.*', '.*Path'),
     (r'py:.*', '.*UserDict'),
@@ -296,6 +327,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
+    (r'py:.*', 'ndarray'),
     #
     # pyarrow does not register a py:module entry in its intersphinx
     # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
@@ -430,7 +462,29 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '**.ipynb_checkpoints',
+    '_templates*',
+    # Fragments that only ever get ``.. include::``-ed into another page or into a
+    # docstring. Sphinx exempts included files from the "isn't included in any
+    # toctree" warning but still builds them as standalone documents, which puts 70
+    # title-less pages in the search index, e.g. searching `bunny` returns four
+    # `<no title>` dataset-gallery carousels. Excluding them keeps the text
+    # searchable through the page that includes it.
+    'api/core/cell_quality/*.rst',
+    'api/examples/dataset-gallery/*.rst',
+    'api/plotting/charts/pen_line_styles.rst',
+    'api/plotting/charts/plot_color_schemes.rst',
+    'api/plotting/charts/scatter_marker_styles.rst',
+    'api/readers/readers_table.rst',
+    'api/utilities/color_table/*.rst',
+    'api/utilities/colormap_table/*.rst',
+    'api/utilities/io_table/*.rst',
+    'api/utilities/mesh_io.rst',
+]
 _repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
 _docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
 _context7_data = json.loads(_repo_context7.read_text())
@@ -529,7 +583,20 @@ sphinx_gallery_conf = {
     'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache', 'image.not_readable']
+suppress_warnings = [
+    'config.cache',
+    'image.not_readable',
+    # sphinx-codeautolink fails to match any line with a `# doctest: +OPTION` comment
+    # back to its rendered HTML; it just skips linking that one block, harmlessly.
+    'codeautolink.match_block',
+]
+
+# Without this, sphinx-codeautolink treats each `>>>` group in a docstring's Examples
+# section as its own isolated scope, so an `import pyvista as pv` in an earlier group
+# (a very common numpydoc pattern: several short examples separated by prose) doesn't
+# carry over to later ones, and `pv` ends up undefined -- nothing after the first group
+# resolves. This makes all groups on a page share one running scope instead.
+codeautolink_concat_default = True
 
 import re
 
@@ -573,6 +640,56 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+
+# -- headings instead of rubrics for docstring sections -----------------------
+# numpydoc renders section headers (Notes, References, Examples) as
+# `.. rubric::` by default. Rubrics aren't real docutils sections, so they're
+# invisible to the "on this page" navbar, which is built from actual heading
+# structure. Since pyvista generates one dedicated page per function/method/
+# class (see doc/source/_templates/autosummary/*.rst), each page has at most
+# one docstring, so promoting these to real headings doesn't create the
+# duplicate-heading clutter it would on a page combining many docstrings.
+def _str_header(self, name):  # noqa: ARG001
+    return [name, '-' * len(name), '']
+
+
+SphinxDocString._str_header = _str_header
+
+
+# Making the sections above real headings isn't enough on its own: autodoc wraps
+# the whole docstring in a `desc` node, and Sphinx's TocTreeCollector explicitly
+# skips any section it finds inside one. Lift them out to page level so they show
+# up in the navbar.
+def _is_nested_desc(node: Element) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, addnodes.desc):
+            return True
+        parent = parent.parent
+    return False
+
+
+def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Move docstring sections out of their ``desc`` node to page level."""
+    for desc in list(doctree.findall(addnodes.desc)):
+        if _is_nested_desc(desc):
+            continue
+        parent = desc.parent
+        if parent is None:
+            continue
+        # Only hoist when this object owns the page, otherwise sections from
+        # several objects would collide at page level.
+        if len([node for node in parent if isinstance(node, addnodes.desc)]) != 1:
+            continue
+        content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
+        if content is None:
+            continue
+        sections = [node for node in content if isinstance(node, nodes.section)]
+        index = parent.index(desc)
+        for offset, section in enumerate(sections):
+            content.remove(section)
+            parent.insert(index + 1 + offset, section)
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -631,11 +748,6 @@ html_theme_options = {
             'icon': 'fa fa-comment fa-fw',
         },
         {
-            'name': 'Contributing',
-            'url': 'https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst',
-            'icon': 'fa fa-gavel fa-fw',
-        },
-        {
             'name': 'The Paper',
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
@@ -681,6 +793,7 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
+    'codeautolink.css',  # style sphinx-codeautolink links like sphinx-gallery's
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -844,7 +957,12 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
-    app.connect('html-page-context', pv_html_page_context)
+    # Priority must stay above the 501 used by sphinx-book-theme's
+    # ``add_source_buttons``, which is what builds the "suggest edit" button.
+    app.connect('html-page-context', pv_html_page_context, priority=502)
+
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)

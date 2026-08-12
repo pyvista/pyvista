@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import sys
-import types
+from types import ModuleType
 from unittest.mock import MagicMock
 import warnings
 
@@ -597,9 +597,9 @@ def _fake_importer(name: str, body: str):
     """
     compiled = compile(body, f'<fake {name}>', 'exec')
 
-    def _import(module_path: str) -> types.ModuleType:
+    def _import(module_path: str) -> ModuleType:
         assert module_path == name
-        module = types.ModuleType(name)
+        module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
         exec(compiled, module.__dict__)  # noqa: S102
@@ -733,7 +733,7 @@ def test_pending_plugin_only_imported_once(monkeypatch):
     def _counting_import(path):
         nonlocal import_count
         import_count += 1
-        module = types.ModuleType(path)
+        module = ModuleType(path)
         sys.modules[path] = module
         # Module attaches an accessor as a side effect of import.
         exec(  # noqa: S102

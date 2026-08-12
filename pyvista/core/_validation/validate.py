@@ -16,7 +16,7 @@ A ``validate`` function typically:
 from __future__ import annotations
 
 import inspect
-from itertools import product
+import itertools
 import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -637,14 +637,16 @@ def validate_transform4x4(
                 )
             except TypeError:
                 msg = (
-                    'Input transform must be one of:\n'
-                    '\tvtkMatrix4x4\n'
-                    '\tvtkMatrix3x3\n'
-                    '\tvtkTransform\n'
-                    '\t4x4 np.ndarray\n'
-                    '\t3x3 np.ndarray\n'
-                    '\tscipy.spatial.transform.Rotation\n'
-                    f'Got {reprlib.repr(transform)} with type {type(transform)} instead.',
+                    (
+                        'Input transform must be one of:\n'
+                        '\tvtkMatrix4x4\n'
+                        '\tvtkMatrix3x3\n'
+                        '\tvtkTransform\n'
+                        '\t4x4 np.ndarray\n'
+                        '\t3x3 np.ndarray\n'
+                        '\tscipy.spatial.transform.Rotation\n'
+                        f'Got {reprlib.repr(transform)} with type {type(transform)} instead.'
+                    ),
                 )
                 raise TypeError(msg)
 
@@ -732,7 +734,7 @@ def _array_from_vtkmatrix(
 ) -> NumpyArray[float]:
     """Convert a vtk matrix to an array."""
     array = np.zeros(shape)
-    for i, j in product(range(shape[0]), range(shape[1])):
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
         array[i, j] = matrix.GetElement(i, j)
     return array
 

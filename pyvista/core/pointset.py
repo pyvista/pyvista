@@ -5,11 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import cached_property
-from functools import wraps
+import functools
 import numbers
 from pathlib import Path
-from textwrap import dedent
+import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
@@ -47,6 +46,7 @@ from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 from .utilities.writer import BaseWriter
+from .utilities.writer import EnSightWriter
 from .utilities.writer import HDFWriter
 from .utilities.writer import HoudiniPolyDataWriter
 from .utilities.writer import IVWriter
@@ -183,9 +183,11 @@ class _PointSet(DataSet):
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
         target = self if inplace else self.copy()
-
-        target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        target.cell_data[array_name] = ghost_cells
         target.RemoveGhostCells()
+        with contextlib.suppress(KeyError):
+            del target.cell_data[array_name]
         return target
 
     def points_to_double(self) -> Self:
@@ -411,14 +413,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)
+    @functools.wraps(DataSet.plot)
     def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @wraps(PolyDataFilters.threshold)
+    @functools.wraps(PolyDataFilters.threshold)
     def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -426,7 +428,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.threshold_percent)
+    @functools.wraps(PolyDataFilters.threshold_percent)
     def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -436,7 +438,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @wraps(PolyDataFilters.explode)
+    @functools.wraps(PolyDataFilters.explode)
     def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
@@ -445,7 +447,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.delaunay_3d)
+    @functools.wraps(PolyDataFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
@@ -672,6 +674,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 3
+
     >>> import vtk
     >>> import numpy as np
     >>> from pyvista import examples
@@ -849,7 +853,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 - vtkDataArray
 
                 Instead got: {type(var_inp)}"""
-            raise TypeError(dedent(msg.strip('\n')))
+            raise TypeError(textwrap.dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
         if faces is lines is strips is verts is None:
@@ -1788,7 +1792,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @cached_property
+    @property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
@@ -1803,14 +1807,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             This property is expensive to compute and is therefore cached. If the mesh's
             geometry is modified, the obb tree will no longer be valid.
 
+        .. deprecated:: 0.49
+            This property is primarily for internal use only, and the vtkOBBTree locator does
+            not reliably find intersections in some cases.
+
         """
-        if self.n_points < 1 or self.n_cells < 1:
-            msg = 'Building the OBB tree requires PolyData with points and cells.'
-            raise ValueError(msg)
-        obb_tree = _vtk.vtkOBBTree()
-        obb_tree.SetDataSet(self)
-        obb_tree.BuildLocator()
-        return obb_tree
+        return self._obb_tree
 
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01
@@ -1859,13 +1861,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         """
         return self.n_open_edges == 0
-
-    def __del__(self) -> None:
-        """Delete the object."""
-        # avoid a reference cycle that can't be resolved with vtkPolyData
-        self._glyph_geom = None
-        with contextlib.suppress(KeyError):
-            del self.__dict__['obbTree']
 
 
 @abstract_class
@@ -1971,6 +1966,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
+        '.case': EnSightWriter,
     }
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
@@ -2356,17 +2352,27 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(arr)
 
     @property
-    def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
+    def cells_dict(  # numpydoc ignore=RT01
+        self,
+    ) -> dict[np.uint8, NumpyArray[int] | list[NumpyArray[int]]]:
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
-        type in an ordered fashion.  Note that this function only
-        works with element types of fixed sizes.
+        type in an ordered fashion.  For a cell type whose cells all have
+        the same number of points the value is a single ``[N, D]`` array;
+        for a cell type with a data-defined number of points whose cells
+        differ in size (e.g. :attr:`~pyvista.CellType.POLYGON`) the value
+        is instead a list of ``N`` 1D arrays, one per cell.
 
         .. versionchanged:: 0.46
 
             An empty dict ``{}`` is returned instead of ``None`` if
             the input is empty.
+
+        .. versionchanged:: 0.49
+
+            Cell types with a data-defined number of points are now
+            supported (previously this raised a ``ValueError``).
 
         Returns
         -------
@@ -3712,7 +3718,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def cell_coords(
         self,
         ind: int | VectorLike[int],
-    ) -> None | MatrixLike[int]:
+    ) -> MatrixLike[int] | None:
         """Return the cell structured coordinates.
 
         The cell structured coordinates are the ``(i, j, k)`` index of a cell

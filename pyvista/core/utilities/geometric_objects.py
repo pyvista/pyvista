@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
-from itertools import product
+import itertools
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
 
@@ -30,12 +30,6 @@ from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
 from .geometric_sources import translate
-
-with contextlib.suppress(ImportError):
-    from .geometric_sources import CapsuleSource
-
-from typing import TYPE_CHECKING
-
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -106,25 +100,15 @@ def Capsule(  # noqa: PLR0917
     >>> capsule.plot(show_edges=True)
 
     """
-    if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-        algo = CylinderSource(
-            center=center,
-            direction=direction,
-            radius=radius,
-            height=cylinder_length,
-            capping=True,
-            resolution=resolution,
-        )
-        algo.capsule_cap = True
-    else:
-        algo = CapsuleSource(
-            center=(0, 0, 0),
-            direction=(1, 0, 0),
-            radius=radius,
-            cylinder_length=cylinder_length,
-            theta_resolution=resolution,
-            phi_resolution=resolution,
-        )
+    algo = CylinderSource(
+        center=center,
+        direction=direction,
+        radius=radius,
+        height=cylinder_length,
+        capping=True,
+        resolution=resolution,
+    )
+    algo.capsule_cap = True
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
@@ -480,7 +464,7 @@ def Sphere(  # noqa: PLR0917
             :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
             the Prime Meridian along the positive x-axis.
 
-            In this case, consider using :func:`~pyvista.examples.planets.load_earth` instead,
+            In this case, consider using :func:`~pyvista.examples.planets.load_planet` instead,
             which already includes this rotation.
 
         .. versionadded:: 0.49
@@ -495,7 +479,7 @@ def Sphere(  # noqa: PLR0917
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
-    :func:`pyvista.examples.planets.load_earth`
+    :func:`pyvista.examples.planets.load_planet`
         Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
 
     Examples
@@ -695,7 +679,7 @@ def SolidSphere(  # noqa: PLR0917
         end_phi = np.pi if radians else 180.0
 
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution + 1)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
         radius=radius,
@@ -953,7 +937,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
         negative_axis = False
 
     # rest of points with theta changing quickest
-    for ir, iphi in product(radius, phi):
+    for ir, iphi in itertools.product(radius, phi):
         points.extend(_spherical_to_cartesian(ir, iphi, theta))
 
     cells = []
@@ -1001,7 +985,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 celltypes.append(pv.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
-        for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
+        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
             cells.append(5)
             cells.extend(
                 [
@@ -1024,7 +1008,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
     if positive_axis:
-        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
             axis0 = ir + 1 if include_origin else ir
             axis1 = ir + 2 if include_origin else ir + 1
 
@@ -1045,7 +1029,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     # now go downwards
     if negative_axis:
-        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
 
@@ -1067,7 +1051,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
+    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
         cells.append(8)
         cells.extend(
             [

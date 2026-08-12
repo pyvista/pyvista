@@ -5,18 +5,21 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
-import enum
+from enum import Enum
+from enum import IntEnum
 import json
-import os
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import ForwardRef
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
 from typing import cast
 from typing import get_args
+from typing import get_origin
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -32,9 +35,8 @@ from pyvista.core.errors import InvalidMeshWarning
 from ._frd import _FRDParser
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
-from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
-from .fileio import read_grdecl
+from .fileio import _read_grdecl
 from .helpers import wrap
 from .misc import _NoNewAttrMixin
 from .misc import abstract_class
@@ -64,6 +66,7 @@ if TYPE_CHECKING:
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
+_CLASS_READER_PATTERNS: list[tuple[str, re.Pattern[str], type[BaseReader[Any]]]] = []
 
 # Covariant TypeVar for :class:`BaseReader`'s output type. Covariant is
 # correct because ``BaseReader`` only *produces* values of ``T_Output``
@@ -128,25 +131,31 @@ def get_reader(filename, force_ext=None):
 
     """
     ext = _get_ext_force(filename, force_ext)
+    reader_class = CLASS_READERS.get(ext)
 
-    try:
-        Reader = CLASS_READERS[ext]
-    except KeyError:
-        if Path(filename).is_dir():
-            if len(files := os.listdir(filename)) > 0 and all(  # noqa: PTH208
-                Path(f).suffix == '.dcm' for f in files
-            ):
-                Reader = DICOMReader
-            else:
-                msg = (
-                    f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
-                )
-                raise ValueError(msg)
-        else:
-            msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
-            raise ValueError(msg)
+    if reader_class is None:
+        reader_class = next(
+            (
+                candidate
+                for _, pattern, candidate in _CLASS_READER_PATTERNS
+                if pattern.fullmatch(ext)
+            ),
+            None,
+        )
 
-    return Reader(filename)
+    if reader_class is not None:
+        return reader_class(filename)
+
+    if Path(filename).is_dir():
+        files = list(Path(filename).iterdir())
+        if files and all(file.suffix == '.dcm' for file in files):
+            return DICOMReader(filename)
+
+        msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+        raise ValueError(msg)
+
+    msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+    raise ValueError(msg)
 
 
 class BaseVTKReader(ABC):
@@ -248,6 +257,12 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
         return [CLASS_READERS]
+
+    @classmethod
+    def _get_extension_pattern_mappings(
+        cls,
+    ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
+        return [(pattern, reader) for _, pattern, reader in _CLASS_READER_PATTERNS]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.
@@ -669,7 +684,6 @@ class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataReader'
 
 
@@ -680,7 +694,6 @@ class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPImageDataReader'
 
 
@@ -708,7 +721,6 @@ class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelec
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLRectilinearGridReader'
 
 
@@ -719,7 +731,6 @@ class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSele
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPRectilinearGridReader'
 
 
@@ -747,7 +758,6 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
 
@@ -758,7 +768,6 @@ class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSe
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPUnstructuredGridReader'
 
 
@@ -788,7 +797,6 @@ class XMLPolyDataReader(BaseReader['PolyData'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPolyDataReader'
 
 
@@ -811,7 +819,6 @@ class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelecti
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLStructuredGridReader'
 
 
@@ -822,7 +829,6 @@ class XMLMultiBlockDataReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataReader'
 
 
@@ -852,7 +858,6 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 
     """
 
-    _vtk_module_name = 'vtkIOEnSight'
     _vtk_class_name = 'vtkGenericEnSightReader'
 
     def _set_filename(self, filename) -> None:
@@ -935,7 +940,6 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOpenFOAMReader'
 
     def _set_defaults_post(self) -> None:
@@ -1218,7 +1222,6 @@ class POpenFOAMReader(OpenFOAMReader):
     parallel reconstructed data, and decomposed data.
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPOpenFOAMReader'
 
     @property
@@ -1281,7 +1284,6 @@ class PLYReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOPLY'
     _vtk_class_name = 'vtkPLYReader'
 
 
@@ -1304,7 +1306,6 @@ class OBJReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOBJReader'
 
 
@@ -1327,7 +1328,6 @@ class STLReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkSTLReader'
 
 
@@ -1347,7 +1347,6 @@ class TecplotReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkTecplotReader'
 
 
@@ -1377,7 +1376,6 @@ class VTKDataSetReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetReader'
     _output_types = get_args(_legacy_dataset_types)
 
@@ -1398,7 +1396,6 @@ class VTKPDataSetReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPDataSetReader'
     _output_types = get_args(_legacy_dataset_types)
 
@@ -1422,7 +1419,6 @@ class BYUReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkBYUReader'
 
 
@@ -1445,7 +1441,6 @@ class FacetReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkFiltersHybrid'
     _vtk_class_name = 'vtkFacetReader'
 
 
@@ -1456,11 +1451,10 @@ class Plot3DMetaReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPlot3DMetaReader'
 
 
-class Plot3DFunctionEnum(enum.IntEnum):
+class Plot3DFunctionEnum(IntEnum):
     """An enumeration for the functions used in :class:`MultiBlockPlot3DReader`."""
 
     DENSITY = 100
@@ -1514,7 +1508,6 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         - ``MultiBlockPlot3DReader.VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE``
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkMultiBlockPLOT3DReader'
 
     # pull in function name enum values as class constants
@@ -1593,7 +1586,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         ... )  # add a function by enumeration via class variable alias
 
         """
-        if isinstance(value, enum.Enum):
+        if isinstance(value, Enum):
             value = value.value
         self.reader.AddFunction(value)
 
@@ -1608,7 +1601,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
             The function to remove.
 
         """
-        if isinstance(value, enum.Enum):
+        if isinstance(value, Enum):
             value = value.value
         self.reader.RemoveFunction(value)
 
@@ -1689,7 +1682,6 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     """
 
-    _vtk_module_name = 'vtkIOCGNSReader'
     _vtk_class_name = 'vtkCGNSReader'
 
     def _set_defaults_post(self) -> None:
@@ -1972,7 +1964,6 @@ class BinaryMarchingCubesReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMCubesReader'
 
 
@@ -2144,16 +2135,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
 
     """
 
-    _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkNek5000Reader'
-
-    def __init__(self, path):
-        # nek5000 reader requires vtk >= 9.3
-        if pv.vtk_version_info < (9, 3):
-            msg = 'Nek5000Reader is only available for vtk>=9.3'
-            raise pv.VTKVersionError(msg)
-
-        super().__init__(path)
 
     def _set_defaults_post(self) -> None:
         self.set_active_time_point(0)
@@ -2194,11 +2176,8 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.TIME_STEPS()
-
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
@@ -2226,9 +2205,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         float
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
@@ -2253,9 +2230,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
             Time or iteration value to set as active.
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
@@ -2336,7 +2311,6 @@ class DICOMReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDICOMImageReader'
 
 
@@ -2359,7 +2333,6 @@ class BMPReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkBMPReader'
 
 
@@ -2382,7 +2355,6 @@ class DEMReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDEMReader'
 
 
@@ -2405,7 +2377,6 @@ class JPEGReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkJPEGReader'
 
 
@@ -2428,7 +2399,6 @@ class MetaImageReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkMetaImageReader'
 
 
@@ -2451,7 +2421,6 @@ class NIFTIReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNIFTIImageReader'
 
 
@@ -2474,7 +2443,6 @@ class NRRDReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNrrdReader'
 
 
@@ -2497,7 +2465,6 @@ class PNGReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNGReader'
 
 
@@ -2520,7 +2487,6 @@ class PNMReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNMReader'
 
 
@@ -2543,7 +2509,6 @@ class SLCReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkSLCReader'
 
 
@@ -2569,7 +2534,6 @@ class TIFFReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkTIFFReader'
 
     def _set_defaults_post(self) -> None:
@@ -2607,7 +2571,6 @@ class HDRReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkHDRReader'
 
 
@@ -2618,7 +2581,6 @@ class PTSReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkPTSReader'
 
 
@@ -2641,7 +2603,6 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkAVSucdReader'
 
 
@@ -2664,7 +2625,6 @@ class HDFReader(BaseReader['DataObject']):
 
     """
 
-    _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
     _output_types = (
         'ImageData',
@@ -2691,7 +2651,6 @@ class GLTFReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkGLTFReader'
 
 
@@ -2702,7 +2661,6 @@ class FluentReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkFLUENTReader'
 
 
@@ -2713,7 +2671,6 @@ class MFIXReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMFIXReader'
 
 
@@ -2724,7 +2681,6 @@ class SegYReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOSegY'
     _vtk_class_name = 'vtkSegYReader'
     _output_types = ('StructuredGrid', 'ImageData')
 
@@ -2737,7 +2693,7 @@ class _GRDECLReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the GRDECL file and store internally to `_data_object`."""
-        self._data_object = read_grdecl(
+        self._data_object = _read_grdecl(
             self._filename,
             elevation=self._elevation,
             other_keywords=self._other_keywords,
@@ -2924,7 +2880,7 @@ class VRMLReader(BaseReader['MultiBlock']):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.vrml.download_grasshopper()
+    >>> filename = examples.download_grasshopper(load=False)
     >>> Path(filename).name
     'grasshop.wrl'
     >>> reader = pv.get_reader(filename)
@@ -2971,7 +2927,7 @@ class ThreeDSReader(BaseReader['MultiBlock']):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.download_3ds.download_iflamigm()
+    >>> filename = examples.download_flamingo(load=False)
     >>> Path(filename).name
     'iflamigm.3ds'
     >>> reader = pv.get_reader(filename)
@@ -3007,7 +2963,6 @@ class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
 
     """
 
-    _vtk_module_name = 'vtkIOXdmf2'
     _vtk_class_name = 'vtkXdmfReader'
     _output_types = ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid')
 
@@ -3073,7 +3028,6 @@ class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPartitionedDataSetReader'
 
 
@@ -3094,7 +3048,6 @@ class FLUENTCFFReader(BaseReader['MultiBlock']):
 
     """
 
-    _vtk_module_name = 'vtkIOFLUENTCFF'
     _vtk_class_name = 'vtkFLUENTCFFReader'
 
 
@@ -3116,7 +3069,6 @@ class GambitReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkGAMBITReader'
 
 
@@ -3137,7 +3089,6 @@ class GaussianCubeReader(BaseReader['DataSet']):
 
     """
 
-    _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
     _output_types = ('ImageData', 'PolyData')
 
@@ -3250,7 +3201,6 @@ class MINCImageReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOMINC'
     _vtk_class_name = 'vtkMINCImageReader'
 
 
@@ -3272,7 +3222,6 @@ class PDBReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkPDBReader'
 
 
@@ -3294,7 +3243,6 @@ class GESignaReader(BaseReader['ImageData']):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkGESignaReader'
 
 
@@ -3325,7 +3273,6 @@ class ParticleReader(BaseReader['PolyData']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkParticleReader'
 
     @property
@@ -3380,7 +3327,6 @@ class ProStarReader(BaseReader['UnstructuredGrid']):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkProStarReader'
 
 
@@ -3402,7 +3348,6 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     """
 
-    _vtk_module_name = 'vtkIOExodus'
     _vtk_class_name = 'vtkExodusIIReader'
 
     def _set_defaults_post(self):
@@ -3417,6 +3362,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
+        self.enable_all_side_set_arrays()
 
     def read_global(self) -> pv.Table:
         """Read enabled global data.
@@ -3427,14 +3373,10 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             Global data from Exodus II file
 
         """
-        global_extractor = _lazy_vtk_import(
-            'vtkFiltersExtraction', 'vtkExtractExodusGlobalTemporalVariables'
-        )()
-
+        global_extractor = _vtk.vtkExtractExodusGlobalTemporalVariables()
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()
-
-        return wrap(global_extractor.GetOutputDataObject(0))
+        return wrap(global_extractor.GetOutputDataObject(0))  # type: ignore[return-value]
 
     @property
     def element_blocks(self):
@@ -3752,9 +3694,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_import(
-            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )()
+        vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
         key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
@@ -3812,6 +3752,148 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         """
         self.reader.SetTimeStep(time_point)
+
+    @property
+    def animate_mode_shapes(self) -> bool:
+        """Return or set whether mode shape animation is enabled.
+
+        When ``True``, the reader will report a continuous time range [0, 1]
+        and animate the displacements in a periodic sinusoid.
+
+        .. versionadded:: 0.49
+
+        """
+        return bool(self.reader.GetAnimateModeShapes())
+
+    @animate_mode_shapes.setter
+    def animate_mode_shapes(self, value: bool) -> None:
+        self.reader.SetAnimateModeShapes(value)
+
+    @property
+    def number_side_set_arrays(self) -> int:
+        """Return the number of side set arrays.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfSideSetArrays()
+
+    @property
+    def side_set_array_names(self) -> list[str]:
+        """Return the list of all side set array names.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        list[str]
+
+        """
+        return [self.reader.GetSideSetArrayName(i) for i in range(self.number_side_set_arrays)]
+
+    def _resolve_side_set_name(self, name: str | int) -> str:
+        """Resolve a side set name or index to a name."""
+        if isinstance(name, int):
+            return self.reader.GetSideSetArrayName(name)
+        if isinstance(name, str):
+            return name
+        msg = f'Could not parse sideset ID/name: {name} with type {type(name)}'  # type: ignore[unreachable]
+        raise TypeError(msg)
+
+    def enable_side_set_array(self, name: str | int) -> None:
+        """Enable a side set array by name or index.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        name : str | int
+            Side set name or index.
+
+        """
+        self.reader.SetSideSetArrayStatus(self._resolve_side_set_name(name), 1)
+
+    def disable_side_set_array(self, name: str | int) -> None:
+        """Disable a side set array by name or index.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        name : str | int
+            Side set name or index.
+
+        """
+        self.reader.SetSideSetArrayStatus(self._resolve_side_set_name(name), 0)
+
+    def side_set_array_status(self, name: str | int) -> bool:
+        """Get the enabled status of a side set array by name or index.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        name : str | int
+            Side set name or index.
+
+        Returns
+        -------
+        bool
+            Whether the side set array is enabled.
+
+        """
+        return bool(self.reader.GetSideSetArrayStatus(self._resolve_side_set_name(name)))
+
+    def enable_all_side_set_arrays(self) -> None:
+        """Enable all side sets.
+
+        .. versionadded:: 0.49
+
+        """
+        for name in self.side_set_array_names:
+            self.enable_side_set_array(name)
+
+    def disable_all_side_set_arrays(self) -> None:
+        """Disable all side sets.
+
+        .. versionadded:: 0.49
+
+        """
+        for name in self.side_set_array_names:
+            self.disable_side_set_array(name)
+
+
+class PExodusIIReader(ExodusIIReader):
+    """PExodusIIReader reads parallel Exodus II and Nemesis files.
+
+    Parallel files use the extensions ``.e.N.p`` and ``.n.N.p``, where ``N`` is
+    the number of partitions and ``p`` is the partition index. Passing any single
+    file from a series to this reader automatically reads every file in the
+    series and loads the complete dataset. Wraps :vtk:`vtkPExodusIIReader`.
+
+    .. versionadded:: 0.49.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_parallel_exodus(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_class_name = 'vtkPExodusIIReader'
+
+    def _set_defaults(self):
+        # Create dummy multi-process controller
+        dummy = _vtk.vtkDummyController()
+        self.reader.SetController(dummy)
 
 
 class _FRDReader(BaseVTKReader):
@@ -4366,6 +4448,15 @@ CLASS_READERS = {
     '.xdmf': XdmfReader,
 }
 
+# Some formats encode partition metadata after the conventional file extension.
+# Match these against the filename only so dots in parent directories cannot
+# influence reader selection. Parallel Exodus uses ``.e.N.P`` and ``.n.N.P``,
+# where ``N`` is the number of partitions and ``P`` is the partition index.
+_CLASS_READER_PATTERNS = [
+    ('.e.N.p', re.compile(r'\.(?:e)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
+    ('.n.N.p', re.compile(r'\.(?:n)\.\d+\.\d+$', re.IGNORECASE), PExodusIIReader),
+]
+
 
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     """Return the forward-reference name from a ``BaseReader[X]`` base.
@@ -4375,17 +4466,15 @@ def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     class's ``__name__``). Returns ``None`` when the class is not a
     parameterized :class:`BaseReader` subclass.
     """
-    import typing as _typing  # noqa: PLC0415
-
     for base in getattr(cls, '__orig_bases__', ()):
-        origin = _typing.get_origin(base)
+        origin = get_origin(base)
         if origin is None or not (isinstance(origin, type) and issubclass(origin, BaseReader)):
             continue
-        args = _typing.get_args(base)
+        args = get_args(base)
         if not args:
             continue
         arg = args[0]
-        if isinstance(arg, _typing.ForwardRef):
+        if isinstance(arg, ForwardRef):
             return arg.__forward_arg__
         if isinstance(arg, type):
             return arg.__name__
@@ -4420,8 +4509,9 @@ def _derive_reader_output_types(
 # The mapping is derived from each reader's ``BaseReader[X]`` parameterization
 # (with a per-class ``_output_types`` attribute on multi-output readers), so
 # adding a new reader automatically produces the right entry here. We seed the
-# iteration from :data:`CLASS_READERS` (every reader registered to a file
-# extension) — readers not registered to an extension stay out by design.
+# iteration from :data:`CLASS_READERS` and :data:`_CLASS_READER_PATTERNS`
+# (every reader registered to a file extension or filename pattern).
 _CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
-    cls: _derive_reader_output_types(cls) for cls in set(CLASS_READERS.values())
+    cls: _derive_reader_output_types(cls)
+    for cls in set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
 }

@@ -29,7 +29,7 @@ year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
 copyright = f'2021-{year}, PyVista developers'  # noqa: A001
 version = '0.1'
 release = '0.1'
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'gallery_src']
 pygments_style = 'sphinx'
 
 extensions = [
@@ -37,9 +37,39 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'sphinx_autoopengraph',
+    'sphinx_examples_as_code',
     'sphinx.ext.autosummary',
+    'sphinx_codeautolink',
     'sphinx_design',
+    'sphinx_gallery.gen_gallery',
+    'sphinxext.opengraph',
 ]
+
+sphinx_examples_as_code_conf = {}
+
+# -- Sphinx-Gallery -------------------------------------------------------
+# ``gallery_dirs`` is generated into the source tree, so tests build from a copy.
+#
+# The examples deliberately render with matplotlib rather than PyVista. Gallery
+# examples run in the main process before Sphinx forks its parallel readers, and on
+# macOS forking after VTK has initialised a render window kills the workers. What is
+# under test here is which image the gallery selects, which does not depend on the
+# scraper that produced it.
+sphinx_gallery_conf = {
+    'examples_dirs': ['gallery_src'],
+    'gallery_dirs': ['gallery'],
+    'filename_pattern': r'\.py',
+    'image_scrapers': ('matplotlib',),
+    'download_all_examples': False,
+    'remove_config_comments': True,
+}
+
+# -- Open Graph -----------------------------------------------------------
+# No configuration of ``sphinx_autoopengraph`` itself is required; ``ogp_site_url``
+# is the only thing ``sphinxext-opengraph`` requires to emit absolute URLs.
+ogp_site_url = 'https://docs.example.org/'
+ogp_image = 'https://docs.example.org/_static/fallback.png'
 
 # -- Plot directive specific configuration --------------------------------
 plot_setup = plot_cleanup = 'import pyvista as pv'
@@ -66,11 +96,11 @@ del __s_p_t
 """
 plot_cleanup = plot_setup
 
-if value := os.environ.get('PLOT_SKIP'):
-    plot_skip = value.lower() == 'true'
+if value := os.environ.get('PYVISTA_PLOT_SKIP'):
+    pyvista_plot_skip = value.lower() == 'true'
 
-if value := os.environ.get('PLOT_SKIP_OPTIONAL'):
-    plot_skip_optional = value.lower() == 'true'
+if value := os.environ.get('PYVISTA_PLOT_SKIP_OPTIONAL'):
+    pyvista_plot_skip_optional = value.lower() == 'true'
 
 
 def _str_examples(self):

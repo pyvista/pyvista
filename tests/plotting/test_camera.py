@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import io
+from io import StringIO
 
 import numpy as np
 import pytest
@@ -79,7 +79,7 @@ def paraview_pvcc():
     projection = False
 
     return (
-        io.StringIO(tmp),
+        StringIO(tmp),
         position,
         focal,
         view_up,

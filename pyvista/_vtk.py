@@ -10,24 +10,21 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import importlib
-import importlib.abc
 import importlib.util
 import os
-import sys
 from typing import TYPE_CHECKING
 
 
-def _resolve_vtk_backend() -> str:
+def _resolve_vtk_root() -> str:
     """Return the root package PyVista resolves VTK imports against.
 
     Selection order:
 
     1. The ``PYVISTA_VTK_BACKEND`` environment variable, if set, always wins
-       (e.g. ``vtkmodules`` to force stock VTK, or ``cvista`` to force the fork).
-    2. Otherwise, if the community ``cvista`` fork is installed, it is auto-selected
-       in preference to stock VTK. Installing ``pyvista[cvista]`` is therefore the
-       only action needed to opt in -- ``cvista`` imports as its own package and
-       coexists with stock ``vtk``, so this never clobbers a stock install.
+       (``vtkmodules`` to force stock VTK, or ``cvista`` to force the fork).
+    2. Otherwise, if the community ``cvista`` fork is installed, it is
+       auto-selected. Installing ``pyvista[cvista]`` is therefore the only action
+       needed to opt in.
     3. Otherwise fall back to stock ``vtkmodules``.
 
     Resolved once when this module is first imported, so ``PYVISTA_VTK_BACKEND``
@@ -41,70 +38,22 @@ def _resolve_vtk_backend() -> str:
     return 'vtkmodules'
 
 
-# Root package every VTK import is resolved against (``vtkmodules`` or ``cvista``).
-_VTK_BACKEND = _resolve_vtk_backend()
+# Root package VTK imports resolve against (``vtkmodules`` or ``cvista``). Only
+# needed for the handful of *module* imports PyVista makes for their side effects
+# (rendering factory registration); classes go through __getattr__ below.
+_VTK_ROOT = _resolve_vtk_root()
 
-
-class _VtkmodulesToCvistaFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
-    """Route ``import vtkmodules[.*]`` to ``cvista[.*]``.
-
-    When PyVista runs on the cvista backend, third-party packages that import
-    ``vtkmodules`` directly (e.g. ``pyvista-zstd``, ``trame-vtk``) should resolve
-    to cvista as well. As of cvista 9.6.2.2 the fork ships VTK libraries under
-    cvista-distinct SONAMEs, so cvista and stock VTK *can* coexist in one process
-    without ``undefined symbol`` errors -- but they are then two separate VTK type
-    systems: a ``vtkPolyData`` from stock ``vtkmodules`` is a different C++ class
-    than one from ``cvista`` and cannot be handed across the boundary. This finder
-    keeps a single VTK build in the process by aliasing each requested
-    ``vtkmodules`` name to its ``cvista`` counterpart in :data:`sys.modules`, so
-    objects created by third-party code interoperate with PyVista's.
-    """
-
-    _PREFIX = 'vtkmodules'
-
-    def find_spec(
-        self,
-        fullname: str,
-        path: Sequence[str] | None = None,  # noqa: ARG002
-        target: ModuleType | None = None,  # noqa: ARG002
-    ) -> ModuleSpec | None:
-        if fullname == self._PREFIX or fullname.startswith(self._PREFIX + '.'):
-            return importlib.util.spec_from_loader(fullname, self)
-        return None
-
-    def create_module(self, spec: ModuleSpec) -> ModuleType:
-        module = importlib.import_module('cvista' + spec.name[len(self._PREFIX) :])
-        sys.modules[spec.name] = module  # alias under the requested vtkmodules name
-        return module
-
-    def exec_module(self, module: ModuleType) -> None:
-        """No-op: the target module was already executed by ``import_module``."""
-
-
-if _VTK_BACKEND == 'cvista' and not any(
-    isinstance(finder, _VtkmodulesToCvistaFinder) for finder in sys.meta_path
-):
-    sys.meta_path.insert(0, _VtkmodulesToCvistaFinder())
-
-
-def _import_from(module_name: str, class_name: str) -> Any:
-    """Import ``class_name`` from the backend's ``module_name``.
-
-    Mirrors ``from {backend}.{module_name} import {class_name}`` semantics:
-    a missing module or missing attribute both raise ``ImportError``.
-    """
-    module = importlib.import_module(f'{_VTK_BACKEND}.{module_name}')
-    try:
-        return getattr(module, class_name)
-    except AttributeError as e:  # match `from m import c` (raises ImportError)
-        raise ImportError(str(e)) from e
+# cvista exposes every public name straight off the package root, resolved lazily
+# against an index generated at build time from the compiled modules (cvista
+# >=9.6.2.4). Classes are therefore looked up by NAME, never by module path, which
+# is what lets PyVista stay agnostic to the fork's internal module layout: cvista
+# relocates classes between modules for its wheel tiering, and stock VTK shuffles
+# them between releases. Neither can break a name-based lookup.
+_VTK_ROOT_IS_FLAT = _VTK_ROOT != 'vtkmodules'
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from collections.abc import Sequence
-    from importlib.machinery import ModuleSpec
-    from types import ModuleType
     from typing import Any
 
     # Type checkers cannot resolve the dynamic lazy vtk imports, so we import everything
@@ -237,10 +186,10 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_PARAMETRIC_TRI_SURFACE',
         'VTK_PENTAGONAL_PRISM',
         'VTK_PIXEL',
-        'VTK_POLY_LINE',
-        'VTK_POLY_VERTEX',
         'VTK_POLYGON',
         'VTK_POLYHEDRON',
+        'VTK_POLY_LINE',
+        'VTK_POLY_VERTEX',
         'VTK_PYRAMID',
         'VTK_QUAD',
         'VTK_QUADRATIC_EDGE',
@@ -262,6 +211,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_VOXEL',
         'VTK_WEDGE',
         'vtkAbstractCellLocator',
+        'vtkAbstractPointLocator',
         'vtkBezierCurve',
         'vtkBezierHexahedron',
         'vtkBezierQuadrilateral',
@@ -302,6 +252,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLagrangeTriangle',
         'vtkLagrangeWedge',
         'vtkLine',
+        'vtkLocator',
         'vtkMultiBlockDataSet',
         'vtkNonMergingPointLocator',
         'vtkPartitionedDataSet',
@@ -315,11 +266,11 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPointLocator',
         'vtkPointSet',
         'vtkPolyData',
-        'vtkPolygon',
-        'vtkPolyhedron',
         'vtkPolyLine',
         'vtkPolyPlane',
         'vtkPolyVertex',
+        'vtkPolygon',
+        'vtkPolyhedron',
         'vtkPyramid',
         'vtkQuad',
         'vtkQuadraticEdge',
@@ -342,10 +293,10 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkStructuredPoints',
         'vtkTable',
         'vtkTetra',
-        'vtkTriangle',
-        'vtkTriangleStrip',
         'vtkTriQuadraticHexahedron',
         'vtkTriQuadraticPyramid',
+        'vtkTriangle',
+        'vtkTriangleStrip',
         'vtkUnstructuredGrid',
         'vtkVertex',
         'vtkVoxel',
@@ -356,6 +307,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkAlgorithmOutput',
         'vtkCompositeDataPipeline',
         'vtkImageToStructuredGrid',
+        'vtkStreamingDemandDrivenPipeline',
     ),
     'vtkCommonMath': (
         'vtkMatrix3x3',
@@ -383,6 +335,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkDelaunay3D',
         'vtkElevationFilter',
         'vtkExplicitStructuredGridToUnstructuredGrid',
+        'vtkExtractCells',
         'vtkExtractEdges',
         'vtkFeatureEdges',
         'vtkFlyingEdges3D',
@@ -411,6 +364,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     ),
     'vtkFiltersExtraction': (
         'vtkExtractCellsByType',
+        'vtkExtractExodusGlobalTemporalVariables',
         'vtkExtractGeometry',
         'vtkExtractGrid',
         'vtkExtractSelection',
@@ -449,7 +403,10 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkGeometryFilter',
         'vtkStructuredGridGeometryFilter',
     ),
-    'vtkFiltersHybrid': ('vtkPolyDataSilhouette',),
+    'vtkFiltersHybrid': (
+        'vtkFacetReader',
+        'vtkPolyDataSilhouette',
+    ),
     'vtkFiltersModeling': (
         'vtkAdaptiveSubdivisionFilter',
         'vtkBandedPolyDataContourFilter',
@@ -511,12 +468,125 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCellSizeFilter',
         'vtkMeshQuality',
     ),
+    'vtkIOCGNSReader': ('vtkCGNSReader',),
+    'vtkIOChemistry': (
+        'vtkGaussianCubeReader',
+        'vtkPDBReader',
+    ),
+    'vtkIOEnSight': ('vtkGenericEnSightReader',),
+    'vtkIOExodus': ('vtkExodusIIReader',),
+    'vtkIOExport': (
+        'vtkGLTFExporter',
+        'vtkOBJExporter',
+        'vtkVRMLExporter',
+    ),
+    'vtkIOExportGL2PS': ('vtkGL2PSExporter',),
+    'vtkIOFLUENTCFF': ('vtkFLUENTCFFReader',),
+    'vtkIOGeometry': (
+        'vtkAVSucdReader',
+        'vtkBYUReader',
+        'vtkFLUENTReader',
+        'vtkGAMBITReader',
+        'vtkGLTFReader',
+        'vtkHoudiniPolyDataWriter',
+        'vtkIVWriter',
+        'vtkMCubesReader',
+        'vtkMFIXReader',
+        'vtkOBJReader',
+        'vtkOBJWriter',
+        'vtkOpenFOAMReader',
+        'vtkPTSReader',
+        'vtkParticleReader',
+        'vtkProStarReader',
+        'vtkSTLReader',
+        'vtkSTLWriter',
+        'vtkTecplotReader',
+    ),
+    'vtkIOHDF': (
+        'vtkHDFReader',
+        'vtkHDFWriter',
+    ),
+    'vtkIOImage': (
+        'vtkBMPReader',
+        'vtkBMPWriter',
+        'vtkDEMReader',
+        'vtkDICOMImageReader',
+        'vtkGESignaReader',
+        'vtkHDRReader',
+        'vtkJPEGReader',
+        'vtkJPEGWriter',
+        'vtkMetaImageReader',
+        'vtkNIFTIImageReader',
+        'vtkNIFTIImageWriter',
+        'vtkNrrdReader',
+        'vtkPNGReader',
+        'vtkPNGWriter',
+        'vtkPNMReader',
+        'vtkPNMWriter',
+        'vtkSLCReader',
+        'vtkTIFFReader',
+        'vtkTIFFWriter',
+    ),
+    'vtkIOImport': (
+        'vtk3DSImporter',
+        'vtkGLTFImporter',
+        'vtkOBJImporter',
+        'vtkVRMLImporter',
+    ),
+    'vtkIOInfovis': ('vtkDelimitedTextReader',),
+    'vtkIOLegacy': (
+        'vtkDataSetReader',
+        'vtkDataSetWriter',
+        'vtkDataWriter',
+        'vtkPolyDataWriter',
+        'vtkRectilinearGridWriter',
+        'vtkSimplePointsWriter',
+        'vtkStructuredGridWriter',
+        'vtkUnstructuredGridWriter',
+    ),
+    'vtkIOMINC': ('vtkMINCImageReader',),
+    'vtkIOPLY': (
+        'vtkPLYReader',
+        'vtkPLYWriter',
+    ),
+    'vtkIOParallel': (
+        'vtkEnSightWriter',
+        'vtkMultiBlockPLOT3DReader',
+        'vtkNek5000Reader',
+        'vtkPDataSetReader',
+        'vtkPOpenFOAMReader',
+        'vtkPlot3DMetaReader',
+    ),
+    'vtkIOParallelExodus': ('vtkPExodusIIReader',),
+    'vtkIOParallelXML': ('vtkXMLPartitionedDataSetWriter',),
+    'vtkIOSegY': ('vtkSegYReader',),
+    'vtkIOXML': (
+        'vtkXMLImageDataReader',
+        'vtkXMLImageDataWriter',
+        'vtkXMLMultiBlockDataReader',
+        'vtkXMLMultiBlockDataWriter',
+        'vtkXMLPImageDataReader',
+        'vtkXMLPRectilinearGridReader',
+        'vtkXMLPUnstructuredGridReader',
+        'vtkXMLPartitionedDataSetReader',
+        'vtkXMLPolyDataReader',
+        'vtkXMLPolyDataWriter',
+        'vtkXMLRectilinearGridReader',
+        'vtkXMLRectilinearGridWriter',
+        'vtkXMLStructuredGridReader',
+        'vtkXMLStructuredGridWriter',
+        'vtkXMLTableReader',
+        'vtkXMLTableWriter',
+        'vtkXMLUnstructuredGridReader',
+        'vtkXMLUnstructuredGridWriter',
+    ),
+    'vtkIOXdmf2': ('vtkXdmfReader',),
     'vtkImagingCore': (
         'vtkAbstractImageInterpolator',
         'vtkExtractVOI',
-        'vtkImageBinaryThreshold',
         'vtkImageBSplineCoefficients',
         'vtkImageBSplineInterpolator',
+        'vtkImageBinaryThreshold',
         'vtkImageConstantPad',
         'vtkImageDifference',
         'vtkImageExtractComponents',
@@ -562,39 +632,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageStencil',
         'vtkPolyDataToImageStencil',
     ),
-    'vtkIOExodus': ('vtkExodusIIReader',),
-    'vtkIOExport': (
-        'vtkGLTFExporter',
-        'vtkOBJExporter',
-        'vtkVRMLExporter',
-    ),
-    'vtkIOExportGL2PS': ('vtkGL2PSExporter',),
-    'vtkIOImport': (
-        'vtk3DSImporter',
-        'vtkGLTFImporter',
-        'vtkOBJImporter',
-        'vtkVRMLImporter',
-    ),
-    'vtkIOInfovis': ('vtkDelimitedTextReader',),
-    'vtkIOLegacy': (
-        'vtkDataSetReader',
-        'vtkDataSetWriter',
-        'vtkDataWriter',
-    ),
-    'vtkIOXML': (
-        'vtkXMLImageDataReader',
-        'vtkXMLImageDataWriter',
-        'vtkXMLPolyDataReader',
-        'vtkXMLPolyDataWriter',
-        'vtkXMLRectilinearGridReader',
-        'vtkXMLRectilinearGridWriter',
-        'vtkXMLStructuredGridReader',
-        'vtkXMLStructuredGridWriter',
-        'vtkXMLTableReader',
-        'vtkXMLTableWriter',
-        'vtkXMLUnstructuredGridReader',
-        'vtkXMLUnstructuredGridWriter',
-    ),
+    'vtkParallelCore': ('vtkDummyController',),
 }
 
 # Rendering modules for pyvista's plotting API
@@ -706,12 +744,12 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkProp3D',
         'vtkPropAssembly',
         'vtkPropCollection',
-        'vtkProperty',
         'vtkPropPicker',
-        'vtkRenderedAreaPicker',
-        'vtkRenderer',
+        'vtkProperty',
         'vtkRenderWindow',
         'vtkRenderWindowInteractor',
+        'vtkRenderedAreaPicker',
+        'vtkRenderer',
         'vtkScenePicker',
         'vtkSelectVisiblePoints',
         'vtkSkybox',
@@ -755,6 +793,7 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
         'vtkDepthOfFieldPass',
         'vtkEDLShading',
+        'vtkEGLRenderWindow',  # optional (Linux EGL builds)
         'vtkGaussianBlurPass',
         'vtkOpenGLFXAAPass',
         'vtkOpenGLHardwareSelector',
@@ -763,11 +802,12 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLTexture',
         'vtkRenderPassCollection',
         'vtkRenderStepsPass',
+        'vtkSSAAPass',
+        'vtkSSAOPass',
         'vtkSequencePass',
         'vtkShader',
         'vtkShadowMapPass',
-        'vtkSSAAPass',
-        'vtkSSAOPass',
+        'vtkXOpenGLRenderWindow',  # optional (Linux X11 builds)
     ),
     'vtkRenderingVolumeOpenGL2': (
         'vtkOpenGLGPUVolumeRayCastMapper',
@@ -782,20 +822,22 @@ _VTK_CLASS_TO_MODULE: dict[str, str] = {
     for cls in classes
 }
 
-# Fallback modules for classes whose home module differs between VTK builds. The
-# tiered ``cvista`` backend relocates the view/camera-dependent FiltersHybrid
-# filters into ``vtkFiltersHybridRendering`` (so the core tier stays rendering-free);
-# stock VTK keeps them in ``vtkFiltersHybrid``. ``__getattr__`` tries the primary
-# module first, then these alternates, so either build resolves the class.
-_VTK_CLASS_ALT_MODULES: dict[str, tuple[str, ...]] = {
-    'vtkPolyDataSilhouette': ('vtkFiltersHybridRendering',),
-    'vtkRenderLargeImage': ('vtkFiltersHybridRendering',),
-    'vtkAdaptiveDataSetSurfaceFilter': ('vtkFiltersHybridRendering',),
-    # cvista moves the glTF reader/texture to vtkIOImport so vtkIOGeometry stays
-    # rendering-free; stock VTK keeps them in vtkIOGeometry.
-    'vtkGLTFReader': ('vtkIOImport',),
-    'vtkGLTFTexture': ('vtkIOImport',),
-}
+
+def _import_from(module_name: str, class_name: str) -> Any:
+    """Import ``class_name``, for the irregular loaders below.
+
+    On a flat-namespace backend the module is irrelevant -- the class resolves by
+    name off the package root -- so ``module_name`` only applies to stock
+    ``vtkmodules``. Either way a missing module or missing attribute raises
+    ``ImportError``, matching ``from module import name`` semantics.
+    """
+    root = importlib.import_module(
+        _VTK_ROOT if _VTK_ROOT_IS_FLAT else f'{_VTK_ROOT}.{module_name}'
+    )
+    try:
+        return getattr(root, class_name)
+    except AttributeError as e:  # match `from m import c` (raises ImportError)
+        raise ImportError(str(e)) from e
 
 
 def __getattr__(name: str):
@@ -803,10 +845,40 @@ def __getattr__(name: str):
 
     VTK modules are only imported when first accessed.
     """
+    # Never route private/dunder lookups to a VTK backend: they are this module's
+    # own helpers (or interpreter probes), and forwarding them turns a plain
+    # missing-attribute into a confusing ImportError from the backend.
+    if name.startswith('_'):
+        raise AttributeError(name)
+
     # Handle special cases
     if importer := _SPECIAL_LOADERS.get(name):
         obj = importer()
-    else:  # Default case: lazily import based on module mapping
+    elif _VTK_ROOT_IS_FLAT:
+        # Flat-namespace backend (cvista): resolve the class by NAME off the
+        # package root. The backend owns the name -> module index and regenerates
+        # it from its own build, so PyVista neither knows nor cares which module
+        # hosts a class, and a relocation upstream cannot break this call.
+        #
+        # The mapping is still consulted for MEMBERSHIP: PyVista curates which VTK
+        # names it re-exports, and an unmapped name must stay the same developer-
+        # facing AttributeError it is on stock VTK. Only the module VALUE goes
+        # unused here -- which is precisely the part that churns between builds.
+        if name not in _VTK_CLASS_TO_MODULE:
+            msg = (
+                f"{name!r} is not defined in PyVista's vtk namespace.\n"
+                f'Developers should add a new `module:{name}` mapping to the `_vtk` module.'
+            )
+            raise AttributeError(msg)
+        try:
+            obj = getattr(importlib.import_module(_VTK_ROOT), name)
+        except (ImportError, AttributeError) as e:
+            msg = (
+                f'Cannot import name {name!r} from {_VTK_ROOT!r}.\n'
+                'The cause is likely attributable to VTK version or a custom VTK build.'
+            )
+            raise ImportError(msg) from e
+    else:  # Stock vtkmodules: lazily import based on the module mapping
         module_name = _VTK_CLASS_TO_MODULE.get(name)
         if module_name is None:
             msg = (
@@ -818,24 +890,16 @@ def __getattr__(name: str):
         # Attempt to import the vtkmodule and the desired attribute
         # Convert module or attribute errors into a similar message that would otherwise be
         # seen when doing `from vtkmodules.vtkModule import vtkClass`
-        module_full_name = f'{_VTK_BACKEND}.{module_name}'
+        module_full_name = f'{_VTK_ROOT}.{module_name}'
         error_msg = (
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
             'The cause is likely attributable to VTK version or a custom VTK build.'
         )
-        candidate_modules = (module_name, *_VTK_CLASS_ALT_MODULES.get(name, ()))
-        obj = _missing = object()
-        last_exc: Exception | None = None
-        for candidate in candidate_modules:
-            try:
-                module = importlib.import_module(f'{_VTK_BACKEND}.{candidate}')
-                obj = getattr(module, name)
-                break
-            except (ModuleNotFoundError, AttributeError) as e:
-                last_exc = e
-                continue
-        if obj is _missing:
-            raise ImportError(error_msg) from last_exc
+        try:
+            module = importlib.import_module(module_full_name)
+            obj = getattr(module, name)
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise ImportError(error_msg) from e
 
     # Cache object for next access
     globals()[name] = obj
@@ -873,6 +937,16 @@ def has_attr(name: str) -> bool:
     return True
 
 
+def import_all(*, suppress_import_errors: bool = True):
+    """Eagerly import all vtk classes used by PyVista."""
+    for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):
+        if suppress_import_errors:
+            # Use has_attr to suppress import errors
+            has_attr(name)
+        else:
+            __getattr__(name)
+
+
 # Specialized loading functions for irregular imports
 
 
@@ -895,13 +969,6 @@ def _import_vtkPythonItem():  # noqa: N802
     return vtkPythonItem
 
 
-def _import_vtkExtractCells():  # noqa: N802
-    try:  # Module changed in VTK 9.3.0
-        return _import_from('vtkFiltersCore', 'vtkExtractCells')
-    except ImportError:
-        return _import_from('vtkFiltersExtraction', 'vtkExtractCells')
-
-
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
         return _import_from('vtkCommonDataModel', 'vtkCellTypeUtilities')
@@ -911,6 +978,5 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
-    'vtkExtractCells': _import_vtkExtractCells,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
 }

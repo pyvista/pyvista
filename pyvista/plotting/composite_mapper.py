@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import cycle
+import itertools
 import sys
 from typing import TYPE_CHECKING
 import weakref
@@ -11,7 +11,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
@@ -495,13 +494,11 @@ class CompositeAttributes(
 
     def __len__(self):
         """Return the number of blocks in this dataset."""
-        from pyvista import MultiBlock  # avoid circular  # noqa: PLC0415
-
         # start with 1 as there is always a composite dataset and this is the
         # root of the tree
         cc = 1
         for dataset in self._dataset:
-            if isinstance(dataset, MultiBlock):
+            if isinstance(dataset, pv.MultiBlock):
                 cc += len(dataset) + 1  # include the block itself
             else:
                 cc += 1
@@ -513,14 +510,7 @@ class CompositeAttributes(
             yield self[ii]
 
 
-class CompositePolyDataMapper(
-    _BaseMapper,
-    (
-        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
-        if vtk_version_info >= (9, 3)
-        else _vtk.vtkCompositePolyDataMapper2
-    ),
-):
+class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
     """Composite PolyData mapper.
 
     Parameters
@@ -698,9 +688,9 @@ class CompositePolyDataMapper(
         self.scalar_visibility = False
 
         if isinstance(color_cycler, bool):
-            colors = cycle(get_cycler('matplotlib'))
+            colors = itertools.cycle(get_cycler('matplotlib'))
         else:
-            colors = cycle(get_cycler(color_cycler))
+            colors = itertools.cycle(get_cycler(color_cycler))
 
         for attr in self.block_attr:
             attr.color = next(colors)['color']

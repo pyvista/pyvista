@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from types import GeneratorType
 
 import numpy as np
@@ -9,6 +10,9 @@ import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista import _vtk
+from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
+from pyvista.core.celltype import _RENAMED_CELL_TYPES
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -250,10 +254,10 @@ def test_abstract_celltype_attributes():
 @pytest.mark.parametrize(
     ('celltype', 'expected_dim'),
     [
-        (pv.CellType.PARAMETRIC_CURVE, 1),
-        (pv.CellType.PARAMETRIC_SURFACE, 2),
-        (pv.CellType.PARAMETRIC_TETRA_REGION, 3),
-        (pv.CellType.HIGHER_ORDER_EDGE, 1),
+        ('PARAMETRIC_CURVE', 1),
+        ('PARAMETRIC_SURFACE', 2),
+        ('PARAMETRIC_TETRA_REGION', 3),
+        (pv.CellType.HIGHER_ORDER_CURVE, 1),
         (pv.CellType.HIGHER_ORDER_TRIANGLE, 2),
         (pv.CellType.HIGHER_ORDER_HEXAHEDRON, 3),
         (pv.CellType.LAGRANGE_PYRAMID, 3),
@@ -262,7 +266,33 @@ def test_abstract_celltype_attributes():
 )
 def test_abstract_celltype_dimension_is_correct(celltype, expected_dim):
     """Abstract / placeholder cell types report their canonical dimension."""
+    if isinstance(celltype, str):
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            celltype = getattr(CellType, celltype)
+
     assert celltype.dimension == expected_dim
+
+
+@pytest.mark.parametrize('celltype', _DEPRECATED_CELL_TYPES)
+def test_celltype_deprecated(celltype):
+    val = _CELL_TYPE_INFO[celltype].value
+    match = f'<CellType.{celltype}: {val}> is deprecated and will be removed in a future version.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        getattr(CellType, celltype)
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        CellType(val)
+
+
+@pytest.mark.parametrize('celltype', _RENAMED_CELL_TYPES)
+def test_celltype_renamed(celltype):
+    val = _CELL_TYPE_INFO[celltype].value
+    new_name = _RENAMED_CELL_TYPES[celltype]
+    called = CellType(val)
+    assert called.name == new_name
+
+    match = f'CellType.{celltype} is deprecated and has been renamed. Use {new_name} instead'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        getattr(CellType, celltype)
 
 
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
@@ -535,76 +565,18 @@ def test_numpy_to_idarr_bool():
     assert np.allclose(mask.nonzero()[0], _vtk.vtk_to_numpy(idarr))
 
 
-def test_cell_types():
-    cell_types = [
-        'EMPTY_CELL',
-        'VERTEX',
-        'POLY_VERTEX',
-        'LINE',
-        'POLY_LINE',
-        'TRIANGLE',
-        'TRIANGLE_STRIP',
-        'POLYGON',
-        'PIXEL',
-        'QUAD',
-        'TETRA',
-        'VOXEL',
-        'HEXAHEDRON',
-        'WEDGE',
-        'PYRAMID',
-        'PENTAGONAL_PRISM',
-        'HEXAGONAL_PRISM',
-        'QUADRATIC_EDGE',
-        'QUADRATIC_TRIANGLE',
-        'QUADRATIC_QUAD',
-        'QUADRATIC_POLYGON',
-        'QUADRATIC_TETRA',
-        'QUADRATIC_HEXAHEDRON',
-        'QUADRATIC_WEDGE',
-        'QUADRATIC_PYRAMID',
-        'BIQUADRATIC_QUAD',
-        'TRIQUADRATIC_HEXAHEDRON',
-        'TRIQUADRATIC_PYRAMID',
-        'QUADRATIC_LINEAR_QUAD',
-        'QUADRATIC_LINEAR_WEDGE',
-        'BIQUADRATIC_QUADRATIC_WEDGE',
-        'BIQUADRATIC_QUADRATIC_HEXAHEDRON',
-        'BIQUADRATIC_TRIANGLE',
-        'CUBIC_LINE',
-        'CONVEX_POINT_SET',
-        'POLYHEDRON',
-        'PARAMETRIC_CURVE',
-        'PARAMETRIC_SURFACE',
-        'PARAMETRIC_TRI_SURFACE',
-        'PARAMETRIC_QUAD_SURFACE',
-        'PARAMETRIC_TETRA_REGION',
-        'PARAMETRIC_HEX_REGION',
-        'HIGHER_ORDER_EDGE',
-        'HIGHER_ORDER_TRIANGLE',
-        'HIGHER_ORDER_QUAD',
-        'HIGHER_ORDER_POLYGON',
-        'HIGHER_ORDER_TETRAHEDRON',
-        'HIGHER_ORDER_WEDGE',
-        'HIGHER_ORDER_PYRAMID',
-        'HIGHER_ORDER_HEXAHEDRON',
-        'LAGRANGE_CURVE',
-        'LAGRANGE_TRIANGLE',
-        'LAGRANGE_QUADRILATERAL',
-        'LAGRANGE_TETRAHEDRON',
-        'LAGRANGE_HEXAHEDRON',
-        'LAGRANGE_WEDGE',
-        'LAGRANGE_PYRAMID',
-        'BEZIER_CURVE',
-        'BEZIER_TRIANGLE',
-        'BEZIER_QUADRILATERAL',
-        'BEZIER_TETRAHEDRON',
-        'BEZIER_HEXAHEDRON',
-        'BEZIER_WEDGE',
-        'BEZIER_PYRAMID',
-    ]
-    for cell_type in cell_types:
-        if hasattr(_vtk, 'VTK_' + cell_type):
-            assert getattr(pv.CellType, cell_type) == getattr(_vtk, 'VTK_' + cell_type)
+@pytest.mark.parametrize('cell_type_name', _CELL_TYPE_INFO)
+def test_cell_types(cell_type_name):
+    if not hasattr(_vtk, 'VTK_' + cell_type_name):
+        pytest.skip(f'Unsupported cell type {cell_type_name} by VTK')
+
+    if cell_type_name in _DEPRECATED_CELL_TYPES or cell_type_name in _RENAMED_CELL_TYPES:
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            pyvista_member = getattr(pv.CellType, cell_type_name)
+    else:
+        pyvista_member = getattr(pv.CellType, cell_type_name)
+    vtk_member = getattr(_vtk, 'VTK_' + cell_type_name)
+    assert pyvista_member == vtk_member
 
 
 def test_n_cells_removed():

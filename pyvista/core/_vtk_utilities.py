@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from functools import cache
+import functools
 import sys
 from typing import Literal
 from typing import NamedTuple
@@ -10,11 +10,12 @@ from typing import NamedTuple
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
+from pyvista.core.errors import VTKVersionError
 
 # A wrapped VTK class' ``__module__`` is rooted at the selected backend
 # (``vtkmodules`` for stock VTK, ``cvista`` for the fork). Accept both so the
 # override-stripping and snake_case guards work under either backend.
-_VTK_MODULE_PREFIXES = ('vtkmodules.', f'{_vtk._VTK_BACKEND}.')
+_VTK_MODULE_PREFIXES = ('vtkmodules.', f'{_vtk._VTK_ROOT}.')
 
 
 class VersionInfo(NamedTuple):
@@ -59,8 +60,6 @@ def _get_vtk_version():
 class VTKVersionInfo(VersionInfo):
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = (
                 f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
                 f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
@@ -85,7 +84,7 @@ class VTKVersionInfo(VersionInfo):
 
 
 vtk_version_info = VTKVersionInfo(*_get_vtk_version())
-_MIN_SUPPORTED_VTK_VERSION = (9, 2, 2)
+_MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
 
 
 class vtkPyVistaOverride:  # noqa: N801
@@ -114,6 +113,10 @@ class vtkPyVistaOverride:  # noqa: N801
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
+# VTK only exposes the snake_case API from 9.4 on, so below that there is nothing
+# to check for. `check_attribute` runs on every attribute access, so bind it once here.
+_VTK_SNAKE_CASE_MIN_VERSION_MET = vtk_version_info >= (9, 4)
+
 
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
@@ -122,11 +125,11 @@ class DisableVtkSnakeCase:
     def check_attribute(target, attr):
         # Skip check and exit early if possible
         if (
-            _VTK_SNAKE_CASE_STATE == 'allow'
+            not _VTK_SNAKE_CASE_MIN_VERSION_MET
+            or _VTK_SNAKE_CASE_STATE == 'allow'
             or not attr
             or not attr[0].islower()
             or attr in ('__class__', '__init__')
-            or vtk_version_info < (9, 4)
         ):
             return
 
@@ -209,7 +212,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
 
 # Wrap the check in an LRU cache
-@cache
+@functools.cache
 def _is_vtk_attribute_cached(target_type, attr):
     return is_vtk_attribute(target_type, attr)
 

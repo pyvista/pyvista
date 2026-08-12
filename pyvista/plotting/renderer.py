@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import partial
-from functools import wraps
-from html import escape
+import functools
+import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -295,7 +294,7 @@ class CameraPosition(_NoNewAttrMixin):
                 ('viewup', [('', vup)], vup),
             ]
         )
-        text_fallback = escape(repr(self))
+        text_fallback = html.escape(repr(self))
 
         return (
             f'<div><style>{css}</style>'
@@ -369,7 +368,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         parent,
         border=True,  # noqa: FBT002
         border_color='w',
-        border_width=2.0,
+        border_width=1.0,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
@@ -406,6 +405,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._charts: Charts | None = None
 
         self._border_actor: _vtk.vtkActor2D | None = None
+        self._border_actor_secondary: _vtk.vtkActor2D | None = None
+        self._border_requested_width: float | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -812,7 +813,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='white', width=2.0):
+    def add_border(self, color='white', width=1.0, edges=None):
         """Add borders around the frame.
 
         Parameters
@@ -820,8 +821,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         color : ColorLike, default: "white"
             Color of the border.
 
-        width : float, default: 2.0
+        width : float, default: 1.0
             Width of the border.
+
+        edges : sequence[str], optional
+            Which edges of the frame to draw. Any subset of
+            ``('top', 'left', 'bottom', 'right')``. When ``None``
+            (the default) all four edges are drawn.
 
         Returns
         -------
@@ -831,7 +837,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         points = np.array([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
 
-        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
+        edge_lines = {
+            'top': [2, 0, 1],
+            'left': [2, 1, 2],
+            'bottom': [2, 2, 3],
+            'right': [2, 3, 0],
+        }
+        if edges is None:
+            edges = ('top', 'left', 'bottom', 'right')
+        lines = np.array([edge_lines[e] for e in edges]).ravel()
 
         poly = pv.PolyData()
         poly.points = points
@@ -847,12 +861,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(Color(color).float_rgb)
-        actor.GetProperty().SetLineWidth(width)
+        # Every edge drawn here sits exactly on this renderer's own 0/1
+        # viewport boundary, by construction. VTK's 2D line rasterizer
+        # clips away roughly half of a line's width right at that
+        # boundary, so the drawn width is doubled to compensate -- the
+        # border then actually renders at the requested `width`, e.g.
+        # matching interior lines drawn at the same nominal width.
+        actor.GetProperty().SetLineWidth(width * 2)
 
         self.AddViewProp(actor)
         self.Modified()
 
         self._border_actor = actor
+        self._border_requested_width = width
         return actor
 
     @property
@@ -862,9 +883,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def border_width(self):  # numpydoc ignore=RT01
-        """Return the border width."""
+        """Return the border width.
+
+        This is the width originally requested, not the (doubled) value
+        actually given to VTK to compensate for edge clipping -- see
+        :meth:`add_border`.
+        """
         if self.has_border:
-            return self._border_actor.GetProperty().GetLineWidth()  # type: ignore[union-attr]
+            return self._border_requested_width
         return 0
 
     @property
@@ -873,6 +899,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
+
+    def _drop_border_actor(self):
+        """Remove this renderer's own border actor(s), if any.
+
+        Used when subplot seams are being drawn by a shared overlay
+        renderer so neighboring renderers don't each rasterize their
+        own clipped copy of the boundary line.
+        """
+        border_actor = self._border_actor
+        secondary_actor = self._border_actor_secondary
+        if border_actor is None and secondary_actor is None:
+            return
+        if border_actor is not None:
+            self.RemoveViewProp(border_actor)
+        if secondary_actor is not None:
+            self.RemoveViewProp(secondary_actor)
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.Modified()
 
     def add_chart(self, chart, *charts):
         """Add a chart to this renderer.
@@ -898,7 +944,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))  # type: ignore[arg-type]
+            self.AddObserver(
+                'StartEvent',  # type: ignore[arg-type]
+                functools.partial(try_callback, self._before_render_event),
+            )
         self._charts.add_chart(chart, *charts)
 
     @property
@@ -925,7 +974,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @wraps(Charts.set_interaction)
+    @functools.wraps(Charts.set_interaction)
     @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
@@ -935,7 +984,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @wraps(Charts.get_charts_by_pos)
+    @functools.wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
@@ -3755,17 +3804,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = (
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.'
-            )
-            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3953,9 +3991,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.RemoveAllObservers()
         self._remove_axes_widget()
 
+        # Detach all props from the underlying vtkRenderer's actual scene graph.
+        # Just dropping our own Python-side references (below) isn't enough: VTK's
+        # own C++ reference counting keeps a prop (and everything it owns, e.g. the
+        # cube axes actor's axis label arrays) alive as long as it's still attached
+        # here, regardless of whether we still hold a Python attribute pointing to it.
+        self.RemoveAllViewProps()
+
         self._bounding_box = None
         self._box_object = None
         self._marker_actor = None
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.cube_axes_actor = None
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -4011,6 +4061,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self._box_object = None
         # remove reference to parent last
         self.parent = None

@@ -32,10 +32,6 @@ Datasets in this section are organized by the module they are imported from.
 
             .. include:: /api/examples/dataset-gallery/planets_carousel.rst
 
-        .. tab-item:: glTF
-
-            .. include:: /api/examples/dataset-gallery/gltf_carousel.rst
-
 
 Browse Datasets by Type
 -----------------------
@@ -171,6 +167,16 @@ Miscellaneous Datasets
 
 Browse Datasets by Category
 ---------------------------
+
+.. dropdown:: Plotter Imported Datasets
+    :name: plotter_import_gallery
+
+    .. tab-set::
+
+        .. tab-item:: All
+
+            .. include:: /api/examples/dataset-gallery/plotter_import_carousel.rst
+
 
 .. dropdown:: Medical Datasets
     :name: medical_dataset_gallery

@@ -1609,7 +1609,6 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth()
@@ -1622,7 +1621,6 @@ def test_smooth(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth_taubin(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth_taubin()
@@ -1636,6 +1634,39 @@ def test_smooth_taubin(uniform):
     smooth_inplace = surf.smooth_taubin(inplace=True)
     assert np.allclose(surf.points, smoothed.points)
     assert np.allclose(smooth_inplace.points, smoothed.points)
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.parametrize('window_function', ['blackman', 'hamming', 'hanning', 'nuttall'])
+def test_smooth_taubin_window_function(ant, window_function):
+    smoothed = ant.smooth_taubin(window_function=window_function)
+
+    assert smoothed.n_points == ant.n_points
+    assert smoothed.n_cells == ant.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_smooth_taubin_window_function_default(ant):
+    smoothed_default = ant.smooth_taubin()
+    smoothed_nuttall = ant.smooth_taubin(window_function='nuttall')
+
+    assert np.allclose(smoothed_default.points, smoothed_nuttall.points)
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_smooth_taubin_invalid_window_function(ant):
+    match = re.escape(
+        "Invalid window_function 'invalid'. Expected one of: blackman, hamming, hanning, nuttall."
+    )
+    with pytest.raises(ValueError, match=match):
+        ant.smooth_taubin(window_function='invalid')
+
+
+@pytest.mark.needs_vtk_version(less_than=(9, 4))
+def test_smooth_taubin_window_function_vtk_version(ant):
+    match = '`window_function` requires VTK 9.4.0 or later.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        ant.smooth_taubin(window_function='nuttall')
 
 
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
@@ -3055,7 +3086,6 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
@@ -3927,7 +3957,7 @@ def test_oriented_bounding_box():
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation, inplace=True)
     obb = box_mesh.oriented_bounding_box()
-    assert obb.bounds == box_mesh.bounds
+    np.testing.assert_allclose(obb.bounds, box_mesh.bounds)
 
 
 @pytest.mark.parametrize('oriented', [True, False])
@@ -4458,7 +4488,6 @@ def frog_tissues_contour(frog_tissues_image):
     return frog_tissues_image.contour_labels(smoothing=False)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask(
         reference_volume=frog_tissues_image, progress_bar=True
@@ -4471,7 +4500,6 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     assert expected_voxels.n_cells == actual_voxels.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
@@ -4602,7 +4630,6 @@ def oriented_polydata(oriented_image):
     return oriented_poly
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds

@@ -3,12 +3,12 @@ from __future__ import annotations
 import faulthandler
 import functools
 import importlib
-from importlib import metadata
-from inspect import BoundArguments
-from inspect import Parameter
-from inspect import Signature
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import requires
+from importlib.metadata import version
+import inspect
 import os
-import pathlib
+from pathlib import Path
 import platform
 import re
 
@@ -18,6 +18,7 @@ import PIL
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
@@ -35,17 +36,13 @@ from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
 
-# ``pyvista.plotting`` (and importing any of its submodules) eagerly loads the
-# VTK rendering modules. A *core-only* VTK backend -- e.g. the rendering-free
-# ``cvista`` wheel used for offline data processing -- ships no rendering
-# modules, so these imports raise ``ImportError``/``ModuleNotFoundError``. Guard
-# them so the test suite can still be collected and the core-only subset
-# (``pytest -m "not needs_rendering"``) can run. When plotting is unavailable the
-# plotting-only registry save/restore hooks become no-ops and ``uses_egl`` is
-# treated as ``False``; the autouse fixtures below skip the plotting branches and
-# every ``needs_rendering`` test is deselected, so these stubs are never relied
-# upon by a test that actually exercises rendering.
-try:
+# Probe the ACTIVE backend for a rendering module rather than catching ImportError
+# from the pyvista.plotting import: the probe is precise (it asks the backend that
+# is actually in use, not whichever VTK happens to be installed alongside) and it
+# keeps this file free of import-error-driven control flow.
+HAS_PLOTTING = importlib.util.find_spec(f'{_vtk._VTK_ROOT}.vtkRenderingCore') is not None
+
+if HAS_PLOTTING:
     from pyvista.plotting.component_registry import (
         _restore_registry_state as _restore_component_registry_state,
     )
@@ -63,8 +60,7 @@ try:
     )
     from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
     from pyvista.plotting.utilities.gl_checks import uses_egl
-except ImportError:  # core-only VTK backend: rendering modules are absent
-    HAS_PLOTTING = False
+else:  # core-only VTK backend: rendering modules are absent
 
     def _save_component_registry_state():
         return None
@@ -86,26 +82,21 @@ except ImportError:  # core-only VTK backend: rendering modules are absent
 
     def uses_egl():
         return False
-else:
-    HAS_PLOTTING = True
 
 
 def _has_vtk_module(module_name: str) -> bool:
-    """Return ``True`` if a (possibly omitted) VTK IO module is importable.
+    """Return ``True`` if a (possibly omitted) VTK IO module is available.
 
     A core-only VTK backend (e.g. the rendering-free cvista wheel) ships none of
     the heavy / third-party IO modules. The readers/writers that wrap them only
     import lazily on first use, so tests that exercise those formats fail at
-    *runtime* on a core-only build. Probing the module here (mirrors
-    ``HAS_PLOTTING``) lets us auto-apply the ``needs_io_extra`` marker so the
-    core-only subset can deselect them with ``-m "not needs_io_extra"``.
+    *runtime* on a core-only build. Probing here (mirrors ``HAS_PLOTTING``) lets
+    us auto-apply the ``needs_io_extra`` marker so the core-only subset can
+    deselect them with ``-m "not needs_io_extra"``. The probe targets the ACTIVE
+    backend root -- a hardcoded ``vtkmodules`` would report on a stock VTK that
+    merely happens to be installed alongside the backend under test.
     """
-    try:
-        importlib.import_module(f'vtkmodules.{module_name}')
-    except ImportError:
-        return False
-    else:
-        return True
+    return importlib.util.find_spec(f'{_vtk._VTK_ROOT}.{module_name}') is not None
 
 
 # IO-tier VTK modules omitted from a core-only build. Each maps to readers /
@@ -196,13 +187,10 @@ def global_variables_reset():
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
-    try:
-        import matplotlib as mpl
-    except ImportError:
-        pass
-    else:
-        mpl.rcdefaults()
-        mpl.use('agg', force=True)
+    import matplotlib as mpl
+
+    mpl.rcdefaults()
+    mpl.use('agg', force=True)
 
 
 @pytest.fixture(autouse=True)
@@ -530,9 +518,9 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
     if HAS_PLOTTING:
         return None
 
-    tests_root = pathlib.Path(__file__).parent
+    tests_root = Path(__file__).parent
     try:
-        rel = pathlib.Path(str(collection_path)).relative_to(tests_root).as_posix()
+        rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
     except ValueError:
         return None
     return True if rel in _RENDERING_ONLY_MODULES else None
@@ -545,12 +533,12 @@ def pytest_collection_modifyitems(config, items):  # noqa: ARG001
     marking only fires when the relevant ``HAS_IO_*`` probe reports the module
     absent, so it is a no-op on a full VTK build.
     """
-    tests_root = pathlib.Path(__file__).parent
+    tests_root = Path(__file__).parent
     plotting_dir = tests_root / 'plotting'
     mark = pytest.mark.needs_rendering
     io_extra_mark = pytest.mark.needs_io_extra
     for item in items:
-        path = pathlib.Path(str(getattr(item, 'fspath', item.nodeid)))
+        path = Path(str(getattr(item, 'fspath', item.nodeid)))
         rel = None
         try:
             rel = path.relative_to(tests_root).as_posix()
@@ -569,7 +557,7 @@ def pytest_collection_modifyitems(config, items):  # noqa: ARG001
             item.add_marker(io_extra_mark)
 
 
-def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
+def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
     try:
@@ -587,8 +575,8 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
 
 def _get_min_max_vtk_version(
     item_mark: pytest.Mark,
-    sig: Signature,
-) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    sig: inspect.Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, inspect.BoundArguments]:
     bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
 
     def _pad_version(val: tuple[int] | None):
@@ -629,25 +617,65 @@ def _get_min_max_vtk_version(
     return _pad_version(_min), _pad_version(_max), bounds
 
 
-# Tests that intentionally diverge under the fvtk backend (an alternative VTK
-# build). fvtk omits the VTK 9.4+ snake_case wrapper API by design and ships a
-# trimmed module set, so a handful of behaviors differ from stock VTK. Keyed by
-# test function name; skipped only when the active backend is fvtk.
-_FVTK_DIVERGENT_TESTS = {
-    # fvtk omits the VTK snake_case wrapper API (by design)
-    'test_vtk_snake_case_api_is_disabled': 'fvtk omits the VTK snake_case wrapper API',
-    'test_dir_snake_case_visible_when_allowed': 'fvtk omits the VTK snake_case wrapper API',
-    'test_is_vtk_attribute': 'fvtk omits the VTK snake_case wrapper API',
-    'test_vtk_snake_case': 'fvtk omits the VTK snake_case wrapper API',
-    'test_vtk_class_does_not_exist': 'fvtk wraps a trimmed VTK class set',
-    'test_vtk_module_does_not_exist': 'fvtk wraps a trimmed VTK module set',
-    'test_plotting_import_loads_context_opengl2': 'module loads under the fvtk namespace',
-    # fvtk ships a trimmed module set and uses narrower container widths
-    'test_xdmf_reader': 'fvtk does not ship vtkIOXdmf2',
-    'test_download_meshio_xdmf': 'fvtk does not ship vtkIOXdmf2',
-    'test_cell_status': 'fvtk diverges on vtkCellStatus enum exposure',
-    'test_save_compression': 'fvtk stores indices as int32 (smaller, less compressible)',
-    'test_to_from_trimesh_points_faces': 'fvtk stores connectivity as int32 (no zero-copy share)',
+# Tests that intentionally diverge under the cvista backend (an alternative VTK
+# build). cvista omits the VTK 9.4+ snake_case wrapper API by design and ships a
+# trimmed module set with int32-default storage. Keyed by test function name;
+# skipped only when the active backend is cvista.
+_CVISTA_DIVERGENT_TESTS = {
+    # cvista omits the VTK snake_case wrapper API (by design)
+    'test_vtk_snake_case_api_is_disabled': 'cvista omits the VTK snake_case wrapper API',
+    'test_dir_snake_case_visible_when_allowed': 'cvista omits the VTK snake_case wrapper API',
+    'test_is_vtk_attribute': 'cvista omits the VTK snake_case wrapper API',
+    'test_vtk_snake_case': 'cvista omits the VTK snake_case wrapper API',
+    'test_vtk_class_does_not_exist': 'cvista wraps a trimmed VTK class set',
+    'test_vtk_module_does_not_exist': 'cvista wraps a trimmed VTK module set',
+    'test_plotting_import_loads_context_opengl2': 'module loads under the cvista namespace',
+    # cvista ships a trimmed module set and uses narrower container widths
+    'test_xdmf_reader': 'cvista does not ship vtkIOXdmf2',
+    'test_download_meshio_xdmf': 'cvista does not ship vtkIOXdmf2',
+    'test_cell_status': 'cvista diverges on vtkCellStatus enum exposure',
+    'test_save_compression': 'cvista stores indices as int32 (smaller, less compressible)',
+    'test_to_from_trimesh_points_faces': (
+        'cvista stores connectivity as int32 (no zero-copy share)'
+    ),
+    # Readers/writers in VTK modules cvista's tiered build does not ship. Each was
+    # confirmed absent from the backend itself (the class is not in cvista's
+    # generated name index at all), so these are build-scope divergences rather
+    # than resolution failures.
+    'test_read_cgns': 'cvista does not ship vtkIOCGNSReader (vtkCGNSReader)',
+    'test_table_init': 'cvista does not ship vtkIOInfovis (vtkDelimitedTextReader)',
+    'test_ensight_save': 'cvista does not ship vtkEnSightWriter',
+    'test_xmlpartitioneddatasetreader': (
+        'cvista does not ship vtkIOParallelXML (vtkXMLPartitionedDataSetWriter)'
+    ),
+    'test_nek5000_reader': 'cvista does not ship vtkIOParallel (vtkNek5000Reader)',
+    'test_multiblockplot3dreader': (
+        'cvista does not ship vtkIOParallel (vtkMultiBlockPLOT3DReader)'
+    ),
+    'test_plot3dmetareader': 'cvista does not ship vtkIOParallel (vtkPlot3DMetaReader)',
+    'test_parallel_exodus_reader': 'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)',
+    'test_get_reader_pexodus_pattern': (
+        'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
+    ),
+    'test_get_reader_pexodus_pattern_force_ext': (
+        'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
+    ),
+    # The OpenFOAM reader resolves, but its parallel variant (vtkPOpenFOAMReader,
+    # vtkIOParallel) does not, and PyVista's reader wraps the parallel class.
+    'test_openfoam_case_type': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
+    'test_openfoam_cell_to_point_default': (
+        'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+    ),
+    'test_openfoam_patch_arrays': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
+    'test_openfoam_skip_zero_time': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
+    'test_openfoamreader_active_time': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
+    'test_openfoamreader_arrays_time': 'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
+    'test_openfoamreader_read_data_time_point': (
+        'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+    ),
+    'test_openfoamreader_read_data_time_value': (
+        'cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+    ),
 }
 
 
@@ -656,36 +684,36 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
-    if pv._vtk._VTK_BACKEND == 'fvtk':
-        reason = _FVTK_DIVERGENT_TESTS.get(getattr(item, 'originalname', '') or item.name)
+    if pv._vtk._VTK_ROOT == 'cvista':
+        reason = _CVISTA_DIVERGENT_TESTS.get(getattr(item, 'originalname', '') or item.name)
         if reason is not None:
-            pytest.skip(f'fvtk backend: {reason}')
+            pytest.skip(f'cvista backend: {reason}')
 
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     'args',
-                    kind=Parameter.VAR_POSITIONAL,
+                    kind=inspect.Parameter.VAR_POSITIONAL,
                     annotation=int | tuple[int],
                 ),
-                Parameter(
+                inspect.Parameter(
                     'at_least',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     annotation=tuple[int] | None,
                     default=None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'less_than',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=tuple[int] | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'reason',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -731,11 +759,11 @@ def pytest_runtest_setup(item: pytest.Item):
                 pytest.skip(reason=reason)
 
     if item_mark := item.get_closest_marker('skip_egl'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails when using OSMesa/EGL VTK build',
                     annotation=str,
                 )
@@ -747,11 +775,11 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_windows'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on Windows',
                     annotation=str,
                 )
@@ -763,23 +791,23 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on MacOS',
                     annotation=str,
                 ),
-                Parameter(
+                inspect.Parameter(
                     p := 'processor',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     m := 'machine',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -811,7 +839,7 @@ def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}
-    for item in metadata.requires('pyvista'):
+    for item in requires('pyvista'):
         pkg_name = re.findall(r'[a-z0-9_\-]+', item, re.IGNORECASE)[0]
         if pkg_name == 'pyvista':
             continue
@@ -828,9 +856,9 @@ def pytest_report_header(config):  # noqa: ARG001
     items = []
     for name in required:
         try:
-            version = metadata.version(name)
-            items.append(f'{name}-{version}')
-        except metadata.PackageNotFoundError:
+            pkg_version = version(name)
+            items.append(f'{name}-{pkg_version}')
+        except PackageNotFoundError:
             items.append(f'{name} (not found)')
     lines.append('required packages: ' + ', '.join(items))
 
@@ -839,9 +867,9 @@ def pytest_report_header(config):  # noqa: ARG001
         installed = []
         for name in extra[pkg_extra]:
             try:
-                version = metadata.version(name)
-                installed.append(f'{name}-{version}')
-            except metadata.PackageNotFoundError:
+                pkg_version = version(name)
+                installed.append(f'{name}-{pkg_version}')
+            except PackageNotFoundError:
                 not_found.append(name)
         if installed:
             plrl = 's' if len(installed) != 1 else ''

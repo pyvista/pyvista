@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
-import importlib
 import itertools
 import json
 from pathlib import Path
@@ -17,7 +16,7 @@ from typing import TextIO
 from typing import TypeVar
 from typing import cast
 from typing import overload
-from urllib.parse import urlparse
+import urllib.parse
 
 import numpy as np
 
@@ -26,6 +25,7 @@ from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -33,6 +33,7 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    import re
 
     import imageio
     import meshio
@@ -74,27 +75,7 @@ _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
-def _lazy_vtk_import(module_name: str, class_name: str) -> type:
-    """Lazy import of a class from the selected VTK backend (vtkmodules or cvista).
-
-    Some classes live in a different module depending on the VTK build (the tiered
-    ``cvista`` backend relocates a few rendering-coupled classes — e.g. ``vtkGLTFReader``
-    moves from ``vtkIOGeometry`` to ``vtkIOImport``). Try the declared module first,
-    then any registered alternates, so a class resolves under either layout.
-    """
-    candidates = (module_name, *_vtk._VTK_CLASS_ALT_MODULES.get(class_name, ()))
-    last_exc: Exception | None = None
-    for candidate in candidates:
-        try:
-            module = importlib.import_module(f'{_vtk._VTK_BACKEND}.{candidate}')
-            return getattr(module, class_name)
-        except (ModuleNotFoundError, AttributeError) as e:
-            last_exc = e
-    raise last_exc  # type: ignore[misc]
-
-
 class _FileIOBase(ABC, _NoNewAttrMixin):
-    _vtk_module_name: str = ''
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -113,13 +94,19 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
-        if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
+        if cls._vtk_class_name:
+            return getattr(_vtk, cls._vtk_class_name)
         return None
 
     @classmethod
     @abstractmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+
+    @classmethod
+    def _get_extension_pattern_mappings(
+        cls,
+    ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
+        return []
 
     @_classproperty
     def extensions(cls) -> tuple[str, ...]:  # noqa: N805
@@ -135,6 +122,21 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
                 if typ is cls:  # type: ignore[comparison-overlap]
                     extensions.add(ext)  # type: ignore[unreachable]
         return tuple(sorted(extensions))
+
+    @_classproperty
+    def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805
+        """Return mapping from regex pattern matching associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
+        patterns = {
+            pattern
+            for pattern, typ in cls._get_extension_pattern_mappings()
+            if typ is cls  # type: ignore[comparison-overlap, redundant-expr]
+        }
+        return tuple(sorted(patterns, key=lambda pattern: pattern.pattern))
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
@@ -203,9 +205,6 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
         raise ValueError(msg)
-    if format_ == 'vtk' and pv.vtk_version_info < (9, 3):
-        msg = "'vtk' pickle format requires VTK >= 9.3"
-        raise ValueError(msg)
 
     pv.PICKLE_FORMAT = format_
 
@@ -236,6 +235,13 @@ def get_ext(filename: str | Path) -> str:
 
     """
     path = Path(filename)
+
+    from .reader import PExodusIIReader  # noqa: PLC0415
+
+    for pattern in PExodusIIReader.extension_patterns:
+        if match := pattern.search(path.name):
+            return match.group().lower()
+
     base = str(path.parent / path.stem)
     ext = path.suffix
     ext = ext.lower()
@@ -278,6 +284,10 @@ def read(  # noqa: PLR0917
     **kwargs,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
+
+    .. note::
+        Reading a file and saving it in another format is also available via
+        command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
@@ -454,7 +464,7 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and has_scheme(filename):
-        uri_ext = get_ext(urlparse(filename).path)
+        uri_ext = get_ext(urllib.parse.urlparse(filename).path)
         if uri_ext.lower() in _PICKLE_FILE_EXT:
             _raise_pickle_removed()
         # If a custom reader is registered for this extension, try it
@@ -480,8 +490,6 @@ def _read_dispatch(  # noqa: PLR0911
         return read_meshio(filename, file_format)
 
     ext = _get_ext_force(filename, force_ext)
-    if ext in ['.e', '.exo']:
-        return read_exodus(filename)
     if ext in _PICKLE_FILE_EXT:
         _raise_pickle_removed()
 
@@ -612,6 +620,9 @@ def read_exodus(  # noqa: PLR0917
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
+    .. deprecated:: 0.49
+        Use :func:`pyvista.read` or :class:`pyvista.ExodusIIReader` instead.
+
     Parameters
     ----------
     filename : str, Path
@@ -654,6 +665,15 @@ def read_exodus(  # noqa: PLR0917
 
     """
     from .helpers import wrap  # noqa: PLC0415
+
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
 
     reader = _vtk.vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -723,6 +743,23 @@ def read_grdecl(
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
     """
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function private'
+        raise RuntimeError(msg)
+    msg = (
+        '`read_grdecl` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    return _read_grdecl(filename, elevation=elevation, other_keywords=other_keywords)
+
+
+def _read_grdecl(
+    filename: str | Path,
+    *,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
+) -> ExplicitStructuredGrid:
     property_keywords = (
         'ACTNUM',
         'COORD',

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-import contextlib
+
+# A type in a base-class position; see "Import Conventions" in CONTRIBUTING.rst.
+from contextlib import AbstractContextManager  # noqa: ICN003
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
@@ -24,7 +26,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
+class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:
