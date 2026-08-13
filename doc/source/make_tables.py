@@ -155,7 +155,7 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
-        print(f'generating tables... {cls.__name__}', flush=True)
+        print(f'{bold("generating tables...")} {darkgreen(cls.__name__)}', flush=True)
         assert cls.path is not None, f'Subclass {cls} should specify a path.'
         if isinstance(cls.path, property):
             cls.path = cls.path.fget(cls)
@@ -3058,7 +3058,7 @@ def _validate_function_annotation(card: DatasetCard) -> str | None:
 def make_dataset_carousel() -> str:  # noqa: D103
     # Skip the expensive dataset download/load step on incremental builds
     if Path(DatasetCarousel.path).exists():
-        print('Carousel RST file already exists, skipping dataset loading', flush=True)
+        print(bold('Carousel RST file already exists, skipping dataset loading'), flush=True)
         return DatasetCarousel.path
 
     DatasetCardFetcher.init_cards()
@@ -3203,5 +3203,5 @@ if __name__ == '__main__':
         nocolor()
 
     new_rsts = make_tables()
-    print('Generated rsts:', flush=True)
-    print('\n'.join(new_rsts), flush=True)
+    print(bold('Generated rsts:'), flush=True)
+    print('\n'.join(darkgreen(path) for path in new_rsts), flush=True)
