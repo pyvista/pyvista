@@ -2557,7 +2557,7 @@ class DatasetCard:
         else:
             add('ct', 'N/A (no cells)', slug='na')
 
-        reader_types = loader.unique_reader_type
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_types is None:
             add('reader', 'N/A (generated in code)', slug='na')
         else:
