@@ -152,7 +152,21 @@ jobs:
           cmake "${cmake_args[@]}"
 
       - name: Build
-        run: cmake --build vtk-build --parallel
+        shell: bash
+        run: |
+          # MSVC in particular dumps huge multi-line warning/template-instantiation
+          # traces for VTK's ThirdParty code that overwhelm the Actions log viewer.
+          # Stream a filtered view live, but keep the full log to print on failure.
+          noisy_pattern=': warning C[0-9]+:|: note:|^[[:space:]]+(with|\[|\])[[:space:]]*$|^[[:space:]]+[A-Za-z_][A-Za-z0-9_]*='
+          set +e
+          cmake --build vtk-build --parallel 2>&1 | tee build.log | grep -Ev "$noisy_pattern"
+          build_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            echo "::error::VTK build failed (exit $build_status); full unfiltered log follows"
+            cat build.log
+            exit "$build_status"
+          fi
 
       - name: Show compiler cache statistics
         shell: bash
