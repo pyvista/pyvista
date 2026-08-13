@@ -1,5 +1,4 @@
 .. _dataset_gallery:
-.. _medical_dataset_gallery:
 
 Dataset Gallery
 ===============
