@@ -33,6 +33,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import linregress
 from sphinx.util import logging
+from sphinx.util.console import bold
+from sphinx.util.console import darkgreen
+from sphinx.util.console import nocolor
+from sphinx.util.console import terminal_supports_colour
 
 import pyvista as pv
 from pyvista import _validation
@@ -2918,9 +2922,8 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 module_name = module.__name__.removeprefix('pyvista.')
-                # stderr, not stdout, so this stays ordered before any of the reader's own errors
-                msg = f'generating rst for {module_name}... {dataset_name}'
-                print(msg, file=sys.stderr, flush=True)
+                summary = bold(f'generating rst for {module_name}...')
+                print(f'{summary} {darkgreen(dataset_name)}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
@@ -3193,6 +3196,12 @@ def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname:
 
 
 if __name__ == '__main__':
+    # Merge stderr into stdout (reader errors/warnings included) so everything
+    # lands on one ordered stream instead of interleaving unpredictably.
+    os.dup2(sys.stdout.fileno(), sys.stderr.fileno())
+    if not terminal_supports_colour():
+        nocolor()
+
     new_rsts = make_tables()
     print('Generated rsts:', flush=True)
     print('\n'.join(new_rsts), flush=True)
