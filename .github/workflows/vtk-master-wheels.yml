@@ -446,3 +446,68 @@ jobs:
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  alert-on-failure:
+    needs:
+      [
+        check-should-run,
+        build-vtk,
+        cache-github-hosted,
+        test-linux,
+        test-macOS,
+        test-windows,
+      ]
+    if: >-
+      failure() &&
+      needs.check-should-run.outputs.run == 'true' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      actions: read # to look up which matrix jobs failed
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Report VTK master wheel failure
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          # Ensure the dedup label exists (idempotent).
+          gh label create vtk-master-wheel-failure \
+            --color cbb230 \
+            --description "Tracks the recurring VTK master wheel build/test failure" \
+            --force || true
+
+          # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
+          failed=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+
+          jobs_list=""
+          while IFS=$'\t' read -r name url; do
+            [ -n "$name" ] || continue
+            jobs_list+="- [\`${name}\`](${url})"$'\n'
+          done <<< "$failed"
+
+          [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+
+          body=$(cat <<EOF
+          ### VTK Master Wheel Failure
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Run:** ${RUN_URL}
+
+          **Failing jobs:**
+          ${jobs_list}
+          EOF
+          )
+
+          # Check for an existing open issue
+          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "VTK master wheel failure" --label "vtk-master-wheel-failure" --body "$body"
+          fi
