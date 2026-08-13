@@ -245,9 +245,33 @@ def _text(html_path: Path) -> str:
     return re.sub(r'<[^>]+>', ' ', html_path.read_text(encoding='utf-8'))
 
 
-def test_tinypages_autoenum_build(tmp_path):
-    proc, autosummary_dir = _build_tinypages_autoenum(tmp_path)
+_MISUSE_PAGES = {
+    'misuse_metaclassproperty.rst': (
+        'Misuse\n======\n\n.. currentmodule:: pyvista\n\n'
+        '.. autometaclassproperty:: CellType.EMPTY_CELL\n'
+    ),
+    'misuse_unimportable.rst': (
+        'Misuse\n======\n\n.. autometaclassproperty:: totally.bogus.NonExistentThing12345\n'
+    ),
+    'misuse_nonenum.rst': 'Misuse\n======\n\n.. autoenum:: pyvista.core.config.Config\n',
+}
+
+
+@pytest.fixture(scope='module')
+def tinypages_build(tmp_path_factory):
+    """Build tinypages_autoenum once, covering the main pages plus every misuse case below.
+
+    Shared across the tests in this section so a full ``sphinx-build`` -- the expensive
+    part -- only runs once instead of once per scenario.
+    """
+    tmp_path = tmp_path_factory.mktemp('tinypages_autoenum')
+    proc, autosummary_dir = _build_tinypages_autoenum(tmp_path, extra_pages=_MISUSE_PAGES)
     assert proc.returncode == 0, proc.stderr
+    return proc, autosummary_dir
+
+
+def test_tinypages_autoenum_build(tinypages_build):
+    _, autosummary_dir = tinypages_build
 
     # #1: every property -- instance and metaclass alike -- is listed, not just the
     # metaclass one.
@@ -295,35 +319,22 @@ def test_tinypages_autoenum_build(tmp_path):
     assert "'circle'" in shape_text
 
 
-def test_metaclassproperty_documenter_warns_on_non_metaclass_property(tmp_path):
+def test_metaclassproperty_documenter_warns_on_non_metaclass_property(tinypages_build):
     """A misuse of the directive (naming something that isn't a metaclass property) warns
     and produces no content, rather than crashing.
     """
-    misuse_rst = (
-        'Misuse\n======\n\n.. currentmodule:: pyvista\n\n'
-        '.. autometaclassproperty:: CellType.EMPTY_CELL\n'
-    )
-    proc, _ = _build_tinypages_autoenum(tmp_path, extra_pages={'misuse.rst': misuse_rst})
-    assert proc.returncode == 0, proc.stderr
+    proc, _ = tinypages_build
     assert 'is not a metaclass property of' in proc.stderr
 
 
-def test_metaclassproperty_documenter_warns_on_unimportable_name(tmp_path):
+def test_metaclassproperty_documenter_warns_on_unimportable_name(tinypages_build):
     """A name that fails to import at all leaves self.parent unset, not just non-metaclass."""
-    misuse_rst = (
-        'Misuse\n======\n\n.. autometaclassproperty:: totally.bogus.NonExistentThing12345\n'
-    )
-    proc, _ = _build_tinypages_autoenum(tmp_path, extra_pages={'misuse.rst': misuse_rst})
-    assert proc.returncode == 0, proc.stderr
+    proc, _ = tinypages_build
     assert 'failed to import' in proc.stderr
 
 
-def test_enum_documenter_filter_members_on_non_enum(tmp_path):
+def test_enum_documenter_filter_members_on_non_enum(tinypages_build):
     """.. autoenum:: on a plain class falls back to the stock ClassDocumenter behavior."""
-    misuse_rst = 'Misuse\n======\n\n.. autoenum:: pyvista.core.config.Config\n'
-    proc, autosummary_dir = _build_tinypages_autoenum(
-        tmp_path, extra_pages={'misuse.rst': misuse_rst}
-    )
-    assert proc.returncode == 0, proc.stderr
-    text = _text(autosummary_dir.parent / 'misuse.html')
+    _, autosummary_dir = tinypages_build
+    text = _text(autosummary_dir.parent / 'misuse_nonenum.html')
     assert 'validate_on_wrap' in text  # from Config's own docstring, not crashed/empty
