@@ -49,8 +49,15 @@ def _eager_resolve_trame_component():
     pl = pv.Plotter()
     try:
         _ = pl.trame  # triggers entry-point import + descriptor install
-        pl.add_mesh(pv.Cone())
-        pl.trame.export_vtksz(filename=None)  # launch the trame server
+        # Skip the export warm-up on an alternative VTK build. trame's
+        # serializers still hardcode two `vtkmodules` imports (fixed upstream in
+        # Kitware/trame-vtk#124, not yet released), so they pull stock VTK into
+        # the process alongside the active build and the export crashes the
+        # interpreter rather than failing a test. The exporting tests themselves
+        # carry skip_vtk_backend for the same reason.
+        if pv.vtk_backend() == 'vtk':
+            pl.add_mesh(pv.Cone())
+            pl.trame.export_vtksz(filename=None)  # launch the trame server
     finally:
         pl.close()
 
