@@ -26,17 +26,14 @@
         }
       });
     });
+    // "na" is handled separately (always first, if present) rather than via
+    // the explicit order list, since that list only covers real values.
+    const rest = Array.from(present).filter((v) => v !== "na");
     const explicitOrder = order[facet];
-    const values = explicitOrder
-      ? explicitOrder.filter((v) => present.has(v))
-      : Array.from(present).sort();
-    // Pin "N/A" first so it doesn't get lost among the real values.
-    const naIndex = values.indexOf("na");
-    if (naIndex > 0) {
-      values.splice(naIndex, 1);
-      values.unshift("na");
-    }
-    return values;
+    const ordered = explicitOrder
+      ? explicitOrder.filter((v) => rest.includes(v))
+      : rest.sort();
+    return present.has("na") ? ["na", ...ordered] : ordered;
   }
 
   function buildPanel(dropdown, facet, values, labels, onChange) {
