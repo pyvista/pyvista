@@ -117,3 +117,12 @@
 .gallery-card.gallery-hidden {
   display: none !important;
 }
+
+/* A field's value cell is right-aligned via `justify-content: space-between`
+   on its row, which only works while the label and value share that row -
+   once a long value wraps onto its own row, space-between has nothing to
+   push against and it falls back flush left. margin-left: auto pushes the
+   cell to the row's end regardless of whether it's sharing the row. */
+.gallery-card .sd-text-right.sd-text-nowrap {
+  margin-left: auto;
+}
