@@ -2137,6 +2137,27 @@ def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare:
     assert kwargs['color'] == 'red'
 
 
+@pytest.mark.parametrize(
+    ('tokens', 'in_kwargs'),
+    [('', False), ('--static', True)],
+    ids=['default', 'static'],
+)
+def test_compare_called_static(
+    tmp_compare_files: list[Path],
+    mock_plot_compare: MagicMock,
+    tokens: str,
+    in_kwargs: bool,  # noqa: FBT001
+):
+    """Test that `--static` is forwarded to `plot_compare` as a supplementary kwarg."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(f'compare {names} {tokens}')
+
+    kwargs = mock_plot_compare.call_args.kwargs
+    assert ('static' in kwargs) is in_kwargs
+    if in_kwargs:
+        assert kwargs['static'] is True
+
+
 @pytest.mark.usefixtures('patch_app_console')
 def test_compare_kwargs_hyphen_warns(
     tmp_compare_files: list[Path], mock_plot_compare: MagicMock, capsys: pytest.CaptureFixture
