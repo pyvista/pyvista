@@ -3379,21 +3379,34 @@ def get_concrete_classes(module, abc):
 
 
 WRITER_CLASSES = get_concrete_classes(pv.core.utilities.writer, pv.BaseWriter)
+
+# Writers whose VTK class an alternative build does not ship, as
+# ``writer class name: reason``. Marked per PARAMETRIZATION rather than on the
+# test, so a backend missing one writer does not drop coverage for the others.
+_CVISTA_ABSENT_WRITERS = {
+    'EnSightWriter': 'cvista does not ship vtkEnSightWriter',
+    'XMLPartitionedDataSetWriter': (
+        'cvista does not ship vtkIOParallelXML (vtkXMLPartitionedDataSetWriter)'
+    ),
+}
+
+
+def _writer_params():
+    """Yield the writer classes, marking the ones an alternative build omits."""
+    for cls in WRITER_CLASSES:
+        reason = _CVISTA_ABSENT_WRITERS.get(cls.__name__)
+        marks = [pytest.mark.skip_vtk_backend('cvista', reason=reason)] if reason else []
+        yield pytest.param(cls, marks=marks)
+
+
 READER_CLASSES = get_concrete_classes(pv.core.utilities.reader, pv.BaseReader)
 
 
-@pytest.mark.parametrize('writer_cls', WRITER_CLASSES)
+@pytest.mark.parametrize('writer_cls', _writer_params())
 def test_writer_data_mode_mixin(writer_cls):
     """Test that classes with an ascii setter have a data_mode property."""
     if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('Needs vtk 9.4')
-    # Probe the ONE writer rather than marking the whole test: an alternative VTK
-    # build may not ship a given writer's class, and a blanket skip_vtk_backend
-    # marker here would drop every other writer's coverage with it.
-    if writer_cls._vtk_class_name and not _vtk.has_attr(writer_cls._vtk_class_name):
-        pytest.skip(
-            f'{writer_cls._vtk_class_name} is not available on the {pv.vtk_backend()} backend'
-        )
     if not any('ascii' in attr.lower() for attr in dir(writer_cls._vtk_class)):
         pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
 
