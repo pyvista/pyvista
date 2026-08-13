@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
+from types import ModuleType
 
 import pytest
 
@@ -107,3 +109,47 @@ def test_stock_backend_resolves_via_module_map():
     """On stock VTK the class->module mapping is still the resolution path."""
     assert _vtk._VTK_CLASS_TO_MODULE['vtkPolyData'] == 'vtkCommonDataModel'
     assert _vtk.vtkPolyData.__module__.startswith('vtkmodules')
+
+
+@pytest.fixture
+def fake_flat_backend(monkeypatch):
+    """Point ``_vtk`` at a stand-in flat-namespace backend.
+
+    Lets the flat resolution path be exercised on any VTK build, including the
+    stock one, so the behaviour is covered by the ordinary test matrix rather
+    than only when cvista happens to be installed.
+    """
+    root = ModuleType('_fake_flat_backend')
+    root.vtkPolyData = type('vtkPolyData', (), {})
+    monkeypatch.setitem(sys.modules, '_fake_flat_backend', root)
+    monkeypatch.setattr(_vtk, '_VTK_ROOT', '_fake_flat_backend')
+    monkeypatch.setattr(_vtk, '_VTK_ROOT_IS_FLAT', True)
+    # __getattr__ caches resolved names into module globals. Snapshot VALUES, not
+    # just keys: a name resolved earlier in the session is already cached, so
+    # deleting only new keys would leave the fake class in its place for every
+    # later test.
+    cached = dict(vars(_vtk))
+    yield root
+    current = vars(_vtk)
+    for name in set(current) - set(cached):
+        delattr(_vtk, name)
+    for name, value in cached.items():
+        if current.get(name) is not value:
+            setattr(_vtk, name, value)
+
+
+def test_flat_resolution_uses_the_root_not_the_module_map(fake_flat_backend):
+    """A flat backend resolves by name off the root, ignoring the stock module."""
+    assert _vtk.__getattr__('vtkPolyData') is fake_flat_backend.vtkPolyData
+
+
+def test_flat_resolution_reports_a_missing_class(fake_flat_backend):  # noqa: ARG001
+    """A mapped name the flat backend does not provide raises ImportError."""
+    with pytest.raises(ImportError, match='Cannot import name'):
+        _vtk.__getattr__('vtkSphereSource')
+
+
+def test_flat_resolution_still_curates_the_namespace(fake_flat_backend):  # noqa: ARG001
+    """An unmapped name is an AttributeError on a flat backend too."""
+    with pytest.raises(AttributeError, match="not defined in PyVista's vtk namespace"):
+        _vtk.__getattr__('vtkNotARealVTKClass')
