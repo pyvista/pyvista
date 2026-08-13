@@ -34,9 +34,9 @@ import numpy as np
 from scipy.stats import linregress
 from sphinx.util import logging
 from sphinx.util.console import bold
+from sphinx.util.console import color_terminal
 from sphinx.util.console import darkgreen
 from sphinx.util.console import nocolor
-from sphinx.util.console import terminal_supports_colour
 
 import pyvista as pv
 from pyvista import _validation
@@ -3212,7 +3212,7 @@ if __name__ == '__main__':
     # Merge stderr into stdout (reader errors/warnings included) so everything
     # lands on one ordered stream instead of interleaving unpredictably.
     os.dup2(sys.stdout.fileno(), sys.stderr.fileno())
-    if not terminal_supports_colour():
+    if not color_terminal():
         nocolor()
 
     new_rsts = make_tables()
