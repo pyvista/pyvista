@@ -895,7 +895,9 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
 
 def _import_vtkRenderPassCollection():  # noqa: N802
     try:  # Moved in VTK 10.0.0
-        from vtkmodules.vtkRenderingCore import vtkRenderPassCollection  # type: ignore[attr-defined]  # noqa: TID251
+        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
+            vtkRenderPassCollection,
+        )
     except ImportError:
         from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection  # noqa: TID251
     return vtkRenderPassCollection
@@ -903,7 +905,9 @@ def _import_vtkRenderPassCollection():  # noqa: N802
 
 def _import_vtkSequencePass():  # noqa: N802
     try:  # Moved in VTK 10.0.0
-        from vtkmodules.vtkRenderingCore import vtkSequencePass  # type: ignore[attr-defined]  # noqa: TID251
+        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
+            vtkSequencePass,
+        )
     except ImportError:
         from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass  # noqa: TID251
     return vtkSequencePass
