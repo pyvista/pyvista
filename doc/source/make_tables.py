@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Iterable
-from collections.abc import Iterator
 from collections.abc import Sequence
 import colorsys
 from dataclasses import dataclass
@@ -2883,18 +2882,25 @@ class DatasetCardFetcher:
 
     @classmethod
     def init_cards(cls):
-        """Download and load all datasets and initialize a card object for each dataset."""
+        """Load each dataset, generate its rst, and clear it from memory before the next.
+
+        Datasets are meshes and can be large; keeping only one loaded at a
+        time (rather than loading all of them before generating any rst)
+        keeps peak memory to a single dataset instead of the whole gallery.
+        """
+        type_mismatches: dict[str, str] = {}
         for module in DATASET_GALLERY_MODULES:
-            cls._init_cards_from_module(module)
+            cls._init_cards_from_module(module, type_mismatches)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
+        cls.DATASET_CARDS_RST = dict(sorted(cls.DATASET_CARDS_RST.items()))
+
+        if type_mismatches:
+            mismatches = '\n'.join(sorted(type_mismatches.values()))
+            msg = f'Type mismatches:\n{mismatches}'
+            raise RuntimeError(msg)
 
     @classmethod
-    def clear_datasets(cls):
-        """Clear loaded datasets."""
-        [loader.clear_dataset() for _, loader in cls.fetch_all_dataset_loaders()]
-
-    @classmethod
-    def _init_cards_from_module(cls, module: ModuleType):
+    def _init_cards_from_module(cls, module: ModuleType, type_mismatches: dict[str, str]):
         # Collect all `_dataset_<name>` file loaders from the module
         module_members: dict[str, FunctionType] = dict(inspect.getmembers(module))
 
@@ -2915,26 +2921,21 @@ class DatasetCardFetcher:
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
-                # Load data
                 module_name = module.__name__.removeprefix('pyvista.')
-                print(f'loading datasets from {module_name}... {dataset_name}', flush=True)
+                print(f'generating rst for {module_name}... {dataset_name}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
                 assert dataset_loader.dataset is not None
 
-    @classmethod
-    def generate_rst_all_cards(cls):
-        """Generate formatted rst output for all cards."""
-        for name in cls.DATASET_CARDS_OBJ:
-            card = cls.DATASET_CARDS_OBJ[name].generate()
-            # indent one level from the carousel header directive
-            cls.DATASET_CARDS_RST[name] = _pad_lines(card, pad_left='   ')
+                card = cls.DATASET_CARDS_OBJ[dataset_name]
+                # indent one level from the carousel header directive
+                cls.DATASET_CARDS_RST[dataset_name] = _pad_lines(card.generate(), pad_left='   ')
 
-    @classmethod
-    def fetch_all_dataset_loaders(cls) -> Iterator[tuple[str, _DatasetLoader]]:
-        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-            yield name, card.loader
+                if mismatch := _validate_function_annotation(card):
+                    type_mismatches[dataset_name] = mismatch
+
+                dataset_loader.clear_dataset()
 
     @classmethod
     def generate_filter_toolbar(cls) -> str:
@@ -3028,39 +3029,29 @@ class DatasetCarousel(DocTable):
             assert real_url in content
 
 
-def _validate_function_annotations(
-    dataset_cards: dict[str, DatasetCard],
-) -> None:
-    """Validate that download/load function return annotations match runtime types."""
-    type_mismatches: dict[str, str] = {}
-    for name, card in dataset_cards.items():
-        if card.loader._module not in [
-            pv.examples.downloads,
-            pv.examples.examples,
-            pv.examples.planets,
-        ]:
-            continue
-        runtime_name = type(card.loader.dataset).__name__
-        function = card.loader._function
-        params = inspect.signature(function).parameters
+def _validate_function_annotation(card: DatasetCard) -> str | None:
+    """Return a mismatch message if the download/load function's return annotation is wrong."""
+    if card.loader._module not in DATASET_GALLERY_MODULES:
+        return None
 
-        expected_annotation = runtime_name
-        if 'texture' in params:
-            expected_annotation = f'Texture | {expected_annotation}'
-        if 'load' in params:
-            expected_annotation += ' | str'
+    runtime_name = type(card.loader.dataset).__name__
+    function = card.loader._function
+    params = inspect.signature(function).parameters
 
-        ann = inspect.signature(function).return_annotation
-        ann_name = ann if isinstance(ann, str) else ann.__name__
-        if expected_annotation != ann_name:
-            type_mismatches[name] = (
-                f'{function.__name__!r} annotated type is {ann_name!r}, '
-                f'expected {expected_annotation!r}'
-            )
-    if type_mismatches:
-        mismatches = '\n'.join(sorted(type_mismatches.values()))
-        msg = f'Type mismatches:\n{mismatches}'
-        raise RuntimeError(msg)
+    expected_annotation = runtime_name
+    if 'texture' in params:
+        expected_annotation = f'Texture | {expected_annotation}'
+    if 'load' in params:
+        expected_annotation += ' | str'
+
+    ann = inspect.signature(function).return_annotation
+    ann_name = ann if isinstance(ann, str) else ann.__name__
+    if expected_annotation != ann_name:
+        return (
+            f'{function.__name__!r} annotated type is {ann_name!r}, '
+            f'expected {expected_annotation!r}'
+        )
+    return None
 
 
 def make_dataset_carousel() -> str:  # noqa: D103
@@ -3070,10 +3061,7 @@ def make_dataset_carousel() -> str:  # noqa: D103
         return DatasetCarousel.path
 
     DatasetCardFetcher.init_cards()
-    DatasetCardFetcher.generate_rst_all_cards()
     DatasetCarousel.generate()
-    _validate_function_annotations(DatasetCardFetcher.DATASET_CARDS_OBJ)
-    DatasetCardFetcher.clear_datasets()
 
     return DatasetCarousel.path
 
