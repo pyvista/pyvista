@@ -112,8 +112,8 @@ DATASET_GALLERY_MODULES: dict[ModuleType, str] = {
 DATASET_GALLERY_SIZE_BINS: list[tuple[float, str, str]] = [
     (1, '< 1 MB', 'lt-1'),
     (10, '1 - 10 MB', '1-10'),
-    (50, '10 - 50 MB', '10-50'),
-    (float('inf'), '>= 50 MB', 'gte-50'),
+    (25, '10 - 25 MB', '10-25'),
+    (float('inf'), '> 25 MB', 'gt-25'),
 ]
 
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
@@ -2066,7 +2066,7 @@ class DatasetCard:
     GRID_ITEM_FIELDS_INDENT_LEVEL = 4
     REF_ANCHOR_INDENT_LEVEL = 2
 
-    # Template for the dataset name
+    # Template for the dataset name and its module badge
     header_template = _aligned_dedent(
         """
         |.. grid:: 1
@@ -2074,6 +2074,11 @@ class DatasetCard:
         |
         |   .. grid-item::
         |      :class: sd-text-center sd-font-weight-bold sd-fs-5
+        |
+        |      {}
+        |
+        |   .. grid-item::
+        |      :class: sd-text-center
         |
         |      {}
         |
@@ -2235,7 +2240,7 @@ class DatasetCard:
             file_ext,
             reader_type,
             importer_meth,
-            module,
+            module_badge,
             dataset_type,
             celltype_field,
             datasource_links,
@@ -2256,12 +2261,11 @@ class DatasetCard:
         DatasetCardFetcher.FACET_LABELS.update(facet_labels)
 
         # Assemble rst parts into main blocks used by the card
-        header_block = self._create_header_block(index_name, header_name)
+        header_block = self._create_header_block(index_name, header_name, module_badge)
         search_text_block = self._create_search_text_block(header_name, func_name, func_doc)
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
         dataset_props_block = self._create_dataset_props_block(
-            module=module,
             dataset_type=dataset_type,
             celltype_field=celltype_field,
             n_cells=n_cells,
@@ -2306,7 +2310,7 @@ class DatasetCard:
         file_ext = DatasetPropsGenerator.generate_file_ext(loader)
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
         importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
-        module = DatasetPropsGenerator.generate_module(loader)
+        module_badge = DatasetPropsGenerator.generate_module_badge(loader)
         dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
         celltype_field = DatasetPropsGenerator.generate_celltype_field(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
@@ -2325,7 +2329,7 @@ class DatasetCard:
             file_ext,
             reader_type,
             importer_meth,
-            module,
+            module_badge,
             dataset_type,
             celltype_field,
             datasource_links,
@@ -2496,8 +2500,8 @@ class DatasetCard:
         return _indent_multi_line_string(block, indent_level=indent_level)
 
     @classmethod
-    def _create_header_block(cls, index_name, header_name):
-        """Generate header rst block with a reference target."""
+    def _create_header_block(cls, index_name, header_name, module_badge):
+        """Generate header rst block with a reference target and module badge."""
         header_name_with_ref = DatasetCard._format_and_indent_from_template(
             index_name,
             header_name,
@@ -2506,6 +2510,7 @@ class DatasetCard:
         )
         return DatasetCard._format_and_indent_from_template(
             header_name_with_ref,
+            module_badge,
             template=cls.header_template,
             indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
         )
@@ -2552,7 +2557,8 @@ class DatasetCard:
         if not isinstance(dataset_types, tuple):
             dataset_types = (dataset_types,)
         for dataset_type in dataset_types:
-            add('dtype', dataset_type.__name__)
+            name = 'None' if dataset_type is type(None) else dataset_type.__name__
+            add('dtype', name)
 
         cell_types = loader.unique_cell_types
         if cell_types:
@@ -2591,7 +2597,6 @@ class DatasetCard:
     def _create_dataset_props_block(
         cls,
         *,
-        module,
         dataset_type,
         celltype_field,
         n_cells,
@@ -2602,7 +2607,6 @@ class DatasetCard:
         n_arrays,
     ):
         dataset_fields = [
-            ('Module', module),
             ('Data Type', dataset_type),
             ('Cell Type', celltype_field),
             ('N Cells', n_cells),
@@ -2735,18 +2739,20 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
         """Format dataset type(s) with doc references to dataset class(es)."""
-        return (
-            repr(loader.unique_dataset_type)
-            .replace("<class '", ':class:`~')
-            .replace("'>", '`')
-            .replace('(', '')
-            .replace(')', '')
-        ).replace(', ', '\n')
+        dataset_types = loader.unique_dataset_type
+        if not isinstance(dataset_types, tuple):
+            dataset_types = (dataset_types,)
+        return '\n'.join(
+            '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
+            for cls in dataset_types
+        )
 
     @staticmethod
-    def generate_module(loader: _DatasetLoader):
-        """Format the dataset's source module, e.g. 'Downloads'."""
-        return '``' + DATASET_GALLERY_MODULES[loader._module] + '``'
+    def generate_module_badge(loader: _DatasetLoader):
+        """Format the dataset's source module as a small badge linking to its module page."""
+        label = DATASET_GALLERY_MODULES[loader._module]
+        module_path = loader._module.__name__
+        return f':bdg-ref-primary:`{label} <{module_path}>`'
 
     @staticmethod
     def generate_celltype_field(loader: _DatasetLoader):
@@ -2754,7 +2760,10 @@ class DatasetPropsGenerator:
         cell_types = loader.unique_cell_types
         if not cell_types:
             return '``N/A (no cells)``'
-        return '\n'.join(f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cell_types)
+        return '\n'.join(
+            f':attr:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
+            for cell_type in cell_types
+        )
 
     @staticmethod
     def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
