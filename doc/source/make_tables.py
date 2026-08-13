@@ -2751,7 +2751,7 @@ class DatasetPropsGenerator:
         if not cell_types:
             return '``N/A (no cells)``'
         return '\n'.join(
-            f':any:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
+            f':attr:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
             for cell_type in cell_types
         )
 
