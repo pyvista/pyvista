@@ -3083,70 +3083,87 @@ def make_dataset_carousel() -> str:  # noqa: D103
     return DatasetCarousel.path
 
 
-def make_all_tables() -> list[str]:  # noqa: D103
+def make_tables() -> list[str]:  # noqa: D103
+    paths = []
+
+    def generate(*classes: type[DocTable]):
+        for cls in classes:
+            cls.generate()
+            paths.append(cls.path)
+
     # Make reader tables
     os.makedirs(READERS_DIR, exist_ok=True)
-    ReadersTable.generate()
+    generate(ReadersTable)
 
     # Make mesh IO tables
     os.makedirs(MESHIO_DIR, exist_ok=True)
-    ImageDataIOTable.generate()
-    RectilinearGridIOTable.generate()
-    StructuredGridIOTable.generate()
-    PolyDataIOTable.generate()
-    UnstructuredGridIOTable.generate()
-    MultiBlockIOTable.generate()
-    PartitionedDataSetIOTable.generate()
-    ExplicitStructuredGridIOTable.generate()
+    generate(
+        ImageDataIOTable,
+        RectilinearGridIOTable,
+        StructuredGridIOTable,
+        PolyDataIOTable,
+        UnstructuredGridIOTable,
+        MultiBlockIOTable,
+        PartitionedDataSetIOTable,
+        ExplicitStructuredGridIOTable,
+    )
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
-    CellQualityMeasuresTable.generate()
-    CellQualityInfoTableTRIANGLE.generate()
-    CellQualityInfoTableQUAD.generate()
-    CellQualityInfoTableHEXAHEDRON.generate()
-    CellQualityInfoTableTETRA.generate()
-    CellQualityInfoTableWEDGE.generate()
-    CellQualityInfoTablePYRAMID.generate()
+    generate(
+        CellQualityMeasuresTable,
+        CellQualityInfoTableTRIANGLE,
+        CellQualityInfoTableQUAD,
+        CellQualityInfoTableHEXAHEDRON,
+        CellQualityInfoTableTETRA,
+        CellQualityInfoTableWEDGE,
+        CellQualityInfoTablePYRAMID,
+    )
 
     # Make colormap tables
     os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
-    ColormapTableLINEAR.generate()
-    ColormapTableDIVERGING.generate()
-    ColormapTableMULTISEQUENTIAL.generate()
-    ColormapTableCYCLIC.generate()
-    ColormapTableCATEGORICAL.generate()
-    ColormapTableMISC.generate()
-    CETColormapTableLINEAR.generate()
-    CETColormapTableDIVERGING.generate()
-    CETColormapTableCYCLIC.generate()
-    CETColormapTableRAINBOW.generate()
-    CETColormapTableISOLUMINANT.generate()
+    generate(
+        ColormapTableLINEAR,
+        ColormapTableDIVERGING,
+        ColormapTableMULTISEQUENTIAL,
+        ColormapTableCYCLIC,
+        ColormapTableCATEGORICAL,
+        ColormapTableMISC,
+        CETColormapTableLINEAR,
+        CETColormapTableDIVERGING,
+        CETColormapTableCYCLIC,
+        CETColormapTableRAINBOW,
+        CETColormapTableISOLUMINANT,
+    )
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
-    LineStyleTable.generate()
-    MarkerStyleTable.generate()
-    ColorSchemeTable.generate()
-    ColorTable.generate()
-    ColorTableGRAY.generate()
-    ColorTableWHITE.generate()
-    ColorTableBLACK.generate()
-    ColorTableRED.generate()
-    ColorTableORANGE.generate()
-    ColorTableBROWN.generate()
-    ColorTableYELLOW.generate()
-    ColorTableGREEN.generate()
-    ColorTableCYAN.generate()
-    ColorTableBLUE.generate()
-    ColorTableVIOLET.generate()
-    ColorTableMAGENTA.generate()
+    generate(
+        LineStyleTable,
+        MarkerStyleTable,
+        ColorSchemeTable,
+        ColorTable,
+        ColorTableGRAY,
+        ColorTableWHITE,
+        ColorTableBLACK,
+        ColorTableRED,
+        ColorTableORANGE,
+        ColorTableBROWN,
+        ColorTableYELLOW,
+        ColorTableGREEN,
+        ColorTableCYAN,
+        ColorTableBLUE,
+        ColorTableVIOLET,
+        ColorTableMAGENTA,
+    )
 
     # Make dataset gallery carousel
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    return [make_dataset_carousel()]
+    paths.append(make_dataset_carousel())
+
+    return paths
 
 
 def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
@@ -3195,6 +3212,6 @@ def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname:
 
 
 if __name__ == '__main__':
-    new_rsts = make_all_tables()
+    new_rsts = make_tables()
     print('Generated rsts:', flush=True)
     print('\n'.join(new_rsts), flush=True)
