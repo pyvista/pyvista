@@ -139,11 +139,13 @@ class AnnotatedIntEnum(int, Enum):
 
     annotation: str
 
-    def __new__(cls, value: int, annotation: str) -> Self:
-        """Initialize."""
+    def __new__(cls, value: int, annotation: str, doc: str | None = None) -> Self:
+        """Initialize, optionally attaching a member docstring."""
         obj = int.__new__(cls, value)
         obj._value_ = value
         obj.annotation = annotation
+        if doc is not None:
+            obj.__doc__ = doc
         return obj
 
     @classmethod

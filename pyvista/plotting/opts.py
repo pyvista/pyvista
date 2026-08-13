@@ -47,25 +47,12 @@ class PointSpriteShape(str, Enum):
 
 
 class InterpolationType(AnnotatedIntEnum):
-    """Lighting interpolation types.
+    """Lighting interpolation types."""
 
-    Attributes
-    ----------
-    FLAT : (int, str)
-        Flat interpolation type.
-    GOURAUD : (int, str)
-        Gouraud interpolation type.
-    PHONG : (int, str)
-        Phong interpolation type.
-    PBR : (int, str)
-        Physically based rendering interpolation type.
-
-    """
-
-    FLAT = (0, 'Flat')
-    GOURAUD = (1, 'Gouraud')
-    PHONG = (2, 'PHONG')
-    PBR = (3, 'Physically based rendering')
+    FLAT = (0, 'Flat', 'Flat interpolation type.')
+    GOURAUD = (1, 'Gouraud', 'Gouraud interpolation type.')
+    PHONG = (2, 'PHONG', 'Phong interpolation type.')
+    PBR = (3, 'Physically based rendering', 'Physically based rendering interpolation type.')
 
     @classmethod
     def from_str(cls, input_str):
