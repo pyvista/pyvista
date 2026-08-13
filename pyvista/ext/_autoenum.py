@@ -83,6 +83,22 @@ def instance_property_names(module: str, objname: str) -> list[str]:  # numpydoc
     return sorted(_instance_properties(_resolve(module, objname)))
 
 
+def metaclass_property_descriptions(  # numpydoc ignore=RT01
+    module: str, objname: str
+) -> list[tuple[str, str]]:
+    """Return ``[(name, first docstring line)]`` for ``module.objname``'s metaclass properties.
+
+    ``.. autosummary::`` gets each entry's description the same eagerly-evaluated way it gets
+    everything else here wrong -- so enum.rst builds its own table from this instead.
+    """
+    props = _metaclass_properties(_resolve(module, objname))
+    descriptions = []
+    for name in sorted(props):
+        doc = inspect.cleandoc(props[name].__doc__ or '')
+        descriptions.append((name, doc.splitlines()[0] if doc else ''))
+    return descriptions
+
+
 def _is_bitmask_like(cls: type[Enum]) -> bool:
     """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two).
 

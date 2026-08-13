@@ -124,6 +124,28 @@ def test_instance_property_names_on_celltype():
     assert 'dimension_map' not in names  # that one's a metaclass property, not an instance one
 
 
+def test_metaclass_property_descriptions_uses_first_docstring_line(monkeypatch):
+    class Meta(type):
+        @property
+        def computed(cls):
+            """Return a value.
+
+            More detail that shouldn't appear in the description.
+            """
+            return 'value'
+
+    class Widget(metaclass=Meta): ...
+
+    monkeypatch.setattr(autoenum, '_resolve', lambda *_args: Widget)
+    descriptions = dict(autoenum.metaclass_property_descriptions('unused', 'unused'))
+    assert descriptions == {'computed': 'Return a value.'}
+
+
+def test_metaclass_property_descriptions_on_celltype():
+    descriptions = dict(autoenum.metaclass_property_descriptions('pyvista', 'CellType'))
+    assert descriptions['dimension_map'].startswith('Return a mapping with sets')
+
+
 @pytest.mark.parametrize(
     ('values', 'expected'),
     [
@@ -254,6 +276,14 @@ def test_tinypages_autoenum_build(tmp_path):
     assert '<p class="rubric">Enum Members</p>' in celltype_html
     assert 'blockquote' not in celltype_html
 
+    # Metaclass properties get their own "Class Attributes" table, with a real description
+    # (not blank, the way autosummary's own description extraction would leave it) and only
+    # one visible link to its page (the toctree-only, :template:-forced block stays hidden,
+    # not just duplicated).
+    assert '>Class Attributes<' in celltype_html
+    assert 'topological dimension' in celltype_text
+    assert celltype_html.count('pyvista.CellType.dimension_map.html#') == 1
+
     # CellStatus: hex-formatted values.
     cellstatus_text = _text(autosummary_dir / 'pyvista.CellStatus.html')
     assert '0x1' in cellstatus_text
@@ -274,3 +304,24 @@ def test_metaclassproperty_documenter_warns_on_non_metaclass_property(tmp_path):
     proc, _ = _build_tinypages_autoenum(tmp_path, extra_pages={'misuse.rst': misuse_rst})
     assert proc.returncode == 0, proc.stderr
     assert 'is not a metaclass property of' in proc.stderr
+
+
+def test_metaclassproperty_documenter_warns_on_unimportable_name(tmp_path):
+    """A name that fails to import at all leaves self.parent unset, not just non-metaclass."""
+    misuse_rst = (
+        'Misuse\n======\n\n.. autometaclassproperty:: totally.bogus.NonExistentThing12345\n'
+    )
+    proc, _ = _build_tinypages_autoenum(tmp_path, extra_pages={'misuse.rst': misuse_rst})
+    assert proc.returncode == 0, proc.stderr
+    assert 'failed to import' in proc.stderr
+
+
+def test_enum_documenter_filter_members_on_non_enum(tmp_path):
+    """.. autoenum:: on a plain class falls back to the stock ClassDocumenter behavior."""
+    misuse_rst = 'Misuse\n======\n\n.. autoenum:: pyvista.core.config.Config\n'
+    proc, autosummary_dir = _build_tinypages_autoenum(
+        tmp_path, extra_pages={'misuse.rst': misuse_rst}
+    )
+    assert proc.returncode == 0, proc.stderr
+    text = _text(autosummary_dir.parent / 'misuse.html')
+    assert 'validate_on_wrap' in text  # from Config's own docstring, not crashed/empty

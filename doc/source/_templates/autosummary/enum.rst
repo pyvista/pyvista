@@ -8,12 +8,11 @@
    for ``class`` (see pyvista/ext/_autoenum.py), so both lists below come from our own
    introspection helpers instead, via ``autosummary_context`` in conf.py. #}
 {% set properties = instance_property_names(module, objname) %}
-{% set class_properties = metaclass_property_names(module, objname) %}
-{% if properties or class_properties %}
+{% set class_properties = metaclass_property_descriptions(module, objname) %}
+{% if properties %}
 {{ _('Attributes') }}
 {{ '-' * _('Attributes')|length }}
 
-{% if properties %}
 .. autosummary::
    :toctree:
 {% for item in properties %}
@@ -22,15 +21,32 @@
 
 {% endif %}
 {% if class_properties %}
-{# Metaclass properties (e.g. dimension_map) evaluate eagerly through a plain getattr,
-   so the usual per-item dispatch can't tell they came from a property at all -- forcing
-   ``:template:`` here routes every item through our own directive instead. #}
-.. autosummary::
-   :toctree:
-   :template: metaclassproperty
-{% for item in class_properties %}
-   {{ objname }}.{{ item }}
+{{ _('Class Attributes') }}
+{{ '-' * _('Class Attributes')|length }}
+
+{# The autosummary directive gets each entry's description the same eagerly-evaluated way
+   it gets everything else about a metaclass property wrong, so this is a hand-written table
+   instead, using metaclass_property_descriptions(). The ``.. only::`` block below still
+   generates each one's page (autosummary_generate scans the raw text for ``:toctree:``,
+   regardless of ``only::``) -- it's just not rendered here, since its own table would have
+   the same blank descriptions this table exists to avoid. ``never`` is never a defined tag,
+   so the block is always excluded. #}
+.. only:: never
+
+   .. autosummary::
+      :toctree:
+      :template: metaclassproperty
+{% for item, description in class_properties %}
+      {{ objname }}.{{ item }}
 {%- endfor %}
 
-{% endif %}
+.. list-table::
+   :class: autosummary longtable
+   :widths: 10 90
+
+{% for item, description in class_properties %}
+   * - :py:obj:`{{ objname }}.{{ item }} <{{ module }}.{{ objname }}.{{ item }}>`
+     - {{ description }}
+{%- endfor %}
+
 {% endif %}

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pyvista as pv
 from pyvista.ext._autoenum import instance_property_names
+from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
 
 project = 'tinypages_autoenum'
@@ -25,5 +26,6 @@ templates_path = [str(_repo_root / 'doc' / 'source' / '_templates')]
 autosummary_context = {
     'instance_property_names': instance_property_names,
     'metaclass_property_names': metaclass_property_names,
+    'metaclass_property_descriptions': metaclass_property_descriptions,
     'skipmethods': [],
 }

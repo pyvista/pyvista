@@ -52,6 +52,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
+from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
@@ -432,6 +433,7 @@ autosummary_context = {
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,
     'metaclass_property_names': metaclass_property_names,
+    'metaclass_property_descriptions': metaclass_property_descriptions,
 }
 
 # The suffix(es) of source filenames.
