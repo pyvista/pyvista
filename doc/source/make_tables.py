@@ -1854,9 +1854,13 @@ def _get_fullname(typ: type[Any]) -> str:
 
 
 def _facet_slugify(text: str) -> str:
-    """Turn a facet label into a CSS-class-safe slug, e.g. ``STLReader`` -> ``stl-reader``."""
+    """Turn a facet label into a CSS-class-safe slug, e.g. ``POLY_LINE`` -> ``poly-line``.
+
+    Dashes underscores too, matching what docutils' class-option parser does
+    to `:class-card:` on its own, so the slug agrees with the rendered class.
+    """
     text = re.sub(r'(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])', '-', text)
-    return text.lower().replace(' ', '-')
+    return text.lower().replace(' ', '-').replace('_', '-')
 
 
 def _facet_size_bin(total_size_bytes: int | None) -> tuple[str, str] | None:
