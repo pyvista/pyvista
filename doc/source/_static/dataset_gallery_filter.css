@@ -126,3 +126,43 @@
 .gallery-card .sd-text-right.sd-text-nowrap {
   margin-left: auto;
 }
+
+/* The card carousel doesn't support native scroll gestures (overflow-x is
+   clipped, not scrollable) - these are the only way to move between cards. */
+.gallery-nav-button {
+  position: fixed;
+  top: 50%;
+  z-index: 15;
+  width: 2.5rem;
+  height: 2.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--pst-color-border);
+  background: var(--pst-color-surface);
+  color: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.gallery-nav-button:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.gallery-nav-button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+#gallery-prev {
+  left: 0.5rem;
+}
+
+#gallery-next {
+  right: 0.5rem;
+}

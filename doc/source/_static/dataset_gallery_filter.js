@@ -2,7 +2,9 @@
 // Builds a checkbox dropdown per facet from each card's `:class-card:`
 // classes (e.g. "dtype-polydata"); a card matches when it has at least one
 // checked value per facet with a selection (OR within a facet, AND across
-// facets), and its search text contains the search query.
+// facets), and its search text contains the search query. Also drives the
+// prev/next buttons: the card carousel clips overflow-x instead of scrolling
+// it, so scrollLeft/scrollIntoView is the only way to move between cards.
 (function () {
   "use strict";
 
@@ -86,7 +88,57 @@
     return el ? el.textContent : "";
   }
 
-  function applyFilters(cards, dropdowns, searchInput) {
+  function visibleCards(cards) {
+    return cards.filter((c) => !c.classList.contains("gallery-hidden"));
+  }
+
+  // Index, among currently-visible cards, of whichever one is flush (or
+  // closest) to the carousel's left edge - i.e. the one currently in view.
+  function currentCardIndex(carousel, visible) {
+    if (!carousel || !visible.length) return -1;
+    const carouselLeft = carousel.getBoundingClientRect().left;
+    let bestIndex = 0;
+    let bestDelta = Infinity;
+    visible.forEach((card, i) => {
+      const delta = Math.abs(card.getBoundingClientRect().left - carouselLeft);
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        bestIndex = i;
+      }
+    });
+    return bestIndex;
+  }
+
+  function scrollToCard(card, behavior) {
+    card.scrollIntoView({
+      inline: "start",
+      block: "nearest",
+      behavior: behavior || "auto",
+    });
+  }
+
+  function updateNavButtons(carousel, cards, prevBtn, nextBtn) {
+    if (!prevBtn || !nextBtn) return;
+    const visible = visibleCards(cards);
+    const idx = currentCardIndex(carousel, visible);
+    prevBtn.disabled = idx <= 0;
+    nextBtn.disabled = idx === -1 || idx >= visible.length - 1;
+  }
+
+  function applyFilters(
+    cards,
+    dropdowns,
+    searchInput,
+    carousel,
+    prevBtn,
+    nextBtn,
+  ) {
+    // Remember what's currently in view so it's still in view afterwards,
+    // as long as this filter change doesn't itself exclude it.
+    const anchorCard = carousel
+      ? visibleCards(cards)[currentCardIndex(carousel, visibleCards(cards))]
+      : undefined;
+
     const active = {};
     dropdowns.forEach((dropdown) => {
       const selected = getSelected(dropdown);
@@ -115,6 +167,15 @@
       countEl.textContent =
         visibleCount + " of " + cards.length + " datasets shown";
     }
+
+    if (
+      carousel &&
+      anchorCard &&
+      !anchorCard.classList.contains("gallery-hidden")
+    ) {
+      scrollToCard(anchorCard, "auto");
+    }
+    updateNavButtons(carousel, cards, prevBtn, nextBtn);
 
     syncUrl(active, query);
   }
@@ -157,7 +218,11 @@
     const manifest = loadManifest();
     const dropdowns = Array.from(bar.querySelectorAll(".facet-dropdown"));
     const searchInput = document.getElementById("gallery-search");
-    const onChange = () => applyFilters(cards, dropdowns, searchInput);
+    const carousel = cards[0].closest(".sd-cards-carousel");
+    const prevBtn = document.getElementById("gallery-prev");
+    const nextBtn = document.getElementById("gallery-next");
+    const onChange = () =>
+      applyFilters(cards, dropdowns, searchInput, carousel, prevBtn, nextBtn);
 
     dropdowns.forEach((dropdown) => {
       const facet = dropdown.dataset.facet;
@@ -205,11 +270,38 @@
             .forEach((i) => (i.checked = false));
         });
         if (searchInput) searchInput.value = "";
-        applyFilters(cards, dropdowns, searchInput);
+        applyFilters(cards, dropdowns, searchInput, carousel, prevBtn, nextBtn);
       });
     }
 
-    applyFilters(cards, dropdowns, searchInput);
+    if (carousel && prevBtn && nextBtn) {
+      prevBtn.addEventListener("click", () => {
+        const visible = visibleCards(cards);
+        const idx = currentCardIndex(carousel, visible);
+        if (idx > 0) scrollToCard(visible[idx - 1], "smooth");
+      });
+      nextBtn.addEventListener("click", () => {
+        const visible = visibleCards(cards);
+        const idx = currentCardIndex(carousel, visible);
+        if (idx !== -1 && idx < visible.length - 1) {
+          scrollToCard(visible[idx + 1], "smooth");
+        }
+      });
+      let scrollTimer;
+      carousel.addEventListener(
+        "scroll",
+        () => {
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(
+            () => updateNavButtons(carousel, cards, prevBtn, nextBtn),
+            100,
+          );
+        },
+        { passive: true },
+      );
+    }
+
+    applyFilters(cards, dropdowns, searchInput, carousel, prevBtn, nextBtn);
   }
 
   if (document.readyState === "loading") {
