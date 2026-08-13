@@ -60,7 +60,13 @@ jobs:
             # wrapper gives each attempt timeout/2, so this must be ~2x the real
             # runtime: at 25 the attempt was killed at 12 min, ~87% through.
             timeout: 50
-    runs-on: ubuntu-latest
+            # Pinned to match Linux Unit Testing, which is also pinned. This job
+            # compares against the committed image_cache, and llvmpipe renders
+            # differently across Mesa releases: ubuntu-latest (24.04, Mesa 25.2 /
+            # LLVM 20) fails cache comparisons that pass on 22.04 (Mesa 23.2 /
+            # LLVM 15) for any VTK build, stock included.
+            runner: ubuntu-22.04
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
