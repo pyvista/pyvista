@@ -20,6 +20,7 @@ from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
 from pyvista.examples import cells
+from tests.vtk_backend_divergence import NO_ENSIGHT_WRITER
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -502,7 +503,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.case'])
-@pytest.mark.skip_vtk_backend('cvista', reason='cvista does not ship vtkEnSightWriter')
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_ENSIGHT_WRITER)
 def test_ensight_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     if not binary:

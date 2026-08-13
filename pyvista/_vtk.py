@@ -43,13 +43,38 @@ def _resolve_vtk_root() -> str:
 # (rendering factory registration); classes go through __getattr__ below.
 _VTK_ROOT = _resolve_vtk_root()
 
-# cvista exposes every public name straight off the package root, resolved lazily
-# against an index generated at build time from the compiled modules (cvista
-# >=9.6.2.4). Classes are therefore looked up by NAME, never by module path, which
-# is what lets PyVista stay agnostic to the fork's internal module layout: cvista
-# relocates classes between modules for its wheel tiering, and stock VTK shuffles
-# them between releases. Neither can break a name-based lookup.
-_VTK_ROOT_IS_FLAT = _VTK_ROOT != 'vtkmodules'
+
+def _resolve_root_is_flat(root: str) -> bool:
+    """Return whether *root* exposes VTK classes directly off its package root.
+
+    cvista (>=9.6.2.4) resolves every public name lazily from the package root
+    against an index generated at build time, so classes are looked up by NAME
+    rather than by module path. That is what lets PyVista stay agnostic to a
+    build's internal module layout: cvista relocates classes between modules for
+    its wheel tiering and stock VTK shuffles them between releases, and neither
+    can break a name-based lookup.
+
+    The capability is probed rather than inferred from the name. A custom build
+    laid out like stock VTK is a perfectly valid ``PYVISTA_VTK_BACKEND``, and
+    assuming any non-``vtkmodules`` root is flat would send every lookup to a
+    package root that has no classes on it.
+    """
+    if root == 'vtkmodules':
+        return False
+    try:
+        module = importlib.import_module(root)
+    except ImportError as e:  # pragma: no cover - depends on the environment
+        msg = (
+            f'The VTK backend {root!r} is not importable. It is selected by '
+            f'PYVISTA_VTK_BACKEND or by being installed alongside PyVista.'
+        )
+        raise ImportError(msg) from e
+    # vtkPolyData is present in every VTK build PyVista supports, so its presence
+    # on the root distinguishes a flat namespace from a stock-style package.
+    return hasattr(module, 'vtkPolyData')
+
+
+_VTK_ROOT_IS_FLAT = _resolve_root_is_flat(_VTK_ROOT)
 
 
 if TYPE_CHECKING:

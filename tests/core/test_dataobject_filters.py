@@ -32,6 +32,7 @@ from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
+from tests.vtk_backend_divergence import CELL_STATUS_ENUM
 
 # CellStatus sorted by lower-case names, excluding VALID state
 CELL_STATUS_ARRAY_NAMES = [
@@ -2427,7 +2428,7 @@ def test_cell_validator():
 
 
 @pytest.mark.needs_vtk_version(9, 6, 0)
-@pytest.mark.skip_vtk_backend('cvista', reason='cvista diverges on vtkCellStatus enum exposure')
+@pytest.mark.skip_vtk_backend('cvista', reason=CELL_STATUS_ENUM)
 def test_cell_status():
     expected_pyvista_values = list(pv.CellStatus)
     expected_vtk_values = list(vars(_vtk.vtkCellStatus).values())

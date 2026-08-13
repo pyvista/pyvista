@@ -86,6 +86,9 @@ from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+from tests.vtk_backend_divergence import NO_ENSIGHT_WRITER
+from tests.vtk_backend_divergence import NO_POPENFOAM_READER
+from tests.vtk_backend_divergence import NO_SNAKE_CASE
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -394,9 +397,7 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
-@pytest.mark.skip_vtk_backend(
-    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
-)
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_POPENFOAM_READER)
 def test_read_reader_kwargs():
     file = ex.download_openfoam_tubes(load=False)
 
@@ -2749,7 +2750,7 @@ def test_vtk_verbosity_invalid_input(value):
 
 
 @pytest.mark.needs_vtk_version(9, 4)
-@pytest.mark.skip_vtk_backend('cvista', reason='cvista omits the VTK snake_case wrapper API')
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
 def test_vtk_snake_case():
     assert pv.vtk_snake_case() == 'error'
     match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
@@ -3131,7 +3132,7 @@ def test_cell_quality_info_raises():
 
 
 @pytest.mark.needs_vtk_version(9, 4)
-@pytest.mark.skip_vtk_backend('cvista', reason='cvista omits the VTK snake_case wrapper API')
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
 def test_is_vtk_attribute():
     assert is_vtk_attribute(pv.ImageData(), 'GetCells')
     assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
@@ -3480,7 +3481,7 @@ def test_try_callback_warns_every_time():
     assert 'callback failed' in str(messages[0].message)
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason='cvista does not ship vtkEnSightWriter')
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_ENSIGHT_WRITER)
 def test_write_path_of_ensight_writer(tmp_path, hexbeam):
 
     path = tmp_path / 'hexbeam.case'

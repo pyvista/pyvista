@@ -316,10 +316,6 @@ CASES = (
 
 @flaky_test(exceptions=(AssertionError,))
 @pytest.mark.parametrize('case', CASES, ids=lambda case: case.id)
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.MonkeyPatch):
     """Test tinypages build using pyvista's plot_directive extension."""
     for hook in ENVIRONMENT_HOOKS:
@@ -418,10 +414,6 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
 
 
 @flaky_test(exceptions=(AssertionError,))
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure that labeling image serial fails."""
     monkeypatch.delenv('PYVISTA_PLOT_USE_COUNTER', raising=False)
@@ -444,10 +436,6 @@ def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
 
 
 @flaky_test(exceptions=(AssertionError,))
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_tinypages_all_extensions_integration(tmp_path: Path):
     """Check that every PyVista-authored Sphinx extension builds together."""
     source_dir = copy_tinypages(tmp_path)
@@ -490,10 +478,6 @@ def test_tinypages_all_extensions_integration(tmp_path: Path):
 
 
 @pytest.mark.needs_playwright
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler
     from http.server import ThreadingHTTPServer

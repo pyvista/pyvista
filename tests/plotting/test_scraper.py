@@ -21,10 +21,6 @@ class QApplication:
         pass
 
 
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_scraper_with_app(tmpdir, monkeypatch):
     n_win = 2
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
@@ -76,10 +72,6 @@ def test_scraper_with_app(tmpdir, monkeypatch):
 
 @pytest.mark.parametrize('scraper_type', ['static', 'dynamic'])
 @pytest.mark.parametrize('n_win', [1, 2])
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()

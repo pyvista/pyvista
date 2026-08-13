@@ -905,7 +905,13 @@ class BasePlotter(_BoundsSizeMixin):
                 f'Set VTK_MODULE_NAME={_vtk._VTK_ROOT} in the environment before importing '
                 f'trame to point it at the same build.'
             )
-            raise ImportError(msg)
+            # Deliberately NOT an ImportError. `show()` wraps its scene capture in
+            # contextlib.suppress(ImportError) so a missing trame degrades quietly,
+            # and raising ImportError here would be swallowed by that same guard --
+            # leaving the user with silence instead of a misconfiguration they can
+            # act on. An installed-but-mismatched trame is a configuration error,
+            # not an absent optional dependency.
+            raise RuntimeError(msg)
         return component
 
     @_deprecate_positional_args(allowed=['filename'])

@@ -52,10 +52,6 @@ def test_trame_component_raises_when_unregistered():
         _StandIn()._trame_component()
 
 
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_export_html_warns_and_delegates(plotter, tmp_path):
     target = tmp_path / 'scene.html'
     with pytest.warns(PyVistaDeprecationWarning, match='Plotter.export_html is deprecated'):
@@ -65,10 +61,6 @@ def test_export_html_warns_and_delegates(plotter, tmp_path):
     assert target.stat().st_size > 0
 
 
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_export_vtksz_warns_and_delegates(plotter, tmp_path):
     target = tmp_path / 'scene.vtksz'
     with pytest.warns(PyVistaDeprecationWarning, match='Plotter.export_vtksz is deprecated'):
@@ -77,10 +69,6 @@ def test_export_vtksz_warns_and_delegates(plotter, tmp_path):
     assert target.stat().st_size > 0
 
 
-@pytest.mark.skip_vtk_backend(
-    'cvista',
-    reason='scene export needs trame built against the same VTK; pending Kitware/trame-vtk#124',
-)
 def test_export_vtksz_returns_bytes_when_no_filename(plotter):
     with pytest.warns(PyVistaDeprecationWarning, match='Plotter.export_vtksz is deprecated'):
         data = plotter.export_vtksz(filename=None)
@@ -98,5 +86,10 @@ def test_trame_component_rejects_a_mismatched_vtk_build(plotter, monkeypatch):
     monkeypatch.delitem(sys.modules, 'vtk_module', raising=False)
     monkeypatch.setenv('VTK_MODULE_NAME', 'a_different_vtk_build')
 
-    with pytest.raises(ImportError, match='VTK_MODULE_NAME'):
+    with pytest.raises(RuntimeError, match='VTK_MODULE_NAME') as excinfo:
         plotter._trame_component()
+
+    # `show()` captures scenes under a guard that ignores a missing trame, so a
+    # misconfigured one has to raise something that guard does not catch,
+    # otherwise the user gets silence instead of the problem.
+    assert not isinstance(excinfo.value, ImportError)
