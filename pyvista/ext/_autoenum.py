@@ -205,8 +205,12 @@ class EnumDocumenter(ClassDocumenter):
         cls = self.object
         as_hex = _is_bitmask_like(cls)
 
+        # A real section (not `.. rubric::`), so conf.py's hoist_docstring_sections picks
+        # it up too, same as numpydoc's own Parameters/Returns/Examples sections.
+        heading = 'Enum Members'
         self.add_line('', sourcename)
-        self.add_line('.. rubric:: Enum Members', sourcename)
+        self.add_line(heading, sourcename)
+        self.add_line('-' * len(heading), sourcename)
         self.add_line('', sourcename)
 
         for member in cls:

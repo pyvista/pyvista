@@ -271,9 +271,11 @@ def test_tinypages_autoenum_build(tmp_path):
     assert 'mappingproxy(' not in dimension_map_html
     assert 'topological dimension' in dimension_map_html  # from its docstring
 
-    # #3: enum members render under their own rubric heading, flat (no blockquote wrapper).
+    # #3: enum members render under their own real heading (a proper section, not a
+    # rubric -- rubrics aren't picked up by conf.py's hoist_docstring_sections, so
+    # wouldn't show up in the "on this page" nav), flat (no blockquote wrapper).
     celltype_html = (autosummary_dir / 'pyvista.CellType.html').read_text(encoding='utf-8')
-    assert '<p class="rubric">Enum Members</p>' in celltype_html
+    assert '<section id="enum-members">' in celltype_html
     assert 'blockquote' not in celltype_html
 
     # Metaclass properties get their own "Class Attributes" table, with a real description
