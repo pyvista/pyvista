@@ -2750,10 +2750,7 @@ class DatasetPropsGenerator:
         cell_types = loader.unique_cell_types
         if not cell_types:
             return '``N/A (no cells)``'
-        return '\n'.join(
-            f':attr:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
-            for cell_type in cell_types
-        )
+        return '\n'.join(f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cell_types)
 
     @staticmethod
     def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
