@@ -2882,12 +2882,7 @@ class DatasetCardFetcher:
 
     @classmethod
     def init_cards(cls):
-        """Load each dataset, generate its rst, and clear it from memory before the next.
-
-        Datasets are meshes and can be large; keeping only one loaded at a
-        time (rather than loading all of them before generating any rst)
-        keeps peak memory to a single dataset instead of the whole gallery.
-        """
+        """Load a single dataset at a time - avoid loading all datasets into memory."""
         type_mismatches: dict[str, str] = {}
         for module in DATASET_GALLERY_MODULES:
             cls._init_cards_from_module(module, type_mismatches)
