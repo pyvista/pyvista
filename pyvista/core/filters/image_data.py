@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
+import contextlib
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -1946,9 +1947,7 @@ class ImageDataFilters(DataSetFilters):
             return _get_output(alg)
 
         threshold_filter = (
-            _binary_image_threshold
-            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
-            else _image_threshold
+            _binary_image_threshold if pv.vtk_version_info >= (9, 7) else _image_threshold
         )
         output = threshold_filter(
             threshold_val=threshold_val,
@@ -2605,7 +2604,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image = examples.load_channels()
         >>> label_ids = np.unique(image.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
         >>> image.dimensions
         (251, 251, 101)
 
@@ -2642,7 +2641,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([1, 2, 3, 4])
+        pyvista_ndarray([1, 2, 3, 4]...)
 
         Set ``simplify_output`` to ``False`` to generate a two-component
         array instead showing the two boundary regions associated with each polygon.
@@ -2659,7 +2658,7 @@ class ImageDataFilters(DataSetFilters):
         array([[1, 0],
                [2, 0],
                [3, 0],
-               [4, 0]])
+               [4, 0]]...)
 
         Repeat the example but this time generate internal contours only. The generated
         array is 2D by default.
@@ -2678,7 +2677,7 @@ class ImageDataFilters(DataSetFilters):
                [1, 4],
                [2, 3],
                [2, 4],
-               [3, 4]])
+               [3, 4]]...)
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
@@ -2689,7 +2688,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([-5, -4, -3, -2, -1])
+        pyvista_ndarray([-5, -4, -3, -2, -1]...)
 
         >>> labels_plotter(contours, zoom=1.5).show()
 
@@ -2873,6 +2872,10 @@ class ImageDataFilters(DataSetFilters):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
         output: pv.PolyData = _get_output(alg)
+
+        # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
+        with contextlib.suppress(KeyError):
+            del output.point_data['NonManifoldTableIndices']
 
         if select_outputs is not None:
             output_ids = _validate_selection(select_outputs)

@@ -578,13 +578,38 @@ def test_compute_cell_sizes(datasets):
     assert np.allclose(grid.volume, volume)
 
 
-def test_compute_cell_sizes_multiblock_vertex_count():
-    multi = pv.MultiBlock([pv.PolyData()])
-    result = multi.compute_cell_sizes(vertex_count=True)[0]
-    assert 'Length' in result.array_names
-    assert 'Area' in result.array_names
-    assert 'Volume' in result.array_names
-    assert 'VertexCount' in result.array_names
+@pytest.mark.parametrize(
+    ('keyword', 'array_name'),
+    [
+        ('vertex_count', 'VertexCount'),
+        ('length', 'Length'),
+        ('area', 'Area'),
+        ('volume', 'Volume'),
+    ],
+)
+@pytest.mark.parametrize('empty', [True, False])
+def test_compute_single_cell_sizes(datasets, keyword, array_name, empty):
+    kwargs = {'vertex_count': False, 'length': False, 'area': False, 'volume': False}
+    kwargs[keyword] = True
+
+    for dataset in datasets:
+        dataset_ = dataset.__class__() if empty else dataset
+        dataset_.clear_data()
+        result = dataset_.compute_cell_sizes(**kwargs)
+        assert result.array_names == [array_name]
+
+
+@pytest.mark.parametrize('empty', [True, False])
+def test_compute_cell_sizes_multiblock_vertex_count(empty):
+    content = [] if empty else [pv.PolyData()]
+    multi = pv.MultiBlock(content)
+    result = multi.compute_cell_sizes(vertex_count=True)
+    if content:
+        poly = result[0]
+        assert 'Length' in poly.array_names
+        assert 'Area' in poly.array_names
+        assert 'Volume' in poly.array_names
+        assert 'VertexCount' in poly.array_names
 
 
 def test_compute_cell_sizes_composite(multiblock_all):

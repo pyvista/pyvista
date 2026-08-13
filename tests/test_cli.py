@@ -1117,6 +1117,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
     from pyvista.plotting._typing import ColorLike  # noqa: F401
     from pyvista.plotting._typing import PlottableType  # noqa: F401
+    from pyvista.plotting._typing import ThemeOptions  # noqa: F401
     from pyvista.plotting.themes import Theme  # noqa: F401
 
     plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())

@@ -60,7 +60,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 # get the int type from vtk
-ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
+ID_TYPE: type[np.int32 | np.longlong] = _get_vtk_id_type()
 
 if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError

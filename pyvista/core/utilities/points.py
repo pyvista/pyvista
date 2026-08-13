@@ -90,11 +90,7 @@ def vtk_points(  # noqa: PLR0917
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        size = (
-            vtk_object.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else vtk_object.GetCapacity()
-        )
+        size = vtk_object.GetSize() if pv.vtk_version_info < (9, 7) else vtk_object.GetCapacity()
         if size == points_.size:
             vtkpts = _vtk.vtkPoints()
             vtkpts.SetData(points_.VTKObject)

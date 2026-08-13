@@ -224,7 +224,7 @@ def test_clip_scalar_multiple():
     mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0)
     assert np.isclose(mesh_clip_y['y'].max(), 0.0)
     mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
+    if pv.vtk_version_info >= (9, 7):
         # Behavior change with vtkClipPolyData where the isovalue itself is no longer included
         # in the inside-out mesh https://gitlab.kitware.com/vtk/vtk/-/work_items/20017
         assert mesh_clip_z['z'].size == 0

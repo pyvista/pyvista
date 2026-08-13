@@ -1112,7 +1112,7 @@ def test_copy_implicit_vtk_array(plane):
     # Use the connectivity filter to generate an implicit vtkDataArray
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if pv.vtk_version_info >= (9, 7):
         assert isinstance(vtk_object, _vtk.VTKImplicitArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
@@ -1124,7 +1124,7 @@ def test_copy_implicit_vtk_array(plane):
     plane['test'] = conn['RegionId']
 
     new_vtk_object = plane['test'].VTKObject
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if pv.vtk_version_info >= (9, 7):
         assert isinstance(new_vtk_object, _vtk.VTKAOSArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
