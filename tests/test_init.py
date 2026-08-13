@@ -33,6 +33,7 @@ CORE_VTKMODULES = {
     'vtkmodules.util.implicit_functions',
     'vtkmodules.util.information',
     'vtkmodules.util.matrix',
+    'vtkmodules.util.molecule',
     'vtkmodules.util.numpy_support',
     'vtkmodules.util.pickle_support',
     'vtkmodules.util.selection',

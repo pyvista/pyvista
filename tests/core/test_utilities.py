@@ -2873,14 +2873,20 @@ def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools)
     reason='Requires runtime SMP backend selection support in VTK.',
 )
 def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    # vtkSMPTools clamps the requested count to the runner's hardware concurrency,
+    # so keep the requested counts within whatever the machine actually has.
+    available = os.cpu_count() or 1
+    outer_threads = min(2, available)
+    inner_threads = min(4, available)
+
     _vtk.vtkSMPTools.SetBackend('Sequential')
     _vtk.vtkSMPTools.Initialize(1)
 
-    with pv.enable_smp_tools(n_threads=2):
-        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
-        with pv.enable_smp_tools(n_threads=4):
-            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
-        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+    with pv.enable_smp_tools(n_threads=outer_threads):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == outer_threads
+        with pv.enable_smp_tools(n_threads=inner_threads):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == inner_threads
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == outer_threads
 
     assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
     assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
