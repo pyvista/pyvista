@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
@@ -2917,7 +2918,9 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 module_name = module.__name__.removeprefix('pyvista.')
-                print(f'generating rst for {module_name}... {dataset_name}', flush=True)
+                # stderr, not stdout, so this stays ordered before any of the reader's own errors
+                msg = f'generating rst for {module_name}... {dataset_name}'
+                print(msg, file=sys.stderr, flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
