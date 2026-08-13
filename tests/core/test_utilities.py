@@ -394,6 +394,9 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
+@pytest.mark.skip_vtk_backend(
+    'cvista', reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)'
+)
 def test_read_reader_kwargs():
     file = ex.download_openfoam_tubes(load=False)
 
@@ -3384,6 +3387,13 @@ def test_writer_data_mode_mixin(writer_cls):
     """Test that classes with an ascii setter have a data_mode property."""
     if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('Needs vtk 9.4')
+    # Probe the ONE writer rather than marking the whole test: an alternative VTK
+    # build may not ship a given writer's class, and a blanket skip_vtk_backend
+    # marker here would drop every other writer's coverage with it.
+    if writer_cls._vtk_class_name and not _vtk.has_attr(writer_cls._vtk_class_name):
+        pytest.skip(
+            f'{writer_cls._vtk_class_name} is not available on the {pv.vtk_backend()} backend'
+        )
     if not any('ascii' in attr.lower() for attr in dir(writer_cls._vtk_class)):
         pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
 
@@ -3457,6 +3467,7 @@ def test_try_callback_warns_every_time():
     assert 'callback failed' in str(messages[0].message)
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason='cvista does not ship vtkEnSightWriter')
 def test_write_path_of_ensight_writer(tmp_path, hexbeam):
 
     path = tmp_path / 'hexbeam.case'
