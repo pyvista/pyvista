@@ -60,22 +60,6 @@ def _eager_resolve_trame_component():
     jupyter_mod._ensure_entry_points()
 
 
-@pytest.fixture(autouse=True)
-def _trame_array_cache():
-    """Clear trame's serializer cache before ``check_gc``'s teardown check.
-
-    The (session-lifetime) ``SynchronizationContext`` caches every exported
-    data array and only releases them via a 20-second time window, so an
-    exporting test's arrays would otherwise survive it.
-    """
-    yield
-    from trame_vtk.modules.vtk import HELPERS_PER_SERVER
-
-    for helper in HELPERS_PER_SERVER.values():
-        protocol = helper._root_protocol
-        if protocol is None:
-            continue
-        for link_protocol in protocol.getLinkProtocols():
-            context = getattr(link_protocol, 'context', None)
-            if context is not None:
-                context.data_array_cache.clear()
+# _trame_array_cache moved up to tests/plotting/conftest.py: test_cli.py also
+# exports scenes, and scoping the cleanup to this directory left those arrays
+# to be blamed on whichever plotting test xdist ran next.

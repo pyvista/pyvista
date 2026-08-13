@@ -56,11 +56,10 @@ jobs:
           - project: playwright
             timeout: 6 # usually takes ~2
           - project: cvista
-            # A full run of core + plotting against a second VTK build, with
-            # scene export enabled, so it is the slowest integration by some way.
-            # The retry wrapper gives each attempt timeout/2, so this has to be
-            # ~2x the real runtime: an attempt reached 83% in 25 minutes with no
-            # failures, so 40 per attempt leaves reasonable headroom.
+            # The whole suite against a second VTK build, so it is the slowest
+            # integration by some way: ~26 min for the 13.5k tests on a runner
+            # where -n auto only yields 2 workers. The retry wrapper gives each
+            # attempt timeout/2, so this is ~2x the real runtime plus headroom.
             timeout: 80
             # Pinned to match Linux Unit Testing, which is also pinned. This job
             # compares against the committed image_cache, and llvmpipe renders
