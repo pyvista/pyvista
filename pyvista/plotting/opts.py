@@ -11,51 +11,39 @@ class ShaderType(str, Enum):
     """Shader types for GLSL shader replacements.
 
     .. versionadded:: 0.48
-
-    Attributes
-    ----------
-    VERTEX : str
-        Vertex shader.
-    FRAGMENT : str
-        Fragment shader.
-    GEOMETRY : str
-        Geometry shader.
-
     """
 
-    VERTEX = 'vertex'
-    FRAGMENT = 'fragment'
-    GEOMETRY = 'geometry'
+    def __new__(cls, value, doc):
+        """Override method to include member documentation."""
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        obj.__doc__ = doc
+        return obj
+
+    VERTEX = 'vertex', 'Vertex shader.'
+    FRAGMENT = 'fragment', 'Fragment shader.'
+    GEOMETRY = 'geometry', 'Geometry shader.'
 
 
 class PointSpriteShape(str, Enum):
     """Point sprite shape options for fragment shader rendering.
 
     .. versionadded:: 0.48
-
-    Attributes
-    ----------
-    CIRCLE : str
-        Circular disc.
-    TRIANGLE : str
-        Upward-pointing triangle.
-    HEXAGON : str
-        Regular hexagon.
-    DIAMOND : str
-        Diamond (rotated square).
-    ASTERISK : str
-        Five-pointed asterisk.
-    STAR : str
-        Five-pointed star.
-
     """
 
-    CIRCLE = 'circle'
-    TRIANGLE = 'triangle'
-    HEXAGON = 'hexagon'
-    DIAMOND = 'diamond'
-    ASTERISK = 'asterisk'
-    STAR = 'star'
+    def __new__(cls, value, doc):
+        """Override method to include member documentation."""
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        obj.__doc__ = doc
+        return obj
+
+    CIRCLE = 'circle', 'Circular disc.'
+    TRIANGLE = 'triangle', 'Upward-pointing triangle.'
+    HEXAGON = 'hexagon', 'Regular hexagon.'
+    DIAMOND = 'diamond', 'Diamond (rotated square).'
+    ASTERISK = 'asterisk', 'Five-pointed asterisk.'
+    STAR = 'star', 'Five-pointed star.'
 
 
 class InterpolationType(AnnotatedIntEnum):
