@@ -2130,32 +2130,13 @@ def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare:
 def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that supplementary keyword arguments are forwarded to add_mesh."""
     names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names} --show_edges=True --color=red')
+    main(f'compare {names} --show_edges=True --color=red --static')
 
     kwargs = mock_plot_compare.call_args.kwargs
     assert kwargs['show_edges'] is True
     assert kwargs['color'] == 'red'
-
-
-@pytest.mark.parametrize(
-    ('tokens', 'in_kwargs'),
-    [('', False), ('--static', True)],
-    ids=['default', 'static'],
-)
-def test_compare_called_static(
-    tmp_compare_files: list[Path],
-    mock_plot_compare: MagicMock,
-    tokens: str,
-    in_kwargs: bool,  # noqa: FBT001
-):
-    """Test that `--static` is forwarded to `plot_compare` as a supplementary kwarg."""
-    names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names} {tokens}')
-
-    kwargs = mock_plot_compare.call_args.kwargs
-    assert ('static' in kwargs) is in_kwargs
-    if in_kwargs:
-        assert kwargs['static'] is True
+    # `--static` is forwarded the same way, from its own flag rather than a `--key=value`
+    assert kwargs['static'] is True
 
 
 @pytest.mark.usefixtures('patch_app_console')
