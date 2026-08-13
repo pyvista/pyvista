@@ -180,7 +180,7 @@ The following are a list of optional dependencies and their purpose:
 VTK Backend
 ~~~~~~~~~~~
 
-PyVista runs against stock `VTK <https://vtk.org/>`_ by default, and nothing
+PyVista runs against stock `VTK <https://vtk.org/>`__ by default, and nothing
 below is required to use it.
 
 `cvista <https://github.com/pyvista/cvista>`_ is a community fork of VTK,
