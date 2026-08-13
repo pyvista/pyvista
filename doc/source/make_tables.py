@@ -2746,11 +2746,14 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_celltype_field(loader: _DatasetLoader):
-        """Format cell type(s) as plain text (no cell types shown for e.g. Texture)."""
+        """Format cell type(s) with doc references to their `pyvista.CellType` member."""
         cell_types = loader.unique_cell_types
         if not cell_types:
             return '``N/A (no cells)``'
-        return '\n'.join('``' + cell_type.name + '``' for cell_type in cell_types)
+        return '\n'.join(
+            f':any:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
+            for cell_type in cell_types
+        )
 
     @staticmethod
     def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
