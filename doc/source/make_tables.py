@@ -2156,6 +2156,10 @@ class DatasetCard:
     #       |       LongerValue |
     #       |    ExtraLongValue |
     #       |     Value3 Value4 |
+    #
+    # sd-text-right only right-aligns a wrapped value on its own line with
+    # help from custom CSS (.gallery-card .sd-text-right.sd-text-nowrap) in
+    # dataset_gallery_filter.css - sphinx-design has no built-in class for it.
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
