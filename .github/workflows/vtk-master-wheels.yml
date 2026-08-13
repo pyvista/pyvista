@@ -159,7 +159,7 @@ jobs:
           # Stream a filtered view live, but keep the full log to print on failure.
           noisy_pattern=': warning C[0-9]+:|: note:|^[[:space:]]+(with|\[|\])[[:space:]]*$|^[[:space:]]+[A-Za-z_][A-Za-z0-9_]*='
           set +e
-          cmake --build vtk-build --parallel 2>&1 | tee build.log | grep -Ev "$noisy_pattern"
+          cmake --build vtk-build --parallel 2>&1 | tee build.log | grep -Ev --line-buffered "$noisy_pattern"
           build_status=${PIPESTATUS[0]}
           set -e
           if [ "$build_status" -ne 0 ]; then
