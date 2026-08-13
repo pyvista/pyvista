@@ -56,7 +56,10 @@ jobs:
           - project: playwright
             timeout: 6 # usually takes ~2
           - project: cvista
-            timeout: 25 # a full run of the suite against a second VTK build
+            # A full run of core + plotting against a second VTK build. The retry
+            # wrapper gives each attempt timeout/2, so this must be ~2x the real
+            # runtime: at 25 the attempt was killed at 12 min, ~87% through.
+            timeout: 50
     runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
@@ -131,6 +134,7 @@ jobs:
             [pyvistaqt]="@larsoner"
             [geovista]=""
             [playwright]="@user27182"
+            [cvista]="@akaszynski"
           )
 
           # The matrix job names are just the project names (see `name:` above)
