@@ -2994,8 +2994,6 @@ class DatasetCarousel(DocTable):
         """
         |{}
         |
-        |:Dataset Count: ``{}``
-        |
         |.. card-carousel:: 1
         |
         """,
@@ -3008,11 +3006,8 @@ class DatasetCarousel(DocTable):
     @classmethod
     def get_header(cls, data):
         """Generate the rst for the carousel's header."""
-        num_datasets = len(data)
-        assert num_datasets > 0, 'No datasets were found.'
-        return cls.header_template.format(
-            DatasetCardFetcher.generate_filter_toolbar(), num_datasets
-        )
+        assert len(data) > 0, 'No datasets were found.'
+        return cls.header_template.format(DatasetCardFetcher.generate_filter_toolbar())
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
