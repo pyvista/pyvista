@@ -9,7 +9,6 @@ Type, Cell Type, Reader, or File Size - each filter accepts multiple values
 and combines with the others (e.g. Data Type "ImageData" + Cell Type
 "PIXEL" finds 2D images, "VOXEL" finds 3D volumes).
 
-.. _all_datasets_gallery:
 .. _medical_dataset_gallery:
 
-.. include:: /api/examples/dataset-gallery/all_datasets_carousel.rst
+.. include:: /api/examples/dataset-gallery/dataset_carousel.rst

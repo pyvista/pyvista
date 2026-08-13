@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -43,7 +42,6 @@ from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
-from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
@@ -97,14 +95,8 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
 # If there is no image, a dummy "Not Available" image is used instead.
 DATASET_GALLERY_IMAGE_NOT_AVAILABLE_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
 
-DATASET_GALLERY_MODULES = [
-    pv.examples.examples,
-    pv.examples.downloads,
-    pv.examples.planets,
-]
-
-# Display label shown in the dataset gallery's "Module" field/filter for each module.
-DATASET_GALLERY_MODULE_LABELS: dict[ModuleType, str] = {
+# Module -> display label shown in the dataset gallery's "Module" field/filter.
+DATASET_GALLERY_MODULES: dict[ModuleType, str] = {
     pv.examples.examples: 'Built-in',
     pv.examples.downloads: 'Downloads',
     pv.examples.planets: 'Planets',
@@ -2550,7 +2542,7 @@ class DatasetCard:
             classes.append(f'{prefix}-{slug}')
             labels[f'{prefix}-{slug}'] = value_name
 
-        add('mod', DATASET_GALLERY_MODULE_LABELS[loader._module])
+        add('mod', DATASET_GALLERY_MODULES[loader._module])
 
         dataset_types = loader.unique_dataset_type
         if not isinstance(dataset_types, tuple):
@@ -2750,7 +2742,7 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_module(loader: _DatasetLoader):
         """Format the dataset's source module, e.g. 'Downloads'."""
-        return '``' + DATASET_GALLERY_MODULE_LABELS[loader._module] + '``'
+        return '``' + DATASET_GALLERY_MODULES[loader._module] + '``'
 
     @staticmethod
     def generate_celltype_field(loader: _DatasetLoader):
@@ -2989,9 +2981,15 @@ class DatasetCardFetcher:
         return f'.. raw:: html\n\n{indented}\n'
 
 
-class DatasetGalleryCarousel(DocTable):
-    # Print the doc and dataset count
-    # The header defines the start of the card carousel
+class DatasetCarousel(DocTable):
+    """Class to generate the carousel with cards for every dataset.
+
+    Cards carry their metadata as ``:class-card:`` CSS classes, filtered
+    client-side by the toolbar from ``DatasetCardFetcher.generate_filter_toolbar``.
+    """
+
+    path = f'{DATASET_GALLERY_DIR}/dataset_carousel.rst'
+
     header_template = _aligned_dedent(
         """
         |{}
@@ -3003,81 +3001,23 @@ class DatasetGalleryCarousel(DocTable):
         """,
     )[1:-1]
 
-    # Subclasses should give the carousel a name
-    # The name should end with '_carousel'
-    name: str = None  # type: ignore[assignment]
-
-    # Subclasses should give the carousel a short description
-    # describing the carousel's contents
-    doc: str = None  # type: ignore[assignment]
-
-    dataset_names: list[str] = None  # type: ignore[assignment]
-
-    @property
-    @final
-    def path(self):
-        assert isinstance(self.name, str), 'Table name must be defined.'
-        assert self.name.endswith('_carousel'), 'Table name must end with "_carousel".'
-        return f'{DATASET_GALLERY_DIR}/{self.name}.rst'
-
     @classmethod
     def fetch_data(cls):
-        return list(cls.dataset_names)
+        return list(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
 
     @classmethod
-    @abstractmethod
-    def fetch_dataset_names(cls) -> list[str]:
-        """Return all dataset names to include in the gallery."""
-
-    @classmethod
-    @final
-    def init_dataset_names(cls):
-        names = list(cls.fetch_dataset_names())
-        assert names is not None, (
-            f'Dataset names cannot be None, {cls.fetch_dataset_names} must return '
-            f'a string iterable.'
-        )
-        cls.dataset_names = names
-
-    @classmethod
-    @final
     def get_header(cls, data):
         """Generate the rst for the carousel's header."""
-        assert isinstance(cls.name, str), f'Carousel {cls} must have a name.'
-        # Get doc value
-        doc = cls.doc.fget(cls) if isinstance(cls.doc, property) else cls.doc
-        assert isinstance(doc, str), f'Carousel {cls} must have a doc string.'
-
         num_datasets = len(data)
-        assert num_datasets > 0, f'No datasets were found for carousel {cls}.'
-        return cls.header_template.format(cls.doc, num_datasets)
+        assert num_datasets > 0, 'No datasets were found.'
+        return cls.header_template.format(
+            DatasetCardFetcher.generate_filter_toolbar(), num_datasets
+        )
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
         """Generate the rst card for a given dataset."""
-        assert isinstance(
-            dataset_name,
-            str,
-        ), f'Dataset name {dataset_name} for {cls} must be a string.'
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
-
-
-class AllDatasetsCarousel(DatasetGalleryCarousel):
-    """Class to generate the carousel with cards for every dataset.
-
-    Cards carry their metadata as ``:class-card:`` CSS classes, filtered
-    client-side by the toolbar from ``DatasetCardFetcher.generate_filter_toolbar``.
-    """
-
-    name = 'all_datasets_carousel'
-
-    @_classproperty
-    def doc(cls):  # noqa: N805
-        return DatasetCardFetcher.generate_filter_toolbar()
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
 
     @classmethod
     def generate(cls):
@@ -3091,14 +3031,6 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
             'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
         ):
             assert real_url in content
-
-
-def _resolve_path(cls):
-    """Resolve a DocTable class path, handling property descriptors."""
-    path = cls.path
-    if isinstance(path, property):
-        path = path.fget(cls)
-    return path
 
 
 def _validate_function_annotations(
@@ -3136,39 +3068,19 @@ def _validate_function_annotations(
         raise RuntimeError(msg)
 
 
-def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
-    # Check if all carousel RST files already exist - if so, skip the
-    # expensive dataset download/load step on incremental builds
-    carousel_paths = [_resolve_path(carousel) for carousel in carousels]
-    all_exist = all(Path(p).exists() for p in carousel_paths)
-    if all_exist:
-        print('All carousel RST files already exist, skipping dataset loading', flush=True)
-        return carousel_paths
+def make_dataset_carousel() -> str:  # noqa: D103
+    # Skip the expensive dataset download/load step on incremental builds
+    if Path(DatasetCarousel.path).exists():
+        print('Carousel RST file already exists, skipping dataset loading', flush=True)
+        return DatasetCarousel.path
 
-    # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
-
-    # Create lists of dataset names for each carousel
-    [carousel.init_dataset_names() for carousel in carousels]
-
-    # Generate rst for all card objects
     DatasetCardFetcher.generate_rst_all_cards()
-
-    # Generate rst for all carousels
-    [carousel.generate() for carousel in carousels]
-
-    # Validate function annotations
+    DatasetCarousel.generate()
     _validate_function_annotations(DatasetCardFetcher.DATASET_CARDS_OBJ)
-
-    # Clear loaded datasets from memory
     DatasetCardFetcher.clear_datasets()
 
-    return [carousel.path for carousel in carousels]
-
-
-CAROUSEL_LIST = [
-    AllDatasetsCarousel,
-]
+    return DatasetCarousel.path
 
 
 def make_all_tables() -> list[str]:  # noqa: D103
@@ -3232,9 +3144,9 @@ def make_all_tables() -> list[str]:  # noqa: D103
     ColorTableVIOLET.generate()
     ColorTableMAGENTA.generate()
 
-    # Make dataset gallery carousels
+    # Make dataset gallery carousel
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    return make_all_carousels(CAROUSEL_LIST)
+    return [make_dataset_carousel()]
 
 
 def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
