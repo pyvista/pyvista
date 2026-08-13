@@ -41,7 +41,7 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
-    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
+    if pv.vtk_version_info >= (9, 7):
         to_be_updated: Any = alg
     else:
         try:

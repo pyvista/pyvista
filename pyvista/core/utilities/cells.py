@@ -229,9 +229,9 @@ def _variable_size_cells(
             )
             raise ValueError(msg)
         _check_cell_indices(cell, elem_t, nr_points)
-        chunks.append(np.concatenate([[cell.size], cell]).astype(np.int64))
+        chunks.append(np.concatenate([[cell.size], cell]).astype(pv.ID_TYPE))
     types = np.array([elem_t] * len(per_cell), dtype=np.uint8)
-    arr = np.concatenate(chunks) if chunks else np.empty(0, dtype=np.int64)
+    arr = np.concatenate(chunks) if chunks else np.empty(0, dtype=pv.ID_TYPE)
     return types, arr
 
 

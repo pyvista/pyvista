@@ -6771,7 +6771,7 @@ def test_partitioned_dataset(sphere):
 
 
 @pytest.mark.needs_vtk_version(
-    (9, 6, 99),  # >= 9,7,0
+    (9, 7),
     reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
 )
 @pytest.mark.parametrize('cell_example', cell_example_functions)

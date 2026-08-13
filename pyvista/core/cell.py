@@ -34,13 +34,25 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-def _get_vtk_id_type() -> type[np.int32 | np.int64]:
-    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`."""
+def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
+    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`.
+
+    The 64-bit case returns :class:`numpy.longlong` (C ``long long``) rather than
+    :class:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
+    LP64 (Linux/macOS) numpy binds the name ``int64`` to C ``long`` instead, which is
+    a *distinct* scalar type. Since VTK 9.7 the numpy-to-VTK mapping follows the
+    underlying C type, so ``np.int64`` there resolves to ``VTK_LONG`` and only
+    ``np.longlong`` resolves to ``VTK_ID_TYPE``. ``longlong`` maps to ``VTK_LONG_LONG``
+    on all supported VTK versions and platforms, so it is correct either way.
+
+    The two compare equal as dtypes and have identical width, so this is invisible to
+    value comparisons; it only affects which VTK array class conversions produce.
+    """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
     elif VTK_ID_TYPE_SIZE == 8:
-        return np.int64
+        return np.longlong
     return np.int32
 
 
@@ -770,7 +782,7 @@ class CellArray(
 
         # ``vtkCellArray`` natively supports 32-bit storage (VTK >= 9). When both
         # arrays are already ``int32`` we preserve that instead of casting up to
-        # ``pv.ID_TYPE`` (``int64``), which avoids copying and doubling the memory of
+        # ``pv.ID_TYPE`` (64-bit), which avoids copying and doubling the memory of
         # large offset/connectivity arrays. See https://github.com/pyvista/pyvista/issues/8477
         if offsets.dtype == np.int32 and connectivity.dtype == np.int32:
             vtk_offsets = _vtk.numpy_to_vtk(np.ascontiguousarray(offsets.ravel()), deep=deep)

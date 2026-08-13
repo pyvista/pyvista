@@ -2290,7 +2290,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> conn = mesh.connectivity('all')
         >>> np.unique(conn['RegionId'])
-        pyvista_ndarray([0, 1, 2])
+        pyvista_ndarray([0, 1, 2]...)
 
         Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
 
@@ -3715,9 +3715,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetIntegratorTypeToRungeKutta45()
         # set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocatorToStaticCellLocator()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 7):
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
+
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg)
@@ -3894,7 +3901,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocatorToModifiedBSPTree()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 7):
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
@@ -4953,7 +4966,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> image = examples.load_channels()
         >>> np.unique(image.active_scalars)
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
 
         Split the image into its separate regions. Here, we also remove the first
         region for visualization.
@@ -5732,7 +5745,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
         >>> ind[:10]
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]...)
 
         """
         surf = DataObjectFilters.extract_surface(
@@ -7471,7 +7484,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(image_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
 
         Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
@@ -7500,7 +7513,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(subset_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([1, 2, 3])
+        pyvista_ndarray([1, 2, 3]...)
 
         Despite the changes to the dataset, the regions have the same coloring
         as before.
@@ -7538,7 +7551,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> scalars = image_labels.active_scalars
         >>> scalars[scalars > 2] *= -1
         >>> np.unique(scalars)
-        pyvista_ndarray([-4, -3,  0,  1,  2])
+        pyvista_ndarray([-4, -3,  0,  1,  2]...)
 
         Color the mesh and enable ``negative_indexing``. With this option enabled,
         the ``'index'`` coloring mode is used by default, and therefore the positive
@@ -7569,7 +7582,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> labeled_data = dataset.connectivity()
         >>> np.unique(labeled_data.active_scalars)
         pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
-                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]...)
 
         Color the dataset with default arguments. Despite having 26 separately colored
         regions, the colors from the default glasbey-style colormap are all relatively

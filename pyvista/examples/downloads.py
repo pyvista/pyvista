@@ -9444,6 +9444,7 @@ def download_particles(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
     >>> reader = pv.get_reader(filename)
     >>> reader.reader.SetDataByteOrderToBigEndian()
     >>> reader.reader.Update()
+    True
     >>> mesh = reader.read()
     >>> mesh.plot()
 
