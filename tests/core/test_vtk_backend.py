@@ -10,6 +10,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._vtk import _resolve_root_is_flat
 from pyvista._vtk import _resolve_vtk_root
 
 
@@ -153,3 +154,36 @@ def test_flat_resolution_still_curates_the_namespace(fake_flat_backend):  # noqa
     """An unmapped name is an AttributeError on a flat backend too."""
     with pytest.raises(AttributeError, match="not defined in PyVista's vtk namespace"):
         _vtk.__getattr__('vtkNotARealVTKClass')
+
+
+def test_stock_root_is_not_flat():
+    """``vtkmodules`` is a stock-layout package, never a flat namespace."""
+    assert _resolve_root_is_flat('vtkmodules') is False
+
+
+def test_flat_root_is_detected_by_probing(monkeypatch):
+    """A root carrying classes directly is flat, whatever it is called."""
+    root = ModuleType('_probe_flat_backend')
+    root.vtkPolyData = type('vtkPolyData', (), {})
+    monkeypatch.setitem(sys.modules, '_probe_flat_backend', root)
+
+    assert _resolve_root_is_flat('_probe_flat_backend') is True
+
+
+def test_stock_layout_custom_root_is_not_flat(monkeypatch):
+    """A custom build laid out like stock VTK must not be treated as flat.
+
+    Inferring this from the name alone sent every class lookup to a package root
+    with no classes on it, and the failure blamed the class rather than the
+    layout.
+    """
+    root = ModuleType('_probe_stock_layout_backend')  # no classes on the root
+    monkeypatch.setitem(sys.modules, '_probe_stock_layout_backend', root)
+
+    assert _resolve_root_is_flat('_probe_stock_layout_backend') is False
+
+
+def test_missing_backend_names_the_setting():
+    """An unimportable backend is reported as such, not as a missing class."""
+    with pytest.raises(ImportError, match='PYVISTA_VTK_BACKEND'):
+        _resolve_root_is_flat('_no_such_vtk_build')

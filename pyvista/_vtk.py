@@ -63,7 +63,7 @@ def _resolve_root_is_flat(root: str) -> bool:
         return False
     try:
         module = importlib.import_module(root)
-    except ImportError as e:  # pragma: no cover - depends on the environment
+    except ImportError as e:
         msg = (
             f'The VTK backend {root!r} is not importable. It is selected by '
             f'PYVISTA_VTK_BACKEND or by being installed alongside PyVista.'
