@@ -47,7 +47,11 @@ class PointSpriteShape(str, Enum):
 
 
 class InterpolationType(AnnotatedIntEnum):
-    """Lighting interpolation types."""
+    """Lighting interpolation types.
+
+    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    ``InterpolationType.from_any('Flat')``.
+    """
 
     FLAT = (0, 'Flat', 'Flat interpolation type.')
     GOURAUD = (1, 'Gouraud', 'Gouraud interpolation type.')
@@ -81,7 +85,11 @@ class InterpolationType(AnnotatedIntEnum):
 
 
 class RepresentationType(AnnotatedIntEnum):
-    """Types of representations the models can have."""
+    """Types of representations the models can have.
+
+    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    ``RepresentationType.from_any('Points')``.
+    """
 
     POINTS = (0, 'Points')
     WIREFRAME = (1, 'Wireframe')
@@ -89,7 +97,11 @@ class RepresentationType(AnnotatedIntEnum):
 
 
 class ElementType(AnnotatedIntEnum):
-    """Types of elemental geometries."""
+    """Types of elemental geometries.
+
+    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    ``ElementType.from_any('Cell')``.
+    """
 
     MESH = (0, 'Mesh')
     CELL = (1, 'Cell')
@@ -99,7 +111,11 @@ class ElementType(AnnotatedIntEnum):
 
 
 class PickerType(AnnotatedIntEnum):
-    """Types of pickers."""
+    """Types of pickers.
+
+    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    ``PickerType.from_any('Volume')``.
+    """
 
     AREA = (0, 'Area')
     CELL = (1, 'Cell')
@@ -114,7 +130,11 @@ class PickerType(AnnotatedIntEnum):
 
 
 class StereoType(AnnotatedIntEnum):
-    """Types of stereo rendering."""
+    """Types of stereo rendering.
+
+    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    ``StereoType.from_any('Anaglyph')``.
+    """
 
     CRYSTAL_EYES = (1, 'Crystal Eyes')
     RED_BLUE = (2, 'Red Blue')
