@@ -13,7 +13,7 @@ class ShaderType(str, Enum):
     .. versionadded:: 0.48
     """
 
-    def __new__(cls, value, doc):
+    def __new__(cls, value, doc=None):
         """Override method to include member documentation."""
         obj = str.__new__(cls, value)
         obj._value_ = value
@@ -31,7 +31,7 @@ class PointSpriteShape(str, Enum):
     .. versionadded:: 0.48
     """
 
-    def __new__(cls, value, doc):
+    def __new__(cls, value, doc=None):
         """Override method to include member documentation."""
         obj = str.__new__(cls, value)
         obj._value_ = value
