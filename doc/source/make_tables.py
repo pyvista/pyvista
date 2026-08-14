@@ -2584,9 +2584,9 @@ class DatasetCard:
         cell_types = loader.unique_cell_types
         if cell_types:
             for cell_type in cell_types:
-                add('ct', cell_type.name)
+                add('ctype', cell_type.name)
         else:
-            add('ct', 'N/A (no cells)', slug='na')
+            add('ctype', 'N/A (no cells)', slug='na')
 
         reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_types is None:
@@ -2971,23 +2971,14 @@ class DatasetCardFetcher:
 
     @classmethod
     def generate_filter_toolbar_open(cls) -> str:
-        """Open the nav-button/toolbar wrapper and place the filter bar and Previous button.
+        """Open `gallery-toolbar-wrap`, closed by `generate_filter_toolbar_close`.
 
         See _static/dataset_gallery_filter.js for the filtering behavior.
-
-        This opens `gallery-toolbar-wrap`, closed by `generate_filter_toolbar_close`
-        after the carousel. Both the bar+buttons (row 1) and the carousel (row 2,
-        see dataset_gallery_filter.css) live in that one shared grid, rather than
-        a wrap around just the bar: a position: sticky element can only stay
-        stuck for as long as its own parent is in view, so the buttons need a
-        parent as tall as the whole carousel to stay pinned to the bar (row 1)
-        throughout scrolling instead of scrolling away once the short bar itself
-        has passed.
         """
         groups = [
             ('mod', 'Module'),
             ('dtype', 'Data Type'),
-            ('ct', 'Cell Type'),
+            ('ctype', 'Cell Type'),
             ('reader', 'Reader'),
             ('size', 'File Size'),
         ]
@@ -3063,10 +3054,7 @@ class DatasetCarousel(DocTable):
         """,
     )[1:-1]
 
-    # Every card's own rst (see `DatasetCardFetcher.DATASET_CARDS_RST`) already
-    # starts with a blank line, but nothing separates the last card from this -
-    # a directive needs a blank line before it, or it's parsed as that card's
-    # content instead of a sibling.
+    # Leading blank line: separates this from the last card's own rst.
     footer_template = _aligned_dedent(
         """
         |
