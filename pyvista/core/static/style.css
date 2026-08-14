@@ -4,10 +4,11 @@
 
 :root {
   --pv-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
-  --pv-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
-  --pv-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --pv-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.6));
+  --pv-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.55));
   --pv-border-color: var(--jp-border-color2, #e0e0e0);
   --pv-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --pv-background-color: var(--jp-layout-color0, #ffffff);
   --pv-background-color-row-even: var(--jp-layout-color1, #f5f5f5);
   --pv-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
   --pv-badge-active: #1b5e20;
@@ -18,45 +19,60 @@
 
 body[data-jp-theme-light="false"] {
   --pv-font-color0: var(--jp-content-font-color0, rgba(255, 255, 255, 1));
-  --pv-font-color2: var(--jp-content-font-color2, rgba(255, 255, 255, 0.54));
-  --pv-font-color3: var(--jp-content-font-color3, rgba(255, 255, 255, 0.38));
+  --pv-font-color2: var(--jp-content-font-color2, rgba(255, 255, 255, 0.6));
+  --pv-font-color3: var(--jp-content-font-color3, rgba(255, 255, 255, 0.55));
   --pv-border-color: var(--jp-border-color2, #424242);
   --pv-disabled-color: var(--jp-layout-color3, #616161);
-  --pv-background-color-row-even: var(--jp-layout-color1, #1a1a1a);
-  --pv-background-color-row-odd: var(--jp-layout-color2, #252525);
+  --pv-background-color: var(--jp-layout-color0, #1a1a1a);
+  --pv-background-color-row-even: var(--jp-layout-color1, #1f1f1f);
+  --pv-background-color-row-odd: var(--jp-layout-color2, #2a2a2a);
   --pv-badge-active: #66bb6a;
   --pv-badge-normals: #64b5f6;
   --pv-badge-vectors: #4db6ac;
   --pv-badge-tcoords: #b39ddb;
 }
 
+/* Values here are deliberately hardcoded rather than written as
+ * var(--jp-*, fallback). A var() fallback only applies when the variable is
+ * *undefined*, not when it is defined with the wrong value. Hosts such as the
+ * jupyter_sphinx Sphinx extension define the --jp-* variables light-only on
+ * :root, and custom properties inherit -- so var(--jp-layout-color0, #1a1a1a)
+ * would resolve to the inherited *light* value here and never reach the
+ * fallback. That is what made the text white on a light background. Do not
+ * "simplify" these into var() chains.
+ */
 html[theme="dark"],
 html[data-theme="dark"],
 body[data-theme="dark"],
 body.vscode-dark {
   --pv-font-color0: rgba(255, 255, 255, 1);
-  --pv-font-color2: rgba(255, 255, 255, 0.54);
-  --pv-font-color3: rgba(255, 255, 255, 0.38);
+  --pv-font-color2: rgba(255, 255, 255, 0.6);
+  --pv-font-color3: rgba(255, 255, 255, 0.55);
   --pv-border-color: #424242;
   --pv-disabled-color: #616161;
-  --pv-background-color-row-even: #1a1a1a;
-  --pv-background-color-row-odd: #252525;
+  --pv-background-color: #1a1a1a;
+  --pv-background-color-row-even: #1f1f1f;
+  --pv-background-color-row-odd: #2a2a2a;
   --pv-badge-active: #66bb6a;
   --pv-badge-normals: #64b5f6;
   --pv-badge-vectors: #4db6ac;
   --pv-badge-tcoords: #b39ddb;
 }
 
-/* OS-level dark mode fallback: applies when no explicit data-theme is set */
+/* OS-level dark mode fallback: applies when no explicit data-theme is set.
+ * Keep these values identical to the explicit dark block above, and hardcoded
+ * for the same reason.
+ */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
     --pv-font-color0: rgba(255, 255, 255, 1);
-    --pv-font-color2: rgba(255, 255, 255, 0.54);
-    --pv-font-color3: rgba(255, 255, 255, 0.38);
+    --pv-font-color2: rgba(255, 255, 255, 0.6);
+    --pv-font-color3: rgba(255, 255, 255, 0.55);
     --pv-border-color: #424242;
     --pv-disabled-color: #616161;
-    --pv-background-color-row-even: #1a1a1a;
-    --pv-background-color-row-odd: #252525;
+    --pv-background-color: #1a1a1a;
+    --pv-background-color-row-even: #1f1f1f;
+    --pv-background-color-row-odd: #2a2a2a;
     --pv-badge-active: #66bb6a;
     --pv-badge-normals: #64b5f6;
     --pv-badge-vectors: #4db6ac;
@@ -64,15 +80,23 @@ body.vscode-dark {
   }
 }
 
+/* The background is set explicitly so that it is always resolved from the same
+ * theme block as the text color. Without it the repr inherits the host's
+ * background, which can disagree with our text color and render the repr
+ * unreadable (e.g. white text on a light background on docs.pyvista.org).
+ */
 .pv-wrap {
   display: block !important;
   min-width: 300px;
   max-width: 700px;
   line-height: 1.6;
-  padding-bottom: 4px;
+  padding: 6px 8px 8px 8px;
+  box-sizing: border-box;
+  border-radius: 3px;
   font-family: var(--jp-ui-font-family, sans-serif);
   font-size: var(--jp-ui-font-size1, 13px);
   color: var(--pv-font-color0);
+  background-color: var(--pv-background-color);
 }
 
 .pv-text-repr-fallback {
@@ -140,10 +164,13 @@ body.vscode-dark {
 }
 
 /* Copy-to-clipboard button */
+/* opacity compounds with the alpha of --pv-font-color3, so keep it high enough
+ * that this control still clears the 3:1 non-text contrast minimum.
+ */
 .pv-copy-btn {
   display: inline-block;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.75;
   font-size: 0.85em;
   padding: 0 3px;
   vertical-align: middle;

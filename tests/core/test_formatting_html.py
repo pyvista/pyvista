@@ -34,6 +34,73 @@ def test_css_cached():
     assert a is b
 
 
+def _css_theme_blocks(css: str) -> dict[str, str]:
+    """Return the body of each block which *declares* ``--pv-`` tokens, keyed by selector.
+
+    Comments are stripped first so that a token merely mentioned in prose is not
+    mistaken for a declaration.
+    """
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.DOTALL)
+    blocks = {}
+    for selector, body in re.findall(r'([^{}]+)\{([^{}]+)\}', css):
+        if re.search(r'--pv-[\w-]+\s*:', body):
+            blocks[' '.join(selector.split())] = body
+    return blocks
+
+
+def test_css_wrap_paints_own_background():
+    # The repr must not inherit the host's background, or the text color and the
+    # background can be resolved from different themes and disagree. See #8813.
+    css = _load_css()
+    wrap = re.search(r'\.pv-wrap\s*\{([^}]*)\}', css)
+    assert wrap is not None
+    assert 'background-color: var(--pv-background-color)' in wrap.group(1)
+
+
+def test_css_theme_blocks_define_the_same_tokens():
+    # This bug was caused by token drift between theme blocks: a token defined in
+    # one block and forgotten in another. Assert all blocks declare the same set.
+    blocks = _css_theme_blocks(_load_css())
+    assert len(blocks) == 4, f'expected 4 theme blocks, found {sorted(blocks)}'
+
+    token_sets = {
+        selector: frozenset(re.findall(r'(--pv-[\w-]+)\s*:', body))
+        for selector, body in blocks.items()
+    }
+    assert len(set(token_sets.values())) == 1, (
+        f'theme blocks declare different tokens: { {k: sorted(v) for k, v in token_sets.items()} }'
+    )
+    assert '--pv-background-color' in next(iter(token_sets.values()))
+
+
+def test_css_dark_blocks_do_not_use_jp_variables():
+    # A var() fallback only applies when the variable is undefined, not when it is
+    # defined with a light value. Hosts such as jupyter_sphinx define the --jp-*
+    # variables light-only on :root, and custom properties inherit -- so using them
+    # in a dark block resolves to the inherited light value. See #8813.
+    blocks = _css_theme_blocks(_load_css())
+    dark = {
+        selector: body
+        for selector, body in blocks.items()
+        if 'data-theme="dark"' in selector or 'not([data-theme="light"])' in selector
+    }
+    assert len(dark) == 2, f'expected 2 hardcoded dark blocks, found {sorted(dark)}'
+    for selector, body in dark.items():
+        assert 'var(--jp-' not in body, f'{selector} must hardcode its values'
+
+
+def test_css_dark_blocks_are_consistent():
+    """The explicit and the OS-preference dark blocks must agree."""
+    blocks = _css_theme_blocks(_load_css())
+    bodies = [
+        dict(re.findall(r'(--pv-[\w-]+)\s*:\s*([^;]+);', body))
+        for selector, body in blocks.items()
+        if 'data-theme="dark"' in selector or 'not([data-theme="light"])' in selector
+    ]
+    assert len(bodies) == 2
+    assert bodies[0] == bodies[1]
+
+
 @pytest.mark.parametrize(
     'mesh_type',
     [
