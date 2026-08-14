@@ -106,6 +106,13 @@ DATASET_GALLERY_MODULES: dict[ModuleType, str] = {
     pv.examples.planets: 'Planets',
 }
 
+# Module -> sphinx-design badge color for the dataset gallery's module badge.
+DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
+    pv.examples.examples: 'primary',
+    pv.examples.downloads: 'secondary',
+    pv.examples.planets: 'success',
+}
+
 # File size bin edges, in decimal MB (matches `_format_file_size` in
 # pyvista/examples/_dataset_loader.py) and calibrated to the real size
 # distribution of the gallery's datasets.
@@ -2759,8 +2766,9 @@ class DatasetPropsGenerator:
     def generate_module_badge(loader: _DatasetLoader):
         """Format the dataset's source module as a small badge linking to its module page."""
         label = DATASET_GALLERY_MODULES[loader._module]
+        color = DATASET_GALLERY_MODULE_BADGE_COLORS[loader._module]
         module_path = loader._module.__name__
-        return f':bdg-ref-primary:`{label} <{module_path}>`'
+        return f':bdg-ref-{color}:`{label} <{module_path}>`'
 
     @staticmethod
     def generate_celltype_field(loader: _DatasetLoader):
