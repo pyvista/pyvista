@@ -107,6 +107,62 @@ def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
         pv.wrap(vtk_poly_with_invalid_arrays)
 
 
+@pytest.mark.parametrize(
+    ('vtk_composite_cls', 'set_block'),
+    [
+        (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiBlockDataSet.SetBlock),
+        (_vtk.vtkPartitionedDataSet, _vtk.vtkPartitionedDataSet.SetPartition),
+    ],
+)
+def test_wrap_composite_valid_data_does_not_warn(sphere, vtk_composite_cls, set_block):
+    # No explicit warnings.catch_warnings needed: the project's pytest config
+    # already turns any unexpected warning into a test failure.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    vtk_composite = vtk_composite_cls()
+    set_block(vtk_composite, 0, vtk_poly)
+    pv.wrap(vtk_composite)
+
+
+def test_wrap_nested_multiblock_valid_data_does_not_warn(sphere):
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk_poly)
+    outer = _vtk.vtkMultiBlockDataSet()
+    outer.SetBlock(0, nested)
+    pv.wrap(outer)
+
+
+@pytest.mark.parametrize(
+    ('vtk_composite_cls', 'set_block'),
+    [
+        (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiBlockDataSet.SetBlock),
+        (_vtk.vtkPartitionedDataSet, _vtk.vtkPartitionedDataSet.SetPartition),
+    ],
+)
+def test_wrap_composite_with_invalid_dataset_warns(
+    vtk_poly_with_invalid_arrays,
+    vtk_composite_cls,
+    set_block,
+):
+    # The invalid DataSet is a block directly inside the composite.
+    vtk_composite = vtk_composite_cls()
+    set_block(vtk_composite, 0, vtk_poly_with_invalid_arrays)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_composite)
+
+
+def test_wrap_nested_multiblock_with_invalid_dataset_warns(vtk_poly_with_invalid_arrays):
+    # The invalid DataSet is inside a nested MultiBlock (PartitionedDataSet can't nest).
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk_poly_with_invalid_arrays)
+    outer = _vtk.vtkMultiBlockDataSet()
+    outer.SetBlock(0, nested)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(outer)
+
+
 def test_wrap_auto_names_unnamed_arrays():
     # The pre-optimization wrap() path validated via keys(), which has the
     # side effect of renaming unnamed arrays to ``Unnamed_<i>``. Filters
