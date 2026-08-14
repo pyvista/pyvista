@@ -125,15 +125,6 @@
   display: none !important;
 }
 
-/* The theme underlines internal cross-reference links by default. */
-.gallery-card a {
-  text-decoration: none;
-}
-
-.gallery-card a:hover {
-  text-decoration: underline;
-}
-
 /* Right-aligns a value that's wrapped onto its own line (space-between has nothing to push against there). */
 .gallery-card .field-value-primary {
   margin-left: auto;
