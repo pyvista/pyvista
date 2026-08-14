@@ -40,6 +40,10 @@
 
   function buildPanel(dropdown, facet, values, labels, onChange) {
     const panel = dropdown.querySelector(".facet-panel");
+    // The panel floats over card content below it; without this, a click on
+    // an option also bubbles out to whatever's underneath at those
+    // coordinates (e.g. a card's link), triggering that too.
+    panel.addEventListener("click", (evt) => evt.stopPropagation());
     values.forEach((value) => {
       const id = "facet-" + facet + "-" + value;
       const label = document.createElement("label");

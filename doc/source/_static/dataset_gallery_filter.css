@@ -86,6 +86,11 @@
   cursor: pointer;
   white-space: nowrap;
   font-weight: 400;
+  /* Skips the tap-delay some mobile browsers use to detect double-tap-zoom;
+     without it, a fast tap here can reflow the grid (hiding/showing many
+     cards) before the browser's delayed synthetic click fires, landing that
+     click on whatever ended up under the same screen coordinates instead. */
+  touch-action: manipulation;
 }
 
 .facet-option:hover {
