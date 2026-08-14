@@ -7,10 +7,18 @@
   align-items: start;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
   background: var(--pst-color-surface);
   border: 1px solid var(--pst-color-border);
   border-radius: 0.5rem;
+}
+
+/* Every card's thumbnail loading in (222 of them, side by side) can grow the
+   carousel's height well after the page first settles. Without this, the
+   browser's scroll anchoring "helpfully" re-scrolls to compensate, silently
+   undoing a deep-link's scroll correction (see dataset_gallery_filter.js)
+   some time after it ran. */
+.sd-cards-carousel {
+  overflow-anchor: none;
 }
 
 /* Shared sizing/typography for every toolbar control, so the search box,
@@ -132,31 +140,60 @@
   margin-left: auto;
 }
 
-/* Stacks the Previous/Next buttons on top of the carousel (same grid cell)
-   so they can be anchored to its box instead of the viewport's - a plain
-   position: fixed button sits at the screen edge, which overlaps the site's
-   sidebars whenever the carousel doesn't span the full viewport width. */
-.gallery-carousel-wrap {
+/* Row 1 (bar + both nav slots, all overlapping) sits above row 2 (the
+   carousel) in one shared grid. The buttons need to be part of that same
+   tall grid, not a wrap around just the bar: position: sticky only stays
+   stuck while its own parent is still in view, so a wrap no taller than the
+   bar itself would let the buttons scroll away the moment the (short) bar
+   scrolled past, instead of staying pinned throughout the whole carousel. */
+.gallery-toolbar-wrap {
   display: grid;
+  /* On the wrap, not the bar itself: a margin on a grid item grows its row's
+     height, which would throw off the buttons' offset below (see
+     .gallery-nav-button), since that's measured from the row's own edge. */
+  margin-bottom: 1rem;
 }
 
-.gallery-carousel-wrap > * {
-  grid-area: 1 / 1;
+#gallery-filter-bar,
+.gallery-nav-slot {
+  grid-row: 1;
+  grid-column: 1;
 }
 
-/* A more reliable way to move between cards than the carousel's native
-   drag/swipe scrolling, which is finicky to hit correctly on mobile.
-   position: sticky keeps them vertically centered in the viewport (top: 50vh
-   - a fixed viewport-relative length, unlike sticky's own percentages which
-   resolve against the carousel's height) for as long as any part of the
-   tall carousel is in view. */
-.gallery-nav-button {
+.sd-cards-carousel {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+/* Stretches to the bar's row height (row 1's default grid alignment) and
+   stays pinned to it with the same top: 0 as the bar - a position: sticky
+   element's `top` only ever takes effect once scrolling actually engages
+   the stick; before that (e.g. at page load) it just sits at its normal,
+   in-flow position, which for a stretched grid item is the bar's own box.
+   Matching top: 0 keeps the slot's box flush with the bar's in both the
+   resting and stuck states, so it's a stable, always-correct reference
+   point for the button's own offset below (see .gallery-nav-button).
+   pointer-events: none passes clicks through the slot's empty space (most
+   of the row) to the bar/dropdowns beneath; the button re-enables its own. */
+.gallery-nav-slot {
   position: sticky;
-  top: 50vh;
-  z-index: 15;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Positioned from the slot's own box (top: 100% = the bar's bottom edge,
+   which the slot's box always matches - see .gallery-nav-slot), not the
+   filter toolbar's live-scrolling position: 100% + a fixed offset lands on
+   the card header band (dataset name + module badge) below the bar,
+   consistently whether the slot is resting or actively stuck. */
+.gallery-nav-button {
+  position: absolute;
+  top: calc(100% + 28px);
+  transform: translateY(-50%);
+  pointer-events: auto;
   width: 2.5rem;
   height: 2.5rem;
-  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,11 +218,9 @@
 }
 
 #gallery-prev {
-  justify-self: start;
-  margin-left: 0.5rem;
+  left: 0.5rem;
 }
 
 #gallery-next {
-  justify-self: end;
-  margin-right: 0.5rem;
+  right: 0.5rem;
 }

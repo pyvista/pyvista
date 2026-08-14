@@ -2970,10 +2970,19 @@ class DatasetCardFetcher:
                 dataset_loader.clear_dataset()
 
     @classmethod
-    def generate_filter_toolbar(cls) -> str:
-        """Generate the raw-HTML filter toolbar shown above the dataset gallery grid.
+    def generate_filter_toolbar_open(cls) -> str:
+        """Open the nav-button/toolbar wrapper and place the filter bar and Previous button.
 
         See _static/dataset_gallery_filter.js for the filtering behavior.
+
+        This opens `gallery-toolbar-wrap`, closed by `generate_filter_toolbar_close`
+        after the carousel. Both the bar+buttons (row 1) and the carousel (row 2,
+        see dataset_gallery_filter.css) live in that one shared grid, rather than
+        a wrap around just the bar: a position: sticky element can only stay
+        stuck for as long as its own parent is in view, so the buttons need a
+        parent as tall as the whole carousel to stay pinned to the bar (row 1)
+        throughout scrolling instead of scrolling away once the short bar itself
+        has passed.
         """
         groups = [
             ('mod', 'Module'),
@@ -2998,6 +3007,11 @@ class DatasetCardFetcher:
             'order': {'size': [slug for _, _, slug in DATASET_GALLERY_SIZE_BINS]},
         }
         html = (
+            '<div class="gallery-toolbar-wrap">\n'
+            '<div class="gallery-nav-slot" id="gallery-prev-slot">\n'
+            '<button id="gallery-prev" class="gallery-nav-button"\n'
+            '        type="button" aria-label="Previous dataset">&lsaquo;</button>\n'
+            '</div>\n'
             '<div id="gallery-filter-bar" class="gallery-filter-bar">\n'
             '  <input id="gallery-search" type="search"\n'
             '         placeholder="Search datasets by name..."\n'
@@ -3012,31 +3026,23 @@ class DatasetCardFetcher:
         )
         return cls._wrap_raw_html(html)
 
+    @classmethod
+    def generate_filter_toolbar_close(cls) -> str:
+        """Place the Next button and close the wrapper opened by `generate_filter_toolbar_open`."""
+        html = (
+            '<div class="gallery-nav-slot" id="gallery-next-slot">\n'
+            '<button id="gallery-next" class="gallery-nav-button"\n'
+            '        type="button" aria-label="Next dataset">&rsaquo;</button>\n'
+            '</div>\n'
+            '</div>\n'
+        )
+        return cls._wrap_raw_html(html)
+
     @staticmethod
     def _wrap_raw_html(html: str) -> str:
         """Indent literal HTML and wrap it in a rst ``raw:: html`` block."""
         indented = '\n'.join('   ' + line if line else line for line in html.splitlines())
         return f'.. raw:: html\n\n{indented}\n'
-
-    @classmethod
-    def generate_carousel_open(cls) -> str:
-        """Open the nav-button wrapper and place the Previous button, before the carousel."""
-        html = (
-            '<div class="gallery-carousel-wrap">\n'
-            '<button id="gallery-prev" class="gallery-nav-button"\n'
-            '        type="button" aria-label="Previous dataset">&lsaquo;</button>\n'
-        )
-        return cls._wrap_raw_html(html)
-
-    @classmethod
-    def generate_carousel_close(cls) -> str:
-        """Place the Next button and close the nav-button wrapper, after the carousel."""
-        html = (
-            '<button id="gallery-next" class="gallery-nav-button"\n'
-            '        type="button" aria-label="Next dataset">&rsaquo;</button>\n'
-            '</div>\n'
-        )
-        return cls._wrap_raw_html(html)
 
 
 class DatasetCarousel(DocTable):
@@ -3052,7 +3058,6 @@ class DatasetCarousel(DocTable):
         """
         |{}
         |
-        |{}
         |.. card-carousel:: 1
         |
         """,
@@ -3075,17 +3080,9 @@ class DatasetCarousel(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        """Generate the rst for the carousel's header.
-
-        Opens the nav-button wrapper (see `get_footer`) so the Previous/Next
-        buttons and the carousel share a parent, letting CSS anchor them to
-        the carousel's own box instead of the viewport.
-        """
+        """Generate the rst for the carousel's header."""
         assert len(data) > 0, 'No datasets were found.'
-        return cls.header_template.format(
-            DatasetCardFetcher.generate_filter_toolbar(),
-            DatasetCardFetcher.generate_carousel_open(),
-        )
+        return cls.header_template.format(DatasetCardFetcher.generate_filter_toolbar_open())
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
@@ -3094,8 +3091,8 @@ class DatasetCarousel(DocTable):
 
     @classmethod
     def get_footer(cls, _):
-        """Close the nav-button wrapper opened in `get_header`, after all cards."""
-        return cls.footer_template.format(DatasetCardFetcher.generate_carousel_close())
+        """Close the toolbar wrapper opened in `get_header`, after all cards."""
+        return cls.footer_template.format(DatasetCardFetcher.generate_filter_toolbar_close())
 
     @classmethod
     def generate(cls):
