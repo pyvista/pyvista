@@ -30,6 +30,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.__main__ import CLI_APP
 from pyvista.__main__ import main
+from pyvista._cli.compare import _compare as cli_compare
 from pyvista._cli.plot import _plot as cli_plot
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from tests.core.test_dataobject_filters import _add_vtk_array
@@ -1052,11 +1053,11 @@ def missing_plot_arguments():
     `pv.cli.plot._plot` function."""
     return {
         'jupyter_backend',
-        'theme',
         'return_viewer',
         'return_img',
         'jupyter_kwargs',
         'notebook',
+        'before_close_callback',  # a callable, which the command line cannot pass
         'var_item',  # intentionally renamed to 'paths' in the CLI
     }
 
@@ -1111,8 +1112,10 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     # Test the parameters annotations
 
     # Need to import some types such that inspect eval them using locals()
+    from collections.abc import Callable  # noqa: F401
     from typing import Literal  # noqa: F401
 
+    from pyvista import Plotter  # noqa: F401
     from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
     from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
     from pyvista.plotting._typing import ColorLike  # noqa: F401
@@ -1142,11 +1145,127 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
         'var_item',
         'screenshot',
         'cpos',  # The CLI takes the named camera positions only, not a full one
+        'theme',  # The CLI takes a theme by name only, not a `Theme` instance
     }
     plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
 
     assert plot_annotations == cli_annotations
+
+
+# CLI-only parameters that have no explicit counterpart in pv.plot_compare
+_CLI_ONLY_COMPARE_PARAMS = {'skip_unreadable', 'paths', 'static', 'outline'}
+
+
+@fixture
+def missing_compare_arguments():
+    """Argument names in the `pv.plot_compare` signature which are intentionally removed
+    from the `pv.cli.compare._compare` function."""
+    return {
+        'jupyter_backend',
+        'jupyter_kwargs',
+        'notebook',
+        'return_img',
+        'return_viewer',
+        'before_close_callback',  # a callable, which the command line cannot pass
+        'label_kwargs',  # an arbitrary `add_text` kwargs dict, with no CLI equivalent
+        'reference_kwargs',  # an arbitrary `add_mesh` kwargs dict, with no CLI equivalent
+        'reference_mesh',  # given as `--outline` instead, which builds one from the paths
+        'datasets',  # intentionally renamed to 'paths' in the CLI
+    }
+
+
+def test_compare_cli_synced(missing_compare_arguments: set[str]):
+    """
+    Since the `pyvista compare` CLI exposes a subset of the original `pv.plot_compare`
+    arguments, any changes made in the signature of `pv.plot_compare` must be synced (or
+    not) in the `pyvista compare` CLI.
+
+    This test will fail if any:
+    - argument names
+    - default values
+    - type annotations
+
+    are different between those functions.
+    """
+    compare_sig = inspect.signature(pv.plot_compare)
+    compare_params = set(compare_sig.parameters.keys())
+    cli_sig = inspect.signature(cli_compare)
+    cli_params = set(cli_sig.parameters.keys())
+
+    diff = compare_params - cli_params - missing_compare_arguments
+    assert diff == set(), (
+        f'Found unexpected differences {diff} in the CLI compare signature arguments'
+    )
+
+    # 'datasets' is intentionally renamed to 'paths' in the CLI
+    assert 'paths' in cli_params
+    assert 'datasets' in compare_params
+
+    # Test the parameters defaults
+
+    # `labels` defaults to a sentinel in `pv.plot_compare`, which generates a label per
+    # dataset. The CLI defaults to `None` instead and does its own labeling from the
+    # paths when it is not given, which `None` means for `pv.plot_compare` too, so
+    # forwarding the CLI's own default as given would disable labels entirely.
+    default_excludes = {'labels'}
+    cli_defaults = {
+        name: p.default
+        for name, p in cli_sig.parameters.items()
+        if name not in _CLI_ONLY_COMPARE_PARAMS and name not in default_excludes
+    }
+    compare_defaults = {name: compare_sig.parameters[name].default for name in cli_defaults}
+    assert cli_defaults == compare_defaults
+
+    # Test the parameters annotations
+
+    # Need to import some types such that inspect eval them using locals()
+    from collections.abc import Callable  # noqa: F401
+    from collections.abc import Sequence  # noqa: F401
+    from typing import Literal  # noqa: F401
+
+    from pyvista import DataSet  # noqa: F401
+    from pyvista import MultiBlock  # noqa: F401
+    from pyvista import PartitionedDataSet  # noqa: F401
+    from pyvista import Plotter  # noqa: F401
+    from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
+    from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
+    from pyvista.plotting._typing import ColorLike  # noqa: F401
+    from pyvista.plotting._typing import PlottableType  # noqa: F401
+    from pyvista.plotting._typing import ThemeOptions  # noqa: F401
+    from pyvista.plotting.text import TextPositionOptions  # noqa: F401
+    from pyvista.plotting.themes import Theme  # noqa: F401
+
+    compare_annotations = inspect.get_annotations(pv.plot_compare, eval_str=True, locals=locals())
+    cli_annotations = inspect.get_annotations(cli_compare, eval_str=True)
+
+    for param in _CLI_ONLY_COMPARE_PARAMS:
+        cli_annotations.pop(param, None)
+
+    cli_annotations = {
+        k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
+    }  # get __origin__ since Annotated type
+    compare_annotations = {k: v for k, v in compare_annotations.items() if k != 'return'}
+
+    # Filter only the ones from cli
+    compare_annotations = {name: compare_annotations[name] for name in cli_annotations}
+
+    # Filter the ones which have intentionally different annotations
+    excludes = {
+        'anti_aliasing',
+        'background',
+        'border_color',
+        'datasets',
+        'screenshot',
+        'cpos',  # The CLI takes the named camera positions only, not a full one
+        'theme',  # The CLI takes a theme by name only, not a `Theme` instance
+        'shape',  # The CLI takes a string it parses itself, not a sequence or descriptor
+        'labels',  # The CLI takes a concrete `list`, one token per label, not any sequence
+    }
+    compare_annotations = {k: v for k, v in compare_annotations.items() if k not in excludes}
+    cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
+
+    assert compare_annotations == cli_annotations
 
 
 class CasesPlot:
@@ -1918,9 +2037,9 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
     assert kwargs['labels'] == ['sphere', 'cube']
     assert kwargs['link'] is None
     assert kwargs['shape'] is None
-    assert kwargs['dataset_kwargs'] == {}
-    assert kwargs['plotter_kwargs']['off_screen'] is None
-    assert kwargs['show_kwargs'] == {'full_screen': None, 'interactive': True}
+    assert kwargs['off_screen'] is None
+    assert kwargs['full_screen'] is None
+    assert kwargs['interactive'] is True
 
 
 @pytest.mark.parametrize(
@@ -2011,12 +2130,13 @@ def test_compare_called_labels(tmp_compare_files: list[Path], mock_plot_compare:
 def test_compare_called_kwargs(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):
     """Test that supplementary keyword arguments are forwarded to add_mesh."""
     names = ' '.join(path.name for path in tmp_compare_files)
-    main(f'compare {names} --show_edges=True --color=red')
+    main(f'compare {names} --show_edges=True --color=red --static')
 
-    assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {
-        'show_edges': True,
-        'color': 'red',
-    }
+    kwargs = mock_plot_compare.call_args.kwargs
+    assert kwargs['show_edges'] is True
+    assert kwargs['color'] == 'red'
+    # `--static` is forwarded the same way, from its own flag rather than a `--key=value`
+    assert kwargs['static'] is True
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -2031,7 +2151,7 @@ def test_compare_kwargs_hyphen_warns(
     assert 'A hyphen `-` has been used as supplementary keyword' in err
     assert '--show_edges=True' in err.replace('\n', '').replace('│', '')
     # The argument is still forwarded, with the hyphenated name
-    assert mock_plot_compare.call_args.kwargs['dataset_kwargs'] == {'show-edges': True}
+    assert mock_plot_compare.call_args.kwargs['show-edges'] is True
 
 
 def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare: MagicMock):

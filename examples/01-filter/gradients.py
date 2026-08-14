@@ -67,7 +67,7 @@ datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
 
 pv.plot_compare(
     datasets,
-    dataset_kwargs={'opacity': 0.75},
+    opacity=0.75,
     reference_mesh=mesh_g.outline(),
     shape=keys.shape,
     cpos='iso',
@@ -92,7 +92,7 @@ datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
 
 pv.plot_compare(
     datasets,
-    dataset_kwargs={'opacity': 0.75},
+    opacity=0.75,
     reference_mesh=mesh_g.outline(),
     shape=keys.shape,
     cpos='iso',
