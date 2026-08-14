@@ -125,6 +125,15 @@
   display: none !important;
 }
 
+/* The theme underlines internal cross-reference links by default. */
+.gallery-card a {
+  text-decoration: none;
+}
+
+.gallery-card a:hover {
+  text-decoration: underline;
+}
+
 /* Right-aligns a value that's wrapped onto its own line (space-between has nothing to push against there). */
 .gallery-card .field-value-primary {
   margin-left: auto;
@@ -158,7 +167,7 @@
 /* top: 100% = the slot's own bottom edge (always the bar's), so the fixed offset below it lands on the card header band regardless of scroll state. */
 .gallery-nav-button {
   position: absolute;
-  top: calc(100% + 36px);
+  top: calc(100% + 38px);
   transform: translateY(-50%);
   pointer-events: auto;
   width: 2.5rem;
