@@ -15,7 +15,7 @@ from pyvista.core.errors import VTKVersionError
 # A wrapped VTK class' ``__module__`` is rooted at the selected backend
 # (``vtkmodules`` for stock VTK, ``cvista`` for the fork). Accept both so the
 # override-stripping and snake_case guards work under either backend.
-_VTK_MODULE_PREFIXES = ('vtkmodules.', f'{_vtk._VTK_ROOT}.')
+_VTK_MODULE_PREFIXES = tuple({'vtkmodules.', f'{_vtk._VTK_ROOT}.'})
 
 
 class VersionInfo(NamedTuple):
@@ -98,6 +98,11 @@ def vtk_backend() -> str:
     Builds differ in which VTK modules they ship, so use this to branch on -- or
     raise a clear error for -- a feature the active build does not provide,
     rather than letting an import fail somewhere deeper.
+
+    The returned name is also accepted by ``PYVISTA_VTK_BACKEND``, so it can be
+    round-tripped.
+
+    .. versionadded:: 0.49
 
     Returns
     -------

@@ -47,14 +47,18 @@ def test_resolve_root_falls_back_to_vtkmodules(monkeypatch):
 
 
 def test_private_names_are_not_routed_to_the_backend():
-    """A missing private helper is an AttributeError, never a backend ImportError.
+    """A private lookup must not produce the developer-facing mapping message.
 
-    ``_vtk.__getattr__`` must not forward private lookups to the VTK root: they
-    are this module's own helpers (and interpreter probes), so forwarding turns a
-    plain missing attribute into a confusing ImportError raised by the backend.
+    An unmapped name raises ``AttributeError`` with or without the guard in
+    ``_vtk.__getattr__``, so asserting only the exception type proves nothing.
+    What the guard actually changes is the message: interpreter and library
+    probes (``copy``, ``pickle``, IPython) ask for dunders PyVista does not map,
+    and they must not be told to add a ``module:__wrapped__`` entry to ``_vtk``.
     """
-    with pytest.raises(AttributeError):
-        _vtk._definitely_not_a_real_helper  # noqa: B018
+    with pytest.raises(AttributeError) as excinfo:
+        _vtk.__getattr__('__wrapped__')
+
+    assert "not defined in PyVista's vtk namespace" not in str(excinfo.value)
 
 
 def test_unmapped_name_raises_attribute_error():
@@ -189,7 +193,7 @@ def test_missing_backend_names_the_setting():
         _resolve_root_is_flat('_no_such_vtk_build')
 
 
-def test_special_loaders_resolve_through_the_active_backend():
+def test_special_loaders_resolve_through_the_active_backend(fake_flat_backend):
     """No ``_SPECIAL_LOADERS`` entry may hardcode a VTK build.
 
     ``_SPECIAL_LOADERS`` is consulted before the backend branch in
@@ -197,23 +201,40 @@ def test_special_loaders_resolve_through_the_active_backend():
     back a stock class while the rest of the namespace hands back the active
     backend's. Mixing wrapped types from two VTK builds does not fail at the
     import; it fails later at the C++ boundary with ``TypeError: <method>
-    argument 1:``, naming a method rather than the import that caused it.
+    argument 1:``, naming a method rather than the import that caused it. That is
+    what happened with vtkRenderPassCollection and vtkSequencePass: a stock
+    collection rejecting a cvista pass took out 32 render-pass tests.
 
-    That is what happened with vtkRenderPassCollection and vtkSequencePass:
-    ``_vtk.vtkRenderPassCollection().AddItem(_vtk.vtkRenderStepsPass())`` mixed a
-    stock collection with a cvista pass and took out 32 render-pass tests.
-
-    ``pyvista`` is allowed because a loader may legitimately fall back to a
-    placeholder it defines itself (see ``_import_vtkPythonItem``).
+    Runs against the stand-in flat backend rather than the real one, because on
+    stock VTK a hardcoded ``vtkmodules`` import IS the correct answer -- checking
+    the live backend would make this pass on every per-PR run and only bite in
+    the nightly cvista job, which is too late.
     """
-    allowed = (_vtk._VTK_ROOT, 'pyvista')
+    for name in _vtk._SPECIAL_LOADERS:
+        setattr(fake_flat_backend, name, type(name, (), {}))
+
     offenders = {}
     for name in _vtk._SPECIAL_LOADERS:
-        module = getattr(getattr(_vtk, name), '__module__', '')
-        if not module.startswith(allowed):
-            offenders[name] = module
+        resolved = _vtk.__getattr__(name)
+        if resolved is not getattr(fake_flat_backend, name):
+            offenders[name] = getattr(resolved, '__module__', '?')
 
     assert not offenders, (
-        f'special loaders bypassed the {_vtk._VTK_ROOT!r} backend: {offenders}. '
-        f'Resolve them with _import_from(), which routes through the active backend.'
+        f'special loaders bypassed the active backend: {offenders}. '
+        f'Resolve them with _import_from(), which routes through _VTK_ROOT.'
     )
+
+
+def test_module_prefixes_match_the_active_backend():
+    """``_VTK_MODULE_PREFIXES`` must match what this build's classes report.
+
+    The override-stripping guard and ``is_vtk_attribute`` both key off it, and
+    both fail OPEN if it does not match: a wrapped class stops being recognised
+    as a VTK class and nothing raises. Every other test that exercises those two
+    is ``skip_vtk_backend('cvista')``, so without this the tuple has no coverage
+    at all on the backend it was widened for.
+    """
+    from pyvista.core._vtk_utilities import _VTK_MODULE_PREFIXES
+
+    assert _vtk.vtkPolyData.__module__.startswith(_VTK_MODULE_PREFIXES)
+    assert len(_VTK_MODULE_PREFIXES) == len(set(_VTK_MODULE_PREFIXES))

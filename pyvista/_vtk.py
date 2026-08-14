@@ -22,6 +22,9 @@ def _resolve_vtk_root() -> str:
 
     1. The ``PYVISTA_VTK_BACKEND`` environment variable, if set, always wins
        (``vtkmodules`` to force stock VTK, or ``cvista`` to force the fork).
+       ``vtk`` is accepted as a spelling of ``vtkmodules``, so the name
+       :func:`pyvista.vtk_backend` reports round-trips back through this
+       variable.
     2. Otherwise, if the community ``cvista`` fork is installed, it is
        auto-selected. Installing ``pyvista[cvista]`` is therefore the only action
        needed to opt in.
@@ -32,7 +35,13 @@ def _resolve_vtk_root() -> str:
     """
     backend = os.environ.get('PYVISTA_VTK_BACKEND')
     if backend:
-        return backend
+        # `vtk` is the name vtk_backend() reports for stock VTK, and the obvious
+        # thing to set. It is also an importable package whose root carries
+        # classes, so without this it probes as a FLAT backend and every
+        # subsequent lookup goes to the eager `vtk` shim -- `import pyvista`
+        # then dies on a name that shim does not re-export. Map it to the real
+        # import root instead.
+        return 'vtkmodules' if backend == 'vtk' else backend
     if importlib.util.find_spec('cvista') is not None:
         return 'cvista'
     return 'vtkmodules'

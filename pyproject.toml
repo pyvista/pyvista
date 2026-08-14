@@ -53,10 +53,12 @@ colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 # that cannot plot or read a file. The `all` extra pulls cvista-rendering and
 # cvista-io alongside it.
 #
-# Floor is 9.6.2.4: the first release exposing the flat class namespace this
-# integration resolves against, and the first whose cp310/cp311 wheels are
-# installable at all (earlier ones were published with an abi3 >=3.12 floor).
-cvista = ['cvista[all]>=9.6.2.4,<9.7.0']
+# Floor is 9.6.2.5: 9.6.2.4 was the first release exposing the flat class
+# namespace, and the first whose cp310/cp311 wheels are installable at all
+# (earlier ones were published with an abi3 >=3.12 floor) -- but it resolves
+# VTK_DOUBLE_MAX to 1e+99 and VTK_LONG_MAX to the 32-bit limit through that
+# namespace (pyvista/cvista#253). Silently wrong numbers, so do not offer it.
+cvista = ['cvista[all]>=9.6.2.5,<9.7.0']
 io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
