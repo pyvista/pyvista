@@ -126,6 +126,23 @@
     });
   }
 
+  // The browser's native scroll-to-fragment on load lands the target flush
+  // with the viewport top, under the sticky filter bar. Nudge it back down
+  // by the bar's actual (wraps-by-viewport-width) height.
+  function scrollHashTargetBelowBar(bar) {
+    if (!location.hash) return;
+    const target = document.getElementById(
+      decodeURIComponent(location.hash.slice(1)),
+    );
+    if (!target) return;
+    const top =
+      target.getBoundingClientRect().top +
+      window.scrollY -
+      bar.getBoundingClientRect().height -
+      8;
+    window.scrollTo({ top, behavior: "auto" });
+  }
+
   function updateNavButtons(carousel, cards, prevBtn, nextBtn) {
     if (!prevBtn || !nextBtn) return;
     const visible = visibleCards(cards);
@@ -311,6 +328,7 @@
     }
 
     applyFilters(cards, dropdowns, searchInput, carousel, prevBtn, nextBtn);
+    scrollHashTargetBelowBar(bar);
   }
 
   if (document.readyState === "loading") {
