@@ -10,6 +10,7 @@ import trimesh
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities import reader as reader_module
@@ -646,6 +647,8 @@ def test_make_tri_mesh(sphere):
 
     assert np.allclose(sphere.points, mesh.points)
     assert np.allclose(sphere.faces, mesh.faces)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_wrappers():

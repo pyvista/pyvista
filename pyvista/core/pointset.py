@@ -38,6 +38,7 @@ from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
 from .utilities.arrays import convert_array
+from .utilities.cells import _get_regular_cells_from_dict
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
@@ -894,11 +895,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return DataSet.__str__(self)
 
     @staticmethod
-    def _make_vertex_cells(npoints: int) -> NumpyArray[int]:
-        cells = np.empty((npoints, 2), dtype=pv.ID_TYPE)
-        cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
-        return cells
+    def _make_vertex_cells(npoints: int) -> CellArray:
+        connectivity = cast('NumpyArray[int]', np.arange(npoints, dtype=pv.ID_TYPE).reshape(-1, 1))
+        return CellArray.from_regular_cells(connectivity)
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1374,7 +1373,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return False
 
         # next, check if there are three points per face
-        return bool((np.diff(self._offset_array) == 3).all())
+        return self.GetPolys().IsHomogeneous() == 3
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
@@ -1391,11 +1390,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def __or__(self, other_mesh):
         """Compute boolean union of two meshes."""
         return self.boolean_union(other_mesh)
-
-    @property
-    def _offset_array(self) -> NumpyArray[int]:
-        """Return the array used to store cell offsets."""
-        return _get_offset_array(self.GetPolys())
 
     @property
     def _connectivity_array(self) -> NumpyArray[int]:
@@ -2044,8 +2038,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             raise ValueError(msg)
 
         nr_points = points.shape[0]
-        cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-        self._from_arrays(cells, cell_types, points, deep=deep)
+        regular_cells = _get_regular_cells_from_dict(cells_dict, nr_points)
+        if regular_cells is None:
+            cell_types, cells = create_mixed_cells(cells_dict, nr_points)
+            self._from_arrays(cells, cell_types, points, deep=deep)
+        else:
+            cell_types, connectivity = regular_cells
+            if not deep:
+                connectivity = connectivity.copy()
+            vtkcells = CellArray.from_regular_cells(connectivity, deep=deep)
+            self._from_arrays(vtkcells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
@@ -2126,12 +2128,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         # convert to arrays upfront
-        cells = np.asarray(cells)
         cell_type = np.asarray(cell_type)
         points = np.asarray(points)
 
         # Convert to vtk arrays
-        vtkcells = CellArray(cells)
+        vtkcells = cells if isinstance(cells, _vtk.vtkCellArray) else CellArray(np.asarray(cells))
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
@@ -3294,14 +3295,16 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                 msg = f'Expected cells to be of shape ({n_cells}, 8)'
                 raise ValueError(msg)
 
-            cells = np.column_stack((np.full(n_cells, 8), cells)).flatten()
+            cell_array = CellArray.from_regular_cells(cells)
 
         elif len(cells) != 9 * n_cells:
             msg = f'Expected cells to be length {9 * n_cells}'
             raise ValueError(msg)
+        else:
+            cell_array = CellArray(cells)
 
         self.SetDimensions(dims[0], dims[1], dims[2])  # type: ignore[arg-type]
-        self.SetCells(CellArray(cells))
+        self.SetCells(cell_array)
         self.SetPoints(vtk_points(points))
 
     def cast_to_unstructured_grid(self) -> UnstructuredGrid:
