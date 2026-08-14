@@ -33,13 +33,11 @@ body[data-jp-theme-light="false"] {
 }
 
 /* Values here are deliberately hardcoded rather than written as
- * var(--jp-*, fallback). A var() fallback only applies when the variable is
- * *undefined*, not when it is defined with the wrong value. Hosts such as the
- * jupyter_sphinx Sphinx extension define the --jp-* variables light-only on
- * :root, and custom properties inherit -- so var(--jp-layout-color0, #1a1a1a)
- * would resolve to the inherited *light* value here and never reach the
- * fallback. That is what made the text white on a light background. Do not
- * "simplify" these into var() chains.
+ * var(--jp-*, fallback), because a var() fallback only applies when the variable
+ * is *undefined*, not when it is defined with a value belonging to the other
+ * theme. Custom properties inherit, so a host that defines the --jp-* variables
+ * light-only on :root would have those light values resolve here, and the dark
+ * fallback would never be reached. Do not "simplify" these into var() chains.
  */
 html[theme="dark"],
 html[data-theme="dark"],
@@ -83,7 +81,13 @@ body.vscode-dark {
 /* The background is set explicitly so that it is always resolved from the same
  * theme block as the text color. Without it the repr inherits the host's
  * background, which can disagree with our text color and render the repr
- * unreadable (e.g. white text on a light background on docs.pyvista.org).
+ * unreadable -- e.g. on docs.pyvista.org, where jupyter-sphinx hardcodes a white
+ * container background that does not follow the page's light/dark toggle.
+ *
+ * A host that themes its own surface correctly can opt out of this and let the
+ * repr blend in, by overriding --pv-background-color (or this rule) with a
+ * selector specific enough to outrank it. The PyVista docs do exactly that in
+ * doc/source/_static/jupyter_sphinx_theme.css.
  */
 .pv-wrap {
   display: block !important;

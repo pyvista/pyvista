@@ -1,0 +1,33 @@
+/* Make the jupyter-sphinx output containers follow the light/dark toggle.
+ *
+ * jupyter-sphinx ships `div.jupyter_container { background-color: #FFFF; }` and
+ * hardcodes light greys on the code cell and highlight blocks. Those values do
+ * not follow pydata-sphinx-theme's theme switch, so in dark mode the container
+ * stays white and shows as a light frame around the (dark) content inside it.
+ */
+div.jupyter_container {
+  background-color: var(--pst-color-background);
+  border-color: var(--pst-color-border);
+}
+
+div.jupyter_container div.code_cell,
+div.jupyter_container div.code_cell pre,
+div.jupyter_container div.highlight,
+div.jupyter_container .output .highlight,
+div.jupyter_container div.output pre {
+  background-color: var(--pst-color-surface);
+}
+
+/* The PyVista HTML repr paints its own background so that its text colour and
+ * background always come from the same theme (see pyvista/core/static/style.css).
+ * The docs page already provides a correctly themed surface, so let the repr
+ * blend into it instead of drawing a card of its own -- otherwise the card is
+ * invisible in light mode (where it matches the page) but visible in dark mode,
+ * which reads as a box appearing out of nowhere when toggling themes.
+ *
+ * This selector needs to outrank `.pv-wrap` from style.css, which is inlined
+ * into the repr markup and therefore comes later in document order.
+ */
+html[data-theme] .pv-wrap {
+  background-color: transparent;
+}

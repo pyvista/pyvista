@@ -75,9 +75,9 @@ def test_css_theme_blocks_define_the_same_tokens():
 
 def test_css_dark_blocks_do_not_use_jp_variables():
     # A var() fallback only applies when the variable is undefined, not when it is
-    # defined with a light value. Hosts such as jupyter_sphinx define the --jp-*
-    # variables light-only on :root, and custom properties inherit -- so using them
-    # in a dark block resolves to the inherited light value. See #8813.
+    # defined with a value belonging to the other theme. Custom properties inherit,
+    # so a host defining the --jp-* variables light-only on :root would have those
+    # light values resolve inside a dark block. See #8813.
     blocks = _css_theme_blocks(_load_css())
     dark = {
         selector: body
