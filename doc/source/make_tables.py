@@ -3058,6 +3058,17 @@ class DatasetCarousel(DocTable):
         """,
     )[1:-1]
 
+    # Every card's own rst (see `DatasetCardFetcher.DATASET_CARDS_RST`) already
+    # starts with a blank line, but nothing separates the last card from this -
+    # a directive needs a blank line before it, or it's parsed as that card's
+    # content instead of a sibling.
+    footer_template = _aligned_dedent(
+        """
+        |
+        |{}
+        """,
+    )[1:-1]
+
     @classmethod
     def fetch_data(cls):
         return list(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
@@ -3084,7 +3095,7 @@ class DatasetCarousel(DocTable):
     @classmethod
     def get_footer(cls, _):
         """Close the nav-button wrapper opened in `get_header`, after all cards."""
-        return DatasetCardFetcher.generate_carousel_close()
+        return cls.footer_template.format(DatasetCardFetcher.generate_carousel_close())
 
     @classmethod
     def generate(cls):
