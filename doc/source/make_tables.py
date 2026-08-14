@@ -2778,12 +2778,12 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_celltype_field(loader: _DatasetLoader):
-        """Format cell type(s) with doc references to their `pyvista.CellType` member."""
+        """Format cell type(s) as badges linking to their `pyvista.CellType` member."""
         cell_types = loader.unique_cell_types
         if not cell_types:
             return '``N/A (no cells)``'
         return '\n'.join(
-            f':attr:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
+            f':bdg-ref-muted-line:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
             for cell_type in cell_types
         )
 
