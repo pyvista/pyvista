@@ -825,11 +825,9 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLRenderer',
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
-        'vtkRenderPassCollection',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
-        'vtkSequencePass',
         'vtkShader',
         'vtkShadowMapPass',
         'vtkXOpenGLRenderWindow',  # optional (Linux X11 builds)
@@ -1001,7 +999,29 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
         return _import_from('vtkCommonDataModel', 'vtkCellTypes')
 
 
+def _import_vtkRenderPassCollection():  # noqa: N802
+    try:  # Moved in VTK 10.0.0
+        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
+            vtkRenderPassCollection,
+        )
+    except ImportError:
+        from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection  # noqa: TID251
+    return vtkRenderPassCollection
+
+
+def _import_vtkSequencePass():  # noqa: N802
+    try:  # Moved in VTK 10.0.0
+        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
+            vtkSequencePass,
+        )
+    except ImportError:
+        from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass  # noqa: TID251
+    return vtkSequencePass
+
+
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
+    'vtkRenderPassCollection': _import_vtkRenderPassCollection,
+    'vtkSequencePass': _import_vtkSequencePass,
 }
