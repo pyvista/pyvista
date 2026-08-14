@@ -127,8 +127,8 @@
   margin-left: auto;
 }
 
-/* The card carousel doesn't support native scroll gestures (overflow-x is
-   clipped, not scrollable) - these are the only way to move between cards. */
+/* A more reliable way to move between cards than the carousel's native
+   drag/swipe scrolling, which is finicky to hit correctly on mobile. */
 .gallery-nav-button {
   position: fixed;
   top: 50%;

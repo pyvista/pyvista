@@ -3,8 +3,8 @@
 // classes (e.g. "dtype-polydata"); a card matches when it has at least one
 // checked value per facet with a selection (OR within a facet, AND across
 // facets), and its search text contains the search query. Also drives the
-// prev/next buttons: the card carousel clips overflow-x instead of scrolling
-// it, so scrollLeft/scrollIntoView is the only way to move between cards.
+// prev/next buttons, a more reliable way to move between cards than the
+// carousel's native drag/swipe scrolling (finicky to hit on mobile).
 (function () {
   "use strict";
 
