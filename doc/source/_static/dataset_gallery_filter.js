@@ -113,10 +113,15 @@
     return bestIndex;
   }
 
-  function scrollToCard(card, behavior) {
-    card.scrollIntoView({
-      inline: "start",
-      block: "nearest",
+  // Scrolls only the carousel horizontally, never the page - unlike
+  // card.scrollIntoView(), which can also shift the page vertically to bring
+  // more of a tall card into view.
+  function scrollToCard(carousel, card, behavior) {
+    if (!carousel) return;
+    const delta =
+      card.getBoundingClientRect().left - carousel.getBoundingClientRect().left;
+    carousel.scrollTo({
+      left: carousel.scrollLeft + delta,
       behavior: behavior || "auto",
     });
   }
@@ -177,7 +182,7 @@
       anchorCard &&
       !anchorCard.classList.contains("gallery-hidden")
     ) {
-      scrollToCard(anchorCard, "auto");
+      scrollToCard(carousel, anchorCard, "auto");
     }
     updateNavButtons(carousel, cards, prevBtn, nextBtn);
 
@@ -282,13 +287,13 @@
       prevBtn.addEventListener("click", () => {
         const visible = visibleCards(cards);
         const idx = currentCardIndex(carousel, visible);
-        if (idx > 0) scrollToCard(visible[idx - 1], "smooth");
+        if (idx > 0) scrollToCard(carousel, visible[idx - 1], "smooth");
       });
       nextBtn.addEventListener("click", () => {
         const visible = visibleCards(cards);
         const idx = currentCardIndex(carousel, visible);
         if (idx !== -1 && idx < visible.length - 1) {
-          scrollToCard(visible[idx + 1], "smooth");
+          scrollToCard(carousel, visible[idx + 1], "smooth");
         }
       });
       let scrollTimer;
