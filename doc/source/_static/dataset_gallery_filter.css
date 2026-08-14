@@ -1,7 +1,4 @@
 .gallery-filter-bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   flex-wrap: wrap;
   align-items: start;
@@ -82,6 +79,10 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.facet-panel[hidden] {
+  display: none;
+}
+
 .facet-option {
   display: flex;
   align-items: center;
@@ -130,32 +131,23 @@
   margin-left: auto;
 }
 
-/* Bar + nav slots (row 1) and carousel (row 2) share one grid, so the sticky nav slots have room to stay stuck past the bar's own short height. */
+/* Stacks the bar and both nav slots in one shared area, so the buttons can be positioned from the bar's own box (see .gallery-nav-button). */
 .gallery-toolbar-wrap {
   display: grid;
-  margin-bottom: 1rem; /* on the wrap, not the bar - see .gallery-nav-button */
+  margin-bottom: 1rem;
 }
 
-#gallery-filter-bar,
+.gallery-toolbar-wrap > * {
+  grid-area: 1 / 1;
+}
+
 .gallery-nav-slot {
-  grid-row: 1;
-  grid-column: 1;
-}
-
-.sd-cards-carousel {
-  grid-row: 2;
-  grid-column: 1;
-}
-
-/* Matches the bar's own box (top: 0, stretched to its row height) as a stable reference point for the button's offset below. */
-.gallery-nav-slot {
-  position: sticky;
-  top: 0;
+  position: relative; /* containing block for .gallery-nav-button's absolute positioning */
   z-index: 5;
   pointer-events: none; /* let clicks fall through to the bar/dropdowns beneath; the button re-enables its own */
 }
 
-/* top: 100% = the slot's own bottom edge (always the bar's), so the fixed offset below it lands on the card header band regardless of scroll state. */
+/* top: 100% = the slot's own bottom edge (always the bar's), so the fixed offset below it lands on the card header band. */
 .gallery-nav-button {
   position: absolute;
   top: calc(100% + 38px);

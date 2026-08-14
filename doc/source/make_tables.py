@@ -176,7 +176,6 @@ class DocTable:
                 row = cls.get_row(i, row_data)
                 if row is not None:
                     fnew.write(row)
-            fnew.write(cls.get_footer(data))
 
             # if file exists, verify that we have no new content
             fnew.seek(0)
@@ -217,11 +216,6 @@ class DocTable:
         """
         msg = 'Subclasses should specify a get_row method.'
         raise NotImplementedError(msg)
-
-    @classmethod
-    def get_footer(cls, _):
-        """Get the rst to write after all rows. Subclasses may override this."""
-        return ''
 
 
 def _swap_extension_mapping(mapping: dict[str, type[Any]]) -> dict[type[Any], set[str]]:
@@ -2970,8 +2964,8 @@ class DatasetCardFetcher:
                 dataset_loader.clear_dataset()
 
     @classmethod
-    def generate_filter_toolbar_open(cls) -> str:
-        """Open `gallery-toolbar-wrap`, closed by `generate_filter_toolbar_close`.
+    def generate_filter_toolbar(cls) -> str:
+        """Generate the raw-HTML filter toolbar shown above the dataset gallery grid.
 
         See _static/dataset_gallery_filter.js for the filtering behavior.
         """
@@ -3011,21 +3005,14 @@ class DatasetCardFetcher:
             '  <button id="filter-clear" type="button">Clear filters</button>\n'
             '  <span id="filter-count" class="gallery-filter-count"></span>\n'
             '</div>\n'
-            '<script id="facet-manifest" type="application/json">\n'
-            f'{json.dumps(manifest)}\n'
-            '</script>\n'
-        )
-        return cls._wrap_raw_html(html)
-
-    @classmethod
-    def generate_filter_toolbar_close(cls) -> str:
-        """Place the Next button and close the wrapper opened by `generate_filter_toolbar_open`."""
-        html = (
             '<div class="gallery-nav-slot" id="gallery-next-slot">\n'
             '<button id="gallery-next" class="gallery-nav-button"\n'
             '        type="button" aria-label="Next dataset">&rsaquo;</button>\n'
             '</div>\n'
             '</div>\n'
+            '<script id="facet-manifest" type="application/json">\n'
+            f'{json.dumps(manifest)}\n'
+            '</script>\n'
         )
         return cls._wrap_raw_html(html)
 
@@ -3054,14 +3041,6 @@ class DatasetCarousel(DocTable):
         """,
     )[1:-1]
 
-    # Leading blank line: separates this from the last card's own rst.
-    footer_template = _aligned_dedent(
-        """
-        |
-        |{}
-        """,
-    )[1:-1]
-
     @classmethod
     def fetch_data(cls):
         return list(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
@@ -3070,17 +3049,12 @@ class DatasetCarousel(DocTable):
     def get_header(cls, data):
         """Generate the rst for the carousel's header."""
         assert len(data) > 0, 'No datasets were found.'
-        return cls.header_template.format(DatasetCardFetcher.generate_filter_toolbar_open())
+        return cls.header_template.format(DatasetCardFetcher.generate_filter_toolbar())
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
         """Generate the rst card for a given dataset."""
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
-
-    @classmethod
-    def get_footer(cls, _):
-        """Close the toolbar wrapper opened in `get_header`, after all cards."""
-        return cls.footer_template.format(DatasetCardFetcher.generate_filter_toolbar_close())
 
     @classmethod
     def generate(cls):
