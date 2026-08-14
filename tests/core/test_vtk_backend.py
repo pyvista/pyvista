@@ -187,3 +187,33 @@ def test_missing_backend_names_the_setting():
     """An unimportable backend is reported as such, not as a missing class."""
     with pytest.raises(ImportError, match='PYVISTA_VTK_BACKEND'):
         _resolve_root_is_flat('_no_such_vtk_build')
+
+
+def test_special_loaders_resolve_through_the_active_backend():
+    """No ``_SPECIAL_LOADERS`` entry may hardcode a VTK build.
+
+    ``_SPECIAL_LOADERS`` is consulted before the backend branch in
+    ``_vtk.__getattr__``, so a loader that imports ``vtkmodules`` directly hands
+    back a stock class while the rest of the namespace hands back the active
+    backend's. Mixing wrapped types from two VTK builds does not fail at the
+    import; it fails later at the C++ boundary with ``TypeError: <method>
+    argument 1:``, naming a method rather than the import that caused it.
+
+    That is what happened with vtkRenderPassCollection and vtkSequencePass:
+    ``_vtk.vtkRenderPassCollection().AddItem(_vtk.vtkRenderStepsPass())`` mixed a
+    stock collection with a cvista pass and took out 32 render-pass tests.
+
+    ``pyvista`` is allowed because a loader may legitimately fall back to a
+    placeholder it defines itself (see ``_import_vtkPythonItem``).
+    """
+    allowed = (_vtk._VTK_ROOT, 'pyvista')
+    offenders = {}
+    for name in _vtk._SPECIAL_LOADERS:
+        module = getattr(getattr(_vtk, name), '__module__', '')
+        if not module.startswith(allowed):
+            offenders[name] = module
+
+    assert not offenders, (
+        f'special loaders bypassed the {_vtk._VTK_ROOT!r} backend: {offenders}. '
+        f'Resolve them with _import_from(), which routes through the active backend.'
+    )

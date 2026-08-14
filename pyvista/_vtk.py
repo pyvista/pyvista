@@ -1001,22 +1001,16 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
 
 def _import_vtkRenderPassCollection():  # noqa: N802
     try:  # Moved in VTK 10.0.0
-        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
-            vtkRenderPassCollection,
-        )
+        return _import_from('vtkRenderingCore', 'vtkRenderPassCollection')
     except ImportError:
-        from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection  # noqa: TID251
-    return vtkRenderPassCollection
+        return _import_from('vtkRenderingOpenGL2', 'vtkRenderPassCollection')
 
 
 def _import_vtkSequencePass():  # noqa: N802
     try:  # Moved in VTK 10.0.0
-        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
-            vtkSequencePass,
-        )
+        return _import_from('vtkRenderingCore', 'vtkSequencePass')
     except ImportError:
-        from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass  # noqa: TID251
-    return vtkSequencePass
+        return _import_from('vtkRenderingOpenGL2', 'vtkSequencePass')
 
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
