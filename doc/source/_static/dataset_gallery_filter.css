@@ -132,11 +132,27 @@
   margin-left: auto;
 }
 
+/* Stacks the Previous/Next buttons on top of the carousel (same grid cell)
+   so they can be anchored to its box instead of the viewport's - a plain
+   position: fixed button sits at the screen edge, which overlaps the site's
+   sidebars whenever the carousel doesn't span the full viewport width. */
+.gallery-carousel-wrap {
+  display: grid;
+}
+
+.gallery-carousel-wrap > * {
+  grid-area: 1 / 1;
+}
+
 /* A more reliable way to move between cards than the carousel's native
-   drag/swipe scrolling, which is finicky to hit correctly on mobile. */
+   drag/swipe scrolling, which is finicky to hit correctly on mobile.
+   position: sticky keeps them vertically centered in the viewport (top: 50vh
+   - a fixed viewport-relative length, unlike sticky's own percentages which
+   resolve against the carousel's height) for as long as any part of the
+   tall carousel is in view. */
 .gallery-nav-button {
-  position: fixed;
-  top: 50%;
+  position: sticky;
+  top: 50vh;
   z-index: 15;
   width: 2.5rem;
   height: 2.5rem;
@@ -165,9 +181,11 @@
 }
 
 #gallery-prev {
-  left: 0.5rem;
+  justify-self: start;
+  margin-left: 0.5rem;
 }
 
 #gallery-next {
-  right: 0.5rem;
+  justify-self: end;
+  margin-right: 0.5rem;
 }

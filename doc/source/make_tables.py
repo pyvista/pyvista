@@ -176,6 +176,7 @@ class DocTable:
                 row = cls.get_row(i, row_data)
                 if row is not None:
                     fnew.write(row)
+            fnew.write(cls.get_footer(data))
 
             # if file exists, verify that we have no new content
             fnew.seek(0)
@@ -216,6 +217,11 @@ class DocTable:
         """
         msg = 'Subclasses should specify a get_row method.'
         raise NotImplementedError(msg)
+
+    @classmethod
+    def get_footer(cls, _):
+        """Get the rst to write after all rows. Subclasses may override this."""
+        return ''
 
 
 def _swap_extension_mapping(mapping: dict[str, type[Any]]) -> dict[type[Any], set[str]]:
@@ -3000,16 +3006,37 @@ class DatasetCardFetcher:
             '  <button id="filter-clear" type="button">Clear filters</button>\n'
             '  <span id="filter-count" class="gallery-filter-count"></span>\n'
             '</div>\n'
-            '<button id="gallery-prev" class="gallery-nav-button"\n'
-            '        type="button" aria-label="Previous dataset">&lsaquo;</button>\n'
-            '<button id="gallery-next" class="gallery-nav-button"\n'
-            '        type="button" aria-label="Next dataset">&rsaquo;</button>\n'
             '<script id="facet-manifest" type="application/json">\n'
             f'{json.dumps(manifest)}\n'
             '</script>\n'
         )
+        return cls._wrap_raw_html(html)
+
+    @staticmethod
+    def _wrap_raw_html(html: str) -> str:
+        """Indent literal HTML and wrap it in a rst ``raw:: html`` block."""
         indented = '\n'.join('   ' + line if line else line for line in html.splitlines())
         return f'.. raw:: html\n\n{indented}\n'
+
+    @classmethod
+    def generate_carousel_open(cls) -> str:
+        """Open the nav-button wrapper and place the Previous button, before the carousel."""
+        html = (
+            '<div class="gallery-carousel-wrap">\n'
+            '<button id="gallery-prev" class="gallery-nav-button"\n'
+            '        type="button" aria-label="Previous dataset">&lsaquo;</button>\n'
+        )
+        return cls._wrap_raw_html(html)
+
+    @classmethod
+    def generate_carousel_close(cls) -> str:
+        """Place the Next button and close the nav-button wrapper, after the carousel."""
+        html = (
+            '<button id="gallery-next" class="gallery-nav-button"\n'
+            '        type="button" aria-label="Next dataset">&rsaquo;</button>\n'
+            '</div>\n'
+        )
+        return cls._wrap_raw_html(html)
 
 
 class DatasetCarousel(DocTable):
@@ -3025,6 +3052,7 @@ class DatasetCarousel(DocTable):
         """
         |{}
         |
+        |{}
         |.. card-carousel:: 1
         |
         """,
@@ -3036,14 +3064,27 @@ class DatasetCarousel(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        """Generate the rst for the carousel's header."""
+        """Generate the rst for the carousel's header.
+
+        Opens the nav-button wrapper (see `get_footer`) so the Previous/Next
+        buttons and the carousel share a parent, letting CSS anchor them to
+        the carousel's own box instead of the viewport.
+        """
         assert len(data) > 0, 'No datasets were found.'
-        return cls.header_template.format(DatasetCardFetcher.generate_filter_toolbar())
+        return cls.header_template.format(
+            DatasetCardFetcher.generate_filter_toolbar(),
+            DatasetCardFetcher.generate_carousel_open(),
+        )
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
         """Generate the rst card for a given dataset."""
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
+
+    @classmethod
+    def get_footer(cls, _):
+        """Close the nav-button wrapper opened in `get_header`, after all cards."""
+        return DatasetCardFetcher.generate_carousel_close()
 
     @classmethod
     def generate(cls):
