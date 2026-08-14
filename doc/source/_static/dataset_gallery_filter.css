@@ -150,7 +150,7 @@
 /* top: 100% = the slot's own bottom edge (always the bar's), so the fixed offset below it lands on the card header band. */
 .gallery-nav-button {
   position: absolute;
-  top: calc(100% + 38px);
+  top: calc(100% + 48px);
   transform: translateY(-50%);
   pointer-events: auto;
   width: 2.5rem;
