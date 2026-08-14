@@ -894,7 +894,7 @@ class CellArray(
         2
         >>> cells.regular_cells
         array([[0, 1, 2],
-               [1, 2, 3]])
+               [1, 2, 3]]...)
 
         """
         cells = np.asarray(cells, dtype=pv.ID_TYPE)
@@ -945,9 +945,9 @@ class CellArray(
         >>> cells.n_cells
         2
         >>> cells.connectivity_array
-        array([0, 1, 2, 1, 2, 3, 4])
+        array([0, 1, 2, 1, 2, 3, 4]...)
         >>> cells.offset_array
-        array([0, 3, 7])
+        array([0, 3, 7]...)
 
         """
         offsets = np.cumsum([len(c) for c in cells])
