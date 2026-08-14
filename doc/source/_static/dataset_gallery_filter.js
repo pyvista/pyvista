@@ -1,10 +1,5 @@
-// Client-side multi-select facet filter + name search for the dataset gallery.
-// Builds a checkbox dropdown per facet from each card's `:class-card:`
-// classes (e.g. "dtype-polydata"); a card matches when it has at least one
-// checked value per facet with a selection (OR within a facet, AND across
-// facets), and its search text contains the search query. Also drives the
-// prev/next buttons, a more reliable way to move between cards than the
-// carousel's native drag/swipe scrolling (finicky to hit on mobile).
+// Client-side multi-select facet filter + name search for the dataset gallery,
+// built from each card's `:class-card:` classes. Also drives the prev/next buttons.
 (function () {
   "use strict";
 
@@ -28,8 +23,7 @@
         }
       });
     });
-    // "na" is handled separately (always first, if present) rather than via
-    // the explicit order list, since that list only covers real values.
+    // "na" is always first, if present - the explicit order list only covers real values.
     const rest = Array.from(present).filter((v) => v !== "na");
     const explicitOrder = order[facet];
     const ordered = explicitOrder
@@ -40,9 +34,7 @@
 
   function buildPanel(dropdown, facet, values, labels, onChange) {
     const panel = dropdown.querySelector(".facet-panel");
-    // The panel floats over card content below it; without this, a click on
-    // an option also bubbles out to whatever's underneath at those
-    // coordinates (e.g. a card's link), triggering that too.
+    // Without this, a click bubbles out to whatever card content is underneath.
     panel.addEventListener("click", (evt) => evt.stopPropagation());
     values.forEach((value) => {
       const id = "facet-" + facet + "-" + value;
@@ -96,8 +88,7 @@
     return cards.filter((c) => !c.classList.contains("gallery-hidden"));
   }
 
-  // Index, among currently-visible cards, of whichever one is flush (or
-  // closest) to the carousel's left edge - i.e. the one currently in view.
+  // Index of whichever visible card is closest to the carousel's left edge.
   function currentCardIndex(carousel, visible) {
     if (!carousel || !visible.length) return -1;
     const carouselLeft = carousel.getBoundingClientRect().left;
@@ -113,9 +104,7 @@
     return bestIndex;
   }
 
-  // Scrolls only the carousel horizontally, never the page - unlike
-  // card.scrollIntoView(), which can also shift the page vertically to bring
-  // more of a tall card into view.
+  // Scrolls only the carousel horizontally, unlike card.scrollIntoView() which can also shift the page vertically.
   function scrollToCard(carousel, card, behavior) {
     if (!carousel) return;
     const delta =
@@ -126,9 +115,7 @@
     });
   }
 
-  // The browser's native scroll-to-fragment on load lands the target flush
-  // with the viewport top, under the sticky filter bar. Nudge it back down
-  // by the bar's actual (wraps-by-viewport-width) height.
+  // The native scroll-to-fragment lands the target under the sticky filter bar; nudge it back down by the bar's height.
   function scrollHashTargetBelowBar(bar) {
     if (!location.hash) return;
     const target = document.getElementById(
@@ -159,8 +146,7 @@
     prevBtn,
     nextBtn,
   ) {
-    // Remember what's currently in view so it's still in view afterwards,
-    // as long as this filter change doesn't itself exclude it.
+    // Remember what's currently in view so it's still in view afterwards.
     const anchorCard = carousel
       ? visibleCards(cards)[currentCardIndex(carousel, visibleCards(cards))]
       : undefined;

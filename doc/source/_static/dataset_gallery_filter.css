@@ -12,11 +12,8 @@
   border-radius: 0.5rem;
 }
 
-/* Every card's thumbnail loading in (222 of them, side by side) can grow the
-   carousel's height well after the page first settles. Without this, the
-   browser's scroll anchoring "helpfully" re-scrolls to compensate, silently
-   undoing a deep-link's scroll correction (see dataset_gallery_filter.js)
-   some time after it ran. */
+/* Cards' thumbnails loading in can grow the carousel's height after the page
+   settles, and scroll anchoring would silently re-scroll to compensate. */
 .sd-cards-carousel {
   overflow-anchor: none;
 }
@@ -94,10 +91,7 @@
   cursor: pointer;
   white-space: nowrap;
   font-weight: 400;
-  /* Skips the tap-delay some mobile browsers use to detect double-tap-zoom;
-     without it, a fast tap here can reflow the grid (hiding/showing many
-     cards) before the browser's delayed synthetic click fires, landing that
-     click on whatever ended up under the same screen coordinates instead. */
+  /* Skips mobile's tap-delay, which can otherwise land a fast tap's synthetic click on whatever ended up under it after the grid reflows. */
   touch-action: manipulation;
 }
 
@@ -131,27 +125,15 @@
   display: none !important;
 }
 
-/* Right-aligns a value once it wraps onto its own line, where the row's
-   space-between has nothing left to push against. Scoped to
-   field-value-primary, not every sd-text-right.sd-text-nowrap cell, since a
-   field's extra values reuse those classes but are already right-packed via
-   their own container. */
+/* Right-aligns a value that's wrapped onto its own line (space-between has nothing to push against there). */
 .gallery-card .field-value-primary {
   margin-left: auto;
 }
 
-/* Row 1 (bar + both nav slots, all overlapping) sits above row 2 (the
-   carousel) in one shared grid. The buttons need to be part of that same
-   tall grid, not a wrap around just the bar: position: sticky only stays
-   stuck while its own parent is still in view, so a wrap no taller than the
-   bar itself would let the buttons scroll away the moment the (short) bar
-   scrolled past, instead of staying pinned throughout the whole carousel. */
+/* Bar + nav slots (row 1) and carousel (row 2) share one grid, so the sticky nav slots have room to stay stuck past the bar's own short height. */
 .gallery-toolbar-wrap {
   display: grid;
-  /* On the wrap, not the bar itself: a margin on a grid item grows its row's
-     height, which would throw off the buttons' offset below (see
-     .gallery-nav-button), since that's measured from the row's own edge. */
-  margin-bottom: 1rem;
+  margin-bottom: 1rem; /* on the wrap, not the bar - see .gallery-nav-button */
 }
 
 #gallery-filter-bar,
@@ -165,28 +147,15 @@
   grid-column: 1;
 }
 
-/* Stretches to the bar's row height (row 1's default grid alignment) and
-   stays pinned to it with the same top: 0 as the bar - a position: sticky
-   element's `top` only ever takes effect once scrolling actually engages
-   the stick; before that (e.g. at page load) it just sits at its normal,
-   in-flow position, which for a stretched grid item is the bar's own box.
-   Matching top: 0 keeps the slot's box flush with the bar's in both the
-   resting and stuck states, so it's a stable, always-correct reference
-   point for the button's own offset below (see .gallery-nav-button).
-   pointer-events: none passes clicks through the slot's empty space (most
-   of the row) to the bar/dropdowns beneath; the button re-enables its own. */
+/* Matches the bar's own box (top: 0, stretched to its row height) as a stable reference point for the button's offset below. */
 .gallery-nav-slot {
   position: sticky;
   top: 0;
   z-index: 5;
-  pointer-events: none;
+  pointer-events: none; /* let clicks fall through to the bar/dropdowns beneath; the button re-enables its own */
 }
 
-/* Positioned from the slot's own box (top: 100% = the bar's bottom edge,
-   which the slot's box always matches - see .gallery-nav-slot), not the
-   filter toolbar's live-scrolling position: 100% + a fixed offset lands on
-   the card header band (dataset name + module badge) below the bar,
-   consistently whether the slot is resting or actively stuck. */
+/* top: 100% = the slot's own bottom edge (always the bar's), so the fixed offset below it lands on the card header band regardless of scroll state. */
 .gallery-nav-button {
   position: absolute;
   top: calc(100% + 36px);
