@@ -2161,13 +2161,9 @@ class DatasetCard:
     #       |    ExtraLongValue |
     #       |     Value3 Value4 |
     #
-    # sd-text-right only right-aligns a wrapped value on its own line with
+    # sd-text-right only handles the shared-row case; the wrapped case needs
     # help from custom CSS (.gallery-card .field-value-primary) in
-    # dataset_gallery_filter.css - sphinx-design has no built-in class for it.
-    # That fix is scoped to field-value-primary rather than sd-text-right
-    # itself, since the extra-values template below reuses those same
-    # classes but is already correctly packed via its container's
-    # sd-align-major-end, which margin-left: auto on every item would break.
+    # dataset_gallery_filter.css.
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto

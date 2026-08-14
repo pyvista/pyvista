@@ -123,16 +123,11 @@
   display: none !important;
 }
 
-/* A field's first/only value is right-aligned via `justify-content:
-   space-between` on its row, which only works while the label and value
-   share that row - once a long value wraps onto its own row, space-between
-   has nothing to push against and it falls back flush left. margin-left:
-   auto pushes it to the row's end regardless of whether it's sharing the
-   row. Scoped to field-value-primary specifically (not every
-   sd-text-right.sd-text-nowrap cell): a field's *extra* values reuse those
-   same classes but are already correctly packed together via their own
-   container's flex-end alignment, which this same margin on each of them
-   would instead spread apart. */
+/* Right-aligns a value once it wraps onto its own line, where the row's
+   space-between has nothing left to push against. Scoped to
+   field-value-primary, not every sd-text-right.sd-text-nowrap cell, since a
+   field's extra values reuse those classes but are already right-packed via
+   their own container. */
 .gallery-card .field-value-primary {
   margin-left: auto;
 }
