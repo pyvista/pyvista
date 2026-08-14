@@ -855,7 +855,13 @@ class CellArray(
         cells: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
     ) -> CellArray:
-        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+        """Construct a ``CellArray`` from cells which all have the same size.
+
+        Use this method when every cell has the same number of points, e.g. an
+        array of triangles or an array of quads. The cell offsets are computed
+        directly from the cell size, and the input array is used as the
+        connectivity array. Use :meth:`from_irregular_cells` instead if the
+        cells have varying sizes.
 
         Parameters
         ----------
@@ -864,11 +870,31 @@ class CellArray(
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
+            If ``False``, the returned cell array may share memory with ``cells``.
 
         Returns
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
+
+        See Also
+        --------
+        from_irregular_cells
+            Equivalent method for cells with varying sizes.
+        regular_cells
+            Read the cells back as a (n_cells, cell_size) array.
+
+        Examples
+        --------
+        Create a cell array of two triangles.
+
+        >>> import pyvista as pv
+        >>> cells = pv.CellArray.from_regular_cells([[0, 1, 2], [1, 2, 3]])
+        >>> cells.n_cells
+        2
+        >>> cells.regular_cells
+        array([[0, 1, 2],
+               [1, 2, 3]])
 
         """
         cells = np.asarray(cells, dtype=pv.ID_TYPE)
@@ -880,17 +906,48 @@ class CellArray(
 
     @classmethod
     def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
-        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+        """Construct a ``CellArray`` from cells which may have different sizes.
+
+        Use this method when the cells have varying numbers of points, e.g. a
+        mix of triangles and quads. The cell offsets are computed from the
+        length of each cell, and the connectivity array is built by
+        concatenating the cells. Use :meth:`from_regular_cells` instead if all
+        cells have the same size.
+
+        Unlike :meth:`from_regular_cells`, this method has no ``deep``
+        parameter, since building the connectivity array always makes a copy of
+        the input.
 
         Parameters
         ----------
-        cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
+        cells : Sequence[Sequence[int]]
+            Sequence of length n_cells where each item is a sequence of the
+            point indices for that cell. The cells may have different lengths.
 
         Returns
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
+
+        See Also
+        --------
+        from_regular_cells
+            Equivalent method for cells which all have the same size.
+        offset_array
+            Offsets marking where each cell begins in the connectivity array.
+
+        Examples
+        --------
+        Create a cell array from a triangle and a quad.
+
+        >>> import pyvista as pv
+        >>> cells = pv.CellArray.from_irregular_cells([[0, 1, 2], [1, 2, 3, 4]])
+        >>> cells.n_cells
+        2
+        >>> cells.connectivity_array
+        array([0, 1, 2, 1, 2, 3, 4])
+        >>> cells.offset_array
+        array([0, 3, 7])
 
         """
         offsets = np.cumsum([len(c) for c in cells])
