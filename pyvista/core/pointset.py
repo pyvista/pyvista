@@ -1503,9 +1503,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Notes
         -----
-        The returned array is read-only and cannot be modified in place. To change
-        the topology, assign a new array to this property, to :attr:`cell_offsets`, or to
-        :attr:`faces`. See the examples below.
+        The returned array is read-only and cannot be modified in place. To change the
+        connectivity, assign a new array to this property. The input is copied, so the
+        mesh never aliases an array that may be modified later. To replace the offsets
+        and connectivity together, assign a :class:`pyvista.CellArray` to :attr:`faces`.
+
+        Where that copy is too expensive, the underlying :vtk:`vtkCellArray` may be
+        edited directly. That path is zero-copy but unvalidated, and marking the mesh
+        modified is left to the caller. See the examples below.
 
         Examples
         --------
@@ -1526,6 +1531,19 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh.cell_connectivity = [2, 1, 0, 2, 3, 1]
         >>> mesh.cell_connectivity
         array([2, 1, 0, 2, 3, 1])
+
+        For a mesh large enough that the copy matters, edit the underlying
+        :vtk:`vtkCellArray` in place instead. Nothing validates the point ids written
+        this way, and the mesh must be marked modified afterwards.
+
+        >>> connectivity = pv.convert_array(mesh.GetPolys().GetConnectivityArray())
+        >>> connectivity[:] = [0, 1, 2, 1, 3, 2]
+        >>> mesh.Modified()
+        >>> mesh.cell_connectivity
+        array([0, 1, 2, 1, 3, 2])
+
+        Note that arrays derived from the old topology, such as ``'Normals'``, are not
+        recomputed by either approach and should be removed or regenerated.
 
         """
         return _get_connectivity(self.GetPolys())
@@ -2641,10 +2659,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Notes
         -----
-        The returned array is read-only and cannot be modified in place. To change
-        the connectivity, assign a new array to this property. The new connectivity
+        The returned array is read-only and cannot be modified in place. To change the
+        connectivity, assign a new array to this property. The input is copied, so the
+        grid never aliases an array that may be modified later. The new connectivity
         must remain consistent with the current :attr:`cell_offsets`; to replace both at
-        once, assign to :attr:`cells` or build a new grid. See the examples below.
+        once, assign to :attr:`cells` or build a new grid.
+
+        Where that copy is too expensive, the underlying :vtk:`vtkCellArray` may be
+        edited directly. That path is zero-copy but unvalidated, and marking the grid
+        modified is left to the caller. See the examples below.
 
         Examples
         --------
@@ -2670,6 +2693,19 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> hex_beam.cell_connectivity = connectivity
         >>> hex_beam.cell_connectivity[:8]
         array([ 1,  2,  8,  7, 27, 36, 90, 81]...)
+
+        For a grid large enough that the copy matters, edit the underlying
+        :vtk:`vtkCellArray` in place instead. Nothing validates the point ids written
+        this way, and the grid must be marked modified afterwards.
+
+        >>> connectivity = pv.convert_array(hex_beam.GetCells().GetConnectivityArray())
+        >>> connectivity[0] = 0
+        >>> hex_beam.Modified()
+        >>> hex_beam.cell_connectivity[:8]
+        array([ 0,  2,  8,  7, 27, 36, 90, 81]...)
+
+        Note that arrays derived from the old topology are not recomputed by either
+        approach and should be removed or regenerated.
 
         """
         return _get_connectivity(self._get_cells())

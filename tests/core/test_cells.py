@@ -742,3 +742,25 @@ def test_empty_cell_array_offsets_connectivity():
     assert cell_array.n_cells == 0
     assert np.array_equal(cell_array.cell_offsets, [0])
     assert cell_array.cell_connectivity.size == 0
+
+
+@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
+def test_documented_in_place_edit_of_underlying_cell_array(offsets_meshes, name):
+    # The documented zero-copy escape hatch: edit the vtkCellArray's connectivity
+    # directly rather than assigning a copy to the read-only property.
+    obj = offsets_meshes[name]
+    if name == 'PolyData':
+        vtk_array = obj.GetPolys().GetConnectivityArray()
+    elif name == 'UnstructuredGrid':
+        vtk_array = obj.GetCells().GetConnectivityArray()
+    else:
+        vtk_array = obj.GetConnectivityArray()
+
+    connectivity = pv.convert_array(vtk_array)
+    assert connectivity.flags['WRITEABLE']
+    assert not connectivity.flags['OWNDATA']  # wraps VTK's buffer, no copy
+
+    expected = obj.cell_connectivity[::-1].copy()
+    connectivity[:] = expected
+    obj.Modified()
+    assert np.array_equal(obj.cell_connectivity, expected)

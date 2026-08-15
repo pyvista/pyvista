@@ -819,18 +819,33 @@ class CellArray(
         -----
         The returned array is read-only and cannot be modified in place. Assign a new
         array to this property to change the connectivity, or use :meth:`from_arrays`
-        to replace the offsets and connectivity together.
+        to replace the offsets and connectivity together. The input is copied, so the
+        cell array never aliases an array that may be modified later.
+
+        Where that copy is too expensive, the connectivity array of the underlying
+        :vtk:`vtkCellArray` may be edited directly. That path is zero-copy but
+        unvalidated, and marking the cell array modified is left to the caller. See the
+        examples below.
 
         Examples
         --------
-        >>> from pyvista import CellArray
-        >>> cell_array = CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+        >>> import pyvista as pv
+        >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
         >>> cell_array.cell_connectivity
         array([0, 1, 2, 3, 4, 5])
 
         >>> cell_array.cell_connectivity = [5, 4, 3, 2, 1, 0]
         >>> cell_array.cell_connectivity
         array([5, 4, 3, 2, 1, 0])
+
+        For a cell array large enough that the copy matters, edit the connectivity in
+        place instead. Nothing validates the point ids written this way.
+
+        >>> connectivity = pv.convert_array(cell_array.GetConnectivityArray())
+        >>> connectivity[:] = [0, 1, 2, 3, 4, 5]
+        >>> cell_array.Modified()
+        >>> cell_array.cell_connectivity
+        array([0, 1, 2, 3, 4, 5])
 
         """
         return _get_connectivity(self)
