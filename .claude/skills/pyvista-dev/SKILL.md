@@ -30,11 +30,16 @@ What follows is only what neither document states.
 
 ## The workflow
 
-| Stage    | Skill                      | Purpose                               |
-| -------- | -------------------------- | ------------------------------------- |
-| Build    | **pyvista-dev** (this one) | Conventions, sizing, local gates      |
-| Critique | **pyvista-review**         | Adversarial review before a PR exists |
-| Ship     | **pyvista-pr**             | Title and body in the project's style |
+| Stage    | Skill                      | Purpose                                         |
+| -------- | -------------------------- | ----------------------------------------------- |
+| Build    | **pyvista-dev** (this one) | Conventions, sizing, local gates                |
+| Wrap     | **pyvista-vtk**            | Filter pattern, validation, VTK discipline      |
+| Test     | **pyvista-testing**        | Image regression: the fixture, flags, baselines |
+| Critique | **pyvista-review**         | Adversarial review before a PR exists           |
+| Ship     | **pyvista-pr**             | Title and body in the project's style           |
+
+`AGENTS.md` at the repository root routes to all five and carries the rules that apply
+before any of them.
 
 Run the review stage in a **subagent**. A reader who has to derive intent from the diff
 alone finds what the author cannot. Fix what it finds before opening anything.
@@ -110,10 +115,16 @@ than a comment:
 | `no-import-error-skip`         | `importorskip`, `except ImportError`, `suppress(ImportError)`   | make the dependency available              |
 | `warn_external`                | `warnings.warn` inside `pyvista/`                               | `warn_external`                            |
 
+`warn_external` is the one that behaves differently: it is a `libcst` codemod, so it
+rewrites the call for you and fails the run because the file changed. Stage its rewrite
+rather than reverting it.
+
 Scope matters when a snippet fails one of these: `namespace-stdlib-imports` and
 `no-forbidden-plotter-names` run on Python, reStructuredText and Markdown;
-`no-bare-import-pyvista` runs on reStructuredText and Markdown only. A documentation
-snippet can fail a hook that the equivalent Python file would pass.
+`no-bare-import-pyvista` runs on reStructuredText and Markdown only;
+`no-lint-suppression-comments` runs under `examples/` and `no-import-error-skip` under
+`tests/`. A documentation snippet can fail a hook that the equivalent Python file would
+pass.
 
 Two more that `ruff` enforces and reviewers still notice: error messages are assigned to
 a variable before being raised (`EM`), and boolean arguments are keyword-only
@@ -152,11 +163,24 @@ the `make` targets are safe. Only a bare `pytest --doctest-modules` outside tox 
 `PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take over the
 display.
 
+**Never push a commit to find out whether something passes.** Every push to an open pull
+request starts the unit test matrix across three operating systems and five Python
+versions, a separate VTK matrix, the documentation build, and the integration tests, all
+of it paid runner time. You have a shell and the same `make` targets CI runs, so run them.
+Amend or squash locally and push once, and keep the pull request in draft while you
+iterate. `CONTRIBUTING.rst` states this as `Continuous Integration Etiquette`; it applies
+to you more than to a human contributor, because pushing is cheaper for you than it is for
+the project.
+
 ## Approaching a red job
 
 - Read the log and find the assertion before changing anything. Do not infer the cause
   from the job name.
 - Check whether the failure also occurs on `main` before attributing it to the branch. A
   second worktree at `origin/main` settles this in a minute.
-- Never re-run a job as the fix. A flaky test is a defect to be diagnosed.
+- Never re-run a job as the fix. A flaky test is a defect to be diagnosed, and the re-run
+  costs what the first run cost.
 - A version-specific failure needs the shared version constant, not a local workaround.
+- An image regression failure is settled from the job's `failed_test_images-*` artifact,
+  not by pushing a regenerated baseline to see whether it sticks. See **pyvista-testing**,
+  and never run `--reset_image_cache` to clear one.

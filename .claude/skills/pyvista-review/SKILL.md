@@ -5,7 +5,8 @@ description: Review a PyVista change against the project's actual merge bar. Use
 
 # Reviewing a PyVista change
 
-Stage two of three: `pyvista-dev` builds, this critiques, `pyvista-pr` ships.
+The critique stage: `pyvista-dev` builds, `pyvista-testing` covers the image regression
+plumbing, this critiques, `pyvista-pr` ships.
 
 Run this from a **subagent** when reviewing your own work, so the reviewer has to derive
 intent from the diff alone.
@@ -75,9 +76,10 @@ where an assignment would do, a configuration knob nobody asked for.
 would pass anyway". Look for the fixture that makes the assertion true regardless, the
 uniform input that never reaches the branch under test, the missing negative case, and
 the assertion that checks one attribute where a round trip was available. A commented-out
-case in a `parametrize` list is always challenged. For plotting changes, check the image
-regression discipline in `CONTRIBUTING.rst` and `context7.json`: symmetric geometry
-renders identically whether the code is right or broken.
+case in a `parametrize` list is always challenged. For plotting changes, load
+**pyvista-testing** and check two things the diff hides: symmetric geometry renders
+identically whether the code is right or broken, and a plotter closed without `show()`
+never compares anything at all.
 
 **Defaults.** Whether a flag should be automatic rather than opt-in, and whether the
 default is what a user wants. The argument that lands is about the mistake someone will

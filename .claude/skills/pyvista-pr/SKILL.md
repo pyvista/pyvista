@@ -5,7 +5,7 @@ description: Write and open a PyVista pull request in the project's own style. U
 
 # Writing a PyVista pull request
 
-Stage three of three: `pyvista-dev` builds, `pyvista-review` critiques, this ships. Do
+The shipping stage: `pyvista-dev` builds, `pyvista-review` critiques, this ships. Do
 not open a pull request whose review findings are still outstanding.
 
 ## Never hard-wrap the body
