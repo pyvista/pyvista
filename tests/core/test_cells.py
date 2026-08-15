@@ -601,17 +601,51 @@ def test_deep_removed(deep: bool):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
 
 
+# Fixed-size storage generates the offsets implicitly instead of storing them, so
+# `cell_offsets` has to materialize them. That is the case these accessors differ on,
+# and it only exists on newer VTK.
+OFFSETS_MESH_NAMES = ['PolyData', 'UnstructuredGrid', 'CellArray']
+if _SUPPORTS_FIXED_SIZE_STORAGE:
+    OFFSETS_MESH_NAMES += ['PolyData (fixed-size)', 'CellArray (fixed-size)']
+
+# `UnstructuredGrid` has no public API that wraps a caller-owned connectivity array
+ZERO_COPY_MESH_NAMES = [n for n in OFFSETS_MESH_NAMES if not n.startswith('UnstructuredGrid')]
+
+
+def _underlying_cell_array(obj):
+    if isinstance(obj, pv.PolyData):
+        return obj.GetPolys()
+    if isinstance(obj, pv.UnstructuredGrid):
+        return obj.GetCells()
+    return obj
+
+
 @pytest.fixture
 def offsets_meshes(hexbeam):
     """Return one mesh per class that exposes ``cell_offsets`` and ``cell_connectivity``."""
-    return {
+    meshes = {
         'PolyData': pv.Plane(i_resolution=1, j_resolution=1).triangulate(),
         'UnstructuredGrid': hexbeam,
         'CellArray': pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5]),
     }
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        meshes['PolyData (fixed-size)'] = pv.PolyData.from_regular_faces(
+            np.random.default_rng(0).random((4, 3)), [[0, 1, 2], [1, 3, 2]]
+        )
+        meshes['CellArray (fixed-size)'] = pv.CellArray.from_regular_cells([[0, 1, 2], [3, 4, 5]])
+    return meshes
 
 
-@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
+@pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
+def test_offsets_meshes_storage(offsets_meshes, name):
+    # Pin which fixture entries use fixed-size storage so the coverage of the
+    # implicit-offsets case cannot silently regress
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        cell_array = _underlying_cell_array(offsets_meshes[name])
+        assert cell_array.IsStorageFixedSize() == name.endswith('(fixed-size)')
+
+
+@pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
 @pytest.mark.parametrize('array_name', ['cell_offsets', 'cell_connectivity'])
 def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
     # `UnstructuredGrid.cell_connectivity` predates this API and stays writeable
@@ -624,12 +658,12 @@ def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
             array[0] = 0
 
 
-@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
+@pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
 def test_offsets_connectivity_describe_cells(offsets_meshes, name):
     obj = offsets_meshes[name]
     offsets = obj.cell_offsets
     connectivity = obj.cell_connectivity
-    n_cells = obj.n_faces if name == 'PolyData' else obj.n_cells
+    n_cells = obj.n_faces if name.startswith('PolyData') else obj.n_cells
     assert offsets.size == n_cells + 1
     assert offsets[0] == 0
     assert offsets[-1] == connectivity.size
@@ -691,30 +725,54 @@ def test_unstructured_grid_setter_rejects_celltype_mismatch():
 
 
 def test_unstructured_grid_setter_allows_variable_size_celltype():
-    # POLYGON has no fixed point count, so the size check must not apply
+    # POLYGON has no fixed point count, so the size check must not apply. Both cells
+    # change size, so the check runs on each of them rather than being skipped.
     grid = pv.UnstructuredGrid(
-        {CellType.POLYGON: np.array([[0, 1, 2, 3]])},
+        np.array([4, 0, 1, 2, 3, 4, 4, 5, 6, 7]),
+        np.array([CellType.POLYGON, CellType.POLYGON], np.uint8),
+        np.random.default_rng(0).random((8, 3)),
+    )
+    grid.cell_offsets = [0, 3, 8]
+    assert grid.get_cell(0).point_ids == [0, 1, 2]
+    assert grid.get_cell(1).point_ids == [3, 4, 5, 6, 7]
+
+
+def test_unstructured_grid_setter_rejects_polyhedron():
+    # A polyhedron is defined by a face stream the cell array does not carry, so
+    # replacing the cell array would silently empty the grid.
+    face_stream = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+    grid = pv.UnstructuredGrid(
+        np.array([len(face_stream), *face_stream]),
+        np.array([CellType.POLYHEDRON], np.uint8),
         np.random.default_rng(0).random((4, 3)),
     )
-    grid.cell_connectivity = [3, 2, 1, 0]
-    assert np.array_equal(grid.cell_connectivity, [3, 2, 1, 0])
+    assert grid.n_cells == 1
+
+    with pytest.raises(ValueError, match="Cell type 'POLYHEDRON' cannot be modified"):
+        grid.cell_connectivity = grid.cell_connectivity.copy()
+    with pytest.raises(ValueError, match="Cell type 'POLYHEDRON' cannot be modified"):
+        grid.cell_offsets = grid.cell_offsets.copy()
+    assert grid.n_cells == 1
 
 
+@pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
 @pytest.mark.parametrize(
-    ('offsets', 'connectivity', 'error', 'match'),
+    ('array_name', 'value', 'error', 'match'),
     [
-        ([[0, 3], [3, 6]], [0, 1, 2, 3, 4, 5], ValueError, 'must be a 1D array'),
-        ([0.0, 3.0, 6.0], [0, 1, 2, 3, 4, 5], TypeError, 'integer dtype'),
-        ([], [], ValueError, 'at least one value'),
-        ([1, 4], [0, 1, 2], ValueError, 'first offset must be 0'),
-        ([0, 3, 2], [0, 1], ValueError, 'monotonically non-decreasing'),
-        ([0, 3], [0, 1], ValueError, 'must equal the size of the connectivity'),
+        ('cell_offsets', [[0, 3], [3, 6]], ValueError, 'must be a 1D array'),
+        ('cell_connectivity', [[0, 1], [2, 3]], ValueError, 'must be a 1D array'),
+        ('cell_offsets', [0.0, 3.0, 6.0], TypeError, 'integer dtype'),
+        ('cell_connectivity', [0.0, 1.0], TypeError, 'integer dtype'),
+        ('cell_offsets', [], ValueError, 'at least one value'),
+        ('cell_offsets', [1, 4, 6], ValueError, 'first offset must be 0'),
+        ('cell_offsets', [0, 6, 3], ValueError, 'monotonically non-decreasing'),
+        ('cell_offsets', [0, 3], ValueError, 'must equal the size of the connectivity'),
+        ('cell_connectivity', [0, 1, 2], ValueError, 'must equal the size of the connectivity'),
     ],
 )
-def test_offsets_connectivity_validation(offsets, connectivity, error, match):
-    cell_array = pv.CellArray()
+def test_offsets_connectivity_validation(offsets_meshes, name, array_name, value, error, match):
     with pytest.raises(error, match=match):
-        _set_cell_array_data(cell_array, offsets, connectivity)
+        setattr(offsets_meshes[name], array_name, value)
 
 
 def test_offsets_uses_fixed_size_storage_when_uniform():
@@ -767,25 +825,22 @@ def test_empty_cell_array_offsets_connectivity():
     assert cell_array.cell_connectivity.size == 0
 
 
-@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
-def test_documented_in_place_edit_of_underlying_cell_array(offsets_meshes, name):
-    # The documented zero-copy escape hatch: edit the vtkCellArray's connectivity
-    # directly rather than assigning a copy to the read-only property.
+@pytest.mark.parametrize('name', ZERO_COPY_MESH_NAMES)
+def test_documented_zero_copy_cell_array_edit(offsets_meshes, name):
+    # The documented zero-copy alternative to assigning a copy to the read-only
+    # property: build the cell array with `deep=False` and keep the connectivity array.
     obj = offsets_meshes[name]
-    if name == 'PolyData':
-        vtk_array = obj.GetPolys().GetConnectivityArray()
-    elif name == 'UnstructuredGrid':
-        vtk_array = obj.GetCells().GetConnectivityArray()
+    offsets = np.asarray(obj.cell_offsets, dtype=pv.ID_TYPE).copy()
+    connectivity = np.asarray(obj.cell_connectivity, dtype=pv.ID_TYPE).copy()
+    cell_array = pv.CellArray.from_arrays(offsets, connectivity, deep=False)
+    if isinstance(obj, pv.PolyData):
+        obj.faces = cell_array
     else:
-        vtk_array = obj.GetConnectivityArray()
+        obj = cell_array
+    assert np.shares_memory(connectivity, obj.cell_connectivity)
 
-    connectivity = pv.convert_array(vtk_array)
-    assert connectivity.flags['WRITEABLE']
-    assert not connectivity.flags['OWNDATA']  # wraps VTK's buffer, no copy
-
-    expected = obj.cell_connectivity[::-1].copy()
+    expected = connectivity[::-1].copy()
     connectivity[:] = expected
-    obj.Modified()
     assert np.array_equal(obj.cell_connectivity, expected)
 
 
