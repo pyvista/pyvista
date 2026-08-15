@@ -54,46 +54,52 @@ typecheck:
 	@echo "Running mypy"
 	@uv run tox -e mypy $(ARGS)
 
+# Forward ARGS as pytest arguments only when set. A bare `--` with nothing after
+# it replaces a tox environment's default arguments instead of adding to them
+# (see the `{posargs:...}` defaults in tox.ini), which would widen or narrow the
+# run in ways the caller did not ask for.
+TOX_ARGS = $(if $(strip $(ARGS)),-- $(ARGS))
+
 # Run tests via tox so local runs match CI exactly. Filter/flag definitions
 # live in tox.ini so they are maintained in one place.
 # Extra pytest args can be passed via ARGS, e.g. `make test ARGS="-n 10 -k filters"`
 test:
 	@echo "Running full test suite (matches CI flags)"
-	@uv run tox -e test -- $(ARGS)
+	@uv run tox -e test $(TOX_ARGS)
 
 # Core tests only (matches CI `pyX.Y-core` env).
 test-core:
 	@echo "Running core tests (matches CI)"
-	@uv run tox -e test-core -- $(ARGS)
+	@uv run tox -e test-core $(TOX_ARGS)
 
 # Plotting tests only (matches CI `pyX.Y-plotting` env).
 test-plotting:
 	@echo "Running plotting tests (matches CI)"
-	@uv run tox -e test-plotting -- $(ARGS)
+	@uv run tox -e test-plotting $(TOX_ARGS)
 
 # Run all docstring tests (matches CI `tox -f doctest`).
 # Executes both doctest-modules and doctest-local tox envs.
 doctest:
 	@echo "Running docstring tests (matches CI)"
-	@uv run tox -f doctest -- $(ARGS)
+	@uv run tox -f doctest $(TOX_ARGS)
 
 # Build the full documentation (matches CI `tox -e docs-build`).
 # Runs pre-gen steps (make_tables, make_external_gallery) and sphinx.
 docs:
 	@echo "Building documentation (matches CI)"
-	@uv run tox -e docs-build -- $(ARGS)
+	@uv run tox -e docs-build $(TOX_ARGS)
 
 # Test the built documentation (matches CI `tox -e docs-test-build`).
 # Requires `make docs` to have been run first.
 docs-test-build:
 	@echo "Testing built documentation (matches CI)"
-	@uv run tox -e docs-test-build -- $(ARGS)
+	@uv run tox -e docs-test-build $(TOX_ARGS)
 
 # Compare documentation-embedded images against cached baselines (matches CI
 # `tox -e docs-test-images`). Requires `make docs` to have been run first.
 docs-test-images:
 	@echo "Comparing documentation images against cached baselines (matches CI)"
-	@uv run tox -e docs-test-images -- $(ARGS)
+	@uv run tox -e docs-test-images $(TOX_ARGS)
 
 # Run an integration test env (matches CI `tox -e integration-<project>`).
 # Specify project via PROJECT, e.g. `make integration PROJECT=trame`.
@@ -101,4 +107,4 @@ docs-test-images:
 integration:
 	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright)"; exit 1; }
 	@echo "Running integration-$(PROJECT) tests (matches CI)"
-	@uv run tox -e integration-$(PROJECT) -- $(ARGS)
+	@uv run tox -e integration-$(PROJECT) $(TOX_ARGS)
