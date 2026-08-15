@@ -452,7 +452,7 @@ def get_mixed_cells(
         raise ValueError(msg)
 
     if regular_connectivity is None:
-        offset = vtkobj.offset
+        offset = vtkobj.cell_offsets
         cell_sizes = np.diff(offset)
         cell_starts = offset[:-1]
 

@@ -23,10 +23,13 @@ from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .cell import CellArray
+from .cell import _get_connectivity
 from .cell import _get_connectivity_array
 from .cell import _get_irregular_cells
 from .cell import _get_offset_array
+from .cell import _get_offsets
 from .cell import _get_regular_cells
+from .cell import _make_cell_array
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import CellSizeError
@@ -1369,7 +1372,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return False
 
         # early return if not all triangular
-        if self._connectivity_array.size % 3:
+        if self.GetPolys().GetNumberOfConnectivityIds() % 3:
             return False
 
         # next, check if there are three points per face
@@ -1392,9 +1395,144 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.boolean_union(other_mesh)
 
     @property
-    def _connectivity_array(self) -> NumpyArray[int]:
-        """Return the array with the point ids that define the cells' connectivity."""
-        return _get_connectivity_array(self.GetPolys())
+    def cell_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the polygonal faces.
+
+        The offsets array has ``n_faces + 1`` values and stores the index into
+        :attr:`cell_connectivity` at which each face begins. The point ids of face ``i``
+        are ``cell_connectivity[cell_offsets[i]:cell_offsets[i + 1]]``.
+
+        .. warning::
+            This property describes the :attr:`faces` only. Vertices, lines, and
+            strips are stored in separate cell arrays and are not included, so
+            ``len(cell_offsets) - 1`` is :attr:`n_faces`, which is only equal to
+            :attr:`~pyvista.DataSet.n_cells` for a mesh made up of faces alone.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face offsets with ``n_faces + 1`` values.
+
+        See Also
+        --------
+        cell_connectivity
+            Point ids that define the faces.
+        faces
+            Faces in the legacy padded format.
+        regular_faces
+            Faces as a 2D array, when every face has the same size.
+        pyvista.UnstructuredGrid.cell_offsets
+            Equivalent property for an unstructured grid.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The new offsets must remain
+        consistent with the current :attr:`cell_connectivity`; to replace both at once,
+        assign a :class:`pyvista.CellArray` to :attr:`faces`. See the examples below.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+        >>> mesh.cell_offsets
+        array([0, 3, 6])
+
+        The offsets and connectivity together describe each face.
+
+        >>> mesh.cell_connectivity[mesh.cell_offsets[0] : mesh.cell_offsets[1]]
+        array([0, 1, 2])
+
+        The array cannot be modified in place.
+
+        >>> mesh.cell_offsets[0] = 1
+        Traceback (most recent call last):
+        ...
+        ValueError: assignment destination is read-only
+
+        Assign a new array instead. Here the six connectivity ids are re-partitioned
+        into three 2-point cells.
+
+        >>> mesh.cell_offsets = [0, 2, 4, 6]
+        >>> mesh.n_faces
+        3
+
+        To replace the offsets and connectivity together, assign a
+        :class:`pyvista.CellArray` to :attr:`faces`.
+
+        >>> mesh.faces = pv.CellArray.from_arrays([0, 4], [0, 1, 3, 2])
+        >>> mesh.n_faces
+        1
+
+        """
+        return _get_offsets(self.GetPolys())
+
+    @cell_offsets.setter
+    def cell_offsets(self, offsets: VectorLike[int]) -> None:
+        self.SetPolys(_make_cell_array(offsets, self.cell_connectivity))
+
+    @property
+    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the polygonal faces.
+
+        The connectivity array stores the point ids of every face, one face after
+        another and without any padding. Use :attr:`cell_offsets` to determine where each
+        face begins and ends.
+
+        .. warning::
+            This property describes the :attr:`faces` only. Vertices, lines, and
+            strips are stored in separate cell arrays and are not included.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the faces.
+
+        See Also
+        --------
+        cell_offsets
+            Index into this array at which each face begins.
+        faces
+            Faces in the legacy padded format.
+        pyvista.UnstructuredGrid.cell_connectivity
+            Equivalent property for an unstructured grid.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the topology, assign a new array to this property, to :attr:`cell_offsets`, or to
+        :attr:`faces`. See the examples below.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+        >>> mesh.cell_connectivity
+        array([0, 1, 2, 1, 3, 2])
+
+        The array cannot be modified in place.
+
+        >>> mesh.cell_connectivity[0] = 1
+        Traceback (most recent call last):
+        ...
+        ValueError: assignment destination is read-only
+
+        Assign a new array instead. Here the winding of both triangles is reversed.
+
+        >>> mesh.cell_connectivity = [2, 1, 0, 2, 3, 1]
+        >>> mesh.cell_connectivity
+        array([2, 1, 0, 2, 3, 1])
+
+        """
+        return _get_connectivity(self.GetPolys())
+
+    @cell_connectivity.setter
+    def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self.SetPolys(_make_cell_array(self.cell_offsets, connectivity))
 
     @property
     def n_lines(self) -> int:  # numpydoc ignore=RT01
@@ -2156,9 +2294,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             )
             raise ValueError(msg)
 
-        if self.n_cells != self.offset.size - 1:  # pragma: no cover
+        if self.n_cells != self.cell_offsets.size - 1:  # pragma: no cover
             msg = (
-                f'Size of the offset ({self.offset.size}) '
+                f'Size of the offsets ({self.cell_offsets.size}) '
                 f'must be one greater than the number of cells ({self.n_cells})'
             )
             raise ValueError(msg)
@@ -2184,7 +2322,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         --------
         pyvista.DataSet.get_cell
         pyvista.UnstructuredGrid.cell_connectivity
-        pyvista.UnstructuredGrid.offset
+        pyvista.UnstructuredGrid.cell_offsets
 
         Notes
         -----
@@ -2412,20 +2550,101 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the cell connectivity as a numpy array.
+    def cell_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array.
 
-        This is effectively :attr:`UnstructuredGrid.cells` without the
-        padding.
+        The offsets array has :attr:`~pyvista.DataSet.n_cells` ``+ 1`` values and
+        stores the index into :attr:`cell_connectivity` at which each cell begins. The
+        point ids of cell ``i`` are ``cell_connectivity[cell_offsets[i]:cell_offsets[i + 1]]``.
+
+        .. versionadded:: 0.49
 
         Returns
         -------
         numpy.ndarray
-            Connectivity array.
+            Array of cell offsets with ``n_cells + 1`` values.
 
         See Also
         --------
+        cell_connectivity
+            Point ids that define the cells.
+        cells
+            Cells in the legacy padded format.
+        celltypes
+            Cell type of each cell.
+        pyvista.PolyData.cell_offsets
+            Equivalent property for the faces of a polygonal mesh.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The number of cells must
+        not change, since :attr:`celltypes` must stay in sync; to change the number
+        of cells, assign to :attr:`cells` or build a new grid. See the examples below.
+
+        Examples
+        --------
+        Return the cell offset array. Since this mesh is composed of all hexahedral
+        cells, note how each cell starts at 8 greater than the prior cell.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> hex_beam = pv.read(examples.hexbeamfile)
+        >>> hex_beam.cell_offsets
+        array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
+               104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
+               208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
+               312, 320])
+
+        The array cannot be modified in place.
+
+        >>> hex_beam.cell_offsets[0] = 1
+        Traceback (most recent call last):
+        ...
+        ValueError: assignment destination is read-only
+
+        """
+        return _get_offsets(self._get_cells())
+
+    @cell_offsets.setter
+    def cell_offsets(self, offsets: VectorLike[int]) -> None:
+        self._set_cells(_make_cell_array(offsets, self.cell_connectivity))
+
+    @property
+    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array.
+
+        The connectivity array stores the point ids of every cell, one cell after
+        another and without any padding. It is effectively :attr:`cells` without the
+        padding. Use :attr:`cell_offsets` to determine where each cell begins and ends.
+
+        .. versionchanged:: 0.49
+            The returned array is now read-only, and the property is settable. It
+            previously returned a writeable view into VTK's memory, so code that
+            modified it in place now raises ``ValueError``. Assign a new array to
+            this property instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the cells.
+
+        See Also
+        --------
+        cell_offsets
+            Index into this array at which each cell begins.
+        cells
+            Cells in the legacy padded format.
         pyvista.DataSet.get_cell
+        pyvista.PolyData.cell_connectivity
+            Equivalent property for the faces of a polygonal mesh.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the connectivity, assign a new array to this property. The new connectivity
+        must remain consistent with the current :attr:`cell_offsets`; to replace both at
+        once, assign to :attr:`cells` or build a new grid. See the examples below.
 
         Examples
         --------
@@ -2437,9 +2656,41 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> hex_beam.cell_connectivity[:16]
         array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90]...)
 
+        The array cannot be modified in place.
+
+        >>> hex_beam.cell_connectivity[0] = 1
+        Traceback (most recent call last):
+        ...
+        ValueError: assignment destination is read-only
+
+        Assign a new array instead.
+
+        >>> connectivity = hex_beam.cell_connectivity.copy()
+        >>> connectivity[0] = 1
+        >>> hex_beam.cell_connectivity = connectivity
+        >>> hex_beam.cell_connectivity[:8]
+        array([ 1,  2,  8,  7, 27, 36, 90, 81]...)
+
         """
-        carr = self._get_cells()
-        return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
+        return _get_connectivity(self._get_cells())
+
+    @cell_connectivity.setter
+    def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self._set_cells(_make_cell_array(self.cell_offsets, connectivity))
+
+    def _set_cells(self, cell_array: CellArray) -> None:
+        """Replace the cell array, keeping :attr:`celltypes` in sync."""
+        n_cells = cell_array.n_cells
+        if n_cells != self.n_cells:
+            msg = (
+                f'Number of cells ({n_cells}) does not match the number of cell types '
+                f'({self.n_cells}). The number of cells cannot be changed by setting '
+                f'`cell_offsets` or `cell_connectivity` because `celltypes` must stay '
+                f'in sync. '
+                f'Set `cells` or create a new `UnstructuredGrid` instead.'
+            )
+            raise ValueError(msg)
+        self.SetCells(self._get_cell_types_array(), cell_array)
 
     @_deprecate_positional_args
     def linear_copy(self, deep: bool = False):  # noqa: FBT001, FBT002
@@ -2499,8 +2750,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         # underlying vtkCellArray's connectivity buffer with vtk_to_numpy,
         # so reading it 4-7 times in the loop redundantly allocates wrappers.
         if np.any(quad_quad_mask) or np.any(quad_tri_mask):
-            cell_offsets = lgrid.offset
-            cell_conn = lgrid.cell_connectivity
+            lgrid_cells = lgrid._get_cells()
+            cell_offsets = _get_offset_array(lgrid_cells)
+            cell_conn = _get_connectivity_array(lgrid_cells)
 
         if np.any(quad_quad_mask):
             quad_offset = cell_offsets[:-1][quad_quad_mask]
@@ -2562,11 +2814,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return array
 
     @property
-    def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def offset(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the cell locations array.
 
         This is the location of the start of each cell in
         :attr:`cell_connectivity`.
+
+        .. deprecated:: 0.49
+            Use :attr:`cell_offsets` instead. The name is plural because the array holds
+            ``n_cells + 1`` values, and it avoids the clash with
+            :attr:`pyvista.ImageData.offset`, which is an unrelated property.
 
         Returns
         -------
@@ -2579,27 +2836,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         need to modify this array, create a copy of it using
         :func:`numpy.copy`.
 
-        Examples
-        --------
-        Return the cell offset array.  Since this mesh is composed of
-        all hexahedral cells, note how each cell starts at 8 greater
-        than the prior cell.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.offset
-        array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
-               104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
-               208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
-               312, 320]...)
-
         """
-        carr = self._get_cells()
-        # This will be the number of cells + 1.
-        array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
-        array.flags['WRITEABLE'] = False
-        return array
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`UnstructuredGrid.offset` is deprecated. Use `UnstructuredGrid.cell_offsets` '
+            'instead.',
+            PyVistaDeprecationWarning,
+        )
+        return _get_offsets(self._get_cells())
 
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
