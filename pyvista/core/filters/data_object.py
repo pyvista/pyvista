@@ -4273,7 +4273,7 @@ class DataObjectFilters:
                          42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
                          56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
                          70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
-                         84, 85, 86, 87, 88, 89])
+                         84, 85, 86, 87, 88, 89]...)
         >>> surf['vtkOriginalCellIds']
         pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
                          36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
@@ -4281,7 +4281,7 @@ class DataObjectFilters:
                           8,  8, 12, 12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32,
                           7,  7, 11, 11, 15, 15, 19, 19, 23, 23, 27, 27, 31, 31,
                          35, 35,  6,  6, 10, 10, 14, 14, 18, 18, 22, 22, 26, 26,
-                         30, 30, 34, 34])
+                         30, 30, 34, 34]...)
 
         Note that in the "vtkOriginalCellIds" array, the same original cells
         appears multiple times since this array represents the original cell of
@@ -4550,27 +4550,32 @@ class DataObjectFilters:
 
         """
 
-        def ensure_vertex_count_array(dataset: DataSet):
-            if dataset.n_cells == 0:
-                dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
+        def ensure_arrays_if_empty(dataset: DataSet):
+            if vertex_count:
+                dataset.cell_data['VertexCount'] = np.zeros(shape=(0,))
+            if area:
+                dataset.cell_data['Area'] = np.empty(shape=(0,))
+            if length:
+                dataset.cell_data['Length'] = np.empty(shape=(0,))
+            if volume:
+                dataset.cell_data['Volume'] = np.empty(shape=(0,))
 
-        # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
-        vert_count = vertex_count and getattr(self, 'n_cells', True)
+        if self.is_empty:
+            # Ensure outputs have arrays so things like `mesh.area` and `mesh.volume` still work
+            # Also guard against seg fault https://gitlab.kitware.com/vtk/vtk/-/issues/19978
+            out = self.copy()
+            if not isinstance(out, pv.MultiBlock):
+                ensure_arrays_if_empty(out)
+            return out
 
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
-        alg.SetComputeVertexCount(vert_count)
+        alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        out = _get_output(alg)
-        if vertex_count:
-            if isinstance(out, pv.MultiBlock):
-                out.generic_filter(ensure_vertex_count_array)
-            else:
-                ensure_vertex_count_array(out)
-        return out
+        return _get_output(alg)
 
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
@@ -5051,7 +5056,11 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
-            alg.SetCellLocatorPrototype(locator)
+
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocator(locator)
+            else:
+                alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:

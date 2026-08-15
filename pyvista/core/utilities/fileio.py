@@ -1204,7 +1204,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         points = np.hstack((points, zero_points))
 
     grid = pv.UnstructuredGrid(
-        np.concatenate(cells).astype(np.int64, copy=False),
+        np.concatenate(cells).astype(pv.ID_TYPE, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
     )

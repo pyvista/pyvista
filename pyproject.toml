@@ -121,7 +121,6 @@ docs = [
   'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
-  'enum-tools==0.13.0',
   'erbsland-sphinx-ansi==1.2.4',
   'fsspec==2026.6.0',
   'imageio-ffmpeg==0.6.0',
@@ -625,6 +624,13 @@ pyvista = "pv"
 'pyvista/examples/planets.py' = ['ANN']
 'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
+'pyvista/ext/_autoenum.py' = [
+  'ARG002', # overrides of fixed third-party (Sphinx) method signatures
+  'ARG003',
+  'FBT001',
+  'FBT002',
+  'PLR0917',
+]
 'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_property.py' = ['ANN']

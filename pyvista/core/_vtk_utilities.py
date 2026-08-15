@@ -112,6 +112,11 @@ _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 # to check for. `check_attribute` runs on every attribute access, so bind it once here.
 _VTK_SNAKE_CASE_MIN_VERSION_MET = vtk_version_info >= (9, 4)
 
+# VTK 9.6.2 adds fixed-size cell array storage (regular cell arrays store their
+# connectivity without an explicit offsets array). Bind the capability check once
+# here and reuse it everywhere instead of re-inlining the version comparison.
+_SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
+
 
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""

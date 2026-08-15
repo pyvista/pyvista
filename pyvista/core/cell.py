@@ -10,6 +10,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
@@ -34,13 +35,25 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-def _get_vtk_id_type() -> type[np.int32 | np.int64]:
-    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`."""
+def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
+    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`.
+
+    The 64-bit case returns :class:`numpy.longlong` (C ``long long``) rather than
+    :class:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
+    LP64 (Linux/macOS) numpy binds the name ``int64`` to C ``long`` instead, which is
+    a *distinct* scalar type. Since VTK 9.7 the numpy-to-VTK mapping follows the
+    underlying C type, so ``np.int64`` there resolves to ``VTK_LONG`` and only
+    ``np.longlong`` resolves to ``VTK_ID_TYPE``. ``longlong`` maps to ``VTK_LONG_LONG``
+    on all supported VTK versions and platforms, so it is correct either way.
+
+    The two compare equal as dtypes and have identical width, so this is invisible to
+    value comparisons; it only affects which VTK array class conversions produce.
+    """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
     elif VTK_ID_TYPE_SIZE == 8:
-        return np.int64
+        return np.longlong
     return np.int32
 
 
@@ -770,7 +783,7 @@ class CellArray(
 
         # ``vtkCellArray`` natively supports 32-bit storage (VTK >= 9). When both
         # arrays are already ``int32`` we preserve that instead of casting up to
-        # ``pv.ID_TYPE`` (``int64``), which avoids copying and doubling the memory of
+        # ``pv.ID_TYPE`` (64-bit), which avoids copying and doubling the memory of
         # large offset/connectivity arrays. See https://github.com/pyvista/pyvista/issues/8477
         if offsets.dtype == np.int32 and connectivity.dtype == np.int32:
             vtk_offsets = _vtk.numpy_to_vtk(np.ascontiguousarray(offsets.ravel()), deep=deep)
@@ -786,6 +799,30 @@ class CellArray(
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
         # garbage collected. Keep a reference to them for safety
         self.__offsets = vtk_offsets
+        self.__connectivity = vtk_connectivity
+
+    def _set_data_fixed_size(
+        self: Self,
+        cell_size: int,
+        connectivity: MatrixLike[int],
+        *,
+        deep: bool = False,
+    ) -> None:
+        """Set fixed-size cell connectivity without an explicit offset array."""
+        connectivity = np.asarray(connectivity)
+
+        if connectivity.dtype == np.int32:
+            vtk_connectivity = _vtk.numpy_to_vtk(
+                np.ascontiguousarray(connectivity.ravel()), deep=deep
+            )
+            self.Use32BitStorage()
+        else:
+            vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        self.SetData(cell_size, vtk_connectivity)
+
+        # Keep the connectivity alive for shallow copies. VTK generates the
+        # offsets implicitly for fixed-size storage.
+        self.__offsets = None
         self.__connectivity = vtk_connectivity
 
     @staticmethod
@@ -859,11 +896,17 @@ class CellArray(
             Constructed ``CellArray``.
 
         """
-        cells = np.asarray(cells, dtype=pv.ID_TYPE)
+        cells = np.asarray(cells)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+        if cells.dtype != np.int32:
+            cells = np.asarray(cells, dtype=pv.ID_TYPE)
+
         cellarr = cls()
-        cellarr._set_data(offsets, cells, deep=deep)
+        if _SUPPORTS_FIXED_SIZE_STORAGE:
+            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
+        else:
+            offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+            cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
@@ -909,11 +952,16 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     if len(cells) == 0:
         return cells
 
-    offsets = _get_offset_array(cellarr)
-    cell_size = offsets[1] - offsets[0]
+    if _SUPPORTS_FIXED_SIZE_STORAGE and cellarr.IsStorageFixedSize():
+        cell_size = cellarr.IsHomogeneous()
+    else:
+        offsets = _get_offset_array(cellarr)
+        cell_size = offsets[1] - offsets[0]
+
     try:
         return cells.reshape(-1, cell_size)
     except ValueError:
+        offsets = _get_offset_array(cellarr)
         sizes = sorted(np.unique(np.diff(offsets)).tolist())
         msg = (
             f'Cell array does not have regular cells. '

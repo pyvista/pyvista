@@ -93,6 +93,7 @@ from .text import Text
 from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
+from .theme_registry import _resolve_theme_like
 from .themes import Theme
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
@@ -146,6 +147,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ScalarBarArgs
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
+    from pyvista.plotting._typing import ThemeOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
@@ -397,7 +399,7 @@ class BasePlotter(_BoundsSizeMixin):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         lighting: LightingOptions | None = 'light kit',
-        theme: Theme | None = None,
+        theme: Theme | ThemeOptions | str | None = None,
         image_scale: int | None = None,
         **kwargs,
     ) -> None:
@@ -429,13 +431,7 @@ class BasePlotter(_BoundsSizeMixin):
             # after creation.
             self._theme.load_theme(pv.global_theme)
         else:
-            if not isinstance(theme, Theme):
-                msg = (  # type: ignore[unreachable]
-                    'Expected ``pyvista.plotting.themes.Theme`` for '
-                    f'``theme``, not {type(theme).__name__}.'
-                )
-                raise TypeError(msg)
-            self._theme.load_theme(theme)
+            self._theme.load_theme(_resolve_theme_like(theme))
 
         self.image_transparent_background = self._theme.transparent_background
 
@@ -600,7 +596,8 @@ class BasePlotter(_BoundsSizeMixin):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return the theme used for this plotter.
 
-        Set the theme when initializing the plotter instance.
+        Set the theme when initializing the plotter instance; see the
+        ``theme`` parameter of :class:`~pyvista.Plotter`.
 
         Returns
         -------
@@ -612,8 +609,7 @@ class BasePlotter(_BoundsSizeMixin):
         Use the dark theme for a plotter.
 
         >>> import pyvista as pv
-        >>> from pyvista import themes
-        >>> pl = pv.Plotter(theme=themes.DarkTheme())
+        >>> pl = pv.Plotter(theme='dark')
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
@@ -3886,7 +3882,7 @@ class BasePlotter(_BoundsSizeMixin):
 
                 # Create degenerate triangles at each point
                 n_points = points.shape[0]
-                cells = np.empty(n_points * 4, dtype=np.int64)
+                cells = np.empty(n_points * 4, dtype=pv.ID_TYPE)
                 celltypes = np.full(n_points, pv.CellType.TRIANGLE, dtype=np.uint8)
                 for i in range(n_points):
                     off = 4 * i
@@ -8119,8 +8115,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         The default is a ``'light kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
-    theme : pyvista.plotting.themes.Theme, optional
-        Plot-specific theme.
+    theme : pyvista.plotting.themes.Theme | str, optional
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
@@ -8169,7 +8166,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         splitting_position: float | None = None,
         title: str | None = None,
         lighting: LightingOptions | None = 'light kit',
-        theme: Theme | None = None,
+        theme: Theme | ThemeOptions | str | None = None,
         image_scale: int | None = None,
         stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
     ) -> None:

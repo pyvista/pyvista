@@ -16,19 +16,28 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._plot import _add_axes_widget
+from pyvista._plot import _apply_render_options
+from pyvista._plot import _set_background
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.plotting.text import _TEXT_POSITIONS
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Sequence
 
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
+    from pyvista import Plotter
+    from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
+    from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting._typing import ThemeOptions
     from pyvista.plotting.text import TextPositionOptions
+    from pyvista.plotting.themes import Theme
 
 
 class _Sentinel:
@@ -146,7 +155,7 @@ def _union_bounds(renderers: Sequence[Any]) -> tuple[float, ...]:
 
 
 def _fix_clipping_range_on_render(
-    plotter: pv.Plotter, bounds: tuple[float, ...], n_renderers: int
+    plotter: Plotter, bounds: tuple[float, ...], n_renderers: int
 ) -> None:
     """Reset the clipping range to the given bounds before every future render.
 
@@ -383,7 +392,7 @@ def _fit_labels(
 
 
 def _fit_labels_on_render(
-    plotter: pv.Plotter,
+    plotter: Plotter,
     labels: Sequence[str],
     *,
     name: str,
@@ -442,23 +451,43 @@ def _fit_labels_on_render(
 def plot_compare(  # noqa: ANN201
     datasets: Sequence[PlottableType] | Mapping[str, PlottableType],
     *,
-    dataset_kwargs: dict[str, Any] | None = None,
     labels: Sequence[str] | None = _AUTO_LABELS,
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
     label_kwargs: dict[str, Any] | None = None,
     reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
+    volume: bool = False,
     shape: Sequence[int] | str | None = None,
     normalize: bool = False,
     link: bool | None = None,
     cpos: CameraPositionOptions | None = None,
-    zoom: float | str | None = None,
+    zoom: str | float | None = None,
     show_axes: bool | None = None,
     show_bounds: bool = False,
+    background: ColorLike | None = None,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
+    eye_dome_lighting: bool = False,
+    parallel_projection: bool = False,
+    ssao: bool = False,
+    off_screen: bool | None = None,
+    notebook: bool | None = None,
+    window_size: list[int] | None = None,
+    border: bool | None = None,
+    border_color: ColorLike | None = None,
+    border_width: float | None = None,
+    subplot_seams: bool | None = None,
+    theme: Theme | ThemeOptions | str | None = None,
     screenshot: str | bool | None = None,
-    plotter_kwargs: dict[str, Any] | None = None,
-    show_kwargs: dict[str, Any] | None = None,
+    full_screen: bool | None = None,
+    interactive: bool = True,
+    return_img: bool = False,
+    return_cpos: bool = False,
+    return_viewer: bool = False,
+    jupyter_backend: JupyterBackendOptions | None = None,
+    jupyter_kwargs: dict[str, Any] | None = None,
+    before_close_callback: Callable[[Plotter], None] | None = None,
+    **kwargs: Any,
 ):
     """Plot a grid comparison of any number of data objects.
 
@@ -480,10 +509,6 @@ def plot_compare(  # noqa: ANN201
         :meth:`~pyvista.Plotter.add_mesh` can draw. At least two datasets are
         required. If a mapping or a :class:`~pyvista.MultiBlock` is given, its
         keys are used as the default ``labels``.
-
-    dataset_kwargs : dict, optional
-        Additional keyword arguments passed to :meth:`~pyvista.Plotter.add_mesh`.
-        The same arguments are used for each dataset.
 
     labels : Sequence[str] | None, optional
         The labels to display for each data object. Must have the same length as
@@ -542,6 +567,10 @@ def plot_compare(  # noqa: ANN201
         Additional keyword arguments to pass to the
         :meth:`~pyvista.Plotter.add_mesh` method used to show the
         ``reference_mesh``. Defaults to ``{'color': 'k'}``.
+
+    volume : bool, default: False
+        Use the :func:`Plotter.add_volume()
+        <pyvista.Plotter.add_volume>` method for volume rendering.
 
     shape : Sequence[int] | str, optional
         The shape of the subplot layout, in any form accepted by
@@ -603,17 +632,118 @@ def plot_compare(  # noqa: ANN201
     show_bounds : bool, default: False
         Show the bounds axes in every subplot.
 
+    background : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.background`
+        Color of the background.
+
+    anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
+        Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
+        disables anti_aliasing. If a string, should be one of the following:
+
+        * ``"ssaa"`` - Super-Sample Anti-Aliasing
+        * ``"msaa"`` - Multi-Sample Anti-Aliasing
+        * ``"fxaa"`` - Fast Approximate Anti-Aliasing
+
+        Defaults to :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+
+    eye_dome_lighting : bool, optional
+        Enables eye dome lighting.
+
+    parallel_projection : bool, default: False
+        Enable parallel projection.
+
+    ssao : bool, optional
+        Enable surface space ambient occlusion (SSAO). See
+        :func:`Plotter.enable_ssao` for more details.
+
+    off_screen : bool, optional
+        Plots off screen when ``True``.  Helpful for saving
+        screenshots without a window popping up.  Defaults to the
+        global setting ``pyvista.OFF_SCREEN``.
+
+    notebook : bool, default: :attr:`pyvista.plotting.themes.Theme.notebook`
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
+
+    window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
+        Window size in pixels.
+
+    border : bool, default: False
+        Draw a frame around the outer edge of the plotting area, i.e.
+        around the whole grid of subplots, regardless of ``shape``.
+
+    border_color : ColorLike, optional
+        Color of the border and/or subplot seams. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
+
+        * ``color='white'``
+        * ``color='w'``
+        * ``color=[1.0, 1.0, 1.0]``
+        * ``color='#FFFFFF'``
+
+    border_width : float, optional
+        Width of the border and/or subplot seams in pixels, when
+        enabled. Defaults to :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
+
+    subplot_seams : bool, optional
+        Draw a thin line between neighboring subplots. Defaults to
+        :attr:`pyvista.global_theme.subplot_seams
+        <pyvista.plotting.themes.Theme.subplot_seams>`.
+
+    theme : pyvista.plotting.themes.Theme | str, optional
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
+
     screenshot : str | bool, optional
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
 
-    plotter_kwargs : dict, optional
-        Additional keyword arguments to pass to the :class:`~pyvista.Plotter`
-        constructor.
+    full_screen : bool, default: :attr:`pyvista.plotting.themes.Theme.full_screen`
+        Opens window in full screen.  When enabled, ignores
+        ``window_size``.
 
-    show_kwargs : dict, optional
-        Additional keyword arguments to pass to the :meth:`~pyvista.Plotter.show`
-        method.
+    interactive : bool, default: :attr:`pyvista.plotting.themes.Theme.interactive`
+        Allows user to pan and move figure.
+
+    return_img : bool, default: False
+        Returns numpy array of the last image rendered.
+
+    return_cpos : bool, default: False
+        Return the last camera position from the render window
+        when enabled.  Defaults to value in theme settings.
+
+    return_viewer : bool, default: False
+        Return the jupyterlab viewer, scene, or display object
+        when plotting with jupyter notebook.
+
+    jupyter_backend : JupyterBackendOptions, optional
+        Jupyter notebook plotting backend to use.
+        See available documentation at :func:`pyvista.set_jupyter_backend`
+        to see all valid values for this parameter along with a detailed documentation.
+
+        Defaults to :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
+
+    jupyter_kwargs : dict, optional
+        Keyword arguments for the Jupyter notebook plotting backend.
+        See :ref:`customize_trame_toolbar_example` for an example
+        using this keyword.
+
+    before_close_callback : Callable, optional
+        Callback that is called before the plotter is closed.
+        The function takes a single parameter, which is the plotter object
+        before it closes. An example of use is to capture a screenshot after
+        interaction::
+
+            def fun(plotter):
+                plotter.screenshot('file.png')
+
+    **kwargs : dict, optional
+        Additional keyword arguments to pass to the
+        :meth:`~pyvista.Plotter.add_mesh` method which draws each of the
+        ``datasets``, or to :meth:`~pyvista.Plotter.add_volume` when ``volume``
+        is ``True``.
 
     Returns
     -------
@@ -636,7 +766,7 @@ def plot_compare(  # noqa: ANN201
     >>> mesh = examples.load_airplane()
     >>> pv.plot_compare(
     ...     [mesh.clip('x'), mesh.clip('y'), mesh.clip('z')],
-    ...     dataset_kwargs={'color': 'w'},
+    ...     color='w',
     ... )
 
     Use a dictionary to label each dataset and set the camera position explicitly.
@@ -647,7 +777,7 @@ def plot_compare(  # noqa: ANN201
     ...         'clip y': mesh.clip('y'),
     ...         'clip z': mesh.clip('z'),
     ...     },
-    ...     dataset_kwargs={'color': 'w'},
+    ...     color='w',
     ...     cpos='xy',
     ... )
 
@@ -683,18 +813,14 @@ def plot_compare(  # noqa: ANN201
     ...     normalize=True,
     ... )
 
-    Anything the :class:`~pyvista.Plotter` itself takes is given to it through
-    ``plotter_kwargs``. Draw a border around each subplot to tell them apart.
+    Draw a border around each subplot to tell them apart.
 
-    >>> pv.plot_compare(
-    ...     blocks,
-    ...     plotter_kwargs={'border': True, 'border_color': 'grey'},
-    ... )
+    >>> pv.plot_compare(blocks, border=True, border_color='grey')
 
     Plot on a dark background by giving the plotter a theme of its own, which
     also decides the color the labels are drawn in.
 
-    >>> pv.plot_compare(blocks, plotter_kwargs={'theme': pv.themes.DarkTheme()})
+    >>> pv.plot_compare(blocks, theme='dark')
 
     """
     datasets, names = _unpack_datasets(datasets)
@@ -712,16 +838,11 @@ def plot_compare(  # noqa: ANN201
         if reference_mesh is not None:
             reference_mesh = _normalized(reference_mesh)
 
-    plotter_kwargs = {} if plotter_kwargs is None else dict(plotter_kwargs)
-    shape = _from_kwargs(
-        plotter_kwargs, 'shape', shape, name='shape', kwargs_name='plotter_kwargs'
-    )
-
     if shape is None:
         shape = _auto_shape(n_datasets)
 
-    dataset_kwargs = {} if dataset_kwargs is None else dataset_kwargs
-    show_kwargs = {} if show_kwargs is None else show_kwargs
+    if jupyter_kwargs is None:
+        jupyter_kwargs = {}
     label_kwargs = {} if label_kwargs is None else dict(label_kwargs)
     reference_kwargs = {'color': 'k'} if reference_kwargs is None else reference_kwargs
 
@@ -730,8 +851,7 @@ def plot_compare(  # noqa: ANN201
             label_kwargs, 'font_size', label_size, name='label_size', kwargs_name='label_kwargs'
         )
     )
-    # A coordinate is only ever given in the keywords, so validate the argument on its
-    # own before the two are reconciled
+
     label_position = _from_kwargs(
         label_kwargs,
         'position',
@@ -751,7 +871,17 @@ def plot_compare(  # noqa: ANN201
         label_kwargs['name'] = _LABEL_NAME
 
     # The shape itself is validated by the plotter
-    pl = pv.Plotter(shape=shape, **plotter_kwargs)
+    pl = pv.Plotter(
+        shape=shape,
+        off_screen=off_screen,
+        notebook=notebook,
+        window_size=window_size,
+        border=border,
+        border_color=border_color,
+        border_width=border_width,
+        theme=theme,
+        subplot_seams=subplot_seams,
+    )
 
     n_subplots = len(pl.renderers)
     if n_subplots < n_datasets:
@@ -764,7 +894,7 @@ def plot_compare(  # noqa: ANN201
 
     for index, dataset in enumerate(datasets):
         pl.subplot(*_subplot_args(pl.renderers.shape, index))
-        pl.add_mesh(dataset, **dataset_kwargs)
+        pl.add_volume(dataset, **kwargs) if volume else pl.add_mesh(dataset, **kwargs)
         if labels is not None:
             pl._add_text_actor(labels[index], **label_kwargs)
         if cpos is not None:
@@ -839,16 +969,23 @@ def plot_compare(  # noqa: ANN201
             for renderer in renderers:
                 renderer.reset_camera()
 
-    if show_axes is None:
-        show_axes = pl.theme.axes.show
-    if show_axes:
-        for renderer in renderers:
-            # Match `pyvista.plot`, which draws box axes when the theme asks for them
-            renderer.add_box_axes() if pl.theme.axes.box else renderer.add_axes()
+    # Shared with `pyvista.plot`, which applies the same options to its one renderer
+    _add_axes_widget(renderers, show_axes=show_axes, theme=pl.theme)
 
     if show_bounds:
         for renderer in renderers:
             renderer.show_bounds()
+
+    _set_background(pl, background)
+
+    _apply_render_options(
+        pl,
+        renderers,
+        anti_aliasing=anti_aliasing,
+        eye_dome_lighting=eye_dome_lighting,
+        parallel_projection=parallel_projection,
+        ssao=ssao,
+    )
 
     if zoom is not None:
         # Linked subplots share one camera, so zooming each would compound the zoom
@@ -863,4 +1000,14 @@ def plot_compare(  # noqa: ANN201
             uniform=None if label_size is None else label_size == _UNIFORM,
         )
 
-    return pl.show(screenshot=screenshot, **show_kwargs)
+    return pl.show(
+        screenshot=screenshot,
+        full_screen=full_screen,
+        interactive=interactive,
+        return_img=return_img,
+        return_cpos=return_cpos,
+        return_viewer=return_viewer,
+        jupyter_backend=jupyter_backend,
+        jupyter_kwargs=jupyter_kwargs,
+        before_close_callback=before_close_callback,
+    )

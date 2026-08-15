@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import given
@@ -15,6 +16,7 @@ from pyvista import _vtk
 from pyvista import colors
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
+from pyvista.plotting._typing import ThemeOptions
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
@@ -283,6 +285,17 @@ def test_themes(theme):
     finally:
         # always return to testing theme
         pv.set_plot_theme('testing')
+
+
+def test_theme_options_literal_matches_native_themes():
+    # ``ThemeOptions`` is a hand-written ``Literal`` covering only the distinct,
+    # user-facing built-in themes; it must stay in sync with ``_NATIVE_THEMES``
+    # minus the names deliberately left out (see ``ThemeOptions``'s comment).
+    # Use ``__members__`` since plain iteration skips value-aliases like ``default``.
+    excluded = {'default', 'vtk', 'testing', 'document_build'}
+    literal_names = set(get_args(ThemeOptions))
+    native_names = set(pv.plotting.themes._NATIVE_THEMES.__members__)
+    assert literal_names == native_names - excluded
 
 
 def test_invalid_theme():
