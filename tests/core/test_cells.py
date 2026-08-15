@@ -614,6 +614,8 @@ def offsets_meshes(hexbeam):
 @pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
 @pytest.mark.parametrize('array_name', ['cell_offsets', 'cell_connectivity'])
 def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
+    if name == 'UnstructuredGrid' and array_name == 'cell_connectivity':
+        pytest.skip('Writeable until v0.52, see test_unstructured_grid_connectivity_writeable')
     array = getattr(offsets_meshes[name], array_name)
     assert not array.flags['WRITEABLE']
     with pytest.raises(ValueError, match='read-only'):
@@ -717,11 +719,13 @@ def test_unstructured_grid_offset_deprecated(hexbeam):
         assert np.array_equal(hexbeam.offset, hexbeam.cell_offsets)
 
 
-def test_unstructured_grid_cell_connectivity_is_now_read_only(hexbeam):
-    # Breaking change in 0.49: `cell_connectivity` used to return a writeable view.
-    # Mutating it now raises instead of silently editing the mesh.
-    with pytest.raises(ValueError, match='read-only'):
-        hexbeam.cell_connectivity[0] += 1
+def test_unstructured_grid_connectivity_writeable(hexbeam):
+    # `UnstructuredGrid.cell_connectivity` predates this API and returned a writeable
+    # array, so it stays writeable through v0.51 rather than breaking callers. The
+    # source carries a version guard that fails the build when v0.52 lands.
+    assert hexbeam.cell_connectivity.flags['WRITEABLE']
+    hexbeam.cell_connectivity[0] += 1
+    assert pv.version_info < (0, 52), 'Flip this property to read-only.'
 
 
 def test_empty_cell_array_offsets_connectivity():
@@ -758,3 +762,23 @@ def test_polydata_connectivity_array_deprecated():
     mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
     with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_connectivity`'):
         assert np.array_equal(mesh._connectivity_array, mesh.cell_connectivity)
+
+
+def test_polydata_offset_array_deprecated():
+    # Restored after being removed in #8873: downstream code uses these internal
+    # helpers, so they get a deprecation cycle rather than being deleted.
+    mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_offsets`'):
+        assert np.array_equal(mesh._offset_array, mesh.cell_offsets)
+
+
+def test_polydata_offset_array_deprecated_with_fixed_size_storage():
+    # The property was removed in #8873 because regular cell arrays store offsets
+    # implicitly. Verify it still returns correct values in that case.
+    mesh = pv.PolyData.from_regular_faces(
+        np.random.default_rng(0).random((4, 3)), [[0, 1, 2], [1, 3, 2]]
+    )
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetPolys().IsStorageFixedSize()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_offsets`'):
+        assert np.array_equal(mesh._offset_array, [0, 3, 6])

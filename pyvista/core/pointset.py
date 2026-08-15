@@ -1553,6 +1553,35 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         self.SetPolys(_make_cell_array(self.cell_offsets, connectivity))
 
     @property
+    def _offset_array(self) -> NumpyArray[int]:
+        """Return the array used to store cell offsets.
+
+        .. deprecated:: 0.49
+            Use :attr:`cell_offsets` instead. Note that :attr:`cell_offsets` is
+            read-only, whereas this property returns a writeable array.
+
+        Notes
+        -----
+        Since VTK 9.6.2 a cell array with equal-sized cells stores its offsets
+        implicitly, in which case the array returned here is generated on access
+        rather than being a view of VTK's memory.
+
+        """
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`PolyData._offset_array` is deprecated. Use `PolyData.cell_offsets` '
+            'instead, which returns a read-only array.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `PolyData._offset_array`.'
+            raise RuntimeError(msg)
+        return _get_offset_array(self.GetPolys())
+
+    @property
     def _connectivity_array(self) -> NumpyArray[int]:
         """Return the array with the point ids that define the cells' connectivity.
 
@@ -2660,10 +2689,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         padding. Use :attr:`cell_offsets` to determine where each cell begins and ends.
 
         .. versionchanged:: 0.49
-            The returned array is now read-only, and the property is settable. It
-            previously returned a writeable view into VTK's memory, so code that
-            modified it in place now raises ``ValueError``. Assign a new array to
-            this property instead.
+            The property is now settable.
+
+        .. deprecated:: 0.49
+            Modifying the returned array in place is deprecated. This array will
+            become read-only in v0.52, matching :attr:`pyvista.PolyData.cell_connectivity`
+            and :attr:`pyvista.CellArray.cell_connectivity`. Assign a new array to this
+            property instead, or edit the underlying :vtk:`vtkCellArray` explicitly as
+            shown in the examples.
 
         Returns
         -------
@@ -2682,11 +2715,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Notes
         -----
-        The returned array is read-only and cannot be modified in place. To change the
-        connectivity, assign a new array to this property. The input is copied, so the
-        grid never aliases an array that may be modified later. The new connectivity
-        must remain consistent with the current :attr:`cell_offsets`; to replace both at
-        once, assign to :attr:`cells` or build a new grid.
+        The returned array is still writeable, but modifying it in place is deprecated
+        and it becomes read-only in v0.52. To change the connectivity, assign a new
+        array to this property. The input is copied, so the grid never aliases an array
+        that may be modified later. The new connectivity must remain consistent with the
+        current :attr:`cell_offsets`; to replace both at once, assign to :attr:`cells`
+        or build a new grid.
 
         Where that copy is too expensive, the underlying :vtk:`vtkCellArray` may be
         edited directly. That path is zero-copy but unvalidated, and marking the grid
@@ -2702,14 +2736,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> hex_beam.cell_connectivity[:16]
         array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90]...)
 
-        The array cannot be modified in place.
-
-        >>> hex_beam.cell_connectivity[0] = 1
-        Traceback (most recent call last):
-        ...
-        ValueError: assignment destination is read-only
-
-        Assign a new array instead.
+        Assign a new array to change it.
 
         >>> connectivity = hex_beam.cell_connectivity.copy()
         >>> connectivity[0] = 1
@@ -2731,7 +2758,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         approach and should be removed or regenerated.
 
         """
-        return _get_connectivity(self._get_cells())
+        # Deprecated writeability on 0.49.0. Unlike `PolyData.cell_connectivity` and
+        # `CellArray.cell_connectivity`, which are new names and read-only from the
+        # start, this property already existed and returned a writeable array, so the
+        # array stays writeable for a transition period rather than breaking callers.
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = (
+                'Make `UnstructuredGrid.cell_connectivity` read-only, matching '
+                '`PolyData.cell_connectivity` and `CellArray.cell_connectivity`.'
+            )
+            raise RuntimeError(msg)
+        return _get_connectivity_array(self._get_cells())
 
     @cell_connectivity.setter
     def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
