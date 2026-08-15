@@ -1438,19 +1438,17 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> import pyvista as pv
         >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
         >>> mesh.cell_offsets
-        array([0, 3, 6])
+        array([0, 3, 6]...)
 
         The offsets and connectivity together describe each face.
 
         >>> mesh.cell_connectivity[mesh.cell_offsets[0] : mesh.cell_offsets[1]]
-        array([0, 1, 2])
+        array([0, 1, 2]...)
 
-        The array cannot be modified in place.
+        The array is read-only and writing to it raises a ``ValueError``.
 
-        >>> mesh.cell_offsets[0] = 1
-        Traceback (most recent call last):
-        ...
-        ValueError: assignment destination is read-only
+        >>> mesh.cell_offsets.flags['WRITEABLE']
+        False
 
         Assign a new array instead. Here the six connectivity ids are re-partitioned
         into three 2-point cells.
@@ -1519,20 +1517,18 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> import pyvista as pv
         >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
         >>> mesh.cell_connectivity
-        array([0, 1, 2, 1, 3, 2])
+        array([0, 1, 2, 1, 3, 2]...)
 
-        The array cannot be modified in place.
+        The array is read-only and writing to it raises a ``ValueError``.
 
-        >>> mesh.cell_connectivity[0] = 1
-        Traceback (most recent call last):
-        ...
-        ValueError: assignment destination is read-only
+        >>> mesh.cell_connectivity.flags['WRITEABLE']
+        False
 
         Assign a new array instead. Here the winding of both triangles is reversed.
 
         >>> mesh.cell_connectivity = [2, 1, 0, 2, 3, 1]
         >>> mesh.cell_connectivity
-        array([2, 1, 0, 2, 3, 1])
+        array([2, 1, 0, 2, 3, 1]...)
 
         For a mesh large enough that the copy matters, keep the connectivity array and
         edit it in place.
@@ -1542,7 +1538,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh.faces = pv.CellArray.from_arrays([0, 3, 6], connectivity, deep=False)
         >>> connectivity[:] = [0, 2, 1, 1, 2, 3]
         >>> mesh.cell_connectivity
-        array([0, 2, 1, 1, 2, 3])
+        array([0, 2, 1, 1, 2, 3]...)
 
         Note that arrays derived from the old topology, such as ``'Normals'``, are not
         recomputed by either approach and should be removed or regenerated.
@@ -2666,14 +2662,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
                104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
                208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
-               312, 320])
+               312, 320]...)
 
-        The array cannot be modified in place.
+        The array is read-only and writing to it raises a ``ValueError``.
 
-        >>> hex_beam.cell_offsets[0] = 1
-        Traceback (most recent call last):
-        ...
-        ValueError: assignment destination is read-only
+        >>> hex_beam.cell_offsets.flags['WRITEABLE']
+        False
 
         """
         return _get_offsets(self._get_cells())

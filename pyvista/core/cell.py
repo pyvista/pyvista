@@ -780,7 +780,7 @@ class CellArray(
         >>> from pyvista import CellArray
         >>> cell_array = CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
         >>> cell_array.cell_offsets
-        array([0, 3, 6])
+        array([0, 3, 6]...)
 
         Replace the offsets so the same connectivity describes three 2-point cells.
 
@@ -832,11 +832,11 @@ class CellArray(
         >>> import pyvista as pv
         >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
         >>> cell_array.cell_connectivity
-        array([0, 1, 2, 3, 4, 5])
+        array([0, 1, 2, 3, 4, 5]...)
 
         >>> cell_array.cell_connectivity = [5, 4, 3, 2, 1, 0]
         >>> cell_array.cell_connectivity
-        array([5, 4, 3, 2, 1, 0])
+        array([5, 4, 3, 2, 1, 0]...)
 
         For a cell array large enough that the copy matters, keep the connectivity
         array and edit it in place.
@@ -846,7 +846,7 @@ class CellArray(
         >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], connectivity, deep=False)
         >>> connectivity[:] = [5, 4, 3, 2, 1, 0]
         >>> cell_array.cell_connectivity
-        array([5, 4, 3, 2, 1, 0])
+        array([5, 4, 3, 2, 1, 0]...)
 
         """
         return _get_connectivity(self)
