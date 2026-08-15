@@ -704,12 +704,6 @@ def test_cell_array_offset_array_deprecated():
     cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
     with pytest.warns(pv.PyVistaDeprecationWarning, match='`CellArray.cell_offsets`'):
         assert np.array_equal(cell_array.offset_array, [0, 3, 6])
-    if pv.version_info >= (0, 52):  # pragma: no cover
-        msg = 'Convert `CellArray.offset_array` deprecation warning into an error.'
-        raise RuntimeError(msg)
-    if pv.version_info >= (0, 53):  # pragma: no cover
-        msg = 'Remove `CellArray.offset_array`.'
-        raise RuntimeError(msg)
 
 
 def test_cell_array_connectivity_array_deprecated():
@@ -721,12 +715,6 @@ def test_cell_array_connectivity_array_deprecated():
 def test_unstructured_grid_offset_deprecated(hexbeam):
     with pytest.warns(pv.PyVistaDeprecationWarning, match='`UnstructuredGrid.cell_offsets`'):
         assert np.array_equal(hexbeam.offset, hexbeam.cell_offsets)
-    if pv.version_info >= (0, 52):  # pragma: no cover
-        msg = 'Convert `UnstructuredGrid.offset` deprecation warning into an error.'
-        raise RuntimeError(msg)
-    if pv.version_info >= (0, 53):  # pragma: no cover
-        msg = 'Remove `UnstructuredGrid.offset`.'
-        raise RuntimeError(msg)
 
 
 def test_unstructured_grid_cell_connectivity_is_now_read_only(hexbeam):
@@ -764,3 +752,9 @@ def test_documented_in_place_edit_of_underlying_cell_array(offsets_meshes, name)
     connectivity[:] = expected
     obj.Modified()
     assert np.array_equal(obj.cell_connectivity, expected)
+
+
+def test_polydata_connectivity_array_deprecated():
+    mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_connectivity`'):
+        assert np.array_equal(mesh._connectivity_array, mesh.cell_connectivity)

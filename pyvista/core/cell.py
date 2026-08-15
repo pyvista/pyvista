@@ -874,6 +874,12 @@ class CellArray(
             '`CellArray.cell_connectivity` instead, which returns a read-only array.',
             PyVistaDeprecationWarning,
         )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `CellArray.connectivity_array`.'
+            raise RuntimeError(msg)
         return _get_connectivity_array(self)
 
     @property
@@ -896,6 +902,12 @@ class CellArray(
             'instead, which returns a read-only array.',
             PyVistaDeprecationWarning,
         )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `CellArray.offset_array`.'
+            raise RuntimeError(msg)
         return _get_offset_array(self)
 
     def _set_data(

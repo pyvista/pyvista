@@ -1553,6 +1553,29 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         self.SetPolys(_make_cell_array(self.cell_offsets, connectivity))
 
     @property
+    def _connectivity_array(self) -> NumpyArray[int]:
+        """Return the array with the point ids that define the cells' connectivity.
+
+        .. deprecated:: 0.49
+            Use :attr:`cell_connectivity` instead. Note that :attr:`cell_connectivity`
+            is read-only, whereas this property returns a writeable array.
+
+        """
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`PolyData._connectivity_array` is deprecated. Use '
+            '`PolyData.cell_connectivity` instead, which returns a read-only array.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `PolyData._connectivity_array`.'
+            raise RuntimeError(msg)
+        return _get_connectivity_array(self.GetPolys())
+
+    @property
     def n_lines(self) -> int:  # numpydoc ignore=RT01
         """Return the number of line cells.
 
@@ -2879,6 +2902,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             'instead.',
             PyVistaDeprecationWarning,
         )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `UnstructuredGrid.offset`.'
+            raise RuntimeError(msg)
         return _get_offsets(self._get_cells())
 
     def cast_to_explicit_structured_grid(self):
