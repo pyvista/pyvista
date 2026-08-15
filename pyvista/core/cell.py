@@ -10,6 +10,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
@@ -697,6 +698,8 @@ class CellArray(
     ) -> None:
         """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
+        self.__offsets: _vtk.vtkIdTypeArray | None = None
+        self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
             self.cells = cells
 
@@ -730,6 +733,7 @@ class CellArray(
                 ' due to invalid connectivity array.'
             )
             raise CellSizeError(msg)
+        self.__offsets = self.__connectivity = None
 
     @property
     def n_cells(self: Self) -> int:
@@ -791,8 +795,14 @@ class CellArray(
         else:
             vtk_offsets = numpy_to_idarr(offsets, deep=deep)
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
-        # Not stashed on self: SetData owns them, and a ghosted __dict__ would outlive us
         self.SetData(vtk_offsets, vtk_connectivity)
+
+        # Only pre-9.6 VTK needs this: there SetData does not reference the arrays, so
+        # dropping them here frees the buffers out from under us. Newer VTK does own
+        # them, and stashing anyway leaks both via the ghost __dict__ (see #8873).
+        if not _SETDATA_TAKES_OWNERSHIP:
+            self.__offsets = vtk_offsets
+            self.__connectivity = vtk_connectivity
 
     def _set_data_fixed_size(
         self: Self,
@@ -811,7 +821,8 @@ class CellArray(
             self.Use32BitStorage()
         else:
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
-        # Not stashed on self, as in _set_data
+        # No stash needed as in _set_data: fixed-size storage implies VTK >= 9.6.2, which
+        # always owns the array
         self.SetData(cell_size, vtk_connectivity)
 
     @staticmethod

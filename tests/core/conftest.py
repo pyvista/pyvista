@@ -25,6 +25,7 @@ from refleak.testing import Snapshot
 from refleak.testing import gc_collect_once
 
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 
 _phase_report_key = pytest.StashKey()
 _check_gc_key = pytest.StashKey()
@@ -47,7 +48,12 @@ def _test_passed(item) -> bool:
 def check_gc(request):
     """Snapshot live VTK objects so leaks from this test can be detected."""
     node = request.node
-    if node.get_closest_marker('check_gc') is None or node.get_closest_marker('skip_check_gc'):
+    if (
+        # On VTK < 9.6 CellArray must hold its own arrays, so this can never pass there
+        not _SETDATA_TAKES_OWNERSHIP
+        or node.get_closest_marker('check_gc') is None
+        or node.get_closest_marker('skip_check_gc')
+    ):
         yield
         return
     node.stash[_check_gc_key] = Snapshot(_vtk.vtkObjectBase, label='VTK')

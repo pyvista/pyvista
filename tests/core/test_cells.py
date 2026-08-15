@@ -12,6 +12,7 @@ import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
@@ -614,6 +615,10 @@ def test_deep_removed(deep: bool):
         lambda: pv.vector_poly_data(np.zeros((10, 3)), np.ones((10, 3))),
     ],
     ids=['verts', 'faces', 'lines', 'vectors'],
+)
+@pytest.mark.skipif(
+    not _SETDATA_TAKES_OWNERSHIP,
+    reason='VTK < 9.6 requires CellArray to keep the arrays alive itself',
 )
 def test_cell_array_does_not_leak_vtk_arrays(make_mesh):
     # A VTK array stashed on the CellArray outlives the mesh in VTK's ghost __dict__
