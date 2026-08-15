@@ -11,6 +11,7 @@ from pyvista import Cell
 from pyvista import CellType
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core.cell import _set_cell_array_data
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.core.celltype import _RENAMED_CELL_TYPES
@@ -499,8 +500,8 @@ OFFSETS_LIST = [0, 3, 6]
 @pytest.mark.parametrize('deep', [False, True])
 def test_init_cell_array_from_arrays(offsets, connectivity, deep):
     cell_array = pv.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
-    assert np.array_equal(np.array(connectivity), cell_array.connectivity_array)
-    assert np.array_equal(np.array(offsets), cell_array.offset_array)
+    assert np.array_equal(np.array(connectivity), cell_array.cell_connectivity)
+    assert np.array_equal(np.array(offsets), cell_array.cell_offsets)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(offsets) - 1
 
 
@@ -516,10 +517,10 @@ def test_init_cell_array_preserves_int32_storage(deep):
     # proves 32-bit storage was kept (no upcast copy). This is checked instead of
     # ``IsStorage32Bit()`` because that method is not available on all supported VTK
     # versions (e.g. 9.4.2).
-    assert cell_array.offset_array.dtype == np.int32
-    assert cell_array.connectivity_array.dtype == np.int32
-    assert np.array_equal(cell_array.offset_array, offsets)
-    assert np.array_equal(cell_array.connectivity_array, connectivity)
+    assert cell_array.cell_offsets.dtype == np.int32
+    assert cell_array.cell_connectivity.dtype == np.int32
+    assert np.array_equal(cell_array.cell_offsets, offsets)
+    assert np.array_equal(cell_array.cell_connectivity, connectivity)
 
 
 def test_init_cell_array_int64_uses_64bit_storage():
@@ -527,8 +528,8 @@ def test_init_cell_array_int64_uses_64bit_storage():
     cell_array = pv.core.cell.CellArray.from_arrays(
         np.array(OFFSETS_LIST, np.int64), np.array(CONNECTIVITY_LIST, np.int64)
     )
-    assert cell_array.offset_array.dtype == np.int64
-    assert cell_array.connectivity_array.dtype == np.int64
+    assert cell_array.cell_offsets.dtype == np.int64
+    assert cell_array.cell_connectivity.dtype == np.int64
 
 
 REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
@@ -557,7 +558,7 @@ def test_init_cell_array_from_regular_cells_preserves_int32():
     cells = np.array(REGULAR_CELL_LIST, np.int32)
     cell_array = pv.CellArray.from_regular_cells(cells)
     expected_dtype = np.int32 if _SUPPORTS_FIXED_SIZE_STORAGE else pv.ID_TYPE
-    assert cell_array.connectivity_array.dtype == expected_dtype
+    assert cell_array.cell_connectivity.dtype == expected_dtype
 
 
 def test_set_shallow_regular_cells():
@@ -598,3 +599,146 @@ def test_n_cells_removed():
 def test_deep_removed(deep: bool):
     with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
+
+
+@pytest.fixture
+def offsets_meshes(hexbeam):
+    """Return one mesh per class that exposes ``cell_offsets`` and ``cell_connectivity``."""
+    return {
+        'PolyData': pv.Plane(i_resolution=1, j_resolution=1).triangulate(),
+        'UnstructuredGrid': hexbeam,
+        'CellArray': pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5]),
+    }
+
+
+@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
+@pytest.mark.parametrize('array_name', ['cell_offsets', 'cell_connectivity'])
+def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
+    array = getattr(offsets_meshes[name], array_name)
+    assert not array.flags['WRITEABLE']
+    with pytest.raises(ValueError, match='read-only'):
+        array[0] = 0
+
+
+@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
+def test_offsets_connectivity_describe_cells(offsets_meshes, name):
+    obj = offsets_meshes[name]
+    offsets = obj.cell_offsets
+    connectivity = obj.cell_connectivity
+    n_cells = obj.n_faces if name == 'PolyData' else obj.n_cells
+    assert offsets.size == n_cells + 1
+    assert offsets[0] == 0
+    assert offsets[-1] == connectivity.size
+
+
+def test_offsets_setter_polydata():
+    mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+    mesh.cell_offsets = [0, 2, 4, 6]
+    assert mesh.n_faces == 3
+    assert np.array_equal(mesh.cell_offsets, [0, 2, 4, 6])
+
+
+def test_connectivity_setter_polydata():
+    mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+    mesh.cell_connectivity = [2, 1, 0, 2, 3, 1]
+    assert np.array_equal(mesh.cell_connectivity, [2, 1, 0, 2, 3, 1])
+    assert np.array_equal(mesh.regular_faces, [[2, 1, 0], [2, 3, 1]])
+
+
+def test_connectivity_setter_unstructured_grid(hexbeam):
+    connectivity = hexbeam.cell_connectivity.copy()
+    connectivity[0] += 1
+    hexbeam.cell_connectivity = connectivity
+    assert np.array_equal(hexbeam.cell_connectivity, connectivity)
+    assert hexbeam.n_cells == hexbeam.celltypes.size
+    assert hexbeam.get_cell(0).point_ids[0] == connectivity[0]
+
+
+def test_offsets_setter_does_not_alias_input(hexbeam):
+    offsets = hexbeam.cell_offsets.copy()
+    hexbeam.cell_offsets = offsets
+    offsets[1] = 0
+    assert hexbeam.cell_offsets[1] != 0
+
+
+def test_unstructured_grid_setter_rejects_cell_count_change(hexbeam):
+    connectivity = hexbeam.cell_connectivity
+    with pytest.raises(ValueError, match='does not match the number of cell types'):
+        hexbeam.cell_offsets = np.arange(0, connectivity.size + 1, 4)
+
+
+@pytest.mark.parametrize(
+    ('offsets', 'connectivity', 'error', 'match'),
+    [
+        ([[0, 3], [3, 6]], [0, 1, 2, 3, 4, 5], ValueError, 'must be a 1D array'),
+        ([0.0, 3.0, 6.0], [0, 1, 2, 3, 4, 5], TypeError, 'integer dtype'),
+        ([], [], ValueError, 'at least one value'),
+        ([1, 4], [0, 1, 2], ValueError, 'first offset must be 0'),
+        ([0, 3, 2], [0, 1], ValueError, 'monotonically non-decreasing'),
+        ([0, 3], [0, 1], ValueError, 'must equal the size of the connectivity'),
+    ],
+)
+def test_offsets_connectivity_validation(offsets, connectivity, error, match):
+    cell_array = pv.CellArray()
+    with pytest.raises(error, match=match):
+        _set_cell_array_data(cell_array, offsets, connectivity)
+
+
+def test_offsets_uses_fixed_size_storage_when_uniform():
+    cell_array = pv.CellArray()
+    _set_cell_array_data(cell_array, [0, 3, 6], [0, 1, 2, 3, 4, 5])
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert cell_array.IsStorageFixedSize()
+    assert np.array_equal(cell_array.cell_offsets, [0, 3, 6])
+
+
+def test_offsets_generic_storage_when_not_uniform():
+    cell_array = pv.CellArray()
+    _set_cell_array_data(cell_array, [0, 3, 5], [0, 1, 2, 3, 4])
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert not cell_array.IsStorageFixedSize()
+    assert np.array_equal(cell_array.cell_offsets, [0, 3, 5])
+
+
+def test_cell_array_offset_array_deprecated():
+    cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`CellArray.cell_offsets`'):
+        assert np.array_equal(cell_array.offset_array, [0, 3, 6])
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Convert `CellArray.offset_array` deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if pv.version_info >= (0, 53):  # pragma: no cover
+        msg = 'Remove `CellArray.offset_array`.'
+        raise RuntimeError(msg)
+
+
+def test_cell_array_connectivity_array_deprecated():
+    cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`CellArray.cell_connectivity`'):
+        assert np.array_equal(cell_array.connectivity_array, [0, 1, 2, 3, 4, 5])
+
+
+def test_unstructured_grid_offset_deprecated(hexbeam):
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`UnstructuredGrid.cell_offsets`'):
+        assert np.array_equal(hexbeam.offset, hexbeam.cell_offsets)
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Convert `UnstructuredGrid.offset` deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if pv.version_info >= (0, 53):  # pragma: no cover
+        msg = 'Remove `UnstructuredGrid.offset`.'
+        raise RuntimeError(msg)
+
+
+def test_unstructured_grid_cell_connectivity_is_now_read_only(hexbeam):
+    # Breaking change in 0.49: `cell_connectivity` used to return a writeable view.
+    # Mutating it now raises instead of silently editing the mesh.
+    with pytest.raises(ValueError, match='read-only'):
+        hexbeam.cell_connectivity[0] += 1
+
+
+def test_empty_cell_array_offsets_connectivity():
+    cell_array = pv.CellArray()
+    _set_cell_array_data(cell_array, [0], [])
+    assert cell_array.n_cells == 0
+    assert np.array_equal(cell_array.cell_offsets, [0])
+    assert cell_array.cell_connectivity.size == 0
