@@ -5,9 +5,6 @@ description: Review a PyVista change against the project's actual merge bar. Use
 
 # Reviewing a PyVista change
 
-The critique stage: `pyvista-dev` builds, `pyvista-testing` covers the image regression
-plumbing, this critiques, `pyvista-pr` ships.
-
 Run this from a **subagent** when reviewing your own work, so the reviewer has to derive
 intent from the diff alone.
 

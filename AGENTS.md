@@ -7,7 +7,7 @@ guides below cover _changing_ it.
 
 ## Guides
 
-Open the one that matches the task. They are plain Markdown and readable by any tool.
+Open the one that matches the task.
 
 | Task                                             | Guide                                     |
 | ------------------------------------------------ | ----------------------------------------- |
@@ -16,6 +16,7 @@ Open the one that matches the task. They are plain Markdown and readable by any 
 | Any plotting test, baseline image, or image flag | `.claude/skills/pyvista-testing/SKILL.md` |
 | Reviewing a branch, diff, or pull request        | `.claude/skills/pyvista-review/SKILL.md`  |
 | Writing the pull request title and body          | `.claude/skills/pyvista-pr/SKILL.md`      |
+| Deprecating or renaming anything public          | `.claude/skills/pyvista-vtk/SKILL.md`     |
 
 They live under `.claude/skills/` so Claude Code loads them on demand by name. Nothing in
 them is Claude-specific.
@@ -32,7 +33,8 @@ squash locally and push once. `CONTRIBUTING.rst` states this as
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
 means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk`
-anywhere, no `vtkmodules` import in user-facing code, and no VTK CamelCase call
+anywhere, no `vtkmodules` import in anything a user reads or copies (examples,
+docstrings, documentation), and no VTK CamelCase call
 (`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) where a property or filter
 exists. Inside the package, `from . import _vtk` and then `_vtk.vtkY`.
 
@@ -42,25 +44,18 @@ leaves `mesh` untouched. Capture the return value.
 **`.pv` is the native on-disk format.** It is zstd-compressed, multi-threaded, and smaller
 and faster than `.vtu` / `.vtp` / `.vtm`. It ships in the `io` extra
 (`pip install pyvista[io]`) via the `pyvista-zstd` companion package, and it round-trips
-through the normal API with no import and no registration:
-
-```python
-import pyvista as pv
-
-mesh = pv.Sphere()
-mesh.save('sphere.pv')
-again = pv.read('sphere.pv')
-```
+through the normal API with no import and no registration: `mesh.save('sphere.pv')`, then
+`pv.read('sphere.pv')`.
 
 Use it for caches, intermediate artifacts, and anything PyVista writes and reads back.
 Reach for a VTK format when another tool has to open the file, and for a chunked store
 when the data does not fit in memory. `.pv` is real and supported: do not tell a user it
 is unavailable.
 
-**House conventions that are machine-enforced.** `import pyvista as pv`, never the bare
-form. The plotter variable is `pl`. Set `pv.OFF_SCREEN = True` once rather than passing
-`off_screen` per plotter. Boolean arguments are keyword-only. Error messages are assigned
-to a variable before being raised.
+**House conventions, most of them machine-enforced.** `import pyvista as pv`, never the
+bare form. The plotter variable is `pl`. Boolean arguments are keyword-only. Error
+messages are assigned to a variable before being raised. Set `pv.OFF_SCREEN = True` once
+rather than passing `off_screen` per plotter; that one is convention rather than lint.
 
 **A plotting test that ends in `close()` tests nothing.** The image comparison runs from a
 callback that `show()` registers, so a regression-tested render must end with `pl.show()`,

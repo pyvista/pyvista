@@ -5,12 +5,10 @@ description: Write and repair image regression tests for this repository. Load b
 
 # Image regression testing
 
-`CONTRIBUTING.rst` covers why the caches exist and where they live, and `context7.json`
-covers what makes a scene worth pinning. This skill is the plumbing: the fixture, the
-flags, and the two mistakes that silently disable the check.
-
-Stage-two review of a plotting change belongs in **pyvista-review**; the local gates and
-the cost of a red job are in **pyvista-dev**.
+`CONTRIBUTING.rst` covers why the caches exist, and `context7.json` covers what makes a
+scene worth pinning. This skill is the plumbing: the fixture, the flags, and the two
+mistakes that silently disable the check. Reviewing a plotting change belongs in
+**pyvista-review**; the local gates and the cost of a red job are in **pyvista-dev**.
 
 ## The mechanic
 
@@ -70,10 +68,10 @@ the environment's whole-suite defaults, so the node id below is the entire run:
 make test-plotting ARGS="tests/plotting/test_plotting.py::test_my_render --reset_only_failed"
 ```
 
-`--reset_image_cache` rewrites the baseline of every test that ran, which launders
-unrelated regressions into the cache and leaves the suite comparing new renders against
-themselves. It exists for a deliberate whole-cache regeneration at a release. Do not reach
-for it to clear a red job, and never run it unscoped.
+`--reset_image_cache` launders unrelated regressions into the cache and leaves the suite
+comparing new renders against themselves. It exists for a deliberate whole-cache
+regeneration at a release. Do not reach for it to clear a red job, and never run it
+unscoped.
 
 Look at the images before you commit them. A failed image test is sometimes a real
 regression, and `git diff` cannot tell you which.

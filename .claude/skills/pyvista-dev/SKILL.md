@@ -22,27 +22,16 @@ Read them, then come back here.
 
 - `context7.json` at the repository root holds the project's agent-facing API rules:
   wrap rather than subclass, prefer PyVista over raw VTK, filters return new datasets,
-  the image-regression discipline. It is schema-validated by `pre-commit`, so it stays
-  current. Treat it as the source for how to _use_ the API; this skill covers how to
+  the image-regression discipline. It is schema-validated by `pre-commit`. Treat it as the source for how to _use_ the API; this skill covers how to
   _change_ it.
-
-What follows is only what neither document states.
 
 ## The workflow
 
-| Stage    | Skill                      | Purpose                                         |
-| -------- | -------------------------- | ----------------------------------------------- |
-| Build    | **pyvista-dev** (this one) | Conventions, sizing, local gates                |
-| Wrap     | **pyvista-vtk**            | Filter pattern, validation, VTK discipline      |
-| Test     | **pyvista-testing**        | Image regression: the fixture, flags, baselines |
-| Critique | **pyvista-review**         | Adversarial review before a PR exists           |
-| Ship     | **pyvista-pr**             | Title and body in the project's style           |
+Build here, wrap with **pyvista-vtk**, test with **pyvista-testing**, critique with
+**pyvista-review**, ship with **pyvista-pr**. `AGENTS.md` at the repository root routes to
+all five and carries the rules that apply before any of them.
 
-`AGENTS.md` at the repository root routes to all five and carries the rules that apply
-before any of them.
-
-Run the review stage in a **subagent**. A reader who has to derive intent from the diff
-alone finds what the author cannot. Fix what it finds before opening anything.
+Run the critique stage in a **subagent** and fix what it finds before opening anything.
 
 ## What the project is for
 
@@ -148,39 +137,31 @@ what to write. This is what gets sent back:
 - Parametrize rather than branching inside the test body, and do not leave a case
   commented out in a `parametrize` list.
 - `filterwarnings` in `pyproject.toml` begins with `error`, so any warning that is not
-  explicitly ignored fails the suite. A new deprecation therefore has to migrate every
-  internal call site in the same change.
+  explicitly ignored fails the suite.
 
 ## Local gates
 
-Continuous integration runs on `pull_request`, so a red pull request costs the whole
-matrix. `Quick Development Commands` lists the `make` targets, each mirroring a job. At
-minimum run `make lint`, the test module you touched, and `make doctest` if you edited a
-docstring example.
+`Quick Development Commands` lists the `make` targets, each mirroring a CI job. At minimum
+run `make lint`, the test module you touched, and `make doctest` if you edited a docstring
+example.
 
 `tests/conftest.py` and the doctest tox environment already set off-screen rendering, so
 the `make` targets are safe. Only a bare `pytest --doctest-modules` outside tox needs
 `PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take over the
 display.
 
-**Never push a commit to find out whether something passes.** Every push to an open pull
-request starts the unit test matrix across three operating systems and five Python
-versions, a separate VTK matrix, the documentation build, and the integration tests, all
-of it paid runner time. You have a shell and the same `make` targets CI runs, so run them.
-Amend or squash locally and push once, and keep the pull request in draft while you
-iterate. `CONTRIBUTING.rst` states this as `Continuous Integration Etiquette`; it applies
-to you more than to a human contributor, because pushing is cheaper for you than it is for
-the project.
+**Never push a commit to find out whether something passes.** `AGENTS.md` opens with that
+rule and `CONTRIBUTING.rst` states it as `Continuous Integration Etiquette`. It binds you
+more tightly than a human contributor, because pushing is cheaper for you than it is for
+the project. Keep the pull request in draft while you iterate.
 
 ## Approaching a red job
 
-- Read the log and find the assertion before changing anything. Do not infer the cause
-  from the job name.
+`Continuous Integration Etiquette` covers the basics: read the log and find the assertion,
+reproduce locally, and diagnose a flaky test rather than re-running the job. Beyond that:
+
 - Check whether the failure also occurs on `main` before attributing it to the branch. A
   second worktree at `origin/main` settles this in a minute.
-- Never re-run a job as the fix. A flaky test is a defect to be diagnosed, and the re-run
-  costs what the first run cost.
 - A version-specific failure needs the shared version constant, not a local workaround.
 - An image regression failure is settled from the job's `failed_test_images-*` artifact,
-  not by pushing a regenerated baseline to see whether it sticks. See **pyvista-testing**,
-  and never run `--reset_image_cache` to clear one.
+  not by pushing a regenerated baseline to see whether it sticks. See **pyvista-testing**.

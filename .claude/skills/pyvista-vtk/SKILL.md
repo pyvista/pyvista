@@ -25,7 +25,9 @@ concluding a wrapper is missing; if it genuinely is, add the property or filter 
 let the consumer land after it.
 
 `import vtk` and `import vtkmodules` are both banned by ruff (`banned-api` in
-`pyproject.toml`), which points you at `pyvista._vtk` instead. Inside the package the
+`pyproject.toml`), which points you at `pyvista._vtk` instead. `examples/*` is exempt from
+that rule (`TID251` in its per-file ignores) and is covered by the custom pre-commit hooks
+instead. Inside the package the
 sanctioned form is `from . import _vtk`, then `_vtk.vtkThreshold()`.
 
 The wrapper classes also gate the VTK surface at runtime: `_NoNewAttrMixin`
@@ -158,8 +160,8 @@ if pv.vtk_version_info >= (9, 5):
     ...
 ```
 
-A shared constant already exists for most capability checks. Re-deriving one locally is the
-most frequently requested change in review, because the local copy is what goes stale.
+A shared constant already exists for most capability checks; reuse it rather than
+re-deriving one locally (see **pyvista-dev**).
 
 Deprecation applies to a shipped public contract only. `CONTRIBUTING.rst` sets the
 lifecycle: warn with `PyVistaDeprecationWarning` through `warn_external`, then raise

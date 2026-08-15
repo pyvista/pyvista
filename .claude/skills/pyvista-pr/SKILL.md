@@ -5,8 +5,7 @@ description: Write and open a PyVista pull request in the project's own style. U
 
 # Writing a PyVista pull request
 
-The shipping stage: `pyvista-dev` builds, `pyvista-review` critiques, this ships. Do
-not open a pull request whose review findings are still outstanding.
+Do not open a pull request whose review findings are still outstanding.
 
 ## Never hard-wrap the body
 
@@ -94,18 +93,10 @@ verification matters, it fits in a clause.
 
 ## Disclosing AI assistance
 
-`CONTRIBUTING.rst` adopts the Python Developer's Guide
-[policy on AI tools](https://devguide.python.org/getting-started/ai-tools/), which the
-`Generative AI` section links as its Generative AI page:
-
-> Disclosure of the use of AI tools in the PR description is appreciated, while not
-> required.
-
-> The person submitting an issue or PR is responsible for its content, regardless of
-> whether AI tools were used in its creation.
-
-So: disclosure is optional, and the person opening the pull request owns everything in
-it. When disclosing, use one inline clause naming what the tool did and confirming the
+The `Generative AI` section of `CONTRIBUTING.rst` adopts the Python Developer's Guide
+[policy on AI tools](https://devguide.python.org/getting-started/ai-tools/): disclosure in
+the pull request description is appreciated and not required, and the person opening the
+pull request owns everything in it. When disclosing, use one inline clause naming what the tool did and confirming the
 author understood it, in the form merged descriptions already use:
 
 > Changes drafted by Claude Opus 5 but fully understood by me
@@ -117,8 +108,8 @@ reviewer reads first.
 ## Before opening
 
 1. Draft the title and body.
-2. Cut the body to about a fifth. If it is longer than the diff deserves and carries no
-   screenshots, it needs cutting rather than restructuring.
+2. If the body is longer than the diff deserves and carries no screenshots, cut rather
+   than restructure.
 3. Confirm every paragraph is a single unbroken line.
 4. Strip anything that reads as generated: section scaffolding, bold labels, hedged
    summary sentences, rule-of-three lists.
