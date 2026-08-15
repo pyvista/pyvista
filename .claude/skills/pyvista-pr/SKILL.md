@@ -8,6 +8,12 @@ description: Write and open a PyVista pull request in the project's own style. U
 Stage three of three: `pyvista-dev` builds, `pyvista-review` critiques, this ships. Do
 not open a pull request whose review findings are still outstanding.
 
+## Never hard-wrap the body
+
+Write each paragraph as one long line and let GitHub wrap it. Hard-wrapped bodies break
+when anyone edits or quotes them, and leave stray breaks mid-sentence. This is the one
+place the wrapping used in source files is wrong.
+
 ## Length
 
 Pull request descriptions here are short. The median merged description is a paragraph;
@@ -17,6 +23,12 @@ length with screenshots and rendered previews rather than with prose.
 Language models write far past that unprompted, and structure it into sections nobody
 here uses. If your draft has a Motivation heading, an Implementation heading, and a
 Testing heading, it is wrong for this repository regardless of how accurate it is.
+
+Two or three paragraphs is the ceiling. Cut to roughly a fifth of what feels complete:
+the first draft is reliably five times too long. Anything a reviewer can read in the
+diff, work out from the linked issue, or does not need in order to review is padding —
+including justifications for the shape of the pull request, follow-up work you chose not
+to do, and summaries of your own process.
 
 Regenerate the distribution with:
 
@@ -105,14 +117,15 @@ reviewer reads first.
 ## Before opening
 
 1. Draft the title and body.
-2. Cut the body. If it is longer than the diff deserves and carries no screenshots, it
-   needs cutting rather than restructuring.
-3. Strip anything that reads as generated: section scaffolding, bold labels, hedged
+2. Cut the body to about a fifth. If it is longer than the diff deserves and carries no
+   screenshots, it needs cutting rather than restructuring.
+3. Confirm every paragraph is a single unbroken line.
+4. Strip anything that reads as generated: section scaffolding, bold labels, hedged
    summary sentences, rule-of-three lists.
-4. Add `Resolves #NNNN` when the change fully closes an issue.
-5. Confirm the local gates pass. Continuous integration runs on `pull_request`, so a red
+5. Add `Resolves #NNNN` when the change fully closes an issue.
+6. Confirm the local gates pass. Continuous integration runs on `pull_request`, so a red
    pull request costs the whole matrix.
-6. Open as a draft unless the change is ready for review.
+7. Open as a draft unless the change is ready for review.
 
 ## Example
 
@@ -145,10 +158,9 @@ write this:
 
 Resolves #8909.
 
-`vtkCellArray` has stored offsets and connectivity separately since VTK 9, but we expose
-them under three different names depending on the class, and only some are read-only.
-This adds `cell_offsets` and `cell_connectivity` everywhere and deprecates the rest.
+`vtkCellArray` has stored offsets and connectivity separately since VTK 9, but we expose them under three different names depending on the class, and only some are read-only. This adds `cell_offsets` and `cell_connectivity` everywhere and deprecates the rest.
 
-Plain `offsets` and `connectivity` were not available, i.e. `connectivity` shadows the
-`DataSetFilters.connectivity` filter.
+Plain `offsets` and `connectivity` were not available, i.e. `connectivity` shadows the `DataSetFilters.connectivity` filter.
 ```
+
+Note the unbroken paragraphs.
