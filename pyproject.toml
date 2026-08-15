@@ -280,6 +280,7 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
+  'check_gc: Enable the strict core leak check for this test (see tests/core/conftest.py).',
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',

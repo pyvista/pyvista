@@ -697,8 +697,6 @@ class CellArray(
     ) -> None:
         """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
-        self.__offsets: _vtk.vtkIdTypeArray | None = None
-        self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
             self.cells = cells
 
@@ -732,7 +730,6 @@ class CellArray(
                 ' due to invalid connectivity array.'
             )
             raise CellSizeError(msg)
-        self.__offsets = self.__connectivity = None
 
     @property
     def n_cells(self: Self) -> int:
@@ -794,12 +791,8 @@ class CellArray(
         else:
             vtk_offsets = numpy_to_idarr(offsets, deep=deep)
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        # Not stashed on self: SetData owns them, and a ghosted __dict__ would outlive us
         self.SetData(vtk_offsets, vtk_connectivity)
-
-        # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
-        # garbage collected. Keep a reference to them for safety
-        self.__offsets = vtk_offsets
-        self.__connectivity = vtk_connectivity
 
     def _set_data_fixed_size(
         self: Self,
@@ -818,12 +811,8 @@ class CellArray(
             self.Use32BitStorage()
         else:
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        # Not stashed on self, as in _set_data
         self.SetData(cell_size, vtk_connectivity)
-
-        # Keep the connectivity alive for shallow copies. VTK generates the
-        # offsets implicitly for fixed-size storage.
-        self.__offsets = None
-        self.__connectivity = vtk_connectivity
 
     @staticmethod
     @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
