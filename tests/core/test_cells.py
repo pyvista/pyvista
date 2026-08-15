@@ -614,12 +614,14 @@ def offsets_meshes(hexbeam):
 @pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
 @pytest.mark.parametrize('array_name', ['cell_offsets', 'cell_connectivity'])
 def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
-    if name == 'UnstructuredGrid' and array_name == 'cell_connectivity':
-        pytest.skip('Writeable until v0.52, see test_unstructured_grid_connectivity_writeable')
+    # `UnstructuredGrid.cell_connectivity` predates this API and stays writeable
+    # until v0.52, so assert that rather than skipping the case
+    expect_writeable = name == 'UnstructuredGrid' and array_name == 'cell_connectivity'
     array = getattr(offsets_meshes[name], array_name)
-    assert not array.flags['WRITEABLE']
-    with pytest.raises(ValueError, match='read-only'):
-        array[0] = 0
+    assert array.flags['WRITEABLE'] is expect_writeable
+    if not expect_writeable:
+        with pytest.raises(ValueError, match='read-only'):
+            array[0] = 0
 
 
 @pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
@@ -656,17 +658,46 @@ def test_connectivity_setter_unstructured_grid(hexbeam):
     assert hexbeam.get_cell(0).point_ids[0] == connectivity[0]
 
 
-def test_offsets_setter_does_not_alias_input(hexbeam):
-    offsets = hexbeam.cell_offsets.copy()
-    hexbeam.cell_offsets = offsets
-    offsets[1] = 0
-    assert hexbeam.cell_offsets[1] != 0
+@pytest.mark.parametrize('array_name', ['cell_offsets', 'cell_connectivity'])
+def test_setter_does_not_alias_input(array_name):
+    # Cells must be non-uniform. Uniform offsets take the fixed-size branch, which
+    # stores the offsets implicitly and would pass this test without any deep copy.
+    cell_array = pv.CellArray.from_arrays([0, 3, 5], [0, 1, 2, 3, 4])
+    assert not _SUPPORTS_FIXED_SIZE_STORAGE or not cell_array.IsStorageFixedSize()
+
+    value = getattr(cell_array, array_name).copy()
+    setattr(cell_array, array_name, value)
+    expected = value.copy()
+    value[-1] = 0
+    assert np.array_equal(getattr(cell_array, array_name), expected)
 
 
 def test_unstructured_grid_setter_rejects_cell_count_change(hexbeam):
     connectivity = hexbeam.cell_connectivity
     with pytest.raises(ValueError, match='does not match the number of cell types'):
         hexbeam.cell_offsets = np.arange(0, connectivity.size + 1, 4)
+
+
+def test_unstructured_grid_setter_rejects_celltype_mismatch():
+    # Same number of cells, but the re-partition leaves a TRIANGLE holding 4 points.
+    # `celltypes` is carried over unchanged, so this must be rejected.
+    grid = pv.UnstructuredGrid(
+        np.array([3, 0, 1, 2, 4, 0, 1, 2, 3]),
+        np.array([CellType.TRIANGLE, CellType.QUAD], np.uint8),
+        np.random.default_rng(0).random((4, 3)),
+    )
+    with pytest.raises(ValueError, match='its cell type TRIANGLE requires 3'):
+        grid.cell_offsets = [0, 4, 7]
+
+
+def test_unstructured_grid_setter_allows_variable_size_celltype():
+    # POLYGON has no fixed point count, so the size check must not apply
+    grid = pv.UnstructuredGrid(
+        {CellType.POLYGON: np.array([[0, 1, 2, 3]])},
+        np.random.default_rng(0).random((4, 3)),
+    )
+    grid.cell_connectivity = [3, 2, 1, 0]
+    assert np.array_equal(grid.cell_connectivity, [3, 2, 1, 0])
 
 
 @pytest.mark.parametrize(

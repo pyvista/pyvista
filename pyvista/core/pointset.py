@@ -2678,7 +2678,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     @cell_offsets.setter
     def cell_offsets(self, offsets: VectorLike[int]) -> None:
-        self._set_cells(_make_cell_array(offsets, self.cell_connectivity))
+        self._replace_cell_array(_make_cell_array(offsets, self.cell_connectivity))
 
     @property
     def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -2772,20 +2772,47 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     @cell_connectivity.setter
     def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
-        self._set_cells(_make_cell_array(self.cell_offsets, connectivity))
+        self._replace_cell_array(_make_cell_array(self.cell_offsets, connectivity))
 
-    def _set_cells(self, cell_array: CellArray) -> None:
-        """Replace the cell array, keeping :attr:`celltypes` in sync."""
+    def _replace_cell_array(self, cell_array: CellArray) -> None:
+        """Replace the cell array, keeping :attr:`celltypes` in sync.
+
+        :attr:`celltypes` is not part of the cell array, so it is carried over
+        unchanged. The new cells must therefore still be described by it: both the
+        number of cells and, for every cell type with a fixed size, the number of
+        points per cell.
+
+        """
+        celltypes = self.celltypes
         n_cells = cell_array.n_cells
-        if n_cells != self.n_cells:
+        if n_cells != celltypes.size:
             msg = (
                 f'Number of cells ({n_cells}) does not match the number of cell types '
-                f'({self.n_cells}). The number of cells cannot be changed by setting '
+                f'({celltypes.size}). The number of cells cannot be changed by setting '
                 f'`cell_offsets` or `cell_connectivity` because `celltypes` must stay '
-                f'in sync. '
-                f'Set `cells` or create a new `UnstructuredGrid` instead.'
+                f'in sync. Set `cells` or create a new `UnstructuredGrid` instead.'
             )
             raise ValueError(msg)
+
+        # Only cells whose size changed are checked. A cell type with a variable
+        # number of points, e.g. POLYGON, may be resized freely, and a mesh that was
+        # already inconsistent is left as it was rather than being newly rejected.
+        resized = np.flatnonzero(np.diff(cell_array.cell_offsets) != np.diff(self.cell_offsets))
+        for index in resized:
+            cell_type = CellType(int(celltypes[index]))
+            try:
+                expected = cell_type.n_points
+            except ValueError:
+                continue
+            msg = (
+                f'Cell {index} would have {np.diff(cell_array.cell_offsets)[index]} '
+                f'points but its cell type {cell_type.name} requires {expected}. '
+                f'Setting `cell_offsets` or `cell_connectivity` must keep every cell '
+                f'consistent with `celltypes`. Set `cells` or create a new '
+                f'`UnstructuredGrid` instead.'
+            )
+            raise ValueError(msg)
+
         self.SetCells(self._get_cell_types_array(), cell_array)
 
     @_deprecate_positional_args
