@@ -822,10 +822,10 @@ class CellArray(
         to replace the offsets and connectivity together. The input is copied, so the
         cell array never aliases an array that may be modified later.
 
-        Where that copy is too expensive, the connectivity array of the underlying
-        :vtk:`vtkCellArray` may be edited directly. That path is zero-copy but
-        unvalidated, and marking the cell array modified is left to the caller. See the
-        examples below.
+        Where that copy is too expensive, build the cell array with
+        :meth:`from_arrays` and ``deep=False`` and keep a reference to the connectivity
+        array. The cell array then wraps that array, so writing to it changes the cells
+        without any copy. Nothing validates the point ids written this way.
 
         Examples
         --------
@@ -838,14 +838,15 @@ class CellArray(
         >>> cell_array.cell_connectivity
         array([5, 4, 3, 2, 1, 0])
 
-        For a cell array large enough that the copy matters, edit the connectivity in
-        place instead. Nothing validates the point ids written this way.
+        For a cell array large enough that the copy matters, keep the connectivity
+        array and edit it in place.
 
-        >>> connectivity = pv.convert_array(cell_array.GetConnectivityArray())
-        >>> connectivity[:] = [0, 1, 2, 3, 4, 5]
-        >>> cell_array.Modified()
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1, 2, 3, 4, 5], dtype=pv.ID_TYPE)
+        >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], connectivity, deep=False)
+        >>> connectivity[:] = [5, 4, 3, 2, 1, 0]
         >>> cell_array.cell_connectivity
-        array([0, 1, 2, 3, 4, 5])
+        array([5, 4, 3, 2, 1, 0])
 
         """
         return _get_connectivity(self)
@@ -1104,7 +1105,7 @@ class CellArray(
         --------
         from_regular_cells
             Equivalent method for cells which all have the same size.
-        offset_array
+        cell_offsets
             Offsets marking where each cell begins in the connectivity array.
 
         Examples
@@ -1115,9 +1116,9 @@ class CellArray(
         >>> cells = pv.CellArray.from_irregular_cells([[0, 1, 2], [1, 2, 3, 4]])
         >>> cells.n_cells
         2
-        >>> cells.connectivity_array
+        >>> cells.cell_connectivity
         array([0, 1, 2, 1, 2, 3, 4]...)
-        >>> cells.offset_array
+        >>> cells.cell_offsets
         array([0, 3, 7]...)
 
         """

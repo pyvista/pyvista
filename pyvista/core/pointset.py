@@ -1508,9 +1508,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         mesh never aliases an array that may be modified later. To replace the offsets
         and connectivity together, assign a :class:`pyvista.CellArray` to :attr:`faces`.
 
-        Where that copy is too expensive, the underlying :vtk:`vtkCellArray` may be
-        edited directly. That path is zero-copy but unvalidated, and marking the mesh
-        modified is left to the caller. See the examples below.
+        Where that copy is too expensive, assign a :class:`pyvista.CellArray` built with
+        :meth:`~pyvista.CellArray.from_arrays` and ``deep=False`` to :attr:`faces`, and
+        keep a reference to the connectivity array. The mesh then wraps that array, so
+        writing to it changes the faces without any copy. Nothing validates the point
+        ids written this way.
 
         Examples
         --------
@@ -1532,15 +1534,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh.cell_connectivity
         array([2, 1, 0, 2, 3, 1])
 
-        For a mesh large enough that the copy matters, edit the underlying
-        :vtk:`vtkCellArray` in place instead. Nothing validates the point ids written
-        this way, and the mesh must be marked modified afterwards.
+        For a mesh large enough that the copy matters, keep the connectivity array and
+        edit it in place.
 
-        >>> connectivity = pv.convert_array(mesh.GetPolys().GetConnectivityArray())
-        >>> connectivity[:] = [0, 1, 2, 1, 3, 2]
-        >>> mesh.Modified()
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1, 2, 1, 3, 2], dtype=pv.ID_TYPE)
+        >>> mesh.faces = pv.CellArray.from_arrays([0, 3, 6], connectivity, deep=False)
+        >>> connectivity[:] = [0, 2, 1, 1, 2, 3]
         >>> mesh.cell_connectivity
-        array([0, 1, 2, 1, 3, 2])
+        array([0, 2, 1, 1, 2, 3])
 
         Note that arrays derived from the old topology, such as ``'Normals'``, are not
         recomputed by either approach and should be removed or regenerated.
@@ -2689,14 +2691,18 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         padding. Use :attr:`cell_offsets` to determine where each cell begins and ends.
 
         .. versionchanged:: 0.49
-            The property is now settable.
+            The property is now settable, and modifying the returned array in place is
+            deprecated.
 
-        .. deprecated:: 0.49
-            Modifying the returned array in place is deprecated. This array will
-            become read-only in v0.52, matching :attr:`pyvista.PolyData.cell_connectivity`
-            and :attr:`pyvista.CellArray.cell_connectivity`. Assign a new array to this
-            property instead, or edit the underlying :vtk:`vtkCellArray` explicitly as
-            shown in the examples.
+        .. warning::
+            Modifying the returned array in place is deprecated. The array becomes
+            read-only in v0.52, matching :attr:`pyvista.PolyData.cell_connectivity`
+            and :attr:`pyvista.CellArray.cell_connectivity`. Assign a new array to
+            this property instead.
+
+            No runtime warning is emitted, since nothing can hook
+            ``ndarray.__setitem__``. This is a documentation-only deprecation, so do
+            not expect a warning to tell you when the array is written to.
 
         Returns
         -------
@@ -2722,9 +2728,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         current :attr:`cell_offsets`; to replace both at once, assign to :attr:`cells`
         or build a new grid.
 
-        Where that copy is too expensive, the underlying :vtk:`vtkCellArray` may be
-        edited directly. That path is zero-copy but unvalidated, and marking the grid
-        modified is left to the caller. See the examples below.
+        Unlike :attr:`pyvista.PolyData.faces`, :attr:`cells` does not accept a
+        :class:`pyvista.CellArray`, so a grid cannot wrap connectivity that the caller
+        keeps a handle to. Every route here copies.
 
         Examples
         --------
@@ -2744,15 +2750,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> hex_beam.cell_connectivity[:8]
         array([ 1,  2,  8,  7, 27, 36, 90, 81]...)
 
-        For a grid large enough that the copy matters, edit the underlying
-        :vtk:`vtkCellArray` in place instead. Nothing validates the point ids written
-        this way, and the grid must be marked modified afterwards.
+        To change the number of cells, or the number of points in a cell of fixed
+        size, build a new grid so that :attr:`celltypes` can change with it.
 
-        >>> connectivity = pv.convert_array(hex_beam.GetCells().GetConnectivityArray())
-        >>> connectivity[0] = 0
-        >>> hex_beam.Modified()
-        >>> hex_beam.cell_connectivity[:8]
-        array([ 0,  2,  8,  7, 27, 36, 90, 81]...)
+        >>> grid = pv.UnstructuredGrid(
+        ...     [8, 0, 2, 8, 7, 27, 36, 90, 81],
+        ...     [pv.CellType.HEXAHEDRON],
+        ...     hex_beam.points,
+        ... )
+        >>> grid.n_cells
+        1
 
         Note that arrays derived from the old topology are not recomputed by either
         approach and should be removed or regenerated.
