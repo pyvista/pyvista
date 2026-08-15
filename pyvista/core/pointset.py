@@ -2782,8 +2782,22 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         number of cells and, for every cell type with a fixed size, the number of
         points per cell.
 
+        A polyhedron is described by a separate face stream which the cell array does
+        not carry, so grids containing one are rejected rather than silently emptied.
+
         """
         celltypes = self.celltypes
+        if CellType.POLYHEDRON in celltypes:
+            msg = (
+                "Cell type 'POLYHEDRON' cannot be modified by setting `cell_offsets` or "
+                '`cell_connectivity` because a polyhedron is defined by its faces, not a '
+                'flat list of point indices. Set `cells` or create a new '
+                '`UnstructuredGrid` instead.'
+            )
+            raise ValueError(msg)
+
+        new_sizes = np.diff(cell_array.cell_offsets)
+        old_sizes = np.diff(self.cell_offsets)
         n_cells = cell_array.n_cells
         if n_cells != celltypes.size:
             msg = (
@@ -2797,7 +2811,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         # Only cells whose size changed are checked. A cell type with a variable
         # number of points, e.g. POLYGON, may be resized freely, and a mesh that was
         # already inconsistent is left as it was rather than being newly rejected.
-        resized = np.flatnonzero(np.diff(cell_array.cell_offsets) != np.diff(self.cell_offsets))
+        resized = np.flatnonzero(new_sizes != old_sizes)
         for index in resized:
             cell_type = CellType(int(celltypes[index]))
             try:
@@ -2805,7 +2819,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             except ValueError:
                 continue
             msg = (
-                f'Cell {index} would have {np.diff(cell_array.cell_offsets)[index]} '
+                f'Cell {index} would have {new_sizes[index]} '
                 f'points but its cell type {cell_type.name} requires {expected}. '
                 f'Setting `cell_offsets` or `cell_connectivity` must keep every cell '
                 f'consistent with `celltypes`. Set `cells` or create a new '
