@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -25,6 +26,7 @@ from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from typing import Any
 
     from typing_extensions import Self
@@ -839,6 +841,49 @@ class CellArray(
     def cell_connectivity(self: Self, connectivity: VectorLike[int]) -> None:
         _set_cell_array_data(self, self.cell_offsets, connectivity)
 
+    def edit_cell_connectivity(self: Self) -> contextlib.AbstractContextManager[NumpyArray[int]]:
+        """Edit the cell connectivity in place, without copying.
+
+        Context manager yielding a *writeable* view of :attr:`cell_connectivity`.
+        Assigning to :attr:`cell_connectivity` copies the array twice, which is
+        wasteful for large meshes; this yields VTK's own buffer instead and marks the
+        cell array modified on exit.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        contextlib.AbstractContextManager[numpy.ndarray]
+            Context manager yielding a writeable connectivity array.
+
+        See Also
+        --------
+        cell_connectivity
+            Read-only connectivity array.
+
+        Notes
+        -----
+        Only the connectivity may be edited this way. The offsets define the structure
+        of the cell array and may be stored implicitly, so they are changed by assigning
+        to :attr:`cell_offsets`.
+
+        Editing in place bypasses validation. The point ids you write are not checked
+        against the number of points, and out-of-range ids cause undefined behavior
+        when the mesh is used. Use :meth:`~pyvista.DataObjectFilters.validate_mesh` if
+        the new ids are not known to be in range.
+
+        Examples
+        --------
+        >>> from pyvista import CellArray
+        >>> cell_array = CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+        >>> with cell_array.edit_cell_connectivity() as connectivity:
+        ...     connectivity[connectivity == 5] = 0
+        >>> cell_array.cell_connectivity
+        array([0, 1, 2, 3, 4, 0])
+
+        """
+        return _edit_connectivity(self)
+
     @property
     def connectivity_array(self: Self) -> NumpyArray[int]:
         """Return the array with the point ids that define the cells' connectivity.
@@ -1139,6 +1184,25 @@ def _make_cell_array(offsets: VectorLike[int], connectivity: VectorLike[int]) ->
     cellarr = CellArray()
     _set_cell_array_data(cellarr, offsets, connectivity)
     return cellarr
+
+
+@contextlib.contextmanager
+def _edit_connectivity(
+    cellarr: _vtk.vtkCellArray, owner: _vtk.vtkObject | None = None
+) -> Iterator[NumpyArray[int]]:
+    """Yield a writeable connectivity array and mark it modified on exit.
+
+    The array is a zero-copy view of VTK's memory. ``Modified`` is called on the way
+    out, including when the block raises, since a partial write still changes the mesh.
+
+    """
+    array = _get_connectivity_array(cellarr)
+    try:
+        yield array
+    finally:
+        cellarr.Modified()
+        if owner is not None:
+            owner.Modified()
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:

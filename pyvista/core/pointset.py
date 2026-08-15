@@ -23,8 +23,8 @@ from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .cell import CellArray
+from .cell import _edit_connectivity
 from .cell import _get_connectivity
-from .cell import _get_connectivity_array
 from .cell import _get_irregular_cells
 from .cell import _get_offset_array
 from .cell import _get_offsets
@@ -1534,6 +1534,60 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
         self.SetPolys(_make_cell_array(self.cell_offsets, connectivity))
 
+    def edit_cell_connectivity(self) -> contextlib.AbstractContextManager[NumpyArray[int]]:
+        """Edit the face connectivity in place, without copying.
+
+        Context manager yielding a *writeable* view of :attr:`cell_connectivity`.
+        Assigning to :attr:`cell_connectivity` copies the array twice, which is
+        wasteful for large meshes; this yields VTK's own buffer instead and marks the
+        mesh modified on exit.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        contextlib.AbstractContextManager[numpy.ndarray]
+            Context manager yielding a writeable connectivity array.
+
+        See Also
+        --------
+        cell_connectivity
+            Read-only connectivity array.
+        cell_offsets
+            Index into the connectivity array at which each face begins.
+
+        Notes
+        -----
+        Only the connectivity may be edited this way. The offsets define the structure
+        of the cell array and may be stored implicitly, so they are changed by assigning
+        to :attr:`cell_offsets`.
+
+        Editing in place bypasses validation. The point ids you write are not checked
+        against :attr:`~pyvista.DataSet.n_points`, and out-of-range ids cause undefined
+        behavior when the mesh is used. Use
+        :meth:`~pyvista.DataObjectFilters.validate_mesh` if the new ids are not known
+        to be in range.
+
+        Marking the mesh modified invalidates VTK's internal caches, but it does not
+        recompute derived *data arrays*. Arrays such as ``'Normals'`` that were
+        computed from the old topology remain in :attr:`~pyvista.DataSet.point_data`
+        and :attr:`~pyvista.DataSet.cell_data` and must be recomputed or removed.
+
+        Examples
+        --------
+        Reverse the winding of every face without copying the connectivity.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+        >>> with mesh.edit_cell_connectivity() as connectivity:
+        ...     connectivity[:] = connectivity.reshape(-1, 3)[:, ::-1].ravel()
+        >>> mesh.regular_faces
+        array([[2, 1, 0],
+               [2, 3, 1]])
+
+        """
+        return _edit_connectivity(self.GetPolys(), self)
+
     @property
     def n_lines(self) -> int:  # numpydoc ignore=RT01
         """Return the number of line cells.
@@ -2678,6 +2732,60 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
         self._set_cells(_make_cell_array(self.cell_offsets, connectivity))
 
+    def edit_cell_connectivity(self) -> contextlib.AbstractContextManager[NumpyArray[int]]:
+        """Edit the cell connectivity in place, without copying.
+
+        Context manager yielding a *writeable* view of :attr:`cell_connectivity`.
+        Assigning to :attr:`cell_connectivity` copies the array twice, which is
+        wasteful for large meshes; this yields VTK's own buffer instead and marks the
+        grid modified on exit.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        contextlib.AbstractContextManager[numpy.ndarray]
+            Context manager yielding a writeable connectivity array.
+
+        See Also
+        --------
+        cell_connectivity
+            Read-only connectivity array.
+        cell_offsets
+            Index into the connectivity array at which each cell begins.
+
+        Notes
+        -----
+        Only the connectivity may be edited this way. The offsets define the structure
+        of the cell array and may be stored implicitly, so they are changed by assigning
+        to :attr:`cell_offsets`, which also keeps :attr:`celltypes` in sync.
+
+        Editing in place bypasses validation. The point ids you write are not checked
+        against :attr:`~pyvista.DataSet.n_points`, and out-of-range ids cause undefined
+        behavior when the grid is used. Use
+        :meth:`~pyvista.DataObjectFilters.validate_mesh` if the new ids are not known
+        to be in range.
+
+        Marking the grid modified invalidates VTK's internal caches, but it does not
+        recompute derived *data arrays*. Arrays computed from the old topology remain
+        in :attr:`~pyvista.DataSet.point_data` and :attr:`~pyvista.DataSet.cell_data`
+        and must be recomputed or removed.
+
+        Examples
+        --------
+        Renumber a point id across the whole grid without copying the connectivity.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> hex_beam = pv.read(examples.hexbeamfile)
+        >>> with hex_beam.edit_cell_connectivity() as connectivity:
+        ...     connectivity[connectivity == 0] = 1
+        >>> hex_beam.cell_connectivity[:8]
+        array([ 1,  2,  8,  7, 27, 36, 90, 81]...)
+
+        """
+        return _edit_connectivity(self._get_cells(), self)
+
     def _set_cells(self, cell_array: CellArray) -> None:
         """Replace the cell array, keeping :attr:`celltypes` in sync."""
         n_cells = cell_array.n_cells
@@ -2746,28 +2854,25 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
         # fixing bug with display of quad cells.
-        # Cache the cell_connectivity array once as each access wraps the
-        # underlying vtkCellArray's connectivity buffer with vtk_to_numpy,
-        # so reading it 4-7 times in the loop redundantly allocates wrappers.
+        # The connectivity is edited in place, which also avoids re-wrapping the
+        # underlying vtkCellArray buffer with vtk_to_numpy on every access.
         if np.any(quad_quad_mask) or np.any(quad_tri_mask):
-            lgrid_cells = lgrid._get_cells()
-            cell_offsets = _get_offset_array(lgrid_cells)
-            cell_conn = _get_connectivity_array(lgrid_cells)
+            cell_offsets = lgrid.cell_offsets
+            with lgrid.edit_cell_connectivity() as cell_conn:
+                if np.any(quad_quad_mask):
+                    quad_offset = cell_offsets[:-1][quad_quad_mask]
+                    base_point = cell_conn[quad_offset]
+                    cell_conn[quad_offset + 4] = base_point
+                    cell_conn[quad_offset + 5] = base_point
+                    cell_conn[quad_offset + 6] = base_point
+                    cell_conn[quad_offset + 7] = base_point
 
-        if np.any(quad_quad_mask):
-            quad_offset = cell_offsets[:-1][quad_quad_mask]
-            base_point = cell_conn[quad_offset]
-            cell_conn[quad_offset + 4] = base_point
-            cell_conn[quad_offset + 5] = base_point
-            cell_conn[quad_offset + 6] = base_point
-            cell_conn[quad_offset + 7] = base_point
-
-        if np.any(quad_tri_mask):
-            tri_offset = cell_offsets[:-1][quad_tri_mask]
-            base_point = cell_conn[tri_offset]
-            cell_conn[tri_offset + 3] = base_point
-            cell_conn[tri_offset + 4] = base_point
-            cell_conn[tri_offset + 5] = base_point
+                if np.any(quad_tri_mask):
+                    tri_offset = cell_offsets[:-1][quad_tri_mask]
+                    base_point = cell_conn[tri_offset]
+                    cell_conn[tri_offset + 3] = base_point
+                    cell_conn[tri_offset + 4] = base_point
+                    cell_conn[tri_offset + 5] = base_point
 
         return lgrid
 

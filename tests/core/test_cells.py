@@ -742,3 +742,46 @@ def test_empty_cell_array_offsets_connectivity():
     assert cell_array.n_cells == 0
     assert np.array_equal(cell_array.cell_offsets, [0])
     assert cell_array.cell_connectivity.size == 0
+
+
+@pytest.mark.parametrize('name', ['PolyData', 'UnstructuredGrid', 'CellArray'])
+def test_edit_cell_connectivity_is_writeable_and_zero_copy(offsets_meshes, name):
+    obj = offsets_meshes[name]
+    before = obj.cell_connectivity.copy()
+    with obj.edit_cell_connectivity() as connectivity:
+        assert connectivity.flags['WRITEABLE']
+        # The yielded array wraps VTK's buffer, so the edit is visible immediately
+        connectivity[0] = before[-1]
+        assert obj.cell_connectivity[0] == before[-1]
+    assert obj.cell_connectivity[0] == before[-1]
+    assert np.array_equal(obj.cell_connectivity[1:], before[1:])
+
+
+def test_edit_cell_connectivity_marks_modified(hexbeam):
+    mtime = hexbeam.GetMTime()
+    with hexbeam.edit_cell_connectivity() as connectivity:
+        connectivity[0] = connectivity[0]
+    assert hexbeam.GetMTime() > mtime
+
+
+def test_edit_cell_connectivity_marks_modified_on_error(hexbeam):
+    mtime = hexbeam.GetMTime()
+    with pytest.raises(RuntimeError, match='boom'):  # noqa: PT012
+        with hexbeam.edit_cell_connectivity() as connectivity:
+            connectivity[0] = 1
+            msg = 'boom'
+            raise RuntimeError(msg)
+    # A partial write still changed the mesh, so it must still be marked modified
+    assert hexbeam.GetMTime() > mtime
+    assert hexbeam.cell_connectivity[0] == 1
+
+
+def test_edit_cell_connectivity_polydata_edits_faces_only():
+    mesh = pv.PolyData(
+        np.random.default_rng(0).random((4, 3)), lines=[2, 0, 1], faces=[3, 1, 2, 3]
+    )
+    lines = mesh.lines.copy()
+    with mesh.edit_cell_connectivity() as connectivity:
+        connectivity[:] = [3, 2, 1]
+    assert np.array_equal(mesh.regular_faces, [[3, 2, 1]])
+    assert np.array_equal(mesh.lines, lines)
