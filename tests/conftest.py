@@ -10,6 +10,10 @@ import os
 import platform
 import re
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import numpy as np
 from numpy.random import default_rng
 import PIL
@@ -340,6 +344,38 @@ def texture():
 @pytest.fixture
 def image(texture):
     return texture.to_image()
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionstart():
+    """Register Hypothesis' global PRNG now, while the heap is still thawed.
+
+    The leak check freezes the heap for the whole body of every test it covers (see
+    :mod:`tests.gc_check`), and ``gc.get_referrers()`` does not look in the permanent
+    generation. Hypothesis creates and registers its global PRNG lazily, on the first
+    ``@given`` test in the process, and ``register_random`` sanity-checks that PRNG with
+    ``gc.get_referrers()``. Run inside a frozen body, that comes back empty, so Hypothesis
+    warns that the PRNG looks collectable -- and ``filterwarnings = ['error']`` turns the
+    warning into a failure of whichever test happened to be the first one. Which test that
+    is depends on how xdist shards the run, so it fails a different test every time, or
+    none at all.
+
+    Running one throwaway example here does that registration once, at session start,
+    where nothing is frozen. Deleting this brings the intermittent failures back.
+
+    ``trylast`` so it runs after Hypothesis' own ``pytest_sessionstart``, which is where
+    Hypothesis stops treating the process as still initializing; before that it warns
+    about strategies being evaluated in a plugin.
+    """
+
+    @settings(
+        max_examples=1, deadline=None, database=None, suppress_health_check=list(HealthCheck)
+    )
+    @given(_=st.none())
+    def warm_up_prng(_):
+        pass
+
+    warm_up_prng()
 
 
 def pytest_addoption(parser):

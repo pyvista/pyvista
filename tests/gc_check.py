@@ -13,6 +13,17 @@ The check runs from a ``pytest_runtest_teardown`` hookwrapper rather than a fixt
 finalizer: several fixtures are set up before an autouse fixture (``monkeypatch`` via
 other autouse fixtures, the registry save/restore in ``tests/conftest.py``), so their
 finalizers run *after* it -- and anything they still held would be misreported here.
+
+.. warning::
+
+    The heap stays frozen for the whole body of a covered test, so anything running in
+    that body sees a *lying* collector: ``gc.get_referrers()`` reports no referrers for
+    an object that pre-dates the test, and ``gc.get_objects()`` omits it entirely. This
+    is not confined to pyvista's own code -- Hypothesis' ``register_random`` uses
+    ``gc.get_referrers()`` to check that a PRNG handed to it is reachable, and wrongly
+    concluded it was not (hence the warmup in ``tests/conftest.py``). Mark a test that
+    needs a truthful view of the collector with ``@pytest.mark.skip_check_gc``, which
+    costs it leak coverage.
 """
 
 from __future__ import annotations
@@ -75,14 +86,15 @@ def take_snapshot(item, match, label: str) -> None:
     """Put every object alive now out of reach, so only *new* survivors are reported.
 
     ``gc.freeze()`` moves them into the permanent generation, which the collector never
-    walks and ``gc.get_objects()`` never reports. So whatever the check finds afterwards
-    was created by this test, and the snapshot needs no "before" set to subtract -- hence
-    the empty ``objs``, which also means ``Snapshot``'s own ``collect=True`` is ignored
-    and the ``gc.collect()`` it used to run here no longer happens. Recording ids instead
-    meant that collect and a scan of the whole heap here and again at teardown, four
-    passes over ~180k objects that between them cost more than the tests: ``tests/core``
-    now runs the check over every one of its tests in less time than it took to run it
-    over the 397 it covered this way.
+    walks and ``gc.get_objects()`` never reports -- for the test body too, not just for
+    the check, which is the hazard the module docstring warns about. So whatever the
+    check finds afterwards was created by this test, and the snapshot needs no "before"
+    set to subtract -- hence the empty ``objs``, which also means ``Snapshot``'s own
+    ``collect=True`` is ignored and the ``gc.collect()`` it used to run here no longer
+    happens. Recording ids instead meant that collect and a scan of the whole heap here
+    and again at teardown, four passes over ~180k objects that between them cost more
+    than the tests: ``tests/core`` now runs the check over every one of its tests in less
+    time than it took to run it over the 397 it covered this way.
 
     It is also stricter. An id-based snapshot cannot distinguish a new object allocated at
     a dead one's address from that dead one, and silently passes; there are no ids to
