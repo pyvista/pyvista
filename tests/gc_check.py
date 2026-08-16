@@ -1,8 +1,8 @@
 """Shared leak-check machinery for the ``core`` and ``plotting`` conftests.
 
-Both run the same check -- snapshot the live VTK objects before a test, assert none of
-them outlived it -- so the mechanics live here and each conftest only supplies its
-policy. They differ in exactly two ways:
+Both run the same check -- put the objects alive before a test out of reach, assert none
+of the ones it creates outlive it -- so the mechanics live here and each conftest only
+supplies its policy. They differ in exactly two ways:
 
 * what they match: plotting also watches ``BasePlotter``, which is not a VTK object.
 * ``flush_ghosts``: plotting forgives a leak that disappears once VTK's ghost map is
@@ -32,6 +32,16 @@ if TYPE_CHECKING:
 
 _phase_report_key = pytest.StashKey()
 _check_gc_key = pytest.StashKey()
+
+# Freezing is process-wide, and ``pytester`` runs a nested session in this same process
+# with a copy of the conftest (see tests/plotting/test_conftest.py), so an inner test
+# would otherwise unfreeze the heap out from under the outer one -- which then sees every
+# object in the process as its own. Only the outermost check freezes and thaws.
+#
+# A list rather than a counter so the depth is mutated in place; rebinding a module-level
+# int needs ``global``. It holds the name of each check currently nested, which is what a
+# failure here would need to report.
+_frozen_for: list[str] = []
 
 
 def stash_phase_report(item, report) -> None:
@@ -66,15 +76,29 @@ def _flush_vtk_ghosts() -> None:
 
 
 def take_snapshot(item, match, label: str) -> None:
-    """Record the live matching objects, so only *new* survivors are reported.
+    """Put every object alive now out of reach, so only *new* survivors are reported.
+
+    ``gc.freeze()`` moves them into the permanent generation, which the collector never
+    walks and ``gc.get_objects()`` never reports. So whatever the check finds afterwards
+    was created by this test, and the snapshot needs no "before" set to subtract -- hence
+    the empty ``objs``. Recording ids instead meant a ``gc.collect()`` and a scan of the
+    whole heap here and again at teardown, four passes over ~180k objects that between
+    them cost more than the tests: ``tests/core`` runs the check over every one of its
+    7,559 tests in less time than it took to run it over 397 of them this way.
+
+    It is also stricter. An id-based snapshot cannot distinguish a new object allocated at
+    a dead one's address from that dead one, and silently passes; there are no ids to
+    reuse here.
 
     Matching by ``isinstance`` rather than class-name prefix also covers pyvista's own
     vtk subclasses (``PolyData``, ...) and the pythonic override subclasses VTK >= 9.6
     instantiates, whose names lack the ``vtk`` prefix. Passing several types as one tuple
-    keeps this to a single pass over the heap. ``Snapshot`` collects before it records
-    ids, so no ``gc.collect()`` is needed here.
+    keeps this to a single pass.
     """
-    item.stash[_check_gc_key] = Snapshot(match, label=label)
+    if not _frozen_for:
+        gc.freeze()
+    _frozen_for.append(item.name)
+    item.stash[_check_gc_key] = Snapshot(match, label=label, objs=[])
 
 
 def assert_no_leaks(
@@ -89,6 +113,25 @@ def assert_no_leaks(
         return
     del item.stash[_check_gc_key]
 
+    # Whatever happens below, hand the frozen objects back to the collector. Leaving them
+    # in the permanent generation would exempt them from collection for the rest of the
+    # session, and the next test would see them as its own.
+    try:
+        _assert_no_leaks(item, snapshot, flush_ghosts=flush_ghosts, before_check=before_check)
+    finally:
+        _frozen_for.pop()
+        if not _frozen_for:
+            gc.unfreeze()
+
+
+def _assert_no_leaks(
+    item,
+    snapshot: Snapshot,
+    *,
+    flush_ghosts: bool,
+    before_check: Callable[[], None] | None,
+) -> None:
+    """Do the checking, with :func:`assert_no_leaks` owning the unfreeze around it."""
     if before_check is not None:
         before_check()
 
