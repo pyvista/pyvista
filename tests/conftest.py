@@ -5,15 +5,12 @@ import functools
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import requires
 from importlib.metadata import version
+import importlib.util
 import inspect
 import os
 import platform
 import re
 
-from hypothesis import HealthCheck
-from hypothesis import given
-from hypothesis import settings
-from hypothesis import strategies as st
 import numpy as np
 from numpy.random import default_rng
 import PIL
@@ -373,6 +370,15 @@ def pytest_sessionstart():
     Hypothesis stops treating the process as still initializing; before that it warns
     about strategies being evaluated in a plugin.
     """
+    # The docs-test dependency group installs no Hypothesis, and this conftest still has
+    # to import under it, so probe for the package instead of importing it at module scope.
+    if importlib.util.find_spec('hypothesis') is None:
+        return
+
+    from hypothesis import HealthCheck
+    from hypothesis import given
+    from hypothesis import settings
+    from hypothesis import strategies as st
 
     @settings(
         max_examples=1, deadline=None, database=None, suppress_health_check=list(HealthCheck)
