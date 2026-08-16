@@ -633,9 +633,20 @@ def _underlying_cell_array(obj):
     return obj
 
 
+def _offsets_attr(name, array_name):
+    """Return the property of ``name`` that holds ``array_name``.
+
+    ``PolyData`` keeps verts, lines, faces and strips in four separate cell arrays, so
+    it names them after the cell type. The classes backed by a single cell array name
+    them after the cell.
+    """
+    prefix = 'face' if name.startswith('PolyData') else 'cell'
+    return f'{prefix}_{array_name}'
+
+
 @pytest.fixture
 def offsets_meshes(hexbeam):
-    """Return one mesh per class that exposes ``cell_offsets`` and ``cell_connectivity``."""
+    """Return one mesh per class that exposes offsets and connectivity properties."""
     meshes = {
         'PolyData': pv.Plane(i_resolution=1, j_resolution=1).triangulate(),
         'UnstructuredGrid': hexbeam,
@@ -659,12 +670,12 @@ def test_offsets_meshes_storage(offsets_meshes, name):
 
 
 @pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
-@pytest.mark.parametrize('array_name', ['cell_offsets', 'cell_connectivity'])
+@pytest.mark.parametrize('array_name', ['offsets', 'connectivity'])
 def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
     # `UnstructuredGrid.cell_connectivity` predates this API and stays writeable
     # until v0.52, so assert that rather than skipping the case
-    expect_writeable = name == 'UnstructuredGrid' and array_name == 'cell_connectivity'
-    array = getattr(offsets_meshes[name], array_name)
+    expect_writeable = name == 'UnstructuredGrid' and array_name == 'connectivity'
+    array = getattr(offsets_meshes[name], _offsets_attr(name, array_name))
     assert array.flags['WRITEABLE'] is expect_writeable
     if not expect_writeable:
         with pytest.raises(ValueError, match='read-only'):
@@ -674,8 +685,8 @@ def test_offsets_connectivity_is_read_only(offsets_meshes, name, array_name):
 @pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
 def test_offsets_connectivity_describe_cells(offsets_meshes, name):
     obj = offsets_meshes[name]
-    offsets = obj.cell_offsets
-    connectivity = obj.cell_connectivity
+    offsets = getattr(obj, _offsets_attr(name, 'offsets'))
+    connectivity = getattr(obj, _offsets_attr(name, 'connectivity'))
     n_cells = obj.n_faces if name.startswith('PolyData') else obj.n_cells
     assert offsets.size == n_cells + 1
     assert offsets[0] == 0
@@ -684,16 +695,121 @@ def test_offsets_connectivity_describe_cells(offsets_meshes, name):
 
 def test_offsets_setter_polydata():
     mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
-    mesh.cell_offsets = [0, 2, 4, 6]
+    mesh.face_offsets = [0, 2, 4, 6]
     assert mesh.n_faces == 3
-    assert np.array_equal(mesh.cell_offsets, [0, 2, 4, 6])
+    assert np.array_equal(mesh.face_offsets, [0, 2, 4, 6])
 
 
 def test_connectivity_setter_polydata():
     mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
-    mesh.cell_connectivity = [2, 1, 0, 2, 3, 1]
-    assert np.array_equal(mesh.cell_connectivity, [2, 1, 0, 2, 3, 1])
+    mesh.face_connectivity = [2, 1, 0, 2, 3, 1]
+    assert np.array_equal(mesh.face_connectivity, [2, 1, 0, 2, 3, 1])
     assert np.array_equal(mesh.regular_faces, [[2, 1, 0], [2, 3, 1]])
+
+
+POLYDATA_CELL_PREFIXES = ['vert', 'line', 'face', 'strip']
+
+
+@pytest.fixture
+def mixed_polydata():
+    """Return a mesh that holds verts, lines, faces and strips at the same time.
+
+    The four cell arrays deliberately hold a different number of cells and different
+    point ids, so a property reading the wrong one cannot pass by coincidence.
+    """
+    mesh = pv.PolyData()
+    mesh.points = np.random.default_rng(0).random((8, 3))
+    mesh.verts = pv.CellArray.from_arrays([0, 3], [0, 1, 2])
+    mesh.lines = pv.CellArray.from_arrays([0, 2, 5], [3, 4, 5, 6, 7])
+    mesh.faces = pv.CellArray.from_arrays([0, 3, 6, 10], [0, 1, 2, 2, 3, 4, 4, 5, 6, 7])
+    mesh.strips = pv.CellArray.from_arrays([0, 3, 6, 9, 12], [0, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5])
+    return mesh
+
+
+def test_polydata_offsets_connectivity_are_per_cell_type(mixed_polydata):
+    # The faces-only accessors this replaced returned the `faces` arrays whatever the
+    # mesh held, so every non-face assertion here fails against that behaviour.
+    assert np.array_equal(mixed_polydata.vert_offsets, [0, 3])
+    assert np.array_equal(mixed_polydata.vert_connectivity, [0, 1, 2])
+    assert np.array_equal(mixed_polydata.line_offsets, [0, 2, 5])
+    assert np.array_equal(mixed_polydata.line_connectivity, [3, 4, 5, 6, 7])
+    assert np.array_equal(mixed_polydata.face_offsets, [0, 3, 6, 10])
+    assert np.array_equal(mixed_polydata.face_connectivity, [0, 1, 2, 2, 3, 4, 4, 5, 6, 7])
+    assert np.array_equal(mixed_polydata.strip_offsets, [0, 3, 6, 9, 12])
+    assert np.array_equal(mixed_polydata.strip_connectivity, [0, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5])
+
+
+@pytest.mark.parametrize(
+    ('prefix', 'n_cells'), [('vert', 1), ('line', 2), ('face', 3), ('strip', 4)]
+)
+def test_polydata_offsets_describe_their_own_cells(mixed_polydata, prefix, n_cells):
+    offsets = getattr(mixed_polydata, f'{prefix}_offsets')
+    connectivity = getattr(mixed_polydata, f'{prefix}_connectivity')
+    assert getattr(mixed_polydata, f'n_{prefix}s') == n_cells
+    assert offsets.size - 1 == n_cells
+    assert offsets[0] == 0
+    assert offsets[-1] == connectivity.size
+    # The four counts are all different and none is `n_cells`, which is what makes a
+    # single `cell_offsets` pair wrong for this mesh
+    assert mixed_polydata.n_cells == 10
+
+
+@pytest.mark.parametrize('prefix', POLYDATA_CELL_PREFIXES)
+@pytest.mark.parametrize('array_name', ['offsets', 'connectivity'])
+def test_polydata_offsets_connectivity_is_read_only(mixed_polydata, prefix, array_name):
+    array = getattr(mixed_polydata, f'{prefix}_{array_name}')
+    assert array.flags['WRITEABLE'] is False
+    with pytest.raises(ValueError, match='read-only'):
+        array[0] = 0
+
+
+@pytest.mark.parametrize(
+    ('prefix', 'offsets', 'n_cells'),
+    [
+        ('vert', [0, 1, 3], 2),
+        ('line', [0, 5], 1),
+        ('face', [0, 5, 10], 2),
+        ('strip', [0, 4, 8, 12], 3),
+    ],
+)
+def test_polydata_offsets_setter(mixed_polydata, prefix, offsets, n_cells):
+    setattr(mixed_polydata, f'{prefix}_offsets', offsets)
+    assert np.array_equal(getattr(mixed_polydata, f'{prefix}_offsets'), offsets)
+    assert getattr(mixed_polydata, f'n_{prefix}s') == n_cells
+
+
+@pytest.mark.parametrize('prefix', POLYDATA_CELL_PREFIXES)
+def test_polydata_connectivity_setter_leaves_other_cell_types_alone(mixed_polydata, prefix):
+    others = {
+        other: (
+            getattr(mixed_polydata, f'{other}_offsets').copy(),
+            getattr(mixed_polydata, f'{other}_connectivity').copy(),
+        )
+        for other in POLYDATA_CELL_PREFIXES
+        if other != prefix
+    }
+    reversed_ids = getattr(mixed_polydata, f'{prefix}_connectivity')[::-1].copy()
+    setattr(mixed_polydata, f'{prefix}_connectivity', reversed_ids)
+
+    assert np.array_equal(getattr(mixed_polydata, f'{prefix}_connectivity'), reversed_ids)
+    for other, (offsets, connectivity) in others.items():
+        assert np.array_equal(getattr(mixed_polydata, f'{other}_offsets'), offsets)
+        assert np.array_equal(getattr(mixed_polydata, f'{other}_connectivity'), connectivity)
+
+
+@pytest.mark.parametrize('prefix', ['vert', 'line', 'strip'])
+def test_polydata_offsets_connectivity_empty(prefix):
+    # A mesh built from faces alone leaves the other three cell arrays empty
+    mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+    assert getattr(mesh, f'n_{prefix}s') == 0
+    assert np.array_equal(getattr(mesh, f'{prefix}_offsets'), [0])
+    assert getattr(mesh, f'{prefix}_connectivity').size == 0
+
+
+@pytest.mark.parametrize('name', ['cell_offsets', 'cell_connectivity'])
+def test_polydata_has_no_cell_offsets_or_connectivity(name):
+    # `PolyData` has four cell arrays, so there is no single pair to name `cell_*`
+    assert not hasattr(pv.PolyData, name)
 
 
 def test_connectivity_setter_unstructured_grid(hexbeam):
@@ -772,20 +888,20 @@ def test_unstructured_grid_setter_rejects_polyhedron():
 @pytest.mark.parametrize(
     ('array_name', 'value', 'error', 'match'),
     [
-        ('cell_offsets', [[0, 3], [3, 6]], ValueError, 'must be a 1D array'),
-        ('cell_connectivity', [[0, 1], [2, 3]], ValueError, 'must be a 1D array'),
-        ('cell_offsets', [0.0, 3.0, 6.0], TypeError, 'integer dtype'),
-        ('cell_connectivity', [0.0, 1.0], TypeError, 'integer dtype'),
-        ('cell_offsets', [], ValueError, 'at least one value'),
-        ('cell_offsets', [1, 4, 6], ValueError, 'first offset must be 0'),
-        ('cell_offsets', [0, 6, 3], ValueError, 'monotonically non-decreasing'),
-        ('cell_offsets', [0, 3], ValueError, 'must equal the size of the connectivity'),
-        ('cell_connectivity', [0, 1, 2], ValueError, 'must equal the size of the connectivity'),
+        ('offsets', [[0, 3], [3, 6]], ValueError, 'must be a 1D array'),
+        ('connectivity', [[0, 1], [2, 3]], ValueError, 'must be a 1D array'),
+        ('offsets', [0.0, 3.0, 6.0], TypeError, 'integer dtype'),
+        ('connectivity', [0.0, 1.0], TypeError, 'integer dtype'),
+        ('offsets', [], ValueError, 'at least one value'),
+        ('offsets', [1, 4, 6], ValueError, 'first offset must be 0'),
+        ('offsets', [0, 6, 3], ValueError, 'monotonically non-decreasing'),
+        ('offsets', [0, 3], ValueError, 'must equal the size of the connectivity'),
+        ('connectivity', [0, 1, 2], ValueError, 'must equal the size of the connectivity'),
     ],
 )
 def test_offsets_connectivity_validation(offsets_meshes, name, array_name, value, error, match):
     with pytest.raises(error, match=match):
-        setattr(offsets_meshes[name], array_name, value)
+        setattr(offsets_meshes[name], _offsets_attr(name, array_name), value)
 
 
 def test_offsets_uses_fixed_size_storage_when_uniform():
@@ -843,32 +959,36 @@ def test_documented_zero_copy_cell_array_edit(offsets_meshes, name):
     # The documented zero-copy alternative to assigning a copy to the read-only
     # property: build the cell array with `deep=False` and keep the connectivity array.
     obj = offsets_meshes[name]
-    offsets = np.asarray(obj.cell_offsets, dtype=pv.ID_TYPE).copy()
-    connectivity = np.asarray(obj.cell_connectivity, dtype=pv.ID_TYPE).copy()
+    offsets = np.asarray(getattr(obj, _offsets_attr(name, 'offsets')), dtype=pv.ID_TYPE).copy()
+    connectivity = np.asarray(
+        getattr(obj, _offsets_attr(name, 'connectivity')), dtype=pv.ID_TYPE
+    ).copy()
     cell_array = pv.CellArray.from_arrays(offsets, connectivity, deep=False)
     if isinstance(obj, pv.PolyData):
         obj.faces = cell_array
+        attr = 'face_connectivity'
     else:
         obj = cell_array
-    assert np.shares_memory(connectivity, obj.cell_connectivity)
+        attr = 'cell_connectivity'
+    assert np.shares_memory(connectivity, getattr(obj, attr))
 
     expected = connectivity[::-1].copy()
     connectivity[:] = expected
-    assert np.array_equal(obj.cell_connectivity, expected)
+    assert np.array_equal(getattr(obj, attr), expected)
 
 
 def test_polydata_connectivity_array_deprecated():
     mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
-    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_connectivity`'):
-        assert np.array_equal(mesh._connectivity_array, mesh.cell_connectivity)
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_connectivity`'):
+        assert np.array_equal(mesh._connectivity_array, mesh.face_connectivity)
 
 
 def test_polydata_offset_array_deprecated():
     # Restored after being removed in #8873: downstream code uses these internal
     # helpers, so they get a deprecation cycle rather than being deleted.
     mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
-    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_offsets`'):
-        assert np.array_equal(mesh._offset_array, mesh.cell_offsets)
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_offsets`'):
+        assert np.array_equal(mesh._offset_array, mesh.face_offsets)
 
 
 def test_polydata_offset_array_deprecated_with_fixed_size_storage():
@@ -879,7 +999,7 @@ def test_polydata_offset_array_deprecated_with_fixed_size_storage():
     )
     if _SUPPORTS_FIXED_SIZE_STORAGE:
         assert mesh.GetPolys().IsStorageFixedSize()
-    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_offsets`'):
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_offsets`'):
         assert np.array_equal(mesh._offset_array, [0, 3, 6])
 
 

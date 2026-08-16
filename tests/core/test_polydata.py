@@ -1496,7 +1496,7 @@ def test_merge_points(inplace):
 
 def test_offset_array():
     # Private, but geovista reads it, so removing it breaks the integration tests.
-    # It still works while deprecated in favour of `cell_offsets`.
+    # It still works while deprecated in favour of `face_offsets`.
     mesh = pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]])
-    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.cell_offsets`'):
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_offsets`'):
         assert np.array_equal(mesh._offset_array, [0, 3, 6])
