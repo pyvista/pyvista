@@ -524,8 +524,8 @@ class ImageDataFilters(DataSetFilters):
             min_ind = axis * 2
             max_ind = axis * 2 + 1
 
-            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
-            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))
         return out
 
     def crop(  # type: ignore[misc]
@@ -2904,12 +2904,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
-        is_external = 'external' in boundary_style
+        want_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = is_external
+            simplify_output = want_external
         if simplify_output:
             # Simplify scalars to a single component
-            if not is_external:
+            if not want_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -5674,7 +5674,7 @@ class ImageDataFilters(DataSetFilters):
                             needs_padding = (dimensions_diff > 0) & (np.arange(3) != axis_num)
                             dimensions_padding[needs_padding] = dimensions_diff[needs_padding]
                             pad_size = np.zeros((6,), dtype=int)
-                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1  # type: ignore[assignment]
+                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1
                             pad_size[pad_ind] = dimensions_padding[needs_padding]
                             img_copy = img_copy.pad_image(
                                 pad_size=pad_size, pad_value=background_value

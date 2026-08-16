@@ -138,9 +138,14 @@ original author to relicense the code.
 Generative AI
 -------------
 
-We follow the Python Developer's Guide on `Generative AI <https://devguide.python.org/getting-started/generative-ai/>`_.
+We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_.
 The resulting contribution is the responsibility of the contributor, and we value good code,
 concise accurate documentation, and avoiding unneeded code churn.
+
+That responsibility covers what the contribution costs us to review and to test.
+If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
+which routes to the task guides and repeats the rules agents get wrong most often,
+and read `Continuous Integration Etiquette`_ before it pushes anything.
 
 --------------
 
@@ -199,6 +204,56 @@ specific ``vtk`` or ``numpy`` version, or building documentation), see
 the `Unit Testing`_, `Style Checking`_, and `Building the
 Documentation`_ sections below, which document the underlying tools
 directly.
+
+Continuous Integration Etiquette
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Opening a pull request, and every push to it afterwards, starts the full
+continuous integration suite: unit tests on Linux, macOS, and Windows across
+every supported Python version, a separate VTK version matrix, the
+documentation build, the integration tests, type checking, and the style and
+docstring jobs. Every one of those runs costs the project paid runner time.
+Push when the change is ready, and use the local gates rather than CI to find
+out whether it works.
+
+Before you push:
+
+#. Run ``make lint``. It runs ``pre-commit`` on all files and catches most of
+   what the style jobs would report.
+#. Run the tests covering what you changed, for example
+   ``make test-core ARGS="-k threshold"`` or ``make test-plotting``. These
+   targets use the same ``tox`` environments and ``pytest`` flags as CI, so a
+   green local run means the same run is green in CI.
+#. Run ``make typecheck`` when you change type annotations, and ``make
+   doctest`` when you change a docstring example.
+
+While you iterate, keep the pull request in draft and amend or squash locally,
+so a single push carries the finished change instead of five pushes carrying a
+debugging session. A new push cancels the runs still in progress for the same
+branch, but it cannot refund a run that already finished.
+
+When a job fails:
+
+-  Read the log and find the failing assertion before changing anything. The
+   job name alone does not identify the cause.
+-  Reproduce it locally with the matching ``make`` target or ``tox``
+   environment. When the failure needs a Python or VTK version you cannot run,
+   say so in the pull request instead of pushing speculative fixes.
+-  Check whether the same failure occurs on ``main``. If it does, the failure
+   is not yours to chase in this pull request.
+-  Diagnose a flaky test rather than re-running the job until it passes. A
+   re-run costs what the first run cost, and a test that only passes on the
+   second attempt is worth reporting.
+-  For image regression failures, download the failed image artifact from the
+   job and compare it against the committed baseline (see `Notes Regarding
+   Image Regression Testing`_) instead of pushing baseline updates to see
+   which ones stick.
+
+This applies with particular force to contributions made with coding agents,
+which can run every gate above locally in a shell. Configure yours to do that
+and review its work before it reaches CI. Whoever opens the pull request is
+responsible for what each push costs the project, in the same way they are
+responsible for the content of the contribution.
 
 Guidelines
 ~~~~~~~~~~
@@ -1049,17 +1104,50 @@ example:
 
             make test ARGS="tests/plotting --reset_image_cache"
 
-Running ``--reset_image_cache`` creates a new image for each test in
-``tests/plotting/test_plotting.py`` and is not recommended except for
-testing or for potentially a major or minor release. You can use
-``--ignore_image_cache`` if you’re running on Linux and want to
-temporarily ignore regression testing. Realize that regression testing
-will still occur on our CI testing.
+Running ``--reset_image_cache`` regenerates the baseline of every test the
+run collected, including tests that were failing for reasons unrelated to
+your change. Reserve it for a deliberate regeneration of the whole cache at
+a major or minor release, and use the scoped flags below for everything
+else. ``--ignore_image_cache`` skips the comparison locally while you
+iterate; regression testing still runs in our CI.
 
-Images are currently only cached from tests in
-``tests/plotting/test_plotting.py``. By default, any test that uses
-``Plotter.show`` will cache images automatically. To skip image caching,
-the ``verify_image_cache`` fixture can be utilized:
+Two scoped flags cover day-to-day work. Give both of them a test node id so
+they cannot touch a baseline you did not mean to change:
+
+.. code-block:: bash
+
+    # a new test that has no baseline yet
+    make test-plotting ARGS="tests/plotting/test_plotting.py::test_new_render --add_missing_images"
+
+    # a render that legitimately changed: overwrite only the failed baselines
+    make test-plotting ARGS="tests/plotting/test_plotting.py::test_my_render --reset_only_failed"
+
+Arguments passed through ``ARGS`` replace the environment's whole-suite defaults
+rather than adding to them, so the node id above is the entire run and neither
+the ``tests/plotting`` collection root nor ``--disallow_unused_cache`` comes
+along with it. Plain ``pytest`` with the same arguments works too.
+
+Look at every image before committing it. ``failed_image_dir`` and
+``generated_image_dir`` are already configured in ``pyproject.toml``, so a
+failing run writes ``_failed_test_images/`` with no extra flag: the committed
+baseline under ``from_cache/`` and the new render under ``from_test/``. For a
+run with many failures, build the HTML report:
+
+.. code-block:: bash
+
+    tox run -e image-report -- _failed_test_images _image_report
+
+Since the baselines are the Linux CI renders, the most reliable way to accept
+a change is to download the ``failed_test_images-*`` artifact from the failing
+job and copy its ``from_test`` images over the cache, instead of re-rendering
+on your own hardware.
+
+Any test that requests the ``verify_image_cache`` fixture and calls
+``Plotter.show`` (or ``mesh.plot``) caches and compares an image. The
+comparison runs from a callback that ``show`` registers, so a test that builds
+a plotter and only calls ``close`` compares nothing while still passing. To
+skip image caching within a test, the ``verify_image_cache`` fixture can be
+utilized:
 
 .. code-block:: python
 
@@ -1634,7 +1722,9 @@ Creating a New Pull Request
 Once you have tested your branch locally, create a pull request on
 `pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
 main. This will automatically run continuous integration (CI) testing
-and verify your changes will work across several platforms.
+and verify your changes will work across several platforms. See
+`Continuous Integration Etiquette`_ for what that run costs and how to
+keep it to one.
 
 To ensure someone else reviews your code, at least one other member of
 the pyvista contributors group must review and verify your code meets
