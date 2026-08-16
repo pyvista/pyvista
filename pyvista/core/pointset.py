@@ -3671,7 +3671,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             raise ValueError(msg)
 
         else:
-            n_cells = np.prod([n - 1 for n in dims])  # type: ignore[arg-type]
+            n_cells = np.prod([n - 1 for n in dims])
 
         if isinstance(cells, dict):
             celltypes = list(cells)
@@ -4212,7 +4212,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     [(0, 0, +1), (4, 5, 6, 7), (0, 1, 2, 3)],
                 ]
                 for f in faces:
-                    coords = np.sum([cell_coords, f[0]], axis=0)  # type: ignore[arg-type]
+                    coords = np.sum([cell_coords, f[0]], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
                         points = self.get_cell(ind).points
@@ -4228,7 +4228,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_coords = self.cell_coords(ind)
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
             for n in cell_neighbors:
-                coords = np.sum([cell_coords, n], axis=0)  # type: ignore[arg-type]
+                coords = np.sum([cell_coords, n], axis=0)
                 ind = self.cell_id(coords)
                 if ind:
                     indices.append(ind)
@@ -4240,7 +4240,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
-                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)  # type: ignore[arg-type]
+                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
                         indices.append(ind)
@@ -4257,7 +4257,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     cell_z = cell_z.reshape((2, 2))
                     cell_zmin = cell_z.min(axis=1)
                     cell_zmax = cell_z.max(axis=1)
-                    coords = np.sum([cell_coords, f[0]], axis=0)  # type: ignore[arg-type]
+                    coords = np.sum([cell_coords, f[0]], axis=0)
                     for k in range(nk):
                         coords[2] = k
                         ind = self.cell_id(coords)
@@ -4390,7 +4390,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             array = array.reshape((-1, 1))  # type: ignore[assignment]
             array = array.astype(np.uint8)  # type: ignore[assignment]
             array = np.unpackbits(array, axis=1)  # type: ignore[assignment]
-            array = array.sum(axis=1)
+            array = array.sum(axis=1)  # type: ignore[assignment]
             self.cell_data['number_of_connections'] = array
             return self
         else:
