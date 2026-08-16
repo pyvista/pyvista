@@ -356,12 +356,18 @@ def pytest_sessionstart():
     ``@given`` test in the process, and ``register_random`` sanity-checks that PRNG with
     ``gc.get_referrers()``. Run inside a frozen body, that comes back empty, so Hypothesis
     warns that the PRNG looks collectable -- and ``filterwarnings = ['error']`` turns the
-    warning into a failure of whichever test happened to be the first one. Which test that
-    is depends on how xdist shards the run, so it fails a different test every time, or
-    none at all.
+    warning into a failure of that first test.
+
+    Two conditions have to line up for that. On Python 3.14 ``threading.local()``
+    allocates its per-thread dict at construction, so the dict holding the PRNG is built
+    when ``hypothesis.core`` is imported and lands in the permanent generation; through
+    3.13 it is created on first access, inside the frozen window, where it stays visible.
+    And the lazy ``register_random`` only runs under ``derandomize=True``, which comes
+    from Hypothesis' ``ci`` profile, auto-loaded when ``CI`` is set. A local run on 3.13,
+    or without ``CI``, will not reproduce it; xdist only picks which test takes the hit.
 
     Running one throwaway example here does that registration once, at session start,
-    where nothing is frozen. Deleting this brings the intermittent failures back.
+    where nothing is frozen. Deleting this brings the failures back.
 
     ``trylast`` so it runs after Hypothesis' own ``pytest_sessionstart``, which is where
     Hypothesis stops treating the process as still initializing; before that it warns
