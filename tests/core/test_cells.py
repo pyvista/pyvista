@@ -15,6 +15,7 @@ from pyvista import CellType
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core.cell import _set_cell_array_data
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
@@ -975,6 +976,96 @@ def test_documented_zero_copy_cell_array_edit(offsets_meshes, name):
     expected = connectivity[::-1].copy()
     connectivity[:] = expected
     assert np.array_equal(getattr(obj, attr), expected)
+
+
+POLYHEDRON_ARRAY_NAMES = [
+    'polyhedron_face_offsets',
+    'polyhedron_face_connectivity',
+    'polyhedron_face_location_offsets',
+    'polyhedron_face_location_connectivity',
+]
+
+requires_polyhedron_face_cell_arrays = pytest.mark.skipif(
+    not _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS,
+    reason='VTK < 9.4 stores a polyhedron as a single padded face stream',
+)
+
+
+@pytest.fixture
+def polyhedron_grid():
+    """Return a grid holding one polyhedron and one cell that is not a polyhedron."""
+    return example_cells.Polyhedron().merge(example_cells.Tetrahedron())
+
+
+@requires_polyhedron_face_cell_arrays
+def test_polyhedron_face_offsets_connectivity(polyhedron_grid):
+    # The polyhedron is a tetrahedron, so it contributes four triangular faces
+    offsets = polyhedron_grid.polyhedron_face_offsets
+    connectivity = polyhedron_grid.polyhedron_face_connectivity
+    assert np.array_equal(offsets, [0, 3, 6, 9, 12])
+    assert np.array_equal(connectivity, [0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3])
+    assert len(offsets) - 1 == 4
+    assert offsets[0] == 0
+    assert offsets[-1] == connectivity.size
+
+
+@requires_polyhedron_face_cell_arrays
+def test_polyhedron_face_location_offsets_connectivity(polyhedron_grid):
+    # Every cell gets an entry, so the cell that is not a polyhedron has an empty slice
+    offsets = polyhedron_grid.polyhedron_face_location_offsets
+    connectivity = polyhedron_grid.polyhedron_face_location_connectivity
+    assert len(offsets) - 1 == polyhedron_grid.n_cells == 2
+    assert np.array_equal(offsets, [0, 4, 4])
+    assert np.array_equal(connectivity, [0, 1, 2, 3])
+    assert offsets[-1] == connectivity.size
+
+
+@requires_polyhedron_face_cell_arrays
+def test_polyhedron_face_locations_index_the_faces(polyhedron_grid):
+    offsets = polyhedron_grid.polyhedron_face_offsets
+    connectivity = polyhedron_grid.polyhedron_face_connectivity
+    faces = [
+        connectivity[offsets[face] : offsets[face + 1]].tolist()
+        for face in polyhedron_grid.polyhedron_face_location_connectivity
+    ]
+    assert faces == [[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]]
+
+
+@requires_polyhedron_face_cell_arrays
+@pytest.mark.parametrize('array_name', POLYHEDRON_ARRAY_NAMES)
+def test_polyhedron_arrays_are_read_only(polyhedron_grid, array_name):
+    array = getattr(polyhedron_grid, array_name)
+    assert array.flags['WRITEABLE'] is False
+    with pytest.raises(ValueError, match='read-only'):
+        array[0] = 0
+
+
+@requires_polyhedron_face_cell_arrays
+@pytest.mark.parametrize('array_name', POLYHEDRON_ARRAY_NAMES)
+def test_polyhedron_arrays_have_no_setter(polyhedron_grid, array_name):
+    # VTK can only replace the faces together with the cells, cell types and locations
+    with pytest.raises(AttributeError):
+        setattr(polyhedron_grid, array_name, [0])
+
+
+@requires_polyhedron_face_cell_arrays
+@pytest.mark.parametrize('array_name', POLYHEDRON_ARRAY_NAMES)
+def test_polyhedron_arrays_empty_without_a_polyhedron(hexbeam, array_name):
+    # VTK allocates neither cell array until the grid holds a polyhedron, so the
+    # offsets do not reach `n_cells + 1` here
+    expected = [0] if array_name.endswith('_offsets') else []
+    assert np.array_equal(getattr(hexbeam, array_name), expected)
+
+
+@pytest.mark.skipif(
+    _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS,
+    reason='VTK >= 9.4 keeps the polyhedron faces in cell arrays',
+)
+@pytest.mark.parametrize('array_name', POLYHEDRON_ARRAY_NAMES)
+def test_polyhedron_arrays_raise_on_old_vtk(hexbeam, array_name):
+    match = re.escape(f'`UnstructuredGrid.{array_name}` requires VTK 9.4 or newer')
+    with pytest.raises(pv.VTKVersionError, match=match):
+        getattr(hexbeam, array_name)
 
 
 def test_polydata_connectivity_array_deprecated():

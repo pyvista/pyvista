@@ -19,8 +19,10 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
 
 from .cell import CellArray
 from .cell import _get_connectivity
@@ -2566,6 +2568,18 @@ class PointGrid(_PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
+def _require_polyhedron_face_cell_arrays(name: str) -> None:
+    """Raise if the installed VTK does not keep the polyhedron faces in cell arrays."""
+    if not _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS:
+        msg = (
+            f'`UnstructuredGrid.{name}` requires VTK 9.4 or newer. Earlier versions '
+            f'store a polyhedron as a single padded face stream with no offsets or '
+            f'connectivity arrays of its own; use `polyhedron_faces` and '
+            f'`polyhedron_face_locations` instead.'
+        )
+        raise VTKVersionError(msg)
+
+
 class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
@@ -3024,6 +3038,261 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
             faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
             return convert_array(arr)
+
+    def _get_polyhedron_faces(self, name: str) -> _vtk.vtkCellArray:
+        """Return the polyhedron faces cell array, or raise on a VTK that has none."""
+        _require_polyhedron_face_cell_arrays(name)
+        faces = self.GetPolyhedronFaces()
+        return _vtk.vtkCellArray() if faces is None else faces
+
+    def _get_polyhedron_face_locations(self, name: str) -> _vtk.vtkCellArray:
+        """Return the polyhedron face locations cell array, or raise on an old VTK."""
+        _require_polyhedron_face_cell_arrays(name)
+        locations = self.GetPolyhedronFaceLocations()
+        return _vtk.vtkCellArray() if locations is None else locations
+
+    @property
+    def polyhedron_face_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the polyhedron faces.
+
+        Every :attr:`~pyvista.CellType.POLYHEDRON` in the grid contributes its faces to
+        one shared cell array. The offsets array has one value per face plus one, and
+        stores the index into :attr:`polyhedron_face_connectivity` at which each face
+        begins. The point ids of face ``i`` run from ``polyhedron_face_offsets[i]`` to
+        ``polyhedron_face_offsets[i + 1]`` in :attr:`polyhedron_face_connectivity`.
+
+        The faces are shared across the whole grid, so which of them belong to which
+        cell is recorded separately in :attr:`polyhedron_face_location_offsets` and
+        :attr:`polyhedron_face_location_connectivity`.
+
+        A grid holding no polyhedron has no faces for VTK to store, and the array is
+        ``[0]``.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face offsets with one value per polyhedron face plus one.
+
+        Raises
+        ------
+        pyvista.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_connectivity
+            Point ids that define the faces.
+        polyhedron_face_location_offsets
+            Index into the face ids at which each cell begins.
+        polyhedron_faces
+            Faces in the legacy padded format.
+        cell_offsets
+            Offsets of the cells themselves, which do not describe a polyhedron.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the faces together with the
+        cells, the cell types and the face locations, so there is no way to assign the
+        faces alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_offsets
+        array([ 0,  3,  6,  9, 12]...)
+
+        The single tetrahedral polyhedron has four triangular faces.
+
+        >>> len(grid.polyhedron_face_offsets) - 1
+        4
+
+        The offsets and connectivity together describe each face.
+
+        >>> start, stop = grid.polyhedron_face_offsets[:2]
+        >>> grid.polyhedron_face_connectivity[start:stop]
+        array([0, 2, 1]...)
+
+        """
+        return _get_offsets(self._get_polyhedron_faces('polyhedron_face_offsets'))
+
+    @property
+    def polyhedron_face_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the polyhedron faces.
+
+        The connectivity array stores the point ids of every polyhedron face in the
+        grid, one face after another and without any padding. Use
+        :attr:`polyhedron_face_offsets` to determine where each face begins and ends.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the polyhedron faces.
+
+        Raises
+        ------
+        pyvista.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_offsets
+            Index into this array at which each face begins.
+        polyhedron_face_location_connectivity
+            Ids of the faces that make up each cell.
+        polyhedron_faces
+            Faces in the legacy padded format.
+        cell_connectivity
+            Connectivity of the cells themselves, which is empty for a polyhedron.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the faces together with the
+        cells, the cell types and the face locations, so there is no way to assign the
+        faces alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_connectivity
+        array([0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> grid.polyhedron_face_connectivity.flags['WRITEABLE']
+        False
+
+        """
+        return _get_connectivity(self._get_polyhedron_faces('polyhedron_face_connectivity'))
+
+    @property
+    def polyhedron_face_location_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the polyhedron face locations.
+
+        The offsets array has :attr:`~pyvista.DataSet.n_cells` ``+ 1`` values and stores
+        the index into :attr:`polyhedron_face_location_connectivity` at which each cell
+        begins. The face ids of cell ``i`` run from
+        ``polyhedron_face_location_offsets[i]`` to
+        ``polyhedron_face_location_offsets[i + 1]`` in
+        :attr:`polyhedron_face_location_connectivity`.
+
+        Every cell has an entry, not just the polyhedra. A cell that is not a
+        :attr:`~pyvista.CellType.POLYHEDRON` has no faces of its own, so its two offsets
+        are equal and its slice is empty. A grid holding no polyhedron at all has no
+        face locations for VTK to store, and the array is ``[0]``.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face location offsets with ``n_cells + 1`` values.
+
+        Raises
+        ------
+        pyvista.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_location_connectivity
+            Ids of the faces that make up each cell.
+        polyhedron_face_offsets
+            Index into the point ids at which each face begins.
+        polyhedron_face_locations
+            Face locations in the legacy padded format.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the face locations together
+        with the cells, the cell types and the faces, so there is no way to assign them
+        alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_location_offsets
+        array([0, 4]...)
+
+        There is one entry per cell, whether or not the cell is a polyhedron.
+
+        >>> len(grid.polyhedron_face_location_offsets) - 1 == grid.n_cells
+        True
+
+        """
+        return _get_offsets(
+            self._get_polyhedron_face_locations('polyhedron_face_location_offsets')
+        )
+
+    @property
+    def polyhedron_face_location_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the polyhedron face locations.
+
+        The connectivity array stores the ids of the faces that make up each cell, one
+        cell after another and without any padding. A face id indexes
+        :attr:`polyhedron_face_offsets`. Use
+        :attr:`polyhedron_face_location_offsets` to determine where each cell begins and
+        ends.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Ids of the faces that make up each cell.
+
+        Raises
+        ------
+        pyvista.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_location_offsets
+            Index into this array at which each cell begins.
+        polyhedron_face_connectivity
+            Point ids that define the faces these ids refer to.
+        polyhedron_face_locations
+            Face locations in the legacy padded format.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the face locations together
+        with the cells, the cell types and the faces, so there is no way to assign them
+        alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_location_connectivity
+        array([0, 1, 2, 3]...)
+
+        Follow a face id back to the point ids of that face.
+
+        >>> face = grid.polyhedron_face_location_connectivity[0]
+        >>> start, stop = grid.polyhedron_face_offsets[face : face + 2]
+        >>> grid.polyhedron_face_connectivity[start:stop]
+        array([0, 2, 1]...)
+
+        """
+        return _get_connectivity(
+            self._get_polyhedron_face_locations('polyhedron_face_location_connectivity')
+        )
 
     @property
     def cells_dict(  # numpydoc ignore=RT01
