@@ -39,6 +39,7 @@ def test_colormap_table_matplotlib(matplotlib_named_cmaps):
         'berlin' not in matplotlib_named_cmaps
         and 'vanimo' not in matplotlib_named_cmaps
         and 'managua' not in matplotlib_named_cmaps
+        and 'okabe_ito' not in matplotlib_named_cmaps
     ):
         pytest.xfail('Older Matplotlib is missing a few colormaps.')
     documented_cmaps = [
