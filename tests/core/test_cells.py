@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gc
 import re
+import sys
 from types import GeneratorType
 
 import numpy as np
@@ -545,7 +546,13 @@ REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
     [
         REGULAR_CELL_LIST,
         np.array(REGULAR_CELL_LIST, np.int16),
-        np.array(REGULAR_CELL_LIST, np.int32),
+        pytest.param(
+            np.array(REGULAR_CELL_LIST, np.int32),
+            marks=pytest.mark.xfail(
+                sys.platform == 'win32',
+                reason='BUG(?) VTK does not use fixed-size storage for int32 cells on Windows',
+            ),
+        ),
         np.array(REGULAR_CELL_LIST, np.int64),
         np.array(np.vstack(REGULAR_CELL_LIST), order='F'),
     ],
