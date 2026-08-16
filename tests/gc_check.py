@@ -38,9 +38,9 @@ _check_gc_key = pytest.StashKey()
 # would otherwise unfreeze the heap out from under the outer one -- which then sees every
 # object in the process as its own. Only the outermost check freezes and thaws.
 #
-# A list rather than a counter so the depth is mutated in place; rebinding a module-level
-# int needs ``global``. It holds the name of each check currently nested, which is what a
-# failure here would need to report.
+# A list rather than a counter so the depth is mutated in place, which a module-level int
+# would need ``global`` for. It holds the name of each nested check, so an unbalanced
+# freeze names the tests involved rather than just failing to add up.
 _frozen_for: list[str] = []
 
 
@@ -119,7 +119,10 @@ def assert_no_leaks(
     try:
         _assert_no_leaks(item, snapshot, flush_ghosts=flush_ghosts, before_check=before_check)
     finally:
-        _frozen_for.pop()
+        # Never raise from here: this runs while a leak assertion may be in flight, and
+        # an IndexError would replace it with something that explains nothing.
+        if _frozen_for:
+            _frozen_for.pop()
         if not _frozen_for:
             gc.unfreeze()
 
