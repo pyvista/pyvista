@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import itertools
 import re
 import sys
 from types import GeneratorType
@@ -993,8 +994,18 @@ requires_polyhedron_face_cell_arrays = pytest.mark.skipif(
 
 @pytest.fixture
 def polyhedron_grid():
-    """Return a grid holding one polyhedron and one cell that is not a polyhedron."""
-    return example_cells.Polyhedron().merge(example_cells.Tetrahedron())
+    """Return a grid holding one polyhedron and one cell that is not a polyhedron.
+
+    Built from literal arrays rather than by merging two example cells. `merge` appends
+    the main mesh last before VTK 9.5 and first from 9.5 on, so a merged grid orders its
+    cells and numbers its points differently depending on the VTK in use.
+    """
+    # A polyhedron with four triangular faces over points 0-3, then a tetrahedron
+    faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    cells = [len(faces) + 1, 4, *faces, 4, 4, 5, 6, 7]
+    celltypes = [pv.CellType.POLYHEDRON, pv.CellType.TETRA]
+    points = np.vstack([example_cells.Polyhedron().points, example_cells.Tetrahedron().points])
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 @requires_polyhedron_face_cell_arrays
@@ -1018,6 +1029,11 @@ def test_polyhedron_face_location_offsets_connectivity(polyhedron_grid):
     assert np.array_equal(offsets, [0, 4, 4])
     assert np.array_equal(connectivity, [0, 1, 2, 3])
     assert offsets[-1] == connectivity.size
+    # The same locations the pre-existing padded-stream property reports
+    padded = [
+        [stop - start, *connectivity[start:stop]] for start, stop in itertools.pairwise(offsets)
+    ]
+    assert np.array_equal(polyhedron_grid.polyhedron_face_locations, np.concatenate(padded))
 
 
 @requires_polyhedron_face_cell_arrays
@@ -1029,6 +1045,9 @@ def test_polyhedron_face_locations_index_the_faces(polyhedron_grid):
         for face in polyhedron_grid.polyhedron_face_location_connectivity
     ]
     assert faces == [[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]]
+    # The same faces the pre-existing padded-stream property reports
+    padded = np.concatenate([[len(face), *face] for face in faces])
+    assert np.array_equal(polyhedron_grid.polyhedron_faces, padded)
 
 
 @requires_polyhedron_face_cell_arrays

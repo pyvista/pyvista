@@ -1747,7 +1747,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Examples
         --------
         >>> import pyvista as pv
-        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+        >>> points = pv.Rectangle().points
+        >>> mesh = pv.PolyData.from_regular_faces(points, [[0, 1, 2], [1, 3, 2]])
         >>> mesh.face_offsets
         array([0, 3, 6]...)
 
@@ -1829,7 +1830,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Examples
         --------
         >>> import pyvista as pv
-        >>> mesh = pv.Plane(i_resolution=1, j_resolution=1).triangulate()
+        >>> points = pv.Rectangle().points
+        >>> mesh = pv.PolyData.from_regular_faces(points, [[0, 1, 2], [1, 3, 2]])
         >>> mesh.face_connectivity
         array([0, 1, 2, 1, 3, 2]...)
 
@@ -3077,7 +3079,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Raises
         ------
-        pyvista.VTKVersionError
+        pyvista.core.errors.VTKVersionError
             If VTK is older than 9.4, which stores polyhedra as a single padded face
             stream instead.
 
@@ -3137,7 +3139,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Raises
         ------
-        pyvista.VTKVersionError
+        pyvista.core.errors.VTKVersionError
             If VTK is older than 9.4, which stores polyhedra as a single padded face
             stream instead.
 
@@ -3199,7 +3201,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Raises
         ------
-        pyvista.VTKVersionError
+        pyvista.core.errors.VTKVersionError
             If VTK is older than 9.4, which stores polyhedra as a single padded face
             stream instead.
 
@@ -3255,7 +3257,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Raises
         ------
-        pyvista.VTKVersionError
+        pyvista.core.errors.VTKVersionError
             If VTK is older than 9.4, which stores polyhedra as a single padded face
             stream instead.
 
