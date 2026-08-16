@@ -580,7 +580,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                         else:
                             cell_types.remove(ctype)
                     return _MeshValidator._invalid_cell_msg(
-                        name, tuple(arrays), cell_type=cell_types
+                        name,
+                        tuple(arrays),  # type: ignore[arg-type]
+                        cell_type=cell_types,
                     )
                 else:
                     return _MeshValidator._invalid_cell_msg(name, array_, cell_type=cell_types[0])
