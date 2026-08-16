@@ -11,6 +11,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
@@ -937,10 +938,12 @@ class CellArray(
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
-        # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
-        # garbage collected. Keep a reference to them for safety
-        self.__offsets = vtk_offsets
-        self.__connectivity = vtk_connectivity
+        # Only pre-9.6 VTK needs this: there SetData does not reference the arrays, so
+        # dropping them here frees the buffers out from under us. Newer VTK does own
+        # them, and stashing anyway leaks both via the ghost __dict__ (see #8873).
+        if not _SETDATA_TAKES_OWNERSHIP:
+            self.__offsets = vtk_offsets
+            self.__connectivity = vtk_connectivity
 
     def _set_data_fixed_size(
         self: Self,
@@ -959,12 +962,9 @@ class CellArray(
             self.Use32BitStorage()
         else:
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        # No stash needed as in _set_data: fixed-size storage implies VTK >= 9.6.2, which
+        # always owns the array
         self.SetData(cell_size, vtk_connectivity)
-
-        # Keep the connectivity alive for shallow copies. VTK generates the
-        # offsets implicitly for fixed-size storage.
-        self.__offsets = None
-        self.__connectivity = vtk_connectivity
 
     @staticmethod
     @_deprecate_positional_args(allowed=['offsets', 'connectivity'])

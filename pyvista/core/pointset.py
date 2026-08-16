@@ -1566,6 +1566,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         """
         # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        # Unused internally since #8873, but geovista reads it, so it gets a deprecation
+        # cycle rather than being deleted; see tests/core/test_polydata.py
         warn_external(
             '`PolyData._offset_array` is deprecated. Use `PolyData.cell_offsets` '
             'instead, which returns a read-only array.',
