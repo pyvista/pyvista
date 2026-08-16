@@ -3043,13 +3043,13 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Return the polyhedron faces cell array, or raise on a VTK that has none."""
         _require_polyhedron_face_cell_arrays(name)
         faces = self.GetPolyhedronFaces()
-        return _vtk.vtkCellArray() if faces is None else faces
+        return _vtk.vtkCellArray() if faces is None else faces  # type: ignore[redundant-expr]
 
     def _get_polyhedron_face_locations(self, name: str) -> _vtk.vtkCellArray:
         """Return the polyhedron face locations cell array, or raise on an old VTK."""
         _require_polyhedron_face_cell_arrays(name)
         locations = self.GetPolyhedronFaceLocations()
-        return _vtk.vtkCellArray() if locations is None else locations
+        return _vtk.vtkCellArray() if locations is None else locations  # type: ignore[redundant-expr]
 
     @property
     def polyhedron_face_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
