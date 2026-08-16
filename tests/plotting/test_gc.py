@@ -11,6 +11,23 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 
+# Stands in for a module-level registry or cache: older than any test here, so the
+# freeze puts it out of reach along with everything else alive at collection time.
+_REGISTRY: list[_vtk.vtkPolyData] = []
+
+
+@pytest.mark.expect_check_gc_fail
+def test_leak_into_a_container_older_than_the_test() -> None:
+    """A leak whose only referrer pre-dates the test must still be reported.
+
+    ``gc.get_referrers`` skips the permanent generation just as ``gc.get_objects``
+    does, so while the heap is frozen this object looks like it is held by nothing
+    -- and the report drops a survivor it cannot explain. Every registry and cache
+    that outlives a test has this shape, ``_ALL_PLOTTERS`` among them.
+    """
+    _REGISTRY.clear()  # whatever an earlier run of this test left, so it cannot pile up
+    _REGISTRY.append(_vtk.vtkPolyData())
+
 
 @pytest.mark.expect_check_gc_fail
 def test_leak_vtk() -> None:
