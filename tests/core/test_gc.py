@@ -23,7 +23,7 @@ pytestmark = pytest.mark.check_gc
 
 @pytest.mark.skipif(
     not _SETDATA_TAKES_OWNERSHIP,
-    reason='CellArray holds its own arrays on VTK < 9.6, so the check never runs there',
+    reason='the core check is disabled entirely on VTK < 9.6, see tests/core/conftest.py',
 )
 @pytest.mark.expect_check_gc_fail
 def test_leak_ghosted_attribute_dict() -> None:
@@ -35,12 +35,19 @@ def test_leak_ghosted_attribute_dict() -> None:
     it. The map is only swept when a new ghost is added, so the entry outlives
     the mesh. Planted under the plotting policy, which sweeps first, this leak
     does not fail the check at all.
+
+    The ghost goes on a command the mesh holds as an observer rather than on the
+    mesh's own arrays because Kitware/VTK@641b2b68 (vtk/vtk!13226, VTK 9.7)
+    evicts a ghost from a ``DeleteEvent`` observer, which only a ``vtkObject``
+    can carry. A command is a ``vtkObjectBase`` that is not a ``vtkObject``, so
+    its ghost still waits for the sweep.
     """
     polydata = _vtk.vtkPolyData()
-    cells = _vtk.vtkCellArray()
-    cells.stashed = _vtk.vtkPoints()
-    polydata.SetPolys(cells)  # the C++ object now outlives the wrapper
-    del cells
+    # The observer list holds the C++ command, so it outlives the wrapper below.
+    tag = polydata.AddObserver('ModifiedEvent', lambda *_: None)
+    command = polydata.GetCommand(tag)
+    command.stashed = _vtk.vtkPoints()
+    del command
 
 
 def test_no_leak_when_nothing_is_held() -> None:
