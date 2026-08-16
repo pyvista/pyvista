@@ -12,8 +12,8 @@ Modules owning dataset construction opt in with::
 
 Opt-in rather than autouse only because ~70 core tests hold VTK objects past teardown
 today; widening it as those are cleaned up is the point. Cost is no longer a reason:
-since the check freezes the heap rather than scanning it, running it over all 7,559
-tests here takes less time than running it over 397 of them did.
+since the check freezes the heap rather than scanning it, running it over every test
+here takes less time than running it over the 397 it started with did.
 """
 
 from __future__ import annotations

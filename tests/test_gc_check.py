@@ -13,6 +13,9 @@ The leaks the check has to catch live with the policy that catches them:
 from __future__ import annotations
 
 import gc
+from types import SimpleNamespace
+
+import pytest
 
 from pyvista import _vtk
 from tests import gc_check
@@ -42,16 +45,21 @@ def test_nested_checks_thaw_only_once() -> None:
     # bookkeeping and skip the scan itself, which is what is under test here.
     outer, inner = _StubItem('outer'), _StubItem('inner')
 
-    assert gc.get_freeze_count() == 0
+    # A delta, not an absolute: CPython freezes a few hundred objects of its own
+    # during startup, and other tests in this worker may have frozen more.
+    baseline = gc.get_freeze_count()
     gc_check.take_snapshot(outer, _vtk.vtkObjectBase, 'VTK')
     frozen = gc.get_freeze_count()
-    assert frozen > 0
+    assert frozen > baseline
 
     gc_check.take_snapshot(inner, _vtk.vtkObjectBase, 'VTK')
     gc_check.assert_no_leaks(inner, flush_ghosts=False)
     assert gc.get_freeze_count() == frozen, 'the inner check thawed the outer freeze'
 
     gc_check.assert_no_leaks(outer, flush_ghosts=False)
+    # Zero, not back to ``baseline``: thawing is not the inverse of freezing.
+    # ``gc.unfreeze()`` empties the permanent generation outright, so it also
+    # releases whatever was in it before the outer check froze anything.
     assert gc.get_freeze_count() == 0
 
 
@@ -64,27 +72,27 @@ def test_leak_at_a_reused_address_is_still_found() -> None:
     silently. It is not a rare corner: CPython reuses the most recently freed
     block of a size class, so in 200 trials the address was reused 199 times and
     the leak was missed every one of them. Freezing has no ids to collide.
+
+    This is also the only test here that reaches the reporting code with an
+    assertion in flight, so it is what covers the thaw on that path.
     """
-    # Whether the allocator hands back the address it just freed is its own
-    # business, so retry until it does rather than assert that it will. The leak
-    # must be found on every pass; landing on the address is what makes a pass
-    # worth having.
-    for _ in range(20):
-        doomed = _vtk.vtkPoints()
-        address = id(doomed)
+    item = _StubItem('reused')
+    gc_check.stash_phase_report(item, SimpleNamespace(when='call', outcome='passed'))
 
-        gc.freeze()  # what the check does before a test runs, with doomed alive
-        try:
-            del doomed  # and it dies during the test, freeing its address
-            leaked = _vtk.vtkPoints()
-            reused = id(leaked) == address
+    doomed = _vtk.vtkPoints()
+    address = id(doomed)
 
-            gc.collect()
-            survivors = [obj for obj in gc.get_objects() if isinstance(obj, _vtk.vtkObjectBase)]
-            assert any(obj is leaked for obj in survivors)
-        finally:
-            gc.unfreeze()
+    # Nothing may raise between here and the check: it holds the freeze, and an
+    # escape would leave the worker's heap frozen for every test after this one.
+    gc_check.take_snapshot(item, _vtk.vtkObjectBase, 'VTK')
+    del doomed  # dies during the "test", freeing its address for the leak below
+    leaked = _vtk.vtkPoints()
+    leaked.self_ref = leaked  # a referrer for the report to walk
 
-        del leaked
-        if reused:
-            break
+    with pytest.raises(AssertionError, match='Found 1 new VTK object'):
+        gc_check.assert_no_leaks(item, flush_ghosts=False)
+
+    assert gc.get_freeze_count() == 0, 'the failing check left the heap frozen'
+    assert id(leaked) == address, 'the allocator did not hand the address back'
+    leaked.self_ref = None  # break the cycle, so the leak does not outlive its test
+    del leaked
