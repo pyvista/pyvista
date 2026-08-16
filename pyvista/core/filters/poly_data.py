@@ -1071,7 +1071,7 @@ class PolyDataFilters(DataSetFilters):
         >>>
         >>> pv.plot_compare(
         ...     datasets,
-        ...     dataset_kwargs={'show_edges': True},
+        ...     show_edges=True,
         ...     cpos=cpos,
         ... )
 
@@ -2979,7 +2979,7 @@ class PolyDataFilters(DataSetFilters):
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             raise NotAllTrianglesError
 
-        f = self.faces.reshape(-1, 4)[:, 1:]  # type: ignore[attr-defined]
+        f = self.regular_faces  # type: ignore[attr-defined]
         vmask = remove_mask.take(f)
         fmask = ~vmask.all(1) if mode == 'all' else ~vmask.any(1)
 
@@ -2988,11 +2988,9 @@ class PolyDataFilters(DataSetFilters):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=pv.ID_TYPE)
-        faces[:, 0] = 3
-        faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
+        faces = np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False)
 
-        newmesh = pv.PolyData(new_points, faces, deep=True)
+        newmesh = pv.PolyData.from_regular_faces(new_points, faces, deep=True)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested

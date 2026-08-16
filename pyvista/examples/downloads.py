@@ -961,9 +961,6 @@ def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Head 2 Dataset <head_2_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
         :ref:`volume_rendering_example`
             Example using this dataset.
 
@@ -1015,9 +1012,6 @@ def download_head_2(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Head Dataset <head_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
     """
     return _download_dataset(_dataset_head_2, load=load)
@@ -1284,9 +1278,6 @@ def download_knee(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Knee Full Dataset <knee_full_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
         This dataset is used in the following examples:
 
         * :ref:`opacity_example`
@@ -1337,9 +1328,6 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Knee Dataset <knee_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
         This dataset is used in the following examples:
 
@@ -2666,9 +2654,6 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
         :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
             Segmentation labels associated with this dataset.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
         :ref:`volume_rendering_example`
             Example using this dataset.
 
@@ -2716,9 +2701,6 @@ def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
         :ref:`Chest Dataset <chest_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
         :ref:`volume_rendering_example`
             Example using this dataset.
 
@@ -2761,9 +2743,6 @@ def download_brain_atlas_with_sides(load: bool = True) -> ImageData | str:  # no
 
         :ref:`Brain Dataset <brain_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
     """
     return _download_dataset(_dataset_brain_atlas_with_sides, load=load)
 
@@ -2800,9 +2779,6 @@ def download_prostate(load: bool = True) -> ImageData | str:  # noqa: FBT001, FB
 
         :ref:`Prostate Dataset <prostate_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
     """
     return _download_dataset(_dataset_prostate, load=load)
@@ -3208,9 +3184,6 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
         This dataset is used in the following examples:
 
@@ -3822,9 +3795,6 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
 
         :ref:`Carotid Dataset <carotid_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
         This dataset is used in the following examples:
 
@@ -4866,9 +4836,6 @@ def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
 
         :ref:`Embryo Dataset <embryo_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
         This dataset is used in the following examples:
 
@@ -6972,9 +6939,6 @@ def download_dicom_stack(
         :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
     """
     return _download_dataset(_dataset_dicom_stack, load=load)
 
@@ -8818,9 +8782,6 @@ def download_whole_body_ct_male(
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             Similar dataset of a female subject.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
         :ref:`crop_labeled_example`
             Example cropping this dataset using a segmentation mask.
 
@@ -9077,9 +9038,6 @@ def download_whole_body_ct_female(
 
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
             Similar dataset of a male subject.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
         :ref:`crop_labeled_example`
             Example cropping this dataset using a segmentation mask.

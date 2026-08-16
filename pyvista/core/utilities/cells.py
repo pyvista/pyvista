@@ -13,6 +13,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -156,6 +157,26 @@ def _fixed_size_cells(
     nr_points: int | None,
 ) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
     """Build the cell-type and connectivity arrays for a fixed-size cell type."""
+    not_flat = _validate_fixed_size_cells(
+        elem_t, nr_points_per_elem, cells_arr, nr_points=nr_points
+    )
+    nr_elems = not_flat.shape[0]
+    types = np.full(nr_elems, elem_t, dtype=np.uint8)
+    arr = np.concatenate(
+        [np.full_like(not_flat[..., :1], nr_points_per_elem), not_flat],
+        axis=-1,
+    ).reshape([-1])
+    return types, arr
+
+
+def _validate_fixed_size_cells(
+    elem_t: CellType,
+    nr_points_per_elem: int,
+    cells_arr: NumpyArray[int],
+    *,
+    nr_points: int | None,
+) -> NumpyArray[int]:
+    """Validate and reshape connectivity for a fixed-size cell type."""
     if (
         not isinstance(cells_arr, np.ndarray)  # type: ignore[redundant-expr]
         or not np.issubdtype(cells_arr.dtype, np.integer)
@@ -172,14 +193,35 @@ def _fixed_size_cells(
     _check_cell_indices(cells_arr, elem_t, nr_points)
 
     # Ensure array is not flat
-    not_flat = cells_arr.reshape([-1, nr_points_per_elem]) if cells_arr.ndim == 1 else cells_arr
-    nr_elems = not_flat.shape[0]
-    types = np.array([elem_t] * nr_elems, dtype=np.uint8)
-    arr = np.concatenate(
-        [np.ones_like(not_flat[..., :1]) * nr_points_per_elem, not_flat],
-        axis=-1,
-    ).reshape([-1])
-    return types, arr
+    return cells_arr.reshape([-1, nr_points_per_elem]) if cells_arr.ndim == 1 else cells_arr
+
+
+def _get_regular_cells_from_dict(
+    cells_dict: dict[np.uint8, NumpyArray[int] | Sequence[ArrayLike[int]]],
+    nr_points: int,
+) -> tuple[NumpyArray[np.uint8], NumpyArray[int]] | None:
+    """Return cell types and regular connectivity for a single-type cells dict."""
+    if len(cells_dict) != 1:
+        return None
+
+    cell_type, cells = next(iter(cells_dict.items()))
+    elem_t = pv.CellType(cell_type)  # type: ignore[arg-type]
+    if not isinstance(cells, np.ndarray) or elem_t == pv.CellType.POLYHEDRON:
+        return None
+
+    nr_points_per_elem = _cell_type_n_points(elem_t)
+    if nr_points_per_elem is not None:
+        connectivity = _validate_fixed_size_cells(
+            elem_t, nr_points_per_elem, cells, nr_points=nr_points
+        )
+    elif cells.ndim == 2 and np.issubdtype(cells.dtype, np.integer):
+        _check_cell_indices(cells, elem_t, nr_points)
+        connectivity = cells
+    else:
+        return None
+
+    cell_types = np.full(connectivity.shape[0], elem_t, dtype=np.uint8)
+    return cell_types, connectivity
 
 
 def _variable_size_cells(
@@ -388,7 +430,13 @@ def get_mixed_cells(
 
     cell_types = vtkobj.celltypes
     connectivity = vtkobj.cell_connectivity
-    offset = vtkobj.offset
+    cell_array = vtkobj.GetCells()
+    cell_size = (
+        cell_array.IsHomogeneous()
+        if _SUPPORTS_FIXED_SIZE_STORAGE and cell_array.IsStorageFixedSize()
+        else -1
+    )
+    regular_connectivity = connectivity.reshape(nr_cells, cell_size) if cell_size >= 0 else None
 
     # Derive the distinct cell types from the live ``celltypes`` array rather than
     # ``vtkobj.distinct_cell_types`` (which VTK may cache, going stale after a raw
@@ -403,14 +451,18 @@ def get_mixed_cells(
         )
         raise ValueError(msg)
 
-    # Per-cell point counts come from the offset array, so this works uniformly for
-    # both fixed-size and data-defined (variable) cell types.
-    cell_sizes = np.diff(offset)
-    cell_starts = offset[:-1]
+    if regular_connectivity is None:
+        offset = vtkobj.offset
+        cell_sizes = np.diff(offset)
+        cell_starts = offset[:-1]
 
     return_dict: dict[np.uint8, NumpyArray[int] | list[NumpyArray[int]]] = {}
     for cell_type in distinct_cell_types:
         mask = cell_types == cell_type
+        if regular_connectivity is not None:
+            return_dict[np.uint8(cell_type)] = regular_connectivity[mask]
+            continue
+
         starts = cell_starts[mask]
         sizes = cell_sizes[mask]
 

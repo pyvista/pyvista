@@ -10,6 +10,8 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
@@ -795,10 +797,33 @@ class CellArray(
             vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
-        # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
-        # garbage collected. Keep a reference to them for safety
-        self.__offsets = vtk_offsets
-        self.__connectivity = vtk_connectivity
+        # Only pre-9.6 VTK needs this: there SetData does not reference the arrays, so
+        # dropping them here frees the buffers out from under us. Newer VTK does own
+        # them, and stashing anyway leaks both via the ghost __dict__ (see #8873).
+        if not _SETDATA_TAKES_OWNERSHIP:
+            self.__offsets = vtk_offsets
+            self.__connectivity = vtk_connectivity
+
+    def _set_data_fixed_size(
+        self: Self,
+        cell_size: int,
+        connectivity: MatrixLike[int],
+        *,
+        deep: bool = False,
+    ) -> None:
+        """Set fixed-size cell connectivity without an explicit offset array."""
+        connectivity = np.asarray(connectivity)
+
+        if connectivity.dtype == np.int32:
+            vtk_connectivity = _vtk.numpy_to_vtk(
+                np.ascontiguousarray(connectivity.ravel()), deep=deep
+            )
+            self.Use32BitStorage()
+        else:
+            vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        # No stash needed as in _set_data: fixed-size storage implies VTK >= 9.6.2, which
+        # always owns the array
+        self.SetData(cell_size, vtk_connectivity)
 
     @staticmethod
     @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
@@ -855,7 +880,13 @@ class CellArray(
         cells: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
     ) -> CellArray:
-        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+        """Construct a ``CellArray`` from cells which all have the same size.
+
+        Use this method when every cell has the same number of points, e.g. an
+        array of triangles or an array of quads. The cell offsets are computed
+        directly from the cell size, and the input array is used as the
+        connectivity array. Use :meth:`from_irregular_cells` instead if the
+        cells have varying sizes.
 
         Parameters
         ----------
@@ -864,33 +895,90 @@ class CellArray(
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
+            If ``False``, the returned cell array may share memory with ``cells``.
 
         Returns
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
 
+        See Also
+        --------
+        from_irregular_cells
+            Equivalent method for cells with varying sizes.
+        regular_cells
+            Read the cells back as a (n_cells, cell_size) array.
+
+        Examples
+        --------
+        Create a cell array of two triangles.
+
+        >>> import pyvista as pv
+        >>> cells = pv.CellArray.from_regular_cells([[0, 1, 2], [1, 2, 3]])
+        >>> cells.n_cells
+        2
+        >>> cells.regular_cells
+        array([[0, 1, 2],
+               [1, 2, 3]]...)
+
         """
-        cells = np.asarray(cells, dtype=pv.ID_TYPE)
+        cells = np.asarray(cells)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+        if cells.dtype != np.int32:
+            cells = np.asarray(cells, dtype=pv.ID_TYPE)
+
         cellarr = cls()
-        cellarr._set_data(offsets, cells, deep=deep)
+        if _SUPPORTS_FIXED_SIZE_STORAGE:
+            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
+        else:
+            offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+            cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
     def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
-        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+        """Construct a ``CellArray`` from cells which may have different sizes.
+
+        Use this method when the cells have varying numbers of points, e.g. a
+        mix of triangles and quads. The cell offsets are computed from the
+        length of each cell, and the connectivity array is built by
+        concatenating the cells. Use :meth:`from_regular_cells` instead if all
+        cells have the same size.
+
+        Unlike :meth:`from_regular_cells`, this method has no ``deep``
+        parameter, since building the connectivity array always makes a copy of
+        the input.
 
         Parameters
         ----------
-        cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
+        cells : Sequence[Sequence[int]]
+            Sequence of length n_cells where each item is a sequence of the
+            point indices for that cell. The cells may have different lengths.
 
         Returns
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
+
+        See Also
+        --------
+        from_regular_cells
+            Equivalent method for cells which all have the same size.
+        offset_array
+            Offsets marking where each cell begins in the connectivity array.
+
+        Examples
+        --------
+        Create a cell array from a triangle and a quad.
+
+        >>> import pyvista as pv
+        >>> cells = pv.CellArray.from_irregular_cells([[0, 1, 2], [1, 2, 3, 4]])
+        >>> cells.n_cells
+        2
+        >>> cells.connectivity_array
+        array([0, 1, 2, 1, 2, 3, 4]...)
+        >>> cells.offset_array
+        array([0, 3, 7]...)
 
         """
         offsets = np.cumsum([len(c) for c in cells])
@@ -921,11 +1009,16 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     if len(cells) == 0:
         return cells
 
-    offsets = _get_offset_array(cellarr)
-    cell_size = offsets[1] - offsets[0]
+    if _SUPPORTS_FIXED_SIZE_STORAGE and cellarr.IsStorageFixedSize():
+        cell_size = cellarr.IsHomogeneous()
+    else:
+        offsets = _get_offset_array(cellarr)
+        cell_size = offsets[1] - offsets[0]
+
     try:
         return cells.reshape(-1, cell_size)
     except ValueError:
+        offsets = _get_offset_array(cellarr)
         sizes = sorted(np.unique(np.diff(offsets)).tolist())
         msg = (
             f'Cell array does not have regular cells. '

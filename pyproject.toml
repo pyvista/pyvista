@@ -139,7 +139,6 @@ docs = [
   'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
-  'enum-tools==0.13.0',
   'erbsland-sphinx-ansi==1.2.4',
   'fsspec==2026.6.0',
   'imageio-ffmpeg==0.6.0',
@@ -298,6 +297,7 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
+  'check_gc: Enable the strict core leak check for this test (see tests/core/conftest.py).',
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
   'needs_io_extra: this test requires an IO-tier VTK module omitted from a core-only build (vtkIOHDF / vtkIOEnSight / vtkIOChemistry, e.g. .vtkhdf, EnSight .case, PDB/XYZ/GaussianCube readers). Auto-applied (only when the module is actually absent) via the HAS_IO_* probes in conftest.py. Deselect with `-m "not needs_io_extra"` alongside `not needs_rendering` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
@@ -647,6 +647,13 @@ pyvista = "pv"
 'pyvista/examples/planets.py' = ['ANN']
 'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
+'pyvista/ext/_autoenum.py' = [
+  'ARG002', # overrides of fixed third-party (Sphinx) method signatures
+  'ARG003',
+  'FBT001',
+  'FBT002',
+  'PLR0917',
+]
 'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_property.py' = ['ANN']

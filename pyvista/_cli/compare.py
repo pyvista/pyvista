@@ -16,17 +16,35 @@ import pyvista as pv
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
-from .utils import CposView
 from .utils import Groups
 from .utils import LabelPosition
 from .utils import LabelSize
 from .utils import _kwargs_converter
-from .utils import _validator_window_size
+from .utils import anti_aliasing
+from .utils import background
+from .utils import border
+from .utils import border_color
+from .utils import border_width
 from .utils import call_or_exit
+from .utils import cpos
+from .utils import eye_dome_lighting
+from .utils import full_screen
+from .utils import interactive
+from .utils import off_screen
+from .utils import parallel_projection
 from .utils import print_error_and_exit
 from .utils import read_meshes
+from .utils import return_cpos
+from .utils import screenshot
+from .utils import show_axes
+from .utils import show_bounds
 from .utils import skip_unreadable
+from .utils import ssao
+from .utils import theme
 from .utils import validate_paths
+from .utils import volume
+from .utils import window_size
+from .utils import zoom
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -73,6 +91,10 @@ A font size is used as given, and may be too large for a label to fit in its sub
 ``best_fit`` draws each label as large as it fits in its own subplot, and ``uniform``
 draws them all at the size of the one which has to be smallest to fit. By default,
 ``uniform`` is used when the subplots are all the same size, and ``best_fit`` otherwise.
+"""
+
+_HELP_SUBPLOT_SEAMS = """\
+Draw a thin line between neighboring subplots.
 """
 
 # What to do about a dataset which is too small to make out, in terms of the options
@@ -174,25 +196,18 @@ def _compare(
     /,
     *,
     skip_unreadable: skip_unreadable = False,
-    off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
-    full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
-    screenshot: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
-    interactive: Annotated[bool, Parameter(group=Groups.PLOTTER)] = True,
-    window_size: Annotated[
-        list[int] | None,
-        Parameter(
-            consume_multiple=True,
-            validator=_validator_window_size,
-            group=Groups.PLOTTER,
-        ),
-    ] = None,
+    off_screen: off_screen = None,
+    full_screen: full_screen = None,
+    screenshot: screenshot = None,
+    interactive: interactive = True,
+    window_size: window_size = None,
     shape: Annotated[str | None, Parameter(help=_HELP_SHAPE, group=Groups.PLOTTER)] = None,
     labels: Annotated[
         list[str] | None,
         Parameter(consume_multiple=True, help=_HELP_LABELS, group=Groups.RENDERING),
     ] = None,
     link: Annotated[bool | None, Parameter(help=_HELP_LINK, group=Groups.RENDERING)] = None,
-    cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
+    cpos: cpos = None,
     outline: Annotated[bool, Parameter(help=_HELP_OUTLINE, group=Groups.RENDERING)] = False,
     normalize: Annotated[bool, Parameter(help=_HELP_NORMALIZE, group=Groups.RENDERING)] = False,
     label_size: Annotated[
@@ -201,12 +216,24 @@ def _compare(
     label_position: Annotated[
         LabelPosition | None, Parameter(help=_HELP_LABEL_POSITION, group=Groups.RENDERING)
     ] = None,
-    show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
-    show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
-    zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
-    border: Annotated[bool, Parameter(group=Groups.PLOTTER)] = False,
-    border_color: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
-    border_width: Annotated[float | None, Parameter(group=Groups.PLOTTER)] = None,
+    show_bounds: show_bounds = False,
+    show_axes: show_axes = None,
+    background: background = None,
+    eye_dome_lighting: eye_dome_lighting = False,
+    parallel_projection: parallel_projection = False,
+    return_cpos: return_cpos = False,
+    anti_aliasing: anti_aliasing = None,
+    zoom: zoom = None,
+    volume: volume = False,
+    ssao: ssao = False,
+    border: border = None,
+    border_color: border_color = None,
+    border_width: border_width = None,
+    theme: theme = None,
+    subplot_seams: Annotated[
+        bool | None, Parameter(help=_HELP_SUBPLOT_SEAMS, group=Groups.PLOTTER)
+    ] = None,
+    static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
@@ -223,6 +250,9 @@ def _compare(
 
     # Label each subplot with the name of the file it was read from
     names = labels if labels is not None else _label_paths(validate_paths(paths))
+
+    if static:
+        kwargs['static'] = True
 
     with warnings.catch_warnings():
         warnings.simplefilter('always')
@@ -245,15 +275,23 @@ def _compare(
             label_position=label_position,
             show_bounds=show_bounds,
             show_axes=show_axes,
+            background=background,
+            eye_dome_lighting=eye_dome_lighting,
+            parallel_projection=parallel_projection,
+            return_cpos=return_cpos,
+            anti_aliasing=anti_aliasing,
             zoom=zoom,
+            volume=volume,
+            ssao=ssao,
             screenshot=screenshot,
-            plotter_kwargs={
-                'off_screen': off_screen,
-                'window_size': window_size,
-                'border': border,
-                'border_color': border_color,
-                'border_width': border_width,
-            },
-            show_kwargs={'full_screen': full_screen, 'interactive': interactive},
-            dataset_kwargs=kwargs,
+            off_screen=off_screen,
+            window_size=window_size,
+            border=border,
+            border_color=border_color,
+            border_width=border_width,
+            theme=theme,
+            subplot_seams=subplot_seams,
+            full_screen=full_screen,
+            interactive=interactive,
+            **kwargs,
         )

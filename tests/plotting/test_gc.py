@@ -43,12 +43,18 @@ def test_leak_pv() -> None:
     # The failure report contains non-ASCII box-drawing characters (refleak's
     # referrer tree), so force UTF-8 on both sides of the pipe -- otherwise
     # the runner's locale (ASCII on CI) breaks the encode or decode step.
+    # PYTHONPATH: the copied conftest imports tests.gc_check, which is not
+    # importable from tmp_path.
     result = subprocess.run(
         ['pytest', '-v', str(test_file)],
         cwd=tmp_path,
         capture_output=True,
         check=False,
-        env={**os.environ, 'PYTHONIOENCODING': 'utf-8'},
+        env={
+            **os.environ,
+            'PYTHONIOENCODING': 'utf-8',
+            'PYTHONPATH': str(Path(__file__).parents[2]),
+        },
         encoding='utf-8',
         errors='replace',
     )

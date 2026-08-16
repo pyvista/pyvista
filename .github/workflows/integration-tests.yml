@@ -124,6 +124,7 @@ jobs:
     permissions:
       issues: write
       actions: read # to look up which matrix jobs failed
+      contents: read # to look up the commit title
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
@@ -133,6 +134,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_ID: ${{ github.run_id }}
           REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
           # Who to @-mention when a given integration breaks; leave empty to not ping anyone
           declare -A maintainers=(
@@ -162,12 +165,17 @@ jobs:
 
           [ -n "$projects" ] || projects="- (could not determine which jobs failed, see the run)"$'\n'
 
+          # Names the PR that landed; no `| head` since SIGPIPE under pipefail kills the step
+          title=$(gh api "repos/{owner}/{repo}/commits/${SHA}" \
+            --jq '.commit.message | split("\n")[0]' || true)
+
           body=$(cat <<EOF
           ### Integration Test Failure
 
           **Date:** $(date -u +%Y-%m-%d)
           **Run:** ${RUN_URL}
           **Ref:** \`${REF}\`
+          **Commit:** [\`${SHA:0:8}\`](${COMMIT_URL})${title:+ — ${title}}
 
           **Failing integrations:**
           ${projects}
