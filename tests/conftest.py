@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import faulthandler
 import functools
-import importlib
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import requires
 from importlib.metadata import version
