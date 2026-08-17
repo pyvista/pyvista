@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import contextlib
+import gc
+import pickle
 import sys
 from types import ModuleType
 from unittest.mock import MagicMock
 import warnings
+import weakref
 
 import pytest
 
@@ -66,6 +69,75 @@ def test_same_cached_accessor_returned_on_repeat_access():
     first = sphere.cached
     second = sphere.cached
     assert first is second
+
+
+def test_cached_accessor_does_not_pin_its_dataset():
+    """The cache must not close an uncollectable cycle through the dataset.
+
+    An accessor holding the dataset is the documented pattern, and caching the
+    accessor in ``dataset.__dict__`` would make that pair immortal: the cycle runs
+    through the instance dict of a VTK object, which VTK's ``tp_traverse`` does not
+    report, so the collector never sees it. Hence the anchor in the observer list
+    (see :class:`~pyvista.core.utilities.accessor_registry._CachedAccessor`).
+    """
+
+    @pv.register_dataset_accessor('pinning', pv.PolyData)
+    class PinningAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+    sphere = pv.Sphere()
+    accessor_ref = weakref.ref(sphere.pinning)
+    assert accessor_ref()._mesh is sphere  # the real dataset, not a proxy
+    sphere_ref = weakref.ref(sphere)
+
+    del sphere
+    gc.collect()
+    assert sphere_ref() is None, 'the accessor cache pinned the dataset'
+    assert accessor_ref() is None
+
+
+def test_cached_accessor_survives_a_pickle_round_trip():
+    """A cached accessor holds a weak reference, which cannot be pickled."""
+
+    @pv.register_dataset_accessor('picklable', pv.PolyData)
+    class PicklableAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+        def n_points(self):
+            return self._mesh.n_points
+
+    sphere = pv.Sphere()
+    assert sphere.picklable.n_points() == sphere.n_points
+
+    restored = pickle.loads(pickle.dumps(sphere))
+    assert restored.n_points == sphere.n_points
+    # and the restored dataset builds its own accessor, bound to itself
+    assert restored.picklable is not sphere.picklable
+    assert restored.picklable._mesh is restored
+
+
+def test_assignment_shadows_the_accessor():
+    """Assigning over an accessor wins, and deleting brings the accessor back."""
+
+    @pv.register_dataset_accessor('shadowed', pv.PolyData)
+    class ShadowedAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+    sphere = pv.Sphere()
+    assert isinstance(sphere.shadowed, ShadowedAccessor)
+
+    sphere.shadowed = 42
+    assert sphere.shadowed == 42
+
+    del sphere.shadowed
+    assert isinstance(sphere.shadowed, ShadowedAccessor)
+
+    del sphere.shadowed
+    with pytest.raises(AttributeError):
+        del sphere.shadowed
 
 
 def test_del_evicts_cache():
