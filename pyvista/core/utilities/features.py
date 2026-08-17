@@ -327,7 +327,7 @@ def voxelize_volume(  # noqa: PLR0917
     Create an equal density voxel volume and plot the result.
 
     >>> vox = pv.voxelize_volume(mesh, density=0.15)  # doctest:+SKIP
-    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]  # doctest:+SKIP
+    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 1, 0)]  # doctest:+SKIP
     >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)  # doctest:+SKIP
 
     Slice the voxel volume to view ``InsideMesh``.
