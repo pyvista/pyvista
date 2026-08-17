@@ -21,6 +21,23 @@ from pyvista import _vtk
 from tests import gc_check
 
 
+@pytest.fixture(autouse=True)
+def _restore_freeze_state():
+    """Leave the collector as we found it, however the test ended.
+
+    These tests drive ``take_snapshot`` and ``assert_no_leaks`` by hand, and the
+    freeze bookkeeping between them is process-wide module state. A test that
+    fails partway leaves a name in ``_frozen_for`` that nothing pops, so the heap
+    stays frozen and every later check in this worker stops freezing and thawing
+    -- degrading quietly rather than failing. The real conftest cannot strand it
+    that way, because it takes the snapshot in setup and asserts in teardown,
+    which pytest always runs.
+    """
+    yield
+    gc_check._frozen_for.clear()
+    gc.unfreeze()
+
+
 class _StubItem:
     """The parts of a pytest item the freeze bookkeeping touches."""
 
@@ -54,7 +71,12 @@ def test_nested_checks_thaw_only_once() -> None:
 
     gc_check.take_snapshot(inner, _vtk.vtkObjectBase, 'VTK')
     gc_check.assert_no_leaks(inner, flush_ghosts=False)
-    assert gc.get_freeze_count() == frozen, 'the inner check thawed the outer freeze'
+    # Still frozen, rather than still exactly ``frozen``. The count drops by one
+    # for every object that was alive at the freeze and dies while it is held,
+    # which is ordinary refcounting; on a 1.1M object heap a drift of one is
+    # routine and is not a thaw. A thaw empties the permanent generation
+    # outright, so it shows up as 0, which this still catches.
+    assert gc.get_freeze_count() > baseline, 'the inner check thawed the outer freeze'
 
     gc_check.assert_no_leaks(outer, flush_ghosts=False)
     # Zero, not back to ``baseline``: thawing is not the inverse of freezing.
