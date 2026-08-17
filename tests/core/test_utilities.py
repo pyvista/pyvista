@@ -1994,32 +1994,40 @@ def test_transform_invert(transform):
 
 
 class CasesTransformApply:
+    """Each case returns a *factory*, not an object.
+
+    ``pytest_cases`` caches a case's return value for the whole session, so a case that
+    returned a dataset directly would keep it alive to the end of the run (a leak the
+    ``check_gc`` fixture reports) and share one mutable object between the ``copy=True``
+    and ``copy=False`` runs.
+    """
+
     def case_list_int(self):
-        return list(VECTOR), False, np.ndarray, float
+        return lambda: list(VECTOR), False, np.ndarray, float
 
     def case_tuple_int(self):
-        return VECTOR, False, np.ndarray, float
+        return lambda: VECTOR, False, np.ndarray, float
 
     def case_array1d_int(self):
-        return np.array(VECTOR), False, np.ndarray, float
+        return lambda: np.array(VECTOR), False, np.ndarray, float
 
     def case_array2d_int(self):
-        return np.array([VECTOR]), False, np.ndarray, float
+        return lambda: np.array([VECTOR]), False, np.ndarray, float
 
     def case_array1d_float(self):
-        return np.array(VECTOR, dtype=float), True, np.ndarray, float
+        return lambda: np.array(VECTOR, dtype=float), True, np.ndarray, float
 
     def case_array2d_float(self):
-        return np.array([VECTOR], dtype=float), True, np.ndarray, float
+        return lambda: np.array([VECTOR], dtype=float), True, np.ndarray, float
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
-        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+        return lambda: pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
         return (
-            pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
+            lambda: pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
             True,
             pv.PolyData,
             np.float32,
@@ -2027,7 +2035,7 @@ class CasesTransformApply:
 
     def case_polydata_float(self):
         return (
-            pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
+            lambda: pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
             True,
             pv.PolyData,
             float,
@@ -2035,7 +2043,7 @@ class CasesTransformApply:
 
     def case_multiblock_float(self):
         return (
-            pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
+            lambda: pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
             True,
             pv.MultiBlock,
             float,
@@ -2044,9 +2052,11 @@ class CasesTransformApply:
 
 @parametrize(copy=[True, False])
 @parametrize_with_cases(
-    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
+    ('make_obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
-def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
+def test_transform_apply(transform, make_obj, return_self, return_type, return_dtype, copy):
+    obj = make_obj()
+
     def _get_points_from_object(obj_):
         return (
             obj_.points

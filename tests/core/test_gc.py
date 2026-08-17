@@ -1,8 +1,8 @@
-"""The core leak check must fail on a leak only it can see.
+"""The core leak check must fail on the leak shape that #8873 shipped.
 
-``tests/plotting/test_gc.py`` already covers the leaks both checks catch. What
-is left for core is the one its own policy exists for: it does not sweep VTK's
-ghost map before reporting, and that sweep is what let #8873 through.
+``tests/plotting/test_gc.py`` covers the leaks both checks catch. What is left
+for core is the one its policy exists for: a VTK object stashed on a wrapper
+that C++ owns, which outlives the mesh in the ghost ``__dict__``.
 
 ``expect_check_gc_fail`` asserts the teardown check *fails*, so a change that
 quietly stops detecting the leak turns the test red.
@@ -20,6 +20,13 @@ from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 
 pytestmark = pytest.mark.check_gc
 
+# Built at import, so the leak check -- which freezes the heap at the start of each test
+# -- sees it as pre-existing rather than as something the test below leaked. Its C++
+# object is what keeps that test's ghost un-sweepable, and it has to outlive the test for
+# that: this stands in for the plotter or the container that holds a mesh in real code.
+_HOLDER = _vtk.vtkPolyData()
+_HOLDER.SetPoints(_vtk.vtkPoints())
+
 
 @pytest.mark.skipif(
     not _SETDATA_TAKES_OWNERSHIP,
@@ -29,25 +36,23 @@ pytestmark = pytest.mark.check_gc
 def test_leak_ghosted_attribute_dict() -> None:
     """A VTK object stashed on a wrapper whose C++ object outlives it.
 
-    This is the shape of #8873. VTK keeps the attribute dict of a wrapper that
-    dies while its C++ object is still referenced, so it can restore it if that
-    object resurfaces in Python, and anything the dict holds stays alive with
-    it. The map is only swept when a new ghost is added, so the entry outlives
-    the mesh. Planted under the plotting policy, which sweeps first, this leak
-    does not fail the check at all.
+    This is the shape of #8873. VTK keeps the attribute dict of a wrapper that dies
+    while its C++ object is still referenced -- a "ghost" -- so it can restore the
+    attributes if that object resurfaces in Python, and anything the dict holds stays
+    alive with it.
 
-    The ghost goes on a command the mesh holds as an observer rather than on the
-    mesh's own arrays because Kitware/VTK@641b2b68 (vtk/vtk!13226, VTK 9.7)
-    evicts a ghost from a ``DeleteEvent`` observer, which only a ``vtkObject``
-    can carry. A command is a ``vtkObjectBase`` that is not a ``vtkObject``, so
-    its ghost still waits for the sweep.
+    The ghost is planted on a wrapper of ``_HOLDER``'s points rather than on a wrapper
+    of something this test owns, because that is the difference between a leak and
+    deferred bookkeeping: a ghost whose C++ object has died is swept out of the map by
+    the next sweep, and the check forgives it (see :func:`tests.gc_check._flush_vtk_ghosts`).
+    A ghost whose C++ object is still alive is swept by nothing and holds its contents
+    for as long as that object lives, which is how #8873 leaked a mesh per plotter into
+    a long-running session.
     """
-    polydata = _vtk.vtkPolyData()
-    # The observer list holds the C++ command, so it outlives the wrapper below.
-    tag = polydata.AddObserver('ModifiedEvent', lambda *_: None)
-    command = polydata.GetCommand(tag)
-    command.stashed = _vtk.vtkPoints()
-    del command
+    # A fresh wrapper of an object C++ owns; the attribute makes its dict worth ghosting
+    points = _HOLDER.GetPoints()
+    points.stashed = _vtk.vtkPoints()
+    del points  # wrapper dies, its C++ object does not -- so the ghost is here to stay
 
 
 def test_no_leak_when_nothing_is_held() -> None:

@@ -1,19 +1,15 @@
-"""Opt-in leak checking for core tests.
+"""Leak checking for every core test.
 
-Same machinery as the plotting conftest (see :mod:`tests.gc_check`), with one
-deliberate difference: no ghost-map sweep before reporting. Plotting needs that
-forgiveness for its own teardown, but it also forgives pyvista stashing a VTK object on
-a wrapper that C++ owns, which then outlives the mesh in the ghost ``__dict__`` -- how
-#8873 shipped a leak the MNE integration tests caught but ours did not.
+Same machinery, and now the same policy, as the plotting conftest (see
+:mod:`tests.gc_check`): both sweep VTK's ghost map before scanning, and the sweep costs
+no strictness. It removes an entry only when the C++ object behind it is already dead,
+which makes the entry deferred bookkeeping -- the next sweep would drop it anyway. A
+ghost whose C++ object is still alive, which is the shape #8873 shipped, survives the
+sweep and is still reported (``tests/core/test_gc.py`` plants one).
 
-Modules owning dataset construction opt in with::
-
-    pytestmark = pytest.mark.check_gc
-
-Opt-in rather than autouse only because ~70 core tests hold VTK objects past teardown
-today; widening it as those are cleaned up is the point. Cost is no longer a reason:
-since the check freezes the heap rather than scanning it, running it over every test
-here takes less time than running it over the 397 it started with did.
+Not sweeping cost 29 tests here, all of them pyvista wrapping its own state on a wrapper
+that C++ owns (``MultiBlock._refs``, ``DataSetAttributes``, ``pyvista_ndarray``) and then
+letting the wrapper die -- deferred every time, never an accumulation.
 """
 
 from __future__ import annotations
@@ -41,9 +37,7 @@ def check_gc(request):
     node = request.node
     if (
         # On VTK < 9.6 CellArray must hold its own arrays, so this can never pass there
-        not _SETDATA_TAKES_OWNERSHIP
-        or node.get_closest_marker('check_gc') is None
-        or not check_enabled(node)
+        not _SETDATA_TAKES_OWNERSHIP or not check_enabled(node)
     ):
         yield
         return
@@ -55,4 +49,4 @@ def check_gc(request):
 def pytest_runtest_teardown(item):
     """Ensure every VTK object created during a test is collected by teardown."""
     yield
-    assert_no_leaks(item, flush_ghosts=False)
+    assert_no_leaks(item, flush_ghosts=True)
