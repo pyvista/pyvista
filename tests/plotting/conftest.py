@@ -12,6 +12,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting import system_supports_plotting
 from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
 from tests.gc_check import stash_phase_report
 from tests.gc_check import take_snapshot
 
@@ -75,7 +76,7 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001
 @pytest.fixture(autouse=True)
 def check_gc(request):
     """Snapshot live plotters and VTK objects so leaks from this test can be detected."""
-    if request.node.get_closest_marker('skip_check_gc'):
+    if not check_enabled(request.node):
         yield
         return
     # BasePlotter is not a vtkObjectBase, so both types are needed here
@@ -89,15 +90,19 @@ def check_gc(request):
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_teardown(item):
-    """Ensure that all VTK objects created during a test are garbage-collected.
+    """Close every plotter, and check that nothing the test created outlived it.
 
-    A hookwrapper so the check runs after every fixture finalizer has run
-    (see ``check_gc``, which takes the snapshot this checks against).
+    A hookwrapper so both run after every fixture finalizer has run (see ``check_gc``,
+    which takes the snapshot this checks against).
     """
     yield
+    # Unconditional, and before the check rather than from it: a test that leaves a
+    # plotter open leaves a render window open for every test after it, whether or not
+    # this run is checking for leaks.
+    pv.close_all()
     # flush_ghosts: plotter teardown leaves stale ghosts behind, so a leak that a ghost
     # sweep clears is deferred bookkeeping rather than a real one (unlike tests/core)
-    assert_no_leaks(item, flush_ghosts=True, before_check=pv.close_all)
+    assert_no_leaks(item, flush_ghosts=True)
 
 
 @pytest.fixture

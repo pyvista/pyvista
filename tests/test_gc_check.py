@@ -16,6 +16,7 @@ import gc
 from types import SimpleNamespace
 
 import pytest
+from refleak.testing import _core as _refleak_core
 
 from pyvista import _vtk
 from tests import gc_check
@@ -26,15 +27,18 @@ def _restore_freeze_state():
     """Leave the collector as we found it, however the test ended.
 
     These tests drive ``take_snapshot`` and ``assert_no_leaks`` by hand, and the
-    freeze bookkeeping between them is process-wide module state. A test that
-    fails partway leaves a name in ``_frozen_for`` that nothing pops, so the heap
-    stays frozen and every later check in this worker stops freezing and thawing
-    -- degrading quietly rather than failing. The real conftest cannot strand it
-    that way, because it takes the snapshot in setup and asserts in teardown,
-    which pytest always runs.
+    freeze bookkeeping between them is process-wide state inside ``refleak``. A
+    test that fails partway leaves it holding a freeze that nothing releases, so
+    the heap stays frozen and every later check in this worker stops freezing and
+    thawing -- degrading quietly rather than failing. The real conftest cannot
+    strand it that way, because it takes the snapshot in setup and asserts in
+    teardown, which pytest always runs.
     """
     yield
-    gc_check._frozen_for.clear()
+    # refleak counts nested freezes in a module global, and only the outermost thaw
+    # unfreezes; a stranded count would keep every later thaw in this worker from
+    # reaching gc.unfreeze(). Nothing public resets it, hence the reach inside.
+    _refleak_core._freeze_depth = 0
     gc.unfreeze()
 
 
@@ -57,6 +61,8 @@ def test_nested_checks_thaw_only_once() -> None:
     conftest, so the checks nest for real (see tests/plotting/test_conftest.py).
     Freezing is process-wide, so an inner thaw hands the outer test the whole
     process to account for, and it reports every VTK object in it as a leak.
+    ``refleak`` counts the nesting; this is the check that pyvista still gets the
+    behavior it depends on.
     """
     # The stubs report no passing call phase, so the checks do their freeze
     # bookkeeping and skip the scan itself, which is what is under test here.
@@ -118,3 +124,25 @@ def test_leak_at_a_reused_address_is_still_found() -> None:
     assert id(leaked) == address, 'the allocator did not hand the address back'
     leaked.self_ref = None  # break the cycle, so the leak does not outlive its test
     del leaked
+
+
+@pytest.mark.parametrize(
+    ('markers', 'opted_out', 'expected'),
+    [
+        ((), False, True),
+        ((), True, False),
+        (('skip_check_gc',), False, False),
+        # A test asserting that the check fails runs it even when the run opted out.
+        (('expect_check_gc_fail',), True, True),
+        # skip wins: a test that cannot survive a frozen heap cannot survive one
+        # because it also expects the check to fail.
+        (('skip_check_gc', 'expect_check_gc_fail'), False, False),
+    ],
+)
+def test_check_enabled(markers, opted_out, expected) -> None:
+    """Everything is checked but what ``--no_check_gc`` or a marker takes out."""
+    node = SimpleNamespace(
+        config=SimpleNamespace(getoption=lambda _name, default=None: opted_out),  # noqa: ARG005
+        get_closest_marker=lambda name: name if name in markers else None,
+    )
+    assert gc_check.check_enabled(node) is expected
