@@ -81,13 +81,12 @@ body.vscode-dark {
 /* The background is set explicitly so that it is always resolved from the same
  * theme block as the text color. Without it the repr inherits the host's
  * background, which can disagree with our text color and render the repr
- * unreadable -- e.g. on docs.pyvista.org, where jupyter-sphinx hardcodes a white
- * container background that does not follow the page's light/dark toggle.
+ * unreadable -- e.g. on docs.pyvista.org, where pydata-sphinx-theme gives HTML
+ * cell outputs a light background in dark mode.
  *
- * A host that themes its own surface correctly can opt out of this and let the
- * repr blend in, by overriding --pv-background-color (or this rule) with a
- * selector specific enough to outrank it. The PyVista docs do exactly that in
- * doc/source/_static/jupyter_sphinx_theme.css.
+ * A host can opt out and let the repr blend into its own surface by overriding
+ * --pv-background-color, or by neutralising whatever backdrop it applies. The
+ * PyVista docs do the latter in doc/source/_static/jupyter_sphinx_theme.css.
  */
 .pv-wrap {
   display: block !important;
