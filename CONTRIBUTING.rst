@@ -925,13 +925,23 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 
 Garbage Collection Checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Every test under ``tests/plotting`` is automatically checked for reference leaks by
-the autouse ``check_gc`` fixture in ``tests/plotting/conftest.py``: no plotter or VTK
-object created by a test may outlive it. A leaking test fails at teardown with a
-rendered chain of what still holds a reference; see the
+Tests are checked for reference leaks: no plotter or VTK object created by a test may
+outlive it. Every test under ``tests/plotting`` is covered by the autouse ``check_gc``
+fixture in ``tests/plotting/conftest.py``, and modules under ``tests/core`` opt in with
+``pytestmark = pytest.mark.check_gc``. A leaking test fails at teardown with a rendered
+chain of what still holds a reference; see the
 `refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
-The cause is usually a reference cycle, and fixing it (e.g. with :mod:`weakref`) is
-preferred over silencing the check with either of these markers:
+
+The check freezes the heap rather than scanning it, so it costs no measurable time and
+every CI job runs it. ``--no_check_gc`` turns it off for a whole run, for local
+iteration where the report is in the way:
+
+.. code-block:: bash
+
+    tox run -e test-plotting-no_check_gc
+
+The cause of a leak is usually a reference cycle, and fixing it (e.g. with
+:mod:`weakref`) is preferred over silencing the check with either of these markers:
 
 .. code-block:: python
 
@@ -947,6 +957,10 @@ preferred over silencing the check with either of these markers:
     @pytest.mark.expect_check_gc_fail
     def test():
         """This test is expected to leak; fail if it does *not*."""
+
+``expect_check_gc_fail`` outranks ``--no_check_gc``, so the tests that exercise the
+check itself (``tests/core/test_gc.py``, ``tests/plotting/test_gc.py``) cannot pass
+while nothing is running.
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
