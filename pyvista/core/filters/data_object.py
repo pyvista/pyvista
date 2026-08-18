@@ -5199,8 +5199,15 @@ class DataObjectFilters:
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
+        def _call_dataset_cell_quality(dataset, **kwargs):
+            # Dispatch through the instance (rather than binding directly to
+            # `DataObjectFilters._dataset_cell_quality`) so that a block-level
+            # override, e.g. PointSet's, is honored when this runs per-block
+            # through `generic_filter`.
+            return dataset._dataset_cell_quality(**kwargs)
+
         cell_quality = functools.partial(
-            DataObjectFilters._dataset_cell_quality,
+            _call_dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
             keep_valid_only=keep_valid_only,
@@ -5223,8 +5230,6 @@ class DataObjectFilters:
         progress_bar,
     ) -> _DataSetType:
         """Compute cell quality of a DataSet (internal method)."""
-        if isinstance(self, pv.PointSet):
-            raise pv.core.errors.PointSetCellOperationError
         CELL_QUALITY = 'CellQuality'
 
         alg = _vtk.vtkCellQuality()
