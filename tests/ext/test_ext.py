@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -102,6 +104,22 @@ def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypat
     assert viewer_uri is None
     assert asset_uri is None
     assert 'is not under outdir/_images; cannot compute asset URI' in caplog.text
+
+
+def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypatch):
+    # `sys.modules[name] = None` is the standard way to force `import name` to raise
+    # ImportError, without the package actually needing to be uninstalled.
+    monkeypatch.setitem(sys.modules, 'sphinx_autocodelink', None)
+    try:
+        importlib.reload(plot_directive)
+        assert plot_directive.record_namespace is None
+    finally:
+        # Undo now (rather than waiting for monkeypatch's own teardown) so this reload
+        # picks the real import back up -- otherwise plot_directive stays reloaded with
+        # record_namespace=None for every test that runs after this one.
+        monkeypatch.undo()
+        importlib.reload(plot_directive)
+    assert plot_directive.record_namespace is not None
 
 
 class _FakeSphinxApp:
