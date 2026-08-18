@@ -138,8 +138,6 @@ class ImageDataFilters(DataSetFilters):
         >>> smoothed = grid.gaussian_smooth()
         >>> smoothed.plot(show_scalar_bar=False)
 
-        See :ref:`gaussian_smoothing_example` for a full example using this filter.
-
         """
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
@@ -687,9 +685,6 @@ class ImageDataFilters(DataSetFilters):
 
         extract_subset
             Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
-
-        :ref:`crop_labeled_example`
-            Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
 
         Examples
         --------
@@ -2015,8 +2010,6 @@ class ImageDataFilters(DataSetFilters):
         Contains arrays :
         PNGImage                complex128 (298620,)          SCALARS
 
-        See :ref:`image_fft_example` for a full example using this filter.
-
         """
         # check for active scalars, otherwise risk of segfault
         if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
@@ -2100,8 +2093,6 @@ class ImageDataFilters(DataSetFilters):
         Contains arrays :
             PNGImage                complex128 (298620,)            SCALARS
 
-        See :ref:`image_fft_example` for a full example using this filter.
-
         """
         self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
@@ -2179,10 +2170,6 @@ class ImageDataFilters(DataSetFilters):
         rfft : Reverse fast Fourier transform.
         high_pass : High-pass filtering of FFT output.
 
-        Examples
-        --------
-        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
-
         """
         self._check_fft_scalars()
         alg = _vtk.vtkImageButterworthLowPass()
@@ -2259,10 +2246,6 @@ class ImageDataFilters(DataSetFilters):
         fft : Direct fast Fourier transform.
         rfft : Reverse fast Fourier transform.
         low_pass : Low-pass filtering of FFT output.
-
-        Examples
-        --------
-        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()
@@ -2575,9 +2558,6 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.color_labels`
             Color labeled data, e.g. labeled volumes or contours.
-
-        :ref:`contouring_example`, :ref:`anatomical_groups_example`
-            Additional examples using this filter.
 
         References
         ----------
@@ -3287,8 +3267,6 @@ class ImageDataFilters(DataSetFilters):
         - The dimensions have decreased by one
         - The bounds have decreased by half the spacing
         - The output ``N Points`` equals the input ``N Cells``
-
-        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:
@@ -4347,9 +4325,6 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
-
-        :ref:`image_representations_example`
-            Compare images represented as points vs. cells.
 
         Examples
         --------

@@ -737,9 +737,6 @@ def principal_axes(
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
 
-    :ref:`point_cloud_orientation_example`
-        Example using this function with point clouds.
-
     Parameters
     ----------
     points : MatrixLike[float]

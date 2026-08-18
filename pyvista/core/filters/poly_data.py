@@ -195,8 +195,6 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_operations_example` for more examples using this filter.
-
         """
         return self._boolean('union', other_mesh, tolerance=tolerance, progress_bar=progress_bar)
 
@@ -267,8 +265,6 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
-
-        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         bool_inter = self._boolean(
@@ -2540,8 +2536,6 @@ class PolyDataFilters(DataSetFilters):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
-        :ref:`ray_trace_moeller_example`
-            Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
 
         Examples
         --------
@@ -3387,11 +3381,6 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             The points of this mesh projected onto a plane.
 
-        See Also
-        --------
-        :ref:`project_plane_example`
-        :ref:`project_points_tessellate_example`
-
         Examples
         --------
         Flatten a sphere to the XY plane.
@@ -3725,10 +3714,6 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Rotationally extruded mesh.
 
-        See Also
-        --------
-        :ref:`extrude_rotate_example`
-
         Examples
         --------
         Create a "spring" using the rotational extrusion filter.
@@ -3856,10 +3841,6 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Extruded mesh trimmed by a surface.
-
-        See Also
-        --------
-        :ref:`extrude_trim_example`
 
         Examples
         --------

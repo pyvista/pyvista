@@ -614,12 +614,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> clipped.plot()
 
-        .. seealso::
-
-            :ref:`compare_threshold_filters_example`
-                This example showcases this filter and
-                other similar ones.
-
         """
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
@@ -861,9 +855,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Threshold-like filter for ``ImageData`` to keep some values and replace others.
-        :ref:`compare_threshold_filters_example`
-            This example showcases this filter and
-            other similar ones.
 
         Returns
         -------
@@ -1060,8 +1051,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_edges=True,
         ... )
 
-        See :ref:`using_filters_example` for more examples using a similar filter.
-
         """
         tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
@@ -1188,9 +1177,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         True
         >>> bool(np.any(np.isnan(cleaned.point_data['values'])))
         False
-
-        See :ref:`using_filters_example` for an end-to-end filter pipeline
-        that begins with this filter.
 
         """
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
@@ -1421,8 +1407,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
           Y Bounds:   0.000e+00, 1.000e+00
           Z Bounds:   0.000e+00, 5.000e+00
           N Arrays:   3
-
-        See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
         msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
@@ -1699,10 +1683,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Original dataset with texture coordinates if
             ``inplace=True``, otherwise a copied dataset.
 
-        Examples
-        --------
-        See :ref:`topo_map_example`
-
         """
         if use_bounds:
             _validation.check_instance(use_bounds, bool, name='use_bounds')
@@ -1785,10 +1765,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.DataSet
             Dataset containing the texture mapped to a sphere.  Return
             type matches input.
-
-        Examples
-        --------
-        See :ref:`texture_example`.
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -2128,9 +2104,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         share a point. However, if a ``scalar_range`` is provided, cells
         must also have at least one point with scalar values in the
         specified range to be considered connected.
-
-        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
-        more examples using this filter.
 
         .. versionadded:: 0.43.0
 
@@ -2631,9 +2604,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> largest = mesh.extract_largest()
         >>> largest.plot()
 
-        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
-        more examples using this filter.
-
         .. seealso::
             :func:`pyvista.DataSetFilters.connectivity`
 
@@ -2852,9 +2822,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vector_example` and :ref:`warp_by_vector_eigenmodes_example` for
-        more examples using this filter.
-
         """
         vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
         arr = get_array(self, vectors_, preference='point')
@@ -3003,10 +2970,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.PolyData
             Mesh containing the ``point_data['SelectedPoints']`` array.
 
-        See Also
-        --------
-        :ref:`extract_cells_inside_surface_example`
-
         Examples
         --------
         Determine which points on a plane are inside a manifold sphere
@@ -3141,7 +3104,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See Also
         --------
         compute_implicit_distance, extract_points, extract_cells
-        :ref:`extract_cells_inside_surface_example`
 
         Examples
         --------
@@ -3314,8 +3276,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
-        See :ref:`resampling_example` for more examples using this filter.
-
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types
@@ -3434,10 +3394,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         source : pyvista.PolyData
             The points of the source are the seed points for the streamlines.
             Only returned if ``return_source=True``.
-
-        Examples
-        --------
-        See the :ref:`streamlines_example` example.
 
         """
         if source_center is None:
@@ -3600,10 +3556,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             attribute values associated with each streamline are
             stored in the cell data, whereas those associated with
             streamline-points are stored in the point data.
-
-        Examples
-        --------
-        See the :ref:`streamlines_example` example.
 
         """
         integration_direction_lower = str(integration_direction).strip().lower()
@@ -3914,10 +3866,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.PolyData
             Decimated boundary.
 
-        Examples
-        --------
-        See the :ref:`linked_views_example` example.
-
         """
         return (
             self.extract_surface(
@@ -4062,10 +4010,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Set component of vector-valued scalars to plot. Must be
             nonnegative and less than the number of components. If ``None``,
             all components are plotted.
-
-        Examples
-        --------
-        See the :ref:`plot_over_line_example` example.
 
         """
         from matplotlib import pyplot as plt  # noqa: PLC0415
@@ -4557,10 +4501,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
-
-        See Also
-        --------
-        :ref:`plot_over_circular_arc_example`
 
         Examples
         --------
@@ -5164,9 +5104,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar filter for thresholding a mesh by value.
         partition
             Split a mesh into a number of sub-parts.
-        :ref:`compare_threshold_filters_example`
-            This example showcases this filter and
-            other similar ones.
 
         Returns
         -------
@@ -6945,9 +6882,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> sep_grid.n_points
         320
 
-        See the :ref:`point_cell_scalars_example` for a more detailed example
-        using this filter.
-
         """
         return self.shrink(1.0)
 
@@ -7345,9 +7279,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pack_labels
             Make labeled data contiguous. May be used as a pre-processing step before
             coloring.
-
-        :ref:`anatomical_groups_example`
-            Additional examples using this filter.
 
         Parameters
         ----------
@@ -7784,8 +7715,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             This filter returns voxels represented as point data, not
             :attr:`~pyvista.CellType.VOXEL` cells.
             This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
-            which return meshes with voxel cells. See :ref:`image_representations_example`
-            for examples demonstrating the difference.
+            which return meshes with voxel cells.
 
         .. note::
             This filter does not discard internal surfaces, due, for instance, to

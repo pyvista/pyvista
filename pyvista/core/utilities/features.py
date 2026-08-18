@@ -456,10 +456,6 @@ def grid_from_sph_coords(theta, phi, r):
     pyvista.StructuredGrid
         Structured grid.
 
-    See Also
-    --------
-    :ref:`spherical_example`
-
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
     # Transform grid to cartesian coordinates
