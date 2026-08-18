@@ -1407,7 +1407,11 @@ def test_explode(datasets):
     for dataset in datasets:
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
-        assert out.n_points > dataset.n_points
+        if dataset.n_cells == 0:
+            # no cells to separate, e.g. PointSet
+            assert out.n_points == dataset.n_points
+        else:
+            assert out.n_points > dataset.n_points
 
 
 def test_separate_cells(hexbeam):
