@@ -479,7 +479,7 @@ def test_tinypages_all_extensions_integration(tmp_path: Path):
 
 @flaky_test(exceptions=(AssertionError,))
 def test_autolink(tmp_path: Path):
-    """Check that ``pyvista.ext._autolink`` hyperlinks identifiers resolved from execution."""
+    """Check that ``pyvista_plot_autolink`` hyperlinks identifiers resolved from execution."""
     source_dir = Path(__file__).parent / 'tinypages_autolink'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
@@ -493,7 +493,8 @@ def test_autolink(tmp_path: Path):
 
     # no nested anchors from overlapping substitution passes
     assert (
-        re.search(r'pyvista-autolink-a" href="[^"]*"><a class="pyvista-autolink-a"', html) is None
+        re.search(r'sphinx-autocodelink-a" href="[^"]*"><a class="sphinx-autocodelink-a"', html)
+        is None
     )
 
     expected_targets = {
@@ -506,19 +507,19 @@ def test_autolink(tmp_path: Path):
         '#autolink_samples.Derived.meth',
         '#autolink_samples.sub.make',
     }
-    found_targets = set(re.findall(r'pyvista-autolink-a" href="([^"]*)"', html))
+    found_targets = set(re.findall(r'sphinx-autocodelink-a" href="([^"]*)"', html))
     assert expected_targets <= found_targets, (
         f'missing expected autolink targets: {expected_targets - found_targets}'
     )
 
     # Widget.draw is referenced 4x: 2 >>> groups, partial(widget.draw), and make_widget().draw().
-    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 4
+    assert html.count('sphinx-autocodelink-a" href="#autolink_samples.Widget.draw"') == 4
 
     # make_widget() and .draw() on its result link separately, with `()` outside both.
     assert (
-        '<a class="pyvista-autolink-a" href="#autolink_samples.make_widget">'
+        '<a class="sphinx-autocodelink-a" href="#autolink_samples.make_widget">'
         '<span class="n">make_widget</span></a><span class="p">()</span>'
-        '<a class="pyvista-autolink-a" href="#autolink_samples.Widget.draw">'
+        '<a class="sphinx-autocodelink-a" href="#autolink_samples.Widget.draw">'
         '<span class="o">.</span><span class="n">draw</span></a>' in html
     )
 
@@ -541,9 +542,10 @@ def test_autolink_idempotent_rebuild(tmp_path: Path):
 
     html = (html_dir / 'index.html').read_text(encoding='utf-8')
     assert (
-        re.search(r'pyvista-autolink-a" href="[^"]*"><a class="pyvista-autolink-a"', html) is None
+        re.search(r'sphinx-autocodelink-a" href="[^"]*"><a class="sphinx-autocodelink-a"', html)
+        is None
     )
-    assert html.count('pyvista-autolink-a" href="#autolink_samples.Widget.draw"') == 4
+    assert html.count('sphinx-autocodelink-a" href="#autolink_samples.Widget.draw"') == 4
 
 
 @pytest.mark.needs_playwright

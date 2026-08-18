@@ -1,4 +1,4 @@
-"""Minimal Sphinx site for testing ``pyvista.ext._autolink`` in isolation.
+"""Minimal Sphinx site for testing ``pyvista_plot_autolink`` in isolation.
 
 Kept separate from ``tests/plotting/tinypages``: that site's ``test_tinypages``
 asserts an exact set of output filenames keyed on a global counter; another

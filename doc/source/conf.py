@@ -16,6 +16,7 @@ import warnings
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
+from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
 if TYPE_CHECKING:
     from docutils.nodes import Element
@@ -581,8 +582,8 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
-    'image_scrapers': (DynamicScraper(), 'matplotlib'),
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
+    'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',

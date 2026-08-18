@@ -130,8 +130,8 @@ The plot directive has the following configuration options:
 
     pyvista_plot_autolink : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
-        targets. Equivalent to Sphinx-Gallery's ``reference_url`` for gallery
-        examples, but for docstring output.
+        targets, via `sphinx-autocodelink
+        <https://github.com/user27182/sphinx-autocodelink>`_.
 
         .. versionadded:: 0.49
 
@@ -179,11 +179,11 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
+from sphinx_autocodelink import record_namespace
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista as pv
-from pyvista.ext import _autolink
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -272,7 +272,7 @@ def setup(app: Sphinx):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
-    _autolink.setup(app)
+    app.setup_extension('sphinx_autocodelink')
 
     legacy_keys = [
         'plot_include_source',
@@ -618,7 +618,7 @@ def render_figures(
             results.append((code_piece, images))
 
         if env is not None and clean_pieces and config.pyvista_plot_autolink:
-            _autolink.record_namespace(
+            record_namespace(
                 env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
             )
     finally:
