@@ -170,7 +170,10 @@ def test_clip_scalar_filter(datasets, both, invert):
 
         for clp, expect_le in zip(clps, expect_les, strict=True):
             assert clp is not None
-            if isinstance(dataset, pv.PolyData):
+            if isinstance(dataset, pv.PointSet):
+                # PointSet has no cells, so clipping produces another PointSet
+                assert isinstance(clp, pv.PointSet)
+            elif isinstance(dataset, pv.PolyData):
                 assert isinstance(clp, pv.PolyData)
             else:
                 assert isinstance(clp, pv.UnstructuredGrid)

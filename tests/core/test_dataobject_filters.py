@@ -88,6 +88,12 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
                 assert isinstance(clip, pv.UnstructuredGrid)
 
             bounds_after_clip = clip.bounds
+            if (
+                isinstance(dataset, pv.PointSet)
+                and pv.vtk_version_info >= (9, 4)
+                and pv.vtk_version_info < (9, 5)
+            ):
+                pytest.xfail("VTK 9.4 bug where clipping PointSet doesn't work")
             assert not np.allclose(bounds_before_clip, bounds_after_clip)
 
 
