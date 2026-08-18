@@ -1,4 +1,4 @@
-"""Minimal Sphinx site for testing ``pyvista_plot_autolink`` in isolation.
+"""Minimal Sphinx site for testing ``pyvista_plot_autocodelink`` in isolation.
 
 Kept separate from ``tests/plotting/tinypages``: that site's ``test_tinypages``
 asserts an exact set of output filenames keyed on a global counter; another
@@ -33,7 +33,7 @@ numpydoc_show_class_members = False
 
 # -- pyvista configuration ------------------------------------------------
 pv.BUILDING_GALLERY = True
-pyvista_plot_autolink = True
+pyvista_plot_autocodelink = True
 
 # -- .. pyvista-plot:: directive, wrapping numpydoc's Examples sections ---
 from numpydoc.docscrape_sphinx import SphinxDocString

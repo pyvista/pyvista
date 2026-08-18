@@ -612,7 +612,7 @@ del __s_p_t
 pyvista_plot_cleanup = pyvista_plot_setup
 
 # Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
-pyvista_plot_autolink = True
+pyvista_plot_autocodelink = True
 
 
 def _str_examples(self):

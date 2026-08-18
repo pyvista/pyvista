@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from pyvista.ext import plot_directive
 from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
 
@@ -101,3 +102,71 @@ def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypat
     assert viewer_uri is None
     assert asset_uri is None
     assert 'is not under outdir/_images; cannot compute asset URI' in caplog.text
+
+
+class _FakeSphinxApp:
+    """Enough of Sphinx's ``Application`` for exercising ``plot_directive.setup``."""
+
+    def __init__(self):
+        self.config = SimpleNamespace()
+        self.confdir = ''
+        self.directives = {}
+        self.connected = {}
+        self.config_values = {}
+        self.setup_extension_calls = []
+
+    def add_directive(self, name, directive):
+        self.directives[name] = directive
+
+    def connect(self, event, handler):
+        self.connected.setdefault(event, []).append(handler)
+
+    def add_config_value(self, name, default, rebuild):  # noqa: ARG002 -- matches Sphinx's signature
+        self.config_values[name] = default
+
+    def setup_extension(self, name):
+        self.setup_extension_calls.append(name)
+
+
+def test_setup_depends_on_sphinx_autocodelink_when_available():
+    app = _FakeSphinxApp()
+    plot_directive.setup(app)
+    assert app.setup_extension_calls == ['sphinx_autocodelink']
+
+
+def test_setup_skips_sphinx_autocodelink_when_unavailable(monkeypatch):
+    monkeypatch.setattr(plot_directive, 'record_namespace', None)
+    app = _FakeSphinxApp()
+    plot_directive.setup(app)
+    assert app.setup_extension_calls == []
+
+
+def test_autocodelink_raises_when_enabled_without_package(monkeypatch):
+    monkeypatch.setattr(plot_directive, 'record_namespace', None)
+    app = _FakeSphinxApp()
+    plot_directive.setup(app)
+    check_autocodelink_available = app.connected['config-inited'][0]
+
+    config = SimpleNamespace(pyvista_plot_autocodelink=True)
+    with pytest.raises(RuntimeError, match='sphinx-autocodelink'):
+        check_autocodelink_available(app, config)
+
+
+@pytest.mark.parametrize('enabled', [True, False])
+def test_autocodelink_does_not_raise_when_package_available(enabled):
+    app = _FakeSphinxApp()
+    plot_directive.setup(app)
+    check_autocodelink_available = app.connected['config-inited'][0]
+
+    config = SimpleNamespace(pyvista_plot_autocodelink=enabled)
+    check_autocodelink_available(app, config)  # does not raise
+
+
+def test_autocodelink_does_not_raise_when_disabled_without_package(monkeypatch):
+    monkeypatch.setattr(plot_directive, 'record_namespace', None)
+    app = _FakeSphinxApp()
+    plot_directive.setup(app)
+    check_autocodelink_available = app.connected['config-inited'][0]
+
+    config = SimpleNamespace(pyvista_plot_autocodelink=False)
+    check_autocodelink_available(app, config)  # does not raise

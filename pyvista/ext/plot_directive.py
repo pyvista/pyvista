@@ -128,10 +128,12 @@ The plot directive has the following configuration options:
     pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
-    pyvista_plot_autolink : bool, default: False
+    pyvista_plot_autocodelink : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
-        targets, via `sphinx-autocodelink
-        <https://github.com/user27182/sphinx-autocodelink>`_.
+        targets. Requires the `sphinx-autocodelink
+        <https://github.com/user27182/sphinx-autocodelink>`_ package to be
+        installed (``pip install sphinx-autocodelink``); raises at build time
+        if enabled without it.
 
         .. versionadded:: 0.49
 
@@ -179,11 +181,16 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
-from sphinx_autocodelink import record_namespace
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista as pv
+
+try:
+    # Optional: only required when `pyvista_plot_autocodelink` is enabled.
+    from sphinx_autocodelink import record_namespace
+except ImportError:
+    record_namespace = None
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -272,7 +279,18 @@ def setup(app: Sphinx):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
-    app.setup_extension('sphinx_autocodelink')
+    if record_namespace is not None:
+        app.setup_extension('sphinx_autocodelink')
+
+    def check_autocodelink_available(_app: Sphinx, config: Config) -> None:
+        if config.pyvista_plot_autocodelink and record_namespace is None:
+            msg = (
+                "'pyvista_plot_autocodelink' is enabled, but the 'sphinx-autocodelink' "
+                'package is not installed. Install it with `pip install sphinx-autocodelink`.'
+            )
+            raise RuntimeError(msg)
+
+    app.connect('config-inited', check_autocodelink_available)
 
     legacy_keys = [
         'plot_include_source',
@@ -325,7 +343,7 @@ def setup(app: Sphinx):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
-    app.add_config_value(name='pyvista_plot_autolink', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -617,7 +635,7 @@ def render_figures(
 
             results.append((code_piece, images))
 
-        if env is not None and clean_pieces and config.pyvista_plot_autolink:
+        if env is not None and clean_pieces and config.pyvista_plot_autocodelink:
             record_namespace(
                 env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
             )

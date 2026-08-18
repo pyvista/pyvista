@@ -479,7 +479,7 @@ def test_tinypages_all_extensions_integration(tmp_path: Path):
 
 @flaky_test(exceptions=(AssertionError,))
 def test_autolink(tmp_path: Path):
-    """Check that ``pyvista_plot_autolink`` hyperlinks identifiers resolved from execution."""
+    """Check that ``pyvista_plot_autocodelink`` hyperlinks identifiers resolved from execution."""
     source_dir = Path(__file__).parent / 'tinypages_autolink'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
