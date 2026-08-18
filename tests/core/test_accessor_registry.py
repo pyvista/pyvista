@@ -97,6 +97,77 @@ def test_cached_accessor_does_not_pin_its_dataset():
     assert accessor_ref() is None
 
 
+def test_accessor_on_a_target_without_an_observer_list_is_not_cached():
+    """A target with a ``__dict__`` but no observer list has nowhere to anchor.
+
+    Caching it in the instance dict is exactly the cycle this indirection exists to
+    avoid, so the accessor is built fresh on each access instead.
+    """
+
+    class PlainTarget:
+        pass
+
+    @pv.register_dataset_accessor('plain_acc', PlainTarget)
+    class PlainAccessor:
+        def __init__(self, obj):
+            self._obj = obj
+
+    instance = PlainTarget()
+    assert instance.plain_acc._obj is instance
+    assert instance.plain_acc is not instance.plain_acc
+
+
+def test_accessor_that_cannot_be_weakly_referenced_is_not_cached():
+    """An accessor with ``__slots__`` and no ``__weakref__`` cannot be cached."""
+
+    @pv.register_dataset_accessor('unreferenceable', pv.PolyData)
+    class UnreferenceableAccessor:
+        __slots__ = ('_mesh',)
+
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+    sphere = pv.Sphere()
+    assert sphere.unreferenceable._mesh is sphere
+    assert sphere.unreferenceable is not sphere.unreferenceable
+
+
+def test_cache_entry_from_another_dataset_is_ignored():
+    """A cache entry that reached a copy of the dataset must not be honored.
+
+    Nothing in PyVista copies an instance dict today -- pickling strips the entry --
+    but honoring one would hand back an accessor bound to a different dataset.
+    """
+
+    @pv.register_dataset_accessor('borrowed', pv.PolyData)
+    class BorrowedAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+    sphere = pv.Sphere()
+    other = pv.Sphere()
+    accessor = sphere.borrowed
+    other.__dict__.update(sphere.__dict__)
+
+    assert other.borrowed is not accessor
+    assert other.borrowed._mesh is other
+
+
+def test_del_on_a_slotted_target_raises():
+    """A ``__slots__`` target has no per-instance accessor state to delete."""
+
+    class SlottedTarget:
+        __slots__ = ()
+
+    @pv.register_dataset_accessor('slotted_del', SlottedTarget)
+    class SlottedAccessor:
+        def __init__(self, obj):
+            self._obj = obj
+
+    with pytest.raises(AttributeError, match='slotted_del'):
+        del SlottedTarget().slotted_del
+
+
 def test_cached_accessor_survives_a_pickle_round_trip():
     """A cached accessor holds a weak reference, which cannot be pickled."""
 
