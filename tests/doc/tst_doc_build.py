@@ -289,6 +289,37 @@ def test_example_anchor(case):
         raise pytest.fail(msg)
 
 
+# -- no "See Also" entry links directly to a gallery example ------------------
+# numpydoc's own "See Also" section and the raw `.. seealso::` directive both render as
+# the same `.. admonition:: seealso` markup. A hand-written link to a gallery example in
+# there is redundant with sphinx-autocodelink's own "Used In" section, and unlike "Used
+# In", never gets rechecked against what the example actually does. A "See Also" pointing
+# at another API page (e.g. a related method) is unaffected.
+
+_SEE_ALSO_RE = re.compile(r'<div class="admonition seealso">(.*?)</div>', re.DOTALL)
+_EXAMPLE_HREF_RE = re.compile(r'href="[^"]*/examples/[^"]*"')
+
+
+def test_see_also_does_not_link_to_examples():
+    pages = sorted(Path(HTML_DIR).rglob('*.html'))
+    assert pages, f'no built pages found under {HTML_DIR}. Build the documentation first.'
+
+    failures = [
+        str(page.relative_to(HTML_DIR))
+        for page in pages
+        if any(
+            _EXAMPLE_HREF_RE.search(block)
+            for block in _SEE_ALSO_RE.findall(page.read_text(encoding='utf-8'))
+        )
+    ]
+
+    assert not failures, (
+        'These pages\' "See Also" sections link directly to a gallery example -- remove '
+        'the hand-written entry; sphinx-autocodelink\'s "Used In" section already covers '
+        'it automatically:\n' + '\n'.join(failures)
+    )
+
+
 # -- Open Graph link previews -------------------------------------------------
 # Sanity checks against the real documentation build.
 
