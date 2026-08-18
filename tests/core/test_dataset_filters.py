@@ -735,8 +735,9 @@ def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         if isinstance(dataset, pv.PointSet):
             # PointSet has no cells, so it has no geometry to extract
-            with pytest.warns(pv.PyVistaDeprecationWarning), pytest.raises(
-                pv.PointSetCellOperationError
+            with (
+                pytest.warns(pv.PyVistaDeprecationWarning),
+                pytest.raises(pv.PointSetCellOperationError),
             ):
                 dataset.extract_geometry(progress_bar=True)
             continue

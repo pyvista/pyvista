@@ -360,30 +360,16 @@ def test_default_pickle_format():
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-@pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
-def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, file_ext, tmp_path):
+def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
     """Test in-memory pickle protocol (multiprocessing/dask use case).
 
     Pickle is NOT a supported mesh file format — only the in-memory
     pickle protocol via ``__getstate__``/``__setstate__`` is tested
     here. File-format refusal is covered in ``test_reader.py``.
     """
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     for dataset in datasets_no_pointset:
-        if file_ext is not None:
-            filepath_save = tmp_path / ('data_object' + file_ext)
-            if file_ext == '':
-                save_pickle(filepath_save, dataset)
-                filepath_read = tmp_path / ('data_object' + '.pkl')
-            else:
-                dataset.save(filepath_save)
-                filepath_read = filepath_save
-            dataset_2 = pv.read(filepath_read)
-        else:
-            dataset_2 = pickle.loads(pickle.dumps(dataset))
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
         for attr in dataset.__dict__:
@@ -415,9 +401,6 @@ def n_points(dataset):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
@@ -428,9 +411,6 @@ def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_no_pointset_with_nested_and_none, pickle_format):
-    if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     pv.set_pickle_format(pickle_format)
     multiblock = multiblock_all_no_pointset_with_nested_and_none
 
