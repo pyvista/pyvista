@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import html
 from pathlib import Path
 import re
+from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 import pytest
@@ -154,17 +155,26 @@ def test_contributing_edit_button_points_to_contributing():
     assert 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst' in html
 
 
-# -- cross-references from the API back to gallery examples -------------------
-# `test_example_has_cross_reference_to_api` (tests/doc/test_sphinx_gallery.py) checks
-# the other direction statically, from example source. This direction can't be: it
-# relies on sphinx-autocodelink's "Used in" backreferences
-# (`autocodelink_autodoc_backrefs`), generated dynamically from the built docs, so it's
-# checked here against the built HTML instead.
+# -- cross-references between the API and gallery examples --------------------
+# Two directions of the same relationship, kept together: does an example reference
+# the API (checked statically, from its own source) and does the API reference back
+# to it (checked here against the built HTML, since it relies on sphinx-autocodelink's
+# "Used in" backreferences -- `autocodelink_autodoc_backrefs` -- generated dynamically
+# at build time, so it can't be checked statically like the other direction can).
 
 EXAMPLES_SRC_DIR = Path(ROOT_DIR) / 'examples'
 
+_CROSSREF_RE = re.compile(r':(meth|func|class|mod|attr|exc|data|ref|obj):`[^`]+`')
+_ANCHOR_RE = re.compile(r'^\s*\.\.\s+_(.+?):\s*$', re.MULTILINE)
 _BACKREF_LIST_RE = re.compile(r'<ul class="sphinx-autocodelink-index">(.*?)</ul>', re.DOTALL)
 _BACKREF_HREF_RE = re.compile(r'href="([^"]*)"')
+
+
+class _ExampleCase(NamedTuple):
+    test_id: str
+    file_path: Path
+    has_crossref_to_api: bool
+    anchor: str | None
 
 
 def find_example_files() -> list[Path]:
@@ -172,9 +182,36 @@ def find_example_files() -> list[Path]:
     return sorted(EXAMPLES_SRC_DIR.rglob('*.py'))
 
 
-def example_html_page(example_file: Path) -> Path:
+def analyze_example_file(file_path: Path) -> tuple[bool, str | None]:
+    """Check a file for a cross-reference to the API, and return its first anchor."""
+    content = file_path.read_text(encoding='utf-8')
+    has_crossref = bool(_CROSSREF_RE.search(content))
+    anchor_match = _ANCHOR_RE.search(content)
+    return has_crossref, anchor_match.group(1) if anchor_match else None
+
+
+def generate_example_cases() -> list[_ExampleCase]:
+    cases = []
+    for file_path in find_example_files():
+        has_crossref_to_api, anchor = analyze_example_file(file_path)
+        cases.append(
+            _ExampleCase(
+                test_id=str(file_path.relative_to(ROOT_DIR)),
+                file_path=file_path,
+                has_crossref_to_api=has_crossref_to_api,
+                anchor=anchor,
+            )
+        )
+    return cases
+
+
+EXAMPLE_CASES = generate_example_cases()
+EXAMPLE_CASE_IDS = [case.test_id for case in EXAMPLE_CASES]
+
+
+def example_html_page(file_path: Path) -> Path:
     """Return the built HTML page Sphinx-Gallery generates for an example."""
-    return Path(HTML_DIR) / example_file.relative_to(EXAMPLES_SRC_DIR).with_suffix('.html')
+    return Path(HTML_DIR) / file_path.relative_to(EXAMPLES_SRC_DIR).with_suffix('.html')
 
 
 def load_backref_target_names() -> set[str]:
@@ -187,19 +224,32 @@ def load_backref_target_names() -> set[str]:
     return names
 
 
-EXAMPLE_FILES = find_example_files()
-EXAMPLE_FILE_IDS = [str(f.relative_to(ROOT_DIR)) for f in EXAMPLE_FILES]
 #: Computed once at collection, not per parametrized example -- scanning every built
 #: page is too expensive to repeat hundreds of times over.
 BACKREF_TARGET_NAMES = load_backref_target_names() if Path(HTML_DIR).is_dir() else set()
 
 
-@pytest.mark.parametrize('example_file', EXAMPLE_FILES, ids=EXAMPLE_FILE_IDS)
-def test_example_has_cross_reference_from_api(example_file):
-    if example_file.name == 'add_example.py':
+@pytest.mark.parametrize('case', EXAMPLE_CASES, ids=EXAMPLE_CASE_IDS)
+def test_example_has_cross_reference_to_api(case):
+    if not case.has_crossref_to_api:
+        msg = (
+            "Example must include at least one cross-reference to PyVista's core or "
+            'plotting API.\n '
+            'E.g. if the example shows how to use `my_function`, then include a reference to '
+            '`my_function`.\n'
+            'E.g. use :class:`~pyvista.Plotter` to reference the `Plotter` class.\n'
+            'E.g. use :meth:`~pyvista.DataSetFilters.transform` to reference the '
+            '`transform` filter.\n'
+        )
+        pytest.fail(msg)
+
+
+@pytest.mark.parametrize('case', EXAMPLE_CASES, ids=EXAMPLE_CASE_IDS)
+def test_example_has_cross_reference_from_api(case):
+    if case.file_path.name == 'add_example.py':
         pytest.skip('This is a meta-example for dev purposes.')
 
-    page = example_html_page(example_file)
+    page = example_html_page(case.file_path)
     assert page.is_file(), f'{page} not found. Build the documentation first.'
 
     if page.name not in BACKREF_TARGET_NAMES:
@@ -211,6 +261,28 @@ def test_example_has_cross_reference_from_api(example_file):
             'sphinx-autocodelink records the reference automatically.'
         )
         pytest.fail(msg)
+
+
+@pytest.mark.parametrize('case', EXAMPLE_CASES, ids=EXAMPLE_CASE_IDS)
+def test_example_anchor(case):
+    def format_anchor(anchor):
+        return f'.. _{anchor}:'
+
+    expected_anchor = f'{case.file_path.stem}_example'
+    if case.anchor is None:
+        msg = (
+            'Example is missing a reference anchor. Expected to find the anchor\n'
+            f'{format_anchor(expected_anchor)!r} at the top of the file.'
+        )
+        raise pytest.fail(msg)
+
+    if case.anchor != expected_anchor:
+        msg = (
+            f'Example has an incorrect reference anchor at the top of the file.\n'
+            f'Actual: {format_anchor(case.anchor)!r}\n'
+            f'Expected: {format_anchor(expected_anchor)!r}'
+        )
+        raise pytest.fail(msg)
 
 
 # -- Open Graph link previews -------------------------------------------------
