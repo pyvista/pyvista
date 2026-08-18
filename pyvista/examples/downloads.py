@@ -414,9 +414,6 @@ def download_masonry_texture(load: bool = True) -> Texture | str:  # noqa: FBT00
         :ref:`Masonry Texture Dataset <masonry_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`texture_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_masonry_texture, load=load)
 
@@ -501,9 +498,6 @@ def download_puppy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001,
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Puppy Dataset <puppy_dataset>`
-
-        :ref:`texture_example`
-            Example which uses this dataset.
 
     """
     return _download_dataset(_dataset_puppy_texture, load=load)
@@ -625,16 +619,6 @@ def download_st_helens(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
         :ref:`St Helens Dataset <st_helens_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`colormap_example`
-        * :ref:`lighting_mesh_example`
-        * :ref:`opacity_example`
-        * :ref:`orbit_example`
-        * :ref:`plot_over_line_example`
-        * :ref:`plotter_lighting_example`
-        * :ref:`themes_example`
-
     """
     return _download_dataset(_dataset_st_helens, load=load)
 
@@ -687,10 +671,7 @@ def download_bunny(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         * :ref:`read_file_example`
         * :ref:`clip_with_surface_example`
-        * :ref:`extract_edges_example`
         * :ref:`subdivide_example`
-        * :ref:`silhouette_example`
-        * :ref:`light_types_example`
 
     """
     return _download_dataset(_dataset_bunny, load=load)
@@ -742,9 +723,7 @@ def download_bunny_coarse(load: bool = True) -> PolyData | str:  # noqa: FBT001,
 
         This dataset is used in the following examples:
 
-        * :ref:`read_file_example`
         * :ref:`clip_with_surface_example`
-        * :ref:`subdivide_example`
 
     """
     return _download_dataset(_dataset_bunny_coarse, load=load)
@@ -792,14 +771,6 @@ def download_cow(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Cow Head Dataset <cow_head_dataset>`
-
-        This dataset is used in the following examples:
-
-        * :ref:`extract_edges_example`
-        * :ref:`mesh_quality_example`
-        * :ref:`rotate_example`
-        * :ref:`linked_views_example`
-        * :ref:`light_actors_example`
 
     """
     return _download_dataset(_dataset_cow, load=load)
@@ -961,9 +932,6 @@ def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Head 2 Dataset <head_2_dataset>`
 
-        :ref:`volume_rendering_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_head, load=load)
 
@@ -1063,9 +1031,6 @@ def download_bolt_nut(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, F
         :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`volume_rendering_example`
-            Example which uses this dataset.
-
     """
     return _download_dataset(_dataset_bolt_nut, load=load)
 
@@ -1153,11 +1118,6 @@ def download_topo_global(load: bool = True) -> PolyData | str:  # noqa: FBT001, 
         :ref:`Topo Global Dataset <topo_global_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`compute_normals_example`
-        * :ref:`background_image_example`
-
     """
     return _download_dataset(_dataset_topo_global, load=load)
 
@@ -1194,11 +1154,6 @@ def download_topo_land(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
         :ref:`Topo Land Dataset <topo_land_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        This dataset is used in the following examples:
-
-        * :ref:`geodesic_example`
-        * :ref:`background_image_example`
 
     """
     return _download_dataset(_dataset_topo_land, load=load)
@@ -1280,7 +1235,6 @@ def download_knee(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         This dataset is used in the following examples:
 
-        * :ref:`opacity_example`
         * :ref:`volume_rendering_example`
         * :ref:`slider_bar_widget_example`
 
@@ -1329,11 +1283,6 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
 
         :ref:`Knee Dataset <knee_dataset>`
 
-        This dataset is used in the following examples:
-
-        * :ref:`volume_rendering_example`
-        * :ref:`slider_bar_widget_example`
-
     """
     return _download_dataset(_dataset_knee_full, load=load)
 
@@ -1373,11 +1322,6 @@ def download_lidar(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         :ref:`Lidar Dataset <lidar_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        This dataset is used in the following examples:
-
-        * :ref:`create_point_cloud_example`
-        * :ref:`edl_example`
 
     """
     return _download_dataset(_dataset_lidar, load=load)
@@ -1628,12 +1572,6 @@ def download_blood_vessels(load: bool = True) -> UnstructuredGrid | str:  # noqa
         :ref:`Blood Vessels Dataset <blood_vessels_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`read_parallel_example`
-        * :ref:`streamlines_example`
-        * :ref:`integrate_data_example`
-
     """
     return _download_dataset(_dataset_blood_vessels, load=load)
 
@@ -1757,9 +1695,6 @@ def download_saddle_surface(load: bool = True) -> PolyData | str:  # noqa: FBT00
         :ref:`Saddle Surface Dataset <saddle_surface_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`interpolate_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_saddle_surface, load=load)
 
@@ -1798,9 +1733,6 @@ def download_sparse_points(load: bool = True) -> PolyData | str:  # noqa: FBT001
 
         :ref:`Sparse Points Dataset <sparse_points_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`interpolate_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_sparse_points, load=load)
@@ -1856,13 +1788,6 @@ def download_foot_bones(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
 
         :ref:`Foot Bones Dataset <foot_bones_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`voxelize_example`
-            Example using this dataset.
-
-        :ref:`compare_threshold_filters_example`
-            Example using this dataset.
-
 
     """
     return _download_dataset(_dataset_foot_bones, load=load)
@@ -2061,9 +1986,6 @@ def download_office(load: bool = True) -> StructuredGrid | str:  # noqa: FBT001,
         :ref:`Office Dataset <office_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`clip_with_plane_box_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_office, load=load)
 
@@ -2103,9 +2025,6 @@ def download_horse_points(load: bool = True) -> PolyData | str:  # noqa: FBT001,
 
         :ref:`Horse Dataset <horse_dataset>`
 
-        :ref:`farthest_point_sampling_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_horse_points, load=load)
 
@@ -2144,9 +2063,6 @@ def download_horse(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Horse Points Dataset <horse_points_dataset>`
-
-        :ref:`mesh_lighting_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_horse, load=load)
@@ -2311,9 +2227,6 @@ def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
 
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
-
-        :ref:`gaussian_smoothing_example`
-            Example using this dataset.
 
     """
     example = __gourds2 if zoom else _dataset_gourds
@@ -2528,9 +2441,6 @@ def download_letter_a(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT
 
         :ref:`Letter K Dataset <letter_k_dataset>`
 
-        :ref:`cell_centers_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_letter_a, load=load)
 
@@ -2605,9 +2515,6 @@ def download_cad_model(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
         :ref:`Cad Model Dataset <cad_model_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`read_file_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_cad_model, load=load)
 
@@ -2653,9 +2560,6 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
             Segmentation labels associated with this dataset.
-
-        :ref:`volume_rendering_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_frog, load=load)
@@ -2870,9 +2774,6 @@ def download_doorman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT0
 
         :ref:`Doorman Dataset <doorman_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`read_file_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_doorman, load=load)
@@ -3141,11 +3042,6 @@ def download_teapot(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
         :ref:`Teapot Dataset <teapot_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`read_file_example`
-        * :ref:`cell_centers_example`
-
     """
     return _download_dataset(_dataset_teapot, load=load)
 
@@ -3184,14 +3080,6 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
-
-        This dataset is used in the following examples:
-
-        * :ref:`gaussian_smoothing_example`
-        * :ref:`slice_example`
-        * :ref:`depth_peeling_example`
-        * :ref:`moving_isovalue_example`
-        * :ref:`plane_widget_example`
 
     """
     return _download_dataset(_dataset_brain, load=load)
@@ -3384,9 +3272,6 @@ def download_face(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Face2 Dataset <face2_dataset>`
-
-        :ref:`decimate_example`
-            Example using this dataset.
 
     """
     # TODO: there is a texture with this
@@ -3796,14 +3681,6 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
         :ref:`Carotid Dataset <carotid_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`glyph_example`
-        * :ref:`gradients_example`
-        * :ref:`streamlines_example`
-        * :ref:`plane_widget_example`
-        * :ref:`compare_threshold_filters_example`
-
     """
     return _download_dataset(_dataset_carotid, load=load)
 
@@ -4076,13 +3953,6 @@ def download_dragon(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
         :ref:`Dragon Dataset <dragon_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`floors_example`
-        * :ref:`orbit_example`
-        * :ref:`silhouette_example`
-        * :ref:`shadows_example`
-
     """
     return _download_dataset(_dataset_dragon, load=load)
 
@@ -4259,11 +4129,6 @@ def download_kitchen(split: bool = False, load: bool = True) -> StructuredGrid |
         :ref:`Kitchen Dataset <kitchen_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`plot_over_line_example`
-        * :ref:`line_widget_example`
-
     """
     if load and split:
         return _download_dataset(__kitchen_split, load=load)
@@ -4405,9 +4270,6 @@ def download_model_with_variance(load: bool = True) -> UnstructuredGrid | str:  
         :ref:`Model With Variance Dataset <model_with_variance_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`opacity_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_model_with_variance, load=load)
 
@@ -4444,9 +4306,6 @@ def download_thermal_probes(load: bool = True) -> PolyData | str:  # noqa: FBT00
 
         :ref:`Thermal Probes Dataset <thermal_probes_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`interpolate_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_thermal_probes, load=load)
@@ -4559,9 +4418,6 @@ def download_pine_roots(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
         :ref:`Pine Roots Dataset <pine_roots_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`connectivity_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_pine_roots, load=load)
 
@@ -4601,11 +4457,6 @@ def download_crater_topo(load: bool = True) -> ImageData | str:  # noqa: FBT001,
 
         :ref:`Crater Topo Dataset <crater_topo_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        This dataset is used in the following examples:
-
-        * :ref:`terrain_following_mesh_example`
-        * :ref:`topo_map_example`
 
     """
     return _download_dataset(_dataset_crater_topo, load=load)
@@ -4649,9 +4500,6 @@ def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001
 
         :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`topo_map_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_crater_imagery, load=load)
@@ -4752,9 +4600,6 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
         :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`volume_rendering_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_damavand_volcano, load=load)
 
@@ -4837,12 +4682,6 @@ def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
         :ref:`Embryo Dataset <embryo_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`contouring_example`
-        * :ref:`resampling_example`
-        * :ref:`slice_orthogonal_example`
-
     """
     return _download_dataset(_dataset_embryo, load=load)
 
@@ -4890,9 +4729,6 @@ def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: 
         :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`antarctica_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_antarctica_velocity, load=load)
 
@@ -4934,9 +4770,6 @@ def download_room_surface_mesh(load: bool = True) -> PolyData | str:  # noqa: FB
 
         :ref:`Room Surface Mesh Dataset <room_surface_mesh_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`depth_peeling_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_room_surface_mesh, load=load)
@@ -5011,9 +4844,6 @@ def download_rgba_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, 
 
         :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`texture_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_rgba_texture, load=load)
@@ -5103,9 +4933,6 @@ def download_sky_box_cube_map(load: bool = True) -> Texture | str:  # noqa: FBT0
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
 
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
-
-        :ref:`pbr_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_sky_box_cube_map, load=load)
@@ -5402,9 +5229,6 @@ def download_gpr_data_array(load: bool = True) -> ndarray | str:  # noqa: FBT001
 
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
 
-        :ref:`create_draped_surface_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_gpr_data_array, load=load)
 
@@ -5446,9 +5270,6 @@ def download_gpr_path(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
-
-        :ref:`create_draped_surface_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_gpr_path, load=load)
@@ -5920,9 +5741,6 @@ def download_louis_louvre(load: bool = True) -> PolyData | str:  # noqa: FBT001,
         :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`pbr_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_louis_louvre, load=load)
 
@@ -5959,9 +5777,6 @@ def download_cylinder_crossflow(load: bool = True) -> MultiBlock | str:  # noqa:
 
         :ref:`Cylinder Crossflow Dataset <cylinder_crossflow_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`streamlines_2D_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_cylinder_crossflow, load=load)
@@ -6019,9 +5834,6 @@ def download_naca(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT00
 
         :ref:`Naca Dataset <naca_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`reader_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_naca, load=load)
@@ -6120,9 +5932,6 @@ def download_wavy(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT00
 
         :ref:`Wavy Dataset <wavy_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`reader_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_wavy, load=load)
@@ -6291,9 +6100,6 @@ def download_cavity(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT
         :ref:`Cavity Dataset <cavity_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`openfoam_example`
-            Full example using this dataset.
-
     """
     return _download_dataset(_dataset_cavity, load=load)
 
@@ -6354,9 +6160,6 @@ def download_openfoam_tubes(load: bool = True) -> MultiBlock | str:  # noqa: FBT
 
         :ref:`Openfoam Tubes Dataset <openfoam_tubes_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`openfoam_tubes_example`
-            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_openfoam_tubes, load=load)
@@ -6505,9 +6308,6 @@ def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa:
         :ref:`Pump Bracket Dataset <pump_bracket_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`pump_bracket_example`
-            Full example using this dataset.
-
     """
     return _download_dataset(_dataset_pump_bracket, load=load)
 
@@ -6594,9 +6394,6 @@ def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa
 
         :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`openfoam_cooling_example`
-            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_electronics_cooling, load=load)
@@ -7085,9 +6882,6 @@ def download_moonlanding_image(load: bool = True) -> ImageData | str:  # noqa: F
         :ref:`Moonlanding Image Dataset <moonlanding_image_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`image_fft_example`
-            Full example using this dataset.
-
     """
     return _download_dataset(_dataset_moonlanding_image, load=load)
 
@@ -7341,9 +7135,6 @@ def download_cloud_dark_matter(load: bool = True) -> PointSet | str:  # noqa: FB
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
-
-        :ref:`point_clouds_example`
-            Full example using this dataset
 
     """
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
@@ -7615,8 +7406,6 @@ def download_fea_hertzian_contact_cylinder(load: bool = True) -> UnstructuredGri
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`fea_hertzian_contact_pressure_example`
-
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
 
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
@@ -7624,7 +7413,6 @@ def download_fea_hertzian_contact_cylinder(load: bool = True) -> UnstructuredGri
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
 
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
-
 
     """
     return _download_dataset(_dataset_fea_hertzian_contact_cylinder, load=load)
@@ -8175,9 +7963,6 @@ def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT00
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             Another HDR texture.
 
-        :ref:`load_gltf_example`
-            See additional examples using this dataset.
-
     """
     return _download_dataset(_dataset_dikhololo_night, load=load)
 
@@ -8439,9 +8224,6 @@ def download_coil_magnetic_field(load: bool = True) -> ImageData | str:  # noqa:
 
         :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`magnetic_fields_example`
-            More details on how to plot with this dataset.
 
     """
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
@@ -8782,9 +8564,6 @@ def download_whole_body_ct_male(
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             Similar dataset of a female subject.
 
-        :ref:`crop_labeled_example`
-            Example cropping this dataset using a segmentation mask.
-
         :ref:`volume_with_mask_example`
             See additional examples using this dataset.
 
@@ -9029,9 +8808,6 @@ def download_whole_body_ct_female(
     >>> pl.show()
 
     .. seealso::
-
-        :ref:`anatomical_groups_example`
-            Additional examples using this dataset.
 
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             See this dataset in the Dataset Gallery for more info.
