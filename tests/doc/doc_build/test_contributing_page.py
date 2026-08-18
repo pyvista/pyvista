@@ -4,13 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from conftest import HTML_DIR
 import pytest
 
 pytestmark = pytest.mark.needs_docs_build
-
-ROOT_DIR = str(Path(__file__).parent.parent.parent.parent)
-BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-HTML_DIR = str(Path(BUILD_DIR) / 'html')
 
 
 def test_contributing_edit_button_points_to_contributing():

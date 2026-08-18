@@ -11,13 +11,10 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
+from conftest import HTML_DIR
 import pytest
 
 pytestmark = pytest.mark.needs_docs_build
-
-ROOT_DIR = str(Path(__file__).parent.parent.parent.parent)
-BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-HTML_DIR = str(Path(BUILD_DIR) / 'html')
 
 # Minimum number of API pages expected to gain a docstring-section entry. The
 # real count is in the thousands; this only needs to be high enough that a

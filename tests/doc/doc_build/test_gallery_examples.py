@@ -5,13 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from conftest import HTML_DIR
 import pytest
 
 pytestmark = pytest.mark.needs_docs_build
-
-ROOT_DIR = str(Path(__file__).parent.parent.parent.parent)
-BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-HTML_DIR = str(Path(BUILD_DIR) / 'html')
 
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'

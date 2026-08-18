@@ -7,13 +7,10 @@ import html
 from pathlib import Path
 import re
 
+from conftest import HTML_DIR
 import pytest
 
 pytestmark = pytest.mark.needs_docs_build
-
-ROOT_DIR = str(Path(__file__).parent.parent.parent.parent)
-BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-HTML_DIR = str(Path(BUILD_DIR) / 'html')
 
 # Same value as `ogp_site_url` in `conf.py`
 OGP_SITE_URL = 'https://docs.pyvista.org/'
