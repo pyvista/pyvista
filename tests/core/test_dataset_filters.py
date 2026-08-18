@@ -173,6 +173,10 @@ def test_clip_scalar_filter(datasets, both, invert):
             if isinstance(dataset, pv.PointSet):
                 # PointSet has no cells, so clipping produces another PointSet
                 assert isinstance(clp, pv.PointSet)
+                if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+                    # Same underlying vtkTableBasedClipDataSet bug as clip():
+                    # the PointSet result comes back empty on VTK 9.4.
+                    pytest.xfail("VTK 9.4 bug where clipping PointSet doesn't work")
             elif isinstance(dataset, pv.PolyData):
                 assert isinstance(clp, pv.PolyData)
             else:
