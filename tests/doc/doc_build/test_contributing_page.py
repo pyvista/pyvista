@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.docs_build
+pytestmark = pytest.mark.needs_docs_build
 
 ROOT_DIR = str(Path(__file__).parent.parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
