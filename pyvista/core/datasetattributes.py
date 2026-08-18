@@ -1586,6 +1586,62 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self._raise_no_normals()
         self.SetActiveNormals(name)
 
+    @property
+    def active_tensors_name(self: Self) -> str | None:
+        """Return the name of the active tensors array.
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active tensors array.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.point_data['my-tensors'] = np.zeros((mesh.n_points, 9))
+        >>> mesh.point_data.active_tensors_name = 'my-tensors'
+        >>> mesh.point_data.active_tensors_name
+        'my-tensors'
+
+        """
+        self._raise_no_tensors()
+        if self.GetTensors() is not None:
+            return str(self.GetTensors().GetName())
+        return None
+
+    @active_tensors_name.setter
+    def active_tensors_name(self: Self, name: str | None) -> None:
+        """Set the name of the active tensors array.
+
+        Parameters
+        ----------
+        name : str
+            Name of the active tensors array.
+
+        """
+        # permit setting no active
+        if name is None:
+            self.SetActiveTensors(None)
+            return
+        self._raise_no_tensors()
+        if name not in self:
+            msg = f'DataSetAttribute does not contain "{name}"'
+            raise KeyError(msg)
+        # VTK accepts 9-component (full) and 6-component (symmetric) tensor
+        # arrays; let it reject anything else
+        if self.SetActiveTensors(name) < 0:
+            n_comp = self.GetArray(name).GetNumberOfComponents()
+            msg = f'{name} needs 9 or 6 components, has ({n_comp})'
+            raise ValueError(msg)
+
+    def _raise_no_tensors(self: Self) -> None:
+        """Raise AttributeError when attempting access tensors for field data."""
+        if self.association == FieldAssociation.NONE:
+            msg = 'FieldData does not have active tensors.'
+            raise AttributeError(msg)
+
     def _raise_no_normals(self: Self) -> None:
         """Raise AttributeError when attempting access normals for field data."""
         if self.association == FieldAssociation.NONE:
