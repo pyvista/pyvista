@@ -31,7 +31,7 @@
 .. autosummary::
    :toctree:
 {% for item in attributes %}
-   {% if name == 'Plotter' or name == 'DataSetMapper' or name == 'ImageData' or item not in inherited_members %}
+   {% if name == 'Plotter' or name == 'DataSetMapper' or item not in inherited_members %}
      {% if item.0 != item.upper().0 %}
        {{ name }}.{{ item }}
      {% endif %}
