@@ -12,9 +12,6 @@ from pathlib import Path
 import re
 
 from conftest import HTML_DIR
-import pytest
-
-pytestmark = pytest.mark.needs_docs_build
 
 # Minimum number of API pages expected to gain a docstring-section entry. The
 # real count is in the thousands; this only needs to be high enough that a

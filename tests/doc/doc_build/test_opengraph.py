@@ -10,8 +10,6 @@ import re
 from conftest import HTML_DIR
 import pytest
 
-pytestmark = pytest.mark.needs_docs_build
-
 # Same value as `ogp_site_url` in `conf.py`
 OGP_SITE_URL = 'https://docs.pyvista.org/'
 

@@ -8,8 +8,6 @@ from xml.etree import ElementTree as ET
 from conftest import HTML_DIR
 import pytest
 
-pytestmark = pytest.mark.needs_docs_build
-
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
 SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds

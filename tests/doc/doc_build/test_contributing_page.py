@@ -5,9 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from conftest import HTML_DIR
-import pytest
-
-pytestmark = pytest.mark.needs_docs_build
 
 
 def test_contributing_edit_button_points_to_contributing():
