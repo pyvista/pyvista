@@ -456,6 +456,21 @@ def test_slice_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_slice_filter_composite_pointset_block_is_empty(multiblock_all):
+    """``slice`` runs through :vtk:`vtkCutter`'s own composite dispatch.
+
+    Unlike ``slice_orthogonal``/``slice_along_axis`` (which iterate blocks in
+    Python and hit :class:`~pyvista.PointSet`'s ``PointSetDimensionReductionError``
+    guard directly), ``slice`` never calls into the Python-level override for a
+    ``PointSet`` block, so it does not raise. The block is silently empty instead.
+    """
+    pointset_index = next(
+        i for i, block in enumerate(multiblock_all) if isinstance(block, pv.PointSet)
+    )
+    output = multiblock_all.slice(normal=normals[0], progress_bar=True)
+    assert output[pointset_index].is_empty
+
+
 def test_slice_orthogonal_filter(datasets_no_pointset):
     """This tests the slice filter on all datatypes available filters"""
     for dataset in datasets_no_pointset:
@@ -471,6 +486,11 @@ def test_slice_orthogonal_filter_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.slice_orthogonal(progress_bar=True)
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_slice_orthogonal_filter_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetDimensionReductionError):
+        multiblock_all.slice_orthogonal(progress_bar=True)
 
 
 def test_slice_along_axis(datasets_no_pointset):
@@ -493,6 +513,11 @@ def test_slice_along_axis_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.slice_along_axis(progress_bar=True)
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_slice_along_axis_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetDimensionReductionError):
+        multiblock_all.slice_along_axis(progress_bar=True)
 
 
 def test_extract_all_edges(datasets_no_pointset):
