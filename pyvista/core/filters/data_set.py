@@ -7280,6 +7280,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Make labeled data contiguous. May be used as a pre-processing step before
             coloring.
 
+        :ref:`anatomical_groups_example`
+            Calls this filter on a subscripted access (``dataset['label_map']``), which
+            sphinx-autocodelink's "Used In" can't yet resolve on its own.
+
         Parameters
         ----------
         colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],

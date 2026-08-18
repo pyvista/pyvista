@@ -863,15 +863,6 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 
-        :ref:`linear_cells_example`
-            Detailed example using linear cells.
-
-        :ref:`create_polyhedron_example`
-            Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
-
-        :ref:`create_polydata_strips_example`
-            Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
-
     References
     ----------
     `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_

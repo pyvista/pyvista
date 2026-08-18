@@ -299,6 +299,16 @@ def test_example_anchor(case):
 _SEE_ALSO_RE = re.compile(r'<div class="admonition seealso">(.*?)</div>', re.DOTALL)
 _EXAMPLE_HREF_RE = re.compile(r'href="[^"]*/examples/[^"]*"')
 
+#: Pages exempted because sphinx-autocodelink can't yet resolve the identifier itself --
+#: not a place to park an entry that's merely inconvenient to remove. Each needs a reason
+#: tying it to a real, tracked resolution gap; drop the entry once that gap is fixed.
+_KNOWN_RESOLUTION_GAPS = {
+    # dataset['label_map'].contour_labels(...): a subscripted access, not a plain name --
+    # sphinx-autocodelink's identifier resolution doesn't walk through those yet.
+    'pyvista.ImageDataFilters.contour_labels',
+    'pyvista.DataSetFilters.color_labels',
+}
+
 
 def test_see_also_does_not_link_to_examples():
     pages = sorted(Path(HTML_DIR).rglob('*.html'))
@@ -307,7 +317,8 @@ def test_see_also_does_not_link_to_examples():
     failures = [
         page.stem
         for page in pages
-        if any(
+        if page.stem not in _KNOWN_RESOLUTION_GAPS
+        and any(
             _EXAMPLE_HREF_RE.search(block)
             for block in _SEE_ALSO_RE.findall(page.read_text(encoding='utf-8'))
         )

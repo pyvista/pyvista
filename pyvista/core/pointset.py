@@ -161,10 +161,6 @@ class _PointSet(DataSet):
             Same type as the input, but with the specified cells
             removed.
 
-        See Also
-        --------
-        :ref:`ghost_cells_example`
-
         Examples
         --------
         Remove 20 cells from an unstructured grid.
@@ -2708,10 +2704,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
 
-    See Also
-    --------
-    :ref:`create_structured_surface_example`
-
     Examples
     --------
     >>> import pyvista as pv
@@ -3126,10 +3118,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         combination of fields allowed by ``validate_mesh``.
 
         .. versionadded:: 0.47
-
-    See Also
-    --------
-    :ref:`create_explicit_structured_grid_example`
 
     Examples
     --------
