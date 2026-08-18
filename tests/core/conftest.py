@@ -23,6 +23,7 @@ import pytest
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
 from tests.gc_check import stash_phase_report
 from tests.gc_check import take_snapshot
 
@@ -42,7 +43,7 @@ def check_gc(request):
         # On VTK < 9.6 CellArray must hold its own arrays, so this can never pass there
         not _SETDATA_TAKES_OWNERSHIP
         or node.get_closest_marker('check_gc') is None
-        or node.get_closest_marker('skip_check_gc')
+        or not check_enabled(node)
     ):
         yield
         return

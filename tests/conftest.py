@@ -393,6 +393,12 @@ def pytest_sessionstart():
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
     parser.addoption(
+        '--no_check_gc',
+        action='store_true',
+        default=False,
+        help='skip the reference leak check, which is otherwise run (see tests/gc_check.py)',
+    )
+    parser.addoption(
         '--playwright',
         action='store_true',
         default=False,

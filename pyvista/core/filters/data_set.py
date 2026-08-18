@@ -8380,7 +8380,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
         >>> cpos = pv.CameraPosition(
-        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 0, 0)
+        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 1, 0)
         ... )
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
