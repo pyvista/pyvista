@@ -1477,8 +1477,8 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     # Test root MultiBlock
     assert (input_ is output) == inplace
     # Test nested MultiBlock container
-    assert isinstance(input_[6], pv.MultiBlock)
-    assert (input_[6] is output[6]) == inplace
+    nested_index = next(i for i, block in enumerate(input_) if isinstance(block, pv.MultiBlock))
+    assert (input_[nested_index] is output[nested_index]) == inplace
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):

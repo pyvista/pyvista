@@ -2942,6 +2942,12 @@ def test_extract_surface_datasets(multiblock_all, algorithm, bool_kwargs):
         pass_pointid=bool_kwargs,
     )
     for dataobj in (*multiblock_all, multiblock_all):
+        if isinstance(dataobj, pv.PointSet):
+            # PointSet has no cells, so it has no surface to extract
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataobj.extract_surface(**kwargs)
+            continue
+
         if algorithm is _SENTINEL:
             with pytest.warns(pv.PyVistaFutureWarning):
                 surf = dataobj.extract_surface(**kwargs)

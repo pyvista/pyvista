@@ -310,7 +310,7 @@ def pointset():
 @pytest.fixture
 def multiblock_all_no_pointset(datasets_no_pointset):
     """Return datasets fixture combined in a pyvista multiblock."""
-    return pyvista.MultiBlock(datasets_no_pointset)
+    return pv.MultiBlock(datasets_no_pointset)
 
 
 @pytest.fixture
@@ -325,7 +325,7 @@ def multiblock_all_no_pointset_with_nested_and_none(
 ):
     """Return datasets fixture combined in a pyvista multiblock."""
     multiblock_all_no_pointset.append(None)
-    return pyvista.MultiBlock([*datasets_no_pointset, None, multiblock_all_no_pointset])
+    return pv.MultiBlock([*datasets_no_pointset, None, multiblock_all_no_pointset])
 
 
 @pytest.fixture
