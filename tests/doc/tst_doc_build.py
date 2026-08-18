@@ -313,9 +313,15 @@ def test_see_also_does_not_link_to_examples():
         )
     ]
 
-    assert not failures, '\n'.join(
-        f'{name}: remove the :ref: to an example from its "See Also" section -- it is '
-        f'automatically included in {name}\'s own "Used In" section by sphinx-autocodelink.'
+    note = (
+        'If a listed page\'s own "Used In" section already shows the example, remove the '
+        "\"See Also\" entry -- it's redundant. If it doesn't, that's a sphinx-autocodelink "
+        'resolution gap (e.g. a subscripted/local-scoped access, like `mesh["key"].method()`) '
+        'to fix there instead of leaving the hand-written entry in place:\n'
+    )
+    assert not failures, note + '\n'.join(
+        f'{name}: :ref: to an example in its "See Also" section, redundant with its own '
+        f'"Used In" section (or should be, once sphinx-autocodelink resolves it there).'
         for name in failures
     )
 
