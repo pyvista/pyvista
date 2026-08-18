@@ -164,8 +164,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> np.abs(dist).mean()  # doctest:+SKIP
         9.997635192915073e-05
 
-        See :ref:`icp_registration_example` for more examples using this filter.
-
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
@@ -523,10 +521,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(sphere, color='w', style='wireframe')
         >>> pl.show()
 
-        See :ref:`clip_with_surface_example` and
-        :ref:`voxelize_example` for more examples using
-        this filter.
-
         """
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
@@ -736,9 +730,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> clipped = cube.clip_surface(sphere)
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
-        See :ref:`clip_with_surface_example` for more examples using
-        this filter.
-
         """
         if not isinstance(surface, _vtk.vtkPolyData):
             surface = wrap(surface).extract_surface(
@@ -874,7 +865,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             This example showcases this filter and
             other similar ones.
 
-
         Returns
         -------
         pyvista.UnstructuredGrid
@@ -924,9 +914,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_scalar_bar=False,
         ...     show_edges=True,
         ... )
-
-        See :ref:`using_filters_example` and :ref:`image_representations_example`
-        for more examples using this filter.
 
         """
         # set the scalars to threshold on
@@ -1268,8 +1255,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> outline = sphere.outline()
         >>> pv.plot([sphere, outline], line_width=5)
 
-        See :ref:`using_filters_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(self)
@@ -1588,10 +1573,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     method='flying_edges',
         ... )
         >>> out.plot(color='lightblue', smooth_shading=True)
-
-        See :ref:`using_filters_example`, :ref:`marching_cubes_example`, or
-        :ref:`gyroid_example` for more examples using this
-        filter.
 
         """
         if method == 'contour':
@@ -1943,9 +1924,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_scalar_bar=False,
         ... )
         >>> pl.show()
-
-        See :ref:`glyph_example`, :ref:`movie_glyphs_example`, and
-        :ref:`glyph_table_example` for more examples using this filter.
 
         """
         dataset = self
@@ -2709,8 +2687,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> len(bodies)
         2
 
-        See :ref:`split_vol` for more examples using this filter.
-
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
@@ -2788,8 +2764,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
-
-        See :ref:`compute_normals_example` for more examples using this filter.
 
         """
         factor = kwargs.pop('scale_factor', factor)
@@ -2959,8 +2933,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = sphere.delaunay_3d()
         >>> edges = grid.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
-
-        See :ref:`convex_hull_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkDelaunay3D()
@@ -3342,8 +3314,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
-        See :ref:`interpolate_example`, :ref:`interpolate_sample_example`,
-        and :ref:`resampling_example` for more examples using this filter.
+        See :ref:`resampling_example` for more examples using this filter.
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
@@ -3843,8 +3814,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(streams.tube(radius=0.02), scalars='vorticity_mag')
         >>> pl.view_xy()
         >>> pl.show()
-
-        See :ref:`streamlines_2D_example` for more examples using this filter.
 
         """
         if integrator_type not in [2, 4]:
@@ -5818,8 +5787,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> feat_edges.clear_data()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
 
-        See the :ref:`extract_edges_example` for more examples using this filter.
-
         """
         dataset: DataSet = self
         if not isinstance(dataset, _vtk.vtkPolyData):
@@ -6197,8 +6164,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> deriv = hills.compute_derivative()
         >>> deriv.plot(scalars='gradient')
 
-        See the :ref:`gradients_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
@@ -6396,8 +6361,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         np.float64(3.14)
         >>> integrated['data'][0]
         np.float64(6.28)
-
-        See the :ref:`integrate_data_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkIntegrateAttributes()

@@ -394,8 +394,6 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced == sliced2
         True
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
 
         def _set_default_start_and_stop(rng, default_start, default_stop):
@@ -1853,8 +1851,6 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh = uni.image_threshold(100)
         >>> ithresh.plot()
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         if scalars is None:
             set_default_active_scalars(self)
@@ -3134,8 +3130,6 @@ class ImageDataFilters(DataSetFilters):
         (101, 101, 2)
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
-
-        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:

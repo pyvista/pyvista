@@ -178,8 +178,6 @@ def Cylinder(  # noqa: PLR0917
 
     The above examples are similar in terms of their behavior.
 
-    See :ref:`chemistry_molecule_example` for more examples using this function.
-
     """
     algo = CylinderSource(
         center=center,
@@ -1196,9 +1194,6 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     >>> pl.camera.zoom(0.8)
     >>> pl.show()
 
-    See :ref:`create_multiple_lines_example` and :ref:`color_lines_example`
-    for more examples.
-
     """
     if points is None:
         points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
@@ -1634,7 +1629,6 @@ def Text3D(  # noqa: PLR0917
 
         .. versionadded:: 0.43
 
-
     Returns
     -------
     pyvista.PolyData
@@ -1679,8 +1673,6 @@ def Text3D(  # noqa: PLR0917
     ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
     ... )
     >>> text_mesh.plot(cpos='xy', show_bounds=True)
-
-    See :ref:`create_text_3d_example` for more examples using this function.
 
     """
     return Text3DSource(
@@ -1849,9 +1841,6 @@ def CircularArc(  # noqa: PLR0917
     >>> _ = pl.view_xy()
     >>> pl.show()
 
-    See :ref:`create_circular_arc_example` and :ref:`flight_paths_example`
-    for more examples using this function.
-
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -1941,8 +1930,6 @@ def CircularArcFromNormal(  # noqa: PLR0917
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
-
-    See :ref:`create_circular_arc_example` for more examples using this function.
 
     """
     check_valid_vector(center, 'center')
@@ -2391,8 +2378,6 @@ def PlatonicSolid(
     >>> import pyvista as pv
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
-
-    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')
