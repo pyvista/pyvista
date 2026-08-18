@@ -614,6 +614,10 @@ pyvista_plot_cleanup = pyvista_plot_setup
 # Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
 pyvista_plot_autocodelink = True
 
+# Append a "Used in" backreferences section to every autodoc-documented object's own
+# docstring (empty ones get nothing appended, not "No references found.").
+autocodelink_autodoc_backrefs = True
+
 
 def _str_examples(self):
     examples_str = '\n'.join(self['Examples'])
