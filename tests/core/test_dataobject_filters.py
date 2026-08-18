@@ -690,10 +690,18 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
-def test_cell_data_to_point_data_composite(multiblock_all):
+def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.cell_data_to_point_data(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.cell_data_to_point_data(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_cell_data_to_point_data_composite_pointset_raises(multiblock_all):
+    # cell_data_to_point_data hands the whole composite to the underlying VTK
+    # algorithm; on some VTK versions this segfaults instead of raising if a
+    # block is a cell-less PointSet, so PyVista guards against it explicitly.
+    with pytest.raises(pv.PointSetNotSupported):
+        multiblock_all.cell_data_to_point_data(progress_bar=True)
 
 
 def test_point_data_to_cell_data():
@@ -704,10 +712,15 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
-def test_point_data_to_cell_data_composite(multiblock_all):
+def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.point_data_to_cell_data(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.point_data_to_cell_data(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetNotSupported):
+        multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 
 def test_triangulate():

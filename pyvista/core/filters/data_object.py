@@ -4693,6 +4693,7 @@ class DataObjectFilters:
         >>> surf.plot(scalars='Area')
 
         """
+        _raise_if_composite_has_pointset(self)
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
@@ -4813,6 +4814,7 @@ class DataObjectFilters:
         >>> sphere.plot()
 
         """
+        _raise_if_composite_has_pointset(self)
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
@@ -5271,6 +5273,23 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
         return output
+
+
+def _raise_if_composite_has_pointset(dataset: DataSet | MultiBlock) -> None:
+    """Raise if a MultiBlock (recursively) contains a PointSet block.
+
+    ``cell_data_to_point_data`` and ``point_data_to_cell_data`` hand a
+    MultiBlock straight to the underlying :vtk:`vtkAlgorithm`, relying on
+    VTK's own composite-dataset dispatch rather than iterating blocks in
+    Python. On some VTK versions, running these filters on a composite
+    containing a cell-less PointSet block segfaults instead of raising, so
+    guard against it here before ever reaching the algorithm.
+    """
+    if isinstance(dataset, pv.MultiBlock) and any(
+        isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
+    ):
+        msg = 'PointSets contain no cells or cell data.'
+        raise pv.core.errors.PointSetNotSupported(msg)
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
