@@ -305,7 +305,7 @@ def test_see_also_does_not_link_to_examples():
     assert pages, f'no built pages found under {HTML_DIR}. Build the documentation first.'
 
     failures = [
-        str(page.relative_to(HTML_DIR))
+        page.stem
         for page in pages
         if any(
             _EXAMPLE_HREF_RE.search(block)
@@ -313,10 +313,10 @@ def test_see_also_does_not_link_to_examples():
         )
     ]
 
-    assert not failures, (
-        'These pages\' "See Also" sections link directly to a gallery example -- remove '
-        'the hand-written entry; sphinx-autocodelink\'s "Used In" section already covers '
-        'it automatically:\n' + '\n'.join(failures)
+    assert not failures, '\n'.join(
+        f'{name}: remove the :ref: to an example from its "See Also" section -- it is '
+        f'automatically included in {name}\'s own "Used In" section by sphinx-autocodelink.'
+        for name in failures
     )
 
 
