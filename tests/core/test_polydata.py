@@ -1492,3 +1492,9 @@ def test_merge_points(inplace):
     assert output.n_points == 8
     assert isinstance(mesh, pv.PolyData)
     assert (mesh is output) == inplace
+
+
+def test_offset_array():
+    # Private, but geovista reads it, so removing it breaks the integration tests
+    mesh = pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]])
+    assert np.array_equal(mesh._offset_array, [0, 3, 6])

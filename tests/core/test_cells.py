@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+import gc
 import re
+import sys
 from types import GeneratorType
 
 import numpy as np
 import pytest
+from refleak.testing import Snapshot
 
 import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
@@ -23,6 +27,9 @@ from pyvista.examples import load_rectilinear
 from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
+
+# Cell arrays are where a stashed VTK object silently outlives its mesh; see conftest
+pytestmark = pytest.mark.check_gc
 
 grids = [
     load_hexbeam(),
@@ -539,7 +546,13 @@ REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
     [
         REGULAR_CELL_LIST,
         np.array(REGULAR_CELL_LIST, np.int16),
-        np.array(REGULAR_CELL_LIST, np.int32),
+        pytest.param(
+            np.array(REGULAR_CELL_LIST, np.int32),
+            marks=pytest.mark.xfail(
+                sys.platform == 'win32',
+                reason='BUG(?) VTK does not use fixed-size storage for int32 cells on Windows',
+            ),
+        ),
         np.array(REGULAR_CELL_LIST, np.int64),
         np.array(np.vstack(REGULAR_CELL_LIST), order='F'),
     ],
@@ -598,3 +611,45 @@ def test_n_cells_removed():
 def test_deep_removed(deep: bool):
     with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        lambda: pv.PolyData(np.zeros((10, 3))),
+        lambda: pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]]),
+        lambda: pv.lines_from_points(np.zeros((10, 3))),
+        lambda: pv.vector_poly_data(np.zeros((10, 3)), np.ones((10, 3))),
+    ],
+    ids=['verts', 'faces', 'lines', 'vectors'],
+)
+@pytest.mark.skipif(
+    not _SETDATA_TAKES_OWNERSHIP,
+    reason='VTK < 9.6 requires CellArray to keep the arrays alive itself',
+)
+def test_cell_array_does_not_leak_vtk_arrays(make_mesh):
+    # A VTK array stashed on the CellArray outlives the mesh in VTK's ghost __dict__
+    snapshot = Snapshot(_vtk.vtkObjectBase, label='VTK')
+    make_mesh()
+    gc.collect()
+    snapshot.assert_no_new(when='after building the mesh')
+
+
+@pytest.mark.parametrize('dtype', [np.int32, pv.ID_TYPE], ids=['int32', 'id_type'])
+def test_cell_array_connectivity_outlives_its_source(dtype):
+    # The counterpart to the leak test: SetData alone must keep the connectivity valid
+    faces = np.arange(120, dtype=dtype).reshape(-1, 3) % 40
+    source = pv.PolyData.from_regular_faces(np.zeros((40, 3)), faces)
+
+    shallow = pv.PolyData()
+    shallow.shallow_copy(source)
+    del source
+    gc.collect()
+    assert np.array_equal(shallow.regular_faces, faces)
+
+    # Same again, but the CellArray wrapper itself dies while C++ still owns it
+    polydata = _vtk.vtkPolyData()
+    polydata.SetPoints(pv.vtk_points(np.zeros((40, 3))))
+    polydata.SetPolys(pv.CellArray.from_regular_cells(faces.copy()))
+    gc.collect()
+    assert np.array_equal(pv.wrap(polydata).regular_faces, faces)

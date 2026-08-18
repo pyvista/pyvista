@@ -4,17 +4,17 @@ memory leaks for all plotting tests
 
 from __future__ import annotations
 
-import gc
 import platform
-from types import SimpleNamespace
 
 import pytest
-from refleak.testing import Snapshot
-from refleak.testing import gc_collect_once
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting import system_supports_plotting
+from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
+from tests.gc_check import stash_phase_report
+from tests.gc_check import take_snapshot
 
 # these are set here because we only need them for plotting tests
 pv.OFF_SCREEN = True
@@ -66,128 +66,43 @@ if APPLE_SILICON:
         del pool
 
 
-_phase_report_key = pytest.StashKey()
-
-
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):  # noqa: ARG001
     """Stash per-phase reports so check_gc can skip the leak check on failure."""
     outcome = yield
-    rep = outcome.get_result()
-    item.stash.setdefault(_phase_report_key, {})[rep.when] = rep
-
-
-def _test_passed(item) -> bool:
-    report = item.stash.get(_phase_report_key, {})
-    return 'call' in report and report['call'].outcome == 'passed'
-
-
-def _flush_vtk_ghosts() -> None:
-    """Sweep dead entries out of VTK's ghost map.
-
-    When a wrapper with attributes dies while its C++ object is still
-    referenced, VTK "ghosts" the attribute dict so it can be restored should
-    the C++ object resurface in Python. The map is only swept when a new
-    ghost is added, so the dict of a wrapper that died during this test can
-    linger after its C++ object dies -- and anything it holds (e.g. a
-    composite mapper's ``_dataset``) then looks like a leak. Adding one
-    throwaway ghost forces the sweep.
-    """
-    holder = _vtk.vtkPolyData()
-    bait = _vtk.vtkPoints()
-    bait._pyvista_ghost_bait = True
-    holder.SetPoints(bait)
-    # bait's wrapper dies while its C++ object is still held by holder, so it
-    # is added to the ghost map, sweeping out stale ghosts; deleting holder
-    # then kills the C++ object, letting a later sweep remove the bait itself.
-    del bait
-    del holder
-
-
-_check_gc_key = pytest.StashKey()
+    stash_phase_report(item, outcome.get_result())
 
 
 @pytest.fixture(autouse=True)
 def check_gc(request):
-    """Snapshot live objects so leaks from this test can be detected.
-
-    The check itself runs in the ``pytest_runtest_teardown`` hookwrapper
-    below, not in this fixture's teardown: several fixtures are set up
-    before this one (``monkeypatch`` via other autouse fixtures, the
-    registry save/restore in ``tests/conftest.py::reset_global_state``),
-    so their finalizers run *after* an autouse fixture's teardown -- and
-    anything they still held (a patched-in mock, a test class left in a
-    global registry) would be misreported here as a leak.
-    """
-    if request.node.get_closest_marker('skip_check_gc'):
+    """Snapshot live plotters and VTK objects so leaks from this test can be detected."""
+    if not check_enabled(request.node):
         yield
         return
-
-    # A snapshot, so that leftovers of earlier tests that legitimately skip
-    # this check are not blamed on this test. Matching vtkObjectBase by
-    # isinstance rather than by class-name prefix also covers pyvista's own
-    # vtk subclasses (PolyData, ...) and the pythonic override subclasses
-    # VTK >= 9.6 instantiates, whose names lack the 'vtk' prefix.
-    #
-    # BasePlotter is not a vtkObjectBase, so both types are needed; matching
-    # them as a single tuple keeps this to one pass over the heap (which is
-    # walked once per test at setup and once at teardown). Snapshot() collects
-    # before it records ids, so there is no gc.collect() here.
-    request.node.stash[_check_gc_key] = Snapshot(
+    # BasePlotter is not a vtkObjectBase, so both types are needed here
+    take_snapshot(
+        request.node,
         (pv.plotting.plotter.BasePlotter, _vtk.vtkObjectBase),
-        label='VTK/plotter',
+        'VTK/plotter',
     )
     yield
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_teardown(item):
-    """Ensure that all VTK objects created during a test are garbage-collected.
+    """Close every plotter, and check that nothing the test created outlived it.
 
-    A hookwrapper so the check runs after every fixture finalizer has run
-    (see ``check_gc``, which takes the snapshot this checks against).
+    A hookwrapper so both run after every fixture finalizer has run (see ``check_gc``,
+    which takes the snapshot this checks against).
     """
     yield
-    snapshot = item.stash.get(_check_gc_key, None)
-    if snapshot is None:
-        return
-    del item.stash[_check_gc_key]
-
+    # Unconditional, and before the check rather than from it: a test that leaves a
+    # plotter open leaves a render window open for every test after it, whether or not
+    # this run is checking for leaks.
     pv.close_all()
-
-    # Skip GC check if test failed (or was skipped during call)
-    if not _test_passed(item):
-        return
-
-    # pytest holds every fixture value in item.funcargs until after all
-    # teardown hooks have run (its runner only then sets it to None), so a
-    # VTK-typed fixture value (sphere, texture, ...) would always be flagged
-    # as a leak. The test passed and its fixtures are already finalized, so
-    # release them a moment early.
-    item.funcargs.clear()
-
-    when = f'teardown of {item.name}'
-    # gc_collect_once deduplicates on request.node; it only needs .node
-    request = SimpleNamespace(node=item)
-    gc_collect_once(request)
-
-    def _assert_no_new():
-        # No plotter and no VTK object created during a test may survive it.
-        try:
-            snapshot.assert_no_new(when, request=request)
-        except AssertionError:
-            # A stale VTK ghost is deferred bookkeeping, not a leak: flush
-            # the ghost map and re-check before reporting a failure.
-            _flush_vtk_ghosts()
-            gc.collect()
-            snapshot.assert_no_new(when, request=request)
-
-    if item.get_closest_marker('expect_check_gc_fail'):
-        with pytest.raises(AssertionError, match='Found '):
-            _assert_no_new()
-        return
-
-    _assert_no_new()
+    # flush_ghosts: plotter teardown leaves stale ghosts behind, so a leak that a ghost
+    # sweep clears is deferred bookkeeping rather than a real one (unlike tests/core)
+    assert_no_leaks(item, flush_ghosts=True)
 
 
 @pytest.fixture

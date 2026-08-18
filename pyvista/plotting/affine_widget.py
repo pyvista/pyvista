@@ -459,7 +459,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
-        self._axes_inv = np.linalg.inv(self._axes)  # type: ignore[assignment]
+        self._axes_inv = np.linalg.inv(self._axes)
         for actor in self._arrows + self._circles:
             matrix = actor.user_matrix
             # Be sure to use the inverse here

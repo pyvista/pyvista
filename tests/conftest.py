@@ -5,6 +5,7 @@ import functools
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import requires
 from importlib.metadata import version
+import importlib.util
 import inspect
 import os
 import platform
@@ -342,8 +343,61 @@ def image(texture):
     return texture.to_image()
 
 
+@pytest.hookimpl(trylast=True)
+def pytest_sessionstart():
+    """Register Hypothesis' global PRNG now, while the heap is still thawed.
+
+    The leak check freezes the heap for the whole body of every test it covers (see
+    :mod:`tests.gc_check`), and ``gc.get_referrers()`` does not look in the permanent
+    generation. Hypothesis creates and registers its global PRNG lazily, on the first
+    ``@given`` test in the process, and ``register_random`` sanity-checks that PRNG with
+    ``gc.get_referrers()``. Run inside a frozen body, that comes back empty, so Hypothesis
+    warns that the PRNG looks collectable -- and ``filterwarnings = ['error']`` turns the
+    warning into a failure of that first test.
+
+    Two conditions have to line up for that. On Python 3.14 ``threading.local()``
+    allocates its per-thread dict at construction, so the dict holding the PRNG is built
+    when ``hypothesis.core`` is imported and lands in the permanent generation; through
+    3.13 it is created on first access, inside the frozen window, where it stays visible.
+    And the lazy ``register_random`` only runs under ``derandomize=True``, which comes
+    from Hypothesis' ``ci`` profile, auto-loaded when ``CI`` is set. A local run on 3.13,
+    or without ``CI``, will not reproduce it; xdist only picks which test takes the hit.
+
+    Running one throwaway example here does that registration once, at session start,
+    where nothing is frozen. Deleting this brings the failures back.
+
+    ``trylast`` so it runs after Hypothesis' own ``pytest_sessionstart``, which is where
+    Hypothesis stops treating the process as still initializing; before that it warns
+    about strategies being evaluated in a plugin.
+    """
+    # The docs-test dependency group installs no Hypothesis, and this conftest still has
+    # to import under it, so probe for the package instead of importing it at module scope.
+    if importlib.util.find_spec('hypothesis') is None:
+        return
+
+    from hypothesis import HealthCheck
+    from hypothesis import given
+    from hypothesis import settings
+    from hypothesis import strategies as st
+
+    @settings(
+        max_examples=1, deadline=None, database=None, suppress_health_check=list(HealthCheck)
+    )
+    @given(_=st.none())
+    def warm_up_prng(_):
+        pass
+
+    warm_up_prng()
+
+
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
+    parser.addoption(
+        '--no_check_gc',
+        action='store_true',
+        default=False,
+        help='skip the reference leak check, which is otherwise run (see tests/gc_check.py)',
+    )
     parser.addoption(
         '--playwright',
         action='store_true',

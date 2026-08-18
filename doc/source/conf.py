@@ -793,6 +793,7 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
+    'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------

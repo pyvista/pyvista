@@ -204,7 +204,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
-) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
+) -> PolyData | tuple[PolyData, NumpyArray[np.float64], NumpyArray[np.float64]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
