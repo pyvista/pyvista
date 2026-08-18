@@ -135,15 +135,9 @@ The plot directive has the following configuration options:
         installed (``pip install sphinx-autocodelink``); raises at build time
         if enabled without it. Only applies to directives with
         ``include-source`` on -- otherwise the code being linked from isn't
-        actually shown to the reader.
-
-        .. versionadded:: 0.49
-
-    pyvista_plot_autocodelink_category : str, default: "Autodoc"
-        Category recorded alongside every identifier ``pyvista_plot_autocodelink``
-        links, for grouping in ``.. autocodelink-index::`` output (e.g. a
-        docstring's generated "Used in" section). Defaults to
-        ``sphinx_autocodelink.DEFAULT_EXAMPLE_CATEGORY``.
+        actually shown to the reader. Recorded under sphinx-autocodelink's
+        own default (uncategorized) bucket; rename its displayed label with
+        sphinx-autocodelink's own ``autocodelink_category_labels``.
 
         .. versionadded:: 0.49
 
@@ -198,11 +192,9 @@ import pyvista as pv
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
-    from sphinx_autocodelink import DEFAULT_EXAMPLE_CATEGORY
     from sphinx_autocodelink import record_namespace
 except ImportError:
     record_namespace = None
-    DEFAULT_EXAMPLE_CATEGORY = 'Autodoc'
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -356,9 +348,6 @@ def setup(app: Sphinx):
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
-    app.add_config_value(
-        name='pyvista_plot_autocodelink_category', default=DEFAULT_EXAMPLE_CATEGORY, rebuild='html'
-    )
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -660,11 +649,7 @@ def render_figures(
             and include_source
         ):
             record_namespace(
-                env=env,
-                docname=env.docname,
-                source='\n'.join(clean_pieces),
-                namespace=ns,
-                category=config.pyvista_plot_autocodelink_category,
+                env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
             )
     finally:
         if code_cleanup:
