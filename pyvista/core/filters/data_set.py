@@ -7297,9 +7297,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Calls this filter on a subscripted access (``dataset['label_map']``), which
             sphinx-autocodelink's "Used In" can't yet resolve on its own.
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this filter.
-
         Parameters
         ----------
         colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
