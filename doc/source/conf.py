@@ -615,7 +615,7 @@ pyvista_plot_cleanup = pyvista_plot_setup
 # Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
 pyvista_plot_autocodelink = True
 
-# Append a "Used in" backreferences section to every autodoc-documented object's own
+# Append a "Used In" backreferences section to every autodoc-documented object's own
 # docstring (empty ones get nothing appended, not "No references found.").
 autocodelink_autodoc_backrefs = True
 
@@ -688,7 +688,7 @@ def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: AR
 
     Finds sections at any depth inside ``desc_content``, not just its direct
     children: a section appended after numpydoc's own Examples section (e.g.
-    sphinx-autocodelink's "Used in", via ``autodoc-process-docstring``) lands
+    sphinx-autocodelink's "Used In", via ``autodoc-process-docstring``) lands
     *inside* Examples' own section rather than beside it, since nothing closed
     Examples' heading first. Hoisting it from wherever it actually is keeps it
     a sibling of Notes/References/Examples/etc., not a subsection of one of

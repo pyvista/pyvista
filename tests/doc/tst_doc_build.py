@@ -159,7 +159,7 @@ def test_contributing_edit_button_points_to_contributing():
 # Two directions of the same relationship, kept together: does an example reference
 # the API (checked statically, from its own source) and does the API reference back
 # to it (checked here against the built HTML, since it relies on sphinx-autocodelink's
-# "Used in" backreferences -- `autocodelink_autodoc_backrefs` -- generated dynamically
+# "Used In" backreferences -- `autocodelink_autodoc_backrefs` -- generated dynamically
 # at build time, so it can't be checked statically like the other direction can).
 
 EXAMPLES_SRC_DIR = Path(ROOT_DIR) / 'examples'
@@ -219,7 +219,7 @@ def example_html_page(file_path: Path) -> Path:
 
 
 def load_backref_target_names() -> set[str]:
-    """Return the filename of every page linked from a "Used in" list, across all built pages."""
+    """Return the filename of every page linked from a "Used In" list, across all built pages."""
     names = set()
     for page in Path(HTML_DIR).rglob('*.html'):
         content = page.read_text(encoding='utf-8')
@@ -259,7 +259,7 @@ def test_example_has_cross_reference_from_api(case):
     if page.name not in BACKREF_TARGET_NAMES:
         msg = (
             "Example must be linked from PyVista's core or plotting API via a "
-            '"Used in" backreference.\n'
+            '"Used In" backreference.\n'
             'E.g. if the example shows how to use `my_function` with dataset '
             '`download_some_dataset`, add a call to one (or both) in the example, so '
             'sphinx-autocodelink records the reference automatically.'

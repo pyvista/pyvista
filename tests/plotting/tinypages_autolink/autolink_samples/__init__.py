@@ -125,7 +125,7 @@ def never_referenced():
 def hoist_target():
     """Referenced by :func:`call_hoist_target`; alone on its own page for hoisting.
 
-    Has its own Examples section, so its injected "Used in" section lands
+    Has its own Examples section, so its injected "Used In" section lands
     right after numpydoc's own Examples section in the docstring -- the
     exact position hoist_docstring_sections must still find it in.
 
