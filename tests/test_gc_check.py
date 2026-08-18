@@ -1,10 +1,9 @@
 """Test the leak-check machinery in :mod:`tests.gc_check` itself.
 
-The suites that use it can only exercise it through their own conftest, and each
-of those supplies a different policy. What is checked here is common to both and
-belongs to neither, so it drives ``take_snapshot`` and ``assert_no_leaks``
-directly. Nothing under ``tests/`` at this level runs the check, so these are
-outside the thing they are testing.
+The conftests can only exercise it through a real test run, so what is checked
+here drives ``take_snapshot`` and ``assert_no_leaks`` directly, on stub items.
+The module opts out of the ambient check for that reason (see the marker below):
+these tests have to be outside the thing they are testing.
 
 The leaks the check has to catch live with the policy that catches them:
 ``tests/plotting/test_gc.py`` and ``tests/core/test_gc.py``.
@@ -20,6 +19,14 @@ from refleak.testing import _core as _refleak_core
 
 from pyvista import _vtk
 from tests import gc_check
+
+# These drive the freeze machinery by hand, on stub items, and the fixture below resets
+# the process-wide freeze state afterwards. The ambient check from ``tests/conftest.py``
+# holds a freeze across each of them, so it has to stay out of the way here -- these
+# tests have to be outside the thing they are testing.
+pytestmark = pytest.mark.skip_check_gc
+
+_OWNER = 'tests.test_gc_check'
 
 
 @pytest.fixture(autouse=True)
@@ -71,12 +78,12 @@ def test_nested_checks_thaw_only_once() -> None:
     # A delta, not an absolute: CPython freezes a few hundred objects of its own
     # during startup, and other tests in this worker may have frozen more.
     baseline = gc.get_freeze_count()
-    gc_check.take_snapshot(outer, _vtk.vtkObjectBase, 'VTK')
+    gc_check.take_snapshot(outer, _vtk.vtkObjectBase, 'VTK', owner=_OWNER)
     frozen = gc.get_freeze_count()
     assert frozen > baseline
 
-    gc_check.take_snapshot(inner, _vtk.vtkObjectBase, 'VTK')
-    gc_check.assert_no_leaks(inner, flush_ghosts=False)
+    gc_check.take_snapshot(inner, _vtk.vtkObjectBase, 'VTK', owner=_OWNER)
+    gc_check.assert_no_leaks(inner, owner=_OWNER, flush_ghosts=False)
     # Still frozen, rather than still exactly ``frozen``. The count drops by one
     # for every object that was alive at the freeze and dies while it is held,
     # which is ordinary refcounting; on a 1.1M object heap a drift of one is
@@ -84,7 +91,7 @@ def test_nested_checks_thaw_only_once() -> None:
     # outright, so it shows up as 0, which this still catches.
     assert gc.get_freeze_count() > baseline, 'the inner check thawed the outer freeze'
 
-    gc_check.assert_no_leaks(outer, flush_ghosts=False)
+    gc_check.assert_no_leaks(outer, owner=_OWNER, flush_ghosts=False)
     # Zero, not back to ``baseline``: thawing is not the inverse of freezing.
     # ``gc.unfreeze()`` empties the permanent generation outright, so it also
     # releases whatever was in it before the outer check froze anything.
@@ -112,13 +119,13 @@ def test_leak_at_a_reused_address_is_still_found() -> None:
 
     # Nothing may raise between here and the check: it holds the freeze, and an
     # escape would leave the worker's heap frozen for every test after this one.
-    gc_check.take_snapshot(item, _vtk.vtkObjectBase, 'VTK')
+    gc_check.take_snapshot(item, _vtk.vtkObjectBase, 'VTK', owner=_OWNER)
     del doomed  # dies during the "test", freeing its address for the leak below
     leaked = _vtk.vtkPoints()
     leaked.self_ref = leaked  # a referrer for the report to walk
 
     with pytest.raises(AssertionError, match='Found 1 new VTK object'):
-        gc_check.assert_no_leaks(item, flush_ghosts=False)
+        gc_check.assert_no_leaks(item, owner=_OWNER, flush_ghosts=False)
 
     assert gc.get_freeze_count() == 0, 'the failing check left the heap frozen'
     assert id(leaked) == address, 'the allocator did not hand the address back'

@@ -18,8 +18,6 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 
-pytestmark = pytest.mark.check_gc
-
 # Built at import, so the leak check -- which freezes the heap at the start of each test
 # -- sees it as pre-existing rather than as something the test below leaked. Its C++
 # object is what keeps that test's ghost un-sweepable, and it has to outlive the test for

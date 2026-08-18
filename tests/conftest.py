@@ -17,7 +17,9 @@ import PIL
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
     _restore_registry_state as _restore_accessor_registry_state,
@@ -50,6 +52,10 @@ from pyvista.plotting.theme_registry import (
 )
 from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
 from pyvista.plotting.utilities.gl_checks import uses_egl
+from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
+from tests.gc_check import stash_phase_report
+from tests.gc_check import take_snapshot
 
 pv.OFF_SCREEN = True
 
@@ -341,6 +347,47 @@ def texture():
 @pytest.fixture
 def image(texture):
     return texture.to_image()
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # noqa: ARG001
+    """Stash per-phase reports so the leak check can skip on failure."""
+    outcome = yield
+    stash_phase_report(item, outcome.get_result())
+
+
+@pytest.fixture(autouse=True)
+def check_gc(request):
+    """Snapshot live VTK objects so leaks from this test can be detected.
+
+    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
+    with one that also watches plotters (a fixture of the same name in a nearer conftest
+    wins), and takes the snapshot this hook's counterpart there checks.
+    """
+    node = request.node
+    if (
+        # On VTK < 9.6 CellArray must hold its own arrays, so this can never pass there
+        not _SETDATA_TAKES_OWNERSHIP or not check_enabled(node)
+    ):
+        yield
+        return
+    take_snapshot(node, _vtk.vtkObjectBase, 'VTK', owner=__name__)
+    yield
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Close every plotter, and check that nothing the test created outlived it."""
+    yield
+    # Unconditional and repository-wide: a test that leaves a plotter open leaves a
+    # render window open for every test after it, wherever that test lives, and whether
+    # or not this run is checking for leaks. A no-op when nothing was plotted.
+    pv.close_all()
+    # Sweeping VTK's ghost map costs no strictness: it drops an entry only once the C++
+    # object behind it is dead, which makes that entry deferred bookkeeping rather than a
+    # leak. A ghost whose C++ object is still alive -- the shape #8873 shipped, planted by
+    # tests/core/test_gc.py -- survives the sweep and is still reported.
+    assert_no_leaks(item, owner=__name__, flush_ghosts=True)
 
 
 @pytest.hookimpl(trylast=True)

@@ -925,11 +925,11 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 
 Garbage Collection Checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Tests are checked for reference leaks: no plotter or VTK object created by a test may
-outlive it. Every test under ``tests/plotting`` is covered by the autouse ``check_gc``
-fixture in ``tests/plotting/conftest.py``, and modules under ``tests/core`` opt in with
-``pytestmark = pytest.mark.check_gc``. A leaking test fails at teardown with a rendered
-chain of what still holds a reference; see the
+Every test is checked for reference leaks: no plotter or VTK object created by a test
+may outlive it. The autouse ``check_gc`` fixture in ``tests/conftest.py`` covers the
+whole repository, and ``tests/plotting/conftest.py`` overrides it with a version that
+also watches plotters. A leaking test fails at teardown with a rendered chain of what
+still holds a reference; see the
 `refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
 
 The check freezes the heap rather than scanning it, so it costs no measurable time and

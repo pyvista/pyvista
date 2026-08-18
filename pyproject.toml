@@ -280,7 +280,6 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'check_gc: Enable the strict core leak check for this test (see tests/core/conftest.py).',
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
   'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',

@@ -661,7 +661,11 @@ def test_load_dataset_no_reader():
 def test_unique_cell_types_explicit_structured_grid():
     loader = examples._dataset_explicit_structured
     loader.load_and_store_dataset()
-    assert loader.unique_cell_types == (pv.CellType.HEXAHEDRON,)
+    try:
+        assert loader.unique_cell_types == (pv.CellType.HEXAHEDRON,)
+    finally:
+        # The loader is module-level, so a stored dataset outlives this test
+        loader.clear_dataset()
 
 
 def test_format_file_size():
