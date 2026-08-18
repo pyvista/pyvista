@@ -6505,6 +6505,10 @@ class BasePlotter(_BoundsSizeMixin):
             See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
+        See Also
+        --------
+        :ref:`points_gaussian_scale_example`
+
         Returns
         -------
         pyvista.Actor
@@ -6767,6 +6771,10 @@ class BasePlotter(_BoundsSizeMixin):
               ``transparent_background`` is set to ``False``.
             * [Window height x Window width x 4] if
               ``transparent_background`` is set to ``True``.
+
+        See Also
+        --------
+        :ref:`screenshot_example`
 
         Examples
         --------

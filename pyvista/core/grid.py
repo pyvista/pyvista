@@ -665,6 +665,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.47
 
+    See Also
+    --------
+    :ref:`create_uniform_grid_example`
+
     Examples
     --------
     Create an empty ImageData.

@@ -2093,6 +2093,8 @@ class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonic
     >>> dodeca = pv.PlatonicSolidSource('dodecahedron')
     >>> dodeca.output.plot(categories=True)
 
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
+
     """
 
     def __init__(self: PlatonicSolidSource, kind: str = 'tetrahedron') -> None:

@@ -438,6 +438,9 @@ class AxesAssembly(_XYZAssembly):
     --------
     AxesAssemblySymmetric
 
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
+
     Examples
     --------
     .. pyvista-plot::
@@ -1369,6 +1372,9 @@ class AxesAssemblySymmetric(AxesAssembly):
     See Also
     --------
     AxesAssembly
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------

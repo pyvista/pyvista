@@ -1199,6 +1199,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         add_axes
 
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1287,6 +1290,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_north_arrow_widget
             Add north arrow as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1402,6 +1408,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add any actor as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1528,6 +1537,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add a custom mesh as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1684,6 +1696,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add any actor as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1999,6 +2014,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         remove_bounds_axes
         update_bounds_axes
 
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+        :ref:`bounds_example`
+            Additional examples using this method.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2291,6 +2311,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_bounds
         remove_bounds_axes
         update_bounds_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+        :ref:`bounds_example`
+            Additional examples using this method.
 
         Examples
         --------
@@ -2749,7 +2774,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.Modified()
 
     def clear(self) -> None:
-        """Remove all actors and properties."""
+        """Remove all actors and properties.
+
+        See Also
+        --------
+        :ref:`clear_example`
+
+        """
         self.clear_actors()
         if self._charts is not None:
             self._charts.deep_clean()
@@ -3678,6 +3709,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
 
+        See Also
+        --------
+        :ref:`ssao_example`
+
         Examples
         --------
         Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
@@ -4215,6 +4250,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         -------
         :vtk:`vtkLegendBoxActor`
             Actor for the legend.
+
+        See Also
+        --------
+        :ref:`legend_example`
 
         Examples
         --------

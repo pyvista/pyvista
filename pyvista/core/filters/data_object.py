@@ -1585,6 +1585,8 @@ class DataObjectFilters:
         --------
         :meth:`~pyvista.DataObjectFilters.validate_mesh`
         :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :ref:`mesh_validation_example`
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
 
         Examples
         --------
@@ -3247,6 +3249,8 @@ class DataObjectFilters:
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip('z')
         >>> clipped_cube.plot()
+
+        See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
         origin_, normal_ = _validate_plane_origin_and_normal(

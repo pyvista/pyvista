@@ -887,6 +887,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         When ``render_points_as_spheres=True``, VTK uses a different
         rendering path that bypasses the fragment shader.
 
+        See Also
+        --------
+        :ref:`point_sprites_example`
+
         Examples
         --------
         Render points as circles instead of squares.

@@ -541,6 +541,8 @@ def download_puppy(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
 
+        :ref:`read_image_example`
+
     """
     return _download_dataset(_dataset_puppy, load=load)
 
@@ -665,6 +667,12 @@ def download_bunny(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
 
+        This dataset is used in the following examples:
+
+        * :ref:`read_file_example`
+        * :ref:`clip_with_surface_example`
+        * :ref:`subdivide_example`
+
     """
     return _download_dataset(_dataset_bunny, load=load)
 
@@ -712,6 +720,10 @@ def download_bunny_coarse(load: bool = True) -> PolyData | str:  # noqa: FBT001,
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Bunny Dataset <bunny_dataset>`
+
+        This dataset is used in the following examples:
+
+        * :ref:`clip_with_surface_example`
 
     """
     return _download_dataset(_dataset_bunny_coarse, load=load)
@@ -1221,6 +1233,11 @@ def download_knee(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Knee Full Dataset <knee_full_dataset>`
 
+        This dataset is used in the following examples:
+
+        * :ref:`volume_rendering_example`
+        * :ref:`slider_bar_widget_example`
+
     """
     return _download_dataset(_dataset_knee, load=load)
 
@@ -1400,6 +1417,15 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
         :ref:`Nefertiti Dataset <nefertiti_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`compute_normals_example`
+        * :ref:`extract_edges_example`
+        * :ref:`show_edges_example`
+        * :ref:`edl_example`
+        * :ref:`pbr_example`
+        * :ref:`box_widget_example`
 
     """
     warn_external(
@@ -2579,6 +2605,9 @@ def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
         :ref:`Chest Dataset <chest_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`volume_rendering_example`
+            Example using this dataset.
+
     """
     return _download_dataset(_dataset_chest, load=load)
 
@@ -3084,6 +3113,9 @@ def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
 
         :ref:`Frd Dataset <frd_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`calculix_colormap_example`
+            Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
 
     """
     return _download_dataset(_dataset_frd, load=load)
@@ -4508,6 +4540,8 @@ def download_dolfin(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT00
 
         :ref:`Dolfin Dataset <dolfin_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`read_dolfin_example`
 
     """
     return _download_dataset(_dataset_dolfin, load=load)
@@ -7169,6 +7203,9 @@ def download_cloud_dark_matter_dense(load: bool = True) -> PointSet | str:  # no
 
         :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
 
+        :ref:`point_clouds_example`
+            More details on how to plot point clouds.
+
     """
     return _download_dataset(_dataset_cloud_dark_matter_dense, load=load)
 
@@ -7243,6 +7280,9 @@ def download_stars_cloud_hyg(load: bool = True) -> PolyData | str:  # noqa: FBT0
 
         :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`point_clouds_example`
+            More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_stars_cloud_hyg, load=load)
@@ -8515,6 +8555,9 @@ def download_whole_body_ct_male(
 
     .. seealso::
 
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
+
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
@@ -8768,6 +8811,12 @@ def download_whole_body_ct_female(
 
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
             Similar dataset of a male subject.
+
+        :ref:`crop_labeled_example`
+            Example cropping this dataset using a segmentation mask.
+
+        :ref:`volume_with_mask_example`
+            See additional examples using this dataset.
 
     """
     if high_resolution:

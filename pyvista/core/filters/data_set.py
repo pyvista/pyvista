@@ -1051,6 +1051,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_edges=True,
         ... )
 
+        See :ref:`using_filters_example` for more examples using a similar filter.
+
         """
         tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
@@ -1407,6 +1409,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
           Y Bounds:   0.000e+00, 1.000e+00
           Z Bounds:   0.000e+00, 5.000e+00
           N Arrays:   3
+
+        See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
         msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
@@ -2604,6 +2608,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> largest = mesh.extract_largest()
         >>> largest.plot()
 
+        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
+        more examples using this filter.
+
         .. seealso::
             :func:`pyvista.DataSetFilters.connectivity`
 
@@ -2970,6 +2977,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.PolyData
             Mesh containing the ``point_data['SelectedPoints']`` array.
 
+        See Also
+        --------
+        :ref:`extract_cells_inside_surface_example`
+
         Examples
         --------
         Determine which points on a plane are inside a manifold sphere
@@ -3275,6 +3286,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
+
+        See :ref:`resampling_example` for more examples using this filter.
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
@@ -7284,6 +7297,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Calls this filter on a subscripted access (``dataset['label_map']``), which
             sphinx-autocodelink's "Used In" can't yet resolve on its own.
 
+        :ref:`anatomical_groups_example`
+            Additional examples using this filter.
+
         Parameters
         ----------
         colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
@@ -7719,7 +7735,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             This filter returns voxels represented as point data, not
             :attr:`~pyvista.CellType.VOXEL` cells.
             This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
-            which return meshes with voxel cells.
+            which return meshes with voxel cells. See :ref:`image_representations_example`
+            for examples demonstrating the difference.
 
         .. note::
             This filter does not discard internal surfaces, due, for instance, to
