@@ -582,13 +582,11 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
-    # trace_locals=False: its sys.setprofile() tracing instruments every function call
-    # during every example's execution, which has coincided with joblib worker SIGSEGVs
-    # in CI (unconfirmed root cause, but the risk applies build-wide for a feature only
-    # one example -- anatomical_groups.py -- currently benefits from). Re-enable once
-    # that's ruled out or a narrower opt-in (e.g. per-example) exists upstream.
-    'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(trace_locals=False), 'matplotlib'),
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods. Only
+    # resolves an example's own top-level (module) scope -- sphinx-autocodelink's local-
+    # scope tracing for Sphinx-Gallery examples was removed after repeated joblib worker
+    # SIGSEGVs in CI; see sphinx-autocodelink's README.
+    'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
