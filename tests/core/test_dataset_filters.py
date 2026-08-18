@@ -257,7 +257,10 @@ def test_clip_surface():
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
-        clp = dataset.clip_surface(dataset.extract_surface(algorithm=None), crinkle=crinkle)
+        # PointSet has no cells so it cannot generate its own surface; clip
+        # against an enclosing sphere instead, which works for all dataset types.
+        surface = pv.Sphere(radius=dataset.length, center=dataset.center)
+        clp = dataset.clip_surface(surface, crinkle=crinkle)
         assert clp is not None
         if isinstance(dataset, pv.PointSet):
             assert isinstance(clp, pv.PointSet)
