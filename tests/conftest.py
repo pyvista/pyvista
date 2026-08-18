@@ -405,7 +405,7 @@ def pytest_addoption(parser):
         help='run Playwright-based tests',
     )
     parser.addoption(
-        '--docs_build',
+        '--doc_build',
         action='store_true',
         default=False,
         help='run tests that require the documentation to already be built',
@@ -622,8 +622,8 @@ def pytest_runtest_setup(item: pytest.Item):
     if item.get_closest_marker('needs_playwright') and not playwright:
         pytest.skip(f'Playwright test not enabled with {flag}')
 
-    docs_build = item.config.getoption(flag := '--docs_build')
-    if item.get_closest_marker('needs_docs_build') and not docs_build:
+    doc_build = item.config.getoption(flag := '--doc_build')
+    if item.get_closest_marker('needs_doc_build') and not doc_build:
         pytest.skip(f'Documentation build required, not enabled with {flag}')
 
 

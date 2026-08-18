@@ -13,11 +13,11 @@ _THIS_DIR = Path(__file__).parent
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Auto-apply `needs_docs_build` to every test collected under this directory.
+    """Auto-apply `needs_doc_build` to every test collected under this directory.
 
     `items` covers the whole session, not just this directory, since collection
     hooks aren't scoped to the conftest.py that defines them.
     """
     for item in items:
         if _THIS_DIR in item.path.parents:
-            item.add_marker(pytest.mark.needs_docs_build)
+            item.add_marker(pytest.mark.needs_doc_build)
