@@ -289,51 +289,45 @@ def test_example_anchor(case):
         raise pytest.fail(msg)
 
 
-# -- no "See Also" entry links directly to a gallery example ------------------
+# -- no "See Also" entry duplicates an example already in "Used In" -----------
 # numpydoc's own "See Also" section and the raw `.. seealso::` directive both render as
-# the same `.. admonition:: seealso` markup. A hand-written link to a gallery example in
-# there is redundant with sphinx-autocodelink's own "Used In" section, and unlike "Used
-# In", never gets rechecked against what the example actually does. A "See Also" pointing
-# at another API page (e.g. a related method) is unaffected.
+# the same `.. admonition:: seealso` markup. A hand-written link to a gallery example
+# there is only a problem once sphinx-autocodelink's own "Used In" section already shows
+# the same example -- at that point it's pure duplication, and unlike "Used In", it never
+# gets rechecked against what the example actually does. A "See Also" example that "Used
+# In" doesn't (yet) cover is left alone -- that's real information, not redundancy.
 
 _SEE_ALSO_RE = re.compile(r'<div class="admonition seealso">(.*?)</div>', re.DOTALL)
-_EXAMPLE_HREF_RE = re.compile(r'href="[^"]*/examples/[^"]*"')
-
-#: Pages exempted because sphinx-autocodelink can't yet resolve the identifier itself --
-#: not a place to park an entry that's merely inconvenient to remove. Each needs a reason
-#: tying it to a real, tracked resolution gap; drop the entry once that gap is fixed.
-_KNOWN_RESOLUTION_GAPS = {
-    # dataset['label_map'].contour_labels(...): a subscripted access, not a plain name --
-    # sphinx-autocodelink's identifier resolution doesn't walk through those yet.
-    'pyvista.ImageDataFilters.contour_labels',
-    'pyvista.DataSetFilters.color_labels',
-}
+_BACKREFS_SECTION_RE = re.compile(
+    r'<section class="sphinx-autocodelink-backrefs"[^>]*>.*?</section>', re.DOTALL
+)
+_EXAMPLE_HREF_RE = re.compile(r'href="([^"]*/examples/[^"]*)"')
 
 
-def test_see_also_does_not_link_to_examples():
+def _example_hrefs(blocks: list[str]) -> set[str]:
+    """Return the basename of every example page linked from `blocks`."""
+    return {Path(href).name for block in blocks for href in _EXAMPLE_HREF_RE.findall(block)}
+
+
+def test_see_also_does_not_duplicate_used_in_examples():
     pages = sorted(Path(HTML_DIR).rglob('*.html'))
     assert pages, f'no built pages found under {HTML_DIR}. Build the documentation first.'
 
-    failures = [
-        page.stem
-        for page in pages
-        if page.stem not in _KNOWN_RESOLUTION_GAPS
-        and any(
-            _EXAMPLE_HREF_RE.search(block)
-            for block in _SEE_ALSO_RE.findall(page.read_text(encoding='utf-8'))
-        )
-    ]
+    failures = {}
+    for page in pages:
+        html_text = page.read_text(encoding='utf-8')
+        see_also_examples = _example_hrefs(_SEE_ALSO_RE.findall(html_text))
+        used_in_examples = _example_hrefs(_BACKREFS_SECTION_RE.findall(html_text))
+        duplicated = see_also_examples & used_in_examples
+        if duplicated:
+            failures[page.stem] = duplicated
 
     note = (
-        'If a listed page\'s own "Used In" section already shows the example, remove the '
-        "\"See Also\" entry -- it's redundant. If it doesn't, that's a sphinx-autocodelink "
-        'resolution gap (e.g. a subscripted/local-scoped access, like `mesh["key"].method()`) '
-        'to fix there instead of leaving the hand-written entry in place:\n'
+        'Remove the "See Also" entry for each example below -- it duplicates that same '
+        'example already listed in the page\'s own "Used In" section:\n'
     )
     assert not failures, note + '\n'.join(
-        f'{name}: :ref: to an example in its "See Also" section, redundant with its own '
-        f'"Used In" section (or should be, once sphinx-autocodelink resolves it there).'
-        for name in failures
+        f'{name}: {", ".join(sorted(examples))}' for name, examples in sorted(failures.items())
     )
 
 
