@@ -3186,11 +3186,6 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     grid : bool, default: True
         Show the background grid in the plot.
 
-    See Also
-    --------
-    :ref:`chart_basics_example`
-    :ref:`chart_overlays_example`
-
     Examples
     --------
     Plot a simple sine wave as a scatter and line plot.
@@ -4625,10 +4620,6 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         the plotter is rendered. For static charts, setting this
         to ``False`` can improve performance.
 
-    See Also
-    --------
-    :ref:`chart_overlays_example`
-
     Examples
     --------
     Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
@@ -4949,10 +4940,6 @@ class Charts(_NoNewAttrMixin):
         ----------
         *charts : Chart2D | Chart3D
             One or more chart objects to be added to the collection.
-
-        See Also
-        --------
-        :ref:`chart_overlays_example`
 
         """
         if self._scene is None:

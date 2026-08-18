@@ -73,9 +73,6 @@ def load_planet(
         :ref:`Planet Dataset <planet_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _dataset_planet.load(  # type: ignore[return-value]
         radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
@@ -134,9 +131,6 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_sun_surface`
             Download the surface of the Sun.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     _planet_deprecated('sun')
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
@@ -169,9 +163,6 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_moon_surface`
             Download the surface of the Moon.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     _planet_deprecated('moon')
@@ -206,9 +197,6 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_mercury_surface`
             Download the surface of Mercury.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     _planet_deprecated('mercury')
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
@@ -241,9 +229,6 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_venus_surface`
             Download the surface of the Venus.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     _planet_deprecated('venus')
@@ -278,9 +263,6 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.examples.load_globe_texture`
             Download the surface of the Earth.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     _planet_deprecated('earth')
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
@@ -314,9 +296,6 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_mars_surface`
             Download the surface of Mars.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     _planet_deprecated('mars')
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
@@ -349,9 +328,6 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_jupiter_surface`
             Download the surface of Jupiter.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     _planet_deprecated('jupiter')
@@ -391,9 +367,6 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_saturn_rings`
             Download the texture of Saturn's rings.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     _planet_deprecated('saturn')
@@ -445,9 +418,6 @@ def load_planet_rings(*, inner: float = 0.25, outer: float = 0.5, c_res: int = 5
 
         :func:`~pyvista.examples.planets.download_saturn_surface`
             Download the surface of Saturn.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _dataset_planet_rings.load(inner=inner, outer=outer, c_res=c_res)  # type: ignore[return-value]
@@ -505,9 +475,6 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
         :func:`~pyvista.examples.planets.download_saturn_surface`
             Download the surface of Saturn.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     # Deprecated on 0.49.0, estimated removal on v0.52.0
     if pv.version_info >= (0, 52):  # pragma: no cover
@@ -549,9 +516,6 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_uranus_surface`
             Download the surface of Uranus.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     _planet_deprecated('uranus')
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
@@ -585,9 +549,6 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
         :func:`~pyvista.examples.planets.download_neptune_surface`
             Download the surface of Neptune.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     _planet_deprecated('neptune')
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
@@ -620,9 +581,6 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
 
         :func:`~pyvista.examples.planets.download_pluto_surface`
             Download the surface of Pluto.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     _planet_deprecated('pluto')
@@ -680,9 +638,6 @@ def download_sun_surface(
 
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_sun_surface, load=load, texture=texture)
@@ -745,9 +700,6 @@ def download_moon_surface(
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
 
@@ -808,9 +760,6 @@ def download_mercury_surface(
 
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_mercury_surface, load=load, texture=texture)
@@ -891,9 +840,6 @@ def download_venus_surface(
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     if atmosphere:
         return _download_dataset_texture(_dataset_venus_surface, load=load, texture=texture)
@@ -962,9 +908,6 @@ def download_mars_surface(
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _download_dataset_texture(_dataset_mars_surface, load=load, texture=texture)
 
@@ -1025,9 +968,6 @@ def download_jupiter_surface(
 
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_jupiter_surface, load=load, texture=texture)
@@ -1096,9 +1036,6 @@ def download_saturn_surface(
         :func:`~pyvista.examples.planets.download_saturn_rings`
             Download the texture of Saturn's rings.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _download_dataset_texture(_dataset_saturn_surface, load=load, texture=texture)
 
@@ -1165,9 +1102,6 @@ def download_saturn_rings(
         :func:`~pyvista.examples.planets.download_saturn_surface`
             Download the surface of Saturn.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _download_dataset_texture(_dataset_saturn_rings, load=load, texture=texture)
 
@@ -1228,9 +1162,6 @@ def download_uranus_surface(
 
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_uranus_surface, load=load, texture=texture)
@@ -1293,9 +1224,6 @@ def download_neptune_surface(
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _download_dataset_texture(_dataset_neptune_surface, load=load, texture=texture)
 
@@ -1356,9 +1284,6 @@ def download_pluto_surface(
 
         :func:`~pyvista.examples.planets.load_planet`
             Load a planet as a sphere with texture coordinates.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_pluto_surface, load=load, texture=texture)
@@ -1430,9 +1355,6 @@ def download_stars_sky_background(
         :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
             Sky texture of the Milky Way galaxy.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
-
     """
     return _download_dataset_texture(_dataset_stars_sky_background, load=load, texture=texture)
 
@@ -1498,9 +1420,6 @@ def download_milkyway_sky_background(
 
         :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
             Night sky stars texture.
-
-        :ref:`planets_example`
-            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_milkyway_sky_background, load=load, texture=texture)

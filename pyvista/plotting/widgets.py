@@ -995,10 +995,6 @@ class WidgetComponent(_NoNewAttrMixin):
         output : :vtk:`vtkPlaneWidget` | :vtk:`vtkImplicitPlaneWidget`
             The VTK plane widget depending on the value of ``implicit``.
 
-        See Also
-        --------
-        :ref:`clip_volume_widget_example`
-
         """
         if isinstance(volume, (pv.ImageData, pv.RectilinearGrid)):
             volume = self._plotter.add_volume(volume, **kwargs)
@@ -1620,10 +1616,6 @@ class WidgetComponent(_NoNewAttrMixin):
         :vtk:`vtkSliderWidget`
             Slider widget.
 
-        See Also
-        --------
-        :ref:`multi_slider_widget_example`
-
         Examples
         --------
         >>> import pyvista as pv
@@ -2139,10 +2131,6 @@ class WidgetComponent(_NoNewAttrMixin):
         :vtk:`vtkSplineWidget`
             The newly created spline widget.
 
-        See Also
-        --------
-        :ref:`spline_widget_example`
-
         Notes
         -----
         This widget has trouble displaying certain colors. Use only simple
@@ -2370,10 +2358,6 @@ class WidgetComponent(_NoNewAttrMixin):
         :vtk:`vtkDistanceWidget`
             The newly created distance widget.
 
-        See Also
-        --------
-        :ref:`distance_measurement_example`
-
         """
         msg = 'Cannot add a widget to a closed plotter.'
         iren = self._plotter._get_iren_not_none(msg)
@@ -2509,10 +2493,6 @@ class WidgetComponent(_NoNewAttrMixin):
         -------
         :vtk:`vtkSphereWidget`
             The sphere widget.
-
-        See Also
-        --------
-        :ref:`sphere_widget_example`
 
         """
         if color is None:
@@ -3023,9 +3003,6 @@ class WidgetComponent(_NoNewAttrMixin):
 
         :meth:`~pyvista.Plotter.add_box_axes`
             Add an axes box as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------

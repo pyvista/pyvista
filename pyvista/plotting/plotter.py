@@ -1202,8 +1202,6 @@ class BasePlotter(_BoundsSizeMixin):
         See Also
         --------
         link_views
-        :ref:`multi_window_example`
-        :ref:`sharing_scalar_bars_example`
 
         Examples
         --------
@@ -5841,12 +5839,6 @@ class BasePlotter(_BoundsSizeMixin):
         size of the gif. See `Optimizing a GIF using pygifsicle
         <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_.
 
-        See Also
-        --------
-        :ref:`gif_example`
-        :ref:`moving_cmap_example`
-        :ref:`moving_isovalue_example`
-
         Examples
         --------
         Open a gif file, setting the framerate to 8 frames per second and
@@ -5942,10 +5934,6 @@ class BasePlotter(_BoundsSizeMixin):
         -----
         Values in ``image_depth`` are negative to adhere to a right-handed
         coordinate system.
-
-        See Also
-        --------
-        :ref:`image_depth_example`
 
         Examples
         --------
@@ -6271,10 +6259,6 @@ class BasePlotter(_BoundsSizeMixin):
         :vtk:`vtkActor2D`
             VTK label actor.  Can be used to change properties of the labels.
 
-        See Also
-        --------
-        :ref:`point_labels_example`
-
         Examples
         --------
         >>> import numpy as np
@@ -6520,10 +6504,6 @@ class BasePlotter(_BoundsSizeMixin):
         **kwargs : dict, optional
             See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
-
-        See Also
-        --------
-        :ref:`points_gaussian_scale_example`
 
         Returns
         -------
@@ -6787,10 +6767,6 @@ class BasePlotter(_BoundsSizeMixin):
               ``transparent_background`` is set to ``False``.
             * [Window height x Window width x 4] if
               ``transparent_background`` is set to ``True``.
-
-        See Also
-        --------
-        :ref:`screenshot_example`
 
         Examples
         --------
