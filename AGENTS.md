@@ -64,6 +64,9 @@ baseline the run collected.
 
 ## Disclosing agent use
 
-`CONTRIBUTING.rst` follows the Python Developer's Guide: disclosure in the pull request
-description is appreciated and not required, and whoever opens the pull request is
-responsible for its content and for what each push costs the project.
+`CONTRIBUTING.rst` requires it: when you write any part of a pull request, its
+description has to say so. Draft that clause along with the rest of the description, and
+hand it to the author to confirm or reword — it is their statement that they reviewed the
+change and can explain it, so never write it as though you were them and never assert on
+their behalf that they understood it. Whoever opens the pull request is responsible for
+its content and for what each push costs the project.
