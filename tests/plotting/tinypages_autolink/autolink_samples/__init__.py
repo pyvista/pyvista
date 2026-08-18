@@ -115,3 +115,26 @@ def module_attribute_chain():
 
     """
     return
+
+
+def never_referenced():
+    """Nothing in this fixture site calls this -- for the empty-backrefs case."""
+    return
+
+
+def hoist_target():
+    """Referenced by :func:`call_hoist_target`; alone on its own page for hoisting."""
+    return
+
+
+def call_hoist_target():
+    """Call ``hoist_target``, giving it a non-empty backreferences section.
+
+    Examples
+    --------
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
+    >>> from autolink_samples import hoist_target
+    >>> hoist_target()
+
+    """
+    return

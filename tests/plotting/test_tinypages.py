@@ -548,6 +548,29 @@ def test_autolink_idempotent_rebuild(tmp_path: Path):
     assert html.count('sphinx-autocodelink-a" href="#autolink_samples.Widget.draw"') == 4
 
 
+@flaky_test(exceptions=(AssertionError,))
+def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
+    """``autocodelink_autodoc_backrefs`` sections must hoist exactly like numpydoc's own."""
+    source_dir = Path(__file__).parent / 'tinypages_autolink'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    referenced = (html_dir / 'hoist_referenced.html').read_text(encoding='utf-8')
+    # hoisted: a sibling of </dl>, not nested inside <dd> like an un-hoisted section would be.
+    assert re.search(r'</dl>\s*<section class="sphinx-autocodelink-backrefs"', referenced)
+    assert '<h2>Used in' in referenced
+    assert 'href="index.html"' in referenced
+
+    unreferenced = (html_dir / 'hoist_unreferenced.html').read_text(encoding='utf-8')
+    assert 'sphinx-autocodelink' not in unreferenced
+    assert 'No references found' not in unreferenced
+
+
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler

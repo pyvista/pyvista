@@ -26,6 +26,8 @@ Dynamic Autolink Testing
 
 .. autofunction:: module_attribute_chain
 
+.. autofunction:: call_hoist_target
+
 .. currentmodule:: autolink_samples.sub
 
 .. autofunction:: make

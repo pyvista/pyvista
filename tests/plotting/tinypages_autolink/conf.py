@@ -10,8 +10,16 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import sys
+from typing import TYPE_CHECKING
+
+from docutils import nodes
+from sphinx import addnodes
 
 import pyvista as pv
+
+if TYPE_CHECKING:
+    from docutils.nodes import Element
+    from sphinx.application import Sphinx
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -34,6 +42,7 @@ numpydoc_show_class_members = False
 # -- pyvista configuration ------------------------------------------------
 pv.BUILDING_GALLERY = True
 pyvista_plot_autocodelink = True
+autocodelink_autodoc_backrefs = True
 
 # -- .. pyvista-plot:: directive, wrapping numpydoc's Examples sections ---
 from numpydoc.docscrape_sphinx import SphinxDocString
@@ -56,3 +65,50 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+
+# -- headings instead of rubrics for docstring sections -----------------------
+# Mirrors doc/source/conf.py's own override of the same name: numpydoc renders section
+# headers (Notes, References, Examples) as `.. rubric::` by default, which are invisible
+# to a heading-built "on this page" navbar. Duplicated here (not imported) since this
+# fixture is deliberately self-contained -- see the module docstring.
+def _str_header(self, name):  # noqa: ARG001
+    return [name, '-' * len(name), '']
+
+
+SphinxDocString._str_header = _str_header
+
+
+def _is_nested_desc(node: Element) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, addnodes.desc):
+            return True
+        parent = parent.parent
+    return False
+
+
+def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Move docstring sections out of their ``desc`` node to page level."""
+    for desc in list(doctree.findall(addnodes.desc)):
+        if _is_nested_desc(desc):
+            continue
+        parent = desc.parent
+        if parent is None:
+            continue
+        if len([node for node in parent if isinstance(node, addnodes.desc)]) != 1:
+            continue
+        content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
+        if content is None:
+            continue
+        sections = [node for node in content if isinstance(node, nodes.section)]
+        index = parent.index(desc)
+        for offset, section in enumerate(sections):
+            content.remove(section)
+            parent.insert(index + 1 + offset, section)
+
+
+def setup(app: Sphinx) -> None:
+    """Wire up the same doctree-read priority ordering as doc/source/conf.py."""
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    app.connect('doctree-read', hoist_docstring_sections, priority=400)
