@@ -597,6 +597,11 @@ def test_compute_single_cell_sizes(datasets, keyword, array_name, empty):
     for dataset in datasets:
         dataset_ = dataset.__class__() if empty else dataset
         dataset_.clear_data()
+        if isinstance(dataset_, pv.PointSet):
+            # PointSet has no cells, so cell sizes cannot be computed
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataset_.compute_cell_sizes(**kwargs)
+            continue
         result = dataset_.compute_cell_sizes(**kwargs)
         assert result.array_names == [array_name]
 
