@@ -3697,9 +3697,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         :attr:`cell_connectivity`.
 
         .. deprecated:: 0.49
-            Use :attr:`cell_offsets` instead. The name is plural because the array holds
-            ``n_cells + 1`` values, and it avoids the clash with
-            :attr:`pyvista.ImageData.offset`, which is an unrelated property.
+            Use :attr:`cell_offsets` instead.
 
         Returns
         -------
