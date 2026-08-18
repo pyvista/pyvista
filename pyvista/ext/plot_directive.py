@@ -199,6 +199,7 @@ except ImportError:
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from docutils.parsers.rst.states import RSTState
     from sphinx.application import Sphinx
     from sphinx.config import Config
     from sphinx.environment import BuildEnvironment
@@ -561,6 +562,7 @@ def render_figures(
     force_static,
     env: BuildEnvironment | None = None,
     include_source: bool = True,
+    state: RSTState | None = None,
 ):
     """Run a pyplot script and save the images in *output_dir*.
 
@@ -570,7 +572,8 @@ def render_figures(
 
     If *env* is given and *include_source* is true, also records the code's identifiers
     to hyperlink -- skipped when the source isn't shown, since there'd be nothing on the
-    page for a reader to click through to.
+    page for a reader to click through to. *state* is the calling directive's own
+    ``self.state``, passed through to sphinx-autocodelink for its own categorization.
     """
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ```pyvista-plot::``
@@ -649,7 +652,11 @@ def render_figures(
             and include_source
         ):
             record_namespace(
-                env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
+                env=env,
+                docname=env.docname,
+                source='\n'.join(clean_pieces),
+                namespace=ns,
+                state=state,
             )
     finally:
         if code_cleanup:
@@ -808,6 +815,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 force_static=force_static,
                 env=document.settings.env,
                 include_source=options['include-source'],
+                state=state,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter

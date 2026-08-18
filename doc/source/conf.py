@@ -625,7 +625,7 @@ autocodelink_autodoc_backrefs = True
 # built (Sphinx-Gallery, or a docstring's own example code), just what kind of page it is.
 autocodelink_category_labels = {
     'Sphinx Gallery': 'Gallery Examples',
-    'Documentation': 'API Reference',
+    'Documentation': 'Guides',
 }
 
 
