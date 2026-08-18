@@ -210,8 +210,12 @@ EXAMPLE_CASE_IDS = [case.test_id for case in EXAMPLE_CASES]
 
 
 def example_html_page(file_path: Path) -> Path:
-    """Return the built HTML page Sphinx-Gallery generates for an example."""
-    return Path(HTML_DIR) / file_path.relative_to(EXAMPLES_SRC_DIR).with_suffix('.html')
+    """Return the built HTML page Sphinx-Gallery generates for an example.
+
+    ``gallery_dirs: ['examples']`` in ``conf.py`` mirrors the source ``examples/`` dir
+    under the same name in the built output, so that path segment is kept, not stripped.
+    """
+    return Path(HTML_DIR) / file_path.relative_to(ROOT_DIR).with_suffix('.html')
 
 
 def load_backref_target_names() -> set[str]:
