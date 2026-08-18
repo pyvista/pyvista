@@ -154,6 +154,65 @@ def test_contributing_edit_button_points_to_contributing():
     assert 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst' in html
 
 
+# -- cross-references from the API back to gallery examples -------------------
+# `test_example_has_cross_reference_to_api` (tests/doc/test_sphinx_gallery.py) checks
+# the other direction statically, from example source. This direction can't be: it
+# relies on sphinx-autocodelink's "Used in" backreferences
+# (`autocodelink_autodoc_backrefs`), generated dynamically from the built docs, so it's
+# checked here against the built HTML instead.
+
+EXAMPLES_SRC_DIR = Path(ROOT_DIR) / 'examples'
+
+_BACKREF_LIST_RE = re.compile(r'<ul class="sphinx-autocodelink-index">(.*?)</ul>', re.DOTALL)
+_BACKREF_HREF_RE = re.compile(r'href="([^"]*)"')
+
+
+def find_example_files() -> list[Path]:
+    """Return every gallery example source file."""
+    return sorted(EXAMPLES_SRC_DIR.rglob('*.py'))
+
+
+def example_html_page(example_file: Path) -> Path:
+    """Return the built HTML page Sphinx-Gallery generates for an example."""
+    return Path(HTML_DIR) / example_file.relative_to(EXAMPLES_SRC_DIR).with_suffix('.html')
+
+
+def load_backref_target_names() -> set[str]:
+    """Return the filename of every page linked from a "Used in" list, across all built pages."""
+    names = set()
+    for page in Path(HTML_DIR).rglob('*.html'):
+        content = page.read_text(encoding='utf-8')
+        for list_block in _BACKREF_LIST_RE.findall(content):
+            names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(list_block))
+    return names
+
+
+EXAMPLE_FILES = find_example_files()
+EXAMPLE_FILE_IDS = [str(f.relative_to(ROOT_DIR)) for f in EXAMPLE_FILES]
+#: Computed once at collection, not per parametrized example -- scanning every built
+#: page is too expensive to repeat hundreds of times over.
+BACKREF_TARGET_NAMES = load_backref_target_names() if Path(HTML_DIR).is_dir() else set()
+
+
+@pytest.mark.parametrize('example_file', EXAMPLE_FILES, ids=EXAMPLE_FILE_IDS)
+def test_example_has_cross_reference_from_api(example_file):
+    if example_file.name == 'add_example.py':
+        pytest.skip('This is a meta-example for dev purposes.')
+
+    page = example_html_page(example_file)
+    assert page.is_file(), f'{page} not found. Build the documentation first.'
+
+    if page.name not in BACKREF_TARGET_NAMES:
+        msg = (
+            "Example must be linked from PyVista's core or plotting API via a "
+            '"Used in" backreference.\n'
+            'E.g. if the example shows how to use `my_function` with dataset '
+            '`download_some_dataset`, add a call to one (or both) in the example, so '
+            'sphinx-autocodelink records the reference automatically.'
+        )
+        pytest.fail(msg)
+
+
 # -- Open Graph link previews -------------------------------------------------
 # Sanity checks against the real documentation build.
 
