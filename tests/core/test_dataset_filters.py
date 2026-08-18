@@ -733,6 +733,13 @@ def test_gaussian_splatting(sphere: PolyData):
 
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
+        if isinstance(dataset, pv.PointSet):
+            # PointSet has no cells, so it has no geometry to extract
+            with pytest.warns(pv.PyVistaDeprecationWarning), pytest.raises(
+                pv.PointSetCellOperationError
+            ):
+                dataset.extract_geometry(progress_bar=True)
+            continue
         with pytest.warns(pv.PyVistaDeprecationWarning):
             geom = dataset.extract_geometry(progress_bar=True)
         assert geom is not None
@@ -3827,7 +3834,10 @@ def test_integrate_data_datasets(datasets):
     """Test multiple dataset types."""
     for dataset in datasets:
         integrated = dataset.integrate_data()
-        if 'Area' in integrated.array_names:
+        if isinstance(dataset, pv.PointSet):
+            # PointSet has no cells, so there is no area or volume to integrate
+            assert integrated.array_names == []
+        elif 'Area' in integrated.array_names:
             assert integrated['Area'] > 0
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0

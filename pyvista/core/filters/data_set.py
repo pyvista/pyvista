@@ -2108,7 +2108,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Glyphs')
 
-        output = _get_output(alg)
+        # Glyphs always produce cell geometry (e.g. arrows), so the output
+        # should remain PolyData even if the input was a cell-less PointSet.
+        output = _get_output(alg, keep_pointset=False)
 
         # Storing geom on the algorithm, for later use in legends.
         output._glyph_geom = geoms
