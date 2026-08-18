@@ -619,10 +619,10 @@ pyvista_plot_autocodelink = True
 # docstring (empty ones get nothing appended, not "No references found.").
 autocodelink_autodoc_backrefs = True
 
-# Rename backreferences group headings: readers don't need to know *how* the docs were
-# built (Sphinx-Gallery, or a docstring's own example code), just what kind of page it is.
+# Rename backreferences group headings.
 autocodelink_category_labels = {
     'Sphinx Gallery': 'Gallery Examples',
+    'Docstring Examples': 'Docstring Examples',
     'Documentation': 'Guides',
 }
 
