@@ -404,6 +404,12 @@ def pytest_addoption(parser):
         default=False,
         help='run Playwright-based tests',
     )
+    parser.addoption(
+        '--doc_build',
+        action='store_true',
+        default=False,
+        help='run tests that require the documentation to already be built',
+    )
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
@@ -615,6 +621,10 @@ def pytest_runtest_setup(item: pytest.Item):
     playwright = item.config.getoption(flag := '--playwright')
     if item.get_closest_marker('needs_playwright') and not playwright:
         pytest.skip(f'Playwright test not enabled with {flag}')
+
+    doc_build = item.config.getoption(flag := '--doc_build')
+    if item.get_closest_marker('needs_doc_build') and not doc_build:
+        pytest.skip(f'Documentation build required, not enabled with {flag}')
 
 
 def pytest_report_header(config):  # noqa: ARG001
