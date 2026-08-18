@@ -5,13 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from conftest import HTML_DIR
+from conftest import BUILD_HTML_DIR
 import pytest
 
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
 SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds
-XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
+XML_FILE = BUILD_HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
 
 
 def load_test_cases() -> list[dict[str, str]]:
@@ -32,7 +32,7 @@ test_ids = [case['classname'] for case in test_cases]
 
 def test_top_level_module_target():
     """Confirm the index page anchors the top-level ``pyvista`` module."""
-    index_html = (Path(HTML_DIR) / 'index.html').read_text(encoding='utf-8')
+    index_html = (Path(BUILD_HTML_DIR) / 'index.html').read_text(encoding='utf-8')
 
     assert 'id="module-pyvista"' in index_html
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-from conftest import HTML_DIR
+from conftest import BUILD_HTML_DIR
 
 # Minimum number of API pages expected to gain a docstring-section entry. The
 # real count is in the thousands; this only needs to be high enough that a
@@ -37,9 +37,9 @@ def find_api_page(filename: str) -> Path:
     Fails rather than skips when the page is missing: skipping would silently
     stop testing the feature, and nobody would know to update the test.
     """
-    page = next(Path(HTML_DIR).rglob(filename), None)
+    page = next(Path(BUILD_HTML_DIR).rglob(filename), None)
     assert page is not None, (
-        f'{filename} not found under {HTML_DIR}. If the API doc layout changed, point '
+        f'{filename} not found under {BUILD_HTML_DIR}. If the API doc layout changed, point '
         f'this test at another single-object page with Notes and Examples sections.'
     )
     return page
@@ -68,7 +68,7 @@ def test_multi_object_page_does_not_hoist_sections():
     """Confirm pages documenting several objects via `:members:` skip hoisting."""
     # `helpers.rst` documents several objects on one page via `:members:`, so
     # hoisting is skipped there to avoid colliding sections at page level.
-    page = Path(HTML_DIR) / 'api' / 'core' / 'helpers.html'
+    page = Path(BUILD_HTML_DIR) / 'api' / 'core' / 'helpers.html'
     assert page.is_file(), (
         f'{page} not found. If the API doc layout changed, point this test at another '
         f'page that documents several objects via `:members:`.'
@@ -89,9 +89,9 @@ def test_page_toc_anchors_resolve():
 
 def test_docstring_sections_hoisted_across_api_pages():
     """Confirm enough API pages gained a hoisted docstring-section entry."""
-    api_pages = list(Path(HTML_DIR).rglob('_autosummary/*.html'))
+    api_pages = list(Path(BUILD_HTML_DIR).rglob('_autosummary/*.html'))
     assert api_pages, (
-        f'no generated API pages found under {HTML_DIR}. If autosummary no longer '
+        f'no generated API pages found under {BUILD_HTML_DIR}. If autosummary no longer '
         f'writes to `_autosummary`, update this glob.'
     )
 

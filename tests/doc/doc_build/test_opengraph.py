@@ -7,7 +7,7 @@ import html
 from pathlib import Path
 import re
 
-from conftest import HTML_DIR
+from conftest import BUILD_HTML_DIR
 import pytest
 
 # Same value as `ogp_site_url` in `conf.py`
@@ -101,7 +101,7 @@ OPENGRAPH_PAGES = (
 @pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)
 def test_opengraph_description(page: OpenGraphPage):
     """Confirm the page's og:description matches what's expected."""
-    path = Path(HTML_DIR) / page.path
+    path = Path(BUILD_HTML_DIR) / page.path
     assert path.is_file(), f'{path} not found. Build the documentation first.'
 
     description = meta_tags(path).get('og:description')
@@ -113,7 +113,7 @@ def test_opengraph_description(page: OpenGraphPage):
 @pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)
 def test_opengraph_image(page: OpenGraphPage):
     """Confirm the page's og:image matches what's expected."""
-    path = Path(HTML_DIR) / page.path
+    path = Path(BUILD_HTML_DIR) / page.path
     assert path.is_file(), f'{path} not found. Build the documentation first.'
 
     if page.image is not None:
