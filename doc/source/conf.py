@@ -676,7 +676,16 @@ def _is_nested_desc(node: Element) -> bool:
 
 
 def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
-    """Move docstring sections out of their ``desc`` node to page level."""
+    """Move docstring sections out of their ``desc`` node to page level.
+
+    Finds sections at any depth inside ``desc_content``, not just its direct
+    children: a section appended after numpydoc's own Examples section (e.g.
+    sphinx-autocodelink's "Used in", via ``autodoc-process-docstring``) lands
+    *inside* Examples' own section rather than beside it, since nothing closed
+    Examples' heading first. Hoisting it from wherever it actually is keeps it
+    a sibling of Notes/References/Examples/etc., not a subsection of one of
+    them.
+    """
     for desc in list(doctree.findall(addnodes.desc)):
         if _is_nested_desc(desc):
             continue
@@ -690,10 +699,10 @@ def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: AR
         content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
         if content is None:
             continue
-        sections = [node for node in content if isinstance(node, nodes.section)]
+        sections = list(content.findall(nodes.section))
         index = parent.index(desc)
         for offset, section in enumerate(sections):
-            content.remove(section)
+            section.parent.remove(section)
             parent.insert(index + 1 + offset, section)
 
 

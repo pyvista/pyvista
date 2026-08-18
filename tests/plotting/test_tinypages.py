@@ -561,9 +561,13 @@ def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     referenced = (html_dir / 'hoist_referenced.html').read_text(encoding='utf-8')
-    # hoisted: a sibling of </dl>, not nested inside <dd> like an un-hoisted section would be.
-    assert re.search(r'</dl>\s*<section class="sphinx-autocodelink-backrefs"', referenced)
-    assert '<h2>Used in' in referenced
+    # hoisted: </section> (closing Examples) directly precedes it, as a sibling -- not
+    # nested inside <dd> (unhoisted) or inside Examples' own <section> (hoisted, but only
+    # one level deep -- the bug this fixture and hoist_docstring_sections' recursive scan
+    # both exist to catch, since "Used in" is appended after Examples' own text with no
+    # closing heading in between, so it starts out nested inside Examples, not beside it).
+    assert re.search(r'</section>\s*<section class="sphinx-autocodelink-backrefs"', referenced)
+    assert '<h2>Used in' in referenced  # same heading level as Examples' own <h2>, not <h3>
     assert 'href="index.html"' in referenced
 
     unreferenced = (html_dir / 'hoist_unreferenced.html').read_text(encoding='utf-8')
