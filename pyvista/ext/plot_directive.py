@@ -133,7 +133,17 @@ The plot directive has the following configuration options:
         targets. Requires the `sphinx-autocodelink
         <https://github.com/user27182/sphinx-autocodelink>`_ package to be
         installed (``pip install sphinx-autocodelink``); raises at build time
-        if enabled without it.
+        if enabled without it. Only applies to directives with
+        ``include-source`` on -- otherwise the code being linked from isn't
+        actually shown to the reader.
+
+        .. versionadded:: 0.49
+
+    pyvista_plot_autocodelink_category : str, default: "Autodoc"
+        Category recorded alongside every identifier ``pyvista_plot_autocodelink``
+        links, for grouping in ``.. autocodelink-index::`` output (e.g. a
+        docstring's generated "Used in" section). Defaults to
+        ``sphinx_autocodelink.DEFAULT_EXAMPLE_CATEGORY``.
 
         .. versionadded:: 0.49
 
@@ -188,9 +198,11 @@ import pyvista as pv
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
+    from sphinx_autocodelink import DEFAULT_EXAMPLE_CATEGORY
     from sphinx_autocodelink import record_namespace
 except ImportError:
     record_namespace = None
+    DEFAULT_EXAMPLE_CATEGORY = 'Autodoc'
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -344,6 +356,9 @@ def setup(app: Sphinx):
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
+    app.add_config_value(
+        name='pyvista_plot_autocodelink_category', default=DEFAULT_EXAMPLE_CATEGORY, rebuild='html'
+    )
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -556,6 +571,7 @@ def render_figures(
     config,
     force_static,
     env: BuildEnvironment | None = None,
+    include_source: bool = True,
 ):
     """Run a pyplot script and save the images in *output_dir*.
 
@@ -563,7 +579,9 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
 
-    If *env* is given, also records the code's identifiers to hyperlink.
+    If *env* is given and *include_source* is true, also records the code's identifiers
+    to hyperlink -- skipped when the source isn't shown, since there'd be nothing on the
+    page for a reader to click through to.
     """
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ```pyvista-plot::``
@@ -635,9 +653,18 @@ def render_figures(
 
             results.append((code_piece, images))
 
-        if env is not None and clean_pieces and config.pyvista_plot_autocodelink:
+        if (
+            env is not None
+            and clean_pieces
+            and config.pyvista_plot_autocodelink
+            and include_source
+        ):
             record_namespace(
-                env=env, docname=env.docname, source='\n'.join(clean_pieces), namespace=ns
+                env=env,
+                docname=env.docname,
+                source='\n'.join(clean_pieces),
+                namespace=ns,
+                category=config.pyvista_plot_autocodelink_category,
             )
     finally:
         if code_cleanup:
@@ -795,6 +822,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 config=config,
                 force_static=force_static,
                 env=document.settings.env,
+                include_source=options['include-source'],
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter
