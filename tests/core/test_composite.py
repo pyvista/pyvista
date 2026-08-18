@@ -2,49 +2,49 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import itertools
-import pathlib
+from pathlib import Path
 import re
 import weakref
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import ImageData
 from pyvista import MultiBlock
 from pyvista import PolyData
-from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
+from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista.core.dataobject import USER_DICT_KEY
+from pyvista.core.errors import DeprecationError
 
 
 def test_multi_block_init_vtk():
-    multi = vtk.vtkMultiBlockDataSet()
-    multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkStructuredGrid())
+    multi = _vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, _vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, _vtk.vtkStructuredGrid())
     multi = MultiBlock(multi)
     assert isinstance(multi, MultiBlock)
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), StructuredGrid)
-    multi = vtk.vtkMultiBlockDataSet()
-    multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkStructuredGrid())
+    multi = _vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, _vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, _vtk.vtkStructuredGrid())
     multi = MultiBlock(multi, deep=True)
     assert isinstance(multi, MultiBlock)
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), StructuredGrid)
     # Test nested structure
-    multi = vtk.vtkMultiBlockDataSet()
-    multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkImageData())
-    nested = vtk.vtkMultiBlockDataSet()
-    nested.SetBlock(0, vtk.vtkUnstructuredGrid())
-    nested.SetBlock(1, vtk.vtkStructuredGrid())
+    multi = _vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, _vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, _vtk.vtkImageData())
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, _vtk.vtkUnstructuredGrid())
+    nested.SetBlock(1, _vtk.vtkStructuredGrid())
     multi.SetBlock(2, nested)
     # Wrap the nested structure
     multi = MultiBlock(multi)
@@ -97,14 +97,14 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     # Now overwrite a block
     multi[4] = pv.Sphere()
     assert isinstance(multi[4], PolyData)
-    multi[4] = vtk.vtkUnstructuredGrid()
+    multi[4] = _vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pv.UnstructuredGrid)
 
-    with pytest.raises(ValueError, match='Cannot nest a composite dataset in itself.'):
+    with pytest.raises(ValueError, match=r'Cannot nest a composite dataset in itself.'):
         multi.append(multi)
 
     with pytest.raises(TypeError, match='dataset should not be or contain an array'):
-        multi.append(vtk.vtkFloatArray())
+        multi.append(_vtk.vtkFloatArray())
 
 
 def test_multi_block_set_get_ers():
@@ -436,7 +436,7 @@ def test_multi_block_io(
 ):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
-        pathlib.Path(filename)
+        Path(filename)
 
     # Use non-nested multiblock with no None types for vtkhdf case
     # these cases are tested separately
@@ -556,7 +556,9 @@ def test_multi_io_erros(tmpdir):
 
 
 def test_extract_geometry(multiblock_all_with_nested_and_none):
-    geom = multiblock_all_with_nested_and_none.extract_geometry()
+    match = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
 
 
@@ -594,7 +596,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     keys_after = output.keys()
 
     assert (output is multi) == inplace
-    for block_in, block_out in zip(multi, output):
+    for block_in, block_out in zip(multi, output, strict=True):
         assert (block_in is block_out) == inplace or (block_in is None)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
@@ -1057,8 +1059,8 @@ def test_multiblock_partitioned_zip(container):
     # Test `__iter__` and `__next__` inheritance
     list_ = [None, None]
     composite = container(list_)
-    zipped_container = list(zip(composite, composite))
-    zipped_list = list(zip(list_, list_))
+    zipped_container = list(zip(composite, composite, strict=True))
+    zipped_list = list(zip(list_, list_, strict=True))
 
     assert len(zipped_container) == len(zipped_list)
     assert len(zipped_container[0]) == len(zipped_list[0])
@@ -1066,12 +1068,12 @@ def test_multiblock_partitioned_zip(container):
         assert zipped_container[i][j] is zipped_list[i][j] is None
 
 
-def test_transform_filter_inplace_default_warns(multiblock_poly):
+def test_transform_filter_inplace_default_raises(multiblock_poly):
     expected_msg = (
         'The default value of `inplace` for the filter `MultiBlock.transform` '
         'will change in the future.'
     )
-    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+    with pytest.raises(DeprecationError, match=expected_msg):
         _ = multiblock_poly.transform(np.eye(4))
 
 
@@ -1195,7 +1197,7 @@ def test_recursive_iterator_raises():
     with pytest.raises(ValueError, match=match):
         multi.recursive_iterator('blocks', prepend_names=True)
 
-    with pytest.raises(ValueError, match='String separator cannot be empty.'):
+    with pytest.raises(ValueError, match=r'String separator cannot be empty.'):
         multi.recursive_iterator(separator='')
 
 
@@ -1415,7 +1417,6 @@ def test_flatten(multiblock_all_with_nested_and_none):
     assert flat.keys() == expected_names
 
     # Test field data keys without copy
-    assert nested_multi[0] is flat[0]
     assert_field_data_keys(flat, root_multi, nested_multi)
 
 
@@ -1427,7 +1428,7 @@ def test_flatten_copy(multiblock_all, copy):
 
     multi_out = multiblock_all.flatten(copy=copy)
     assert multi_in is not multi_out
-    for block_in, block_out in zip(multi_in, multi_out):
+    for block_in, block_out in zip(multi_in, multi_out, strict=True):
         assert block_in == block_out
         assert (block_in is block_out) == (not copy)
 
@@ -1470,7 +1471,7 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     flat_output = output.flatten(copy=False, check_duplicate_keys=False)
 
     assert flat_inputs.n_blocks == flat_output.n_blocks
-    for block_in, block_out in zip(flat_inputs, flat_output):
+    for block_in, block_out in zip(flat_inputs, flat_output, strict=True):
         assert ((block_in is block_out) == inplace) or block_out is None
 
     # Test root MultiBlock

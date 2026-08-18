@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import pathlib
+import importlib.util
 from pathlib import Path
 import re
+import sys
 from typing import TYPE_CHECKING
 import weakref
 
@@ -10,11 +11,12 @@ from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import CellType
+from pyvista import _vtk
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
@@ -40,12 +42,14 @@ def test_init_from_polydata(sphere):
     assert unstruct_grid.n_points == sphere.n_points
     assert unstruct_grid.n_cells == sphere.n_cells
     assert np.all(unstruct_grid.celltypes == 5)
+    assert len(unstruct_grid.celltypes) == sphere.n_cells
 
 
 def test_init_from_structured(struct_grid):
     unstruct_grid = pv.UnstructuredGrid(struct_grid)
     assert unstruct_grid.points.shape[0] == struct_grid.x.size
     assert np.all(unstruct_grid.celltypes == 12)
+    assert len(unstruct_grid.celltypes) == struct_grid.n_cells
 
 
 def test_init_from_unstructured(hexbeam):
@@ -101,20 +105,24 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match='Cannot work with input type'):
         pv.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError, match='points must have real numbers.'):
+    with pytest.raises(TypeError, match=r'points must have real numbers.'):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
     points = rnd_generator.random((4, 3))
     celltypes = [pv.CellType.TETRA]
     cells = np.array([5, 0, 1, 2, 3])
-    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
+
+    match = re.escape(
+        'Cell array size is invalid. Size (5) does not match expected size (6). This is likely due to invalid connectivity array.'  # noqa: E501
+    )
+    with pytest.raises(CellSizeError, match=match):
         pv.UnstructuredGrid(cells, celltypes, points)
 
     with pytest.raises(TypeError, match='requires the following arrays'):
         pv.UnstructuredGrid(*range(5))
 
-    with pytest.raises(TypeError, match='All input types must be sequences.'):
+    with pytest.raises(TypeError, match=r'All input types must be sequences.'):
         pv.UnstructuredGrid(*range(3))
 
 
@@ -211,6 +219,8 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     assert np.all(grid.offset == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
+    if not multiple_cell_types and _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert grid.GetCells().IsStorageFixedSize()
     assert np.all(grid.cells == vtk_cell_format)
     assert np.allclose(
         grid.cell_connectivity,
@@ -275,6 +285,62 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
         pv.UnstructuredGrid(input_cells_dict, points[..., :-1])
 
 
+def test_init_from_dict_variable_length():
+    rng = np.random.default_rng(seed=0)
+
+    # Higher-order Lagrange triangle (TRI10): its point count is data-defined, so a
+    # 2D [N, D] array sets D points per cell. This is the case from issue #8628.
+    points = rng.normal(size=(10, 3))
+    conn = np.arange(10).reshape(1, 10)
+    grid = pv.UnstructuredGrid({CellType.LAGRANGE_TRIANGLE: conn}, points)
+    assert grid.n_cells == 1
+    assert grid.celltypes[0] == CellType.LAGRANGE_TRIANGLE
+    assert grid.get_cell(0).n_points == 10
+    assert np.all(grid.cells_dict[CellType.LAGRANGE_TRIANGLE] == conn)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert grid.GetCells().IsStorageFixedSize()
+
+    # Ragged polygons (a triangle and a pentagon) passed as a sequence of index
+    # arrays of differing length, and the resulting mesh has the expected geometry.
+    square = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float)
+    grid = pv.UnstructuredGrid({CellType.POLYGON: [np.arange(4)]}, square)
+    assert grid.n_cells == 1
+    assert grid.extract_surface(algorithm='dataset_surface').area == pytest.approx(1.0)
+
+    # A single dict mixing a fixed-size and a variable-size, ragged cell type.
+    points = rng.normal(size=(13, 3))
+    triangle = np.array([[0, 1, 2]])
+    polygons = [np.array([3, 4, 5, 6]), np.array([7, 8, 9, 10, 11, 12])]
+    grid = pv.UnstructuredGrid(
+        {CellType.TRIANGLE: triangle, CellType.POLYGON: polygons},
+        points,
+    )
+    assert grid.n_cells == 3
+    out = grid.cells_dict
+    assert np.all(out[CellType.TRIANGLE] == triangle)
+    assert isinstance(out[CellType.POLYGON], list)
+    assert np.all(out[CellType.POLYGON][0] == polygons[0])
+    assert np.all(out[CellType.POLYGON][1] == polygons[1])
+
+    # POLYHEDRON is defined by faces, not a point list, so it is rejected.
+    with pytest.raises(ValueError, match='POLYHEDRON'):
+        pv.UnstructuredGrid({CellType.POLYHEDRON: [np.arange(4)]}, points)
+
+    # A flat 1D array is ambiguous for a variable-length cell type.
+    with pytest.raises(ValueError, match='data-defined number of points'):
+        pv.UnstructuredGrid({CellType.POLYGON: np.arange(5)}, points)
+
+    # Out-of-range and negative indices are validated for variable-length cells too.
+    with pytest.raises(ValueError, match='Non-valid index'):
+        pv.UnstructuredGrid({CellType.POLYGON: [np.array([0, 1, 99])]}, points)
+    with pytest.raises(ValueError, match='Non-valid index'):
+        pv.UnstructuredGrid({CellType.POLYGON: np.array([[0, 1, -1]])}, points)
+
+    # Each ragged cell must be a non-empty 1D integer array; an empty cell is rejected.
+    with pytest.raises(ValueError, match='non-empty 1D array'):
+        pv.UnstructuredGrid({CellType.POLYGON: [np.array([], dtype=int)]}, points)
+
+
 def test_init_polyhedron():
     polyhedron_nodes = [
         [0.02, 0.0, 0.02],  # 17
@@ -325,18 +391,46 @@ def test_cells_dict_hexbeam_file():
 
 
 def test_cells_dict_variable_length():
+    # A single polygon round-trips through the cells dict (variable-length cell type).
     cells_poly = np.concatenate([[5], np.arange(5)])
     cells_types = np.array([CellType.POLYGON])
     points = np.random.default_rng().normal(size=(5, 3))
     grid = pv.UnstructuredGrid(cells_poly, cells_types, points)
 
-    # Dynamic sizes cell types are currently unsupported
-    with pytest.raises(ValueError):  # noqa: PT011
-        _ = grid.cells_dict
+    assert np.all(grid.cells_dict[CellType.POLYGON] == np.arange(5))
 
     grid.celltypes[:] = 255
     # Unknown cell types
     with pytest.raises(ValueError):  # noqa: PT011
+        _ = grid.cells_dict
+
+
+def test_cells_dict_ragged_polygons():
+    # Polygons of differing sizes come back as a list of one index array per cell.
+    triangle = np.array([0, 1, 2])
+    pentagon = np.array([3, 4, 5, 6, 7])
+    cells = np.concatenate([[len(triangle)], triangle, [len(pentagon)], pentagon])
+    cells_types = np.array([CellType.POLYGON, CellType.POLYGON])
+    points = np.random.default_rng().normal(size=(8, 3))
+    grid = pv.UnstructuredGrid(cells, cells_types, points)
+
+    out = grid.cells_dict[CellType.POLYGON]
+    assert isinstance(out, list)
+    assert np.all(out[0] == triangle)
+    assert np.all(out[1] == pentagon)
+
+
+def test_cells_dict_polyhedron_raises():
+    # A polyhedron is defined by its faces, not a flat point list, so reading a grid
+    # that contains one back into a cells dict is rejected (mirrors the init guard).
+    points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=float)
+    face_stream = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+    cells = np.array([len(face_stream), *face_stream])
+    cell_types = np.array([CellType.POLYHEDRON])
+    grid = pv.UnstructuredGrid(cells, cell_types, points)
+    assert grid.get_cell(0).type == CellType.POLYHEDRON
+
+    with pytest.raises(ValueError, match='POLYHEDRON'):
         _ = grid.cells_dict
 
 
@@ -366,7 +460,7 @@ def test_destructor():
 
 
 def test_surface_indices(hexbeam):
-    surf = hexbeam.extract_surface()
+    surf = hexbeam.extract_surface(algorithm=None)
     surf_ind = surf.point_data['vtkOriginalPointIds']
     assert np.allclose(surf_ind, hexbeam.surface_indices())
 
@@ -387,9 +481,15 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
+    if extension == '.case':
+        pytest.skip('Tests for EnSightWriter are prepared in a separate test function.')
+        return
+
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if extension == '.vtkhdf' and not binary:
-        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+        with pytest.raises(
+            ValueError, match=r'.vtkhdf files can only be written in binary format'
+        ):
             hexbeam.save(filename, binary=binary)
         return
 
@@ -405,8 +505,36 @@ def test_save(extension, binary, tmpdir, hexbeam):
     assert isinstance(grid, pv.UnstructuredGrid)
 
 
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['.case'])
+def test_ensight_save(extension, binary, tmpdir, hexbeam):
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
+    if not binary:
+        with pytest.raises(ValueError, match=r'.case files can only be written in binary format'):
+            hexbeam.save(filename, binary=binary)
+        return
+
+    hexbeam.save(filename, binary=binary)
+
+    output_filename = list(Path(filename).parent.glob('*.case'))
+    expected_pattern = re.compile(r'^tmp\.[0-9]+\.case$')
+
+    assert len(output_filename) == 1
+    assert expected_pattern.match(output_filename[0].name)
+    output_filename = str(output_filename[0])
+
+    grid = pv.MultiBlock(output_filename)['VTK Part']
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+
+    grid = pv.read(output_filename)['VTK Part']
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+    assert isinstance(grid, pv.UnstructuredGrid)
+
+
 def test_pathlib_read_write(tmpdir, hexbeam):
-    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
+    path = Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     assert not path.is_file()
     hexbeam.save(path)
     assert path.is_file()
@@ -431,8 +559,29 @@ def test_init_bad_filename():
 
 
 def test_save_bad_extension():
-    with pytest.raises(FileNotFoundError):
-        pv.UnstructuredGrid('file.abc')
+    # Don't assert on the full list of valid extensions because plugin
+    # packages registered via the ``pyvista.writers`` entry-point group
+    # can extend it (e.g. pyvista_zarr adding ``.zarr``). Verify the
+    # bad-extension framing and that all the built-in extensions are
+    # listed; that's the contract users rely on.
+    builtin_exts = ['.vtu', '.vtk']
+    # ``.pv`` / ``.zvtk`` come from the optional ``pyvista-zstd`` plugin which
+    # is only installed in envs that pin VTK >= 9.4 (see tox.ini).
+    if importlib.util.find_spec('pyvista_zstd') is not None:
+        builtin_exts.extend(['.pv', '.zvtk'])
+    if pv.vtk_version_info >= (9, 4):
+        builtin_exts.append('.vtkhdf')
+
+    with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
+        pv.UnstructuredGrid().save('file.abc')
+
+    message = str(excinfo.value)
+    assert (
+        "Invalid file extension '.abc' for data type "
+        "<class 'pyvista.core.pointset.UnstructuredGrid'>" in message
+    )
+    for ext in builtin_exts:
+        assert f"'{ext}'" in message, f'Built-in extension {ext} missing from error message'
 
 
 @pytest.mark.parametrize(
@@ -483,7 +632,7 @@ def test_linear_copy_surf_elem():
     grid = pv.UnstructuredGrid(cells, celltypes, points, deep=False)
     lgrid = grid.linear_copy()
 
-    qfilter = vtk.vtkMeshQuality()
+    qfilter = _vtk.vtkMeshQuality()
     qfilter.SetInputData(lgrid)
     qfilter.Update()
     qual = pv.wrap(qfilter.GetOutput())['Quality']
@@ -495,10 +644,17 @@ def test_extract_cells(hexbeam, invert):
     ind = [1, 2, 3]
     n_ind = [i for i in range(hexbeam.n_cells) if i not in ind] if invert else ind
 
+    assert 'vtkOriginalPointIds' not in hexbeam.point_data
+    assert 'vtkOriginalCellIds' not in hexbeam.cell_data
+
     part_beam = hexbeam.extract_cells(ind, invert=invert)
     assert part_beam.n_cells == len(n_ind)
     assert part_beam.n_points < hexbeam.n_points
     assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], n_ind)
+
+    # should be no side effects
+    assert 'vtkOriginalPointIds' not in hexbeam.point_data
+    assert 'vtkOriginalCellIds' not in hexbeam.cell_data
 
     mask = np.zeros(hexbeam.n_cells, dtype=bool)
     mask[ind] = True
@@ -895,7 +1051,7 @@ def test_read_rectilinear_grid_from_file():
 
 
 def test_read_rectilinear_grid_from_pathlib():
-    grid = pv.RectilinearGrid(pathlib.Path(examples.rectfile))
+    grid = pv.RectilinearGrid(Path(examples.rectfile))
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
@@ -924,6 +1080,176 @@ def test_cast_rectilinear_grid():
         assert np.allclose(structured.point_data[k], v)
     for k, v in grid.cell_data.items():
         assert np.allclose(structured.cell_data[k], v)
+
+
+def _polydata(dtype):
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(dtype)
+    return mesh
+
+
+def _structured_grid(dtype):
+    coords = np.mgrid[0:3, 0:3, 0:3].astype(dtype)
+    return pv.StructuredGrid(*coords)
+
+
+def _unstructured_grid(dtype):
+    mesh = examples.cells.Hexahedron()
+    mesh.points = mesh.points.astype(dtype)
+    return mesh
+
+
+def _point_set(dtype):
+    return pv.PointSet(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype))
+
+
+def _rectilinear_grid(dtype):
+    grid = pv.RectilinearGrid()
+    grid.x = np.array([0.1, 0.2, 0.3], dtype=dtype)
+    grid.y = np.array([0.0, 1.0], dtype=dtype)
+    grid.z = np.array([0.0], dtype=dtype)
+    return grid
+
+
+@pytest.mark.parametrize(
+    'builder',
+    [_polydata, _structured_grid, _unstructured_grid, _point_set, _rectilinear_grid],
+)
+@pytest.mark.parametrize('dtype', [np.float64, np.float32])
+def test_cast_to_unstructured_grid_preserves_point_precision(builder, dtype):
+    mesh = builder(dtype)
+
+    ugrid = mesh.cast_to_unstructured_grid()
+
+    assert ugrid.points.dtype == dtype
+    assert ugrid.n_points == mesh.n_points
+    assert np.allclose(ugrid.bounds, mesh.bounds)
+
+
+def test_cast_image_data_to_unstructured_grid_is_double():
+    # ImageData stores no points, so its always-double origin and spacing are
+    # the only source of precision; the cast must not downcast them (#7931).
+    image = pv.ImageData(dimensions=(3, 3, 3), spacing=(0.1, 0.2, 0.3))
+
+    ugrid = image.cast_to_unstructured_grid()
+
+    assert ugrid.points.dtype == np.float64
+    assert ugrid.n_points == image.n_points
+    assert ugrid.n_cells == image.n_cells
+    assert np.allclose(ugrid.bounds, image.bounds)
+
+
+def test_vtk_append_filter_implicit_geometry_precision_bug():
+    # vtkAppendFilter falls back to float32 for RectilinearGrid/ImageData
+    # because it infers precision via vtkPointSet.GetPoints(), which returns
+    # None for implicit-geometry datasets. This test asserts the bug exists so
+    # that when it is patched upstream (see
+    # https://gitlab.kitware.com/vtk/vtk/-/work_items/19965), the workaround
+    # in cast_to_unstructured_grid can be removed.
+    alg = pv._vtk.vtkAppendFilter()
+
+    grid = pv.RectilinearGrid()
+    grid.x = np.array([0.1, 0.2, 0.3], dtype=np.float64)
+    grid.y = np.array([0.0, 1.0], dtype=np.float64)
+    grid.z = np.array([0.0], dtype=np.float64)
+
+    alg.AddInputData(grid)
+    alg.Update()
+
+    # Without the workaround, vtkAppendFilter downcasts float64 → float32.
+    # If this assertion fails, the VTK bug has been fixed and the workaround
+    # in cast_to_unstructured_grid() can be removed.
+    assert alg.GetOutput().GetPoints().GetDataType() != 11  # 11 == VTK_DOUBLE
+
+
+@pytest.mark.parametrize('as_rectilinear', [True, False])
+def test_cast_grid_scalars_and_cell_type(as_rectilinear):
+    """Test cell type and scalars after casting to structured or unstructured grid."""
+    scalars_name = 'data'
+    grid2d = pv.ImageData(dimensions=(3, 2, 1))
+    grid2d.point_data[scalars_name] = range(grid2d.n_points)
+
+    grid3d = pv.ImageData(dimensions=(2, 2, 2))
+    grid3d.point_data[scalars_name] = range(grid3d.n_points)
+
+    grid2d = grid2d.cast_to_rectilinear_grid() if as_rectilinear else grid2d
+    grid3d = grid3d.cast_to_rectilinear_grid() if as_rectilinear else grid3d
+
+    assert grid2d.get_cell(0).type == pv.CellType.PIXEL
+    assert grid3d.get_cell(0).type == pv.CellType.VOXEL
+
+    structured2d = grid2d.cast_to_structured_grid()
+    structured3d = grid3d.cast_to_structured_grid()
+    assert structured2d.active_scalars_name == scalars_name
+    assert structured3d.active_scalars_name == scalars_name
+    assert structured2d.get_cell(0).type == pv.CellType.QUAD
+    assert structured3d.get_cell(0).type == pv.CellType.HEXAHEDRON
+
+    unstructured2d = grid2d.cast_to_unstructured_grid()
+    unstructured3d = grid3d.cast_to_unstructured_grid()
+    assert unstructured2d.active_scalars_name == scalars_name
+    assert unstructured3d.active_scalars_name == scalars_name
+    assert unstructured2d.get_cell(0).type == pv.CellType.PIXEL
+    assert unstructured3d.get_cell(0).type == pv.CellType.VOXEL
+
+    assert structured2d.cast_to_unstructured_grid() != unstructured2d
+    assert structured3d.cast_to_unstructured_grid() != unstructured3d
+
+
+@pytest.mark.parametrize('as_rectilinear', [True, False])
+def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
+    grid = rectilinear if as_rectilinear else uniform
+    hexahedra = grid.to_hexahedra()
+    assert isinstance(hexahedra, pv.UnstructuredGrid)
+    assert hexahedra.distinct_cell_types == {pv.CellType.HEXAHEDRON}
+    assert hexahedra.n_cells == grid.n_cells
+    assert hexahedra.n_points == grid.n_points
+    assert hexahedra.active_scalars_name == grid.active_scalars_name
+    match = 'Input must be 3-dimensional. Got 0-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        type(grid)().to_hexahedra()
+
+    match = (
+        'Input must be 3-dimensional. Got 2-dimensional input instead.\n'
+        'Use `to_quads` for 2D inputs.'
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(2, 2, 1)).to_hexahedra()
+
+    match = 'Input must be 3-dimensional. Got 1-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(3, 1, 1)).to_hexahedra()
+
+
+@pytest.mark.parametrize('as_rectilinear', [True, False])
+def test_to_quads(as_rectilinear):
+    # Build a 2D ImageData directly. The shared ``image`` fixture goes
+    # through the ``texture`` fixture (``Plotter.screenshot``) which can
+    # abort the xdist worker on older VTK + headless rendering, and that
+    # crash is unrelated to the ``to_quads`` filter under test.
+    image = pv.ImageData(dimensions=(4, 3, 1))
+    image['scalars'] = np.arange(image.n_points)
+    grid = image.cast_to_rectilinear_grid() if as_rectilinear else image
+    quads = grid.to_quads()
+    assert isinstance(quads, pv.UnstructuredGrid)
+    assert quads.distinct_cell_types == {pv.CellType.QUAD}
+    assert quads.n_cells == grid.n_cells
+    assert quads.n_points == grid.n_points
+    assert quads.active_scalars_name == grid.active_scalars_name
+    match = 'Input must be 2-dimensional. Got 0-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        type(grid)().to_quads()
+
+    match = (
+        'Input must be 2-dimensional. Got 3-dimensional input instead.\n'
+        'Use `to_hexahedra` for 3D inputs.'
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(2, 2, 2)).to_quads()
+
+    match = 'Input must be 2-dimensional. Got 1-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(3, 1, 1)).to_quads()
 
 
 def test_create_image_data_from_specs():
@@ -1035,7 +1361,7 @@ def test_read_image_data_from_file():
 
 
 def test_read_image_data_from_pathlib():
-    grid = pv.ImageData(pathlib.Path(examples.uniformfile))
+    grid = pv.ImageData(Path(examples.uniformfile))
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
@@ -1054,7 +1380,7 @@ def test_cast_uniform_to_structured():
 def test_cast_uniform_to_rectilinear():
     grid = examples.load_uniform()
     grid.offset = (1, 2, 3)
-    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))
+    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))  # on-axis rotation is allowed
     grid.spacing = (1.1, 2.2, 3.3)
     rectilinear = grid.cast_to_rectilinear_grid()
     assert rectilinear.n_points == grid.n_points
@@ -1063,16 +1389,12 @@ def test_cast_uniform_to_rectilinear():
 
     grid.direction_matrix = pv.Transform().rotate_x(30).matrix[:3, :3]
     match = (
-        'The direction matrix is not a diagonal matrix and cannot be used when casting to '
-        'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid instead.'
+        'Rectilinear grid does not support off-axis rotations.\n'
+        'Consider removing off-axis rotations from the `direction_matrix`, '
+        'or casting to StructuredGrid instead.'
     )
-    with pytest.warns(RuntimeWarning, match=match):
-        rectilinear = grid.cast_to_rectilinear_grid()
-    # Input has orientation, output does not
-    assert rectilinear.bounds != grid.bounds
-    # Test output has orientation component removed
-    grid.direction_matrix = np.eye(3)
-    assert rectilinear.bounds == grid.bounds
+    with pytest.raises(ValueError, match=match):
+        grid.cast_to_rectilinear_grid()
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():
@@ -1191,14 +1513,15 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
 
     if extension == '.vtk' and not is_identity_matrix:
         match = re.escape(
-            'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.'
+            'The direction matrix for ImageData cannot be saved using the legacy `.vtk` format.'
             '\nSee https://gitlab.kitware.com/vtk/vtk/-/issues/19663 '
             '\nUse the `.vti` extension instead (XML format).'
         )
-        with pytest.warns(UserWarning, match=match):
+        with pytest.raises(ValueError, match=match):
             uniform.save(filename, binary=binary)
-    else:
-        uniform.save(filename, binary=binary)
+        return
+
+    uniform.save(filename, binary=binary)
 
     grid = reader(filename)
 
@@ -1489,6 +1812,8 @@ def test_explicit_structured_grid_init():
     grid = pv.ExplicitStructuredGrid(dims, cells, points)
     assert grid.n_cells == 2
     assert grid.n_points == 16
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert grid.GetCells().IsStorageFixedSize()
 
 
 def test_explicit_structured_grid_cast_to_unstructured_grid():
@@ -1549,7 +1874,7 @@ def test_explicit_structured_grid_save():
 
 
 def test_explicit_structured_grid_save_raises():
-    with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
+    with pytest.raises(ValueError, match=r'Cannot save texture of a pointset.'):
         examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
 
 
@@ -1660,6 +1985,10 @@ def test_explicit_structured_grid_neighbors():
     assert indices == [1, 4, 20]
 
 
+@pytest.mark.skipif(
+    sys.maxsize <= 2**32,
+    reason='Fails on 32-bit systems, see https://github.com/pyvista/pyvista/issues/8841',
+)
 def test_explicit_structured_grid_compute_connectivity():
     connectivity = np.asarray(
         """
@@ -1687,6 +2016,10 @@ def test_explicit_structured_grid_compute_connectivity():
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
+@pytest.mark.skipif(
+    sys.maxsize <= 2**32,
+    reason='Fails on 32-bit systems, see https://github.com/pyvista/pyvista/issues/8841',
+)
 def test_explicit_structured_grid_compute_connections():
     connections = np.asarray(
         """
@@ -1783,7 +2116,7 @@ def test_structured_grid_cast_to_explicit_structured_grid_raises():
     grid = pv.StructuredGrid(x, y, z)
     with pytest.raises(
         TypeError,
-        match='Only 3D structured grid can be casted to an explicit structured grid.',
+        match=r'Only 3D structured grid can be casted to an explicit structured grid.',
     ):
         grid.cast_to_explicit_structured_grid()
 
@@ -1868,16 +2201,21 @@ def test_rect_grid_dimensions_raises():
 
 @pytest.fixture
 def empty_poly_cast_to_ugrid():
+    def get_cell_types(mesh):
+        return (
+            mesh.GetCellTypes() if pv.vtk_version_info >= (9, 6, 0) else mesh.GetCellTypesArray()
+        )
+
     cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
 
     # Likely VTK bug, these should not be None but they are
     assert cast_ugrid.GetCells() is None
-    assert cast_ugrid.GetCellTypesArray() is None
+    assert get_cell_types(cast_ugrid) is None
 
     # Make sure a proper ugrid does not have these as None
     ugrid = pv.UnstructuredGrid()
-    assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
-    assert isinstance(ugrid.GetCellTypesArray(), vtk.vtkUnsignedCharArray)
+    assert isinstance(ugrid.GetCells(), _vtk.vtkCellArray)
+    assert isinstance(get_cell_types(ugrid), _vtk.vtkUnsignedCharArray)
 
     return cast_ugrid
 
@@ -1908,7 +2246,7 @@ def appended_images():
     slice0 = create_slice(0)
     slice1 = create_slice(1)
 
-    append = vtk.vtkImageAppend()
+    append = _vtk.vtkImageAppend()
     append.SetAppendAxis(2)
     append.AddInputData(slice0)
     append.AddInputData(slice1)
@@ -1976,7 +2314,7 @@ def test_imagedata_slice_index_range(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with index range equal to dimensions
@@ -2006,7 +2344,7 @@ def test_imagedata_slice_index_range_upper_bounds(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with upper range larger than dimensions
@@ -2028,7 +2366,7 @@ def test_imagedata_slice_index_negative_range(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with negative stop index

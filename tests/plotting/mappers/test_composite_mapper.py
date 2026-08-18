@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from vtkmodules.vtkCommonCore import vtkLookupTable
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.plotting.composite_mapper import BlockAttributes
 from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 
@@ -11,7 +11,7 @@ from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 @pytest.fixture
 def composite_mapper(multiblock_poly):
     pl = pv.Plotter()
-    actor, mapper = pl.add_composite(multiblock_poly)
+    _actor, mapper = pl.add_composite(multiblock_poly)
     return mapper
 
 
@@ -39,9 +39,9 @@ def test_color_missing_with_nan(composite_mapper):
 
 
 def test_lookup_table(composite_mapper):
-    isinstance(composite_mapper.lookup_table, vtkLookupTable)
+    isinstance(composite_mapper.lookup_table, _vtk.vtkLookupTable)
 
-    table = vtkLookupTable()
+    table = _vtk.vtkLookupTable()
     composite_mapper.lookup_table = table
     assert composite_mapper.lookup_table is table
 
@@ -68,7 +68,7 @@ def test_scalar_map_mode_values(value, composite_mapper):
 def test_composite_mapper_non_poly(multiblock_all):
     # should run without raising
     pl = pv.Plotter()
-    actor, mapper = pl.add_composite(multiblock_all)
+    _actor, _mapper = pl.add_composite(multiblock_all)
 
 
 def test_block_attr(block_attributes):
@@ -88,7 +88,7 @@ def test_block_attr_get_item_(multiblock_poly):
     block_c = multiblock_poly.copy()
     block_a = pv.MultiBlock([block_b, block_c])
     pl = pv.Plotter()
-    actor, mapper = pl.add_composite(block_a)
+    _actor, mapper = pl.add_composite(block_a)
     assert len(mapper.block_attr) == len(block_b) + len(block_c) + 3
     with pytest.raises(KeyError):
         mapper.block_attr[len(mapper.block_attr)]

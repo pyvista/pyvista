@@ -1,15 +1,23 @@
 from __future__ import annotations
 
+import gc
+import re
+import sys
 from types import GeneratorType
 
 import numpy as np
 import pytest
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
+from refleak.testing import Snapshot
 
 import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
+from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
+from pyvista.core.celltype import _RENAMED_CELL_TYPES
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -19,6 +27,9 @@ from pyvista.examples import load_rectilinear
 from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
+
+# Cell arrays are where a stashed VTK object silently outlives its mesh; see conftest
+pytestmark = pytest.mark.check_gc
 
 grids = [
     load_hexbeam(),
@@ -174,7 +185,7 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_cell_type(cell, type_):
     assert cell.type == type_
 
@@ -184,22 +195,125 @@ def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims, strict=True), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints), ids=cell_ids)
+def test_celltype_dimension_map():
+    dimension_map = CellType.dimension_map
+    dimensions = list(dimension_map.keys())
+    assert dimensions == [0, 1, 2, 3]
+
+    for grouping in dimension_map.values():
+        assert isinstance(grouping, frozenset)
+        assert all(isinstance(m, CellType) for m in grouping)
+
+    assert CellType.VERTEX in dimension_map[0]
+    assert CellType.POLY_VERTEX in dimension_map[0]
+    assert CellType.LINE in dimension_map[1]
+    assert CellType.POLY_LINE in dimension_map[1]
+    assert CellType.TRIANGLE in dimension_map[2]
+    assert CellType.QUAD in dimension_map[2]
+    assert CellType.POLYGON in dimension_map[2]
+    assert CellType.PIXEL in dimension_map[2]
+    assert CellType.TRIANGLE_STRIP in dimension_map[2]
+    assert CellType.TETRA in dimension_map[3]
+    assert CellType.HEXAHEDRON in dimension_map[3]
+    assert CellType.VOXEL in dimension_map[3]
+    assert CellType.POLYHEDRON in dimension_map[3]
+
+    for i in (0, 1, 2, 3):
+        for j in (0, 1, 2, 3):
+            if i != j:
+                assert dimension_map[i].isdisjoint(dimension_map[j])
+
+    union = dimension_map[0] | dimension_map[1] | dimension_map[2] | dimension_map[3]
+    assert union == set(CellType)
+
+    for member in CellType:
+        assert member in dimension_map[member.dimension]
+
+
+def test_celltype_dimension_map_not_mutable():
+    mapping = CellType.dimension_map
+    match = "'mappingproxy' object does not support item assignment"
+    with pytest.raises(TypeError, match=match):
+        mapping[42] = 'foo'
+
+
+def test_abstract_celltype_attributes():
+    # ``HIGHER_ORDER_HEXAHEDRON`` has no concrete vtk class, but its dimension
+    # is well-defined and the same on every supported VTK build. See
+    # https://github.com/pyvista/pyvista/issues/8634
+    celltype = pv.CellType.HIGHER_ORDER_HEXAHEDRON
+    assert celltype.dimension == 3
+    assert not celltype.is_linear
+
+    match = "'HIGHER_ORDER_HEXAHEDRON' without a concrete cell instance."
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_points
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_edges
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_faces
+
+
+@pytest.mark.parametrize(
+    ('celltype', 'expected_dim'),
+    [
+        ('PARAMETRIC_CURVE', 1),
+        ('PARAMETRIC_SURFACE', 2),
+        ('PARAMETRIC_TETRA_REGION', 3),
+        (pv.CellType.HIGHER_ORDER_CURVE, 1),
+        (pv.CellType.HIGHER_ORDER_TRIANGLE, 2),
+        (pv.CellType.HIGHER_ORDER_HEXAHEDRON, 3),
+        (pv.CellType.LAGRANGE_PYRAMID, 3),
+        (pv.CellType.BEZIER_PYRAMID, 3),
+    ],
+)
+def test_abstract_celltype_dimension_is_correct(celltype, expected_dim):
+    """Abstract / placeholder cell types report their canonical dimension."""
+    if isinstance(celltype, str):
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            celltype = getattr(CellType, celltype)
+
+    assert celltype.dimension == expected_dim
+
+
+@pytest.mark.parametrize('celltype', _DEPRECATED_CELL_TYPES)
+def test_celltype_deprecated(celltype):
+    val = _CELL_TYPE_INFO[celltype].value
+    match = f'<CellType.{celltype}: {val}> is deprecated and will be removed in a future version.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        getattr(CellType, celltype)
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        CellType(val)
+
+
+@pytest.mark.parametrize('celltype', _RENAMED_CELL_TYPES)
+def test_celltype_renamed(celltype):
+    val = _CELL_TYPE_INFO[celltype].value
+    new_name = _RENAMED_CELL_TYPES[celltype]
+    called = CellType(val)
+    assert called.name == new_name
+
+    match = f'CellType.{celltype} is deprecated and has been renamed. Use {new_name} instead'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        getattr(CellType, celltype)
+
+
+@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces, strict=True), ids=cell_ids)
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges, strict=True), ids=cell_ids)
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
@@ -278,8 +392,12 @@ def test_cell_faces(cell):
 @pytest.mark.parametrize('grid', grids, ids=ids)
 def test_cell_bounds(grid):
     assert isinstance(grid.get_cell(0).bounds, tuple)
-    assert all(bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2]))
-    assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
+    assert all(
+        bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2], strict=True)
+    )
+    assert all(
+        bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2], strict=True)
+    )
 
 
 @pytest.mark.parametrize('grid', grids, ids=ids)
@@ -300,12 +418,12 @@ def test_cell_center_value():
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 
@@ -393,6 +511,33 @@ def test_init_cell_array_from_arrays(offsets, connectivity, deep):
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(offsets) - 1
 
 
+@pytest.mark.parametrize('deep', [False, True])
+def test_init_cell_array_preserves_int32_storage(deep):
+    # int32 offsets/connectivity should be stored natively as 32-bit instead of
+    # being cast up to int64, which avoids a copy that doubles memory on large
+    # meshes. See https://github.com/pyvista/pyvista/issues/8477
+    offsets = np.array(OFFSETS_LIST, np.int32)
+    connectivity = np.array(CONNECTIVITY_LIST, np.int32)
+    cell_array = pv.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
+    # The array dtype reflects the native VTK storage width, so an int32 dtype here
+    # proves 32-bit storage was kept (no upcast copy). This is checked instead of
+    # ``IsStorage32Bit()`` because that method is not available on all supported VTK
+    # versions (e.g. 9.4.2).
+    assert cell_array.offset_array.dtype == np.int32
+    assert cell_array.connectivity_array.dtype == np.int32
+    assert np.array_equal(cell_array.offset_array, offsets)
+    assert np.array_equal(cell_array.connectivity_array, connectivity)
+
+
+def test_init_cell_array_int64_uses_64bit_storage():
+    # int64 input should keep 64-bit storage (unchanged behavior).
+    cell_array = pv.core.cell.CellArray.from_arrays(
+        np.array(OFFSETS_LIST, np.int64), np.array(CONNECTIVITY_LIST, np.int64)
+    )
+    assert cell_array.offset_array.dtype == np.int64
+    assert cell_array.connectivity_array.dtype == np.int64
+
+
 REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
 
 
@@ -401,7 +546,13 @@ REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
     [
         REGULAR_CELL_LIST,
         np.array(REGULAR_CELL_LIST, np.int16),
-        np.array(REGULAR_CELL_LIST, np.int32),
+        pytest.param(
+            np.array(REGULAR_CELL_LIST, np.int32),
+            marks=pytest.mark.xfail(
+                sys.platform == 'win32',
+                reason='BUG(?) VTK does not use fixed-size storage for int32 cells on Windows',
+            ),
+        ),
         np.array(REGULAR_CELL_LIST, np.int64),
         np.array(np.vstack(REGULAR_CELL_LIST), order='F'),
     ],
@@ -411,6 +562,15 @@ def test_init_cell_array_from_regular_cells(cells, deep):
     cell_array = pv.core.cell.CellArray.from_regular_cells(cells, deep=deep)
     assert np.array_equal(np.array(cells), cell_array.regular_cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == len(cells)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert cell_array.IsStorageFixedSize()
+
+
+def test_init_cell_array_from_regular_cells_preserves_int32():
+    cells = np.array(REGULAR_CELL_LIST, np.int32)
+    cell_array = pv.CellArray.from_regular_cells(cells)
+    expected_dtype = np.int32 if _SUPPORTS_FIXED_SIZE_STORAGE else pv.ID_TYPE
+    assert cell_array.connectivity_array.dtype == expected_dtype
 
 
 def test_set_shallow_regular_cells():
@@ -425,99 +585,71 @@ def test_set_shallow_regular_cells():
 def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
     idarr = numpy_to_idarr(mask)
-    assert np.allclose(mask.nonzero()[0], vtk_to_numpy(idarr))
+    assert np.allclose(mask.nonzero()[0], _vtk.vtk_to_numpy(idarr))
 
 
-def test_cell_types():
-    cell_types = [
-        'EMPTY_CELL',
-        'VERTEX',
-        'POLY_VERTEX',
-        'LINE',
-        'POLY_LINE',
-        'TRIANGLE',
-        'TRIANGLE_STRIP',
-        'POLYGON',
-        'PIXEL',
-        'QUAD',
-        'TETRA',
-        'VOXEL',
-        'HEXAHEDRON',
-        'WEDGE',
-        'PYRAMID',
-        'PENTAGONAL_PRISM',
-        'HEXAGONAL_PRISM',
-        'QUADRATIC_EDGE',
-        'QUADRATIC_TRIANGLE',
-        'QUADRATIC_QUAD',
-        'QUADRATIC_POLYGON',
-        'QUADRATIC_TETRA',
-        'QUADRATIC_HEXAHEDRON',
-        'QUADRATIC_WEDGE',
-        'QUADRATIC_PYRAMID',
-        'BIQUADRATIC_QUAD',
-        'TRIQUADRATIC_HEXAHEDRON',
-        'TRIQUADRATIC_PYRAMID',
-        'QUADRATIC_LINEAR_QUAD',
-        'QUADRATIC_LINEAR_WEDGE',
-        'BIQUADRATIC_QUADRATIC_WEDGE',
-        'BIQUADRATIC_QUADRATIC_HEXAHEDRON',
-        'BIQUADRATIC_TRIANGLE',
-        'CUBIC_LINE',
-        'CONVEX_POINT_SET',
-        'POLYHEDRON',
-        'PARAMETRIC_CURVE',
-        'PARAMETRIC_SURFACE',
-        'PARAMETRIC_TRI_SURFACE',
-        'PARAMETRIC_QUAD_SURFACE',
-        'PARAMETRIC_TETRA_REGION',
-        'PARAMETRIC_HEX_REGION',
-        'HIGHER_ORDER_EDGE',
-        'HIGHER_ORDER_TRIANGLE',
-        'HIGHER_ORDER_QUAD',
-        'HIGHER_ORDER_POLYGON',
-        'HIGHER_ORDER_TETRAHEDRON',
-        'HIGHER_ORDER_WEDGE',
-        'HIGHER_ORDER_PYRAMID',
-        'HIGHER_ORDER_HEXAHEDRON',
-        'LAGRANGE_CURVE',
-        'LAGRANGE_TRIANGLE',
-        'LAGRANGE_QUADRILATERAL',
-        'LAGRANGE_TETRAHEDRON',
-        'LAGRANGE_HEXAHEDRON',
-        'LAGRANGE_WEDGE',
-        'LAGRANGE_PYRAMID',
-        'BEZIER_CURVE',
-        'BEZIER_TRIANGLE',
-        'BEZIER_QUADRILATERAL',
-        'BEZIER_TETRAHEDRON',
-        'BEZIER_HEXAHEDRON',
-        'BEZIER_WEDGE',
-        'BEZIER_PYRAMID',
-    ]
-    for cell_type in cell_types:
-        if hasattr(vtk, 'VTK_' + cell_type):
-            assert getattr(pv.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
+@pytest.mark.parametrize('cell_type_name', _CELL_TYPE_INFO)
+def test_cell_types(cell_type_name):
+    if not hasattr(_vtk, 'VTK_' + cell_type_name):
+        pytest.skip(f'Unsupported cell type {cell_type_name} by VTK')
+
+    if cell_type_name in _DEPRECATED_CELL_TYPES or cell_type_name in _RENAMED_CELL_TYPES:
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            pyvista_member = getattr(pv.CellType, cell_type_name)
+    else:
+        pyvista_member = getattr(pv.CellType, cell_type_name)
+    vtk_member = getattr(_vtk, 'VTK_' + cell_type_name)
+    assert pyvista_member == vtk_member
 
 
-def test_n_cells_deprecated():
-    with pytest.raises(
-        TypeError,
-        match=r'CellArray parameter `n_cells` is deprecated and no longer used\.',
-    ):
+def test_n_cells_removed():
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], n_cells=1)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `n_cells` constructor kwarg'
-        raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('deep', [True, False])
-def test_deep_deprecated(deep: bool):
-    with pytest.raises(
-        TypeError,
-        match=r'CellArray parameter `deep` is deprecated and no longer used\.',
-    ):
+def test_deep_removed(deep: bool):
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `deep` constructor kwarg'
-        raise RuntimeError(msg)
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        lambda: pv.PolyData(np.zeros((10, 3))),
+        lambda: pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]]),
+        lambda: pv.lines_from_points(np.zeros((10, 3))),
+        lambda: pv.vector_poly_data(np.zeros((10, 3)), np.ones((10, 3))),
+    ],
+    ids=['verts', 'faces', 'lines', 'vectors'],
+)
+@pytest.mark.skipif(
+    not _SETDATA_TAKES_OWNERSHIP,
+    reason='VTK < 9.6 requires CellArray to keep the arrays alive itself',
+)
+def test_cell_array_does_not_leak_vtk_arrays(make_mesh):
+    # A VTK array stashed on the CellArray outlives the mesh in VTK's ghost __dict__
+    snapshot = Snapshot(_vtk.vtkObjectBase, label='VTK')
+    make_mesh()
+    gc.collect()
+    snapshot.assert_no_new(when='after building the mesh')
+
+
+@pytest.mark.parametrize('dtype', [np.int32, pv.ID_TYPE], ids=['int32', 'id_type'])
+def test_cell_array_connectivity_outlives_its_source(dtype):
+    # The counterpart to the leak test: SetData alone must keep the connectivity valid
+    faces = np.arange(120, dtype=dtype).reshape(-1, 3) % 40
+    source = pv.PolyData.from_regular_faces(np.zeros((40, 3)), faces)
+
+    shallow = pv.PolyData()
+    shallow.shallow_copy(source)
+    del source
+    gc.collect()
+    assert np.array_equal(shallow.regular_faces, faces)
+
+    # Same again, but the CellArray wrapper itself dies while C++ still owns it
+    polydata = _vtk.vtkPolyData()
+    polydata.SetPoints(pv.vtk_points(np.zeros((40, 3))))
+    polydata.SetPolys(pv.CellArray.from_regular_cells(faces.copy()))
+    gc.collect()
+    assert np.array_equal(pv.wrap(polydata).regular_faces, faces)

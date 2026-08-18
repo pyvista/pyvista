@@ -1,34 +1,77 @@
 from __future__ import annotations
 
+import faulthandler
 import functools
-from importlib import metadata
-from inspect import BoundArguments
-from inspect import Parameter
-from inspect import Signature
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import requires
+from importlib.metadata import version
+import importlib.util
+import inspect
 import os
 import platform
 import re
 
 import numpy as np
 from numpy.random import default_rng
+import PIL
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
-from pyvista.core._vtk_core import VersionInfo
+from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core.utilities.accessor_registry import (
+    _restore_registry_state as _restore_accessor_registry_state,
+)
+from pyvista.core.utilities.accessor_registry import (
+    _save_registry_state as _save_accessor_registry_state,
+)
+from pyvista.core.utilities.reader_registry import _restore_registry_state
+from pyvista.core.utilities.reader_registry import _save_registry_state
+from pyvista.core.utilities.writer_registry import (
+    _restore_registry_state as _restore_writer_registry_state,
+)
+from pyvista.core.utilities.writer_registry import (
+    _save_registry_state as _save_writer_registry_state,
+)
+from pyvista.plotting.component_registry import (
+    _restore_registry_state as _restore_component_registry_state,
+)
+from pyvista.plotting.component_registry import (
+    _save_registry_state as _save_component_registry_state,
+)
+from pyvista.plotting.interactor_style_registry import (
+    _restore_registry_state as _restore_style_registry_state,
+)
+from pyvista.plotting.interactor_style_registry import (
+    _save_registry_state as _save_style_registry_state,
+)
+from pyvista.plotting.theme_registry import (
+    _restore_registry_state as _restore_theme_registry_state,
+)
+from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
-pyvista.OFF_SCREEN = True
+pv.OFF_SCREEN = True
 
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
 )
+PILLOW_VERSION_INFO = VersionInfo(
+    major=int(PIL.__version__.split('.')[0]),
+    minor=int(PIL.__version__.split('.')[1]),
+    micro=int(PIL.__version__.split('.')[2]),
+)
+
+faulthandler.enable()
 
 
 def flaky_test(
-    test_function=None, *, times: int = 3, exceptions: tuple[Exception, ...] = (AssertionError,)
+    test_function=None,
+    *,
+    times: int = 3,
+    exceptions: tuple[type[Exception], ...] = (AssertionError,),
 ):
     """Decorator for re-trying flaky tests.
 
@@ -42,10 +85,11 @@ def flaky_test(
     times : int, default: 3
         Number of times to try to test.
 
-    exceptions : tuple[Exception, ...], default: (AssertionError,)
-        Exceptions which will cause the test to be re-tried. By default, tests are only
-        retried for assertion errors. Customize this to retry for other exceptions
-        depending on the cause(s) of the flaky test, e.g. `(ValueError, TypeError)`.
+    exceptions : tuple[type[Exception], ...], default: (AssertionError,)
+        Exception types which will cause the test to be re-tried. By default, tests
+        are only retried for assertion errors. Customize this to retry for other
+        exceptions depending on the cause(s) of the flaky test, e.g.
+        ``(ValueError, TypeError)``.
 
     """
     if test_function is None:
@@ -78,41 +122,62 @@ def flaky_test(
 
 @pytest.fixture
 def global_variables_reset():
-    tmp_screenshots = pyvista.ON_SCREENSHOT
-    tmp_figurepath = pyvista.FIGURE_PATH
+    tmp_screenshots = pv.ON_SCREENSHOT
+    tmp_figurepath = pv.FIGURE_PATH
     yield
-    pyvista.ON_SCREENSHOT = tmp_screenshots
-    pyvista.FIGURE_PATH = tmp_figurepath
+    pv.ON_SCREENSHOT = tmp_screenshots
+    pv.FIGURE_PATH = tmp_figurepath
 
 
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
-    try:
-        import matplotlib as mpl
-    except ImportError:
-        pass
-    else:
-        mpl.rcdefaults()
-        mpl.use('agg', force=True)
+    import matplotlib as mpl
+
+    mpl.rcdefaults()
+    mpl.use('agg', force=True)
 
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Default is to allow new 'private' attributes for downstream packages,
+    # but for PyVista itself we enforce no new attributes
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+
+    style_registry_state = _save_style_registry_state()
+    reader_registry_state = _save_registry_state()
+    writer_registry_state = _save_writer_registry_state()
+    accessor_registry_state = _save_accessor_registry_state()
+    component_registry_state = _save_component_registry_state()
+    theme_registry_state = _save_theme_registry_state()
+
     yield
 
-    pyvista.vtk_snake_case('error')
-    assert pyvista.vtk_snake_case() == 'error'
+    _restore_style_registry_state(style_registry_state)
+    _restore_registry_state(reader_registry_state)
+    _restore_writer_registry_state(writer_registry_state)
+    _restore_accessor_registry_state(accessor_registry_state)
+    _restore_component_registry_state(component_registry_state)
+    _restore_theme_registry_state(theme_registry_state)
 
-    pyvista.vtk_verbosity('info')
-    assert pyvista.vtk_verbosity() == 'info'
+    pv.vtk_snake_case('error')
+    assert pv.vtk_snake_case() == 'error'
 
-    pyvista.PICKLE_FORMAT = 'vtk'
+    pv.vtk_verbosity('info')
+    # On VTK built with VTK_ENABLE_LOGGING=OFF the cutoff is fixed at the
+    # disabled sentinel and setting verbosity is a no-op, so it stays 'off'.
+    assert pv.vtk_verbosity() in ('info', 'off')
+
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+
+    pv.PICKLE_FORMAT = 'vtk'
 
 
 @pytest.fixture
 def cube():
-    return pyvista.Cube()
+    return pv.Cube()
 
 
 @pytest.fixture
@@ -162,12 +227,12 @@ def struct_grid():
         np.arange(-10, 10, 2, dtype=np.float32),
         np.arange(-10, 10, 2, dtype=np.float32),
     )
-    return pyvista.StructuredGrid(x, y, z)
+    return pv.StructuredGrid(x, y, z)
 
 
 @pytest.fixture
 def plane():
-    return pyvista.Plane(direction=(0, 0, -1))
+    return pv.Plane(direction=(0, 0, -1))
 
 
 @pytest.fixture
@@ -183,7 +248,7 @@ def random_hills():
 @pytest.fixture
 def tri_cylinder():
     """Triangulated cylinder"""
-    return pyvista.Cylinder().triangulate()
+    return pv.Cylinder().triangulate()
 
 
 @pytest.fixture
@@ -205,23 +270,23 @@ def datasets(datasets_no_pointset, pointset):
 @pytest.fixture
 def multiblock_poly():
     # format and order of data (including missing) is intentional
-    mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
+    mesh_a = pv.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
     mesh_a['data_a'] = mesh_a.points[:, 0] * 10
     mesh_a['data_b'] = mesh_a.points[:, 1] * 10
     mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
     mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
 
-    mesh_b = pyvista.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
+    mesh_b = pv.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
     mesh_b['data_a'] = mesh_b.points[:, 0] * 10
     mesh_b['data_b'] = mesh_b.points[:, 1] * 10
     mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
     mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
 
-    mesh_c = pyvista.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
+    mesh_c = pv.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
     mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
     mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
 
-    mblock = pyvista.MultiBlock()
+    mblock = pv.MultiBlock()
     mblock.append(mesh_a)
     mblock.append(mesh_b)
     mblock.append(mesh_c)
@@ -239,7 +304,7 @@ def datasets_vtk9():
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
-    return pyvista.PointSet(points)
+    return pv.PointSet(points)
 
 
 @pytest.fixture
@@ -251,7 +316,7 @@ def multiblock_all_no_pointset(datasets_no_pointset):
 @pytest.fixture
 def multiblock_all(datasets):
     """Return datasets fixture combined in a pyvista multiblock."""
-    return pyvista.MultiBlock(datasets)
+    return pv.MultiBlock(datasets)
 
 
 @pytest.fixture
@@ -267,25 +332,25 @@ def multiblock_all_no_pointset_with_nested_and_none(
 def multiblock_all_with_nested_and_none(datasets, multiblock_all):
     """Return datasets fixture combined in a pyvista multiblock."""
     multiblock_all.append(None)
-    return pyvista.MultiBlock([*datasets, None, multiblock_all])
+    return pv.MultiBlock([*datasets, None, multiblock_all.copy()])
 
 
 @pytest.fixture
 def noise_2d():
     freq = [10, 5, 0]
-    noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
-    return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
+    noise = pv.perlin_noise(1, freq, (0, 0, 0))
+    return pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
 
 
 @pytest.fixture
 def texture():
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
-    pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
-    mesh = pyvista.Sphere()
+    pl = pv.Plotter(window_size=(300, 200), lighting=None)
+    mesh = pv.Sphere()
     pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
     pl.background_color = 'w'
-    return pyvista.Texture(pl.screenshot())
+    return pv.Texture(pl.screenshot())
 
 
 @pytest.fixture
@@ -293,11 +358,70 @@ def image(texture):
     return texture.to_image()
 
 
+@pytest.hookimpl(trylast=True)
+def pytest_sessionstart():
+    """Register Hypothesis' global PRNG now, while the heap is still thawed.
+
+    The leak check freezes the heap for the whole body of every test it covers (see
+    :mod:`tests.gc_check`), and ``gc.get_referrers()`` does not look in the permanent
+    generation. Hypothesis creates and registers its global PRNG lazily, on the first
+    ``@given`` test in the process, and ``register_random`` sanity-checks that PRNG with
+    ``gc.get_referrers()``. Run inside a frozen body, that comes back empty, so Hypothesis
+    warns that the PRNG looks collectable -- and ``filterwarnings = ['error']`` turns the
+    warning into a failure of that first test.
+
+    Two conditions have to line up for that. On Python 3.14 ``threading.local()``
+    allocates its per-thread dict at construction, so the dict holding the PRNG is built
+    when ``hypothesis.core`` is imported and lands in the permanent generation; through
+    3.13 it is created on first access, inside the frozen window, where it stays visible.
+    And the lazy ``register_random`` only runs under ``derandomize=True``, which comes
+    from Hypothesis' ``ci`` profile, auto-loaded when ``CI`` is set. A local run on 3.13,
+    or without ``CI``, will not reproduce it; xdist only picks which test takes the hit.
+
+    Running one throwaway example here does that registration once, at session start,
+    where nothing is frozen. Deleting this brings the failures back.
+
+    ``trylast`` so it runs after Hypothesis' own ``pytest_sessionstart``, which is where
+    Hypothesis stops treating the process as still initializing; before that it warns
+    about strategies being evaluated in a plugin.
+    """
+    # The docs-test dependency group installs no Hypothesis, and this conftest still has
+    # to import under it, so probe for the package instead of importing it at module scope.
+    if importlib.util.find_spec('hypothesis') is None:
+        return
+
+    from hypothesis import HealthCheck
+    from hypothesis import given
+    from hypothesis import settings
+    from hypothesis import strategies as st
+
+    @settings(
+        max_examples=1, deadline=None, database=None, suppress_health_check=list(HealthCheck)
+    )
+    @given(_=st.none())
+    def warm_up_prng(_):
+        pass
+
+    warm_up_prng()
+
+
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
+    parser.addoption(
+        '--no_check_gc',
+        action='store_true',
+        default=False,
+        help='skip the reference leak check, which is otherwise run (see tests/gc_check.py)',
+    )
+    parser.addoption(
+        '--playwright',
+        action='store_true',
+        default=False,
+        help='run Playwright-based tests',
+    )
 
 
-def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
+def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
     try:
@@ -315,8 +439,8 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
 
 def _get_min_max_vtk_version(
     item_mark: pytest.Mark,
-    sig: Signature,
-) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    sig: inspect.Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, inspect.BoundArguments]:
     bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
 
     def _pad_version(val: tuple[int] | None):
@@ -365,28 +489,28 @@ def pytest_runtest_setup(item: pytest.Item):
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     'args',
-                    kind=Parameter.VAR_POSITIONAL,
+                    kind=inspect.Parameter.VAR_POSITIONAL,
                     annotation=int | tuple[int],
                 ),
-                Parameter(
+                inspect.Parameter(
                     'at_least',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     annotation=tuple[int] | None,
                     default=None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'less_than',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=tuple[int] | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'reason',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -396,16 +520,16 @@ def pytest_runtest_setup(item: pytest.Item):
         _min = (_min,) if isinstance(_min, int) else _min
         _max = (_max,) if isinstance(_max, int) else _max
 
-        if (_min is not None and _min <= pyvista._MIN_SUPPORTED_VTK_VERSION) or (
-            _max is not None and _max <= pyvista._MIN_SUPPORTED_VTK_VERSION
+        if (_min is not None and _min <= pv._MIN_SUPPORTED_VTK_VERSION) or (
+            _max is not None and _max <= pv._MIN_SUPPORTED_VTK_VERSION
         ):
             msg = (
                 f'The {needs_vtk_version!r} marker is no longer necessary\n'
                 f'and can be removed from test {item}.'
             )
-            raise pyvista.VTKVersionError(msg)
+            raise pv.VTKVersionError(msg)
 
-        curr_version = pyvista.vtk_version_info
+        curr_version = pv.vtk_version_info
 
         if _max is None and curr_version < _min:
             reason = item_mark.kwargs.get(
@@ -432,11 +556,11 @@ def pytest_runtest_setup(item: pytest.Item):
                 pytest.skip(reason=reason)
 
     if item_mark := item.get_closest_marker('skip_egl'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails when using OSMesa/EGL VTK build',
                     annotation=str,
                 )
@@ -448,11 +572,11 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_windows'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on Windows',
                     annotation=str,
                 )
@@ -464,23 +588,23 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on MacOS',
                     annotation=str,
                 ),
-                Parameter(
+                inspect.Parameter(
                     p := 'processor',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     m := 'machine',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -503,12 +627,16 @@ def pytest_runtest_setup(item: pytest.Item):
     if item.get_closest_marker('needs_download') and not test_downloads:
         pytest.skip(f'Downloads not enabled with {flag}')
 
+    playwright = item.config.getoption(flag := '--playwright')
+    if item.get_closest_marker('needs_playwright') and not playwright:
+        pytest.skip(f'Playwright test not enabled with {flag}')
+
 
 def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}
-    for item in metadata.requires('pyvista'):
+    for item in requires('pyvista'):
         pkg_name = re.findall(r'[a-z0-9_\-]+', item, re.IGNORECASE)[0]
         if pkg_name == 'pyvista':
             continue
@@ -525,9 +653,9 @@ def pytest_report_header(config):  # noqa: ARG001
     items = []
     for name in required:
         try:
-            version = metadata.version(name)
-            items.append(f'{name}-{version}')
-        except metadata.PackageNotFoundError:
+            pkg_version = version(name)
+            items.append(f'{name}-{pkg_version}')
+        except PackageNotFoundError:
             items.append(f'{name} (not found)')
     lines.append('required packages: ' + ', '.join(items))
 
@@ -536,9 +664,9 @@ def pytest_report_header(config):  # noqa: ARG001
         installed = []
         for name in extra[pkg_extra]:
             try:
-                version = metadata.version(name)
-                installed.append(f'{name}-{version}')
-            except metadata.PackageNotFoundError:
+                pkg_version = version(name)
+                installed.append(f'{name}-{pkg_version}')
+            except PackageNotFoundError:
                 not_found.append(name)
         if installed:
             plrl = 's' if len(installed) != 1 else ''

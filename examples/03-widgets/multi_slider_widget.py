@@ -15,15 +15,15 @@ mesh-generating/altering code.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import pyvista as pv
 
 
-class MyCustomRoutine:  # noqa: D101
+class MyCustomRoutine:
+    """Stateful callback for updating a mesh from slider parameters."""
+
     def __init__(self, mesh):
         self.output = mesh  # Expected PyVista mesh type
         # default parameters
@@ -50,9 +50,9 @@ engine = MyCustomRoutine(starting_mesh)
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(starting_mesh, show_edges=True)
-p.add_slider_widget(
+pl = pv.Plotter()
+pl.add_mesh(starting_mesh, show_edges=True)
+pl.add_slider_widget(
     callback=lambda value: engine('phi_resolution', int(value)),
     rng=[3, 60],
     value=30,
@@ -61,7 +61,7 @@ p.add_slider_widget(
     pointb=(0.31, 0.1),
     style='modern',
 )
-p.add_slider_widget(
+pl.add_slider_widget(
     callback=lambda value: engine('theta_resolution', int(value)),
     rng=[3, 60],
     value=30,
@@ -70,7 +70,7 @@ p.add_slider_widget(
     pointb=(0.64, 0.1),
     style='modern',
 )
-p.add_slider_widget(
+pl.add_slider_widget(
     callback=lambda value: engine('radius', value),
     rng=[0.1, 1.5],
     value=0.5,
@@ -79,6 +79,6 @@ p.add_slider_widget(
     pointb=(0.98, 0.1),
     style='modern',
 )
-p.show()
+pl.show()
 # %%
 # .. tags:: widgets

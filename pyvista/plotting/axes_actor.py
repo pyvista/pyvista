@@ -5,18 +5,19 @@ from __future__ import annotations
 from collections.abc import Iterable
 from enum import Enum
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .actor_properties import ActorProperties
 
 
 class AxesActor(
-    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor
+    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAxesActor
 ):
     """Axes actor wrapper for :vtk:`vtkAxesActor`.
 
@@ -89,23 +90,23 @@ class AxesActor(
         """Initialize actor."""
         super().__init__()
 
-        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.float_rgb
-        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.float_rgb
-        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
-        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
-        self.x_axis_shaft_properties.lighting = pyvista.global_theme.lighting
+        self.x_axis_shaft_properties.color = pv.global_theme.axes.x_color.float_rgb
+        self.x_axis_tip_properties.color = pv.global_theme.axes.x_color.float_rgb
+        self.x_axis_shaft_properties.opacity = pv.global_theme.axes.x_color.float_rgba[3]
+        self.x_axis_tip_properties.opacity = pv.global_theme.axes.x_color.float_rgba[3]
+        self.x_axis_shaft_properties.lighting = pv.global_theme.lighting
 
-        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.float_rgb
-        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.float_rgb
-        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
-        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
-        self.y_axis_shaft_properties.lighting = pyvista.global_theme.lighting
+        self.y_axis_shaft_properties.color = pv.global_theme.axes.y_color.float_rgb
+        self.y_axis_tip_properties.color = pv.global_theme.axes.y_color.float_rgb
+        self.y_axis_shaft_properties.opacity = pv.global_theme.axes.y_color.float_rgba[3]
+        self.y_axis_tip_properties.opacity = pv.global_theme.axes.y_color.float_rgba[3]
+        self.y_axis_shaft_properties.lighting = pv.global_theme.lighting
 
-        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.float_rgb
-        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.float_rgb
-        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
-        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
-        self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
+        self.z_axis_shaft_properties.color = pv.global_theme.axes.z_color.float_rgb
+        self.z_axis_tip_properties.color = pv.global_theme.axes.z_color.float_rgb
+        self.z_axis_shaft_properties.opacity = pv.global_theme.axes.z_color.float_rgba[3]
+        self.z_axis_tip_properties.opacity = pv.global_theme.axes.z_color.float_rgba[3]
+        self.z_axis_shaft_properties.lighting = pv.global_theme.lighting
 
     @property
     def bounds(self) -> BoundsTuple:

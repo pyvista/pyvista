@@ -7,10 +7,14 @@ from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
-from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataobject import DataObject
@@ -24,6 +28,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from pyvista import PolyData
     from pyvista import UnstructuredGrid
 
     from ._typing_core import CellsLike
@@ -31,13 +36,25 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-def _get_vtk_id_type() -> type[np.int32 | np.int64]:
-    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`."""
+def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
+    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`.
+
+    The 64-bit case returns :class:`numpy.longlong` (C ``long long``) rather than
+    :class:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
+    LP64 (Linux/macOS) numpy binds the name ``int64`` to C ``long`` instead, which is
+    a *distinct* scalar type. Since VTK 9.7 the numpy-to-VTK mapping follows the
+    underlying C type, so ``np.int64`` there resolves to ``VTK_LONG`` and only
+    ``np.longlong`` resolves to ``VTK_ID_TYPE``. ``longlong`` maps to ``VTK_LONG_LONG``
+    on all supported VTK versions and platforms, so it is correct either way.
+
+    The two compare equal as dtypes and have identical width, so this is invisible to
+    value comparisons; it only affects which VTK array class conversions produce.
+    """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
     elif VTK_ID_TYPE_SIZE == 8:
-        return np.int64
+        return np.longlong
     return np.int32
 
 
@@ -58,6 +75,10 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
     deep : bool, default: False
         Perform a deep copy of the original cell.
+
+    See Also
+    --------
+    pyvista.CellType
 
     Notes
     -----
@@ -154,6 +175,10 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     def is_linear(self: Self) -> bool:
         """Return if the cell is linear.
 
+        See Also
+        --------
+        pyvista.CellType.is_linear
+
         Returns
         -------
         bool
@@ -188,7 +213,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
 
-    def cast_to_polydata(self: Self) -> pyvista.PolyData:
+    def cast_to_polydata(self: Self) -> PolyData:
         """Cast this cell to PolyData.
 
         Can only be used for 0D, 1D, or 2D cells.
@@ -217,14 +242,14 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """
         cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
         if self.dimension == 0:
-            return pyvista.PolyData(self.points.copy(), verts=cells)
+            return pv.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
-            return pyvista.PolyData(self.points.copy(), lines=cells)
+            return pv.PolyData(self.points.copy(), lines=cells)
         if self.dimension == 2:
             if self.type == CellType.TRIANGLE_STRIP:
-                return pyvista.PolyData(self.points.copy(), strips=cells)
+                return pv.PolyData(self.points.copy(), strips=cells)
             else:
-                return pyvista.PolyData(self.points.copy(), faces=cells)
+                return pv.PolyData(self.points.copy(), faces=cells)
         else:
             msg = f'3D cells cannot be cast to PolyData: got cell type {self.type}'
             raise ValueError(msg)
@@ -262,7 +287,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
             cell_ids.insert(0, len(cell_ids))
         else:
             cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
-        return pyvista.UnstructuredGrid(
+        return pv.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
             self.points.copy(),
@@ -274,6 +299,10 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
         This returns the dimensionality of the cell. For example, 1 for an edge,
         2 for a triangle, and 3 for a tetrahedron.
+
+        See Also
+        --------
+        pyvista.CellType.dimension
 
         Returns
         -------
@@ -294,6 +323,10 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     def n_points(self: Self) -> int:
         """Get the number of points composing the cell.
 
+        See Also
+        --------
+        pyvista.CellType.n_points
+
         Returns
         -------
         int
@@ -313,6 +346,10 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     def n_faces(self: Self) -> int:
         """Get the number of faces composing the cell.
 
+        See Also
+        --------
+        pyvista.CellType.n_faces
+
         Returns
         -------
         int
@@ -331,6 +368,10 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     @property
     def n_edges(self: Self) -> int:
         """Get the number of edges composing the cell.
+
+        See Also
+        --------
+        pyvista.CellType.n_edges
 
         Returns
         -------
@@ -562,7 +603,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         attrs.append(('N Faces', self.n_faces, '{}'))  # type: ignore[arg-type]
         attrs.append(('N Edges', self.n_edges, '{}'))  # type: ignore[arg-type]
         bds = self.bounds
-        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        fmt = f'{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}'
         attrs.append(('X Bounds', (bds[0], bds[1]), fmt))  # type: ignore[arg-type]
         attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))  # type: ignore[arg-type]
         attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))  # type: ignore[arg-type]
@@ -618,17 +659,14 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
 class CellArray(
     _NoNewAttrMixin,
-    _vtk.DisableVtkSnakeCase,
-    _vtk.vtkPyVistaOverride,
+    DisableVtkSnakeCase,
+    vtkPyVistaOverride,
     _vtk.vtkCellArray,
 ):
     """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
     a numpy array or list.
-
-    .. deprecated:: 0.44.0
-       The parameters ``n_cells`` and ``deep`` are deprecated and no longer used.
 
     Parameters
     ----------
@@ -637,12 +675,6 @@ class CellArray(
         ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
         Where n0 is the number of points in cell 0, and pX_Y is the Y'th
         point in cell X.
-
-    n_cells : int, optional
-        The number of cells.
-
-    deep : bool, default: False
-        Perform a deep copy of the original cell.
 
     Examples
     --------
@@ -660,12 +692,9 @@ class CellArray(
 
     """
 
-    @_deprecate_positional_args(allowed=['cells'])
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
-        n_cells: int | None = None,
-        deep: bool | None = None,  # noqa: FBT001
     ) -> None:
         """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
@@ -673,12 +702,6 @@ class CellArray(
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
             self.cells = cells
-
-        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (('n_cells', n_cells), ('deep', deep)):
-            if v is not None:
-                msg = f'CellArray parameter `{k}` is deprecated and no longer used.'
-                raise TypeError(msg)
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
@@ -699,7 +722,8 @@ class CellArray(
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
-        imported_size = self.GetNumberOfConnectivityEntries()
+
+        imported_size = self.GetNumberOfCells() + self.GetNumberOfConnectivityIds()
 
         # https://github.com/pyvista/pyvista/pull/5404
         if imported_size != cells.size:
@@ -755,14 +779,51 @@ class CellArray(
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
-        vtk_offsets = numpy_to_idarr(offsets, deep=deep)
-        vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        offsets = np.asarray(offsets)
+        connectivity = np.asarray(connectivity)
+
+        # ``vtkCellArray`` natively supports 32-bit storage (VTK >= 9). When both
+        # arrays are already ``int32`` we preserve that instead of casting up to
+        # ``pv.ID_TYPE`` (64-bit), which avoids copying and doubling the memory of
+        # large offset/connectivity arrays. See https://github.com/pyvista/pyvista/issues/8477
+        if offsets.dtype == np.int32 and connectivity.dtype == np.int32:
+            vtk_offsets = _vtk.numpy_to_vtk(np.ascontiguousarray(offsets.ravel()), deep=deep)
+            vtk_connectivity = _vtk.numpy_to_vtk(
+                np.ascontiguousarray(connectivity.ravel()), deep=deep
+            )
+            self.Use32BitStorage()
+        else:
+            vtk_offsets = numpy_to_idarr(offsets, deep=deep)
+            vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
-        # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
-        # garbage collected. Keep a reference to them for safety
-        self.__offsets = vtk_offsets
-        self.__connectivity = vtk_connectivity
+        # Only pre-9.6 VTK needs this: there SetData does not reference the arrays, so
+        # dropping them here frees the buffers out from under us. Newer VTK does own
+        # them, and stashing anyway leaks both via the ghost __dict__ (see #8873).
+        if not _SETDATA_TAKES_OWNERSHIP:
+            self.__offsets = vtk_offsets
+            self.__connectivity = vtk_connectivity
+
+    def _set_data_fixed_size(
+        self: Self,
+        cell_size: int,
+        connectivity: MatrixLike[int],
+        *,
+        deep: bool = False,
+    ) -> None:
+        """Set fixed-size cell connectivity without an explicit offset array."""
+        connectivity = np.asarray(connectivity)
+
+        if connectivity.dtype == np.int32:
+            vtk_connectivity = _vtk.numpy_to_vtk(
+                np.ascontiguousarray(connectivity.ravel()), deep=deep
+            )
+            self.Use32BitStorage()
+        else:
+            vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        # No stash needed as in _set_data: fixed-size storage implies VTK >= 9.6.2, which
+        # always owns the array
+        self.SetData(cell_size, vtk_connectivity)
 
     @staticmethod
     @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
@@ -818,8 +879,14 @@ class CellArray(
         cls: type[CellArray],
         cells: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
-    ) -> pyvista.CellArray:
-        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+    ) -> CellArray:
+        """Construct a ``CellArray`` from cells which all have the same size.
+
+        Use this method when every cell has the same number of points, e.g. an
+        array of triangles or an array of quads. The cell offsets are computed
+        directly from the cell size, and the input array is used as the
+        connectivity array. Use :meth:`from_irregular_cells` instead if the
+        cells have varying sizes.
 
         Parameters
         ----------
@@ -828,38 +895,95 @@ class CellArray(
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
+            If ``False``, the returned cell array may share memory with ``cells``.
 
         Returns
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
 
+        See Also
+        --------
+        from_irregular_cells
+            Equivalent method for cells with varying sizes.
+        regular_cells
+            Read the cells back as a (n_cells, cell_size) array.
+
+        Examples
+        --------
+        Create a cell array of two triangles.
+
+        >>> import pyvista as pv
+        >>> cells = pv.CellArray.from_regular_cells([[0, 1, 2], [1, 2, 3]])
+        >>> cells.n_cells
+        2
+        >>> cells.regular_cells
+        array([[0, 1, 2],
+               [1, 2, 3]]...)
+
         """
-        cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
+        cells = np.asarray(cells)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
+        if cells.dtype != np.int32:
+            cells = np.asarray(cells, dtype=pv.ID_TYPE)
+
         cellarr = cls()
-        cellarr._set_data(offsets, cells, deep=deep)
+        if _SUPPORTS_FIXED_SIZE_STORAGE:
+            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
+        else:
+            offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+            cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> pyvista.CellArray:
-        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
+        """Construct a ``CellArray`` from cells which may have different sizes.
+
+        Use this method when the cells have varying numbers of points, e.g. a
+        mix of triangles and quads. The cell offsets are computed from the
+        length of each cell, and the connectivity array is built by
+        concatenating the cells. Use :meth:`from_regular_cells` instead if all
+        cells have the same size.
+
+        Unlike :meth:`from_regular_cells`, this method has no ``deep``
+        parameter, since building the connectivity array always makes a copy of
+        the input.
 
         Parameters
         ----------
-        cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
+        cells : Sequence[Sequence[int]]
+            Sequence of length n_cells where each item is a sequence of the
+            point indices for that cell. The cells may have different lengths.
 
         Returns
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
 
+        See Also
+        --------
+        from_regular_cells
+            Equivalent method for cells which all have the same size.
+        offset_array
+            Offsets marking where each cell begins in the connectivity array.
+
+        Examples
+        --------
+        Create a cell array from a triangle and a quad.
+
+        >>> import pyvista as pv
+        >>> cells = pv.CellArray.from_irregular_cells([[0, 1, 2], [1, 2, 3, 4]])
+        >>> cells.n_cells
+        2
+        >>> cells.connectivity_array
+        array([0, 1, 2, 1, 2, 3, 4]...)
+        >>> cells.offset_array
+        array([0, 3, 7]...)
+
         """
         offsets = np.cumsum([len(c) for c in cells])
-        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
-        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        offsets = np.concatenate([[0], offsets], dtype=pv.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pv.ID_TYPE)
         return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
@@ -885,9 +1009,22 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     if len(cells) == 0:
         return cells
 
-    offsets = _get_offset_array(cellarr)
-    cell_size = offsets[1] - offsets[0]
-    return cells.reshape(-1, cell_size)
+    if _SUPPORTS_FIXED_SIZE_STORAGE and cellarr.IsStorageFixedSize():
+        cell_size = cellarr.IsHomogeneous()
+    else:
+        offsets = _get_offset_array(cellarr)
+        cell_size = offsets[1] - offsets[0]
+
+    try:
+        return cells.reshape(-1, cell_size)
+    except ValueError:
+        offsets = _get_offset_array(cellarr)
+        sizes = sorted(np.unique(np.diff(offsets)).tolist())
+        msg = (
+            f'Cell array does not have regular cells. '
+            f'Multiple cell sizes detected with different number of points: {sizes}'
+        )
+        raise ValueError(msg)
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:

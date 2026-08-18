@@ -18,8 +18,6 @@ that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
 """
 
-from __future__ import annotations
-
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 3
@@ -70,11 +68,11 @@ mesh['Elevation'] = zz.ravel(order='F')
 mesh
 
 # %%
-cpos = [
-    (1826736.796308761, 5655837.275274233, 4676.8405505181745),
-    (1821066.1790519988, 5649248.765538796, 943.0995128226014),
-    (-0.2797856225380979, -0.27966946337594883, 0.9184252809434081),
-]
+cpos = pv.CameraPosition(
+    position=(1826736.796308761, 5655837.275274233, 4676.8405505181745),
+    focal_point=(1821066.1790519988, 5649248.765538796, 943.0995128226014),
+    viewup=(-0.2797856225380979, -0.27966946337594883, 0.9184252809434081),
+)
 
 mesh.plot(show_edges=True, lighting=False, cpos=cpos)
 # %%

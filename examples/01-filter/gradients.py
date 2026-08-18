@@ -13,8 +13,6 @@ an input array {u, v, w}.
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
 
-from __future__ import annotations
-
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 1
@@ -47,7 +45,7 @@ def gradients_to_dict(arr):
         ['du/dx', 'du/dy', 'du/dz', 'dv/dx', 'dv/dy', 'dv/dz', 'dw/dx', 'dw/dy', 'dw/dz'],
     )
     keys = keys.reshape((3, 3))[:, : arr.shape[1]].ravel()
-    return dict(zip(keys, mesh_g['gradient'].T))
+    return dict(zip(keys, mesh_g['gradient'].T, strict=False))
 
 
 gradients = gradients_to_dict(mesh_g['gradient'])
@@ -63,14 +61,17 @@ mesh_g
 
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
-p = pv.Plotter(shape=keys.shape)
-for (i, j), name in np.ndenumerate(keys):
-    p.subplot(i, j)
-    p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    p.add_mesh(mesh_g.outline(), color='k')
-p.link_views()
-p.view_isometric()
-p.show()
+# `contour` makes the scalars it contours by the active scalars, so each mesh is
+# colored by its own gradient component.
+datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
+
+pv.plot_compare(
+    datasets,
+    opacity=0.75,
+    reference_mesh=mesh_g.outline(),
+    shape=keys.shape,
+    cpos='iso',
+)
 
 
 # %%
@@ -87,14 +88,14 @@ mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
-p = pv.Plotter(shape=keys.shape)
+datasets = {name: mesh_g.contour(scalars=name) for name in keys.ravel()}
 
-for (i, j), name in np.ndenumerate(keys):
-    p.subplot(i, j)
-    p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    p.add_mesh(mesh_g.outline(), color='k')
-p.link_views()
-p.view_isometric()
-p.show()
+pv.plot_compare(
+    datasets,
+    opacity=0.75,
+    reference_mesh=mesh_g.outline(),
+    shape=keys.shape,
+    cpos='iso',
+)
 # %%
 # .. tags:: filter

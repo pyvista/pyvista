@@ -1,0 +1,32 @@
+/* Pin the CoDimensional PBC partner card to the bottom of the right
+   (secondary) sidebar.
+
+   The theme already makes .bd-sidebar-secondary a flex column, but it only
+   sets max-height (not min-height), so with a short page table of contents the
+   box collapses to its content height and the card rides up near the top.
+   Forcing the sidebar to fill the available viewport height gives the flex
+   column room, and margin-top:auto on the card item drops it to the bottom. */
+
+.bd-sidebar-secondary {
+  min-height: calc(100vh - var(--pst-header-height));
+}
+
+.bd-sidebar-secondary .sidebar-secondary-items {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.bd-sidebar-secondary
+  .sidebar-secondary-items
+  > .sidebar-secondary-item:has(.codimensional-partner-card) {
+  margin-top: auto;
+}
+
+.codimensional-partner-card {
+  padding-top: 1em;
+}
+
+.codimensional-partner-card img {
+  margin: 0 auto;
+}

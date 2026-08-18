@@ -6,9 +6,10 @@ from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista import _vtk
+from pyvista import examples
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -19,23 +20,23 @@ def plane2x2():
 
 
 def test_show_bounds_axes_ranges():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
 
     # test empty call
-    plotter.show_bounds()
-    cube_axes_actor = plotter.renderer.cube_axes_actor
-    assert cube_axes_actor.GetBounds() == tuple(plotter.bounds)
+    pl.show_bounds()
+    cube_axes_actor = pl.renderer.cube_axes_actor
+    assert cube_axes_actor.GetBounds() == tuple(pl.bounds)
 
     # send bounds but no axes ranges
     bounds = (0, 1, 0, 1, 0, 1)
-    plotter.show_bounds(bounds=bounds)
-    cube_axes_actor = plotter.renderer.cube_axes_actor
+    pl.show_bounds(bounds=bounds)
+    cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.bounds == bounds
 
     # send bounds and axes ranges
     axes_ranges = [0, 1, 0, 2, 0, 3]
-    plotter.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
-    cube_axes_actor = plotter.renderer.cube_axes_actor
+    pl.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
+    cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.GetBounds() == bounds
     test_ranges = [
         *cube_axes_actor.GetXAxisRange(),
@@ -47,158 +48,373 @@ def test_show_bounds_axes_ranges():
     # make sure that the axes labels match the axes ranges
     labels_ranges = []
     for axis in range(3):
-        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        axis_labels = pl.renderer.cube_axes_actor.GetAxisLabels(axis)
         labels_ranges.append(float(axis_labels.GetValue(0)))
         labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
     assert labels_ranges == axes_ranges
 
 
 def test_show_grid_axes_ranges_with_all_edges():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
 
     axes_ranges = [5, 10, 5, 10, 5, 10]
-    plotter.show_grid(axes_ranges=axes_ranges, all_edges=True)
+    pl.show_grid(axes_ranges=axes_ranges, all_edges=True)
     labels_ranges = []
     for axis in range(3):
-        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        axis_labels = pl.renderer.cube_axes_actor.GetAxisLabels(axis)
         labels_ranges.append(float(axis_labels.GetValue(0)))
         labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
     assert labels_ranges == axes_ranges
 
 
 def test_show_bounds_with_scaling(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    actor0 = plotter.show_bounds()
-    assert actor0.GetUseTextActor3D()
-    plotter.set_scale(0.5, 0.5, 2)
-    actor1 = plotter.show_bounds()
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    actor0 = pl.show_bounds()
+    expected_default = pv.vtk_version_info < (9, 6, 0)
+    assert actor0.GetUseTextActor3D() == expected_default
+    pl.set_scale(0.5, 0.5, 2)
+    actor1 = pl.show_bounds()
     assert not actor1.GetUseTextActor3D()
 
 
 def test_show_bounds_invalid_axes_ranges():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
 
     # send incorrect axes_ranges types
     axes_ranges = 1
     with pytest.raises(TypeError, match='numeric sequence'):
-        plotter.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 'a', 'b', 2, 3]
     with pytest.raises(TypeError, match='All of the elements'):
-        plotter.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
-    with pytest.raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
-        plotter.show_bounds(axes_ranges=axes_ranges)
+    with pytest.raises(ValueError, match=r'[xmin, xmax, ymin, max, zmin, zmax]'):
+        pl.show_bounds(axes_ranges=axes_ranges)
 
 
 @pytest.mark.skip_plotting
 def test_camera_position():
-    plotter = pv.Plotter()
-    plotter.add_mesh(pv.Sphere())
-    plotter.show()
-    assert isinstance(plotter.camera_position, pv.CameraPosition)
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show()
+    cpos = pl.camera_position
+    assert isinstance(cpos, pv.CameraPosition)
+
+    # Test str format is a list
+    assert eval(str(cpos)) == cpos.to_list()
+
+    # Test repr format is init-able
+    cpos2 = eval('pv.' + repr(cpos))
+    assert cpos2 == cpos
 
 
 @pytest.mark.skip_plotting
 def test_plotter_camera_position():
-    plotter = pv.Plotter()
-    plotter.set_position([1, 1, 1], render=True)
+    pl = pv.Plotter()
+    pl.set_position([1, 1, 1], render=True)
 
 
 def test_renderer_set_viewup():
-    plotter = pv.Plotter()
-    plotter.renderer.set_viewup([1, 1, 1])
+    pl = pv.Plotter()
+    pl.renderer.set_viewup([1, 1, 1])
 
 
 def test_reset_camera():
-    plotter = pv.Plotter()
-    plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_isometric():
-    plotter = pv.Plotter()
-    plotter.view_isometric(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_isometric(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_xy():
-    plotter = pv.Plotter()
-    plotter.view_xy(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_xy(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_yx():
-    plotter = pv.Plotter()
-    plotter.view_yx(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_yx(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_xz():
-    plotter = pv.Plotter()
-    plotter.view_xz(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_xz(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_zx():
-    plotter = pv.Plotter()
-    plotter.view_zx(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_zx(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_yz():
-    plotter = pv.Plotter()
-    plotter.view_yz(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_yz(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_zy():
-    plotter = pv.Plotter()
-    plotter.view_zy(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_zy(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_camera_is_set():
-    plotter = pv.Plotter()
-    assert not plotter.camera_set
-    assert not plotter.renderer.camera_set
+    pl = pv.Plotter()
+    assert not pl.camera_set
+    assert not pl.renderer.camera_set
 
-    renderer = pv.Renderer(plotter)
+    renderer = pv.Renderer(pl)
     assert not renderer.camera_set
 
 
 def test_layer():
-    plotter = pv.Plotter()
-    plotter.renderer.layer = 1
-    assert plotter.renderer.layer == 1
-    plotter.renderer.layer = 0
-    assert plotter.renderer.layer == 0
+    pl = pv.Plotter()
+    pl.renderer.layer = 1
+    assert pl.renderer.layer == 1
+    pl.renderer.layer = 0
+    assert pl.renderer.layer == 0
 
 
 @pytest.mark.parametrize('has_border', [True, False])
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
-    plotter = pv.Plotter(border=has_border, border_color=border_color, border_width=border_width)
-    assert plotter.renderer.has_border is has_border
+    pl = pv.Plotter(border=has_border, border_color=border_color, border_width=border_width)
+    assert pl.renderer.has_border is has_border
 
     if has_border:
-        assert plotter.renderer.border_color == border_color
+        assert pl.renderer.border_color == border_color
     else:
-        assert plotter.renderer.border_color is None
+        assert pl.renderer.border_color is None
 
     if has_border:
-        assert plotter.renderer.border_width == border_width
+        assert pl.renderer.border_width == border_width
     else:
-        assert plotter.renderer.border_width == 0
+        assert pl.renderer.border_width == 0
+
+
+def test_border_defaults_from_theme():
+    """Plotter should pick up border color/width from the theme when unset."""
+    pl = pv.Plotter(shape=(1, 2))
+    try:
+        expected_color = pv.global_theme.border_color
+        expected_width = pv.global_theme.border_width
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay.border_color == expected_color
+        assert overlay.border_width == expected_width
+    finally:
+        pl.close()
+
+
+def test_border_explicit_overrides_theme():
+    pl = pv.Plotter(shape=(1, 2), border_color='red', border_width=3)
+    try:
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay.border_color == pv.Color('red')
+        assert overlay.border_width == 3
+    finally:
+        pl.close()
+
+
+@pytest.mark.parametrize('side', ['top', 'left', 'bottom', 'right'])
+def test_add_border_edges_single_side(side):
+    """add_border should honor the ``edges`` kwarg and draw only the requested line."""
+    pl = pv.Plotter()
+    try:
+        # Remove the default (full) border actor before adding a single-side one.
+        if pl.renderer.has_border:
+            pl.renderer.RemoveViewProp(pl.renderer._border_actor)
+            pl.renderer._border_actor = None
+        actor = pl.renderer.add_border(edges=[side])
+        poly = actor.GetMapper().GetInput()
+        assert poly.GetNumberOfLines() == 1
+    finally:
+        pl.close()
+
+
+def _overlay_seam_count(pl):
+    overlay = pl.renderers.border_overlay_renderer
+    if overlay is None:
+        return 0
+    count = 0
+    for actor in (overlay._border_actor, overlay._border_actor_secondary):
+        if actor is not None:
+            count += actor.GetMapper().GetInput().GetNumberOfLines()
+    return count
+
+
+def _per_renderer_has_border(pl):
+    return [renderer.has_border for renderer in pl.renderers]
+
+
+def test_interior_border_overlay_1x2():
+    """A 1x2 plotter gets one interior seam, drawn from the overlay renderer."""
+    pl = pv.Plotter(shape=(1, 2))
+    try:
+        # Per-subplot borders are dropped in favor of the shared overlay.
+        assert _per_renderer_has_border(pl) == [False, False]
+        # One vertical seam between the two subplots.
+        assert _overlay_seam_count(pl) == 1
+    finally:
+        pl.close()
+
+
+def test_interior_border_overlay_2x2():
+    """A 2x2 plotter produces exactly two interior seams (one H, one V)."""
+    pl = pv.Plotter(shape=(2, 2))
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 4
+        # Two seams total: one horizontal and one vertical.
+        assert _overlay_seam_count(pl) == 2
+    finally:
+        pl.close()
+
+
+def test_interior_border_overlay_3x1():
+    """A 3x1 plotter produces two horizontal seams from the overlay."""
+    pl = pv.Plotter(shape=(3, 1))
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 3
+        # Two horizontal seams between the three stacked rows.
+        assert _overlay_seam_count(pl) == 2
+    finally:
+        pl.close()
+
+
+def test_interior_border_overlay_string_shape():
+    """String-shape layouts also route seams through the overlay renderer."""
+    pl = pv.Plotter(shape='1|3')
+    try:
+        assert all(h is False for h in _per_renderer_has_border(pl))
+        # "1|3" has one vertical seam separating the big left panel from
+        # the right column, plus two horizontal seams inside the right
+        # column — 3 segments total.
+        assert _overlay_seam_count(pl) == 3
+    finally:
+        pl.close()
+
+
+def test_interior_border_disabled_single_plotter():
+    """A 1x1 plotter should not grow an interior border (there are no neighbors)."""
+    pl = pv.Plotter()
+    try:
+        assert not pl.renderer.has_border
+        assert pl.renderers.border_overlay_renderer is None
+    finally:
+        pl.close()
+
+
+def test_interior_border_preserves_full_border_on_explicit_single():
+    """Explicit border=True on a 1x1 plotter keeps the full rectangle.
+
+    The interior-only refactor is gated on multi-subplot layouts so that
+    users who opt in on a single plotter still see all four edges.
+    """
+    pl = pv.Plotter(border=True)
+    try:
+        assert pl.renderer.has_border
+        # The lone renderer keeps all four edges of its own border actor.
+        assert pl.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines() == 4
+        assert pl.renderers.border_overlay_renderer is None
+    finally:
+        pl.close()
+
+
+@pytest.mark.parametrize(
+    ('border', 'subplot_seams', 'expected_lines'),
+    [
+        (None, None, 2),  # defaults: no outer frame, interior seams only
+        (False, None, 2),  # same as above, spelled out explicitly
+        (True, None, 6),  # outer frame (4) + interior seams (2)
+        (True, False, 4),  # outer frame only
+        (False, True, 2),  # interior seams only, spelled out explicitly
+        (False, False, 0),  # nothing at all
+    ],
+)
+def test_border_and_subplot_seams_are_independent(border, subplot_seams, expected_lines):
+    """``border`` (outer frame) and ``subplot_seams`` (interior lines) are orthogonal.
+
+    Neither flag depends on the other for a 2x2 grid: every one of the
+    four combinations (plus the all-``None`` defaults) should draw
+    exactly the union of what each flag independently requests.
+    """
+    pl = pv.Plotter(shape=(2, 2), border=border, subplot_seams=subplot_seams)
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 4
+        assert _overlay_seam_count(pl) == expected_lines
+    finally:
+        pl.close()
+
+
+def test_drop_border_actor_removes_both_primary_and_secondary_actor():
+    """``_drop_border_actor`` removes the secondary actor too, when one exists.
+
+    A secondary actor only ever exists on the shared overlay renderer,
+    and only when both interior seams and the exterior frame are drawn
+    together (they need different line widths, so they can't share one
+    actor -- see ``Renderers._build_border_overlay_renderer``). No
+    other renderer ever has one, so exercising this on the overlay is
+    the only way to cover the branch that removes it.
+    """
+    pl = pv.Plotter(shape=(2, 2), border=True)  # subplot_seams defaults True too
+    try:
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay._border_actor is not None
+        assert overlay._border_actor_secondary is not None
+
+        overlay._drop_border_actor()
+
+        assert overlay._border_actor is None
+        assert overlay._border_actor_secondary is None
+    finally:
+        pl.close()
+
+
+def test_subplot_seams_default_is_shape_dependent():
+    """``subplot_seams`` defaults to ``shape != (1, 1)``, mirroring the old ``border`` default."""
+    pl_single = pv.Plotter()
+    pl_multi = pv.Plotter(shape=(1, 2))
+    try:
+        assert pl_single.renderers.border_overlay_renderer is None
+        assert pl_multi.renderers.border_overlay_renderer is not None
+    finally:
+        pl_single.close()
+        pl_multi.close()
+
+
+def test_border_default_is_always_false_regardless_of_shape():
+    """Unlike the old implicit default, ``border`` defaults to ``False`` for every shape."""
+    pl_single = pv.Plotter()
+    pl_multi = pv.Plotter(shape=(2, 2))
+    try:
+        assert not pl_single.renderer.has_border
+        # Multi-subplot: nothing but the (default-on) interior seams, i.e. no
+        # exterior segments were folded into the overlay.
+        assert _overlay_seam_count(pl_multi) == 2
+    finally:
+        pl_single.close()
+        pl_multi.close()
 
 
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
-        plotter.add_legend(labels=legend_labels, loc='bar')
+        pl.add_legend(labels=legend_labels, loc='bar')
     with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=[])
+        pl.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
     with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=type)
+        pl.add_legend(labels=legend_labels, size=type)
 
 
 @pytest.mark.parametrize('loc', ACTOR_LOC_MAP)
@@ -426,9 +642,107 @@ def test_actors_prop_collection_init():
     assert pl.renderer._actors is prop_collection
 
 
+def test_actors_after_close():
+    # Regression test for #8419: closing a plotter must not leave the renderer's
+    # `_actors` attribute deleted (which `_NoNewAttributesMixin` could never restore,
+    # raising "'Renderer' object has no attribute '_actors'" on any later access).
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), name='sph')
+    assert len(pl.renderer.actors) == 1
+
+    pl.close()
+
+    # `_actors` is reset to None instead of being deleted, so accessing it no longer raises.
+    assert pl.renderer._actors is None
+    # and the public `actors` property keeps working, reporting no actors.
+    assert pl.renderer.actors == {}
+    # methods that read `_actors` must tolerate the closed (None) state, not raise.
+    assert pl.renderer.compute_bounds() is not None
+    assert pl.renderer.remove_actor('nonexistent') is False
+    # Plotter-level methods that scan renderer actors must tolerate the closed state too.
+    assert pl.where_is('sph') == []
+    pl.increment_point_size_and_line_width(1)
+
+
+def _add_self_referencing_observer(pl, vtk_obj):
+    """Add an observer whose callback closes over ``pl``.
+
+    VTK's observer/command storage holds the callback (and anything it closes
+    over) in a way that isn't visible to Python's cyclic garbage collector.
+    Without that, plain refcounting already collects an unreferenced ``pl`` --
+    an observer like this is what makes a *missing* ``close()`` cleanup step
+    actually manifest as a real, unreachable leak instead of getting silently
+    swept up anyway.
+    """
+
+    def _cb(*_args):
+        return pl
+
+    vtk_obj.AddObserver('ModifiedEvent', _cb)
+
+
+def test_border_actor_gc_after_close():
+    # Regression test: `Renderer.close()` must clear `_border_actor` (in addition
+    # to `_bounding_box`/`_box_object`/`_marker_actor`, which it already cleared)
+    # so the border actor can be garbage-collected instead of lingering after close.
+    pl = pv.Plotter(border=True)
+    _add_self_referencing_observer(pl, pl.renderer._border_actor)
+    pl.close()
+
+
+def test_render_passes_gc_after_close():
+    # Regression test: `Renderer.close()` must clean up render passes (e.g. the
+    # EDL pass enabled below) the same way `deep_clean()` already does, so their
+    # VTK objects don't linger after close.
+    pl = pv.Plotter()
+    pl.enable_eye_dome_lighting()
+    _add_self_referencing_observer(pl, pl.renderer._render_passes._edl_pass)
+    pl.close()
+
+
+def test_actors_removed_from_scene_on_close():
+    # Regression test: `Renderer.close()` must detach all props from the
+    # underlying vtkRenderer's actual scene graph (e.g. via `RemoveAllViewProps()`),
+    # not just drop pyvista's own Python-side references to them. VTK's own C++
+    # reference counting otherwise keeps a still-attached prop -- and everything
+    # it owns, like the cube axes actor's axis label arrays below -- alive
+    # regardless of whether pyvista still holds a Python attribute pointing to it.
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    cube_axes_actor = pl.show_bounds()
+    _add_self_referencing_observer(pl, cube_axes_actor)
+
+    assert pl.renderer.GetViewProps().GetNumberOfItems() > 0
+    pl.close()
+    assert pl.renderer.GetViewProps().GetNumberOfItems() == 0
+
+
+def test_background_renderer_resize_after_close():
+    # Regression test for #8419: a background renderer can be closed (its `_actors`
+    # reset to None) while the parent plotter and its render window are still alive,
+    # e.g. when the background image is cleared and the window is later resized. The
+    # resize handler must not subscript the now-``None`` ``_actors`` collection.
+    pl = pv.Plotter()
+    pl.add_background_image(examples.mapfile)
+    background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
+    assert background_renderer is not None
+
+    background_renderer.close()
+
+    # The renderer is closed but the plotter/render window remain valid, so `resize`
+    # gets past its `parent`/`render_window` guards and would previously raise
+    # `TypeError: 'NoneType' object is not subscriptable` on `self._actors['background']`.
+    assert background_renderer._actors is None
+    assert background_renderer.parent is not None
+    assert background_renderer.parent.render_window is not None
+    background_renderer.resize()  # must return early via the closed-renderer guard
+
+    pl.close()
+
+
 @pytest.fixture
 def prop_collection():
-    vtk_collection = vtk.vtkPropCollection()
+    vtk_collection = _vtk.vtkPropCollection()
     coll = _PropCollection(vtk_collection)
     yield coll
     del vtk_collection
@@ -527,7 +841,7 @@ def test_prop_collection_setitem(prop_collection):
     assert prop_collection.keys() == ['b', 'b', 'a']
 
     # Test setitem index error
-    with pytest.raises(IndexError, match='Index out of range.'):
+    with pytest.raises(IndexError, match=r'Index out of range.'):
         prop_collection[-4] = c
 
     # Test setitem name
@@ -597,7 +911,7 @@ def test_enable_antialising_raises(aa_type):
 def test_add_actor_raises():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match=re.escape('Culling option (foo) not understood.')):
-        pl.renderer.add_actor(vtk.vtkActor(), culling='foo')
+        pl.renderer.add_actor(_vtk.vtkActor(), culling='foo')
 
 
 @pytest.mark.parametrize('grid', [1.0, 1, object()])
@@ -646,3 +960,27 @@ def test_init_renderers_groups_item_len_raises(groups):
         match=re.escape('Each group entry must have length 2.'),
     ):
         pv.Plotter(groups=[groups])
+
+
+@pytest.mark.parametrize(('shape', 'n_renderers'), [('3|1', 4), ('4/2', 6), ('1|1', 2)])
+def test_init_renderers_shape_descriptor(shape, n_renderers):
+    pl = pv.Plotter(shape=shape)
+    assert len(pl.renderers) == n_renderers
+    assert pl.renderers.shape == (n_renderers,)
+
+
+@pytest.mark.parametrize('shape', ['abc', '1|2|3', '1|2/3', '3|', '', ' 3|1'])
+def test_init_renderers_shape_descriptor_raises(shape):
+    match = (
+        '"shape" string descriptor must be two integers separated by "|" or "/", '
+        f'for example "3|1" or "4/2". Got {shape!r}.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Plotter(shape=shape)
+
+
+@pytest.mark.parametrize('shape', ['0|2', '3|0', '0/2'])
+def test_init_renderers_shape_descriptor_positive_raises(shape):
+    match = f'"shape" must contain only positive integers. Got {shape!r}.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Plotter(shape=shape)

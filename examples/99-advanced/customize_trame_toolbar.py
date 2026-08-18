@@ -9,16 +9,14 @@ This example shows how to add custom tools using the
 `jupyter_kwargs` option with :meth:`~pyvista.Plotter.show`.
 """
 
-from __future__ import annotations
-
 import asyncio
 
 import pyvista as pv
-from pyvista.trame.ui.vuetify3 import button
-from pyvista.trame.ui.vuetify3 import divider
-from pyvista.trame.ui.vuetify3 import select
-from pyvista.trame.ui.vuetify3 import slider
-from pyvista.trame.ui.vuetify3 import text_field
+from trame_pyvista.ui.vuetify3 import button
+from trame_pyvista.ui.vuetify3 import divider
+from trame_pyvista.ui.vuetify3 import select
+from trame_pyvista.ui.vuetify3 import slider
+from trame_pyvista.ui.vuetify3 import text_field
 
 # %%
 # Let's first create the menu items we want to add to the trame's toolbar.
@@ -135,7 +133,7 @@ ctrl.view_update = widget.viewer.update
 
 # trame callbacks
 @state.change('play')
-async def _play(play, **kwargs):  # noqa: ARG001
+async def _play(play, **kwargs):
     while state.play:
         state.resolution += 1
         state.flush()
@@ -145,13 +143,13 @@ async def _play(play, **kwargs):  # noqa: ARG001
 
 
 @state.change('resolution')
-def update_resolution(resolution, **kwargs):  # noqa: ARG001
+def update_resolution(resolution, **kwargs):
     algo.resolution = resolution
     ctrl.view_update()
 
 
 @state.change('visibility')
-def set_visibility(visibility, **kwargs):  # noqa: ARG001
+def set_visibility(visibility, **kwargs):
     toggle = {'Hide': 0, 'Show': 1}
     mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()

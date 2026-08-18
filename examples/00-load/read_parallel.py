@@ -8,8 +8,6 @@ The VTK library supports parallel file formats. Reading meshes broken up into
 several files is natively supported by VTK and PyVista.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 
 # sphinx_gallery_thumbnail_number = 1

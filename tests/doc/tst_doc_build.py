@@ -2,293 +2,49 @@
 
 from __future__ import annotations
 
-import glob
-import os
+from dataclasses import dataclass
+import html
 from pathlib import Path
-import shutil
-from typing import Literal
-from typing import NamedTuple
-import warnings
-from xml.etree.ElementTree import parse
+import re
+from xml.etree import ElementTree as ET
 
-from PIL import Image
 import pytest
-
-import pyvista as pv
 
 ROOT_DIR = str(Path(__file__).parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
 HTML_DIR = str(Path(BUILD_DIR) / 'html')
-BUILD_IMAGE_DIR = str(Path(HTML_DIR) / '_images')
-DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
-DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
-BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
-FLAKY_IMAGE_DIR = str(Path(__file__).parent / 'flaky_tests')
-FLAKY_TEST_CASES = [path.name for path in Path(FLAKY_IMAGE_DIR).iterdir() if path.is_dir()]
 
-MAX_VTKSZ_FILE_SIZE_MB = 50
 
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
 SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds
 XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
-assert XML_FILE.is_file()
-
-pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
 
-class _TestCaseTuple(NamedTuple):
-    test_name: str
-    docs_image_path: str
-    cached_image_path: str
+def load_test_cases() -> list[dict[str, str]]:
+    """Return the sphinx-gallery junit test cases, or none if the docs aren't built.
 
-
-def _get_file_paths(dir_: str, ext: str):
-    """Get all paths of files with a specific extension inside a directory tree."""
-    pattern = str(Path(dir_) / '**' / ('*.' + ext))
-    return glob.glob(pattern, recursive=True)  # noqa: PTH207
-
-
-def _flatten_path(path: str):
-    return '_'.join(os.path.split(path))[1:]
-
-
-def _preprocess_build_images(build_images_dir: str, output_dir: str):
-    """Read images from the build dir, resize them, and save as JPG to a flat output dir.
-
-    All PNG and GIF files from the build are included, and are saved as JPG.
-
+    Parametrization happens at collection time, so this can't raise on a missing
+    file without failing every test in the module.
+    ``test_sphinx_gallery_junit_results_exist`` reports that instead.
     """
-    input_png = _get_file_paths(build_images_dir, ext='png')
-    input_gif = _get_file_paths(build_images_dir, ext='gif')
-    input_jpg = _get_file_paths(build_images_dir, ext='jpg')
-    output_paths = []
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    for input_path in input_png + input_gif + input_jpg:
-        # input image from the docs may come from a nested directory,
-        # so we flatten the file's relative path
-        output_file_name = _flatten_path(os.path.relpath(input_path, build_images_dir))
-        output_file_name = Path(output_file_name).with_suffix('.jpg')
-        output_path = str(Path(output_dir) / output_file_name)
-        output_paths.append(output_path)
-
-        # Ensure image size is max 400x400 and save to output
-        with Image.open(input_path) as im:
-            im = im.convert('RGB') if im.mode != 'RGB' else im  # noqa: PLW2901
-            if not (im.size[0] <= 400 and im.size[1] <= 400):
-                im.thumbnail(size=(400, 400))
-            im.save(output_path, quality='keep') if im.format == 'JPEG' else im.save(output_path)
-
-    return output_paths
+    if not XML_FILE.is_file():
+        return []
+    return [dict(case.attrib) for case in ET.parse(XML_FILE).getroot().iterfind('testcase')]
 
 
-def _generate_test_cases():
-    """Generate a list of image test cases.
-    This function:
-        (1) Generates a list of test images from the docs
-        (2) Generates a list of cached images
-        (3) Merges the two lists together and returns separate test cases to
-            comparing all docs images to all cached images
-    """
-    test_cases_dict: dict = {}
-
-    def add_to_dict(filepath: str, key: str):
-        # Function for stuffing image paths into a dict.
-        # We use a dict to allow for any entry to be made based on image path alone.
-        # This way, we can defer checking for any mismatch between the cached and docs
-        # images to test time.
-        nonlocal test_cases_dict
-        test_name = Path(filepath).stem
-        try:
-            test_cases_dict[test_name]
-        except KeyError:
-            test_cases_dict[test_name] = {}
-        test_cases_dict[test_name].setdefault(key, filepath)
-
-    # process test images
-    test_image_paths = _preprocess_build_images(BUILD_IMAGE_DIR, DEBUG_IMAGE_DIR)
-    [add_to_dict(path, 'docs') for path in test_image_paths]
-
-    # process cached images
-    cached_image_paths = _get_file_paths(BUILD_IMAGE_CACHE, ext='jpg')
-    [add_to_dict(path, 'cached') for path in cached_image_paths]
-
-    # flatten dict
-    test_cases_list = []
-    for test_name, content in sorted(test_cases_dict.items()):
-        doc = content.get('docs', None)
-        cache = content.get('cached', None)
-        test_case = _TestCaseTuple(
-            test_name=test_name,
-            docs_image_path=doc,
-            cached_image_path=cache,
-        )
-        test_cases_list.append(test_case)
-
-    return test_cases_list
-
-
-def pytest_generate_tests(metafunc):
-    """Generate parametrized tests."""
-    if 'test_case' in metafunc.fixturenames:
-        # Generate a separate test case for each image being tested
-        test_cases = _generate_test_cases()
-        ids = [case.test_name for case in test_cases]
-        metafunc.parametrize('test_case', test_cases, ids=ids)
-
-    if 'vtksz_file' in metafunc.fixturenames:
-        # Generate a separate test case for each vtksz file
-        files = sorted(_get_file_paths(BUILD_IMAGE_DIR, ext='vtksz'))
-        ids = [str(Path(file).stem) for file in files]
-        metafunc.parametrize('vtksz_file', files, ids=ids)
-
-
-def _save_failed_test_image(source_path, category: Literal['warnings', 'errors', 'flaky']):
-    """Save test image from cache or build to the failed image dir."""
-    parent_dir = Path(category)
-    if Path(source_path).parent == Path(BUILD_IMAGE_CACHE):
-        dest_dirname = 'from_cache'
-    else:
-        dest_dirname = 'from_build'
-    Path(DEBUG_IMAGE_FAILED_DIR).mkdir(exist_ok=True)
-    Path(DEBUG_IMAGE_FAILED_DIR, parent_dir).mkdir(exist_ok=True)
-    dest_dir = Path(DEBUG_IMAGE_FAILED_DIR, parent_dir, dest_dirname)
-    dest_dir.mkdir(exist_ok=True)
-    dest_path = Path(dest_dir, Path(source_path).name)
-    shutil.copy(source_path, dest_path)
-
-
-def test_static_images(test_case: _TestCaseTuple):
-    fail_msg, fail_source = _test_both_images_exist(*test_case)
-    if fail_msg:
-        _save_failed_test_image(fail_source, 'errors')
-        pytest.fail(fail_msg)
-
-    warn_msg, fail_msg = _test_compare_images(*test_case)
-    if fail_msg:
-        _save_failed_test_image(test_case.docs_image_path, 'errors')
-        _save_failed_test_image(test_case.cached_image_path, 'errors')
-        pytest.fail(fail_msg)
-
-    if warn_msg:
-        parent_dir = (
-            'flaky' if Path(test_case.cached_image_path).stem in FLAKY_TEST_CASES else 'warnings'
-        )
-        _save_failed_test_image(test_case.docs_image_path, parent_dir)
-        _save_failed_test_image(test_case.cached_image_path, parent_dir)
-        warnings.warn(warn_msg)
-
-
-def _test_both_images_exist(filename, docs_image_path, cached_image_path):
-    if docs_image_path is None or cached_image_path is None:
-        if docs_image_path is None:
-            assert cached_image_path is not None
-            source_path = cached_image_path
-            exists = 'cache'
-            missing = 'docs build'
-            exists_path = cached_image_path
-            missing_path = BUILD_IMAGE_DIR
-        else:
-            assert docs_image_path is not None
-            source_path = docs_image_path
-            exists = 'docs build'
-            missing = 'cache'
-            exists_path = BUILD_IMAGE_DIR
-            missing_path = BUILD_IMAGE_CACHE
-
-        msg = (
-            f'Test setup failed for test image:\n'
-            f'\t{filename}\n'
-            f'The image exists in the {exists} directory:\n'
-            f'\t{exists_path}\n'
-            f'but is missing from the {missing} directory:\n'
-            f'\t{missing_path}\n'
-        )
-        return msg, source_path
-    return None, None
-
-
-def _test_compare_images(test_name, docs_image_path, cached_image_path):
-    try:
-        docs_image = pv.read(docs_image_path)
-        cached_image = pv.read(cached_image_path)
-
-        # Check if test should fail or warn
-        error = pv.compare_images(docs_image, cached_image)
-        fail_msg = _check_compare_fail(test_name, error)
-        warn_msg = _check_compare_warn(test_name, error)
-        if fail_msg:
-            # Check if test case is flaky test
-            if test_name in FLAKY_TEST_CASES:
-                # Compare build image to other known valid versions
-                success_path = _is_false_positive(test_name, docs_image)
-                if success_path:
-                    # Convert failure into a warning
-                    warn_msg = fail_msg + (
-                        '\nTHIS IS A FLAKY TEST. It initially failed (as above) but passed when '
-                        f'compared to:\n\t{success_path}'
-                    )
-                    fail_msg = None
-                else:
-                    # Test still fails
-                    fail_msg += (
-                        '\nTHIS IS A FLAKY TEST. It initially failed (as above) and failed again '
-                        f'for all images in \n\t{Path(FLAKY_IMAGE_DIR, test_name)!s}.'
-                    )
-    except RuntimeError as e:
-        warn_msg = None
-        fail_msg = repr(e)
-    return warn_msg, fail_msg
-
-
-def _check_compare_fail(filename, error_, allowed_error=500.0):
-    if error_ > allowed_error:
-        return (
-            f'{filename} Exceeded image regression error of '
-            f'{allowed_error} with an image error equal to: {error_}'
-        )
-    return None
-
-
-def _check_compare_warn(filename, error_, allowed_warning=200.0):
-    if error_ > allowed_warning:
-        return (
-            f'{filename} Exceeded image regression warning of '
-            f'{allowed_warning} with an image error of '
-            f'{error_}'
-        )
-    return None
-
-
-def _is_false_positive(test_name, docs_image):
-    """Compare against other image in the flaky image dir."""
-    paths = _get_file_paths(str(Path(FLAKY_IMAGE_DIR, test_name)), 'jpg')
-    for path in paths:
-        error = pv.compare_images(docs_image, pv.read(path))
-        if _check_compare_fail(test_name, error) is None:
-            return path
-    return None
-
-
-def test_interactive_plot_file_size(vtksz_file: str):
-    filepath = Path(vtksz_file)
-    assert filepath.is_file()
-    size_bytes = filepath.stat().st_size
-    size_megabytes = round(size_bytes / 1_000_000)
-    if size_megabytes > MAX_VTKSZ_FILE_SIZE_MB:
-        rel_path = filepath.relative_to(ROOT_DIR)
-        msg = (
-            f'The generated interactive plot file is too large: '
-            f'\n\t{rel_path}\n'
-            f'Its size is {size_megabytes} MB, but must be less than {MAX_VTKSZ_FILE_SIZE_MB} MB.'
-            f'\nConsider reducing the complexity of the plot or forcing it to be static.'
-        )
-        pytest.fail(msg)
-
-
-xml_root = parse(XML_FILE).getroot()
-test_cases = [dict(case.attrib) for case in xml_root.iterfind('testcase')]
+test_cases = load_test_cases()
 test_ids = [case['classname'] for case in test_cases]
+
+
+def test_top_level_module_target():
+    index_html = (Path(HTML_DIR) / 'index.html').read_text(encoding='utf-8')
+
+    assert 'id="module-pyvista"' in index_html
+
+
+def test_sphinx_gallery_junit_results_exist():
+    assert XML_FILE.is_file(), f'{XML_FILE} not found. Build the documentation first.'
 
 
 @pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
@@ -299,3 +55,213 @@ def test_sphinx_gallery_execution_times(testcase):
             f'Took too long to run: '
             f'Duration {testcase["time"]}s > {SPHINX_GALLERY_EXAMPLE_MAX_TIME}s',
         )
+
+
+# -- docstring sections in the "on this page" navbar --------------------------
+# `conf.py` patches numpydoc to emit real headings instead of rubrics, then
+# hoists those sections out of the autodoc `desc` node so Sphinx's
+# TocTreeCollector can see them. Both halves are needed, and neither fails
+# loudly if it breaks -- the navbar entries just silently disappear.
+
+# Minimum number of API pages expected to gain a docstring-section entry. The
+# real count is in the thousands; this only needs to be high enough that a
+# silent regression can't slip through.
+MIN_PAGES_WITH_HOISTED_SECTIONS = 100
+
+# A generated page for a single object whose docstring has Notes and Examples.
+API_PAGE = 'pyvista.PolyDataFilters.decimate.html'
+
+_PAGE_TOC_RE = re.compile(r'<nav class="bd-toc-nav page-toc">(.*?)</nav>', re.DOTALL)
+_HREF_RE = re.compile(r'href="#([^"]+)"')
+
+
+def page_toc_anchors(html: str) -> list[str]:
+    """Return the anchors linked from a page's "on this page" navbar."""
+    match = _PAGE_TOC_RE.search(html)
+    return _HREF_RE.findall(match.group(1)) if match else []
+
+
+def find_api_page(filename: str) -> Path:
+    """Return a generated single-object API page.
+
+    Fails rather than skips when the page is missing: skipping would silently
+    stop testing the feature, and nobody would know to update the test.
+    """
+    page = next(Path(HTML_DIR).rglob(filename), None)
+    assert page is not None, (
+        f'{filename} not found under {HTML_DIR}. If the API doc layout changed, point '
+        f'this test at another single-object page with Notes and Examples sections.'
+    )
+    return page
+
+
+def test_docstring_sections_are_hoisted_into_page_toc():
+    html = find_api_page(API_PAGE).read_text()
+    anchors = page_toc_anchors(html)
+
+    assert 'notes' in anchors
+    assert 'examples' in anchors
+
+
+def test_hoisted_sections_are_not_rubrics():
+    html = find_api_page(API_PAGE).read_text()
+
+    # A rubric would render as <p class="rubric">Examples</p> and never reach
+    # the navbar. Real headings carry an id so they can be linked.
+    assert '<p class="rubric">Examples</p>' not in html
+    assert 'id="examples"' in html
+
+
+def test_multi_object_page_does_not_hoist_sections():
+    # `helpers.rst` documents several objects on one page via `:members:`, so
+    # hoisting is skipped there to avoid colliding sections at page level.
+    page = Path(HTML_DIR) / 'api' / 'core' / 'helpers.html'
+    assert page.is_file(), (
+        f'{page} not found. If the API doc layout changed, point this test at another '
+        f'page that documents several objects via `:members:`.'
+    )
+    anchors = page_toc_anchors(page.read_text())
+
+    assert 'notes' not in anchors
+    assert 'examples' not in anchors
+
+
+def test_page_toc_anchors_resolve():
+    html = find_api_page(API_PAGE).read_text()
+
+    for anchor in page_toc_anchors(html):
+        assert f'id="{anchor}"' in html, f'navbar links to #{anchor} but no such id exists'
+
+
+def test_docstring_sections_hoisted_across_api_pages():
+    api_pages = list(Path(HTML_DIR).rglob('_autosummary/*.html'))
+    assert api_pages, (
+        f'no generated API pages found under {HTML_DIR}. If autosummary no longer '
+        f'writes to `_autosummary`, update this glob.'
+    )
+
+    pages_with_sections = [
+        path
+        for path in api_pages
+        if {'notes', 'examples'} & set(page_toc_anchors(path.read_text()))
+    ]
+
+    assert len(pages_with_sections) > MIN_PAGES_WITH_HOISTED_SECTIONS
+
+
+def test_contributing_edit_button_points_to_contributing():
+    html = (Path(HTML_DIR) / 'contributing.html').read_text(encoding='utf-8')
+    assert 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst' in html
+
+
+# -- Open Graph link previews -------------------------------------------------
+# Sanity checks against the real documentation build.
+
+# Same value as `ogp_site_url` in `conf.py`
+OGP_SITE_URL = 'https://docs.pyvista.org/'
+
+_META_TAG = re.compile(r'<meta\b[^>]*>')
+_META_KEY = re.compile(r'\b(?:property|name)="([^"]+)"')
+_META_CONTENT = re.compile(r'\bcontent="([^"]*)"')
+_PAGE_IMAGE = re.compile(r'<img\b[^>]*\bsrc="[^"]*/_images/([^"]+)"')
+
+
+def meta_tags(page: Path) -> dict[str, str]:
+    """Return a built page's ``<meta>`` tags, keyed by ``property`` or ``name``."""
+    tags: dict[str, str] = {}
+    for tag in _META_TAG.findall(page.read_text(encoding='utf-8')):
+        key = _META_KEY.search(tag)
+        content = _META_CONTENT.search(tag)
+        if key is not None and content is not None:
+            tags.setdefault(key.group(1), html.unescape(content.group(1)))
+    return tags
+
+
+def page_images(page: Path) -> list[str]:
+    """Return the filenames of the images a page shows, in the order it shows them."""
+    images = _PAGE_IMAGE.findall(page.read_text(encoding='utf-8'))
+    assert images, f'{page} shows no images'
+    return images
+
+
+@dataclass(frozen=True)
+class OpenGraphPage:
+    id: str
+    path: str
+    description: str
+    #: One-based position of the expected preview among the images the page shows.
+    #: Ignored when `image` is set.
+    image_number: int = 1
+    #: Exact expected `og:image` URL, for a page whose preview isn't one of its
+    #: own images (e.g. the root page's `ogp_image` fallback).
+    image: str | None = None
+
+
+OPENGRAPH_PAGES = (
+    OpenGraphPage(
+        id='prose',
+        # A hand-written page selecting its image with ``.. autoopengraph_thumbnail::``
+        path='user-guide/what-is-a-mesh.html',
+        description='In PyVista, a mesh is any spatially referenced information',
+        image_number=7,
+    ),
+    OpenGraphPage(
+        id='gallery',
+        # A gallery example selecting its image with ``sphinx_gallery_thumbnail_number``
+        path='examples/00-load/create_circular_arc.html',
+        description='Generate arc geometry with pyvista.CircularArc()',
+        image_number=2,
+    ),
+    OpenGraphPage(
+        id='api',
+        # ``.. autoopengraph_thumbnail::`` inside an Examples section numpydoc wraps
+        # in ``.. pyvista-plot::`` on its own
+        path='api/core/_autosummary/pyvista.ImageDataFilters.crop.html',
+        description='Crop this image to remove points at its boundaries.',
+        image_number=4,
+    ),
+    OpenGraphPage(
+        id='autoenum-gallery',
+        # Images are plain ``.. image::`` directives rather than the plot directive,
+        # to confirm selection counts image nodes generically
+        path='api/utilities/_autosummary/pyvista.CellType.html',
+        description='Define types of cells.',
+        image_number=13,
+    ),
+    OpenGraphPage(
+        id='root',
+        # Opts out of selecting one of its own images with
+        # ``.. autoopengraph_thumbnail:: none``, so its preview is the site-wide
+        # default rather than one of its own real content images below the fold
+        path='index.html',
+        description=(
+            'PyVista is the foundational Python library for 3D visualization and mesh '
+            'analysis in scientific computing and engineering.'
+        ),
+        image=f'{OGP_SITE_URL}_static/pyvista_banner_small.png',
+    ),
+)
+
+
+@pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)
+def test_opengraph_description(page: OpenGraphPage):
+    path = Path(HTML_DIR) / page.path
+    assert path.is_file(), f'{path} not found. Build the documentation first.'
+
+    description = meta_tags(path).get('og:description')
+
+    assert description is not None, f'{page.path} has no og:description'
+    assert description.startswith(page.description)
+
+
+@pytest.mark.parametrize('page', OPENGRAPH_PAGES, ids=lambda page: page.id)
+def test_opengraph_image(page: OpenGraphPage):
+    path = Path(HTML_DIR) / page.path
+    assert path.is_file(), f'{path} not found. Build the documentation first.'
+
+    if page.image is not None:
+        expected = page.image
+    else:
+        expected = f'{OGP_SITE_URL}_images/{page_images(path)[page.image_number - 1]}'
+
+    assert meta_tags(path).get('og:image') == expected

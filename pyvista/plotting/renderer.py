@@ -5,29 +5,34 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import partial
-from functools import wraps
+import functools
+import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista import _vtk
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.formatting_html import _copy_btn
+from pyvista.core.formatting_html import _load_css
+from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -46,6 +51,7 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
 
     from .cube_axes_actor import CubeAxesActor
@@ -133,6 +139,7 @@ def make_legend_face(face) -> PolyData:
 
     def normalize(poly):
         norm_poly = poly.copy()  # Avoid mutating input
+        norm_poly.clear_data()
 
         # Center data
         norm_poly.points -= np.array(norm_poly.center)
@@ -149,16 +156,16 @@ def make_legend_face(face) -> PolyData:
         return norm_poly
 
     if face is None or face == 'none':
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
+        legendface = pv.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
     elif face in ['-', 'line']:
-        legendface = pyvista.Rectangle().scale((1, 0.2, 1))
+        legendface = pv.Rectangle().scale((1, 0.2, 1))
     elif face in ['^', 'triangle']:
-        legendface = pyvista.Triangle()
+        legendface = pv.Triangle()
     elif face in ['o', 'circle']:
-        legendface = pyvista.Circle()
+        legendface = pv.Circle()
     elif face in ['r', 'rectangle']:
-        legendface = pyvista.Rectangle()
-    elif isinstance(face, pyvista.PolyData):
+        legendface = pv.Rectangle()
+    elif isinstance(face, pv.PolyData):
         legendface = face
     else:
         msg = (
@@ -177,7 +184,7 @@ def make_legend_face(face) -> PolyData:
     # Add points to each corner of the normalized geom to define the full extent of the geometry.
     # This is needed for asymmetric shapes (like a line) because otherwise the legend actor
     # will do its own scaling and skew the shape
-    rect = normalize(pyvista.Rectangle())
+    rect = normalize(pv.Rectangle())
     legendface.points = np.append(legendface.points, rect.points, axis=0)
     return legendface
 
@@ -256,9 +263,50 @@ class CameraPosition(_NoNewAttrMixin):
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         """List representation method."""
         return '[{},\n {},\n {}]'.format(*self.to_list())
+
+    def __repr__(self) -> str:
+        """Explicit representation of CameraPosition."""
+        return (
+            f'{CameraPosition.__name__}(position={self._position},\n'
+            f'               focal_point={self._focal_point},\n'
+            f'               viewup={self._viewup})'
+        )
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+
+        def _fmt_vec(vec: tuple[float, ...]) -> str:
+            return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
+
+        pos = _fmt_vec(self._position)
+        foc = _fmt_vec(self._focal_point)
+        vup = _fmt_vec(self._viewup)
+
+        css = _load_css()
+        copy_all = _copy_btn(repr(self.to_list()))
+        meta = _metadata_html(
+            [
+                ('position', [('', pos)], pos),
+                ('focal_point', [('', foc)], foc),
+                ('viewup', [('', vup)], vup),
+            ]
+        )
+        text_fallback = html.escape(repr(self))
+
+        return (
+            f'<div><style>{css}</style>'
+            f"<pre class='pv-text-repr-fallback'>{text_fallback}</pre>"
+            "<div class='pv-wrap' style='display:none'>"
+            "<div class='pv-header'>"
+            "<div class='pv-header-text'>"
+            f"<div class='pv-obj-type'>CameraPosition{copy_all}</div>"
+            '</div></div>'
+            f'{meta}'
+            '</div></div>'
+        )
 
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
@@ -300,9 +348,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = value
 
 
-class Renderer(
-    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer
-):
+class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -322,11 +368,11 @@ class Renderer(
         parent,
         border=True,  # noqa: FBT002
         border_color='w',
-        border_width=2.0,
+        border_width=1.0,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = _PropCollection(self.GetViewProps())
+        self._actors: _PropCollection | None = _PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -359,6 +405,8 @@ class Renderer(
         self._charts: Charts | None = None
 
         self._border_actor: _vtk.vtkActor2D | None = None
+        self._border_actor_secondary: _vtk.vtkActor2D | None = None
+        self._border_requested_width: float | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -614,7 +662,7 @@ class Renderer(
             for ax in range(3):
                 update_axis(ax)
 
-        for name, actor in self._actors.items():
+        for name, actor in self.actors.items():
             if not actor.GetUseBounds() and not force_use_bounds:
                 continue
             if not actor.GetVisibility() and not force_visibility:
@@ -640,7 +688,7 @@ class Renderer(
             Length of the diagonal of the bounding box.
 
         """
-        return pyvista.Box(self.bounds).length
+        return pv.Box(self.bounds).length
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -733,8 +781,8 @@ class Renderer(
         if aa_type == 'fxaa':
             if uses_egl():  # pragma: no cover
                 # only display the warning when not building documentation
-                if not pyvista.BUILDING_GALLERY:
-                    warnings.warn(
+                if not pv.BUILDING_GALLERY:
+                    warn_external(
                         'VTK compiled with OSMesa/EGL does not properly support '
                         'FXAA anti-aliasing and SSAA will be used instead.',
                     )
@@ -765,7 +813,7 @@ class Renderer(
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='white', width=2.0):
+    def add_border(self, color='white', width=1.0, edges=None):
         """Add borders around the frame.
 
         Parameters
@@ -773,8 +821,13 @@ class Renderer(
         color : ColorLike, default: "white"
             Color of the border.
 
-        width : float, default: 2.0
+        width : float, default: 1.0
             Width of the border.
+
+        edges : sequence[str], optional
+            Which edges of the frame to draw. Any subset of
+            ``('top', 'left', 'bottom', 'right')``. When ``None``
+            (the default) all four edges are drawn.
 
         Returns
         -------
@@ -784,9 +837,17 @@ class Renderer(
         """
         points = np.array([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
 
-        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
+        edge_lines = {
+            'top': [2, 0, 1],
+            'left': [2, 1, 2],
+            'bottom': [2, 2, 3],
+            'right': [2, 3, 0],
+        }
+        if edges is None:
+            edges = ('top', 'left', 'bottom', 'right')
+        lines = np.array([edge_lines[e] for e in edges]).ravel()
 
-        poly = pyvista.PolyData()
+        poly = pv.PolyData()
         poly.points = points
         poly.lines = lines
 
@@ -800,12 +861,19 @@ class Renderer(
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(Color(color).float_rgb)
-        actor.GetProperty().SetLineWidth(width)
+        # Every edge drawn here sits exactly on this renderer's own 0/1
+        # viewport boundary, by construction. VTK's 2D line rasterizer
+        # clips away roughly half of a line's width right at that
+        # boundary, so the drawn width is doubled to compensate -- the
+        # border then actually renders at the requested `width`, e.g.
+        # matching interior lines drawn at the same nominal width.
+        actor.GetProperty().SetLineWidth(width * 2)
 
         self.AddViewProp(actor)
         self.Modified()
 
         self._border_actor = actor
+        self._border_requested_width = width
         return actor
 
     @property
@@ -815,9 +883,14 @@ class Renderer(
 
     @property
     def border_width(self):  # numpydoc ignore=RT01
-        """Return the border width."""
+        """Return the border width.
+
+        This is the width originally requested, not the (doubled) value
+        actually given to VTK to compensate for edge clipping -- see
+        :meth:`add_border`.
+        """
         if self.has_border:
-            return self._border_actor.GetProperty().GetLineWidth()  # type: ignore[union-attr]
+            return self._border_requested_width
         return 0
 
     @property
@@ -826,6 +899,26 @@ class Renderer(
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
+
+    def _drop_border_actor(self):
+        """Remove this renderer's own border actor(s), if any.
+
+        Used when subplot seams are being drawn by a shared overlay
+        renderer so neighboring renderers don't each rasterize their
+        own clipped copy of the boundary line.
+        """
+        border_actor = self._border_actor
+        secondary_actor = self._border_actor_secondary
+        if border_actor is None and secondary_actor is None:
+            return
+        if border_actor is not None:
+            self.RemoveViewProp(border_actor)
+        if secondary_actor is not None:
+            self.RemoveViewProp(secondary_actor)
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.Modified()
 
     def add_chart(self, chart, *charts):
         """Add a chart to this renderer.
@@ -851,7 +944,10 @@ class Renderer(
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))  # type: ignore[arg-type]
+            self.AddObserver(
+                'StartEvent',  # type: ignore[arg-type]
+                functools.partial(try_callback, self._before_render_event),
+            )
         self._charts.add_chart(chart, *charts)
 
     @property
@@ -878,7 +974,7 @@ class Renderer(
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @wraps(Charts.set_interaction)
+    @functools.wraps(Charts.set_interaction)
     @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
@@ -888,7 +984,7 @@ class Renderer(
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @wraps(Charts.get_charts_by_pos)
+    @functools.wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
@@ -946,6 +1042,9 @@ class Renderer(
             The actors may also be unwrapped VTK objects.
 
         """
+        if self._actors is None:
+            # The renderer has been closed; it no longer holds any actors.
+            return {}
         return dict(self._actors.items())
 
     @_deprecate_positional_args(allowed=['actor'])
@@ -1206,12 +1305,12 @@ class Renderer(
         >>> pl.show()
 
         """
-        if isinstance(actor, pyvista.DataSet):
+        if isinstance(actor, pv.DataSet):
             mapper = _vtk.vtkDataSetMapper()
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = pyvista.Actor(mapper=mapper)
+            actor = pv.Actor(mapper=mapper)
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
@@ -1244,8 +1343,6 @@ class Renderer(
         ylabel='Y',
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
-        box=None,
-        box_args=None,
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1282,18 +1379,6 @@ class Renderer(
 
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
-
-        box : bool, optional
-            Show a box orientation marker. Use ``box_args`` to adjust.
-            See :func:`pyvista.create_axes_orientation_box` for details.
-
-            .. deprecated:: 0.43.0
-                The is deprecated. Use `add_box_axes` method instead.
-
-        box_args : dict, optional
-            Parameters for the orientation box widget when
-            ``box=True``. See the parameters of
-            :func:`pyvista.create_axes_orientation_box`.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
@@ -1356,40 +1441,19 @@ class Renderer(
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
-        if box is None:
-            box = self._theme.axes.box
-        if box:
-            warnings.warn(
-                '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-                PyVistaDeprecationWarning,
-            )
-            if box_args is None:
-                box_args = {}
-            self.axes_actor = create_axes_orientation_box(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **box_args,
-            )
-        else:
-            self.axes_actor = create_axes_marker(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **kwargs,
-            )
+
+        self.axes_actor = create_axes_marker(
+            label_color=color,
+            line_width=line_width,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            labels_off=labels_off,
+            **kwargs,
+        )
         axes_widget = self.add_orientation_widget(
             self.axes_actor,
             interactive=interactive,
@@ -1408,6 +1472,9 @@ class Renderer(
         edge_color=None,
         lighting=False,  # noqa: FBT002
         viewport=(0, 0, 0.1, 0.1),
+        *,
+        top_color=None,
+        bottom_color=None,
     ):
         """Add a geographic north arrow to the scene.
 
@@ -1422,7 +1489,8 @@ class Renderer(
             <pyvista.plotting.themes.Theme.interactive>`.
 
         color : ColorLike, optional
-            Color of the north arrow.
+            Color of the north arrow. When ``top_color`` or ``bottom_color``
+            is set, this color is applied to the side faces only.
 
         opacity : float, optional
             Opacity of the north arrow.
@@ -1439,6 +1507,21 @@ class Renderer(
         viewport : sequence[float], default: (0, 0, 0.1, 0.1)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
+        top_color : ColorLike, optional
+            Color applied to the top face of the arrow. When set (together
+            with or independently from ``bottom_color``), per-face RGB
+            scalars are used so the top face can be distinguished from the
+            bottom at a glance. Defaults to ``color`` when only
+            ``bottom_color`` is set.
+
+            .. versionadded:: 0.48.0
+
+        bottom_color : ColorLike, optional
+            Color applied to the bottom face of the arrow. See ``top_color``
+            for details.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkOrientationMarkerWidget`
@@ -1452,15 +1535,15 @@ class Renderer(
         add_box_axes
             Add an axes box as an orientation widget.
 
-        add_north_arrow_widget
-            Add north arrow as an orientation widget.
+        add_orientation_widget
+            Add a custom mesh as an orientation widget.
 
         :ref:`axes_objects_example`
             Example showing different axes objects.
 
         Examples
         --------
-        Use an north arrow as the orientation widget.
+        Use a north arrow as the orientation widget.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1471,17 +1554,44 @@ class Renderer(
         >>> pl.enable_terrain_style(mouse_wheel_zooms=True)
         >>> pl.show()
 
+        Distinguish the top and bottom of the arrow by coloring the top
+        face a lighter shade and the bottom face a darker shade of the
+        side color.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> widget = pl.add_north_arrow_widget(
+        ...     color='royalblue',
+        ...     top_color='lightsteelblue',
+        ...     bottom_color='midnightblue',
+        ... )
+        >>> pl.show()
+
         """
         marker = create_north_arrow()
-        mapper = pyvista.DataSetMapper(marker)
-        actor = pyvista.Actor(mapper)
+        mapper = pv.DataSetMapper(marker)
+        actor = pv.Actor(mapper)
         actor.prop.show_edges = True
         if edge_color is not None:
             actor.prop.edge_color = edge_color
         actor.prop.line_width = line_width
-        actor.prop.color = color
         actor.prop.opacity = opacity
         actor.prop.lighting = lighting
+        if top_color is None and bottom_color is None:
+            actor.prop.color = color
+        else:
+            # Face order in create_north_arrow: 4 sides, bottom (z=0), top (z=1).
+            top = top_color if top_color is not None else color
+            bottom = bottom_color if bottom_color is not None else color
+            face_colors = [color, color, color, color, bottom, top]
+            marker.cell_data['_face_index'] = np.arange(marker.n_cells, dtype=np.uint8)
+            marker.color_labels(
+                face_colors,
+                scalars='_face_index',
+                coloring_mode='index',
+                inplace=True,
+            )
+            mapper.color_mode = 'direct'
         return self.add_orientation_widget(
             actor,
             interactive=interactive,
@@ -1745,7 +1855,7 @@ class Renderer(
         fmt=None,
         minor_ticks=False,  # noqa: FBT002
         padding=0.0,
-        use_3d_text=True,  # noqa: FBT002
+        use_3d_text: bool | None = None,  # noqa: FBT001
         render=None,
         **kwargs,
     ):
@@ -1873,8 +1983,18 @@ class Renderer(
             cushion the datasets in the scene from the axes
             annotations. Defaults no padding.
 
-        use_3d_text : bool, default: True
-            Use :vtk:`vtkTextActor3D` for titles and labels.
+        use_3d_text : bool
+            Use :vtk:`vtkTextActor3D` for titles and labels. Defaults to ``False`` for
+            VTK 9.6 and later, and ``True`` for older versions of VTK.
+
+            .. versionchanged:: 0.47
+                The default value of this flag is now dependent on the version of VTK used.
+                Previously, the default was always ``True``.
+
+            .. warning::
+                Setting ``use_3d_text=True`` is not recommended with VTK 9.6.0 or later since
+                the 3D labels may not render at all in some cases. This is a known VTK bug:
+                https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -1905,22 +2025,22 @@ class Renderer(
         >>> from pyvista import examples
 
         >>> mesh = pv.Sphere()
-        >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor = pl.show_bounds(
         ...     grid='front',
         ...     location='outer',
         ...     all_edges=True,
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         Control how many labels are displayed.
 
         >>> mesh = examples.load_random_hills()
 
-        >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
-        >>> actor = plotter.show_bounds(
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = pl.show_bounds(
         ...     grid='back',
         ...     location='outer',
         ...     ticks='both',
@@ -1931,13 +2051,13 @@ class Renderer(
         ...     ytitle='Northing',
         ...     ztitle='Elevation',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         Hide labels, but still show axis titles.
 
-        >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
-        >>> actor = plotter.show_bounds(
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = pl.show_bounds(
         ...     grid='back',
         ...     location='outer',
         ...     ticks='both',
@@ -1948,11 +2068,15 @@ class Renderer(
         ...     ytitle='Northing',
         ...     ztitle='Elevation',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         self.remove_bounds_axes()
 
+        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
+        if use_3d_text is None:
+            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
+            use_3d_text = vtk_less_than_96
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -1960,25 +2084,22 @@ class Renderer(
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.1f'  # fallback
+            fmt = '%.1f' if vtk_less_than_96 else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
-            warnings.warn(
-                '`xlabel` is deprecated. Use `xtitle` instead.',
-                PyVistaDeprecationWarning,
+            warn_external(
+                '`xlabel` is deprecated. Use `xtitle` instead.', PyVistaDeprecationWarning
             )
         if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
-            warnings.warn(
-                '`ylabel` is deprecated. Use `ytitle` instead.',
-                PyVistaDeprecationWarning,
+            warn_external(
+                '`ylabel` is deprecated. Use `ytitle` instead.', PyVistaDeprecationWarning
             )
         if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
-            warnings.warn(
-                '`zlabel` is deprecated. Use `ztitle` instead.',
-                PyVistaDeprecationWarning,
+            warn_external(
+                '`zlabel` is deprecated. Use `ztitle` instead.', PyVistaDeprecationWarning
             )
         assert_empty_kwargs(**kwargs)
 
@@ -1994,7 +2115,7 @@ class Renderer(
             bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
-        cube_axes_actor = pyvista.CubeAxesActor(
+        cube_axes_actor = pv.CubeAxesActor(
             self.camera,
             minor_ticks=minor_ticks,
             tick_location=ticks,
@@ -2137,21 +2258,24 @@ class Renderer(
         default_font_size = 12
         scaled_font_size = 50
 
-        font_size_factor = (
-            scaled_font_size / default_font_size if pyvista.vtk_version_info > (9, 5, 99) else 1.0
-        )
         for prop in props:
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
             prop.SetBold(bold)
 
-            # this merely makes the font sharper
             if use_3d_text:
+                # this merely makes the font sharper
                 prop.SetFontSize(scaled_font_size)
+            else:
+                prop.SetFontSize(font_size)
 
-        cube_axes_actor.SetScreenSize(
-            font_size / default_font_size / font_size_factor * default_screen_size
-        )
+        if use_3d_text:
+            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
+            cube_axes_actor.SetScreenSize(
+                font_size / default_font_size / font_size_factor * default_screen_size
+            )
+        elif vtk_less_than_96:
+            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
@@ -2490,7 +2614,7 @@ class Renderer(
         else:
             msg = f'Face ({face}) not implemented'
             raise NotImplementedError(msg)
-        floor = pyvista.Plane(
+        floor = pv.Plane(
             center=center,
             direction=normal,
             i_size=i_size,
@@ -2599,10 +2723,10 @@ class Renderer(
 
         """
         # convert from a vtk type if applicable
-        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
-            light = pyvista.Light.from_vtk(light)
+        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pv.Light):
+            light = pv.Light.from_vtk(light)
 
-        if not isinstance(light, pyvista.Light):
+        if not isinstance(light, pv.Light):
             msg = f'Expected Light instance, got {type(light).__name__} instead.'
             raise TypeError(msg)
         self._lights.append(light)
@@ -2901,12 +3025,13 @@ class Renderer(
         """
         if isinstance(actor, str):
             name = actor
-            keys = list(self._actors.keys())
+            actors = self.actors
+            keys = list(actors.keys())
             names = [k for k in keys if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
-                actor = self._actors[name]
+                actor = actors[name]
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
@@ -3448,11 +3573,11 @@ class Renderer(
         ...         color=color,
         ...     )
         >>> pl.camera.zoom(1.8)
-        >>> pl.camera_position = [
-        ...     (4.74, 0.959, 0.525),
-        ...     (0.363, 0.3116, 0.132),
-        ...     (-0.088, -0.0075, 0.996),
-        ... ]
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(4.74, 0.959, 0.525),
+        ...     focal_point=(0.363, 0.3116, 0.132),
+        ...     viewup=(-0.088, -0.0075, 0.996),
+        ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
 
@@ -3679,17 +3804,6 @@ class Renderer(
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = (
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.'
-            )
-            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3723,11 +3837,13 @@ class Renderer(
         self.Modified()
 
     @_deprecate_positional_args(allowed=['texture'])
-    def set_environment_texture(
+    def set_environment_texture(  # noqa: PLR0917
         self,
         texture,
         is_srgb=False,  # noqa: FBT002
         resample: bool | float | None = None,  # noqa: FBT001
+        rotation: RotationLike | None = None,
+        show_background=True,  # noqa: FBT002
     ) -> None:
         """Set the environment texture used for image based lighting.
 
@@ -3765,6 +3881,27 @@ class Renderer(
 
             .. versionadded:: 0.45
 
+            .. versionchanged:: 0.48
+
+                Resampling now uses linear interpolation with anti-aliasing
+                instead of nearest-neighbor, which gives smoother results for
+                continuous environment textures.
+
+        rotation : RotationLike, optional
+            Rotation to apply to the environment texture for image-based
+            lighting and the background texture. Accepts any 3x3
+            :class:`numpy.ndarray`, :vtk:`vtkMatrix3x3`, or SciPy ``Rotation``.
+            Requires VTK >= 9.6.
+
+            .. versionadded:: 0.48
+
+        show_background : bool, default: True
+            Whether to also show the environment texture as the renderer
+            background. Set this to ``False`` to keep image-based lighting
+            enabled while using a solid or gradient background instead.
+
+            .. versionadded:: 0.48
+
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
@@ -3790,14 +3927,14 @@ class Renderer(
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pyvista.global_theme.resample_environment_texture
+            resample = pv.global_theme.resample_environment_texture
 
         if resample:
             resample = 1 / 16 if resample is True else resample
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
-            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy = pv.Texture()  # type: ignore[abstract]
             texture_copy.cube_map = texture.cube_map
             texture_copy.mipmap = texture.mipmap
             texture_copy.interpolate = texture.interpolate
@@ -3805,14 +3942,27 @@ class Renderer(
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
-                texture_copy.SetInputDataObject(
-                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
-                )
+                old_image = pv.wrap(texture.GetInputDataObject(i, 0))
+                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
+                texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        self.SetBackgroundTexture(texture)
+        if rotation is not None:
+            if vtk_version_info < (9, 6):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
+                raise VTKVersionError(msg)
+            rotation_matrix = _validation.validate_rotation(
+                rotation,
+                must_have_handedness='right',
+                name='rotation',
+            )
+            self.SetEnvironmentRotationMatrix(pv.vtkmatrix_from_array(rotation_matrix))
+
+        self.SetBackgroundTexture(texture if show_background else None)  # type: ignore[arg-type]
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3841,17 +3991,31 @@ class Renderer(
         self.RemoveAllObservers()
         self._remove_axes_widget()
 
+        # Detach all props from the underlying vtkRenderer's actual scene graph.
+        # Just dropping our own Python-side references (below) isn't enough: VTK's
+        # own C++ reference counting keeps a prop (and everything it owns, e.g. the
+        # cube axes actor's axis label arrays) alive as long as it's still attached
+        # here, regardless of whether we still hold a Python attribute pointing to it.
+        self.RemoveAllViewProps()
+
         self._bounding_box = None
         self._box_object = None
         self._marker_actor = None
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.cube_axes_actor = None
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-        # Remove ref to `vtkPropCollection` held by vtkRenderer
-        if hasattr(self, '_actors'):
-            del self._actors
+        # Release the `_PropCollection` (and its ref to the `vtkPropCollection` held by
+        # vtkRenderer) by setting it to None rather than deleting the attribute. Deleting it
+        # conflicts with `_NoNewAttributesMixin`, which freezes attributes after `__init__` and
+        # so prevents the attribute from ever being restored (see #8419).
+        self._actors = None
 
         self._closed = True
 
@@ -3897,6 +4061,8 @@ class Renderer(
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self._box_object = None
         # remove reference to parent last
         self.parent = None
@@ -4097,33 +4263,31 @@ class Renderer(
         >>> from pyvista import examples
         >>> sphere = pv.Sphere(center=(0, 0, 1))
         >>> cube = pv.Cube()
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, color='grey', smooth_shading=True, label='Sphere'
-        ... )
-        >>> _ = plotter.add_mesh(cube, color='r', label='Cube')
-        >>> _ = plotter.add_legend(bcolor='w', face=None)
-        >>> plotter.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, color='grey', smooth_shading=True, label='Sphere')
+        >>> _ = pl.add_mesh(cube, color='r', label='Cube')
+        >>> _ = pl.add_legend(bcolor='w', face=None)
+        >>> pl.show()
 
         Alternatively provide labels in the plotter as a list.
 
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
-        >>> _ = plotter.add_mesh(cube, color='r')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, color='grey', smooth_shading=True)
+        >>> _ = pl.add_mesh(cube, color='r')
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> _ = plotter.add_legend(legend_entries)
-        >>> plotter.show()
+        >>> _ = pl.add_legend(legend_entries)
+        >>> pl.show()
 
         Or use a dictionary to define them.
 
         >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
-        >>> _ = plotter.add_mesh(cube, color='red')
-        >>> _ = plotter.add_legend(labels, face='rectangle')
-        >>> plotter.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, color='grey', smooth_shading=True)
+        >>> _ = pl.add_mesh(cube, color='red')
+        >>> _ = pl.add_legend(labels, face='rectangle')
+        >>> pl.show()
 
         """
         if self.legend is not None:
@@ -4170,8 +4334,8 @@ class Renderer(
                     face_ = args.pop('face', None)
 
                     if args:
-                        warnings.warn(
-                            f'Some of the arguments given to legend are not used.\n{args}',
+                        warn_external(
+                            f'Some of the arguments given to legend are not used.\n{args}'
                         )
                 elif isinstance(args, str):
                     # Only passing label
@@ -4353,12 +4517,12 @@ class Renderer(
         --------
         >>> import pyvista as pv
         >>> cone = pv.Cone(height=2.0, radius=0.5)
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(cone)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(cone)
 
         Measure x direction of cone and place ruler slightly below.
 
-        >>> _ = plotter.add_ruler(
+        >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min, cone.bounds.y_min - 0.1, 0.0],
         ...     pointb=[cone.bounds.x_max, cone.bounds.y_min - 0.1, 0.0],
         ...     title='X Distance',
@@ -4368,15 +4532,15 @@ class Renderer(
         The title and labels are placed to the right of the ruler when
         traveling from ``pointa`` to ``pointb``.
 
-        >>> _ = plotter.add_ruler(
+        >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
         ...     pointb=[cone.bounds.x_min - 0.1, cone.bounds.y_min, 0.0],
         ...     flip_range=True,
         ...     title='Y Distance',
         ... )
-        >>> plotter.enable_parallel_projection()
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        >>> pl.enable_parallel_projection()
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         label_color = Color(label_color, default_color=self._theme.font.color)
@@ -4554,10 +4718,10 @@ class Renderer(
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
         if xy_label_mode:
-            if pyvista.vtk_version_info >= (9, 4):
+            if pv.vtk_version_info >= (9, 4):
                 legend_scale.SetLabelModeToCoordinates()
             else:
-                legend_scale.SetLabelModeToXYCoordinates()
+                legend_scale.SetLabelModeToXYCoordinates()  # type: ignore[attr-defined]
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)

@@ -1,37 +1,193 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pickle
 import re
+import textwrap
 from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import imageio
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
+from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
+from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-HAS_IMAGEIO = True
-try:
-    import imageio
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
+
+def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
+    mesh_type = _CLASS_READER_RETURN_TYPE[type(reader)]
+    allowed_types = (mesh_type,) if isinstance(mesh_type, str) else mesh_type
+    actual_type = type(mesh).__name__
+    assert actual_type in allowed_types
+
+
+def test_reader_output_type_defined():
+    expected = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
+    actual = set(_CLASS_READER_RETURN_TYPE.keys())
+    assert actual == expected, 'Return type must be defined for every reader'
+
+
+def test_reader_output_type_derived_from_generic():
+    """Single-type reader outputs are derived from ``BaseReader[X]``.
+
+    This guards the automation in ``_derive_reader_output_types``: if a
+    new reader is added as ``class NewReader(BaseReader['PolyData'])``,
+    its entry in :data:`_CLASS_READER_RETURN_TYPE` should come from the
+    generic parameter with no manual dict edit.
+    """
+    assert _CLASS_READER_RETURN_TYPE[pv.XMLPolyDataReader] == 'PolyData'
+    assert _CLASS_READER_RETURN_TYPE[pv.STLReader] == 'PolyData'
+    assert _CLASS_READER_RETURN_TYPE[pv.DICOMReader] == 'ImageData'
+    assert _CLASS_READER_RETURN_TYPE[pv.XMLUnstructuredGridReader] == 'UnstructuredGrid'
+
+
+def test_reader_output_type_override_for_multi_output():
+    """Readers that emit more than one concrete type use the override list."""
+    assert _CLASS_READER_RETURN_TYPE[pv.GaussianCubeReader] == ('ImageData', 'PolyData')
+    assert _CLASS_READER_RETURN_TYPE[pv.XdmfReader] == (
+        'MultiBlock',
+        'UnstructuredGrid',
+        'StructuredGrid',
+        'RectilinearGrid',
+    )
+
+
+def test_extract_base_reader_generic_arg_returns_none_for_unparameterized():
+    """``_extract_base_reader_generic_arg`` returns ``None`` when no ``BaseReader[X]``
+    is present in ``__orig_bases__``.
+    """
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    class _NotAReader:
+        pass
+
+    assert _extract_base_reader_generic_arg(_NotAReader) is None  # type: ignore[arg-type]
+
+
+def test_extract_base_reader_generic_arg_handles_real_class_parameterization():
+    """The helper resolves ``BaseReader[ActualClass]`` (not only forward refs)."""
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    class _RealPolyReader(pv.BaseReader[pv.PolyData]):  # uses the actual class, not 'PolyData'
+        _vtk_module_name = 'vtkIOXML'
+        _vtk_class_name = 'vtkXMLPolyDataReader'
+
+    assert _extract_base_reader_generic_arg(_RealPolyReader) == 'PolyData'
+
+
+def test_derive_reader_output_types_raises_for_unparameterized():
+    """``_derive_reader_output_types`` raises on classes it cannot classify."""
+    from pyvista.core.utilities.reader import _derive_reader_output_types
+
+    class _UnparameterizedReader:
+        pass
+
+    with pytest.raises(TypeError, match='Cannot derive output type'):
+        _derive_reader_output_types(_UnparameterizedReader)  # type: ignore[arg-type]
+
+
+def test_extract_base_reader_generic_arg_forward_ref_path():
+    """The helper resolves the ForwardRef branch used by real reader subclasses."""
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    # Every real *Reader subclass uses ``BaseReader['PolyData']`` (string),
+    # which stores a ForwardRef; the helper returns its text.
+    assert _extract_base_reader_generic_arg(pv.XMLPolyDataReader) == 'PolyData'
+    assert _extract_base_reader_generic_arg(pv.DICOMReader) == 'ImageData'
+    assert _extract_base_reader_generic_arg(pv.XMLMultiBlockDataReader) == 'MultiBlock'
+
+
+def test_extract_base_reader_generic_arg_skips_non_base_reader_generics():
+    """Generic bases that are not ``BaseReader`` subclasses are skipped."""
+    from typing import Generic
+    from typing import TypeVar
+
+    from pyvista.core.utilities.reader import _extract_base_reader_generic_arg
+
+    _T = TypeVar('_T')
+
+    class _UnrelatedGeneric(Generic[_T]): ...
+
+    class _MixedClass(_UnrelatedGeneric[int]):  # Generic, but not a BaseReader
+        pass
+
+    assert _extract_base_reader_generic_arg(_MixedClass) is None  # type: ignore[arg-type]
+
+
+def test_derive_reader_output_types_uses_override_for_multi_output():
+    """``_derive_reader_output_types`` returns the override tuple for multi-output readers."""
+    from pyvista.core.utilities.reader import _derive_reader_output_types
+
+    assert _derive_reader_output_types(pv.GaussianCubeReader) == ('ImageData', 'PolyData')
+    assert _derive_reader_output_types(pv.HDFReader) == (
+        'ImageData',
+        'PolyData',
+        'UnstructuredGrid',
+        'PartitionedDataSet',
+        'MultiBlock',
+    )
+
+
+def test_derive_reader_output_types_uses_generic_arg_for_single_output():
+    """``_derive_reader_output_types`` returns the generic parameter for single-output readers."""
+    from pyvista.core.utilities.reader import _derive_reader_output_types
+
+    assert _derive_reader_output_types(pv.XMLPolyDataReader) == 'PolyData'
+    assert _derive_reader_output_types(pv.STLReader) == 'PolyData'
+    assert _derive_reader_output_types(pv.XMLUnstructuredGridReader) == 'UnstructuredGrid'
+    assert _derive_reader_output_types(pv.DICOMReader) == 'ImageData'
 
 
 def test_read_raises():
     with pytest.raises(
-        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+        ValueError, match=r'Only one of `file_format` and `force_ext` may be specified.'
     ):
         pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
+
+
+def test_read_cls_narrows(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    result = pv.read(filepath, cls=pv.PolyData)
+    assert isinstance(result, pv.PolyData)
+    assert result.n_points == mesh.n_points
+
+
+def test_read_cls_mismatch_raises(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    match = (
+        r'Expected an instance of UnstructuredGrid when reading .*sphere\.vtp.*, '
+        r'but got PolyData\.'
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(filepath, cls=pv.UnstructuredGrid)
+
+
+def test_read_cls_none_behaves_like_default(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    explicit = pv.read(filepath, cls=None)
+    default = pv.read(filepath)
+    assert type(explicit) is type(default)
+    assert explicit.n_points == default.n_points
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
@@ -51,11 +207,16 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
-    with pytest.raises(
-        TypeError,
-        match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
-    ):
-        pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
+    match = (
+        '`read_exodus` is deprecated and will be removed in a future version. '
+        'Use `pyvista.read` or `pyvista.ExodusIIReader` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
+        ):
+            pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
 
 
 def test_get_reader_fail(tmp_path):
@@ -64,6 +225,33 @@ def test_get_reader_fail(tmp_path):
     match = '`pyvista.get_reader` does not support reading from directory:\n\t'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(str(tmp_path))
+
+
+@pytest.mark.parametrize(
+    'filename',
+    [
+        'mesh.e.4.0',
+        'mesh.n.12.11',
+        'mesh.E.4.0',
+        'mesh.N.12.11',
+    ],
+)
+def test_get_reader_pexodus_pattern(tmp_path, filename):
+    path = tmp_path / filename
+    path.touch()
+    reader = pv.get_reader(path)
+    assert isinstance(reader, pv.PExodusIIReader)
+
+
+@pytest.mark.parametrize(
+    ('force_ext', 'reader_type'),
+    [('.e', pv.ExodusIIReader), ('.e.4.0', pv.PExodusIIReader)],
+)
+def test_get_reader_pexodus_pattern_force_ext(tmp_path, force_ext, reader_type):
+    path = tmp_path / 'mesh.e.4.0'
+    path.touch()
+    reader = pv.get_reader(path, force_ext=force_ext)
+    assert isinstance(reader, reader_type)
 
 
 def test_reader_invalid_file():
@@ -80,6 +268,7 @@ def test_xmlimagedatareader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.ImageData)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -93,6 +282,7 @@ def test_xmlrectilineargridreader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.RectilinearGrid)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -106,6 +296,7 @@ def test_xmlunstructuredgridreader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.UnstructuredGrid)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -119,6 +310,7 @@ def test_xmlpolydatareader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.PolyData)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -132,6 +324,7 @@ def test_xmlstructuredgridreader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.StructuredGrid)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -203,6 +396,7 @@ def test_ensightreader_arrays():
     filename = examples.download_backward_facing_step(load=False)
 
     reader = pv.get_reader(filename)
+    assert_output_type(reader.read(), reader)
     assert reader.path == filename
     assert reader.number_cell_arrays == 9
     assert reader.number_point_arrays == 0
@@ -281,7 +475,7 @@ def test_ensightreader_timepoints():
     mesh_3 = reader.read()
 
     # assert all the data is different
-    for m_1, m_3 in zip(mesh_1, mesh_3):
+    for m_1, m_3 in zip(mesh_1, mesh_3, strict=True):
         assert not all(m_1['DENS'] == m_3['DENS'])
 
     reader.set_active_time_point(0)
@@ -333,6 +527,7 @@ def test_dcmreader():
     assert reader.path == directory
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert isinstance(mesh, pv.ImageData)
     assert all([mesh.n_points, mesh.n_cells])
 
@@ -354,6 +549,7 @@ def test_plyreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -364,6 +560,7 @@ def test_objreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -374,6 +571,7 @@ def test_stlreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -384,6 +582,7 @@ def test_tecplotreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh[0].n_points, mesh[0].n_cells])
 
 
@@ -394,6 +593,7 @@ def test_vtkreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -404,6 +604,7 @@ def test_byureader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -414,6 +615,7 @@ def test_facetreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -427,6 +629,7 @@ def test_plot3dmetareader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     for m in mesh:
         assert all([m.n_points, m.n_cells])
 
@@ -512,6 +715,7 @@ def test_binarymarchingcubesreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
     read_mesh = pv.read(filename)
     assert mesh == read_mesh
@@ -552,7 +756,7 @@ def test_pvdreader():
     assert reader.active_time_value == 2.0
 
     mesh = reader.read()
-    assert isinstance(mesh, pv.MultiBlock)
+    assert_output_type(mesh, reader)
     assert len(mesh) == 1
     assert isinstance(mesh[0], pv.StructuredGrid)
 
@@ -678,18 +882,6 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 3),
-    reason='polyhedra decomposition was removed after 9.3',
-)
-def test_openfoam_decompose_polyhedra():
-    reader = get_cavity_reader()
-    reader.decompose_polyhedra = False
-    assert reader.decompose_polyhedra is False
-    reader.decompose_polyhedra = True
-    assert reader.decompose_polyhedra is True
-
-
 def test_openfoam_skip_zero_time():
     reader = get_cavity_reader()
 
@@ -711,6 +903,7 @@ def test_openfoam_skip_zero_time():
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert reader.cell_to_point_creation is True
     assert mesh[0].n_arrays == 4
 
@@ -784,7 +977,7 @@ def test_openfoam_case_type():
     assert reader.case_type == 'decomposed'
     reader.case_type = 'reconstructed'
     assert reader.case_type == 'reconstructed'
-    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+    with pytest.raises(ValueError, match=r"Unknown case type 'wrong_value'."):
         reader.case_type = 'wrong_value'
 
 
@@ -795,6 +988,7 @@ def test_read_cgns():
     assert 'CGNS' in str(reader)
     reader.show_progress()
     assert reader._progress_bar is True
+    assert_output_type(reader.read(), reader)
 
     assert reader.distribute_blocks in [True, False]  # don't insist on a VTK default
     reader.distribute_blocks = True
@@ -841,14 +1035,19 @@ def test_read_cgns():
     assert reader.family_array_status('inflow') is True
 
 
-def test_bmpreader():
+def test_bmp_reader_writer(tmp_path):
     filename = examples.download_masonry_texture(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.BMPReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.bmp'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_demreader():
@@ -858,17 +1057,27 @@ def test_demreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_jpegreader():
-    filename = examples.planets.download_mars_surface(load=False)
+def test_jpeg_reader_writer(tmp_path):
+    filename = examples.download_bird(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.JPEGReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.jpg'
+    mesh.save(new_filename)
+    assert pv.compare_images(filename, new_filename) < 5
+
+    new_filename = tmp_path / 'new.jpeg'
+    mesh.save(new_filename)
+    assert pv.compare_images(filename, new_filename) < 5
 
 
 def test_meta_image_reader():
@@ -878,17 +1087,27 @@ def test_meta_image_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_nifti_reader():
+def test_nifti_reader_writer(tmp_path):
     filename = examples.download_brain_atlas_with_sides(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.NIFTIReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.nii'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
+
+    new_filename = tmp_path / 'new.nii.gz'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_nrrd_reader():
@@ -898,27 +1117,38 @@ def test_nrrd_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_png_reader():
+def test_png_reader_writer(tmp_path):
     filename = examples.download_vtk_logo(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.PNGReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
+    new_filename = tmp_path / 'new.png'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
-def test_pnm_reader():
+
+def test_pnm_reader_writer(tmp_path):
     filename = examples.download_gourds_pnm(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.PNMReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.pnm'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_slc_reader():
@@ -928,17 +1158,35 @@ def test_slc_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_tiff_reader():
+def test_tiff_reader_writer(tmp_path):
     filename = examples.download_crater_imagery(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.TIFFReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.tif'
+    mesh.save(new_filename)
+    old = pv.read(filename)
+    new = pv.read(new_filename)
+    # We should be able to do `assert new == old` but the equality check is too strict since
+    # there is floating point error associated with the spacing, so use `np.allclose` instead
+    assert np.allclose(old.active_scalars, new.active_scalars)
+    assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
+
+    new_filename = tmp_path / 'new.tiff'
+    mesh.save(new_filename)
+    old = pv.read(filename)
+    new = pv.read(new_filename)
+    assert np.allclose(old.active_scalars, new.active_scalars)
+    assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
 
 
 def test_hdr_reader():
@@ -948,6 +1196,7 @@ def test_hdr_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -958,6 +1207,7 @@ def test_avsucd_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -968,6 +1218,7 @@ def test_hdf_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
     assert mesh.n_points == 6724
     assert 'VEL' in mesh.point_data
@@ -993,6 +1244,7 @@ def test_xdmf_reader():
     assert reader.cell_array_names == ['a']
 
     blocks = reader.read()
+    assert_output_type(blocks, reader)
     assert reader.active_time_value == 0.0
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
     reader.set_active_time_value(0.25)
@@ -1019,7 +1271,6 @@ def test_xdmf_reader():
         reader.set_active_time_value(1000.0)
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
@@ -1031,17 +1282,15 @@ def test_xmlpartitioneddatasetreader(tmpdir):
         [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))],
     )
     partitions.save(tmpfile.strpath)
+    reader = pv.get_reader(tmpfile)
     new_partitions = pv.read(tmpfile.strpath)
-    assert isinstance(new_partitions, pv.PartitionedDataSet)
+    assert_output_type(new_partitions, reader)
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
         assert new_partition.n_cells == partitions[i].n_cells
 
 
-@pytest.mark.needs_vtk_version(
-    9, 3, 0, reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.'
-)
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
     reader = pv.get_reader(filename)
@@ -1049,6 +1298,7 @@ def test_fluentcffreader():
     assert reader.path == filename
 
     blocks = reader.read()
+    assert_output_type(blocks, reader)
     assert blocks.n_blocks == 1
     assert isinstance(blocks[0], pv.UnstructuredGrid)
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
@@ -1061,6 +1311,7 @@ def test_gambitreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -1079,10 +1330,12 @@ def test_gaussian_cubes_reader():
 
     grid = reader.read(grid=True)
     assert isinstance(grid, pv.ImageData)
+    assert_output_type(grid, reader)
     assert all([grid.n_points, grid.n_cells])
 
     poly = reader.read(grid=False)
     assert isinstance(poly, pv.PolyData)
+    assert_output_type(poly, reader)
     assert all([poly.n_points, poly.n_cells])
 
 
@@ -1093,6 +1346,7 @@ def test_gesignareader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -1103,6 +1357,7 @@ def test_pdbreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -1114,6 +1369,7 @@ def test_particle_reader():
 
     reader.endian = 'BigEndian'
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
     reader.endian = 'LittleEndian'
@@ -1129,10 +1385,12 @@ def test_prostar_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_grdecl_reader(tmp_path):
+@pytest.mark.parametrize('as_reader', [True, False])
+def test_grdecl_reader(tmp_path, as_reader):
     def read(content, include_content, **kwargs):
         path = tmp_path
 
@@ -1142,9 +1400,24 @@ def test_grdecl_reader(tmp_path):
         with Path.open(path / '3x3x3_include.grdecl', 'w') as f:
             f.write(''.join(include_content))
 
-        return pv.core.utilities.fileio.read_grdecl(path / '3x3x3.grdecl', **kwargs)
+        filepath = path / '3x3x3.grdecl'
+        if as_reader:
+            reader = pv.GRDECLReader(filepath)
+            for key, value in kwargs.items():
+                setattr(reader, key, value)
+            return reader.read()
+        else:
+            match = (
+                '`read_grdecl` is deprecated and will be removed in a future version. '
+                'Use `pyvista.read` or `pyvista.GRDECLReader` instead.'
+            )
+            with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+                return pv.core.utilities.fileio.read_grdecl(filepath, **kwargs)
 
     path = Path(__file__).parent.parent / 'example_files'
+
+    mesh = pv.read(path / '3x3x3.grdecl')
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
 
     with Path.open(path / '3x3x3.grdecl') as f:
         content = list(f)
@@ -1203,18 +1476,29 @@ def test_grdecl_reader(tmp_path):
         _ = read(content, include_content_copy)
 
 
+def test_erdgcl_reader_properties():
+    path = Path(__file__).parent.parent / 'example_files' / '3x3x3.grdecl'
+
+    reader = pv.GRDECLReader(path)
+    assert reader.elevation is True
+    reader.elevation = False
+    assert reader.elevation is False
+
+    assert reader.other_keywords is None
+    reader.other_keywords = ['KEYWORD']
+    assert reader.other_keywords == ['KEYWORD']
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
+
+
 def test_nek5000_reader():
     # load nek5000 file
     filename = examples.download_nek5000(load=False)
 
-    # this class only available for vtk versions >= 9.3
-    if pv.vtk_version_info < (9, 3):
-        with pytest.raises(pv.VTKVersionError):
-            _ = pv.get_reader(filename)
-        return
-
     # test get_reader
     nek_reader = pv.get_reader(filename)
+    assert_output_type(nek_reader.read(), nek_reader)
 
     # test time routines
     # Check correct number of time points
@@ -1341,43 +1625,59 @@ def test_nek5000_reader():
     assert 'spectral element id' in nek_data.cell_data
 
 
-@pytest.mark.parametrize(
-    ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
-)
-@pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext):
-    filepath = tmp_path / ('data_object' + ext)
-    data_object.save(filepath)
-    new_data_object = pv.read(filepath)
-    assert data_object == new_data_object
+_PICKLE_REFUSAL_MATCH = 'pickle is a Python serialization protocol, not a mesh'
 
-    # Test raises
-    with open(str(filepath), 'wb') as f:  # noqa: PTH123
-        # Create non-mesh pickle file
-        pickle.dump([1, 2, 3], f)
-    match = (
-        "Pickled object must be an instance of <class 'pyvista.core.dataobject.DataObject'>. "
-        "Got <class 'list'> instead."
-    )
-    with pytest.raises(TypeError, match=match):
-        pv.read(filepath)
 
-    match = "Filename must be a file path with extension ('.pkl', '.pickle'). Got {} instead."
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.read_pickle({})
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_pv_read_refuses_pickle_extension(tmp_path, ext):
+    """``pv.read`` must refuse ``.pkl`` / ``.pickle`` — not a mesh format (CWE-502)."""
+    p = tmp_path / f'x{ext}'
+    p.write_bytes(b'\x80\x04N.')  # valid pickle of ``None``
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(p)
 
-    match = (
-        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
-        "Got <class 'dict'> instead."
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.save_pickle('filename', {})
+
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_dataobject_save_refuses_pickle_extension(sphere, tmp_path, ext):
+    """``DataObject.save`` must refuse ``.pkl`` / ``.pickle``."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        sphere.save(tmp_path / f'x{ext}')
+
+
+def test_top_level_read_pickle_stub_raises(sphere):
+    """``pv.read_pickle`` / ``pv.save_pickle`` remain importable but refuse."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read_pickle('anything.pkl')
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.save_pickle('anything.pkl', sphere)
+
+
+def test_force_ext_pickle_refused(tmp_path):
+    """``force_ext='.pkl'`` must not bypass the refusal."""
+    p = tmp_path / 'x.vtp'
+    p.write_bytes(b'\x80\x04N.')
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(p, force_ext='.pkl')
+
+
+@pytest.mark.parametrize('scheme', ['https', 's3'])
+@pytest.mark.parametrize('ext', ['.pkl', '.pickle'])
+def test_remote_pickle_uri_refused(scheme, ext):
+    """Remote ``.pkl`` URIs must refuse before any download attempt (P-1a)."""
+    with pytest.raises(ValueError, match=_PICKLE_REFUSAL_MATCH):
+        pv.read(f'{scheme}://attacker.example/x{ext}')
 
 
 def test_exodus_reader_ext():
     # test against mug and exodus to check different valid file
     # extensions: .e and .exo
+    reader = pv.ExodusIIReader
+    assert reader.extensions == (
+        '.e',
+        '.ex2',
+        '.exii',
+        '.exo',
+    )
 
     fname_e = examples.download_mug(load=False)
     fname_exo = examples.download_exodus(load=False)
@@ -1385,8 +1685,11 @@ def test_exodus_reader_ext():
     e_reader = pv.get_reader(fname_e)
     exo_reader = pv.get_reader(fname_exo)
 
-    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
-    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(e_reader, pv.ExodusIIReader)
+    assert isinstance(exo_reader, pv.ExodusIIReader)
+
+    assert_output_type(e_reader.read(), e_reader)
+    assert_output_type(exo_reader.read(), exo_reader)
 
 
 def test_exodus_reader_core():
@@ -1587,3 +1890,225 @@ def test_exodus_blocks():
 
     number_method = e_reader.face_sets._construct_result_method('GetNumberOf', 's')
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
+
+
+def test_parallel_exodus_reader():
+    reader = pv.get_reader(examples.download_parallel_exodus(load=False))
+    assert isinstance(reader, pv.PExodusIIReader)
+
+    element_block_names = ['Unnamed block ID: 1', 'Unnamed block ID: 2']
+    side_set_names = ['Unnamed set ID: 4']
+    point_array_names = ['ACCL', 'DISPL', 'VEL']
+
+    assert reader.element_blocks.names == element_block_names
+    assert reader.element_blocks.array_names == ['EQPS']
+    assert reader.side_sets.names == side_set_names
+    assert reader.side_sets.array_names == []
+
+    mesh = reader.read()
+    element_blocks = mesh['Element Blocks']
+    side_sets = mesh['Side Sets']
+
+    assert element_blocks.keys() == element_block_names
+    assert side_sets.keys() == side_set_names
+
+    for block in element_blocks:
+        assert block.point_data.keys() == point_array_names
+        assert block.cell_data.keys() == ['EQPS', 'ObjectId']
+
+    for side_set in side_sets:
+        assert side_set.point_data.keys() == point_array_names
+        assert side_set.cell_data.keys() == ['ObjectId']
+
+
+def test_exodus_reader_animate_mode_shapes():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    # check default value matches vtkExodusIIReader default
+    default = bool(e_reader.reader.GetAnimateModeShapes())
+    assert e_reader.animate_mode_shapes == default
+
+    # check setter
+    e_reader.animate_mode_shapes = True
+    assert e_reader.reader.GetAnimateModeShapes() == 1
+
+    e_reader.animate_mode_shapes = False
+    assert e_reader.reader.GetAnimateModeShapes() == 0
+
+
+def test_exodus_reader_side_set_arrays():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    expected_names = ['bottom', 'top']
+
+    # check count and names
+    assert e_reader.number_side_set_arrays == len(expected_names)
+    assert e_reader.side_set_array_names == expected_names
+
+    # check all enabled by default (matching read_exodus default behavior)
+    for name in expected_names:
+        assert e_reader.side_set_array_status(name)
+
+    # check disable/enable by name
+    for name in expected_names:
+        e_reader.disable_side_set_array(name)
+        assert not e_reader.side_set_array_status(name)
+
+        e_reader.enable_side_set_array(name)
+        assert e_reader.side_set_array_status(name)
+
+    # check disable/enable by index
+    for i, _ in enumerate(expected_names):
+        e_reader.disable_side_set_array(i)
+        assert not e_reader.side_set_array_status(i)
+
+        e_reader.enable_side_set_array(i)
+        assert e_reader.side_set_array_status(i)
+
+    # check enable_all / disable_all
+    e_reader.disable_all_side_set_arrays()
+    for name in expected_names:
+        assert not e_reader.side_set_array_status(name)
+
+    e_reader.enable_all_side_set_arrays()
+    for name in expected_names:
+        assert e_reader.side_set_array_status(name)
+
+
+@pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+def test_exodus_reader_side_set_array_raises(sideset):
+    e_reader = pv.get_reader(examples.download_mug(load=False))
+    match = re.escape(f'Could not parse sideset ID/name: {sideset}')
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.enable_side_set_array(sideset)
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.disable_side_set_array(sideset)
+
+    with pytest.raises(TypeError, match=match):
+        e_reader.side_set_array_status(sideset)
+
+
+def test_vtu_series_reader():
+    filename = examples.download_file('vtu_series/wavy.zip')
+    reader = pv.get_reader(filename[0])
+    assert filename[0].endswith('.vtu.series')
+    assert isinstance(reader, pv.SeriesReader)
+    assert isinstance(reader.reader, pv.core.utilities.reader._SeriesReader)
+
+    assert reader.path == filename[0]
+
+    assert reader.number_time_points == 15
+    assert reader.time_point_value(1) == 1.0
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=float))
+
+    assert reader.active_time_value == reader.time_values[0]
+
+    active_dataset = reader.active_dataset
+    assert active_dataset.time == 0.0
+    assert active_dataset.name == 'ts/mesh_0.vtu'
+
+    assert len(reader.datasets) == len(reader.time_values)
+
+    assert isinstance(reader.active_reader, pv.XMLUnstructuredGridReader)
+
+    reader.set_active_time_value(1.0)
+    assert reader.active_time_value == 1.0
+
+    reader.set_active_time_point(2)
+    assert reader.active_time_value == 2.0
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.UnstructuredGrid)
+
+
+def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                { "name" : "ts/mesh_0.vti", "time" : 0.0 },
+                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
+                { "name" : "ts/mesh_2.vti", "time" : 2.0 }
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(
+        ValueError, match=r'Dataset extension .vti does not match series file parent extension'
+    ):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_forbid_inconsistent_ext_among_children(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                { "name" : "ts/mesh_0.vtu", "time" : 0.0 },
+                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
+                { "name" : "ts/mesh_2.vtp", "time" : 2.0 }
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(ValueError, match='Datasets in series file have multiple extensions'):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_forbid_empty_series_file(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(ValueError, match='No datasets found in series file'):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_vrml_reader():
+    filename = examples.download_grasshopper(load=False)
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+
+def test_threeds_reader():
+    filename = examples.download_flamingo(load=False)
+    reader = pv.get_reader(filename)
+    mesh = reader.read()
+    assert isinstance(mesh, pv.MultiBlock)
+
+    # Necessary to check bounds since these will be uninitialized if Update()
+    # wasn't called when reading
+    expected_bounds = pv.BoundsTuple(
+        x_min=-5.379246234893799,
+        x_max=5.364696979522705,
+        y_min=-1.9769330024719238,
+        y_max=2.731842041015625,
+        z_min=-7.883847236633301,
+        z_max=5.437096118927002,
+    )
+
+    assert np.allclose(mesh.bounds, expected_bounds)

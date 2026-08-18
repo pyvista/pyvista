@@ -1,36 +1,94 @@
 .. title:: PyVista
 
+.. autoopengraph_thumbnail:: none
+
 .. raw:: html
 
     <div class="banner">
-        <a href="./examples/index.html"><center><img src="_static/pyvista_logo.png" alt="pyvista" width="75%"/></a>
-        <h3>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
+        <a href="./examples/index.html"><center><img src="_static/pyvista_logo.svg" alt="pyvista" width="75%"/></a>
+        <h3>3D visualization and mesh analysis for science and engineering</h3>
         <a href="./examples/index.html"><img src="_static/pyvista_banner_small.png" alt="pyvista" width="100%"/></a>
     </div>
 
 |
 
+.. raw:: html
+
+   <p align="center">
+     <em>
+       PyVista is an open source, community-owned project, MIT licensed and
+       <a href="https://numfocus.org/sponsored-projects/affiliated-projects">NumFOCUS Affiliated</a>.
+     </em>
+   </p>
+
+   <p align="center">
+     <em>
+       <a href="https://codimensional.com"><strong>CoDimensional PBC</strong></a>,
+       founded by PyVista maintainers, is the project's commercial steward.
+     </em>
+   </p>
+
+
+.. Register the top-level ``pyvista`` module so that ``:mod:`pyvista``` and the
+   Python module index resolve to this page. This must not be immediately
+   followed by a ``raw`` directive: docutils propagates the empty target's id
+   onto the next node, and a raw node is written verbatim without an ``id``.
+
+.. py:module:: pyvista
 
 Overview
 ********
-PyVista is:
 
-* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets
-* 3D plotting made simple and built for large/complex data geometries
+PyVista is the foundational Python library for 3D visualization and mesh
+analysis in scientific computing and engineering. PyVista plays the same role
+for 3D data that pandas plays for tabular data and xarray plays for labeled
+n-dimensional arrays.
 
-.. _Visualization Toolkit: https://vtk.org
+* a NumPy-native API for 3D visualization and mesh analysis
+* dataset structures and filters for points, surfaces, and volumes
+* one plotting framework for notebooks, scripts, CI, and apps
+* streamlined 3D for newcomers and graphics experts alike
 
-PyVista is a helper library for the Visualization Toolkit (VTK) that
-takes a different approach on interfacing with VTK through NumPy and
-direct array access. This package provides a Pythonic,
-well-documented interface exposing VTK's powerful visualization
-backend to facilitate rapid prototyping, analysis, and visual
-integration of spatially referenced datasets.
+Use PyVista for figures in papers and presentations, interactive analysis in
+notebooks, and as the visualization layer of larger Python tools.
 
-This module can be used for scientific plotting for presentations and
-research papers as well as a supporting module for other mesh
-dependent Python modules.
+
+Built for Production
+~~~~~~~~~~~~~~~~~~~~
+
+3D code has to keep working when the underlying graphics stack changes.
+PyVista is image-regression tested on every commit across the supported
+matrix of Python and `VTK`_ releases. Public APIs follow a deliberate
+deprecation lifecycle (warn, then error, then remove) across at least three
+minor versions, and every release ships wheels for every supported Python
+version.
+
+The C++ toolkit underneath does not provide the same guarantees. Its Python
+bindings shift between releases, large parts of the surface ship without test
+coverage, and rendering changes are not gated on visual diffs. PyVista is
+what science and engineering teams reach for when code written today has to
+still produce the same picture two years from now.
+
+
+Built to Extend
+~~~~~~~~~~~~~~~
+
+Downstream libraries build on PyVista through a small, lazily evaluated
+extension API. Third-party packages attach domain-specific filters and
+plotter components via registered accessors, with no subclassing, no
+monkey-patching, and no vendoring of upstream algorithms. This is the same
+contract pandas exposes for tabular accessors and xarray exposes for labeled
+arrays. See :ref:`extending-pyvista` for the full contract.
+
+For a curated, continuously updated list of domain-specific tooling that
+interoperates with or is built on PyVista, see
+`awesome-pyvista <https://github.com/pyvista/awesome-pyvista>`_.
+
+Reach for the underlying `VTK`_ toolkit directly only when there is genuinely
+no PyVista equivalent. When that happens, please file an issue. There should
+be one.
+
+.. _VTK: https://vtk.org
 
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
@@ -59,6 +117,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    examples/index
    api/index
    extras/index
+   contributing
 
 
 Brief Examples
@@ -72,13 +131,13 @@ might want to use PyVista:
    :include-source: false
    :force_static:
 
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.anti_aliasing = 'fxaa'
+   import pyvista as pv
+   pv.set_jupyter_backend('static')
+   pv.global_theme.background = 'white'
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.smooth_shading = True
+   pv.global_theme.anti_aliasing = 'fxaa'
 
 
 Maps and Geoscience
@@ -120,15 +179,15 @@ the points directly.
     :context:
 
     import numpy as np
-    import pyvista
+    import pyvista as pv
 
     rng = np.random.default_rng(seed=0)
     point_cloud = rng.random((100, 3))
-    pdata = pyvista.PolyData(point_cloud)
+    pdata = pv.PolyData(point_cloud)
     pdata['orig_sphere'] = np.arange(100)
 
     # create many spheres from the point cloud
-    sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
+    sphere = pv.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
     pc = pdata.glyph(scale=False, geom=sphere, orient=False)
     pc.plot(cmap='Reds')
 
@@ -141,7 +200,7 @@ Generate a spline from an array of NumPy points.
     :context:
 
     import numpy as np
-    import pyvista
+    import pyvista as pv
 
     # Make the xyz points
     theta = np.linspace(-10 * np.pi, 10 * np.pi, 100)
@@ -151,7 +210,7 @@ Generate a spline from an array of NumPy points.
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
 
-    spline = pyvista.Spline(points, 500).tube(radius=0.1)
+    spline = pv.Spline(points, 500).tube(radius=0.1)
     spline.plot(scalars='arc_length', show_scalar_bar=False)
 
 
@@ -162,17 +221,17 @@ Subtract a sphere from a cube mesh.
 .. pyvista-plot::
     :context:
 
-    import pyvista
+    import pyvista as pv
     import numpy as np
 
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
-        grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
+        grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
         surf = grid.extract_surface().triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations
-    sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
+    sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
     cube = make_cube()
 
     # Perform a boolean difference
@@ -208,14 +267,13 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 #. Click ``Request language`` and fill form.
 #. Wait acceptance by transifex pyvista translation maintainers.
 #. (After acceptance) Translate on transifex.
-#. We can host the translated document using `atsphinx-mini18n`_.
-#. Translation is backed up in `pyvista-doc-translations`_.
+#. Translations are stored in `pyvista-doc-translations`_, which also owns the
+   dedicated pipeline that builds and publishes the localized documentation.
 
 Details can be found here: https://help.transifex.com/en/
 
 .. _`pyvista translation page`: https://app.transifex.com/signin/?next=/tkoyama010/pyvista-doc/
 .. _Transifex: https://app.transifex.com/signin/?next=/home/
-.. _atsphinx-mini18n: https://atsphinx.github.io/mini18n/en/
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
@@ -290,20 +348,15 @@ Status
 Professional Support
 ********************
 
-While PyVista is an Open Source project with a big community, you might be looking for professional support.
-This section aims to list companies with VTK/PyVista expertise who can help you with your software project.
+PyVista is a community-owned Open Source project, but many users and organizations rely on it in production workflows, research pipelines, and custom visualization systems. If you need expert guidance, development help, or guaranteed support, there are several ways to engage with the people who build and maintain PyVista.
 
-+---------------+-----------------------------------------+
-| Company Name  | Kitware Inc.                            |
-+---------------+-----------------------------------------+
-| Description   | Kitware is dedicated to build solutions |
-|               | for our customers based on our          |
-|               | well-established open source platforms. |
-+---------------+-----------------------------------------+
-| Expertise     | CMake, VTK, PyVista, ParaView, Trame    |
-+---------------+-----------------------------------------+
-| Contact       | https://www.kitware.com/contact/        |
-+---------------+-----------------------------------------+
+For general inquiries, reach out to info@pyvista.org and we can help connect you with the right community experts for your 3D visualization or analysis needs.
+
+If you are looking for professional services (consulting, custom development, feature design, integration support, or training), consider sponsoring PyVista's core developers through the “Sponsor this project” section on GitHub. Sponsorship not only provides direct access to experts but also helps sustain critical maintenance and ongoing feature work that keeps PyVista reliable and modern.
+
+More details can be found in the discussion post: https://github.com/pyvista/pyvista/discussions/4033
+
+Sponsoring a developer supports both your project and the health of the PyVista ecosystem, ensuring continued improvements, long-term stability, and expert help when you need it.
 
 
 Project Index

@@ -6,8 +6,8 @@ Some Plots
 
 .. pyvista-plot::
 
-    import pyvista
-    pyvista.Sphere().plot()
+    import pyvista as pv
+    pv.Sphere().plot()
 
 
 **Plot 2** Uses doctest syntax:
@@ -15,8 +15,8 @@ Some Plots
 .. pyvista-plot::
     :format: doctest
 
-    >>> import pyvista
-    >>> pyvista.Cube().plot()
+    >>> import pyvista as pv
+    >>> pv.Cube().plot(text='Plot 2')
 
 
 **Plot 3** Shows that a new block with context does not see the variable defined
@@ -34,8 +34,8 @@ in the no-context block:
     :context:
 
     a = 10
-    import pyvista
-    pyvista.Plane().plot()
+    import pyvista as pv
+    pv.Plane().plot(text='Plot 4')
 
 
 **Plot 5** Shows that a block with context sees the new variable. It also uses
@@ -52,6 +52,7 @@ in the no-context block:
 
 .. pyvista-plot::
 
+    assert 'a' not in globals()
     assert 'a' not in globals()
 
 
@@ -82,8 +83,8 @@ Plot _ Uses a specific function in a file with plot commands:
    :force_static:
    :caption: Plot 8 uses the caption option.
 
-   import pyvista
-   pyvista.Disc().plot()
+   import pyvista as pv
+   pv.Disc().plot(text='Plot 8')
 
 
 Plot __ Uses an external file with the plot commands and a caption
@@ -101,18 +102,19 @@ scenario:
    :force_static:
    :caption: This caption applies to both plots.
 
-   import pyvista
-   pyvista.Text3D('hello').plot()
+   import pyvista as pv
 
-   pyvista.Text3D('world').plot()
+   pv.Text3D('hello').plot(text='Plot 9 hello')
+
+   pv.Text3D('world').plot(text='Plot 9 world')
 
 
 **Plot 10** Uses the skip directive and should not generate a plot:
 
 .. pyvista-plot::
 
-   import pyvista
-   pyvista.Sphere().plot()  # doctest:+SKIP
+   import pyvista as pv
+   pv.ParametricEnneper().plot(text='Plot 10')  # doctest:+SKIP
 
 
 **Plot 11** Uses ``:include-source: False``:
@@ -136,10 +138,14 @@ lines, even in two sections:
 
 .. pyvista-plot::
 
-    >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+    >>> import pyvista as pv
+    >>> pv.ParametricMobius().plot(
+    ...     color='blue', cpos='xy', text='Plot 13 blue'
+    ... )
 
-    >>> pyvista.Sphere().plot(color='red', cpos='xy')
+    >>> pv.ParametricMobius().plot(
+    ...     color='red', cpos='xy', text='Plot 13 red'
+    ... )
 
 
 **Plot 14** Forces two static images instead of interactive scenes:
@@ -147,10 +153,14 @@ lines, even in two sections:
 .. pyvista-plot::
    :force_static:
 
-   >>> import pyvista
-   >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+   >>> import pyvista as pv
+   >>> pv.ParametricRandomHills().plot(
+   ...     color='blue', cpos='xy', text='Plot 14 blue'
+   ... )
 
-   >>> pyvista.Sphere().plot(color='red', cpos='xy')
+   >>> pv.ParametricRandomHills().plot(
+   ...     color='red', cpos='xy', text='Plot 14 red'
+   ... )
 
 
 **Plot 15** Uses caption with tabbed UI:
@@ -158,8 +168,8 @@ lines, even in two sections:
 .. pyvista-plot::
    :caption: Plot 15 uses the caption option with tabbed UI.
 
-   import pyvista
-   pyvista.Disc().plot()
+   import pyvista as pv
+   pv.Disc().plot(text='Plot 15')
 
 
 **Plot 16** Should never be skipped, using the ``:skip: no`` option:
@@ -168,8 +178,8 @@ lines, even in two sections:
    :skip: no
    :caption: Plot 16 will never be skipped
 
-   import pyvista
-   pyvista.Cube().plot()
+   import pyvista as pv
+   pv.ParametricKlein().plot(text='Plot 16')
 
 
 This plot will always be skipped, using the ``:skip: yes`` option,
@@ -189,8 +199,8 @@ but the source will always be included with a conditional caption:
    :optional:
    :caption: This plot may be skipped with no caption
 
-   import pyvista
-   pyvista.Cube().plot()
+   import pyvista as pv
+   pv.ParametricDini().plot(text='Plot 18')
 
 **Plot 19** Shows a ``matplotlib`` plot to to show that both plot directives
  can coexist.
@@ -228,25 +238,30 @@ but the source will always be included with a conditional caption:
    >>> from pyvista import examples
 
    >>> mesh = examples.download_tecplot_ascii()
-   >>> mesh.plot()
+   >>> mesh.plot(text='Plot 22')
 
 **Plot 23** Create a gif.
 
+.. note::
+   We use ``uuid`` here to avoid multiple threads writing to the same GIF
+   similtaniously when using ``pytest-xdist`` and building ``tinypages``.
+
 .. pyvista-plot::
 
+    import uuid
     import pyvista as pv
     from pyvista import examples
     filename = examples.download_single_sphere_animation(load=False)
     reader = pv.PVDReader(filename)
-    plotter = pv.Plotter()
-    plotter.open_gif('single_sphere.gif')
+    pl = pv.Plotter()
+    pl.open_gif(f'single_sphere_{str(uuid.uuid4())[:8]}.gif')
     for time_value in reader.time_values:
         reader.set_active_time_value(time_value)
         mesh = reader.read()
-        plotter.add_mesh(mesh, smooth_shading=True)
-        plotter.write_frame()
-        plotter.clear()
-    plotter.close()
+        pl.add_mesh(mesh, smooth_shading=True)
+        pl.write_frame()
+        pl.clear()
+    pl.close()
 
 **Plot 24** Any function with ``plot_<...>`` syntax will generate a plot.
 
@@ -262,3 +277,15 @@ but the source will always be included with a conditional caption:
     >>> import pyvista as pv
     >>> sphere = pv.Sphere()
     >>> sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
+
+
+**Plot 26** Plotters that do not call show do not generate images.
+
+.. pyvista-plot::
+
+    >>> import pyvista as pv
+    >>> pl1 = pv.Plotter()
+    >>> pl1.add_mesh(pv.ParametricCrossCap())
+    >>> pl2 = pv.Plotter()
+    >>> pl2.add_mesh(pv.ParametricTorus())
+    >>> pl2.show()

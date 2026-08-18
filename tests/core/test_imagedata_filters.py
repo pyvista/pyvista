@@ -2,18 +2,22 @@ from __future__ import annotations
 
 import operator
 import re
-import time
+from typing import get_args
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
-from pyvista.core.errors import PyVistaDeprecationWarning
-from tests.conftest import flaky_test
+from pyvista.core.filters.image_data import _InterpolationOptions
+from tests.conftest import NUMPY_VERSION_INFO
 
 BOUNDARY_LABELS = 'boundary_labels'
+MORPHOLOGICAL_MAX_VAL = 42.0
+MORPHOLOGICAL_MID_VAL = 5.0
+MORPHOLOGICAL_MIN_VAL = 0.0
 
 
 @pytest.fixture
@@ -54,154 +58,6 @@ def frog_tissues():
     return examples.load_frog_tissues()
 
 
-def test_contour_labeled_deprecated():
-    match = 'This filter produces unexpected results and is deprecated.'
-    with pytest.raises(PyVistaDeprecationWarning, match=match):
-        pv.ImageData().contour_labeled()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled()
-
-    assert frog_tissues.point_data.active_scalars.max() == 29
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_smoothing(frog_tissues):
-    # Extract smooth surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(smoothing=True)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_reduced_labels_count(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(n_labels=2)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_boundary_output_style(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(output_style='boundary')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError):  # noqa: PT011
-            frog_tissues.contour_labeled(output_mesh_type='invalid')
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_output_style(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(NotImplementedError):
-            frog_tissues.contour_labeled(output_style='selected')
-
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError):  # noqa: PT011
-            frog_tissues.contour_labeled(output_style='invalid')
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_scalars(frog_tissues):
-    # Create a new array with reduced number of labels
-    frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
-
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(scalars='labels')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_scalars(frog_tissues):
-    # Nonexistent scalar key
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(KeyError):
-            frog_tissues.contour_labeled(scalars='nonexistent_key')
-
-    # Using cell data
-    frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError, match='Can only process point data'):
-            frog_tissues.contour_labeled(scalars='cell_data')
-
-    # When no scalas are given and active scalars are not point data
-    frog_tissues.set_active_scalars('cell_data', preference='cell')
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError, match='active scalars must be point array'):
-            frog_tissues.contour_labeled()
-
-
 @pytest.fixture
 def channels():
     # ImageData with cell data
@@ -238,7 +94,6 @@ def labeled_image():
 @pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_scalars_smoothing_output_mesh_type(
     labeled_image,
     smoothing,
@@ -291,7 +146,6 @@ def _remove_duplicate_points(polydata):
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
 @pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,
     select_inputs,
@@ -368,7 +222,6 @@ ALL_LABEL_IDS = {0, 2, 5}
 
 
 @pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 
@@ -377,7 +230,6 @@ def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value not in first_component
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
@@ -386,7 +238,6 @@ def test_contour_labels_pad_background(labeled_image):
 
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
@@ -395,7 +246,6 @@ def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_o
     assert poly[BOUNDARY_LABELS].ndim == expected_ndim
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
@@ -404,35 +254,26 @@ def test_contour_labels_cell_data(channels):
         smoothing=False,
         boundary_style='external',
     )
-    voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+    voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface(
+        algorithm=None
+    )
 
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
-@flaky_test
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
-    start = time.perf_counter()
-    channels.contour_labels('external', orient_faces=False)
-    time_slow = time.perf_counter() - start
-
-    start = time.perf_counter()
-    contours = channels.contour_labels('strict_external', orient_faces=False)
-    time_fast = time.perf_counter() - start
-    assert time_fast < time_slow / 1.5
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        contours = channels.contour_labels('strict_external', orient_faces=False)
 
     # Test output is simplified correctly
     assert contours.active_scalars.ndim == 1
     assert np.all(contours.active_scalars > 0)
 
-    match = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_inputs=[0])
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_outputs=[0])
+    # Test that selecting inputs/outputs works with this mode
+    channels.contour_labels('strict_external', select_inputs=[1])
+    channels.contour_labels('strict_external', select_outputs=[2])
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
@@ -443,14 +284,6 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 3, 0))
-def test_contour_labels_raises_vtkversionerror():
-    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
-    with pytest.raises(pv.VTKVersionError, match=match):
-        pv.ImageData().contour_labels()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0
@@ -493,6 +326,7 @@ def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
     for array_in, array_out in zip(
         point_voxel_image.point_data.keys(),
         cell_voxel_image.cell_data.keys(),
+        strict=True,
     ):
         shares_memory = np.shares_memory(point_voxel_image[array_in], cell_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory
@@ -525,6 +359,7 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
     for array_in, array_out in zip(
         cell_voxel_image.cell_data.keys(),
         point_voxel_image.point_data.keys(),
+        strict=True,
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory
@@ -952,28 +787,11 @@ def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
         beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=True)
 
 
-def test_pad_image_deprecation(zero_dimensionality_image):
-    match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
+def test_pad_image_pad_singleton_dims_removed(zero_dimensionality_image):
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Passing `pad_singleton_dims` should raise an error.'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `pad_singleton_dims`.'
-        raise RuntimeError(msg)
-
-    match = (
-        'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
-    )
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Passing `pad_singleton_dims` should raise an error.'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `pad_singleton_dims`.'
-        raise RuntimeError(msg)
 
 
 @pytest.fixture
@@ -999,7 +817,7 @@ def test_label_connectivity(segmented_grid):
 def test_label_connectivity_point_data(segmented_grid):
     # Test default parameters
     segmented_points = segmented_grid.cells_to_points()
-    connected, labels, sizes = segmented_points.label_connectivity(scalar_range='foreground')
+    connected, labels, _sizes = segmented_points.label_connectivity(scalar_range='foreground')
     assert isinstance(connected, pv.ImageData)
     assert connected.bounds == segmented_points.bounds
     assert 'RegionId' in connected.point_data
@@ -1011,14 +829,14 @@ def test_label_connectivity_point_data(segmented_grid):
 def test_label_connectivity_scalar(segmented_grid):
     segmented_grid.cell_data['AdditionalData'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     segmented_grid.set_active_scalars(name='AdditionalData')
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, _sizes = segmented_grid.label_connectivity(
         scalars='Data', scalar_range='foreground'
     )
     assert all(labels == [1, 2, 3])
 
 
 def test_label_connectivity_largest_region(segmented_grid):
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, sizes = segmented_grid.label_connectivity(
         scalar_range='foreground', extraction_mode='largest'
     )
     # Test that only one region was labelled
@@ -1035,7 +853,7 @@ def test_label_connectivity_seed_points(segmented_grid):
         ' issues when transforming or applying filters. Casting to ``np.float32``.'
         ' Disable this by passing ``force_float=False``.',
     ):
-        connected, labels, sizes = segmented_grid.label_connectivity(
+        _connected, labels, sizes = segmented_grid.label_connectivity(
             scalar_range='foreground',
             extraction_mode='seeded',
             point_seeds=points,
@@ -1051,7 +869,7 @@ def test_label_connectivity_seed_points(segmented_grid):
 def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):  # noqa: N802
     points = pv.PolyData()
     points.points = [(2, 1, 0), (0, 0, 1)]
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, sizes = segmented_grid.label_connectivity(
         scalar_range='foreground',
         extraction_mode='seeded',
         point_seeds=points,
@@ -1066,7 +884,7 @@ def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):  # noqa: N80
 
 def test_label_connectivity_scalar_range_whole_number(segmented_grid):
     # Exclude the cell with a 2 value
-    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[1, 1])
+    _connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[1, 1])
     # Test that three distinct connected regions were labelled
     assert all(labels == [1, 2, 3])
     # Test that the first region id has 1 cell
@@ -1075,7 +893,7 @@ def test_label_connectivity_scalar_range_whole_number(segmented_grid):
 
 def test_label_connectivity_scalar_range_fractional_number(segmented_grid):
     # Exclude the cell with a 2 value
-    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[0.5, 1.5])
+    _connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[0.5, 1.5])
     # Test that three distinct connected regions were labelled
     assert all(labels == [1, 2, 3])
     # Test that the first region id has 1 cell
@@ -1084,7 +902,7 @@ def test_label_connectivity_scalar_range_fractional_number(segmented_grid):
 
 def test_label_connectivity_auto_scalar_range(segmented_grid):
     # Exclude the cell with a 2 value
-    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='auto')
+    _connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='auto')
     # Test that only one connected regions was labelled
     assert all(labels == 1)
     # Test that the region has 12 cell
@@ -1092,7 +910,7 @@ def test_label_connectivity_auto_scalar_range(segmented_grid):
 
 
 def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    connected, labels, _sizes = segmented_grid.label_connectivity(
         scalar_range='vtk_default', inplace=True
     )
     # Test that three distinct connected regions were labelled
@@ -1102,7 +920,7 @@ def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
 
 
 def test_label_connectivity_constant_label(segmented_grid):
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, _sizes = segmented_grid.label_connectivity(
         label_mode='constant', constant_value=10
     )
     assert all(l in (0, 10) for l in labels)
@@ -1110,14 +928,14 @@ def test_label_connectivity_constant_label(segmented_grid):
 
 def test_label_connectivity_inplace_with_float_casting(segmented_grid):
     segmented_points = segmented_grid.cells_to_points()
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    connected, _labels, _sizes = segmented_grid.label_connectivity(
         inplace=True, scalar_range=[0.5, 2.5]
     )
     assert connected == segmented_grid
     assert 'RegionId' in connected.cell_data
     assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
 
-    connected, labels, sizes = segmented_points.label_connectivity(
+    connected, _labels, _sizes = segmented_points.label_connectivity(
         inplace=True, scalar_range=[0.5, 2.5]
     )
     assert connected == segmented_points
@@ -1128,12 +946,12 @@ def test_label_connectivity_inplace_with_float_casting(segmented_grid):
 def test_label_connectivity_invalid_parameters(segmented_grid):
     with pytest.raises(
         ValueError,
-        match='Invalid `extraction_mode` "invalid", use "all", "largest", or "seeded".',
+        match=r'Invalid `extraction_mode` "invalid", use "all", "largest", or "seeded".',
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='invalid')
     with pytest.raises(
         ValueError,
-        match='`point_seeds` must be specified when `extraction_mode="seeded"`.',
+        match=r'`point_seeds` must be specified when `extraction_mode="seeded"`.',
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
     match = re.escape(
@@ -1143,11 +961,11 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError,
-        match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".',
+        match=r'Invalid `label_mode` "invalid", use "size", "constant", or "seeds".',
     ):
         _ = segmented_grid.label_connectivity(label_mode='invalid')
     with pytest.raises(
-        ValueError, match='`point_seeds` must be specified when `label_mode="seeds"`.'
+        ValueError, match=r'`point_seeds` must be specified when `label_mode="seeds"`.'
     ):
         _ = segmented_grid.label_connectivity(label_mode='seeds')
     with pytest.raises(
@@ -1158,7 +976,7 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         _ = segmented_grid.label_connectivity(scalar_range=[1.0, 2.0, 3.0])
     with pytest.raises(
         ValueError,
-        match='`constant_value` must be provided when `extraction_mode`is "constant".',
+        match=r'`constant_value` must be provided when `extraction_mode`is "constant".',
     ):
         _ = segmented_grid.label_connectivity(label_mode='constant')
 
@@ -1205,8 +1023,10 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            '`invalid` is not a valid `operation_mask`. Use one of '
-            '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+            (
+                '`invalid` is not a valid `operation_mask`. Use one of '
+                '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].'
+            ),
         ),
         (
             (1, 1, 1),
@@ -1220,31 +1040,37 @@ def test_validate_dim_operation(
             4,
             operator.add,
             TypeError,
-            "Array has incorrect dtype of 'int64'. The dtype must be a subtype of <class 'bool'>.",
+            "The dtype must be a subtype of <class 'bool'>.",
         ),
         (
             (2, 2, 2),
             '1D',
             operator.add,
             ValueError,
-            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
-            'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+            (
+                'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
+                'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.'
+            ),
         ),
         (
             (2, 1, 2),
             '3D',
             operator.sub,
             ValueError,
-            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
-            'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+            (
+                'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
+                'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.'
+            ),
         ),
         (
             (1, 2, 5),
             (True, False, True),
             operator.sub,
             ValueError,
-            'The mask (True, False, True), size [1 3 5], and operation sub would result in '
-            '[0 2 0] which contains <= 0 dimensions.',
+            (
+                'The mask (True, False, True), size [1 3 5], and operation sub would result in '
+                '[0 2 0] which contains <= 0 dimensions.'
+            ),
         ),
     ],
 )
@@ -1325,9 +1151,7 @@ def test_resample_extend_border(uniform, extend_border, name, value):
 
 
 @pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
-@pytest.mark.parametrize(
-    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
-)
+@pytest.mark.parametrize('interpolation', get_args(_InterpolationOptions))
 @pytest.mark.parametrize('sample_rate', [0.5, 2.0])
 def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
     array = uniform.active_scalars
@@ -1349,6 +1173,28 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
         assert not np.allclose(resampled_array, anti_aliased_array)
     else:
         assert np.allclose(resampled_array, anti_aliased_array)
+
+
+@pytest.mark.parametrize(
+    ('interpolation', 'border_mode', 'expected_array'),
+    [  # Exact values aren't important, we're just checking the values differ between modes
+        ('cubic', 'wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
+        ('cubic', 'mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
+        ('cubic', 'clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
+        ('bspline', 'wrap', [0.5, 0.50799719, 0.80400287, 1.19599713, 1.49200281, 1.5]),
+        ('bspline', 'mirror', [0.3333333, 0.4719961, 0.8026696, 1.1973304, 1.52800391, 1.6666667]),
+        ('bspline', 'clamp', [0.16666667, 0.435995, 0.80133632, 1.19866368, 1.564005, 1.83333333]),
+        ('bspline0', 'clamp', [0.0, 0.0, 1.0, 1.0, 2.0, 2.0]),
+        ('bspline9', 'clamp', [0.326433, 0.55864616, 0.84595512, 1.1540449, 1.44135384, 1.673567]),
+    ],
+)
+def test_resample_border_mode(interpolation, border_mode, expected_array):
+    im = pv.ImageData(dimensions=(3, 1, 1))
+    im.point_data['data'] = np.arange(3, dtype=float).ravel()
+
+    out = im.resample(2, interpolation=interpolation, border_mode=border_mode)
+    array = out['data']
+    assert np.allclose(array, expected_array)
 
 
 @pytest.mark.parametrize(
@@ -1398,6 +1244,30 @@ def test_resample_cell_data(uniform):
     assert np.allclose(uniform.bounds, resampled.bounds)
 
 
+@pytest.mark.parametrize(
+    'dimensions',
+    [(10, 10, 1), (10, 1, 1), (1, 1, 1), (5, 5, 1)],
+)
+def test_resample_dimensions_to_singleton(uniform, dimensions):
+    # Reducing a non-singleton axis to a single point requires a magnification
+    # factor of zero, which vtkImageResize silently ignores. Regression test for
+    # https://github.com/pyvista/pyvista/issues/8022
+    resampled = uniform.resample(dimensions=dimensions)
+    assert np.array_equal(resampled.dimensions, dimensions)
+
+
+def test_resample_dimensions_to_singleton_values():
+    # The collapsed axis is sampled (not ignored): a 3D volume flattened to a
+    # single z-slice must contain the values from that slice.
+    image = pv.ImageData(dimensions=(4, 4, 4))
+    image['v'] = np.arange(image.n_points, dtype=float)
+    resampled = image.resample(dimensions=(4, 4, 1))
+    assert np.array_equal(resampled.dimensions, (4, 4, 1))
+    # Nearest interpolation samples the first (z=0) slice of the volume.
+    first_slice = image['v'].reshape(image.dimensions[::-1])[0].ravel()
+    assert np.array_equal(np.sort(resampled.active_scalars), np.sort(first_slice))
+
+
 def test_resample_inplace(uniform):
     resampled = uniform.resample()
     assert resampled is not uniform
@@ -1436,6 +1306,73 @@ def test_select_values(uniform):
     assert isinstance(selected, pv.ImageData)
     assert selected is not uniform
     assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+def test_select_values_like_threshold(
+    frog_tissues,
+    replacement_value,
+    fill_value,
+):
+    rng = frog_tissues.get_data_range()
+
+    selected = frog_tissues.select_values(
+        ranges=rng,
+        replacement_value=replacement_value,
+        fill_value=fill_value,
+    )
+    thresholded = frog_tissues.image_threshold(
+        rng, in_value=replacement_value, out_value=fill_value
+    )
+
+    assert selected == thresholded
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        # invert=True excludes the fast path
+        dict(ranges=[10, 20], invert=True),
+        # multiple ranges excludes the fast path
+        dict(ranges=[[10, 20], [50, 60]]),
+        # ``values`` excludes the fast path
+        dict(values=[10, 20, 30]),
+        # cell preference excludes the fast path
+        dict(ranges=[10, 20], preference='cell', scalars='Spatial Cell Data'),
+    ],
+)
+def test_select_values_slow_path(uniform, kwargs):
+    selected = uniform.select_values(
+        replacement_value=99,
+        fill_value=-1,
+        **kwargs,
+    )
+    assert isinstance(selected, pv.ImageData)
+    array_name = kwargs.get('scalars') or uniform.active_scalars_name
+    out_values = set(np.asarray(selected[array_name]).tolist())
+    assert out_values <= {99, -1}
+
+
+def test_select_values_fast_and_slow_path_match(uniform):
+    rng = [10, 20]
+    fast = uniform.select_values(ranges=rng, replacement_value=1, fill_value=-1)
+    # Use ``invert=True`` then re-invert to force the slow path with equivalent semantics
+    arr = uniform.active_scalars
+    expected_mask = (arr >= rng[0]) & (arr <= rng[1])
+    slow = uniform.select_values(
+        ranges=[[float('-inf'), rng[0] - 1], [rng[1] + 1, float('inf')]],
+        replacement_value=-1,
+        fill_value=1,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(fast.active_scalars),
+        np.where(expected_mask, 1, -1).astype(fast.active_scalars.dtype),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(slow.active_scalars),
+        np.where(expected_mask, 1, -1).astype(slow.active_scalars.dtype),
+    )
 
 
 def test_select_values_split(uniform):
@@ -1526,43 +1463,55 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'margin': (
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'dims_offset': (
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'dimensions': (
         dict(dimensions=CROPPED_DIMENSIONS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'mask': (
         dict(mask=MASK_ARRAY_NAME),
@@ -1837,3 +1786,578 @@ def test_crop_raises():
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         img.crop()
+
+
+def test_dilate():
+    """Test the dilate method for binary data."""
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_dilated = point_data.copy()
+    point_data_dilated[3:6, 3:6, 4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
+    point_data_dilated[3:6, 4, 3:6] = 1
+    point_data_dilated[4, 3:6, 3:6] = 1
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.dilate()
+    assert isinstance(volume_dilated, pv.ImageData)
+    assert np.array_equal(
+        volume_dilated.point_data['point_data'],
+        point_data_dilated.flatten(order='F'),
+    )
+
+
+def test_erode():
+    """Test the erode method for binary data."""
+    point_data = np.ones((10, 10, 10))
+    point_data[4, 4, 4] = 0
+    point_data_eroded = point_data.copy()
+    point_data_eroded[3:6, 3:6, 4] = 0  # erode all voxels within diameter 3 around (4,4,4)
+    point_data_eroded[3:6, 4, 3:6] = 0
+    point_data_eroded[4, 3:6, 3:6] = 0
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.erode()
+    assert isinstance(volume_eroded, pv.ImageData)
+    assert np.array_equal(
+        volume_eroded.point_data['point_data'],
+        point_data_eroded.flatten(order='F'),
+    )
+
+
+@pytest.mark.parametrize('binary', [True, False, [MORPHOLOGICAL_MIN_VAL, MORPHOLOGICAL_MAX_VAL]])
+def test_dilate_binary(binary):
+    """Test the dilate method with binary option."""
+    point_data = np.ones((10, 10, 10)) * MORPHOLOGICAL_MIN_VAL
+    point_data[4, 4, 4] = MORPHOLOGICAL_MAX_VAL
+    point_data[0, 0, 0] = MORPHOLOGICAL_MID_VAL
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.dilate(binary=binary)
+    assert isinstance(volume_dilated, pv.ImageData)
+    # Check that dilation occurred (max value should be at original position)
+    assert volume_dilated.point_data['point_data'].max() == MORPHOLOGICAL_MAX_VAL
+    # Check that surrounding voxels have been affected
+    reshaped = volume_dilated.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # neighboring voxel should have dilated value
+    assert reshaped[3, 4, 4] == MORPHOLOGICAL_MAX_VAL
+
+    assert reshaped[0, 0, 0] == MORPHOLOGICAL_MID_VAL
+    if NUMPY_VERSION_INFO > (2, 0, 0):
+        # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)
+        expected_counts = (980, 1, 19) if binary else (974, 7, 19)
+        actual_counts = tuple(np.unique_counts(reshaped).counts)
+        assert actual_counts == expected_counts
+
+
+@pytest.mark.parametrize('binary', [True, False, [MORPHOLOGICAL_MIN_VAL, MORPHOLOGICAL_MAX_VAL]])
+def test_erode_binary(binary):
+    """Test the erode method with binary option."""
+    point_data = np.ones((10, 10, 10)) * MORPHOLOGICAL_MAX_VAL
+    point_data[4, 4, 4] = MORPHOLOGICAL_MIN_VAL
+    point_data[0, 0, 0] = MORPHOLOGICAL_MID_VAL
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.erode(binary=binary)
+    assert isinstance(volume_eroded, pv.ImageData)
+    # Check that erosion occurred
+    assert volume_eroded.point_data['point_data'].min() == MORPHOLOGICAL_MIN_VAL
+    # Check that surrounding voxels have been affected
+    reshaped = volume_eroded.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # neighboring voxel should have eroded value
+    assert reshaped[3, 4, 4] == MORPHOLOGICAL_MIN_VAL
+
+    assert reshaped[0, 0, 0] == MORPHOLOGICAL_MID_VAL
+    if NUMPY_VERSION_INFO > (2, 0, 0):
+        # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)
+        expected_counts = (19, 1, 980) if binary else (19, 7, 974)
+        actual_counts = tuple(np.unique_counts(reshaped).counts)
+        assert actual_counts == expected_counts
+
+
+def test_open():
+    """Test the morphological open operation."""
+    # Create data with small noise that should be removed
+    point_data = np.zeros((10, 10, 10))
+    point_data[4:7, 4:7, 4:7] = 1  # main object
+    point_data[1, 1, 1] = 1  # small noise
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_opened = volume.open()
+    assert isinstance(volume_opened, pv.ImageData)
+    reshaped = volume_opened.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # Check that noise is removed
+    assert reshaped[1, 1, 1] == 0
+    # Check that main object is preserved (at least partially)
+    assert reshaped[5, 5, 5] == 1
+
+
+def test_close():
+    """Test the morphological close operation."""
+    # Create data with a small hole that should be filled
+    point_data = np.ones((10, 10, 10))
+    point_data[4:7, 4:7, 4:7] = 0  # hole in the middle
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_closed = volume.close(kernel_size=(5, 5, 5))
+    assert isinstance(volume_closed, pv.ImageData)
+    reshaped = volume_closed.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # Check that hole is filled (at least partially)
+    assert reshaped[5, 5, 5] == 1
+
+
+@pytest.mark.parametrize('binary', [True, False, None])
+def test_morphological_filters_bool(binary):
+    im = pv.ImageData(dimensions=(2, 1, 1))
+    im['data'] = np.array((True, False), dtype=bool)
+    eroded = im.erode(binary=binary)
+    assert eroded['data'].dtype == bool
+    assert np.array_equal(eroded['data'], [False, False])
+
+
+def test_morphological_filters_single_value():
+    im = pv.ImageData(dimensions=(1, 1, 1))
+    value = 42.0
+    im['data'] = np.array((value,), dtype=float)
+    eroded = im.erode()
+    assert eroded['data'].dtype == float
+    assert np.array_equal(eroded['data'], [value])
+
+
+def test_morphological_filters_float():
+    im = pv.ImageData(dimensions=(3, 1, 1))
+    im['data'] = [1.0, 2.0, 3.0]
+    eroded = im.erode()
+    assert eroded['data'].dtype == float
+    assert np.array_equal(eroded['data'], [1.0, 1.0, 2.0])
+
+
+def test_morphological_filters_with_scalars():
+    """Test morphological filters with specified scalars."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    data1 = np.zeros((5, 5, 5))
+    data1[2, 2, 2] = 1
+    data2 = np.ones((5, 5, 5))
+    volume.point_data['data1'] = data1.flatten(order='F')
+    volume.point_data['data2'] = data2.flatten(order='F')
+
+    # Test with specified scalars
+    dilated = volume.dilate(scalars='data1')
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(scalars='data2')
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(scalars='data1')
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(scalars='data2')
+    assert isinstance(closed, pv.ImageData)
+
+
+def test_morphological_filters_cell_data_error():
+    """Test that morphological filters raise error for cell data."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    volume.cell_data['cell_data'] = np.zeros(4 * 4 * 4)
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.dilate(scalars='cell_data')
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.erode(scalars='cell_data')
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.open(scalars='cell_data')
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.close(scalars='cell_data')
+
+
+def test_morphological_filters_progress_bar():
+    """Test morphological filters with progress_bar parameter."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    data = np.zeros((5, 5, 5))
+    data[2, 2, 2] = 1
+    volume.point_data['data'] = data.flatten(order='F')
+
+    # Test progress_bar parameter for all morphological operations
+    dilated = volume.dilate(progress_bar=True)
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(progress_bar=True)
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(progress_bar=True)
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(progress_bar=True)
+    assert isinstance(closed, pv.ImageData)
+
+
+def test_morphological_filters_no_active_scalars_cell_data():
+    """Test morphological filters error when active scalars are cell data."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    volume.cell_data['cell_data'] = np.zeros(4 * 4 * 4)
+    volume.set_active_scalars('cell_data', preference='cell')
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.dilate()
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.erode()
+
+    # For open and close, the error will come from the internal dilate/erode calls
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.open()
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.close()
+
+
+def test_morphological_filters_custom_kernel_size():
+    """Test morphological filters with custom kernel sizes."""
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    data = np.zeros((10, 10, 10))
+    data[5, 5, 5] = 1
+    volume.point_data['data'] = data.flatten(order='F')
+
+    # Test with different kernel sizes
+    dilated = volume.dilate(kernel_size=(5, 5, 5))
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(kernel_size=(2, 2, 2))
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(kernel_size=(4, 4, 4))
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(kernel_size=(3, 2, 1))
+    assert isinstance(closed, pv.ImageData)
+
+
+@pytest.mark.parametrize(
+    ('axis', 'dimensions_out'), [(0, (2, 1, 1)), (1, (1, 2, 1)), (2, (1, 1, 2))]
+)
+@pytest.mark.parametrize(
+    ('dtypes', 'dtype_policy'),
+    [
+        ((int, float), 'promote'),
+        ((int, float), 'match'),
+        ((float, float), 'strict'),
+        ((int, int), 'strict'),
+        ((np.int64, np.uint8), 'promote'),
+        ((np.uint8, np.int32), 'match'),
+    ],
+)
+def test_concatenate(axis, dimensions_out, dtypes, dtype_policy):
+    array_a = np.array([0], dtype=dtypes[0])
+    array_b = np.array([1], dtype=dtypes[1])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(1, 1, 1))
+    image_b['B'] = array_b
+
+    if dtype_policy == 'strict':
+        concatenated_image = image_a.concatenate(image_b, axis=axis)
+    else:
+        match = (
+            r'The dtypes of the scalar arrays do not match\. '
+            r"Got multiple dtypes: \{dtype\('[A-Za-z0-9_]+'\), dtype\('[A-Za-z0-9_]+'\)\}\.\n"
+            r"Set the dtype policy to 'promote' or 'match' to cast the inputs to a single dtype\."
+        )
+        with pytest.raises(TypeError, match=match):
+            image_a.concatenate(image_b, axis=axis)
+        concatenated_image = image_a.concatenate(image_b, axis=axis, dtype_policy=dtype_policy)
+
+    assert concatenated_image.array_names == ['A']
+    image_array = concatenated_image['A']
+    assert concatenated_image.dimensions == dimensions_out
+    assert np.array_equal(image_array, [0, 1])
+
+    expected_dtype = np.result_type(*dtypes) if dtype_policy == 'promote' else dtypes[0]
+    actual_dtype = image_array.dtype
+    assert actual_dtype == expected_dtype
+
+
+def test_concatenate_dimensions_mismatch():
+    array_a = np.array([0])
+    array_b = np.array([1, 2])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = array_b
+
+    concatenated_image = image_a.concatenate(image_b, axis=0)
+    assert concatenated_image.dimensions == (3, 1, 1)
+
+    image_a = pv.ImageData(dimensions=(1, 2, 3))
+    image_a['A'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=(4, 5, 6))
+    image_b['B'] = range(image_b.n_points)
+
+    match = (
+        'Image dimensions (4, 5, 6) must match off-axis dimensions (1, 2, 3) for axis 0.\n'
+        'Got y dimension 5, expected 2. Use the `mode` keyword to allow concatenation with\n'
+        'mismatched dimensions.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate(image_b, axis=0)
+
+    match = (
+        'Image 1 dimensions (4, 5, 6) must match off-axis dimensions (1, 2, 3) for axis 2.\n'
+        'Got x dimension 4, expected 1. Use the `mode` keyword to allow concatenation with\n'
+        'mismatched dimensions.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate([image_a, image_b], axis=2)
+
+
+def test_concatenate_component_policy():
+    gray_array = np.array([0], dtype=np.uint8)
+    rgb_array = np.array([[1, 2, 3]], dtype=np.uint8)
+    gray = pv.ImageData(dimensions=(1, 1, 1))
+    gray['A'] = gray_array
+    rgb = pv.ImageData(dimensions=(1, 1, 1))
+    rgb['A'] = rgb_array
+
+    match = (
+        r'The number of components in the scalar arrays do not match. Got n components: {1, 3}.\n'
+        r"Set the component policy to 'promote_rgba' to automatically increase the number of "
+        r'components as needed.'
+    )
+    with pytest.raises(ValueError, match=match):
+        gray.concatenate(rgb)
+
+    concatenated = gray.concatenate(rgb, component_policy='promote_rgba')
+    expected_array = np.vstack((np.broadcast_to(gray_array, (1, 3)), rgb_array))
+    assert np.array_equal(concatenated.active_scalars, expected_array)
+
+    rgba_array = np.array([[1, 2, 3, 255]], dtype=np.uint8)
+    rgba = pv.ImageData(dimensions=(1, 1, 1))
+    rgba['A'] = rgba_array
+
+    concatenated = gray.concatenate(rgba, component_policy='promote_rgba')
+    expected_gray_rgba = np.broadcast_to(gray_array, (1, 4)).copy()
+    expected_gray_rgba[0][3] = 255
+    expected_array = np.vstack((expected_gray_rgba, rgba_array))
+    assert np.array_equal(concatenated.active_scalars, expected_array)
+
+
+def test_concatenate_component_policy_raises(beach):
+    im = pv.ImageData(dimensions=(1, 1, 1))
+    im['data'] = np.array([[1, 2]], dtype=np.uint8)
+    match = (
+        'Unable to promote scalar components. Only promotion for grayscale (1 component), '
+        'RGB (3 components),\nand RGBA (4 components) is supported. Got: {2, 3}'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        im.concatenate(beach, mode='crop-off-axis', component_policy='promote_rgba')
+
+
+class CasesResampleOffAxis:
+    # 1D WITH 1D CASES
+    def case_1d_x_with_1d_x_along_x(self):
+        return (20, 1, 1), (30, 1, 1), 'x', (50, 1, 1)
+
+    def case_1d_x_with_1d_x_along_y(self):
+        return (20, 1, 1), (30, 1, 1), 'y', (20, 2, 1)
+
+    def case_1d_x_with_1d_x_along_z(self):
+        return (20, 1, 1), (30, 1, 1), 'z', (20, 1, 2)
+
+    # 2D WITH 2D CASES
+    def case_2d_xy_with_2d_xy_along_x(self):
+        return (20, 40, 1), (30, 50, 1), 'x', (50, 40, 1)
+
+    def case_2d_xy_with_2d_xy_along_y(self):
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 90, 1)
+
+    def case_2d_xy_with_2d_xy_along_z(self):
+        return (20, 40, 1), (30, 50, 1), 'z', (20, 40, 2)
+
+    def case_2d_yz_with_2d_xy_along_x(self):
+        return (1, 20, 40), (30, 50, 1), 'x', (31, 20, 40)
+
+    def case_2d_yz_with_2d_xy_along_y(self):
+        return (1, 20, 40), (30, 50, 1), 'y', (1, 70, 40)
+
+    def case_2d_yz_with_2d_xy_along_z(self):
+        return (1, 20, 40), (30, 50, 1), 'z', (1, 20, 41)
+
+    # 3D WITH 3D CASES
+    def case_3d_with_3d_along_x(self):
+        return (10, 20, 30), (40, 50, 60), 'x', (50, 20, 30)
+
+    def case_3d_with_3d_along_y(self):
+        return (10, 20, 30), (40, 50, 60), 'y', (10, 70, 30)
+
+    def case_3d_with_3d_along_z(self):
+        return (10, 20, 30), (40, 50, 60), 'z', (10, 20, 90)
+
+    # MIXED DIMENSIONALITY CASES
+    def case_1d_x_with_2d_yz_along_x(self):
+        return (10, 1, 1), (1, 20, 30), 'x', (11, 1, 1)
+
+    def case_1d_x_with_3d_along_x(self):
+        return (10, 1, 1), (20, 30, 40), 'x', (30, 1, 1)
+
+    def case_2d_xy_with_3d_along_x(self):
+        return (10, 20, 1), (30, 40, 50), 'x', (40, 20, 1)
+
+
+@parametrize_with_cases(
+    'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleOffAxis
+)
+def test_concatenate_resample_off_axis(dimensions_a, dimensions_b, axis, dimensions_out):
+    image_a = pv.ImageData(dimensions=dimensions_a)
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=dimensions_b)
+    image_b['data'] = range(image_b.n_points)
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-off-axis')
+    assert concatenated_image.dimensions == dimensions_out
+
+
+class CasesResampleProportional:
+    def case_2d_xy_along_x(self):
+        return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
+
+    def case_2d_xy_along_y(self):
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
+
+    def case_2d_yz_along_y(self):
+        return (1, 20, 40), (1, 30, 50), 'y', (1, 44, 40)
+
+    def case_2d_yz_along_z(self):
+        return (1, 20, 40), (1, 30, 50), 'z', (1, 20, 73)
+
+    def case_3d_proportional_along_z_same_proportion(self):
+        return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
+
+    def case_3d_proportional_along_z_different_proportion(self):
+        return (256, 256, 2), (128, 127, 50), 'z', (256, 256, 102)
+
+
+@parametrize_with_cases(
+    'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleProportional
+)
+def test_concatenate_resample_proportional_match(dimensions_a, dimensions_b, axis, dimensions_out):
+    image_a = pv.ImageData(dimensions=dimensions_a)
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=dimensions_b)
+    image_b['data'] = range(image_b.n_points)
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-proportional')
+    assert concatenated_image.dimensions == dimensions_out
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-match')
+    expected_dims = list(dimensions_a)
+    if axis == 'x':
+        expected_dims[0] = expected_dims[0] * 2
+    if axis == 'y':
+        expected_dims[1] = expected_dims[1] * 2
+    if axis == 'z':
+        expected_dims[2] = expected_dims[2] * 2
+    assert concatenated_image.dimensions == tuple(expected_dims)
+
+
+@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-proportional', 'resample-match'])
+def test_concatenate_resample_kwargs(mode):
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = [0]
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = [1, 2]
+    resample_kwargs = dict(interpolation='linear', border_mode='wrap', anti_aliasing=True)
+    concatenated_image = image_a.concatenate(
+        image_b, axis=0, mode=mode, resample_kwargs=resample_kwargs
+    )
+    assert isinstance(concatenated_image, pv.ImageData)
+
+    match = (
+        "resample_kwargs 'dimensions' is not valid. resample_kwargs must be one of: \n\t"
+        "('anti_aliasing', 'interpolation', 'border_mode')"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate(
+            image_b, mode='resample-off-axis', resample_kwargs={'dimensions': (1, 2, 3)}
+        )
+
+
+def test_concatenate_preserve_extents():
+    array_a = np.array([0])
+    array_b = np.array([1])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(1, 1, 1))
+    image_b['B'] = array_b
+
+    concatenated = image_a.concatenate(image_b, mode='preserve-extents')
+    assert concatenated.dimensions == (1, 1, 1)
+    assert np.array_equal(concatenated.active_scalars, array_b)
+
+    offset = (-1, 0, 0)
+    image_a.offset = offset
+    concatenated = image_a.concatenate(image_b, mode='preserve-extents')
+    assert concatenated.dimensions == (2, 1, 1)
+    assert concatenated.offset == offset
+    expected = np.hstack((array_a, array_b))
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+    match = "The axis keyword cannot be used with 'preserve-extents' mode."
+    with pytest.raises(ValueError, match=match):
+        image_a.concatenate(image_b, axis=0, mode='preserve-extents')
+
+
+def test_concatenate_crop():
+    array_a = np.array([0])
+    array_b = np.arange(9)
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(3, 3, 1))
+    image_b['B'] = array_b
+
+    concatenated = image_a.concatenate(image_b, mode='crop-match')
+    assert concatenated.dimensions == (2, 1, 1)
+    expected = np.hstack((array_a, array_b[4]))
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+    concatenated = image_a.concatenate(image_b, mode='crop-off-axis')
+    assert concatenated.dimensions == (4, 1, 1)
+    expected = np.hstack((array_a, array_b[3:6]))
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+
+@pytest.mark.parametrize('background_value', [127, 128])
+@pytest.mark.parametrize('mode', ['crop-match', 'resample-proportional', 'preserve-extents'])
+@pytest.mark.parametrize(
+    ('origin', 'spacing'), [((0, 0, 0), (1, 1, 1)), ((1, 2, 3), (0.1, 0.2, 0.3))]
+)
+def test_concatenate_background_value(background_value, mode, origin, spacing):
+    image_a = pv.ImageData(dimensions=(10, 11, 12), origin=origin, spacing=spacing)
+    image_a['A'] = np.ones((image_a.n_points,))
+    user_dict = {'foo': 'bar'}
+    image_a.user_dict = user_dict
+
+    image_b = pv.ImageData(dimensions=(6, 5, 4))
+    image_b.offset = (-5, -5, -5)
+    image_b['B'] = np.zeros((image_b.n_points,))
+
+    concatenated = image_a.concatenate(image_b, mode=mode, background_value=background_value)
+    assert background_value in concatenated.active_scalars
+
+    # Make sure the output preserves the input geometry and field data
+    assert concatenated.origin == origin
+    assert concatenated.spacing == spacing
+    assert concatenated.user_dict == user_dict
+    assert concatenated.active_scalars_name == image_a.active_scalars_name

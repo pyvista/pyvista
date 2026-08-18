@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from pyvista import PolyData
@@ -76,7 +77,7 @@ def vtk_points(  # noqa: PLR0917
             raise
 
     if force_float and not np.issubdtype(points_.dtype, np.floating):
-        warnings.warn(
+        warn_external(
             'Points is not a float type. This can cause issues when '
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
@@ -85,12 +86,13 @@ def vtk_points(  # noqa: PLR0917
         points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points_, pyvista.pyvista_ndarray) and points_.VTKObject is not None:
+    if not deep and isinstance(points_, pv.pyvista_ndarray) and points_.VTKObject is not None:
         vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        if vtk_object.GetSize() == points_.size:
+        size = vtk_object.GetSize() if pv.vtk_version_info < (9, 7) else vtk_object.GetCapacity()
+        if size == points_.size:
             vtkpts = _vtk.vtkPoints()
             vtkpts.SetData(points_.VTKObject)
             return vtkpts
@@ -135,21 +137,18 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     >>> lines = pv.line_segments_from_points(points)
     >>> lines.plot()
 
+    See :ref:`graph_network_example` for more examples using this function.
+
     """
     if len(points) % 2 != 0:
         msg = 'An even number of points must be given to define each segment.'
         raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
-    n_lines = n_points // 2
-    lines = np.c_[
-        2 * np.ones(n_lines, np.int_),
-        np.arange(0, n_points - 1, step=2),
-        np.arange(1, n_points + 1, step=2),
-    ]
-    poly = pyvista.PolyData()
-    poly.points = points
-    poly.lines = lines
+    lines = cast('NumpyArray[int]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2))
+    poly = pv.PolyData()
+    poly.points = cast('MatrixLike[float]', points)
+    poly.lines = pv.CellArray.from_regular_cells(lines)
     return poly
 
 
@@ -183,15 +182,19 @@ def lines_from_points(
     >>> poly = pv.lines_from_points(points)
     >>> poly.plot(line_width=5)
 
+    See :ref:`lorenz_attractor_example` for more examples using this function.
+
     """
-    poly = pyvista.PolyData()
-    poly.points = points
-    cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
-    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
-    cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
+    poly = pv.PolyData()
+    poly.points = cast('MatrixLike[float]', points)
+    n_points = len(points)
+    point_ids = np.arange(n_points, dtype=pv.ID_TYPE)
+    cells = np.empty((n_points if close else n_points - 1, 2), dtype=pv.ID_TYPE)
+    cells[: n_points - 1, 0] = point_ids[:-1]
+    cells[: n_points - 1, 1] = point_ids[1:]
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
-    poly.lines = cells
+        cells[-1] = [n_points - 1, 0]
+    poly.lines = pv.CellArray.from_regular_cells(cells)
     return poly
 
 
@@ -201,7 +204,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
-) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
+) -> PolyData | tuple[PolyData, NumpyArray[np.float64], NumpyArray[np.float64]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -268,6 +271,8 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 2
+
     Fit a plane to a random point cloud.
 
     >>> import pyvista as pv
@@ -305,11 +310,11 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(plane, show_edges=True, opacity=0.25)
     >>> _ = pl.add_mesh(mesh, color='gray')
-    >>> pl.camera_position = [
-    ...     (-117, 76, 235),
-    ...     (1.69, -1.38, 0),
-    ...     (0.189, 0.957, -0.22),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-117, 76, 235),
+    ...     focal_point=(1.69, -1.38, 0),
+    ...     viewup=(0.189, 0.957, -0.22),
+    ... )
     >>> pl.show()
 
     Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
@@ -324,27 +329,25 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(first_half, color='red')
     >>> _ = pl.add_mesh(second_half, color='blue')
-    >>> pl.camera_position = [
-    ...     (-143, 43, 40),
-    ...     (-8.7, -11, -14),
-    ...     (0.25, 0.92, -0.29),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-143, 43, 40),
+    ...     focal_point=(-8.7, -11, -14),
+    ...     viewup=(0.25, 0.92, -0.29),
+    ... )
     >>> pl.show()
 
     Note that it is pointing in the positive z-direction.
 
-    >>> normal
-    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, 1.0], dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
 
     >>> _, _, normal = pv.fit_plane_to_points(
     ...     mesh.points, return_meta=True, init_normal='-z'
     ... )
-    >>> normal
-    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, -1.0], dtype=float32)
 
     """
     valid_resolution = _validation.validate_array(
@@ -357,13 +360,13 @@ def fit_plane_to_points(  # noqa: PLR0917
     i_resolution, j_resolution = valid_resolution
 
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(
+    aligned, matrix = pv.PolyData(points).align_xyz(
         return_matrix=True, axis_2_direction=init_normal
     )
 
     # Fit plane to xyz-aligned mesh
     i_size, j_size, _ = aligned.bounds_size
-    plane = pyvista.Plane(
+    plane = pv.Plane(
         i_size=i_size,
         j_size=j_size,
         i_resolution=i_resolution,
@@ -371,7 +374,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     )
 
     # Transform plane back to input points positioning
-    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
     plane.transform(inverse_matrix, inplace=True)
 
     if return_meta:
@@ -433,6 +436,8 @@ def fit_line_to_points(
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 2
+
     Download a point cloud. The points trace a path along topographical surface.
 
     >>> import pyvista as pv
@@ -458,7 +463,7 @@ def fit_line_to_points(
     Show the length of the line.
 
     >>> length
-    167.6145387467733
+    167.6145
 
     Plot the line as an arrow to show its direction.
 
@@ -501,17 +506,17 @@ def fit_line_to_points(
 
     """
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(
+    aligned, matrix = pv.PolyData(points).align_xyz(
         axis_0_direction=init_direction, return_matrix=True
     )
 
     # Fit line to xyz-aligned mesh
     point_a = (aligned.bounds.x_min, 0, 0)
     point_b = (aligned.bounds.x_max, 0, 0)
-    line_mesh = pyvista.LineSource(point_a, point_b, resolution=resolution).output
+    line_mesh = pv.LineSource(point_a, point_b, resolution=resolution).output
 
     # Transform line back to input points positioning
-    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
     line_mesh.transform(inverse_matrix, inplace=True)
 
     if return_meta:
@@ -584,10 +589,7 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
     if faces.ndim != 2 or faces.shape[1] != 3:
         msg = 'Face array should have shape (M, 3).'
         raise ValueError(msg)
-    cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
-    cells[:, 0] = 3
-    cells[:, 1:] = faces
-    return pyvista.PolyData(points, cells)
+    return pv.PolyData.from_regular_faces(points, faces)
 
 
 def vector_poly_data(
@@ -655,8 +657,8 @@ def vector_poly_data(
     vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    vcells = pyvista.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1)),
+    vcells = pv.core.cell.CellArray.from_regular_cells(
+        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),  # type: ignore[arg-type]
     )
 
     # Create vtkPolyData object
@@ -679,7 +681,7 @@ def vector_poly_data(
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
 
-    return pyvista.PolyData(pdata)
+    return pv.PolyData(pdata)
 
 
 @overload
@@ -739,6 +741,9 @@ def principal_axes(
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
 
+    :ref:`point_cloud_orientation_example`
+        Example using this function with point clouds.
+
     Parameters
     ----------
     points : MatrixLike[float]
@@ -773,20 +778,19 @@ def principal_axes(
 
     Plot the mesh and highlight its points in black.
 
-    >>> p = pv.Plotter()
-    >>> _ = p.add_mesh(mesh)
-    >>> _ = p.add_points(mesh, color='black')
-    >>> _ = p.show_grid()
-    >>> p.show()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh)
+    >>> _ = pl.add_points(mesh, color='black')
+    >>> _ = pl.show_grid()
+    >>> pl.show()
 
     Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
-    >>> axes
-    pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
-                     [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
-                     [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
-                    dtype=float32)
+    >>> axes  # doctest:+SKIP
+    pyvista_ndarray([[-1.,  0.,  0.],
+                     [ 0.,  1.,  0.],
+                     [ 0.,  0., -1.]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
@@ -798,8 +802,8 @@ def principal_axes(
 
     Show the standard deviation along each axis.
 
-    >>> std
-    array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
+    >>> std  # doctest:+SKIP
+    array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
     Compare this to using :meth:`numpy.std` for the computation.
 
@@ -813,7 +817,7 @@ def principal_axes(
 
     Convert the values to proportions for analysis.
 
-    >>> std / sum(std)
+    >>> std / sum(std)  # doctest:+SKIP
     array([0.5769149 , 0.28845742, 0.1346276 ], dtype=float32)
 
     From this result, we can determine that the axes explain approximately

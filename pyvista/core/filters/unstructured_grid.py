@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from functools import wraps
+import functools
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -24,12 +23,12 @@ if TYPE_CHECKING:
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
+    @functools.wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
     def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
+    @functools.wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
     def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
@@ -123,6 +122,9 @@ class UnstructuredGridFilters(DataSetFilters):
         --------
         remove_unused_points
             Strictly remove unused points `without` merging points.
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :meth:`~pyvista.DataObjectFilters.cell_validator`
+        :meth:`~pyvista.DataObjectFilters.validate_mesh`
 
         Examples
         --------
@@ -151,13 +153,7 @@ class UnstructuredGridFilters(DataSetFilters):
         >>> pl.show()
 
         """
-        try:
-            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid  # noqa: PLC0415
-        except ImportError:  # pragma no cover
-            msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
-            raise VTKVersionError(msg) from None
-
-        alg = vtkStaticCleanUnstructuredGrid()
+        alg = _vtk.vtkStaticCleanUnstructuredGrid()
         # https://github.com/pyvista/pyvista/pull/6337
         alg.SetInputDataObject(self.copy())  # type: ignore[attr-defined]
         alg.SetAbsoluteTolerance(True)

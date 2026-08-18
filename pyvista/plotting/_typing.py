@@ -3,34 +3,45 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeAlias
 from typing import TypedDict
 from typing import Union
 
 import matplotlib as mpl
 
+from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
 
-from . import _vtk
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
+    from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataset import DataSet
+    from pyvista.core.partitioned import PartitionedDataSet
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
     from .charts import ChartPie as ChartPie
+    from .colors import _ALL_COLORS_LITERAL
     from .colors import _CMCRAMERI_CMAPS_LITERAL
     from .colors import _CMOCEAN_CMAPS_LITERAL
     from .colors import _COLORCET_CMAPS_LITERAL
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
+
+PlottableType: TypeAlias = Union[
+    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
+]
+
 
 NamedColormaps = Union[
     '_MATPLOTLIB_CMAPS_LITERAL',
@@ -53,10 +64,8 @@ ColorLike = Union[
     str,
     'Color',
     _vtk.vtkColor3ub,
+    '_ALL_COLORS_LITERAL',
 ]
-# Overwrite default docstring, as sphinx is not able to capture the docstring
-# when it is put beneath the definition somehow?
-ColorLike.__doc__ = 'Any object convertible to a :class:`Color`.'
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']
 OpacityOptions = Literal[
@@ -82,6 +91,16 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+# Distinct, user-facing built-in theme names, for autocomplete only. Excludes
+# 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
+# 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
+# remain valid at runtime as a plain ``str`` — see ``pyvista.registered_themes``.
+ThemeOptions = Literal[
+    'dark',
+    'document',
+    'document_pro',
+    'paraview',
+]
 CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
     | VectorLike[float]

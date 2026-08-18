@@ -1,7 +1,7 @@
 Contributing
 ============
 
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg
    :target: CODE_OF_CONDUCT.md
 
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
@@ -66,7 +66,7 @@ to provide live interaction windows.  Follow directions
 `Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
 to use the live interaction.
 
-Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+Alternatively, an offscreen version using OSMesa libraries with VTK 9.5+ is available.
 
 Questions
 ---------
@@ -135,6 +135,18 @@ responsibility to ensure that the existing license is compatible and
 included in the contributed files or you can obtain permission from the
 original author to relicense the code.
 
+Generative AI
+-------------
+
+We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_.
+The resulting contribution is the responsibility of the contributor, and we value good code,
+concise accurate documentation, and avoiding unneeded code churn.
+
+That responsibility covers what the contribution costs us to review and to test.
+If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
+which routes to the task guides and repeats the rules agents get wrong most often,
+and read `Continuous Integration Etiquette`_ before it pushes anything.
+
 --------------
 
 Development Practices
@@ -143,6 +155,105 @@ Development Practices
 This section provides a guide to how we conduct development in the
 PyVista repository. Please follow the practices outlined here when
 contributing directly to this repository.
+
+Quick Development Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, the most common developer tasks are wrapped as ``make``
+targets in the repository's top-level ``Makefile``. These are the
+recommended entry points for day-to-day development.
+
+Most targets delegate to ``uv``, so ``uv`` must be installed on your
+system first (see https://docs.astral.sh/uv/getting-started/installation/).
+``make`` itself must also be available on your ``PATH``; on Windows it
+can be installed via package managers like ``scoop`` or ``chocolatey``.
+
+.. code-block:: bash
+
+    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
+    make lint           # run pre-commit on all files
+    make typecheck      # run mypy via tox
+    make test           # run the full test suite via tox (matches CI flags)
+    make test-core      # run the core test suite via tox (matches CI)
+    make test-plotting  # run the plotting test suite via tox (matches CI)
+    make doctest        # run all docstring tests via tox (matches CI)
+    make docs           # build the full documentation via tox (matches CI)
+    make docs-test      # test the built documentation via tox (matches CI)
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
+
+``make test``, ``make test-core``, and ``make test-plotting`` all
+invoke tox environments defined in ``tox.ini`` so they run with the
+exact same pytest filters and flags as the corresponding CI jobs. The
+filter definitions live in ``tox.ini`` so they only need to be
+maintained in one place.
+
+Running ``make`` with no target is equivalent to ``make test``.
+
+Additional arguments can be forwarded to ``pytest`` via the ``ARGS``
+variable, for example:
+
+.. code-block:: bash
+
+    make test ARGS="-n 10"               # run tests in parallel with 10 workers
+    make test ARGS="-k filters"          # only run tests matching "filters"
+    make test-core ARGS="-n auto -x"     # core tests, auto parallelism, stop on first failure
+
+These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
+and ``pytest``. If you need more control (e.g., running against a
+specific ``vtk`` or ``numpy`` version, or building documentation), see
+the `Unit Testing`_, `Style Checking`_, and `Building the
+Documentation`_ sections below, which document the underlying tools
+directly.
+
+Continuous Integration Etiquette
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Opening a pull request, and every push to it afterwards, starts the full
+continuous integration suite: unit tests on Linux, macOS, and Windows across
+every supported Python version, a separate VTK version matrix, the
+documentation build, the integration tests, type checking, and the style and
+docstring jobs. Every one of those runs costs the project paid runner time.
+Push when the change is ready, and use the local gates rather than CI to find
+out whether it works.
+
+Before you push:
+
+#. Run ``make lint``. It runs ``pre-commit`` on all files and catches most of
+   what the style jobs would report.
+#. Run the tests covering what you changed, for example
+   ``make test-core ARGS="-k threshold"`` or ``make test-plotting``. These
+   targets use the same ``tox`` environments and ``pytest`` flags as CI, so a
+   green local run means the same run is green in CI.
+#. Run ``make typecheck`` when you change type annotations, and ``make
+   doctest`` when you change a docstring example.
+
+While you iterate, keep the pull request in draft and amend or squash locally,
+so a single push carries the finished change instead of five pushes carrying a
+debugging session. A new push cancels the runs still in progress for the same
+branch, but it cannot refund a run that already finished.
+
+When a job fails:
+
+-  Read the log and find the failing assertion before changing anything. The
+   job name alone does not identify the cause.
+-  Reproduce it locally with the matching ``make`` target or ``tox``
+   environment. When the failure needs a Python or VTK version you cannot run,
+   say so in the pull request instead of pushing speculative fixes.
+-  Check whether the same failure occurs on ``main``. If it does, the failure
+   is not yours to chase in this pull request.
+-  Diagnose a flaky test rather than re-running the job until it passes. A
+   re-run costs what the first run cost, and a test that only passes on the
+   second attempt is worth reporting.
+-  For image regression failures, download the failed image artifact from the
+   job and compare it against the committed baseline (see `Notes Regarding
+   Image Regression Testing`_) instead of pushing baseline updates to see
+   which ones stick.
+
+This applies with particular force to contributions made with coding agents,
+which can run every gate above locally in a shell. Configure yours to do that
+and review its work before it reaches CI. Whoever opens the pull request is
+responsible for what each push costs the project, in the same way they are
+responsible for the content of the contribution.
 
 Guidelines
 ~~~~~~~~~~
@@ -232,6 +343,83 @@ Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
+
+Import Conventions
+^^^^^^^^^^^^^^^^^^
+
+Standard library imports follow one rule: **import the name that carries its
+own meaning at the call site.**
+
+Modules that export *types* are imported by member. "Type" here means a name
+that appears in a type position -- an annotation, a base class, or a
+class-defining decorator -- where the module prefix is pure noise:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from collections.abc import Sequence
+    from dataclasses import dataclass
+
+
+    @dataclass
+    class Config:
+        path: Path
+        names: Sequence[str]
+
+Everything else keeps the namespace prefix, because the module name supplies
+the domain that makes the call readable:
+
+.. code-block:: python
+
+    import functools
+    import re
+
+    pattern = re.escape(text)  # not `escape` -- shell? HTML? regex?
+
+
+    @functools.wraps(func)  # not `wraps` -- wraps what?
+    def wrapper(*args, **kwargs): ...
+
+
+Some member imports also shadow their own module (``from time import time``,
+``from glob import glob``), which the namespace form avoids.
+
+The unit is the module, not the name. ``argparse`` exports ``ArgumentParser``
+but is namespace-imported, because one type does not make a type module;
+``argparse.ArgumentParser`` reads fine. The member list is closed and short:
+``__future__``, ``abc``, ``collections``, ``collections.abc``, ``dataclasses``,
+``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
+``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
+
+How this is enforced
+""""""""""""""""""""
+
+Two lists, because ``ruff`` can only express one direction:
+
+* ``banned-from`` under ``[tool.ruff.lint.flake8-import-conventions]`` in
+  ``pyproject.toml`` rejects ``from re import escape`` (``ICN003``).
+* the ``namespace-stdlib-imports`` pygrep hook in ``.pre-commit-config.yaml``
+  rejects ``import pathlib``. Ruff cannot do this direction --
+  ``flake8-tidy-imports``' ``banned-api`` matches the resolved symbol, so
+  banning ``pathlib`` would reject ``from pathlib import Path`` too.
+
+``tests/test_import_conventions.py`` asserts the lists stay disjoint and
+jointly govern every standard library module the repository imports, so a
+module governed by neither fails CI instead of settling into whichever form its
+first author picked. When it fails, add the module to the matching list.
+
+Two details:
+
+* ``banned-from`` does not match submodules -- banning ``importlib`` still
+  permits ``from importlib.metadata import entry_points``. Govern the submodule
+  explicitly when it is used directly.
+* Aliased imports (``import xml.dom.minidom as md``) are an intentional escape
+  hatch and neither list matches them.
+
+Prefer fixing the code over adding a waiver: a local variable shadowing a
+module is a reason to rename the variable. The sole exception in the tree is
+``contextlib.AbstractContextManager``, a type in a base-class position inside
+an otherwise action-shaped module, carrying a ``# noqa: ICN003``.
 
 Documentation Style
 ^^^^^^^^^^^^^^^^^^^
@@ -325,10 +513,13 @@ Note the following:
   ``numpydoc``'s documentation where there are no empty lines between parameter
   docstrings.
 * This docstring also contains a returns section and an examples section.
-* The returns section does not include the parameter name if the function has
-  a single return value. Multiple return values (not shown) should have
-  descriptive parameter names for each returned value, in the same format as
-  the input parameters.
+* The returns section structure depends on the number of return values and types:
+    * for a single return value with a single return type, the parameter name
+      can be omitted (as shown above),
+    * for a single return value with multiple types (ie. ``str | int``), the parameter
+      must be specified (not shown),
+    * for multiple return values (not shown), descriptive parameter names for each returned value
+      must be specified in the same format as the input parameters.
 * The examples section references the "full example" in the gallery if it
   exists.
 
@@ -385,13 +576,13 @@ versions of backwards compatibility to give users the ability to update their
 software and scripts.
 
 Here's an example of a soft deprecation of a function. Note the usage of both
-the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
-directive.
+the ``PyVistaDeprecationWarning`` warning, the ``.. deprecated`` Sphinx
+directive and the ``warn_external`` helper function.
 
 .. code-block:: python
 
-    import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista._warn_external import warn_external  # available from 0.47
 
 
     def addition(a, b):
@@ -415,7 +606,7 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        warnings.warn(
+        warn_external(
             '`addition` has been deprecated. Use pyvista.add instead',
             PyVistaDeprecationWarning,
         )
@@ -500,31 +691,160 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install PyVista with all
-test dependencies:
-
-.. code-block:: bash
-
-   pip install -e . --group test
-
-Then, if you have everything installed, you can run the various test
-suites.
+To run our comprehensive suite of unit tests, please refer to the `Unit Testing`_
+section.
 
 Unit Testing
 ~~~~~~~~~~~~
-Run the primary test suite and generate coverage report:
+Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
+or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
+The top-level ``Makefile`` also wraps the most common invocations — see
+`Quick Development Commands`_.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pip install -e . --group=test # installing testing dependencies
+            pytest # alternatively: python -m pytest
+
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            pip install tox
+            tox run -e py3.11 # change to the python version targeted
+
+        .. admonition:: tox usage
+            :class: hint dropdown
+
+            When using ``tox``, specific test environments can be used to test against various
+            dependencies versions (mostly ``numpy`` and ``vtk``). The full list is available by running:
+
+            .. code-block:: bash
+
+                tox list
+
+            For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
+            on the main branch, simply run:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-vtk_dev
+
+            Note that several dependencies versions are already predefined in the ``tox.ini`` configuration
+            and can be specified with ``tox`` factors such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+
+            If you need to tests dependencies that are not predefined in the configuration, you can always override them such
+            that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.4.2 and numpy==2.0
+
+            By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
+            To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-core # run core tests (no need for graphics library)
+                tox run -e py3.11-plotting # run plotting tests (requires graphics library)
+                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+
+            To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
+            ``tox`` arguments from ``pytest`` ones such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11 -- -k "filters" # run all tests whose name match `filters`
+                tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
+
+            For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make sync-deps # install dev dependencies via uv
+            make test      # run the full test suite (equivalent to `tox -e test`)
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
 leverage multiple processes. Example usage:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -n <NUMCORE> --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest -n <NUMCORE>
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- -n <NUMCORE>
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="-n <NUMCORE>"
+
+Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
+such that:
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest --cov pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11-cov
+
+        .. note::
+
+            The ``-cov`` factor can be added to any existing environment to enable test coverage, such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make coverage # pytest -v --cov pyvista
+            make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
@@ -575,30 +895,93 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage (note t
     def test():
         """Test is skipped with a custom message"""
 
-VTK Dev Wheel Testing
-^^^^^^^^^^^^^^^^^^^^^
-Most unit testing is run with stable VTK releases. However, it is sometimes useful to
-run tests with the latest VTK dev wheels. To install these locally, run
+Testing Against VTK master
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Most unit testing is run against stable VTK releases. However, when developing features that depend on upstream VTK
+changes or when investigating regressions, it can be useful to test against the latest VTK development code.
+VTK publishes development wheels to the VTK wheels index, which are snapshots of recent development builds.
+To install them locally, run:
 
 .. code-block:: shell
 
     pip install vtk --upgrade --pre --extra-index-url https://wheels.vtk.org
 
-For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
-the VTK dev wheels. The tests only run when the label is applied.
+For pull requests, applying the ``vtk-dev-testing`` label enables an additional CI job that installs these development
+wheels and runs the unit test suite against them. Although these wheels are official VTK builds, they are only published
+periodically (typically once per week) and may not include the latest commits from the VTK repository. As a result,
+passing ``vtk-dev-testing`` does not guarantee compatibility with the current VTK master branch.
+
+To test against the very latest upstream VTK source, apply the ``vtk-master-testing`` label instead. This enables a CI
+job that clones the VTK repository, builds VTK directly from the current master branch, and runs the unit tests against
+that build. This provides the most up-to-date compatibility testing and is recommended when changes depend on recent VTK
+development.
+
+The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and may be applied separately or together.
 
 .. note::
 
     The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
 
+Garbage Collection Checks
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Tests are checked for reference leaks: no plotter or VTK object created by a test may
+outlive it. Every test under ``tests/plotting`` is covered by the autouse ``check_gc``
+fixture in ``tests/plotting/conftest.py``, and modules under ``tests/core`` opt in with
+``pytestmark = pytest.mark.check_gc``. A leaking test fails at teardown with a rendered
+chain of what still holds a reference; see the
+`refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
+
+The check freezes the heap rather than scanning it, so it costs no measurable time and
+every CI job runs it. ``--no_check_gc`` turns it off for a whole run, for local
+iteration where the report is in the way:
+
+.. code-block:: bash
+
+    tox run -e test-plotting-no_check_gc
+
+The cause of a leak is usually a reference cycle, and fixing it (e.g. with
+:mod:`weakref`) is preferred over silencing the check with either of these markers:
+
+.. code-block:: python
+
+    @pytest.mark.skip_check_gc
+    def test():
+        """Do not check this test for leaks.
+
+        Use sparingly, with a comment saying why the leak is not fixable here,
+        e.g. an upstream VTK issue or a module-level cache pinning the object.
+        """
+
+
+    @pytest.mark.expect_check_gc_fail
+    def test():
+        """This test is expected to leak; fail if it does *not*."""
+
+``expect_check_gc_fail`` outranks ``--no_check_gc``, so the tests that exercise the
+check itself (``tests/core/test_gc.py``, ``tests/plotting/test_gc.py``) cannot pass
+while nothing is running.
+
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --doctest-modules pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest -v --doctest-modules pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e doctest-modules
 
 .. note::
 
@@ -615,6 +998,10 @@ To ensure your code meets minimum code styling standards, run::
 
   pip install pre-commit
   pre-commit run --all-files
+
+Alternatively, the top-level ``Makefile`` wraps this invocation::
+
+  make lint
 
 If you have issues related to ``setuptools`` when installing ``pre-commit``, see
 `pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
@@ -676,29 +1063,82 @@ There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
 example:
 
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/plotting --reset_image_cache
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/plotting --reset_image_cache
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/plotting --reset_image_cache"
+
+Running ``--reset_image_cache`` regenerates the baseline of every test the
+run collected, including tests that were failing for reasons unrelated to
+your change. Reserve it for a deliberate regeneration of the whole cache at
+a major or minor release, and use the scoped flags below for everything
+else. ``--ignore_image_cache`` skips the comparison locally while you
+iterate; regression testing still runs in our CI.
+
+Two scoped flags cover day-to-day work. Give both of them a test node id so
+they cannot touch a baseline you did not mean to change:
+
 .. code-block:: bash
 
-       pytest tests/plotting --reset_image_cache
+    # a new test that has no baseline yet
+    make test-plotting ARGS="tests/plotting/test_plotting.py::test_new_render --add_missing_images"
 
-Running ``--reset_image_cache`` creates a new image for each test in
-``tests/plotting/test_plotting.py`` and is not recommended except for
-testing or for potentially a major or minor release. You can use
-``--ignore_image_cache`` if you’re running on Linux and want to
-temporarily ignore regression testing. Realize that regression testing
-will still occur on our CI testing.
+    # a render that legitimately changed: overwrite only the failed baselines
+    make test-plotting ARGS="tests/plotting/test_plotting.py::test_my_render --reset_only_failed"
 
-Images are currently only cached from tests in
-``tests/plotting/test_plotting.py``. By default, any test that uses
-``Plotter.show`` will cache images automatically. To skip image caching,
-the ``verify_image_cache`` fixture can be utilized:
+Arguments passed through ``ARGS`` replace the environment's whole-suite defaults
+rather than adding to them, so the node id above is the entire run and neither
+the ``tests/plotting`` collection root nor ``--disallow_unused_cache`` comes
+along with it. Plain ``pytest`` with the same arguments works too.
+
+Look at every image before committing it. ``failed_image_dir`` and
+``generated_image_dir`` are already configured in ``pyproject.toml``, so a
+failing run writes ``_failed_test_images/`` with no extra flag: the committed
+baseline under ``from_cache/`` and the new render under ``from_test/``. For a
+run with many failures, build the HTML report:
+
+.. code-block:: bash
+
+    tox run -e image-report -- _failed_test_images _image_report
+
+Since the baselines are the Linux CI renders, the most reliable way to accept
+a change is to download the ``failed_test_images-*`` artifact from the failing
+job and copy its ``from_test`` images over the cache, instead of re-rendering
+on your own hardware.
+
+Any test that requests the ``verify_image_cache`` fixture and calls
+``Plotter.show`` (or ``mesh.plot``) caches and compares an image. The
+comparison runs from a callback that ``show`` registers, so a test that builds
+a plotter and only calls ``close`` compares nothing while still passing. To
+skip image caching within a test, the ``verify_image_cache`` fixture can be
+utilized:
 
 .. code-block:: python
 
     def test_add_background_image_not_global(verify_image_cache):
         verify_image_cache.skip = True  # Turn off caching
-        plotter = pyvista.Plotter()
-        plotter.add_mesh(sphere)
-        plotter.show()
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.show()
         # Turn on caching for further plotting
         verify_image_cache.skip = False
         ...
@@ -722,9 +1162,29 @@ For example, the following writes all images generated by ``pytest`` to
 ``debug_images/`` for any tests in ``tests/plotting`` whose function name has
 ``volume`` in it.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/plotting/ -k volume --generated_image_dir debug_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/plotting/ -k volume --generated_image_dir debug_images"
 
 See `pytest-pyvista`_ for more details.
 
@@ -792,9 +1252,30 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-    pytest tests/core/typing
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/core/typing
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/core/typing
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/core/typing"
+
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
@@ -810,25 +1291,49 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Install documentation dependencies with:
+Documentation can be build either directly (i.e. using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
 
-.. code-block:: shell
+.. tab-set::
+    :sync-group: category
 
-   python -m pip install -e . --group docs
+    .. tab-item:: python
+        :sync: pytest
 
-Build the documentation on Linux or Mac OS with:
+        .. code-block:: bash
 
-.. code-block:: bash
+            python -m pip install -e . --group docs
 
-   make -C doc html
+        .. tab-set::
 
-Build the documentation on Windows with:
+            .. tab-item:: Mac OS / Linux
 
-.. code-block:: winbatch
+                .. code-block:: bash
 
-   cd doc
-   python -msphinx -M html source _build
-   python -msphinx -M html . _build
+                    make -C doc html
+
+            .. tab-item:: Windows
+
+                .. code-block:: bash
+
+                    cd doc
+                    python -msphinx -M html source _build
+                    python -msphinx -M html . _build
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e docs-build
+
+        .. note::
+            By default, the ``html`` builder of sphinx is specified when running the ``docs-build``
+            environment.
+            You can customize it as a separate positional argument such that:
+
+            .. code-block:: bash
+
+                tox run -e docs-build -- mini18n-html # for translated languages
 
 The generated documentation can be found in the ``doc/_build/html``
 directory.
@@ -886,18 +1391,33 @@ The regression testing compares these generated images to those stored in
 
     Doc Image Cache: ``./tests/doc/doc_image_cache``
 
-To test all the images, run ``pytest`` with:
+To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_static_images
+    .. tab-item:: pytest
+        :sync: pytest
 
-The tests must be executed explicitly with this command. The name of the test
-file is prefixed with ``tst``, and not ``test`` specifically to avoid being
-automatically executed by ``pytest`` (``pytest`` collects all tests prefixed
-with ``test`` by default.) This is done since the tests require building the
-documentation, and are not a primary form of testing.
+        .. code-block:: bash
 
+            pytest --doc_mode
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e docs-test
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make docs-test
+
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
 
 #. Collected from the ``Build Image Directory``.
@@ -915,7 +1435,7 @@ copies of the images are made as follows:
 #. If the comparison between the two images fails:
 
     - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
@@ -923,15 +1443,15 @@ copies of the images are made as follows:
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
 
-To resolve failed tests, any images in ``from_build`` or ``from_cache``
+To resolve failed tests, any images in ``from_test`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
 if adding new docstring examples or plots, the test will initially fail,
-and the images in ``from_build`` may be added to the ``Doc Image Cache``.
+and the images in ``from_test`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
@@ -980,9 +1500,33 @@ To ensure that the interactive plots do not unnecessarily inflate the size
 of the documentation build, a limit is placed on the size of ``.vtksz`` files.
 To test that interactive plots do not exceed this limit, run:
 
-.. code:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest --doc_mode
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e docs-test
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make docs-test
+
+
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
+with the limit being specified by ``max_vtksz_file_size`` in the ``pyproject.toml`` file.
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
@@ -1025,21 +1569,6 @@ modified, e.g.:
 
     See `Documentation Image Regression Testing`_. for testing performed on
     the static images generated by the plot directive.
-
-Controlling Cache for CI Documentation Build
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To reduce build times of the documentation for PRs, cached sphinx gallery, example data, and sphinx build directories
-are used in the CI on GitHub.  In some cases, the caching action can cause problems for a specific
-PR.  To invalidate a cache for a specific PR, one of the following labels can be applied to the PR.
-
-- ``no-example-data-cache``
-- ``no-gallery-cache``
-- ``no-sphinx-build-cache``
-
-The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
-rerun the CI with the labels applied.
-
 
 Contributing to the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1100,7 +1629,7 @@ For more details see :ref:`add_example_example`.
 Adding a New Dataset
 ^^^^^^^^^^^^^^^^^^^^
 If you have a dataset that you want to feature or want to include as part
-of a full gallery example, add it to `pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_
+of a full gallery example, add it to `pyvista/data <https://github.com/pyvista/data/>`_
 and follow the directions there. You will then need to add a new function to
 download the dataset in ``pyvista/examples/downloads.py``. This might be as easy as:
 
@@ -1170,91 +1699,15 @@ For example:
    ``See Also`` heading due to limitations with how ``numpydoc`` parses
    explicit references.
 
-Extending the Dataset Gallery
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If you have multiple related datasets to contribute, or would like to
-group any existing datasets together that share similar properties,
-the :ref:`dataset_gallery` can easily be extended to feature these
-datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
-
-For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
-featuring two datasets of musical instruments, e.g.
-
-#.  :func:`pyvista.examples.downloads.download_guitar`
-#.  :func:`pyvista.examples.downloads.download_trumpet`
-
-complete the following steps:
-
-#. Define a new carousel in ``doc/source/make_tables.py``, e.g.:
-
-    .. code-block:: python
-
-        class InstrumentCarousel(DatasetGalleryCarousel):
-            """Class to generate a carousel of instrument dataset cards."""
-
-            name = 'instrument_carousel'
-            doc = 'Instrument datasets.'
-            badge = CategoryBadge('Instrument', ref='instrument_gallery')
-
-            @classmethod
-            def fetch_dataset_names(cls):
-                return sorted(
-                    (
-                        'guitar',
-                        'trumpet',
-                    )
-                )
-
-   where
-
-   -  ``name`` is used internally to define the name of the generated
-      ``.rst`` file for the carousel.
-
-   -  ``doc`` is a short text description of the carousel which will
-      appear in the documentation in the header above the carousel.
-
-   -  ``badge`` is used to give all datasets in the carousel a reference
-      tag. The ``ref`` argument for the badge should be a new reference
-      target (details below).
-
-   -  ``fetch_dataset_names`` should return a list of any/all dataset names
-      to be included in the carousel. The dataset names should not include
-      any ``load_``, ``download_``, or ``dataset_`` prefix.
-
-#. Add the new carousel class to the ``CAROUSEL_LIST`` variable defined
-   in ``doc/source/make_tables.py``. This will enable the rst to be
-   auto-generated for the carousel.
-
-#. Update the ``doc/source/api/examples/dataset_gallery.rst`` file to
-   include the new generated ``<name>_carousel.rst`` file. E.g. to add the
-   carousel as a new drop-down item, add the following:
-
-   .. code-block:: rst
-
-      .. dropdown:: Instrument Datasets
-         :name: instrument_gallery
-
-         .. include:: /api/examples/dataset-gallery/instrument_carousel.rst
-
-   where:
-
-   -  The dropdown name ``:name: <reference>`` should be the badge's ``ref``
-      variable defined earlier. This will make it so that clicking on the new
-      badge will link to the new dropdown menu.
-
-   -  The name of the included ``.rst`` file should match the ``name``
-      variable defined in the new ``Carousel`` class.
-
-After building the documentation, the carousel should now be part
-of the gallery.
-
 Creating a New Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have tested your branch locally, create a pull request on
 `pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
 main. This will automatically run continuous integration (CI) testing
-and verify your changes will work across several platforms.
+and verify your changes will work across several platforms. See
+`Continuous Integration Etiquette`_ for what that run costs and how to
+keep it to one.
 
 To ensure someone else reviews your code, at least one other member of
 the pyvista contributors group must review and verify your code meets
@@ -1329,16 +1782,15 @@ created the following will occur:
 #.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-#.  Locally test and build the documentation with link checking to make
-    sure no links are outdated. Be sure to run ``make clean`` to ensure
-    no results are cached.
+#.  Locally test and build the documentation. Be sure to run ``make clean``
+    to ensure no results are cached.
 
     .. code-block:: bash
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest-modules
-       make html -b linkcheck
+       tox run -e doctest-modules
+       tox run -e docs-build
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -1461,7 +1913,7 @@ status check label regardless of if it is self hosted.
 
   macOS:
     name: ${{ matrix.job-name }}
-    needs: cache-vtk-data
+    needs: cache-pyvista-data
     strategy:
       fail-fast: false
       matrix:
@@ -1494,8 +1946,8 @@ applicable) to ensure the runner restarts should it be interrupted.
 PyVista Hosts and Runners
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Apple 2024 Mac mini M4
-^^^^^^^^^^^^^^^^^^^^^^
+Apple Silicon - 2024 Mac mini M4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - CPU: 10-core CPU ARM64 (Apple Silicon)
 - GPU: 10-core GPU
 - Storage: 256 GB SSD
@@ -1514,3 +1966,14 @@ Testing showed peak memory usage of ~2GB per runner for the
 ``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
 the OS, there's room to spare. Should we encounter memory issues we can disable
 runners.
+
+
+Linux Runners
+^^^^^^^^^^^^^
+PyVista uses a high availability Linux cluster running [k3s](https://k3s.io/) and deployed
+using [Ansible](https://docs.ansible.com/). See
+[pyvista/arc-runners](https://github.com/pyvista/arc-runners) for more details.
+
+GPU enabled runs should use the ``ubuntu-24.04-self-hosted-gpu`` labels. Runners
+using this label will receive a minimum of 2 CPUs and at maximum 8 CPUs along
+with access to either an NVIDIA Quadro P2000 or a NVIDIA T400 (4GB VRAM).

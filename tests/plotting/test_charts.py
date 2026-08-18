@@ -7,14 +7,12 @@ import weakref
 
 import numpy as np
 import pytest
-from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
-
-pytestmark = pytest.mark.skip_check_gc  # A large number of tests here fail gc
 
 
 def vtk_array_to_tuple(arr):
@@ -52,9 +50,9 @@ class PlotterChanged:
 
 @pytest.fixture
 def pl():
-    p = pv.Plotter(window_size=(600, 600))
-    p.background_color = 'w'
-    return p
+    pl = pv.Plotter(window_size=(600, 600))
+    pl.background_color = 'w'
+    return pl
 
 
 @pytest.fixture
@@ -158,7 +156,7 @@ def test_pen():
 def test_wrapping():
     width = 5
     # Test wrapping of VTK Pen object
-    pen = vtkPen()
+    pen = _vtk.vtkPen()
     wrappedPen = charts.Pen(_wrap=pen)
     assert wrappedPen.__this__ == pen.__this__
     assert wrappedPen.width == pen.GetWidth()
@@ -479,6 +477,12 @@ def test_chart_common(pl, chart_f, request):
     chart.legend_visible = False
     assert not chart.legend_visible
 
+    if isinstance(chart, pv.ChartMPL):
+        with pytest.raises(NotImplementedError, match='ChartMPL does not expose a VTK legend'):
+            _ = chart.legend
+    else:
+        assert chart.legend is chart.GetLegend()
+
 
 @pytest.mark.parametrize(
     'plot_f',
@@ -546,7 +550,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.color_scheme = cs
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]['id']
-    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
+    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors, strict=True))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
     ]
@@ -560,7 +564,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.colors = cs
     assert plot.color_scheme == cs
     plot.colors = colors
-    assert all(pc == c for pc, c in zip(plot.colors, colors))
+    assert all(pc == c for pc, c in zip(plot.colors, colors, strict=True))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
     ]
@@ -689,7 +693,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
     assert plot.orientation == ori
     assert plot.labels == l
 
@@ -734,7 +738,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
     assert plot.labels == l
 
     # Test single comp constructor
@@ -801,7 +805,11 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ['#fa09b6', '0xa53a8d', '#b02239f0', '0xcee6927f']
-    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ''])
+    colors = itertools.chain(
+        pv.plotting.colors._formatted_hex_colors,
+        pv.plotting.colors._formatted_color_synonyms,
+        [*hex_colors, ''],
+    )
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
@@ -1008,7 +1016,7 @@ def test_chart_mpl(pl):
     loc = (0.25, 0.25)
 
     # Test constructor
-    f, ax = plt.subplots()
+    f, _ax = plt.subplots()
     chart = pv.ChartMPL(f, size=size, loc=loc)
     assert chart.size == size
     assert chart.loc == loc
@@ -1128,12 +1136,6 @@ def test_iren_context_style(pl):
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.needs_vtk_version(
-    9,
-    3,
-    0,
-    reason='Chart interaction when using multiple renderers is bugged on older versions.',
-)
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts
     # in the bottom renderer.

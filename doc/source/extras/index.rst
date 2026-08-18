@@ -7,7 +7,7 @@ rich headless plotting on remote servers. You can also package
 PyVista using `pyinstaller`_ to be used within a standalone
 application.
 
-See the :ref:`developer_notes` section for details on contributing
+See the :ref:`contributing` section for details on contributing
 and how you can help develop PyVista.
 
 .. toctree::
@@ -15,11 +15,12 @@ and how you can help develop PyVista.
    building_vtk
    docker
    pyinstaller
-   developer_notes
    plot_directive
+   opengraph
    vtk_role
+   examples_as_code
    pytest_plugin
-   vtk_data
+   pyvista_data
    extending_pyvista
 
 .. _pyinstaller: https://www.pyinstaller.org/

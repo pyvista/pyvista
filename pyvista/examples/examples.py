@@ -13,12 +13,23 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+
+if TYPE_CHECKING:
+    from pyvista import ExplicitStructuredGrid
+    from pyvista import ImageData
+    from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
+    from pyvista import Texture
+    from pyvista import UnstructuredGrid
+    from pyvista import VectorLike
 
 # get location of this folder and the example files
 dir_path = str(Path(os.path.realpath(__file__)).parent)
@@ -36,7 +47,7 @@ nutfile = str(Path(dir_path) / 'nut.ply')
 frogtissuesfile = str(Path(dir_path) / 'frog_tissues.vti')
 
 
-def load_ant():
+def load_ant() -> PolyData:
     """Load ply ant mesh.
 
     Returns
@@ -59,10 +70,10 @@ def load_ant():
     return _dataset_ant.load()
 
 
-_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pv.PolyData)
 
 
-def load_airplane():
+def load_airplane() -> PolyData:
     """Load ply airplane mesh.
 
     Returns
@@ -85,10 +96,10 @@ def load_airplane():
     return _dataset_airplane.load()
 
 
-_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pv.PolyData)
 
 
-def load_sphere():
+def load_sphere() -> PolyData:
     """Load sphere ply mesh.
 
     Returns
@@ -111,10 +122,10 @@ def load_sphere():
     return _dataset_sphere.load()
 
 
-_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pv.PolyData)
 
 
-def load_uniform():
+def load_uniform() -> ImageData:
     """Load a sample uniform grid.
 
     Returns
@@ -137,10 +148,10 @@ def load_uniform():
     return _dataset_uniform.load()
 
 
-_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)  # type: ignore[arg-type]
+_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pv.ImageData)
 
 
-def load_rectilinear():
+def load_rectilinear() -> RectilinearGrid:
     """Load a sample uniform grid.
 
     Returns
@@ -165,11 +176,11 @@ def load_rectilinear():
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
     rectfile,
-    read_func=pyvista.RectilinearGrid,  # type: ignore[arg-type]
+    read_func=pv.RectilinearGrid,
 )
 
 
-def load_hexbeam():
+def load_hexbeam() -> UnstructuredGrid:
     """Load a sample UnstructuredGrid.
 
     Returns
@@ -194,11 +205,11 @@ def load_hexbeam():
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
     hexbeamfile,
-    read_func=pyvista.UnstructuredGrid,  # type: ignore[arg-type]
+    read_func=pv.UnstructuredGrid,
 )
 
 
-def load_tetbeam():
+def load_tetbeam() -> UnstructuredGrid:
     """Load a sample UnstructuredGrid containing only tetrahedral cells.
 
     Returns
@@ -218,7 +229,7 @@ def load_tetbeam():
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_tetbeam.load()
+    return _dataset_tetbeam.load()  # type:ignore[return-value]
 
 
 def _tetbeam_load_func():
@@ -226,14 +237,14 @@ def _tetbeam_load_func():
     xrng = np.linspace(0, 1, 3)
     yrng = np.linspace(0, 1, 3)
     zrng = np.linspace(0, 5, 11)
-    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    grid = pv.RectilinearGrid(xrng, yrng, zrng)
     return grid.to_tetrahedra()
 
 
 _dataset_tetbeam = _DatasetLoader(_tetbeam_load_func)
 
 
-def load_structured():
+def load_structured() -> StructuredGrid:
     """Load a simple StructuredGrid.
 
     Returns
@@ -253,7 +264,7 @@ def load_structured():
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_structured.load()
+    return _dataset_structured.load()  # type:ignore[return-value]
 
 
 def _structured_load_func():
@@ -262,13 +273,13 @@ def _structured_load_func():
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
-    return pyvista.StructuredGrid(x, y, z)
+    return pv.StructuredGrid(x, y, z)
 
 
 _dataset_structured = _DatasetLoader(_structured_load_func)
 
 
-def load_globe():
+def load_globe() -> PolyData:
     """Load a globe source.
 
     Returns
@@ -292,10 +303,10 @@ def load_globe():
     return _dataset_globe.load()
 
 
-_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pv.PolyData)
 
 
-def load_globe_texture():
+def load_globe_texture() -> Texture:
     """Load a pyvista.Texture that can be applied to the globe source.
 
     Returns
@@ -320,11 +331,11 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pyvista.read_texture,  # type: ignore[arg-type]
+    read_func=pv.read_texture,
 )
 
 
-def load_channels():
+def load_channels() -> ImageData:
     """Load a uniform grid of fluvial channels in the subsurface.
 
     Returns
@@ -350,7 +361,7 @@ def load_channels():
 _dataset_channels = _SingleFileDownloadableDatasetLoader(channelsfile)
 
 
-def load_spline():
+def load_spline() -> PolyData:
     """Load an example spline mesh.
 
     This example data was created with:
@@ -384,7 +395,7 @@ def load_spline():
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_spline.load()
+    return _dataset_spline.load()  # type:ignore[return-value]
 
 
 def _spline_load_func():
@@ -394,13 +405,13 @@ def _spline_load_func():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    return pyvista.Spline(points, 1000)
+    return pv.Spline(points, 1000)
 
 
 _dataset_spline = _DatasetLoader(_spline_load_func)
 
 
-def load_random_hills():
+def load_random_hills() -> PolyData:
     """Create random hills toy example.
 
     Uses the parametric random hill function to create hills oriented
@@ -430,18 +441,18 @@ def load_random_hills():
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_random_hills.load()
+    return _dataset_random_hills.load()  # type:ignore[return-value]
 
 
 def _random_hills_load_func():
-    mesh = pyvista.ParametricRandomHills()
+    mesh = pv.ParametricRandomHills()
     return mesh.elevation()
 
 
 _dataset_random_hills = _DatasetLoader(_random_hills_load_func)
 
 
-def load_sphere_vectors():
+def load_sphere_vectors() -> PolyData:
     """Create example sphere with a swirly vector field defined on nodes.
 
     Returns
@@ -470,11 +481,11 @@ def load_sphere_vectors():
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_sphere_vectors.load()
+    return _dataset_sphere_vectors.load()  # type:ignore[return-value]
 
 
-def _sphere_vectors_load_func() -> pyvista.PolyData:
-    sphere = pyvista.Sphere(radius=math.pi)
+def _sphere_vectors_load_func() -> PolyData:
+    sphere = pv.Sphere(radius=math.pi)
 
     # make cool swirly pattern
     vectors = np.vstack(
@@ -494,7 +505,9 @@ def _sphere_vectors_load_func() -> pyvista.PolyData:
 _dataset_sphere_vectors = _DatasetLoader(_sphere_vectors_load_func)
 
 
-def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
+def load_explicit_structured(
+    dimensions: VectorLike[int] = (5, 6, 7), spacing: VectorLike[float] = (20, 10, 1)
+) -> ExplicitStructuredGrid:
     """Load a simple explicit structured grid.
 
     Parameters
@@ -521,17 +534,19 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_explicit_structured.load(dimensions=dimensions, spacing=spacing)
+    return _dataset_explicit_structured.load(dimensions=dimensions, spacing=spacing)  # type:ignore[return-value]
 
 
-def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
+def _explicit_structured_load_func(
+    dimensions: VectorLike[int] = (5, 6, 7), spacing: VectorLike[float] = (20, 10, 1)
+):
     ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
-    xi = np.arange(0.0, (ni + 1) * si, si)
-    yi = np.arange(0.0, (nj + 1) * sj, sj)
-    zi = np.arange(0.0, (nk + 1) * sk, sk)
+    xi = np.arange(0.0, (ni + 1) * si, si)  # type:ignore[arg-type]
+    yi = np.arange(0.0, (nj + 1) * sj, sj)  # type:ignore[arg-type]
+    zi = np.arange(0.0, (nk + 1) * sk, sk)  # type:ignore[arg-type]
 
-    return pyvista.StructuredGrid(
+    return pv.StructuredGrid(
         *np.meshgrid(xi, yi, zi, indexing='ij')
     ).cast_to_explicit_structured_grid()
 
@@ -539,7 +554,7 @@ def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)
 
 
-def load_nut():
+def load_nut() -> PolyData:
     """Load an example nut mesh.
 
     Returns
@@ -567,7 +582,7 @@ def load_nut():
 _dataset_nut = _SingleFileDownloadableDatasetLoader(nutfile)
 
 
-def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
+def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 1.0) -> ImageData:  # noqa: PLR0917
     """Load the hydrogen wave function for a :class:`pyvista.ImageData`.
 
     This is the solution to the Schrödinger equation for hydrogen
@@ -626,16 +641,16 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _dataset_hydrogen_orbital.load(n=n, l=l, m=m, zoom_fac=zoom_fac)
+    return _dataset_hydrogen_orbital.load(n=n, l=l, m=m, zoom_fac=zoom_fac)  # type:ignore[return-value]
 
 
-def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
+def _hydrogen_orbital_load_func(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 1.0):  # noqa: PLR0917
     try:
-        from sympy import lambdify
-        from sympy.abc import phi
-        from sympy.abc import r
-        from sympy.abc import theta
-        from sympy.physics.hydrogen import Psi_nlm
+        from sympy import lambdify  # noqa: PLC0415
+        from sympy.abc import phi  # noqa: PLC0415
+        from sympy.abc import r  # noqa: PLC0415
+        from sympy.abc import theta  # noqa: PLC0415
+        from sympy.physics.hydrogen import Psi_nlm  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         msg = '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
         raise ImportError(msg) from None
@@ -658,13 +673,13 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
 
     dim = 100
     sp = (org * 2) / (dim - 1)
-    grid = pyvista.ImageData(
+    grid = pv.ImageData(
         dimensions=(dim, dim, dim),
         spacing=(sp, sp, sp),
         origin=(-org, -org, -org),
     )
 
-    r, theta, phi = pyvista.cartesian_to_spherical(grid.x, grid.y, grid.z)
+    r, theta, phi = pv.cartesian_to_spherical(grid.x, grid.y, grid.z)
     wfc = psi(r, phi, theta).reshape(grid.dimensions)
 
     grid['real_wf'] = np.real(wfc.ravel())
@@ -675,7 +690,7 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
 _dataset_hydrogen_orbital = _DatasetLoader(_hydrogen_orbital_load_func)
 
 
-def load_logo():
+def load_logo() -> ImageData:
     """Load the PyVista logo as a :class:`pyvista.ImageData`.
 
     .. note::
@@ -715,7 +730,7 @@ def load_logo():
 _dataset_logo = _SingleFileDownloadableDatasetLoader(logofile)
 
 
-def load_frog_tissues():
+def load_frog_tissues() -> ImageData:
     """Load frog tissues dataset.
 
     This dataset contains tissue segmentation labels for the frog dataset.
@@ -762,8 +777,8 @@ def load_frog_tissues():
 
     Make and show plot
 
-    >>> p = pv.Plotter()
-    >>> _ = p.add_volume(
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_volume(
     ...     data,
     ...     clim=clim,
     ...     ambient=ambient,
@@ -778,8 +793,8 @@ def load_frog_tissues():
     ...     cmap=cmap,
     ...     resolution=res,
     ... )
-    >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
-    >>> p.show()
+    >>> pl.camera_position = 'yx'  # Set camera to provide a dorsal view
+    >>> pl.show()
 
     .. seealso::
 
@@ -787,9 +802,6 @@ def load_frog_tissues():
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Frog Dataset <frog_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
     """
     return _dataset_frog_tissues.load()

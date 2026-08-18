@@ -4,14 +4,17 @@ memory leaks for all plotting tests
 
 from __future__ import annotations
 
-import gc
-import inspect
 import platform
 
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.plotting import system_supports_plotting
+from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
+from tests.gc_check import stash_phase_report
+from tests.gc_check import take_snapshot
 
 # these are set here because we only need them for plotting tests
 pv.OFF_SCREEN = True
@@ -33,11 +36,18 @@ def pytest_runtest_setup(item):
         pytest.skip('Test requires system to support plotting')
 
 
-def _is_vtk(obj):
-    try:
-        return obj.__class__.__name__.startswith('vtk')
-    except (ReferenceError, AttributeError):
-        return False
+@pytest.fixture(autouse=True)
+def _clean_trame_env(monkeypatch):
+    # Isolate trame/jupyter-hub env vars so tests don't inherit developer
+    # machine state (e.g. PYVISTA_TRAME_SERVER_PROXY_PREFIX set by a tailnet
+    # proxy). Tests that need these set should call monkeypatch.setenv.
+    for var in (
+        'PYVISTA_TRAME_SERVER_PROXY_PREFIX',
+        'JUPYTERHUB_SERVICE_PREFIX',
+        'TRAME_JUPYTER_WWW',
+        'PYVISTA_TRAME_JUPYTER_MODE',
+    ):
+        monkeypatch.delenv(var, raising=False)
 
 
 if APPLE_SILICON:
@@ -56,52 +66,43 @@ if APPLE_SILICON:
         del pool
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # noqa: ARG001
+    """Stash per-phase reports so check_gc can skip the leak check on failure."""
+    outcome = yield
+    stash_phase_report(item, outcome.get_result())
+
+
 @pytest.fixture(autouse=True)
 def check_gc(request):
-    """Ensure that all VTK objects are garbage-collected by Python."""
-    if request.node.get_closest_marker('skip_check_gc'):
+    """Snapshot live plotters and VTK objects so leaks from this test can be detected."""
+    if not check_enabled(request.node):
         yield
         return
-
-    gc.collect()
-    before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
-
+    # BasePlotter is not a vtkObjectBase, so both types are needed here
+    take_snapshot(
+        request.node,
+        (pv.plotting.plotter.BasePlotter, _vtk.vtkObjectBase),
+        'VTK/plotter',
+    )
     yield
 
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Close every plotter, and check that nothing the test created outlived it.
+
+    A hookwrapper so both run after every fixture finalizer has run (see ``check_gc``,
+    which takes the snapshot this checks against).
+    """
+    yield
+    # Unconditional, and before the check rather than from it: a test that leaves a
+    # plotter open leaves a render window open for every test after it, whether or not
+    # this run is checking for leaks.
     pv.close_all()
-
-    # Skip GC check if test failed
-    if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
-        return
-
-    gc.collect()
-    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
-    msg = 'Not all objects GCed:\n'
-    for obj in after:
-        cn = obj.__class__.__name__
-        cf = inspect.currentframe()
-        referrers = [v for v in gc.get_referrers(obj) if v is not after and v is not cf]
-        del cf
-        for ri, referrer in enumerate(referrers):
-            if isinstance(referrer, dict):
-                for k, v in referrer.items():
-                    if k is obj:
-                        referrers[ri] = 'dict: d key'
-                        del k, v
-                        break
-                    elif v is obj:
-                        referrers[ri] = f'dict: d[{k!r}]'
-                        del k, v
-                        break
-                    del k, v
-                else:
-                    referrers[ri] = f'dict: len={len(referrer)}'
-            else:
-                referrers[ri] = repr(referrer)
-            del ri, referrer
-        msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
-        del cn, referrers
-    assert len(after) == 0, msg
+    # flush_ghosts: plotter teardown leaves stale ghosts behind, so a leak that a ghost
+    # sweep clears is deferred bookkeeping rather than a real one (unlike tests/core)
+    assert_no_leaks(item, flush_ghosts=True)
 
 
 @pytest.fixture
@@ -132,6 +133,32 @@ def make_two_char_img(text):
     pl.background_color = 'k'
     pl.camera.zoom = 'tight'
     return pv.Texture(pl.screenshot()).to_image()
+
+
+def get_actor_mapper_input(actor):
+    """Return a detached deep copy of the mapper's current pipeline input.
+
+    The deep copy detaches the returned dataset from the live VTK
+    pipeline so ``check_gc`` teardown doesn't race with test assertions
+    that inspect its arrays.
+    """
+    actor.mapper.update()
+    return pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
+
+
+class AlgorithmExecutionTracker:
+    """Callable filter body that records whether it was invoked.
+
+    Used to assert that mapper configuration is lazy, i.e. does not
+    force the pipeline to run before ``show()`` or ``render()``.
+    """
+
+    def __init__(self) -> None:
+        self.executed = False
+
+    def __call__(self, mesh: pv.DataSet) -> pv.DataSet:
+        self.executed = True
+        return mesh
 
 
 @pytest.fixture

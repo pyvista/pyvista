@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import warnings
+
+from pyvista._warn_external import warn_external
 
 # Places to look for the utility
 _MODULES = [
@@ -64,9 +65,6 @@ def __getattr__(name):
         f'`{name}` is now imported as: `{import_path}`.'
     )
 
-    warnings.warn(
-        message,
-        PyVistaDeprecationWarning,
-    )
+    warn_external(message, PyVistaDeprecationWarning)
 
     return feature

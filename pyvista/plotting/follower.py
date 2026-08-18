@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import _vtk
+from pyvista import _vtk
+
 from .actor import Actor
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ class Follower(Actor, _vtk.vtkFollower):
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> plotter = pv.Plotter()
+    >>> pl = pv.Plotter()
 
     Create the "Hello" text that will follow the camera.
 
@@ -53,19 +54,19 @@ class Follower(Actor, _vtk.vtkFollower):
     >>> text_mapper = pv.DataSetMapper(text_mesh)
     >>> follower = pv.Follower(mapper=text_mapper)
     >>> follower.prop.color = 'gold'
-    >>> _ = plotter.add_actor(follower)
+    >>> _ = pl.add_actor(follower)
 
     Create a transparent cube that doesn't follow the camera.
 
     >>> cube = pv.Cube()
-    >>> cube_actor = plotter.add_mesh(
+    >>> cube_actor = pl.add_mesh(
     ...     cube, color='MidnightBlue', opacity=0.3, show_edges=False
     ... )
 
     Set the follower's camera and show the scene.
 
-    >>> follower.camera = plotter.camera
-    >>> plotter.show()
+    >>> follower.camera = pl.camera
+    >>> pl.show()
 
     """
 

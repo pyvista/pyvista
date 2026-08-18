@@ -16,7 +16,7 @@ A user-defined Foo class is defined that extends the functionality of
 ...     pass  # Extend PolyData here
 >>> pv._wrappers['vtkPolyData'] = Foo
 >>> image = pv.ImageData()
->>> surface = image.extract_surface()
+>>> surface = image.extract_surface(algorithm=None)
 >>> assert isinstance(surface, Foo)
 >>> pv._wrappers = default_wrappers  # reset back to default
 
@@ -26,7 +26,8 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from . import _vtk_core as _vtk
+from pyvista import _vtk
+
 from .composite import MultiBlock
 from .grid import ImageData
 from .grid import RectilinearGrid

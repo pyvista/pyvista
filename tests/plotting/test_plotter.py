@@ -7,29 +7,38 @@ All other tests requiring rendering should to in
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
+import sys
+import threading
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import MissingDataError
-from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
+import pyvista.plotting.tools as tools_mod
+from pyvista.plotting.tools import supports_open_gl
+from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
 
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(AttributeError, match='not yet been set up'):
-        _ = plotter.image
+        _ = pl.image
 
 
 def test_has_render_window_fail():
@@ -49,26 +58,130 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
     assert actor.prop.render_lines_as_tubes
 
 
+@pytest.mark.parametrize('static', [False, True])
+@pytest.mark.parametrize('style', ['surface', 'points_gaussian'])
+def test_plotter_add_mesh_static(sphere, static, style):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, style=style, static=static, render=False)
+    assert actor.mapper.static == static
+
+
+@pytest.mark.parametrize('style', ['surface', 'points_gaussian'])
+def test_plotter_add_mesh_static_initializes_scalars(sphere, style):
+    scalars = sphere.points[:, 2]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars=scalars, style=style, static=True, render=False)
+
+    mapper_input = pv.wrap(actor.mapper.GetInputDataObject(0, 0))
+    assert mapper_input.n_points == sphere.n_points
+    if style == 'points_gaussian':
+        assert mapper_input.active_scalars.shape == (sphere.n_points, 4)
+    else:
+        assert np.array_equal(mapper_input.active_scalars, scalars)
+
+
+def test_plotter_add_mesh_static_dataset_swap(sphere):
+    replacement = sphere.copy(deep=False)
+    replacement.points = replacement.points + np.array([1, 0, 0])
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, static=True, render=False)
+    actor.mapper.dataset = replacement
+
+    assert actor.mapper.static
+    assert actor.mapper.dataset is replacement
+    assert actor.mapper.GetInputDataObject(0, 0) is replacement
+
+
+def test_plotter_add_mesh_static_dataset_swap_with_scalars(sphere):
+    sphere['values'] = sphere.points[:, 2]
+    replacement = sphere.copy(deep=False)
+    replacement.points = replacement.points + np.array([1, 0, 0])
+    replacement['values'] = replacement.points[:, 2]
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='values', static=True, render=False)
+    actor.mapper.dataset = replacement
+
+    mapper_input = pv.wrap(actor.mapper.GetInputDataObject(0, 0))
+    assert actor.mapper.static
+    assert mapper_input.n_points == replacement.n_points
+    assert np.array_equal(mapper_input.points, replacement.points)
+    assert np.array_equal(mapper_input.active_scalars, replacement['values'])
+
+
+def test_plotter_add_mesh_static_silhouette_remains_dynamic(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, color='white', static=True, silhouette=True, render=False)
+
+    assert actor.mapper.static
+    static_states = sorted(item.mapper.static for item in pl.renderer.actors.values())
+    assert static_states == [False, True]
+
+
+def test_plotter_add_mesh_static_show_vertices(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, color='white', static=True, show_vertices=True, render=False)
+
+    assert actor.mapper.static
+    assert all(item.mapper.static for item in pl.renderer.actors.values())
+
+
+@pytest.mark.parametrize('static', [False, True])
+def test_plotter_add_composite_static(static):
+    pl = pv.Plotter()
+    actor, mapper = pl.add_composite(
+        pv.MultiBlock([pv.Cube(), pv.Sphere()]),
+        static=static,
+        render=False,
+    )
+    assert actor.mapper is mapper
+    assert mapper.static == static
+
+
+def test_plotter_add_mesh_multiblock_static():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.MultiBlock([pv.Cube(), pv.Sphere()]), static=True, render=False)
+    assert actor.mapper.static
+
+
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_screenshot_fail_suppressed_rendering():
-    plotter = pv.Plotter()
-    plotter.suppress_rendering = True
+    pl = pv.Plotter()
+    pl.suppress_rendering = True
     with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
-        plotter.show(screenshot='tmp.png')
+        pl.show(screenshot='tmp.png')
 
 
 def test_plotter_theme_raises():
     with pytest.raises(
         TypeError,
-        match=re.escape('Expected ``pyvista.plotting.themes.Theme`` for ``theme``, not int.'),
+        match=re.escape(
+            'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not int',
+        ),
     ):
         pv.Plotter(theme=1)
 
-    pl = pv.Plotter()
-    match = re.escape('Expected a pyvista theme like ``pyvista.plotting.themes.Theme``, not int.')
+    with pytest.raises(ValueError, match='Theme "not-a-real-theme" not found'):
+        pv.Plotter(theme='not-a-real-theme')
 
-    with pytest.raises(TypeError, match=match):
-        pl.theme = 1
+    pl = pv.Plotter()
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'Assigning a theme for a plotter instance is deprecated',
+    ):
+        pl.theme = pv.themes.DarkTheme()
+
+
+@pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
+def test_plotter_theme_by_name(theme):
+    pl = pv.Plotter(theme=theme.name)
+    assert pl.theme == theme.value()
+
+
+def test_plotter_theme_by_dotted_path():
+    pl = pv.Plotter(theme='pyvista.plotting.themes:DarkTheme')
+    assert pl.theme == pv.themes.DarkTheme()
 
 
 def test_plotter_anti_aliasing_raises():
@@ -76,7 +189,7 @@ def test_plotter_anti_aliasing_raises():
     pl.close()
     with pytest.raises(
         AttributeError,
-        match='The render window has been closed.',
+        match=r'The render window has been closed.',
     ):
         pl.enable_anti_aliasing(aa_type='msaa')
 
@@ -92,13 +205,13 @@ def test_plotter_store_mouse_position_raises():
     pl.iren = None
     with pytest.raises(
         RuntimeError,
-        match='This plotting window is not interactive.',
+        match=r'This plotting window is not interactive.',
     ):
         pl.store_mouse_position()
 
     with pytest.raises(
         RuntimeError,
-        match='This plotting window is not interactive.',
+        match=r'This plotting window is not interactive.',
     ):
         pl.store_click_position()
 
@@ -107,30 +220,14 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.MultiBlock(), 'foo'
+    m.return_value = pv.MultiBlock(), {}
 
     pl = pv.Plotter()
     match = re.escape(
         'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
     )
     with pytest.raises(TypeError, match=match):
-        pl.add_mesh('foo')
-
-
-def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
-
-    m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), 'foo'
-
-    pl = pv.Plotter()
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
-        ),
-    ):
-        pl.add_mesh('foo', smooth_shading=True)
+        pl.add_mesh({})
 
 
 def test_plotter_add_mesh_scalars_rgb_raises():
@@ -154,7 +251,7 @@ def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
         pl.add_mesh(pv.Sphere(), texture='foo')
 
     m = mocker.patch.object(plotter, 'numpy_to_texture')
-    m.return_value = vtk.vtkTexture()
+    m.return_value = _vtk.vtkTexture()
     with pytest.raises(
         ValueError,
         match=re.escape('Input mesh does not have texture coordinates to support the texture.'),
@@ -249,7 +346,7 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), vtk.vtkAlgorithm()
+    m.return_value = pv.PolyData(), _vtk.vtkAlgorithm()
 
     pl = pv.Plotter()
     match = re.escape(
@@ -303,7 +400,7 @@ def test_add_volume_scalar_raises(mocker: MockerFixture):
     pl = pv.Plotter()
     with pytest.raises(
         TypeError,
-        match='Non-numeric scalars are currently not supported for volume rendering.',
+        match=r'Non-numeric scalars are currently not supported for volume rendering.',
     ):
         pl.add_volume(pv.ImageData(), scalars='foo')
 
@@ -327,7 +424,7 @@ def test_update_scalar_bar_range_raises():
     with pytest.raises(TypeError, match=match):
         pl.update_scalar_bar_range(clim=[1, 2, 3])
 
-    with pytest.raises(AttributeError, match='This plotter does not have an active mapper.'):
+    with pytest.raises(AttributeError, match=r'This plotter does not have an active mapper.'):
         pl.update_scalar_bar_range(clim=[1, 2], name=None)
 
 
@@ -336,7 +433,7 @@ def test_save_graphic_raises():
     pl.close()
 
     with pytest.raises(
-        AttributeError, match='This plotter is closed and unable to save a screenshot.'
+        AttributeError, match=r'This plotter is closed and unable to save a screenshot.'
     ):
         pl.save_graphic(filename='foo.svg')
 
@@ -385,53 +482,53 @@ def test_plotter_line_point_smoothing():
 
 
 def test_enable_hidden_line_removal():
-    plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(all_renderers=False)
-    assert plotter.renderers[0].GetUseHiddenLineRemoval()
-    assert not plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl = pv.Plotter(shape=(1, 2))
+    pl.enable_hidden_line_removal(all_renderers=False)
+    assert pl.renderers[0].GetUseHiddenLineRemoval()
+    assert not pl.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.enable_hidden_line_removal(all_renderers=True)
-    assert plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl.enable_hidden_line_removal(all_renderers=True)
+    assert pl.renderers[1].GetUseHiddenLineRemoval()
 
 
 def test_disable_hidden_line_removal():
-    plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(all_renderers=True)
+    pl = pv.Plotter(shape=(1, 2))
+    pl.enable_hidden_line_removal(all_renderers=True)
 
-    plotter.disable_hidden_line_removal(all_renderers=False)
-    assert not plotter.renderers[0].GetUseHiddenLineRemoval()
-    assert plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl.disable_hidden_line_removal(all_renderers=False)
+    assert not pl.renderers[0].GetUseHiddenLineRemoval()
+    assert pl.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.disable_hidden_line_removal(all_renderers=True)
-    assert not plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl.disable_hidden_line_removal(all_renderers=True)
+    assert not pl.renderers[1].GetUseHiddenLineRemoval()
 
 
 def test_pickable_actors():
-    plotter = pv.Plotter()
-    sphere = plotter.add_mesh(pv.Sphere(), pickable=True)
-    cube = plotter.add_mesh(pv.Cube(), pickable=False)
+    pl = pv.Plotter()
+    sphere = pl.add_mesh(pv.Sphere(), pickable=True)
+    cube = pl.add_mesh(pv.Cube(), pickable=False)
 
-    pickable = plotter.pickable_actors
+    pickable = pl.pickable_actors
     assert sphere in pickable
     assert cube not in pickable
 
-    plotter.pickable_actors = cube
-    pickable = plotter.pickable_actors
+    pl.pickable_actors = cube
+    pickable = pl.pickable_actors
     assert sphere not in pickable
     assert cube in pickable
 
-    plotter.pickable_actors = [sphere, cube]
-    pickable = plotter.pickable_actors
+    pl.pickable_actors = [sphere, cube]
+    pickable = pl.pickable_actors
     assert sphere in pickable
     assert cube in pickable
 
-    plotter.pickable_actors = None
-    pickable = plotter.pickable_actors
+    pl.pickable_actors = None
+    pickable = pl.pickable_actors
     assert sphere not in pickable
     assert cube not in pickable
 
     with pytest.raises(TypeError, match='Expected a vtkActor instance or '):
-        plotter.pickable_actors = [0, 10]
+        pl.pickable_actors = [0, 10]
 
 
 def test_plotter_image_scale():
@@ -442,60 +539,6 @@ def test_plotter_image_scale():
 
     pl.image_scale = 2
     assert pl.image_scale == 2
-
-
-def test_prepare_smooth_shading_texture(globe):
-    """Test edge cases for smooth shading"""
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        mesh=globe,
-        scalars=None,
-        texture=True,
-        split_sharp_edges=True,
-        feature_angle=False,
-        preference=None,
-    )
-    assert scalars is None
-    assert 'Normals' in mesh.point_data
-    assert 'Texture Coordinates' in mesh.point_data
-
-
-def test_prepare_smooth_shading_not_poly(hexbeam):
-    """Test edge cases for smooth shading"""
-    scalars_name = 'sample_point_scalars'
-    scalars = hexbeam.point_data[scalars_name]
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        mesh=hexbeam,
-        scalars=scalars,
-        texture=False,
-        split_sharp_edges=True,
-        feature_angle=True,
-        preference=None,
-    )
-
-    assert 'Normals' in mesh.point_data
-
-    expected_mesh = hexbeam.extract_surface().compute_normals(
-        cell_normals=False,
-        split_vertices=True,
-    )
-
-    assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
-
-
-@pytest.mark.parametrize('split_sharp_edges', [True, False])
-def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
-    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
-    assert point_cloud.n_verts == point_cloud.n_cells
-    mesh, scalars = _plotting.prepare_smooth_shading(
-        mesh=point_cloud,
-        scalars=None,
-        texture=True,
-        split_sharp_edges=split_sharp_edges,
-        feature_angle=False,
-        preference=None,
-    )
-    assert scalars is None
-    assert 'Normals' not in mesh.point_data
 
 
 def test_smooth_shading_shallow_copy(sphere):
@@ -584,8 +627,8 @@ def test_plotter_remains_shallow():
     assert np.array_equal(sphere['numbers'], sphere2['numbers'])
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere, scalars=None)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=None)
 
     sphere[
         'numbers'
@@ -605,6 +648,20 @@ def test_add_multiple(sphere):
     pl.add_mesh(sphere, scalars='data', copy_mesh=True)
     pl.show()
     assert sphere.n_arrays == 1
+
+
+@pytest.mark.parametrize('input_type', [str, Path])
+def test_add_mesh_from_file(input_type):
+    file = input_type(pv.examples.antfile)
+    pl1 = pv.Plotter()
+    pl1.add_mesh(file)
+    screenshot1 = pl1.screenshot(return_img=True)
+
+    pl2 = pv.Plotter()
+    pl2.add_mesh(pv.read(file))
+    screenshot2 = pl2.screenshot(return_img=True)
+
+    assert pv.compare_images(screenshot1, screenshot2) < 1.0
 
 
 def test_deep_clean(cube):
@@ -754,9 +811,77 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_plotter_meshes_mapper_without_dataset_input():
+    mapper = _vtk.vtkPolyDataMapper()
+    assert mapper.GetInput() is None
+
+    actor = _vtk.vtkActor()
+    actor.SetMapper(mapper)
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(actor)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_actor_without_mapper():
+    prop = _vtk.vtkPropAssembly()
+    assert not hasattr(prop, 'GetMapper')
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(prop)
+
+    result = pl.meshes
+    assert result == []
+
+
+def test_plotter_meshes_from_assembly():
+    assembly = pv.AxesAssembly()
+    n_3d_actors = 6
+    n_2d_actors = 3
+    assert len(assembly.parts) == n_2d_actors + n_3d_actors
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(assembly)
+
+    result = pl.meshes
+    assert len(result) == n_3d_actors
+
+    # Ensure all actors with meshes are included in result
+    for part in assembly.parts:
+        if isinstance(part, pv.DataObject):
+            assert part in result
+        else:
+            assert part not in result
+
+
+def test_plotter_meshes_from_nested_assembly():
+    assembly = pv.AxesAssembly()
+    subassembly = pv.AxesAssembly()
+    assembly.AddPart(subassembly)
+    n_3d_actors = 6
+    n_2d_actors = 3
+    n_nested = 1
+    assert len(assembly.parts) == n_2d_actors + n_3d_actors + n_nested
+
+    pl = pv.Plotter()
+    pl.renderer.AddActor(assembly)
+
+    result = pl.meshes
+    assert len(result) == n_3d_actors * 2
+
+    # Ensure all actors with meshes are included in result
+    for part in [*assembly.parts, *subassembly.parts]:
+        if isinstance(part, pv.DataObject):
+            assert part in result
+        else:
+            assert part not in result
+
+
 def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     data = {
         'sphere1': pv.Sphere(center=(1, 0, 0)),
         'sphere2': pv.Sphere(center=(2, 0, 0)),
@@ -764,7 +889,7 @@ def test_multi_block_color_cycler():
         'sphere4': pv.Sphere(center=(4, 0, 0)),
     }
     spheres = pv.MultiBlock(data)
-    actor, mapper = plotter.add_composite(spheres)
+    _actor, mapper = pl.add_composite(spheres)
 
     # pass custom cycler
     mapper.set_unique_colors(['red', 'green', 'blue'])
@@ -840,20 +965,19 @@ def test_only_screenshots_flag(sphere, tmpdir):
 
 
 def test_legend_font(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
-    legend = plotter.add_legend(
+    legend = pl.add_legend(
         labels=legend_labels,
         border=True,
         bcolor=None,
         size=[0.1, 0.1],
         font_family='times',
     )
-    assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
+    assert legend.GetEntryTextProperty().GetFontFamily() == _vtk.VTK_TIMES
 
 
-@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter()
@@ -862,13 +986,13 @@ def test_edge_opacity(sphere):
 
 
 def test_add_ruler_scale():
-    plotter = pv.Plotter()
-    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
     min_, max_ = ruler.GetRange()
     assert min_ == 0.0
     assert max_ == 0.6
 
-    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
+    ruler = pl.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
     min_, max_ = ruler.GetRange()
     assert min_ == 0.6
     assert max_ == 0.0
@@ -886,14 +1010,116 @@ def test_plotter_shape():
     assert isinstance(pl.shape[0], int)
 
 
-@pytest.mark.parametrize(
-    'filename_mtl',
-    [
-        None,
-        Path(pv.examples.download_doorman(load=False)).with_suffix('.mtl'),
-    ],
-)
-def test_import_obj_with_filename_mtl(filename_mtl):
+def test_import_obj_with_filename_mtl():
     filename = Path(pv.examples.download_doorman(load=False))
-    plotter = pv.Plotter()
-    plotter.import_obj(filename, filename_mtl=filename_mtl)
+
+    # test with and without setting filename_mtl
+    pl = pv.Plotter()
+    pl.import_obj(filename, filename_mtl=None)
+    assert pl.actors
+
+    pl = pv.Plotter()
+    pl.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
+    assert pl.actors
+
+
+def test_off_screen_background_thread_rendering():
+    """Off-screen plotters must work on background threads.
+
+    On macOS, vtkCocoaRenderWindow creates an NSWindow by default which
+    requires the main thread. `SetConnectContextToNSView(False)` creates
+    a standalone CGL context instead. On Linux (EGL), background thread
+    rendering works out of the box.
+    """
+    errors = []
+
+    def render_on_thread():
+        try:
+            pl = pv.Plotter(off_screen=True, window_size=(200, 200))
+            pl.add_mesh(pv.Sphere(), color='red')
+            img = pl.screenshot()
+            assert img is not None
+            assert img.shape[0] > 0
+            pl.close()
+        except Exception as e:  # noqa: BLE001
+            errors.append(e)
+
+    t = threading.Thread(target=render_on_thread)
+    t.start()
+    t.join(timeout=10)
+
+    assert not errors, f'Background thread rendering failed: {errors[0]}'
+
+
+def test_supports_open_gl():
+    assert supports_open_gl()
+
+
+def _make_fake_render_window():
+    """MagicMock whose Get/Set for NSView context stay in sync."""
+    fake = MagicMock()
+    fake.GetConnectContextToNSView.return_value = True  # VTK's real default
+
+    def _set_connect(value):
+        fake.GetConnectContextToNSView.return_value = value
+
+    fake.SetConnectContextToNSView.side_effect = _set_connect
+    return fake
+
+
+def _invoke_check_depth_peeling():
+    fake_render_window = _make_fake_render_window()
+    with patch(
+        'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
+        return_value=fake_render_window,
+    ):
+        check_depth_peeling()
+    return fake_render_window
+
+
+def _invoke_supports_open_gl():
+    fake_render_window = _make_fake_render_window()
+    tools_mod.SUPPORTS_OPENGL = None  # bypass the module-level cache
+    with patch(
+        'pyvista.plotting.tools._vtk.vtkRenderWindow',
+        return_value=fake_render_window,
+    ):
+        supports_open_gl()
+    return fake_render_window
+
+
+def _invoke_plotter_offscreen():
+    pl = pv.Plotter(off_screen=True)
+    ren_win = pl.ren_win
+    pl.close()
+    return ren_win
+
+
+@dataclass
+class _MacOSFixCase:
+    id: str
+    invoke: Callable[[], MagicMock]
+
+
+# Test cases for functions that create off-screen render windows.
+# These functions all call `_prepare_offscreen_macos_render_window` internally.
+# NOTE: report.py has a script that creates an off-screen renderer but is not covered here
+_MACOS_FIX_CASES = [
+    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling),
+    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl),
+    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen),
+]
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+@pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
+def test_macos_offscreen_render_window_configured(case):
+    """Test no macOS phantom window is generated for off-screen plotting."""
+    appkit_mock = MagicMock()
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        render_window = case.invoke()
+
+    assert render_window.GetConnectContextToNSView() is False
+    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
+        appkit_mock.NSApplicationActivationPolicyProhibited,
+    )

@@ -8,8 +8,6 @@ This example demonstrates how to measure distance between two points.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 cube = pv.Cube()
@@ -20,7 +18,7 @@ pl.add_mesh(cube)
 pl.add_mesh(cube2)
 
 
-def callback(a, b, distance):  # noqa: ARG001
+def callback(a, b, distance):
     pl.add_text(f'Distance: {distance:.2f}', name='dist')
 
 
