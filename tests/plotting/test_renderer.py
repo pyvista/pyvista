@@ -326,30 +326,75 @@ def test_interior_border_preserves_full_border_on_explicit_single():
         pl.close()
 
 
+def test_border_exterior_same_as_true_for_single_subplot():
+    """``border='exterior'`` and ``border=True`` are equivalent on a single subplot.
+
+    There's no distinction between "the outer frame" and "everything"
+    when there are no neighboring subplots to draw interior seams
+    between.
+    """
+    pl_true = pv.Plotter(border=True)
+    pl_exterior = pv.Plotter(border='exterior')
+    try:
+        lines_true = pl_true.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines()
+        lines_exterior = (
+            pl_exterior.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines()
+        )
+        assert lines_true == lines_exterior == 4
+    finally:
+        pl_true.close()
+        pl_exterior.close()
+
+
+def test_border_interior_has_no_effect_for_single_subplot():
+    """``border='interior'`` draws nothing on a single subplot.
+
+    Unlike ``'exterior'`` (equivalent to ``True`` with no neighbors),
+    ``'interior'`` asks only for lines between subplots -- there are
+    none to draw when there's just the one.
+    """
+    pl = pv.Plotter(border='interior')
+    try:
+        assert not pl.renderer.has_border
+        assert pl.renderers.border_overlay_renderer is None
+    finally:
+        pl.close()
+
+
 @pytest.mark.parametrize(
-    ('border', 'subplot_seams', 'expected_lines'),
+    ('border', 'expected_lines'),
     [
-        (None, None, 2),  # defaults: no outer frame, interior seams only
-        (False, None, 2),  # same as above, spelled out explicitly
-        (True, None, 6),  # outer frame (4) + interior seams (2)
-        (True, False, 4),  # outer frame only
-        (False, True, 2),  # interior seams only, spelled out explicitly
-        (False, False, 0),  # nothing at all
+        (None, 2),  # default: interior seams only
+        (False, 0),  # nothing at all
+        (True, 6),  # outer frame (4) + interior seams (2)
+        ('interior', 2),  # interior seams only, same as the default
+        ('exterior', 4),  # outer frame only
+        (np.bool_(True), 6),  # a numpy bool is not `True` by identity, only by value
+        (np.bool_(False), 0),
     ],
 )
-def test_border_and_subplot_seams_are_independent(border, subplot_seams, expected_lines):
-    """``border`` (outer frame) and ``subplot_seams`` (interior lines) are orthogonal.
+def test_border_literal_modes(border, expected_lines):
+    """Each of ``border``'s bool and string-literal values draws exactly what it promises.
 
-    Neither flag depends on the other for a 2x2 grid: every one of the
-    four combinations (plus the all-``None`` defaults) should draw
-    exactly the union of what each flag independently requests.
+    For a 2x2 grid, ``None``/``'interior'`` draw the 2 interior seams,
+    ``'exterior'`` draws the 4-segment outer frame, ``True`` draws
+    both (6 total), and ``False`` draws nothing. A `numpy.bool_` (e.g.
+    the result of a numpy comparison, common in this numpy-heavy
+    codebase) must resolve the same as the equivalent Python `bool`,
+    even though ``numpy.bool_(True) is True`` is ``False``.
     """
-    pl = pv.Plotter(shape=(2, 2), border=border, subplot_seams=subplot_seams)
+    pl = pv.Plotter(shape=(2, 2), border=border)
     try:
         assert _per_renderer_has_border(pl) == [False] * 4
         assert _overlay_seam_count(pl) == expected_lines
     finally:
         pl.close()
+
+
+def test_border_invalid_value_raises():
+    """An unrecognized ``border`` value raises, rather than silently drawing nothing."""
+    with pytest.raises(ValueError, match='interior'):
+        pv.Plotter(shape=(2, 2), border='sideways')
 
 
 def test_drop_border_actor_removes_both_primary_and_secondary_actor():
@@ -362,7 +407,7 @@ def test_drop_border_actor_removes_both_primary_and_secondary_actor():
     other renderer ever has one, so exercising this on the overlay is
     the only way to cover the branch that removes it.
     """
-    pl = pv.Plotter(shape=(2, 2), border=True)  # subplot_seams defaults True too
+    pl = pv.Plotter(shape=(2, 2), border=True)  # both interior and exterior
     try:
         overlay = pl.renderers.border_overlay_renderer
         assert overlay is not None
@@ -377,30 +422,30 @@ def test_drop_border_actor_removes_both_primary_and_secondary_actor():
         pl.close()
 
 
-def test_subplot_seams_default_is_shape_dependent():
-    """``subplot_seams`` defaults to ``shape != (1, 1)``, mirroring the old ``border`` default."""
-    pl_single = pv.Plotter()
-    pl_multi = pv.Plotter(shape=(1, 2))
-    try:
-        assert pl_single.renderers.border_overlay_renderer is None
-        assert pl_multi.renderers.border_overlay_renderer is not None
-    finally:
-        pl_single.close()
-        pl_multi.close()
+@pytest.mark.parametrize(
+    ('shape', 'expects_overlay'),
+    [
+        ((1, 1), False),
+        ([1, 1], False),
+        (np.array([1, 1]), False),
+        ((2, 2), True),
+        (np.array([2, 2]), True),
+        ('3|1', True),
+    ],
+)
+def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
+    """``border``'s default resolution doesn't choke on a list/array ``shape``.
 
-
-def test_border_default_is_always_false_regardless_of_shape():
-    """Unlike the old implicit default, ``border`` defaults to ``False`` for every shape."""
-    pl_single = pv.Plotter()
-    pl_multi = pv.Plotter(shape=(2, 2))
+    Regression test: comparing ``shape`` to ``(1, 1)`` with ``==``
+    raises "truth value of an array is ambiguous" for a numpy-array
+    ``shape``, since ``==`` compares elementwise there instead of
+    testing equality as a whole.
+    """
+    pl = pv.Plotter(shape=shape)
     try:
-        assert not pl_single.renderer.has_border
-        # Multi-subplot: nothing but the (default-on) interior seams, i.e. no
-        # exterior segments were folded into the overlay.
-        assert _overlay_seam_count(pl_multi) == 2
+        assert (pl.renderers.border_overlay_renderer is not None) is expects_overlay
     finally:
-        pl_single.close()
-        pl_multi.close()
+        pl.close()
 
 
 def test_bad_legend_origin_and_size(sphere):

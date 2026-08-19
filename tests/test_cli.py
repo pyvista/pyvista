@@ -1229,6 +1229,7 @@ def test_compare_cli_synced(missing_compare_arguments: set[str]):
     from pyvista import PartitionedDataSet  # noqa: F401
     from pyvista import Plotter  # noqa: F401
     from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
+    from pyvista.plotting._typing import BorderOptions  # noqa: F401
     from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
     from pyvista.plotting._typing import ColorLike  # noqa: F401
     from pyvista.plotting._typing import PlottableType  # noqa: F401
@@ -1261,6 +1262,10 @@ def test_compare_cli_synced(missing_compare_arguments: set[str]):
         'theme',  # The CLI takes a theme by name only, not a `Theme` instance
         'shape',  # The CLI takes a string it parses itself, not a sequence or descriptor
         'labels',  # The CLI takes a concrete `list`, one token per label, not any sequence
+        # cyclopts can't parse a Union of a bool and a Literal[str, ...] -- "Cannot Union
+        # types that consume different numbers of tokens" -- so the CLI's `border` stays
+        # `bool | None` and can't take the `'interior'`/`'exterior'` string values.
+        'border',
     }
     compare_annotations = {k: v for k, v in compare_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
