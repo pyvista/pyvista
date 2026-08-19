@@ -144,7 +144,7 @@ docs = [
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
-  'sphinx-autocodelink==0.5.3',
+  'sphinx-autocodelink==0.5.4',
   'sphinx-autoopengraph==0.2.1',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
