@@ -3,6 +3,6 @@
 Hoist Unreferenced
 ##################
 
-.. currentmodule:: autolink_samples
+.. currentmodule:: autocodelink_samples
 
 .. autofunction:: never_referenced

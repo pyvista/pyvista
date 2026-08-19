@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from autolink_samples._internal import Derived
+from autocodelink_samples._internal import Derived
 
 
 def make() -> Derived:

@@ -3,6 +3,6 @@
 Hoist Referenced
 ################
 
-.. currentmodule:: autolink_samples
+.. currentmodule:: autocodelink_samples
 
 .. autofunction:: hoist_target

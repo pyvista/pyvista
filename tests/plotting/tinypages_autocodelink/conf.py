@@ -27,7 +27,7 @@ sys.path.append(str(Path(__file__).parent))
 
 source_suffix = '.rst'
 root_doc = 'index'
-project = 'tinypages-autolink'
+project = 'tinypages-autocodelink'
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 

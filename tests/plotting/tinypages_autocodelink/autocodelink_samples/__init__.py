@@ -7,7 +7,7 @@ Each Examples section imports pyvista solely to trigger ``conf.py``'s
 
 from __future__ import annotations
 
-from autolink_samples._internal import Derived  # re-exported, mirrors pyvista's pattern
+from autocodelink_samples._internal import Derived  # re-exported, mirrors pyvista's pattern
 
 __all__ = ['Derived']
 
@@ -30,7 +30,7 @@ def call_chain_example():
     Examples
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
-    >>> from autolink_samples import make_widget
+    >>> from autocodelink_samples import make_widget
     >>> make_widget().draw()
 
     """
@@ -43,7 +43,7 @@ def make_widget_or_string(as_string=False):
     Examples
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
-    >>> from autolink_samples import make_widget_or_string
+    >>> from autocodelink_samples import make_widget_or_string
     >>> widget = make_widget_or_string()
     >>> widget.draw()
 
@@ -60,7 +60,7 @@ def make_derived():
     Examples
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
-    >>> from autolink_samples import make_derived
+    >>> from autocodelink_samples import make_derived
     >>> obj = make_derived()
     >>> obj.meth()
 
@@ -76,7 +76,7 @@ def multi_block_examples():
     Create a widget.
 
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
-    >>> from autolink_samples import make_widget_or_string
+    >>> from autocodelink_samples import make_widget_or_string
     >>> widget = make_widget_or_string()
 
     Draw it.
@@ -94,7 +94,7 @@ def make_partial_method():
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
     >>> from functools import partial
-    >>> from autolink_samples import make_widget_or_string
+    >>> from autocodelink_samples import make_widget_or_string
     >>> widget = make_widget_or_string()
     >>> method = partial(widget.draw)
     >>> method()
@@ -109,7 +109,7 @@ def module_attribute_chain():
     Examples
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
-    >>> from autolink_samples import sub
+    >>> from autocodelink_samples import sub
     >>> obj = sub.make()
     >>> obj.meth()
 
@@ -144,7 +144,7 @@ def call_hoist_target():
     Examples
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
-    >>> from autolink_samples import hoist_target
+    >>> from autocodelink_samples import hoist_target
     >>> hoist_target()
 
     """

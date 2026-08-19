@@ -478,9 +478,9 @@ def test_tinypages_all_extensions_integration(tmp_path: Path):
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autolink(tmp_path: Path):
+def test_autocodelink(tmp_path: Path):
     """Check that ``pyvista_plot_autocodelink`` hyperlinks identifiers resolved from execution."""
-    source_dir = Path(__file__).parent / 'tinypages_autolink'
+    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 
@@ -498,28 +498,28 @@ def test_autolink(tmp_path: Path):
     )
 
     expected_targets = {
-        '#autolink_samples.make_widget',
-        '#autolink_samples.make_widget_or_string',
-        '#autolink_samples.Widget',
-        '#autolink_samples.Widget.draw',
-        '#autolink_samples.make_derived',
-        '#autolink_samples.Derived',
-        '#autolink_samples.Derived.meth',
-        '#autolink_samples.sub.make',
+        '#autocodelink_samples.make_widget',
+        '#autocodelink_samples.make_widget_or_string',
+        '#autocodelink_samples.Widget',
+        '#autocodelink_samples.Widget.draw',
+        '#autocodelink_samples.make_derived',
+        '#autocodelink_samples.Derived',
+        '#autocodelink_samples.Derived.meth',
+        '#autocodelink_samples.sub.make',
     }
     found_targets = set(re.findall(r'sphinx-autocodelink-a" href="([^"]*)"', html))
     assert expected_targets <= found_targets, (
-        f'missing expected autolink targets: {expected_targets - found_targets}'
+        f'missing expected autocodelink targets: {expected_targets - found_targets}'
     )
 
     # Widget.draw is referenced 4x: 2 >>> groups, partial(widget.draw), and make_widget().draw().
-    assert html.count('sphinx-autocodelink-a" href="#autolink_samples.Widget.draw"') == 4
+    assert html.count('sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw"') == 4
 
     # make_widget() and .draw() on its result link separately, with `()` outside both.
     assert (
-        '<a class="sphinx-autocodelink-a" href="#autolink_samples.make_widget">'
+        '<a class="sphinx-autocodelink-a" href="#autocodelink_samples.make_widget">'
         '<span class="n">make_widget</span></a><span class="p">()</span>'
-        '<a class="sphinx-autocodelink-a" href="#autolink_samples.Widget.draw">'
+        '<a class="sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw">'
         '<span class="o">.</span><span class="n">draw</span></a>' in html
     )
 
@@ -529,9 +529,9 @@ def test_autolink(tmp_path: Path):
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autolink_idempotent_rebuild(tmp_path: Path):
+def test_autocodelink_idempotent_rebuild(tmp_path: Path):
     """Rebuilding into the same output dir must not nest a second anchor."""
-    source_dir = Path(__file__).parent / 'tinypages_autolink'
+    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
     cmd = _sphinx_build_cmd(source_dir, html_dir, doctree_dir)
@@ -545,13 +545,13 @@ def test_autolink_idempotent_rebuild(tmp_path: Path):
         re.search(r'sphinx-autocodelink-a" href="[^"]*"><a class="sphinx-autocodelink-a"', html)
         is None
     )
-    assert html.count('sphinx-autocodelink-a" href="#autolink_samples.Widget.draw"') == 4
+    assert html.count('sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw"') == 4
 
 
 @flaky_test(exceptions=(AssertionError,))
 def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
     """``autocodelink_autodoc_backrefs`` sections must hoist exactly like numpydoc's own."""
-    source_dir = Path(__file__).parent / 'tinypages_autolink'
+    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
 

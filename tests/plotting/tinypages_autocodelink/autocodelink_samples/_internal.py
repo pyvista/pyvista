@@ -11,4 +11,4 @@ class Base:
 
 
 class Derived(Base):
-    """Documented as ``autolink_samples.Derived``, but actually defined here."""
+    """Documented as ``autocodelink_samples.Derived``, but actually defined here."""

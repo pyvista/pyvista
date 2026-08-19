@@ -2,7 +2,7 @@
 Dynamic Autolink Testing
 #############################
 
-.. currentmodule:: autolink_samples
+.. currentmodule:: autocodelink_samples
 
 .. autoclass:: Widget
 
@@ -28,6 +28,6 @@ Dynamic Autolink Testing
 
 .. autofunction:: call_hoist_target
 
-.. currentmodule:: autolink_samples.sub
+.. currentmodule:: autocodelink_samples.sub
 
 .. autofunction:: make
