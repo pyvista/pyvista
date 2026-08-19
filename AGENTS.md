@@ -32,7 +32,10 @@ docstring gates before you call a change finished, not only when the diff looks 
 to them: `make doctest` executes every docstring example in the package, so a change to
 import-time behavior or to a plotting default fails it with no docstring in the diff.
 Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
-`Continuous Integration Etiquette`.
+`Continuous Integration Etiquette`. Some jobs run only when a label asks for them
+(`vtk-dev-testing`, `vtk-master-testing`, `integration-testing`, `docker`) -- see
+`.claude/skills/pyvista-pr/SKILL.md` for which to suggest, and say so when you hand the
+change over, since a label applied after the last push does nothing until the next one.
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
 means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk`

@@ -105,6 +105,26 @@ No banner, no badge, no separate heading, no generated-with footer. Put it in th
 description rather than only in a commit trailer, because the description is what a
 reviewer reads first.
 
+## Labels that start extra CI
+
+Four labels each start a job a pull request does not otherwise get. They cost real runner
+time, so ask for one because the change touches what it covers, not by default:
+
+| Label                 | Starts                                      | Ask for it when                                                                         |
+| --------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `vtk-dev-testing`     | the suite against VTK development wheels    | anything version-dependent: wrapping, object lifetimes, a VTK behavior that has changed |
+| `vtk-master-testing`  | a VTK build from master, then the suite     | the change depends on unreleased VTK, or the dev wheels are not recent enough           |
+| `integration-testing` | mne, trame, pyvistaqt, geovista, playwright | public API behavior, object lifetimes, plotting defaults -- what downstream sits on     |
+| `docker`              | the Docker image build                      | packaging, or a dependency the image installs                                           |
+
+A label only takes effect on the next run, so it goes on before the final push, or the
+branch gets pushed again afterwards; `CONTRIBUTING.rst` says the same for the VTK labels.
+You cannot apply labels yourself, so name the ones the change warrants when you hand the
+pull request over.
+
+`full-doc` reads as relevant and is not: the full documentation has built on every pull
+request since #3919, and no workflow reads that label any more.
+
 ## Before opening
 
 1. Draft the title and body.
