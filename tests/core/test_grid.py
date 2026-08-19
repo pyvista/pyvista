@@ -218,7 +218,7 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     grid = pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
-    assert np.all(grid.offset == offsets)
+    assert np.all(grid.cell_offsets == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
     if not multiple_cell_types and _SUPPORTS_FIXED_SIZE_STORAGE:
         assert grid.GetCells().IsStorageFixedSize()
@@ -448,7 +448,7 @@ def test_cells_dict_alternating_cells():
 
     cells_dict = grid.cells_dict
 
-    assert np.all(grid.offset == np.array([0, 4, 7, 11]))
+    assert np.all(grid.cell_offsets == np.array([0, 4, 7, 11]))
     assert np.all(cells_dict[CellType.QUAD] == np.array([cells[1:5], cells[-4:]]))
     assert np.all(cells_dict[CellType.TRIANGLE] == [0, 1, 2])
 

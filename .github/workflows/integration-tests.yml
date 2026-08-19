@@ -142,7 +142,7 @@ jobs:
             [mne]="@larsoner"
             [trame]="@user27182"
             [pyvistaqt]="@larsoner"
-            [geovista]=""
+            [geovista]="@bjlittle"
             [playwright]="@user27182"
             [cvista]="@akaszynski"
           )

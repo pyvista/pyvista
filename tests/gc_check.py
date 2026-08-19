@@ -1,13 +1,11 @@
-"""Shared leak-check machinery for the ``core`` and ``plotting`` conftests.
+"""Shared leak-check machinery for the repository-wide and ``plotting`` conftests.
 
-Both run the same check -- put the objects alive before a test out of reach, assert none
-of the ones it creates outlive it -- so the mechanics live here and each conftest only
-supplies its policy. They differ in exactly two ways:
-
-* what they match: plotting also watches ``BasePlotter``, which is not a VTK object.
-* ``flush_ghosts``: plotting sweeps VTK's ghost map before scanning, forgiving a leak
-  that the sweep clears, because plotter teardown routinely leaves stale ghosts behind.
-  Core does not, and that strictness is the point -- the sweep is what hid #8873.
+Every test is checked -- put the objects alive before it out of reach, assert none of
+the ones it creates outlive it. ``tests/conftest.py`` runs it for the repository;
+``tests/plotting/conftest.py`` overrides the fixture for its own tests, because
+plotting has to watch one more type (``BasePlotter``, which is not a VTK object) and
+has to close its plotters before the check runs. The mechanics live here so the two
+supply only that.
 
 The check runs from a ``pytest_runtest_teardown`` hookwrapper rather than a fixture
 finalizer: several fixtures are set up before an autouse fixture (``monkeypatch`` via
@@ -16,21 +14,20 @@ finalizers run *after* it -- and anything they still held would be misreported h
 
 .. warning::
 
-    The heap stays frozen for the whole body of a covered test, so anything running in
-    that body sees a *lying* collector: ``gc.get_referrers()`` reports no referrers for
-    an object that pre-dates the test, and ``gc.get_objects()`` omits it entirely. This
-    is not confined to pyvista's own code -- Hypothesis' ``register_random`` uses
-    ``gc.get_referrers()`` to check that a PRNG handed to it is reachable, and wrongly
-    concluded it was not (hence the warmup in ``tests/conftest.py``). Mark a test that
-    needs a truthful view of the collector with ``@pytest.mark.skip_check_gc``, which
-    costs it leak coverage.
+    ``refleak``'s freeze mode keeps the heap frozen for the whole body of a covered test,
+    so anything running in that body sees a *lying* collector: ``gc.get_referrers()``
+    reports no referrers for an object that pre-dates the test, and ``gc.get_objects()``
+    omits it entirely. This is not confined to pyvista's own code -- Hypothesis'
+    ``register_random`` uses ``gc.get_referrers()`` to check that a PRNG handed to it is
+    reachable, and wrongly concluded it was not (hence the warmup in
+    ``tests/conftest.py``). Mark a test that needs a truthful view of the collector with
+    ``@pytest.mark.skip_check_gc``, which costs it leak coverage.
 """
 
 from __future__ import annotations
 
 import gc
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
 
 import pytest
 from refleak.testing import Snapshot
@@ -38,22 +35,32 @@ from refleak.testing import gc_collect_once
 
 from pyvista import _vtk
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 _phase_report_key = pytest.StashKey()
 _check_gc_key = pytest.StashKey()
-
-# Freezing is process-wide, and ``pytester`` runs a nested session in this same process
-# with a copy of the conftest (see tests/plotting/test_conftest.py), so an inner test
-# would otherwise unfreeze the heap out from under the outer one -- which then sees every
-# object in the process as its own. Only the outermost check freezes and thaws.
-_frozen_for: list[str] = []
 
 
 def stash_phase_report(item, report) -> None:
     """Record a phase report so the check can be skipped when the test failed."""
     item.stash.setdefault(_phase_report_key, {})[report.when] = report
+
+
+def check_enabled(node) -> bool:
+    """Return whether this test should be checked for leaks.
+
+    The check runs unless the test opts out with ``skip_check_gc`` or the whole run does
+    with ``--no_check_gc``, which exists for local iteration only -- CI never passes it,
+    and since the check freezes the heap rather than scanning it there is nothing to
+    gain by it. ``expect_check_gc_fail`` overrides the flag: a test asserting that the
+    check *fails* would otherwise pass while nothing ran.
+    """
+    if node.get_closest_marker('skip_check_gc'):
+        return False
+    if node.get_closest_marker('expect_check_gc_fail'):
+        return True
+    # A default rather than a hard lookup: a nested in-process session (``pytester``,
+    # see tests/plotting/test_conftest.py) copies this conftest but not
+    # ``tests/conftest.py``, which is what registers the option.
+    return not node.config.getoption('no_check_gc', default=False)
 
 
 def _test_passed(item) -> bool:
@@ -82,19 +89,18 @@ def _flush_vtk_ghosts() -> None:
     del holder
 
 
-def take_snapshot(item, match, label: str) -> None:
+def take_snapshot(item, match, label: str, owner: str) -> None:
     """Put every object alive now out of reach, so only *new* survivors are reported.
 
-    ``gc.freeze()`` moves them into the permanent generation, which the collector never
-    walks and ``gc.get_objects()`` never reports -- for the test body too, not just for
-    the check, which is the hazard the module docstring warns about. So whatever the
-    check finds afterwards was created by this test, and the snapshot needs no "before"
-    set to subtract -- hence the empty ``objs``, which also means ``Snapshot``'s own
-    ``collect=True`` is ignored and the ``gc.collect()`` it used to run here no longer
-    happens. Recording ids instead meant that collect and a scan of the whole heap here
-    and again at teardown, four passes over ~180k objects that between them cost more
-    than the tests: ``tests/core`` now runs the check over every one of its tests in less
-    time than it took to run it over the 397 it covered this way.
+    ``owner`` records which conftest took the snapshot; see :func:`assert_no_leaks`.
+
+    ``freeze=True`` has ``refleak`` call ``gc.freeze()``, moving them into the permanent
+    generation, which the collector never walks and ``gc.get_objects()`` never reports --
+    for the test body too, not just for the check, which is the hazard the module
+    docstring warns about. So whatever the check finds afterwards was created by this
+    test, and there is no "before" set to record: no collect and no heap scan happen here.
+    Recording ids instead meant a collect and a scan of the whole heap here and again at
+    teardown, four passes over ~180k objects that between them cost more than the tests.
 
     It is also stricter. An id-based snapshot cannot distinguish a new object allocated at
     a dead one's address from that dead one, and silently passes; there are no ids to
@@ -105,68 +111,35 @@ def take_snapshot(item, match, label: str) -> None:
     instantiates, whose names lack the ``vtk`` prefix. Passing several types as one tuple
     keeps this to a single pass.
     """
-    # Built before the freeze: a raise from Snapshot would otherwise leave a name in
-    # _frozen_for that nothing pops, and the worker's heap frozen for the rest of the run.
-    snapshot = Snapshot(match, label=label, objs=[])
-    if not _frozen_for:
-        gc.freeze()
-    _frozen_for.append(item.name)
-    item.stash[_check_gc_key] = snapshot
+    item.stash[_check_gc_key] = (owner, Snapshot(match, label=label, freeze=True))
 
 
-def assert_no_leaks(
-    item,
-    *,
-    flush_ghosts: bool,
-    before_check: Callable[[], None] | None = None,
-) -> None:
-    """Assert nothing matched by :func:`take_snapshot` outlived the test."""
-    snapshot = item.stash.get(_check_gc_key, None)
-    if snapshot is None:
+def assert_no_leaks(item, *, owner: str, flush_ghosts: bool) -> None:
+    """Assert nothing matched by :func:`take_snapshot` outlived the test.
+
+    ``owner`` is the conftest doing the checking. Two conftests register this hook --
+    the repository-wide one and the plotting one, whose fixture overrides it for its own
+    tests -- and both hooks run for a plotting test. Only the one whose fixture took the
+    snapshot may check it: the other would report before ``tests/plotting`` has closed
+    its plotters.
+    """
+    stashed = item.stash.get(_check_gc_key, None)
+    if stashed is None or stashed[0] != owner:
         return
+    snapshot = stashed[1]
     del item.stash[_check_gc_key]
-
-    thawed = False
-
-    def thaw() -> None:
-        """Hand the frozen objects back to the collector, at most once.
-
-        Leaving them in the permanent generation would exempt them from collection for
-        the rest of the session, and the next test would see them as its own. The check
-        thaws partway through (see :func:`_assert_no_leaks`); this is also the backstop
-        for the paths that return or raise before getting that far.
-        """
-        # Never raise from here: this runs while a leak assertion may be in flight, and
-        # an IndexError would replace it with something that explains nothing.
-        nonlocal thawed
-        if thawed:
-            return
-        thawed = True
-        if _frozen_for:
-            _frozen_for.pop()
-        if not _frozen_for:
-            gc.unfreeze()
-
     try:
-        _assert_no_leaks(
-            item, snapshot, flush_ghosts=flush_ghosts, before_check=before_check, thaw=thaw
-        )
+        _assert_no_leaks(item, snapshot, flush_ghosts=flush_ghosts)
     finally:
-        thaw()
+        # Whatever happened above, hand the frozen objects back to the collector: leaving
+        # them in the permanent generation would exempt them from collection for the rest
+        # of the session, and the next test would see them as its own. A no-op on the
+        # paths that reached the check, which thaws itself.
+        snapshot.thaw()
 
 
-def _assert_no_leaks(
-    item,
-    snapshot: Snapshot,
-    *,
-    flush_ghosts: bool,
-    before_check: Callable[[], None] | None,
-    thaw: Callable[[], None],
-) -> None:
-    """Do the checking, calling ``thaw`` once the survivors have been taken."""
-    if before_check is not None:
-        before_check()
-
+def _assert_no_leaks(item, snapshot: Snapshot, *, flush_ghosts: bool) -> None:
+    """Do the checking, with the heap frozen and the caller holding the thaw."""
     if not _test_passed(item):
         return
 
@@ -183,21 +156,17 @@ def _assert_no_leaks(
 
     if flush_ghosts:
         # A stale VTK ghost is deferred bookkeeping, not a leak: sweep the map before
-        # scanning rather than re-checking after a failure, because the survivor list
-        # below holds strong references and nothing can be freed once it is taken.
+        # ``refleak`` scans rather than re-checking after a failure, because the survivor
+        # list it takes holds strong references and nothing can be freed once it is taken.
         _flush_vtk_ghosts()
         gc.collect()
 
-    # Take the survivors while the heap is still frozen -- these are exactly the objects
-    # this test created. Thaw before reporting: gc.get_referrers() does not look in the
-    # permanent generation either, so a leak anchored in a container that pre-dates the
-    # test would have no visible referrer, and refleak drops a survivor it cannot explain.
-    objs = gc.get_objects()
-    thaw()
-
+    # assert_no_new takes its survivors while the heap is still frozen -- those are
+    # exactly the objects this test created -- and thaws before reporting, on the failing
+    # path too.
     if item.get_closest_marker('expect_check_gc_fail'):
         with pytest.raises(AssertionError, match='Found '):
-            snapshot.assert_no_new(when, request=request, objs=objs)
+            snapshot.assert_no_new(when, request=request)
         return
 
-    snapshot.assert_no_new(when, request=request, objs=objs)
+    snapshot.assert_no_new(when, request=request)

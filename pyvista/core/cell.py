@@ -10,6 +10,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -19,6 +20,7 @@ from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataobject import DataObject
 from .errors import CellSizeError
+from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import _NoNewAttrMixin
@@ -34,6 +36,7 @@ if TYPE_CHECKING:
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
@@ -748,8 +751,118 @@ class CellArray(
         return self.GetNumberOfCells()
 
     @property
+    def cell_offsets(self: Self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array.
+
+        The offsets array has ``n_cells + 1`` values and stores the index into
+        :attr:`cell_connectivity` at which each cell begins. The point ids of cell ``i``
+        are ``cell_connectivity[cell_offsets[i]:cell_offsets[i + 1]]``.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of cell offsets with ``n_cells + 1`` values.
+
+        See Also
+        --------
+        cell_connectivity
+            Point ids that define the cells.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. Assign a new
+        array to this property to change the offsets, or use :meth:`from_arrays` to
+        replace the offsets and connectivity together.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+        >>> cell_array.cell_offsets
+        array([0, 3, 6]...)
+
+        Replace the offsets so the same connectivity describes three 2-point cells.
+
+        >>> cell_array.cell_offsets = [0, 2, 4, 6]
+        >>> cell_array.n_cells
+        3
+
+        """
+        return _get_offsets(self)
+
+    @cell_offsets.setter
+    def cell_offsets(self: Self, offsets: VectorLike[int]) -> None:
+        _set_cell_array_data(self, offsets, self.cell_connectivity)
+
+    @property
+    def cell_connectivity(self: Self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array.
+
+        The connectivity array stores the point ids of every cell, one cell after
+        another and without any padding. Use :attr:`cell_offsets` to determine where each
+        cell begins and ends.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the cells.
+
+        See Also
+        --------
+        cell_offsets
+            Index into this array at which each cell begins.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. Assign a new
+        array to this property to change the connectivity, or use :meth:`from_arrays`
+        to replace the offsets and connectivity together. The input is copied, so the
+        cell array never aliases an array that may be modified later.
+
+        Where that copy is too expensive, build the cell array with
+        :meth:`from_arrays` and ``deep=False`` and keep a reference to the connectivity
+        array. The cell array then wraps that array, so writing to it changes the cells
+        without any copy. Nothing validates the point ids written this way.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+        >>> cell_array.cell_connectivity
+        array([0, 1, 2, 3, 4, 5]...)
+
+        >>> cell_array.cell_connectivity = [5, 4, 3, 2, 1, 0]
+        >>> cell_array.cell_connectivity
+        array([5, 4, 3, 2, 1, 0]...)
+
+        For a cell array large enough that the copy matters, keep the connectivity
+        array and edit it in place.
+
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1, 2, 3, 4, 5], dtype=pv.ID_TYPE)
+        >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], connectivity, deep=False)
+        >>> connectivity[:] = [5, 4, 3, 2, 1, 0]
+        >>> cell_array.cell_connectivity
+        array([5, 4, 3, 2, 1, 0]...)
+
+        """
+        return _get_connectivity(self)
+
+    @cell_connectivity.setter
+    def cell_connectivity(self: Self, connectivity: VectorLike[int]) -> None:
+        _set_cell_array_data(self, self.cell_offsets, connectivity)
+
+    @property
     def connectivity_array(self: Self) -> NumpyArray[int]:
         """Return the array with the point ids that define the cells' connectivity.
+
+        .. deprecated:: 0.49
+            Use :attr:`cell_connectivity` instead. Note that :attr:`cell_connectivity` is
+            read-only, whereas this property returns a writeable array.
 
         Returns
         -------
@@ -757,11 +870,27 @@ class CellArray(
             Array with the point ids that define the cells' connectivity.
 
         """
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`CellArray.connectivity_array` is deprecated. Use '
+            '`CellArray.cell_connectivity` instead, which returns a read-only array.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `CellArray.connectivity_array`.'
+            raise RuntimeError(msg)
         return _get_connectivity_array(self)
 
     @property
     def offset_array(self: Self) -> NumpyArray[int]:
         """Return the array used to store cell offsets.
+
+        .. deprecated:: 0.49
+            Use :attr:`cell_offsets` instead. Note that :attr:`cell_offsets` is read-only,
+            whereas this property returns a writeable array.
 
         Returns
         -------
@@ -769,6 +898,18 @@ class CellArray(
             Array used to store cell offsets.
 
         """
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`CellArray.offset_array` is deprecated. Use `CellArray.cell_offsets` '
+            'instead, which returns a read-only array.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `CellArray.offset_array`.'
+            raise RuntimeError(msg)
         return _get_offset_array(self)
 
     def _set_data(
@@ -964,7 +1105,7 @@ class CellArray(
         --------
         from_regular_cells
             Equivalent method for cells which all have the same size.
-        offset_array
+        cell_offsets
             Offsets marking where each cell begins in the connectivity array.
 
         Examples
@@ -975,9 +1116,9 @@ class CellArray(
         >>> cells = pv.CellArray.from_irregular_cells([[0, 1, 2], [1, 2, 3, 4]])
         >>> cells.n_cells
         2
-        >>> cells.connectivity_array
+        >>> cells.cell_connectivity
         array([0, 1, 2, 1, 2, 3, 4]...)
-        >>> cells.offset_array
+        >>> cells.cell_offsets
         array([0, 3, 7]...)
 
         """
@@ -1001,6 +1142,88 @@ def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
+
+
+def _get_offsets(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+    """Return a read-only array of the cell offsets."""
+    array = _get_offset_array(cellarr)
+    array.flags['WRITEABLE'] = False
+    return array
+
+
+def _get_connectivity(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+    """Return a read-only array of the cell connectivity."""
+    array = _get_connectivity_array(cellarr)
+    array.flags['WRITEABLE'] = False
+    return array
+
+
+def _validate_offsets_connectivity(
+    offsets: NumpyArray[int], connectivity: NumpyArray[int]
+) -> None:
+    """Raise if ``offsets`` and ``connectivity`` do not describe a valid cell array."""
+    for name, array in (('Offsets', offsets), ('Connectivity', connectivity)):
+        if array.ndim != 1:
+            msg = f'{name} must be a 1D array, got {array.ndim}D.'
+            raise ValueError(msg)
+        if not np.issubdtype(array.dtype, np.integer):
+            msg = f'{name} must have an integer dtype, got {array.dtype}.'
+            raise TypeError(msg)
+
+    if offsets.size == 0:
+        msg = 'Offsets must have at least one value. Use `[0]` for an empty cell array.'
+        raise ValueError(msg)
+    if offsets[0] != 0:
+        msg = f'The first offset must be 0, got {offsets[0]}.'
+        raise ValueError(msg)
+    if np.any(np.diff(offsets) < 0):
+        msg = 'Offsets must be monotonically non-decreasing.'
+        raise ValueError(msg)
+    if offsets[-1] != connectivity.size:
+        msg = (
+            f'The last offset ({offsets[-1]}) must equal the size of the '
+            f'connectivity array ({connectivity.size}).'
+        )
+        raise ValueError(msg)
+
+
+def _set_cell_array_data(
+    cellarr: CellArray,
+    offsets: VectorLike[int],
+    connectivity: VectorLike[int],
+) -> None:
+    """Validate ``offsets`` and ``connectivity`` and store them in ``cellarr``.
+
+    The inputs are always deep-copied so the cell array never aliases memory owned by
+    the caller. Fixed-size storage is used when the offsets are uniform, which lets VTK
+    generate the offsets implicitly instead of allocating them.
+
+    """
+    offsets_array = np.asarray(offsets)
+    connectivity_array = np.asarray(connectivity)
+    # An empty sequence defaults to a float dtype, so coerce it before validating
+    if offsets_array.size == 0:
+        offsets_array = offsets_array.astype(pv.ID_TYPE)
+    if connectivity_array.size == 0:
+        connectivity_array = connectivity_array.astype(pv.ID_TYPE)
+    _validate_offsets_connectivity(offsets_array, connectivity_array)
+
+    sizes = np.diff(offsets_array)
+    uniform = sizes.size > 0 and bool((sizes == sizes[0]).all()) and sizes[0] > 0
+    if _SUPPORTS_FIXED_SIZE_STORAGE and uniform:
+        cell_size = int(sizes[0])
+        cellarr._set_data_fixed_size(
+            cell_size, connectivity_array.reshape(-1, cell_size), deep=True
+        )
+    else:
+        cellarr._set_data(offsets_array, connectivity_array, deep=True)
+
+
+def _make_cell_array(offsets: VectorLike[int], connectivity: VectorLike[int]) -> CellArray:
+    """Build a validated :class:`CellArray` from offsets and connectivity."""
+    cellarr = CellArray()
+    _set_cell_array_data(cellarr, offsets, connectivity)
+    return cellarr
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:

@@ -20,6 +20,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
     _restore_registry_state as _restore_accessor_registry_state,
@@ -35,6 +36,13 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
+
+# Unconditional, unlike the Hypothesis probe below: every environment that runs pytest
+# over tests/ has to carry refleak, the docs-test dependency group included.
+from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
+from tests.gc_check import stash_phase_report
+from tests.gc_check import take_snapshot
 
 # Probe the active backend for a rendering module (precise, and no import-error control flow).
 HAS_PLOTTING = importlib.util.find_spec(f'{_vtk._VTK_ROOT}.vtkRenderingCore') is not None
@@ -185,6 +193,14 @@ def set_mpl():
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Pin notebook mode off. Left to its default the plotter asks scooby whether it is
+    # in an ipykernel, so a test that plots renders through the trame jupyter backend on
+    # any machine that answers yes -- which launches the process-lifetime
+    # 'pyvista-jupyter' server, and whichever test does that first is blamed for the
+    # vtkWebApplication it leaves behind (pyvista/pyvista#8929). Tests that want a
+    # notebook pass notebook=True themselves.
+    pv.global_theme.notebook = False
+
     # Default is to allow new 'private' attributes for downstream packages,
     # but for PyVista itself we enforce no new attributes
     pv.allow_new_attributes(False)
@@ -388,6 +404,47 @@ def image(texture):
     return texture.to_image()
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # noqa: ARG001
+    """Stash per-phase reports so the leak check can skip on failure."""
+    outcome = yield
+    stash_phase_report(item, outcome.get_result())
+
+
+@pytest.fixture(autouse=True)
+def check_gc(request):
+    """Snapshot live VTK objects so leaks from this test can be detected.
+
+    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
+    with one that also watches plotters (a fixture of the same name in a nearer conftest
+    wins), and takes the snapshot this hook's counterpart there checks.
+    """
+    node = request.node
+    if (
+        # On VTK < 9.6 CellArray must hold its own arrays, so this can never pass there
+        not _SETDATA_TAKES_OWNERSHIP or not check_enabled(node)
+    ):
+        yield
+        return
+    take_snapshot(node, _vtk.vtkObjectBase, 'VTK', owner=__name__)
+    yield
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Close every plotter, and check that nothing the test created outlived it."""
+    yield
+    # Unconditional and repository-wide: a test that leaves a plotter open leaves a
+    # render window open for every test after it, wherever that test lives, and whether
+    # or not this run is checking for leaks. A no-op when nothing was plotted.
+    pv.close_all()
+    # Sweeping VTK's ghost map costs no strictness: it drops an entry only once the C++
+    # object behind it is dead, which makes that entry deferred bookkeeping rather than a
+    # leak. A ghost whose C++ object is still alive -- the shape #8873 shipped, planted by
+    # tests/core/test_gc.py -- survives the sweep and is still reported.
+    assert_no_leaks(item, owner=__name__, flush_ghosts=True)
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_sessionstart():
     """Register Hypothesis' global PRNG now, while the heap is still thawed.
@@ -438,10 +495,22 @@ def pytest_sessionstart():
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
     parser.addoption(
+        '--no_check_gc',
+        action='store_true',
+        default=False,
+        help='skip the reference leak check, which is otherwise run (see tests/gc_check.py)',
+    )
+    parser.addoption(
         '--playwright',
         action='store_true',
         default=False,
         help='run Playwright-based tests',
+    )
+    parser.addoption(
+        '--doc_build',
+        action='store_true',
+        default=False,
+        help='run tests that require the documentation to already be built',
     )
 
 
@@ -800,6 +869,10 @@ def pytest_runtest_setup(item: pytest.Item):
     playwright = item.config.getoption(flag := '--playwright')
     if item.get_closest_marker('needs_playwright') and not playwright:
         pytest.skip(f'Playwright test not enabled with {flag}')
+
+    doc_build = item.config.getoption(flag := '--doc_build')
+    if item.get_closest_marker('needs_doc_build') and not doc_build:
+        pytest.skip(f'Documentation build required, not enabled with {flag}')
 
 
 def pytest_report_header(config):  # noqa: ARG001

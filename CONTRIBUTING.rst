@@ -138,9 +138,16 @@ original author to relicense the code.
 Generative AI
 -------------
 
-We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_.
+We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_,
+with one difference: disclosure is required here, where the guide only appreciates it.
 The resulting contribution is the responsibility of the contributor, and we value good code,
 concise accurate documentation, and avoiding unneeded code churn.
+
+If an AI tool wrote any part of a pull request -- code, tests, documentation, or the
+description itself -- say so in the description. Write that sentence yourself: it states
+that you reviewed the change and can explain it, which no tool can attest to on your
+behalf. One clause naming the tool and what it did is enough, in the form merged
+descriptions already use, e.g. ``Changes drafted by Claude Opus 5 but fully understood by me``.
 
 That responsibility covers what the contribution costs us to review and to test.
 If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
@@ -683,6 +690,12 @@ changes any given branch is introducing before looking at the code.
 -  ``release/``: releases (see below)
 -  ``breaking-change/``: Changes that break backward compatibility
 
+A prefix is unusable on a remote that already has a branch named exactly that, since
+Git cannot store a ref as both a file and a directory: pushing ``doc/my-change`` to a
+fork that still has an old ``doc`` branch is rejected with ``directory file conflict``.
+Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
+either use another prefix or delete the stale branch.
+
 Testing
 ^^^^^^^
 
@@ -956,13 +969,23 @@ build that cannot support a feature.
 
 Garbage Collection Checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Every test under ``tests/plotting`` is automatically checked for reference leaks by
-the autouse ``check_gc`` fixture in ``tests/plotting/conftest.py``: no plotter or VTK
-object created by a test may outlive it. A leaking test fails at teardown with a
-rendered chain of what still holds a reference; see the
+Every test is checked for reference leaks: no plotter or VTK object created by a test
+may outlive it. The autouse ``check_gc`` fixture in ``tests/conftest.py`` covers the
+whole repository, and ``tests/plotting/conftest.py`` overrides it with a version that
+also watches plotters. A leaking test fails at teardown with a rendered chain of what
+still holds a reference; see the
 `refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
-The cause is usually a reference cycle, and fixing it (e.g. with :mod:`weakref`) is
-preferred over silencing the check with either of these markers:
+
+The check freezes the heap rather than scanning it, so it costs no measurable time and
+every CI job runs it. ``--no_check_gc`` turns it off for a whole run, for local
+iteration where the report is in the way:
+
+.. code-block:: bash
+
+    tox run -e test-plotting-no_check_gc
+
+The cause of a leak is usually a reference cycle, and fixing it (e.g. with
+:mod:`weakref`) is preferred over silencing the check with either of these markers:
 
 .. code-block:: python
 
@@ -978,6 +1001,10 @@ preferred over silencing the check with either of these markers:
     @pytest.mark.expect_check_gc_fail
     def test():
         """This test is expected to leak; fail if it does *not*."""
+
+``expect_check_gc_fail`` outranks ``--no_check_gc``, so the tests that exercise the
+check itself (``tests/core/test_gc.py``, ``tests/plotting/test_gc.py``) cannot pass
+while nothing is running.
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~

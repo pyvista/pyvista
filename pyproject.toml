@@ -112,7 +112,7 @@ test = [
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-zstd>=0.2.3,<0.3.0',
-  'refleak>=0.2.1,<0.3.0',
+  'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-autoopengraph<0.3',
@@ -188,6 +188,7 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
+  'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.6',
   { include-group = 'pinned' },
 ]
@@ -297,8 +298,8 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'check_gc: Enable the strict core leak check for this test (see tests/core/conftest.py).',
-  'expect_check_gc_fail: Expect vtk leak.',
+  'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
+  'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
   'needs_io_extra: this test requires an IO-tier VTK module omitted from a core-only build (vtkIOHDF / vtkIOEnSight / vtkIOChemistry, e.g. .vtkhdf, EnSight .case, PDB/XYZ/GaussianCube readers). Auto-applied (only when the module is actually absent) via the HAS_IO_* probes in conftest.py. Deselect with `-m "not needs_io_extra"` alongside `not needs_rendering` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',

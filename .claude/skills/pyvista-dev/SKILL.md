@@ -141,9 +141,16 @@ what to write. This is what gets sent back:
 
 ## Local gates
 
-`Quick Development Commands` lists the `make` targets, each mirroring a CI job. At minimum
-run `make lint`, the test module you touched, and `make doctest` if you edited a docstring
-example.
+`Quick Development Commands` lists the `make` targets, each mirroring a CI job. Run
+`make lint`, `make docstyle`, `make doctest`, and the test module you touched, and treat a
+change as unfinished until they pass.
+
+`make doctest` is the one that gets skipped for looking unrelated: it runs every docstring
+example in the package rather than the ones in the diff, so anything that changes
+import-time behavior or a plotting default can fail it without a docstring edit anywhere.
+Moving `pv.BUILDING_GALLERY` out of `pyvista/ext/plot_directive.py`'s module scope did
+exactly that -- collecting that module was what set the flag, and one example's
+anti-aliasing warning is silenced only while a gallery is being built.
 
 `tests/conftest.py` and the doctest tox environment already set off-screen rendering, so
 the `make` targets are safe. Only a bare `pytest --doctest-modules` outside tox needs

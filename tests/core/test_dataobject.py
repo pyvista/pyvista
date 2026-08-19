@@ -107,7 +107,9 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
     copy = hexbeam.copy()
-    hexbeam.cell_connectivity[0] += 1
+    connectivity = hexbeam.cell_connectivity.copy()
+    connectivity[0] += 1
+    hexbeam.cell_connectivity = connectivity
     assert hexbeam != copy
 
     # test changing polyfaces is detected
@@ -207,8 +209,9 @@ def test_save_nested_multiblock_field_data(tmp_path, file_ext):
     root.save(tmp_path / filename)
 
 
-@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
-def test_user_dict(data_object):
+@pytest.mark.parametrize('data_object_type', [pv.PolyData, pv.MultiBlock])
+def test_user_dict(data_object_type):
+    data_object = data_object_type()
     assert USER_DICT_KEY not in data_object.field_data.keys()
 
     data_object.user_dict['abc'] = 123
@@ -232,9 +235,11 @@ def test_user_dict(data_object):
         data_object.user_dict = 42
 
 
-@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
+@pytest.mark.parametrize('data_object_type', [pv.PolyData, pv.MultiBlock])
 @pytest.mark.parametrize('method', ['set_none', 'clear', 'clear_field_data'])
-def test_user_dict_removal(data_object, method):
+def test_user_dict_removal(data_object_type, method):
+    data_object = data_object_type()
+
     def clear_user_dict():
         if method == 'clear':
             data_object.field_data.clear()
@@ -288,16 +293,18 @@ def test_user_dict_repr(ant):
 
 
 @pytest.mark.parametrize(
-    ('data_object', 'ext'),
+    ('make_data_object', 'ext'),
     [
-        (pv.MultiBlock([examples.load_ant()]), '.vtm'),
-        (examples.load_ant(), '.vtp'),
-        (examples.load_ant(), '.vtkhdf'),
+        (lambda: pv.MultiBlock([examples.load_ant()]), '.vtm'),
+        (examples.load_ant, '.vtp'),
+        (examples.load_ant, '.vtkhdf'),
     ],
 )
-def test_user_dict_write_read(tmp_path, data_object, ext):
+def test_user_dict_write_read(tmp_path, make_data_object, ext):
     if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
         return  # can't use VTKHDF on VTK<9.4.0
+
+    data_object = make_data_object()
 
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')

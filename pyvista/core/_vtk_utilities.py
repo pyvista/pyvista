@@ -163,6 +163,12 @@ _SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 # alive itself -- see `CellArray._set_data`.
 _SETDATA_TAKES_OWNERSHIP = vtk_version_info >= (9, 6)
 
+# VTK 9.4 keeps the polyhedron faces and face locations in two cell arrays, reachable
+# from `GetPolyhedronFaces` and `GetPolyhedronFaceLocations`. Before that a polyhedron
+# is a single padded face stream with no offsets or connectivity of its own, so the
+# properties built on those cell arrays have nothing to read.
+_SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
+
 
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
