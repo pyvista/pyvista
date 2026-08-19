@@ -22,13 +22,6 @@ from .renderer import Renderer
 _SeamSegment = tuple[tuple[float, float], tuple[float, float]]
 
 # What each accepted `border` value draws, as (draw_interior, draw_exterior).
-# A plain dict (rather than an if/elif chain) means `border`'s valid values
-# live in exactly one place, shared by both the `ValueError` message (via
-# `_validation.check_contains`) and the resolution itself. Keying by `True`/
-# `False` rather than branching on identity also means a bool-like value
-# that isn't the exact singleton (e.g. `numpy.bool_`) still resolves
-# correctly, since dict/`in` lookups use `==` (and a matching `__hash__`),
-# not `is`.
 _BORDER_MODES: dict[bool | str, tuple[bool, bool]] = {
     True: (True, True),
     False: (False, False),
@@ -228,12 +221,9 @@ class Renderers(_NoNewAttrMixin):
         self._renderers = []
         self._shadow_renderer = None
 
-        # By default, a single subplot gets nothing and a grid gets only
-        # the lines between its cells -- not the outer frame, since the
-        # window already has an edge of its own. `np.array_equal` (rather
-        # than `shape == (1, 1)`) accepts a list or array `shape` too, and
-        # never raises on a shape it can't compare, e.g. a string
-        # descriptor -- those are always multiple subplots regardless.
+        # `np.array_equal` (rather than `shape == (1, 1)`) also accepts a list or
+        # array `shape`, and never raises on a shape it can't compare (e.g. a
+        # string descriptor -- always multiple subplots regardless).
         if border is None:
             is_single_subplot = not isinstance(shape, str) and np.array_equal(shape, (1, 1))
             border = False if is_single_subplot else 'interior'
