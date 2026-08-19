@@ -1325,7 +1325,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     # Mixed cell types
     else:
         cells = []
-        offset = mesh.offset
+        offset = mesh.cell_offsets
 
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)

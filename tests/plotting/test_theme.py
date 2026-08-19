@@ -802,3 +802,13 @@ def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
 def test_box_axes(default_theme):
     default_theme.axes.box = True
     _ = pv.Sphere().plot(theme=default_theme)
+
+
+def test_testing_theme_pins_notebook_off():
+    """Detected notebook mode would route a plotting test through the trame backend.
+
+    That launches the process-lifetime ``pyvista-jupyter`` server, and whichever test
+    creates it first is blamed for the ``vtkWebApplication`` it leaves behind
+    (pyvista/pyvista#8929).
+    """
+    assert pv.plotting.themes._TestingTheme().notebook is False

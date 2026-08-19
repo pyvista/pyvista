@@ -106,7 +106,9 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
     copy = hexbeam.copy()
-    hexbeam.cell_connectivity[0] += 1
+    connectivity = hexbeam.cell_connectivity.copy()
+    connectivity[0] += 1
+    hexbeam.cell_connectivity = connectivity
     assert hexbeam != copy
 
     # test changing polyfaces is detected

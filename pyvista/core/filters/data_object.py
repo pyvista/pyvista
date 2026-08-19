@@ -1770,7 +1770,7 @@ class DataObjectFilters:
             )
 
             conn = ugrid.cell_connectivity
-            offset = ugrid.offset
+            offset = ugrid.cell_offsets
             n_cells = ugrid.n_cells
             n_points = ugrid.n_points
 

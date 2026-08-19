@@ -152,6 +152,14 @@ def set_mpl():
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Pin notebook mode off. Left to its default the plotter asks scooby whether it is
+    # in an ipykernel, so a test that plots renders through the trame jupyter backend on
+    # any machine that answers yes -- which launches the process-lifetime
+    # 'pyvista-jupyter' server, and whichever test does that first is blamed for the
+    # vtkWebApplication it leaves behind (pyvista/pyvista#8929). Tests that want a
+    # notebook pass notebook=True themselves.
+    pv.global_theme.notebook = False
+
     # Default is to allow new 'private' attributes for downstream packages,
     # but for PyVista itself we enforce no new attributes
     pv.allow_new_attributes(False)
