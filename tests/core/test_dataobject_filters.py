@@ -23,6 +23,7 @@ import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core.cell import _get_connectivity_array
 from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
@@ -926,13 +927,20 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         for name, array in dataset.cell_data.items():
             assert transformed.cell_data[name] == pytest.approx(array)
 
-        # verify that the cell connectivity is a deep copy
-        if hasattr(dataset, '_connectivity_array'):
-            transformed._connectivity_array[0] += 1
-            assert not np.array_equal(dataset._connectivity_array, transformed._connectivity_array)
-        if hasattr(dataset, 'cell_connectivity'):
-            transformed.cell_connectivity[0] += 1
-            assert not np.array_equal(dataset.cell_connectivity, transformed.cell_connectivity)
+        # verify that the cell connectivity is a deep copy. The public `connectivity`
+        # property is read-only, so mutate the underlying vtkCellArray in place to
+        # prove the two meshes do not share a buffer.
+        cell_array = None
+        if isinstance(dataset, pv.PolyData):
+            cell_array = pv.core.pointset.PolyData.GetPolys
+        elif isinstance(dataset, pv.UnstructuredGrid):
+            cell_array = pv.core.pointset.UnstructuredGrid._get_cells
+        if cell_array is not None:
+            _get_connectivity_array(cell_array(transformed))[0] += 1
+            assert not np.array_equal(
+                _get_connectivity_array(cell_array(dataset)),
+                _get_connectivity_array(cell_array(transformed)),
+            )
 
 
 @pytest.mark.parametrize(

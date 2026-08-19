@@ -6951,7 +6951,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        split.points += np.repeat(vec, np.diff(split.cell_offsets), axis=0)
         return split
 
     def separate_cells(  # type: ignore[misc]
