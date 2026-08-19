@@ -327,12 +327,7 @@ def test_interior_border_preserves_full_border_on_explicit_single():
 
 
 def test_border_exterior_same_as_true_for_single_subplot():
-    """``border='exterior'`` and ``border=True`` are equivalent on a single subplot.
-
-    There's no distinction between "the outer frame" and "everything"
-    when there are no neighboring subplots to draw interior seams
-    between.
-    """
+    """``border='exterior'`` and ``border=True`` are equivalent on a single subplot."""
     pl_true = pv.Plotter(border=True)
     pl_exterior = pv.Plotter(border='exterior')
     try:
@@ -347,12 +342,7 @@ def test_border_exterior_same_as_true_for_single_subplot():
 
 
 def test_border_interior_has_no_effect_for_single_subplot():
-    """``border='interior'`` draws nothing on a single subplot.
-
-    Unlike ``'exterior'`` (equivalent to ``True`` with no neighbors),
-    ``'interior'`` asks only for lines between subplots -- there are
-    none to draw when there's just the one.
-    """
+    """``border='interior'`` draws nothing on a single subplot."""
     pl = pv.Plotter(border='interior')
     try:
         assert not pl.renderer.has_border
@@ -374,15 +364,7 @@ def test_border_interior_has_no_effect_for_single_subplot():
     ],
 )
 def test_border_literal_modes(border, expected_lines):
-    """Each of ``border``'s bool and string-literal values draws exactly what it promises.
-
-    For a 2x2 grid, ``None``/``'interior'`` draw the 2 interior seams,
-    ``'exterior'`` draws the 4-segment outer frame, ``True`` draws
-    both (6 total), and ``False`` draws nothing. A `numpy.bool_` (e.g.
-    the result of a numpy comparison, common in this numpy-heavy
-    codebase) must resolve the same as the equivalent Python `bool`,
-    even though ``numpy.bool_(True) is True`` is ``False``.
-    """
+    """Each of ``border``'s bool, ``numpy.bool_``, and string-literal values resolves correctly."""
     pl = pv.Plotter(shape=(2, 2), border=border)
     try:
         assert _per_renderer_has_border(pl) == [False] * 4
@@ -434,13 +416,7 @@ def test_drop_border_actor_removes_both_primary_and_secondary_actor():
     ],
 )
 def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
-    """``border``'s default resolution doesn't choke on a list/array ``shape``.
-
-    Regression test: comparing ``shape`` to ``(1, 1)`` with ``==``
-    raises "truth value of an array is ambiguous" for a numpy-array
-    ``shape``, since ``==`` compares elementwise there instead of
-    testing equality as a whole.
-    """
+    """``border``'s default resolution doesn't choke on a list/array ``shape``."""
     pl = pv.Plotter(shape=shape)
     try:
         assert (pl.renderers.border_overlay_renderer is not None) is expects_overlay
