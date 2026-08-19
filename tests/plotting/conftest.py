@@ -54,15 +54,9 @@ def _clean_trame_env(monkeypatch):
 def _trame_array_cache():
     """Clear trame's serializer cache before ``check_gc``'s teardown check.
 
-    The (session-lifetime) ``SynchronizationContext`` caches every exported data
-    array and only releases them on a 20-second time window, so an exporting
-    test's arrays outlive it and ``check_gc`` reports them as that test's leak.
-
-    Any test that exports a scene needs this, not just the jupyter ones:
-    ``test_cli.py::test_plot`` reaches the same path, and whether it is *blamed*
-    depends on how xdist happens to distribute the suite -- so running a subset
-    can look clean while the full run errors in bulk. It lives here rather than
-    in ``jupyter/conftest.py`` for that reason.
+    trame's session-lifetime ``SynchronizationContext`` caches exported arrays on a
+    20-second window, so they outlive the exporting test and are reported as its leak.
+    Any scene-exporting test hits this (not just jupyter), hence the suite-wide scope.
     """
     yield
     if importlib.util.find_spec('trame_vtk') is None:

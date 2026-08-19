@@ -49,11 +49,8 @@ def test_resolve_root_falls_back_to_vtkmodules(monkeypatch):
 def test_private_names_are_not_routed_to_the_backend():
     """A private lookup must not produce the developer-facing mapping message.
 
-    An unmapped name raises ``AttributeError`` with or without the guard in
-    ``_vtk.__getattr__``, so asserting only the exception type proves nothing.
-    What the guard actually changes is the message: interpreter and library
-    probes (``copy``, ``pickle``, IPython) ask for dunders PyVista does not map,
-    and they must not be told to add a ``module:__wrapped__`` entry to ``_vtk``.
+    Interpreter/library probes (copy, pickle, IPython) ask for unmapped dunders;
+    they must not be told to add a ``module:__wrapped__`` entry to ``_vtk``.
     """
     with pytest.raises(AttributeError) as excinfo:
         _vtk.__getattr__('__wrapped__')
@@ -73,12 +70,7 @@ def test_mapped_name_resolves():
 
 
 def test_vtk_backend_reports_the_active_build():
-    """``vtk_backend()`` names the build, using 'vtk' for stock VTK.
-
-    This is the public escape hatch: it lets user code branch on -- or raise a
-    clear error for -- a feature the active build does not provide, without
-    reaching into ``_vtk`` internals.
-    """
+    """``vtk_backend()`` names the build, using 'vtk' for stock VTK."""
     backend = pv.vtk_backend()
     assert isinstance(backend, str)
     if _vtk._VTK_ROOT == 'vtkmodules':
@@ -88,10 +80,8 @@ def test_vtk_backend_reports_the_active_build():
         assert backend == _vtk._VTK_ROOT
 
 
-# Classes PyVista maps whose hosting module differs between stock VTK and cvista
-# (cvista relocates them so its core wheel tier stays rendering-free), as
-# ``name: stock module``. Resolving by NAME off the package root is what makes the
-# move invisible, so PyVista carries no relocation table for them.
+# Mapped classes cvista hosts in a different module than stock (``name: stock
+# module``); name-based resolution makes the move invisible, needing no relocation table.
 _RELOCATED_IN_CVISTA = {
     'vtkPolyDataSilhouette': 'vtkFiltersHybrid',
     'vtkGLTFReader': 'vtkIOGeometry',
@@ -103,9 +93,8 @@ _RELOCATED_IN_CVISTA = {
 def test_flat_backend_resolves_relocated_classes(name, stock_module):
     """A relocated class resolves, and does so without using its stock module."""
     assert getattr(_vtk, name).__name__ == name
-    # PyVista still records the STOCK module (that mapping drives the stock
-    # backend), yet resolution on cvista did not go through it -- which is exactly
-    # what makes the relocation a non-event here.
+    # The stock module is still recorded (it drives the stock backend) but was not
+    # used to resolve here -- that's what makes the relocation a non-event.
     assert _vtk._VTK_CLASS_TO_MODULE[name] == stock_module
 
 
@@ -129,10 +118,8 @@ def fake_flat_backend(monkeypatch):
     monkeypatch.setitem(sys.modules, '_fake_flat_backend', root)
     monkeypatch.setattr(_vtk, '_VTK_ROOT', '_fake_flat_backend')
     monkeypatch.setattr(_vtk, '_VTK_ROOT_IS_FLAT', True)
-    # __getattr__ caches resolved names into module globals. Snapshot VALUES, not
-    # just keys: a name resolved earlier in the session is already cached, so
-    # deleting only new keys would leave the fake class in its place for every
-    # later test.
+    # __getattr__ caches into module globals; snapshot VALUES (a name cached
+    # earlier must be restored, not just newly-added keys deleted).
     cached = dict(vars(_vtk))
     yield root
     current = vars(_vtk)
@@ -196,19 +183,9 @@ def test_missing_backend_names_the_setting():
 def test_special_loaders_resolve_through_the_active_backend(fake_flat_backend):
     """No ``_SPECIAL_LOADERS`` entry may hardcode a VTK build.
 
-    ``_SPECIAL_LOADERS`` is consulted before the backend branch in
-    ``_vtk.__getattr__``, so a loader that imports ``vtkmodules`` directly hands
-    back a stock class while the rest of the namespace hands back the active
-    backend's. Mixing wrapped types from two VTK builds does not fail at the
-    import; it fails later at the C++ boundary with ``TypeError: <method>
-    argument 1:``, naming a method rather than the import that caused it. That is
-    what happened with vtkRenderPassCollection and vtkSequencePass: a stock
-    collection rejecting a cvista pass took out 32 render-pass tests.
-
-    Runs against the stand-in flat backend rather than the real one, because on
-    stock VTK a hardcoded ``vtkmodules`` import IS the correct answer -- checking
-    the live backend would make this pass on every per-PR run and only bite in
-    the nightly cvista job, which is too late.
+    A loader importing ``vtkmodules`` directly mixes stock and backend wrapped
+    types, failing later at the C++ boundary. Run against the stand-in flat backend
+    so this is caught per-PR rather than only in the nightly cvista job.
     """
     for name in _vtk._SPECIAL_LOADERS:
         setattr(fake_flat_backend, name, type(name, (), {}))
@@ -228,11 +205,8 @@ def test_special_loaders_resolve_through_the_active_backend(fake_flat_backend):
 def test_module_prefixes_match_the_active_backend():
     """``_VTK_MODULE_PREFIXES`` must match what this build's classes report.
 
-    The override-stripping guard and ``is_vtk_attribute`` both key off it, and
-    both fail OPEN if it does not match: a wrapped class stops being recognised
-    as a VTK class and nothing raises. Every other test that exercises those two
-    is ``skip_vtk_backend('cvista')``, so without this the tuple has no coverage
-    at all on the backend it was widened for.
+    The override guard and ``is_vtk_attribute`` key off it and fail OPEN on a
+    mismatch; this is their only coverage on the cvista backend.
     """
     from pyvista.core._vtk_utilities import _VTK_MODULE_PREFIXES
 

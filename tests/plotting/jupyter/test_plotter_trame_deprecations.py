@@ -77,19 +77,12 @@ def test_export_vtksz_returns_bytes_when_no_filename(plotter):
 
 
 def test_trame_component_rejects_a_mismatched_vtk_build(plotter, monkeypatch):
-    """A trame resolved against a different VTK build is refused, with the fix.
-
-    A process must use one VTK build: objects cannot cross between two of them.
-    Without this check the mismatch surfaces deep inside trame as an opaque
-    wrapped-type ``TypeError`` instead of something the user can act on.
-    """
+    """A trame resolved against a different VTK build is refused, with the fix."""
     monkeypatch.delitem(sys.modules, 'vtk_module', raising=False)
     monkeypatch.setenv('VTK_MODULE_NAME', 'a_different_vtk_build')
 
     with pytest.raises(RuntimeError, match='VTK_MODULE_NAME') as excinfo:
         plotter._trame_component()
 
-    # `show()` captures scenes under a guard that ignores a missing trame, so a
-    # misconfigured one has to raise something that guard does not catch,
-    # otherwise the user gets silence instead of the problem.
+    # Not an ImportError: `show()`'s scene-capture guard would swallow it (see plotter.py).
     assert not isinstance(excinfo.value, ImportError)

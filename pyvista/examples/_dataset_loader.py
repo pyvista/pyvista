@@ -46,11 +46,12 @@ from typing import final
 from typing import runtime_checkable
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from pyvista.core._typing_core import NumpyArray
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -69,20 +70,11 @@ _FilePropIntType_co = TypeVar(
     covariant=True,
 )
 
-# ``pv.Texture`` is a plotting class; accessing it via ``pyvista.__getattr__``
-# eagerly imports ``pyvista.plotting`` and the VTK rendering modules. These two
-# aliases are only consumed as string annotations (this module uses
-# ``from __future__ import annotations``) and are never resolved at runtime, so
-# defining them eagerly here would needlessly pull in rendering and break
-# ``import pyvista.examples`` on a rendering-free (core-only) VTK backend. Define
-# the real aliases for type checkers only and fall back to a rendering-free
-# runtime value.
+# Annotations only (never resolved at runtime), so keep these out of the runtime
+# namespace: ``pv.Texture`` would eagerly import rendering and break core-only builds.
 if TYPE_CHECKING:
     DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
     DatasetType = type[pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock]
-else:
-    DatasetObject = pv.DataSet | NumpyArray[Any] | pv.MultiBlock
-    DatasetType = type[pv.DataSet] | type[NumpyArray[Any]] | type[pv.MultiBlock]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):

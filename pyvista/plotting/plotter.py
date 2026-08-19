@@ -886,12 +886,9 @@ class BasePlotter(_BoundsSizeMixin):
             )
             raise ImportError(msg)
 
-        # A process must use ONE VTK build. trame resolves its own VTK through
-        # VTK_MODULE_NAME (default ``vtkmodules``), so on an alternative backend it
-        # would otherwise build stock-VTK objects while PyVista builds cvista ones
-        # and fail deep inside trame on a wrapped-type mismatch. Check the module
-        # trame actually resolved when it is already imported, else the variable it
-        # will resolve with, so the order of imports does not matter.
+        # A process must use ONE VTK build. trame resolves its via VTK_MODULE_NAME;
+        # a mismatch with PyVista's backend fails deep inside trame on a wrapped-type
+        # mismatch. Prefer the module trame already resolved, else the variable it will.
         resolved = sys.modules.get('vtk_module')
         trame_root = (
             resolved.__name__
@@ -905,12 +902,8 @@ class BasePlotter(_BoundsSizeMixin):
                 f'Set VTK_MODULE_NAME={_vtk._VTK_ROOT} in the environment before importing '
                 f'trame to point it at the same build.'
             )
-            # Deliberately NOT an ImportError. `show()` wraps its scene capture in
-            # contextlib.suppress(ImportError) so a missing trame degrades quietly,
-            # and raising ImportError here would be swallowed by that same guard --
-            # leaving the user with silence instead of a misconfiguration they can
-            # act on. An installed-but-mismatched trame is a configuration error,
-            # not an absent optional dependency.
+            # RuntimeError, not ImportError: `show()` suppresses ImportError (missing
+            # trame degrades quietly), which would swallow this misconfiguration.
             raise RuntimeError(msg)
         return component
 

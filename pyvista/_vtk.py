@@ -18,55 +18,32 @@ from typing import TYPE_CHECKING
 def _resolve_vtk_root() -> str:
     """Return the root package PyVista resolves VTK imports against.
 
-    Selection order:
-
-    1. The ``PYVISTA_VTK_BACKEND`` environment variable, if set, always wins
-       (``vtkmodules`` to force stock VTK, or ``cvista`` to force the fork).
-       ``vtk`` is accepted as a spelling of ``vtkmodules``, so the name
-       :func:`pyvista.vtk_backend` reports round-trips back through this
-       variable.
-    2. Otherwise, if the community ``cvista`` fork is installed, it is
-       auto-selected. Installing ``pyvista[cvista]`` is therefore the only action
-       needed to opt in.
-    3. Otherwise fall back to stock ``vtkmodules``.
-
-    Resolved once when this module is first imported, so ``PYVISTA_VTK_BACKEND``
-    must be set before importing :mod:`pyvista`.
+    ``PYVISTA_VTK_BACKEND`` wins if set (``vtk``/``vtkmodules`` for stock, a name
+    like ``cvista`` for the fork); else auto-select ``cvista`` if installed; else
+    stock ``vtkmodules``. Resolved at import, so set the variable before importing
+    :mod:`pyvista`.
     """
     backend = os.environ.get('PYVISTA_VTK_BACKEND')
     if backend:
-        # `vtk` is the name vtk_backend() reports for stock VTK, and the obvious
-        # thing to set. It is also an importable package whose root carries
-        # classes, so without this it probes as a FLAT backend and every
-        # subsequent lookup goes to the eager `vtk` shim -- `import pyvista`
-        # then dies on a name that shim does not re-export. Map it to the real
-        # import root instead.
+        # `vtk` is what vtk_backend() reports for stock; map it to the real root
+        # (the `vtk` shim is eager and does not re-export every name).
         return 'vtkmodules' if backend == 'vtk' else backend
     if importlib.util.find_spec('cvista') is not None:
         return 'cvista'
     return 'vtkmodules'
 
 
-# Root package VTK imports resolve against (``vtkmodules`` or ``cvista``). Only
-# needed for the handful of *module* imports PyVista makes for their side effects
-# (rendering factory registration); classes go through __getattr__ below.
+# Root package VTK imports resolve against. Only used for the few *module* imports
+# made for their side effects (factory registration); classes go through __getattr__.
 _VTK_ROOT = _resolve_vtk_root()
 
 
 def _resolve_root_is_flat(root: str) -> bool:
     """Return whether *root* exposes VTK classes directly off its package root.
 
-    cvista (>=9.6.2.4) resolves every public name lazily from the package root
-    against an index generated at build time, so classes are looked up by NAME
-    rather than by module path. That is what lets PyVista stay agnostic to a
-    build's internal module layout: cvista relocates classes between modules for
-    its wheel tiering and stock VTK shuffles them between releases, and neither
-    can break a name-based lookup.
-
-    The capability is probed rather than inferred from the name. A custom build
-    laid out like stock VTK is a perfectly valid ``PYVISTA_VTK_BACKEND``, and
-    assuming any non-``vtkmodules`` root is flat would send every lookup to a
-    package root that has no classes on it.
+    A flat backend (e.g. cvista >=9.6.2.4) resolves public names lazily off the
+    root, so PyVista looks classes up by NAME and stays agnostic to module layout.
+    Probed rather than inferred, since a custom build may be laid out like stock VTK.
     """
     if root == 'vtkmodules':
         return False
@@ -78,8 +55,7 @@ def _resolve_root_is_flat(root: str) -> bool:
             f'PYVISTA_VTK_BACKEND or by being installed alongside PyVista.'
         )
         raise ImportError(msg) from e
-    # vtkPolyData is present in every VTK build PyVista supports, so its presence
-    # on the root distinguishes a flat namespace from a stock-style package.
+    # vtkPolyData exists in every supported build, so its presence marks a flat root.
     return hasattr(module, 'vtkPolyData')
 
 
@@ -856,12 +832,10 @@ _VTK_CLASS_TO_MODULE: dict[str, str] = {
 
 
 def _import_from(module_name: str, class_name: str) -> Any:
-    """Import ``class_name``, for the irregular loaders below.
+    """Import ``class_name`` for the irregular loaders below.
 
-    On a flat-namespace backend the module is irrelevant -- the class resolves by
-    name off the package root -- so ``module_name`` only applies to stock
-    ``vtkmodules``. Either way a missing module or missing attribute raises
-    ``ImportError``, matching ``from module import name`` semantics.
+    ``module_name`` is ignored on a flat backend (the class resolves off the root);
+    a missing module or attribute raises ``ImportError``, as ``from m import c`` does.
     """
     root = importlib.import_module(
         _VTK_ROOT if _VTK_ROOT_IS_FLAT else f'{_VTK_ROOT}.{module_name}'
@@ -877,9 +851,8 @@ def __getattr__(name: str):
 
     VTK modules are only imported when first accessed.
     """
-    # Never route private/dunder lookups to a VTK backend: they are this module's
-    # own helpers (or interpreter probes), and forwarding them turns a plain
-    # missing-attribute into a confusing ImportError from the backend.
+    # Private/dunder lookups are this module's own (or interpreter probes); don't
+    # forward them to the backend (would turn AttributeError into a stray ImportError).
     if name.startswith('_'):
         raise AttributeError(name)
 
@@ -887,15 +860,9 @@ def __getattr__(name: str):
     if importer := _SPECIAL_LOADERS.get(name):
         obj = importer()
     elif _VTK_ROOT_IS_FLAT:
-        # Flat-namespace backend (cvista): resolve the class by NAME off the
-        # package root. The backend owns the name -> module index and regenerates
-        # it from its own build, so PyVista neither knows nor cares which module
-        # hosts a class, and a relocation upstream cannot break this call.
-        #
-        # The mapping is still consulted for MEMBERSHIP: PyVista curates which VTK
-        # names it re-exports, and an unmapped name must stay the same developer-
-        # facing AttributeError it is on stock VTK. Only the module VALUE goes
-        # unused here -- which is precisely the part that churns between builds.
+        # Flat backend (cvista): resolve the class by NAME off the root. The mapping
+        # is still consulted for MEMBERSHIP (an unmapped name stays an AttributeError,
+        # as on stock VTK); only its module value -- the part that churns -- is unused.
         if name not in _VTK_CLASS_TO_MODULE:
             msg = (
                 f"{name!r} is not defined in PyVista's vtk namespace.\n"

@@ -36,10 +36,7 @@ from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
 
-# Probe the ACTIVE backend for a rendering module rather than catching ImportError
-# from the pyvista.plotting import: the probe is precise (it asks the backend that
-# is actually in use, not whichever VTK happens to be installed alongside) and it
-# keeps this file free of import-error-driven control flow.
+# Probe the active backend for a rendering module (precise, and no import-error control flow).
 HAS_PLOTTING = importlib.util.find_spec(f'{_vtk._VTK_ROOT}.vtkRenderingCore') is not None
 
 if HAS_PLOTTING:
@@ -85,22 +82,15 @@ else:  # core-only VTK backend: rendering modules are absent
 
 
 def _has_vtk_module(module_name: str) -> bool:
-    """Return ``True`` if a (possibly omitted) VTK IO module is available.
+    """Probe the active backend for an IO module a core-only build may omit.
 
-    A core-only VTK backend (e.g. the rendering-free cvista wheel) ships none of
-    the heavy / third-party IO modules. The readers/writers that wrap them only
-    import lazily on first use, so tests that exercise those formats fail at
-    *runtime* on a core-only build. Probing here (mirrors ``HAS_PLOTTING``) lets
-    us auto-apply the ``needs_io_extra`` marker so the core-only subset can
-    deselect them with ``-m "not needs_io_extra"``. The probe targets the ACTIVE
-    backend root -- a hardcoded ``vtkmodules`` would report on a stock VTK that
-    merely happens to be installed alongside the backend under test.
+    Lets ``pytest_collection_modifyitems`` auto-apply ``needs_io_extra`` so the
+    core-only subset can deselect the readers/writers that wrap these lazily.
     """
     return importlib.util.find_spec(f'{_vtk._VTK_ROOT}.{module_name}') is not None
 
 
-# IO-tier VTK modules omitted from a core-only build. Each maps to readers /
-# writers (see ``pyvista.core.utilities.reader``) that wrap the module lazily.
+# IO-tier VTK modules a core-only build may omit; each backs lazily-wrapped readers/writers.
 HAS_IO_HDF = _has_vtk_module('vtkIOHDF')  # HDFReader, .vtkhdf save
 HAS_IO_ENSIGHT = _has_vtk_module('vtkIOEnSight')  # EnSightReader (.case)
 HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
@@ -456,33 +446,16 @@ def pytest_addoption(parser):
 
 
 # --- core-only test selection --------------------------------------------------
-# Auto-apply the ``needs_rendering`` marker so that ``pytest -m "not
-# needs_rendering"`` selects the subset of tests that run without any VTK
-# rendering module installed (the offline data-processing use case served by the
-# rendering-free ``cvista`` core wheel). We mark by *location* and *fixture*
-# rather than editing hundreds of test files.
-#
-# A test needs rendering if any of the following hold:
-#   1. It lives under ``tests/plotting/`` (the canonical rendering test tree).
-#   2. It requests a fixture that builds a real ``Plotter`` (``texture`` /
-#      ``image`` in this conftest, or any fixture defined in
-#      ``tests/plotting/conftest.py``).
-#   3. It lives in one of the few non-``tests/plotting`` modules that
-#      instantiate a ``Plotter`` (directly or via ``mocker.patch.object(pv,
-#      'Plotter')``, which still triggers the rendering import). Keep this list
-#      tight and explicit so the marking stays precise.
-#
-# Fixtures that build a real Plotter and therefore require rendering. Requesting
-# any of these marks the test as ``needs_rendering``.
+# Auto-apply ``needs_rendering`` (by location / fixture / name) so `-m "not
+# needs_rendering"` selects the subset that runs without any rendering module -- the
+# offline use case served by the rendering-free ``cvista`` core wheel.
+
+# Fixtures that build a real Plotter; requesting one marks the test needs_rendering.
 _RENDERING_FIXTURES = frozenset({'texture', 'image'})
 
-# A handful of otherwise-core tests exercise data objects/readers that are
-# physically implemented in modules excluded from a core-only VTK build:
-#   * ``Text3D`` / ``Text3DSource`` -> ``vtkRenderingFreeType.vtkVectorText``
-#   * the VRML, 3DS and Facet readers and texture reading -> ``vtkFiltersHybrid``
-#     / rendering modules
-# These tests are scattered inside core test modules (not whole files), so they
-# are matched by a substring of the test's *name* rather than hand-edited.
+# Otherwise-core tests exercising formats implemented in rendering-only modules
+# (Text3D, VRML/3DS/Facet readers, texture reads). Scattered inside core modules,
+# so matched by test-name substring.
 _RENDERING_NAME_KEYWORDS = (
     'text3d',
     'text_3d',
@@ -507,11 +480,9 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
-        # The modules below additionally evaluate plotting symbols (``pv.Color``,
-        # ``pv.get_cmap_safe``, ``import pyvista.plotting``) at *module scope*, so
-        # they cannot even be collected when rendering is absent. They are skipped
-        # entirely on a rendering-free backend (see ``_RENDERING_ONLY_MODULES``
-        # and ``pytest_ignore_collect`` below).
+        # These also evaluate plotting symbols at module scope, so on a
+        # rendering-free backend they are skipped at collection time (see
+        # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).
         'core/test_dataobject_filters.py',
         'core/test_dataset_filters.py',
         'core/test_helpers.py',
@@ -520,10 +491,8 @@ _RENDERING_MODULES = frozenset(
     }
 )
 
-# Subset of ``_RENDERING_MODULES`` that import plotting / rendering at *module
-# scope*. Their import fails outright when rendering is absent, so on a
-# rendering-free backend they must be skipped at collection time (a per-item
-# marker is too late -- the module body already failed to import).
+# Subset of ``_RENDERING_MODULES`` importing rendering at module scope, so on a
+# rendering-free backend they must be skipped at collection time (a marker is too late).
 _RENDERING_ONLY_MODULES = frozenset(
     {
         'test_attributes.py',
@@ -536,12 +505,8 @@ _RENDERING_ONLY_MODULES = frozenset(
 )
 
 
-# Tests that exercise an IO-tier format physically implemented in a VTK module
-# omitted from a core-only build. Matched by a substring of the test's *name*
-# (mirrors ``_RENDERING_NAME_KEYWORDS``); each keyword group is gated on the
-# corresponding ``HAS_IO_*`` probe so the marking is a no-op on a full VTK build.
-# Keywords are chosen to be specific enough not to catch unrelated core tests
-# (e.g. ``hdf``/``ensight`` rather than the generic ``cube``/``case``).
+# Tests exercising an IO-tier format a core-only build omits, matched by name
+# substring and gated on the matching ``HAS_IO_*`` probe (a no-op on a full build).
 _IO_EXTRA_NAME_KEYWORDS = (
     ('hdf', HAS_IO_HDF),  # HDFReader, .vtkhdf save, download_can_crushed_hdf
     ('ensight', HAS_IO_ENSIGHT),  # EnSightReader (.case)

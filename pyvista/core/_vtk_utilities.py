@@ -12,9 +12,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
 from pyvista.core.errors import VTKVersionError
 
-# A wrapped VTK class' ``__module__`` is rooted at the selected backend
-# (``vtkmodules`` for stock VTK, ``cvista`` for the fork). Accept both so the
-# override-stripping and snake_case guards work under either backend.
+# A wrapped VTK class' ``__module__`` is rooted at the active backend; accept both.
 _VTK_MODULE_PREFIXES = tuple({'vtkmodules.', f'{_vtk._VTK_ROOT}.'})
 
 
@@ -90,17 +88,10 @@ _MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
 def vtk_backend() -> str:
     """Return the name of the VTK build PyVista is running against.
 
-    PyVista resolves its VTK imports against one of several builds. ``'vtk'`` is
-    stock VTK (the default). ``'cvista'`` is the community fork, selected by
-    installing ``pyvista[cvista]`` or by setting the ``PYVISTA_VTK_BACKEND``
-    environment variable before importing PyVista.
-
-    Builds differ in which VTK modules they ship, so use this to branch on -- or
-    raise a clear error for -- a feature the active build does not provide,
-    rather than letting an import fail somewhere deeper.
-
-    The returned name is also accepted by ``PYVISTA_VTK_BACKEND``, so it can be
-    round-tripped.
+    ``'vtk'`` is stock VTK (the default); ``'cvista'`` is the community fork,
+    selected by installing ``pyvista[cvista]`` or setting ``PYVISTA_VTK_BACKEND``
+    before importing PyVista. Use it to branch on features a given build ships.
+    The returned name round-trips through ``PYVISTA_VTK_BACKEND``.
 
     .. versionadded:: 0.49
 
