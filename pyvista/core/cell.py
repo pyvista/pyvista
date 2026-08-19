@@ -778,8 +778,8 @@ class CellArray(
 
         Examples
         --------
-        >>> from pyvista import CellArray
-        >>> cell_array = CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
+        >>> import pyvista as pv
+        >>> cell_array = pv.CellArray.from_arrays([0, 3, 6], [0, 1, 2, 3, 4, 5])
         >>> cell_array.cell_offsets
         array([0, 3, 6]...)
 

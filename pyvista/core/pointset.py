@@ -3380,6 +3380,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Cell type of each cell.
         pyvista.PolyData.face_offsets
             Equivalent property for the faces of a polygonal mesh.
+        polyhedron_face_offsets
+            Offsets for the faces of polyhedral cells, which VTK stores separately
+            from the cell offsets.
 
         Notes
         -----
@@ -3450,6 +3453,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         pyvista.DataSet.get_cell
         pyvista.PolyData.face_connectivity
             Equivalent property for the faces of a polygonal mesh.
+        polyhedron_face_connectivity
+            Point ids for the faces of polyhedral cells, which VTK stores separately
+            from the cell connectivity.
 
         Notes
         -----
