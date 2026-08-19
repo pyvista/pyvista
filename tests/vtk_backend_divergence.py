@@ -33,3 +33,6 @@ CVISTA_NAMESPACE = 'module loads under the cvista namespace'
 INT32_CELL_STORAGE = 'cvista stores connectivity as int32 (no zero-copy share)'
 INT32_COMPRESSION = 'cvista stores indices as int32 (smaller, less compressible)'
 CELL_STATUS_ENUM = 'cvista diverges on vtkCellStatus enum exposure'
+FIXED_SIZE_CELL_STORAGE = (
+    'cvista uses fixed-size cell storage for uniform cells where stock VTK does not'
+)
