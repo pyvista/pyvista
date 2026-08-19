@@ -52,6 +52,9 @@ from pyvista.plotting.theme_registry import (
 )
 from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
 from pyvista.plotting.utilities.gl_checks import uses_egl
+
+# Unconditional, unlike the Hypothesis probe below: every environment that runs pytest
+# over tests/ has to carry refleak, the docs-test dependency group included.
 from tests.gc_check import assert_no_leaks
 from tests.gc_check import check_enabled
 from tests.gc_check import stash_phase_report

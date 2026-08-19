@@ -171,6 +171,7 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
+  'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.6',
   { include-group = 'pinned' },
 ]
