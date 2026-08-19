@@ -390,7 +390,7 @@ class BasePlotter(_BoundsSizeMixin):
     def __init__(  # noqa: PLR0917
         self,
         shape: Sequence[int] | str = (1, 1),
-        border: bool | BorderOptions | None = None,  # noqa: FBT001
+        border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
         border_width: float | None = None,
         title: str | None = None,
@@ -8152,7 +8152,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         groups: Sequence[int] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
-        border: bool | BorderOptions | None = None,  # noqa: FBT001
+        border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
         border_width: float | None = None,
         window_size: list[int] | None = None,

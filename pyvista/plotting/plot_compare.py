@@ -474,7 +474,7 @@ def plot_compare(  # noqa: ANN201
     off_screen: bool | None = None,
     notebook: bool | None = None,
     window_size: list[int] | None = None,
-    border: bool | BorderOptions | None = None,
+    border: BorderOptions | None = None,
     border_color: ColorLike | None = None,
     border_width: float | None = None,
     theme: Theme | ThemeOptions | str | None = None,
