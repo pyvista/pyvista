@@ -518,11 +518,9 @@ def test_autocodelink(tmp_path: Path):
     # make_widget() and .draw() on its result link separately, with `()` outside both.
     assert (
         '<a class="sphinx-autocodelink-a" href="#autocodelink_samples.make_widget">'
-        '<code class="xref py py-obj docutils literal notranslate">'
-        '<span class="n">make_widget</span></code></a><span class="p">()</span>'
+        '<span class="n">make_widget</span></a><span class="p">()</span>'
         '<a class="sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw">'
-        '<code class="xref py py-obj docutils literal notranslate">'
-        '<span class="o">.</span><span class="n">draw</span></code></a>' in html
+        '<span class="o">.</span><span class="n">draw</span></a>' in html
     )
 
     # functools.partial instances used to crash the resolver (see make_partial_method).
