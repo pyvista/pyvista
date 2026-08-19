@@ -6,6 +6,9 @@ import re
 from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
+from typing import Literal
+from typing import cast
+from typing import get_args
 import warnings
 
 from cyclopts import Parameter
@@ -22,7 +25,6 @@ from .utils import LabelSize
 from .utils import _kwargs_converter
 from .utils import anti_aliasing
 from .utils import background
-from .utils import border
 from .utils import border_color
 from .utils import border_width
 from .utils import call_or_exit
@@ -48,8 +50,11 @@ from .utils import zoom
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Sequence
     from pathlib import Path
     from typing import TextIO
+
+    from cyclopts import Token
 
 _HELP_SHAPE = """\
 Shape of the subplot grid, as either the number of rows and columns, e.g. ``2,2``,
@@ -92,6 +97,52 @@ A font size is used as given, and may be too large for a label to fit in its sub
 draws them all at the size of the one which has to be smallest to fit. By default,
 ``uniform`` is used when the subplots are all the same size, and ``best_fit`` otherwise.
 """
+
+_HELP_BORDER = """\
+Draw a border around the plotting area. On its own, draws both an outer frame and the
+lines between subplots. Give it one of:
+- ``true`` to draw both, same as passing no value at all.
+- ``false`` to draw neither.
+- ``interior`` to draw only the lines between subplots.
+- ``exterior`` to draw only the outer frame.
+
+``interior`` is used by default if ``--border`` isn't given at all.
+"""
+
+# cyclopts can't union bool (0 tokens) with Literal[str, ...] (1 token), so this
+# takes 0-1 string tokens instead, like --report in validate.py.
+_CompareBorderOptions = Literal['true', 'false', 'interior', 'exterior']
+
+
+def _converter_border(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_CompareBorderOptions]:
+    values: list[str] = [t.value for t in tokens]
+    n_values = len(values)
+    if n_values > 1:
+        msg = f'Invalid value for {tokens[0].keyword}: accepts 0 or 1 arguments. Got {n_values}.'
+        raise ValueError(msg)
+    value = values[0]
+    allowed = get_args(_CompareBorderOptions)
+    if value in allowed:
+        return cast('list[_CompareBorderOptions]', [value])
+    msg = f'expected one of {str(allowed)[1:-1]} or no value. Got {value!r}.'
+    raise ValueError(msg)
+
+
+def _resolve_border(
+    border: list[_CompareBorderOptions] | None,
+) -> bool | Literal['interior', 'exterior'] | None:
+    """Turn 0-or-1 raw CLI tokens into the value `plot_compare`'s own `border` expects."""
+    if border is None:
+        return None
+    if not border:
+        # `--border` given bare, with no value.
+        return True
+    value = border[0]
+    return {'true': True, 'false': False}.get(value, value)
+
 
 # What to do about a dataset which is too small to make out, in terms of the options
 # this command has rather than the arguments of `plot_compare`, which it does not
@@ -222,7 +273,16 @@ def _compare(
     zoom: zoom = None,
     volume: volume = False,
     ssao: ssao = False,
-    border: border = None,
+    border: Annotated[
+        list[_CompareBorderOptions] | None,
+        Parameter(
+            consume_multiple=True,
+            converter=_converter_border,
+            negative=[],
+            help=_HELP_BORDER,
+            group=Groups.PLOTTER,
+        ),
+    ] = None,
     border_color: border_color = None,
     border_width: border_width = None,
     theme: theme = None,
@@ -233,6 +293,7 @@ def _compare(
     ],
 ) -> None:
     """Compare two or more mesh files side-by-side."""
+    border = _resolve_border(border)
     meshes = read_meshes(paths, skip_unreadable=skip_unreadable)
     if len(meshes) < 2:
         msg = (
