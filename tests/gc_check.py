@@ -1,13 +1,11 @@
-"""Shared leak-check machinery for the ``core`` and ``plotting`` conftests.
+"""Shared leak-check machinery for the repository-wide and ``plotting`` conftests.
 
-Both run the same check -- put the objects alive before a test out of reach, assert none
-of the ones it creates outlive it -- so the mechanics live here and each conftest only
-supplies its policy. They differ in exactly two ways:
-
-* what they match: plotting also watches ``BasePlotter``, which is not a VTK object.
-* ``flush_ghosts``: plotting sweeps VTK's ghost map before scanning, forgiving a leak
-  that the sweep clears, because plotter teardown routinely leaves stale ghosts behind.
-  Core does not, and that strictness is the point -- the sweep is what hid #8873.
+Every test is checked -- put the objects alive before it out of reach, assert none of
+the ones it creates outlive it. ``tests/conftest.py`` runs it for the repository;
+``tests/plotting/conftest.py`` overrides the fixture for its own tests, because
+plotting has to watch one more type (``BasePlotter``, which is not a VTK object) and
+has to close its plotters before the check runs. The mechanics live here so the two
+supply only that.
 
 The check runs from a ``pytest_runtest_teardown`` hookwrapper rather than a fixture
 finalizer: several fixtures are set up before an autouse fixture (``monkeypatch`` via
@@ -91,8 +89,10 @@ def _flush_vtk_ghosts() -> None:
     del holder
 
 
-def take_snapshot(item, match, label: str) -> None:
+def take_snapshot(item, match, label: str, owner: str) -> None:
     """Put every object alive now out of reach, so only *new* survivors are reported.
+
+    ``owner`` records which conftest took the snapshot; see :func:`assert_no_leaks`.
 
     ``freeze=True`` has ``refleak`` call ``gc.freeze()``, moving them into the permanent
     generation, which the collector never walks and ``gc.get_objects()`` never reports --
@@ -111,14 +111,22 @@ def take_snapshot(item, match, label: str) -> None:
     instantiates, whose names lack the ``vtk`` prefix. Passing several types as one tuple
     keeps this to a single pass.
     """
-    item.stash[_check_gc_key] = Snapshot(match, label=label, freeze=True)
+    item.stash[_check_gc_key] = (owner, Snapshot(match, label=label, freeze=True))
 
 
-def assert_no_leaks(item, *, flush_ghosts: bool) -> None:
-    """Assert nothing matched by :func:`take_snapshot` outlived the test."""
-    snapshot = item.stash.get(_check_gc_key, None)
-    if snapshot is None:
+def assert_no_leaks(item, *, owner: str, flush_ghosts: bool) -> None:
+    """Assert nothing matched by :func:`take_snapshot` outlived the test.
+
+    ``owner`` is the conftest doing the checking. Two conftests register this hook --
+    the repository-wide one and the plotting one, whose fixture overrides it for its own
+    tests -- and both hooks run for a plotting test. Only the one whose fixture took the
+    snapshot may check it: the other would report before ``tests/plotting`` has closed
+    its plotters.
+    """
+    stashed = item.stash.get(_check_gc_key, None)
+    if stashed is None or stashed[0] != owner:
         return
+    snapshot = stashed[1]
     del item.stash[_check_gc_key]
     try:
         _assert_no_leaks(item, snapshot, flush_ghosts=flush_ghosts)

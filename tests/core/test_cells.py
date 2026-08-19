@@ -31,9 +31,6 @@ from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
 
-# Cell arrays are where a stashed VTK object silently outlives its mesh; see conftest
-pytestmark = pytest.mark.check_gc
-
 grids = [
     load_hexbeam(),
     load_airplane(),
