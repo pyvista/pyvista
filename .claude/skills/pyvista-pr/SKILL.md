@@ -122,9 +122,6 @@ branch gets pushed again afterwards; `CONTRIBUTING.rst` says the same for the VT
 You cannot apply labels yourself, so name the ones the change warrants when you hand the
 pull request over.
 
-`full-doc` reads as relevant and is not: the full documentation has built on every pull
-request since #3919, and no workflow reads that label any more.
-
 ## Before opening
 
 1. Draft the title and body.
