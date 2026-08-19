@@ -26,9 +26,12 @@ them is Claude-specific.
 **Do not use CI as your test runner.** Every push to an open pull request starts the unit
 test matrix on three operating systems and five Python versions, a separate VTK matrix,
 the documentation build, and the integration tests. You have a shell and the same `make`
-targets CI runs, so run them: `make lint`, then `make test-core` or `make test-plotting`
-scoped to what you touched, plus `make doctest` for a changed docstring example. Amend or
-squash locally and push once. `CONTRIBUTING.rst` states this as
+targets CI runs, so run them: `make lint`, `make docstyle`, `make doctest`, and
+`make test-core` or `make test-plotting` scoped to what you touched. Run the style and
+docstring gates before you call a change finished, not only when the diff looks related
+to them: `make doctest` executes every docstring example in the package, so a change to
+import-time behavior or to a plotting default fails it with no docstring in the diff.
+Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
 `Continuous Integration Etiquette`.
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
