@@ -141,7 +141,11 @@ def _resolve_border(
         # `--border` given bare, with no value.
         return True
     value = border[0]
-    return {'true': True, 'false': False}.get(value, value)
+    if value == 'true':
+        return True
+    if value == 'false':
+        return False
+    return value
 
 
 # What to do about a dataset which is too small to make out, in terms of the options
@@ -293,7 +297,7 @@ def _compare(
     ],
 ) -> None:
     """Compare two or more mesh files side-by-side."""
-    border = _resolve_border(border)
+    resolved_border = _resolve_border(border)
     meshes = read_meshes(paths, skip_unreadable=skip_unreadable)
     if len(meshes) < 2:
         msg = (
@@ -340,7 +344,7 @@ def _compare(
             screenshot=screenshot,
             off_screen=off_screen,
             window_size=window_size,
-            border=border,
+            border=resolved_border,
             border_color=border_color,
             border_width=border_width,
             theme=theme,
