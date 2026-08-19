@@ -570,6 +570,15 @@ def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
     assert '<h2>Used In' in referenced  # same heading level as Examples' own <h2>, not <h3>
     assert 'href="index.html"' in referenced
 
+    # "See Also" is a real, hoisted section -- not a `.. seealso::` admonition -- and sits
+    # between Examples and Used In, not in numpydoc's own default position before Examples.
+    assert 'admonition seealso' not in referenced
+    assert '<h2>See Also' in referenced
+    examples_idx = referenced.index('<h2>Examples')
+    see_also_idx = referenced.index('<h2>See Also')
+    used_in_idx = referenced.index('<h2>Used In')
+    assert examples_idx < see_also_idx < used_in_idx
+
     unreferenced = (html_dir / 'hoist_unreferenced.html').read_text(encoding='utf-8')
     assert 'sphinx-autocodelink' not in unreferenced
     assert 'No references found' not in unreferenced

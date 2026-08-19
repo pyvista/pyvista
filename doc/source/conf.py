@@ -600,6 +600,8 @@ suppress_warnings = [
 import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
+from jinja2.sandbox import SandboxedEnvironment
+from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
@@ -653,6 +655,58 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+
+# -- "See Also" as a real section, not a `.. seealso::` admonition ------------
+# SphinxDocString's own _str_see_also always wraps the base rendering in
+# `.. seealso::`, which isn't a real docutils section: no heading, unlinkable,
+# invisible to the "on this page" navbar. The un-wrapped base rendering already
+# goes through self._str_header, so skipping the wrap turns it into a real
+# heading for free, the same way _str_header below already does for Notes,
+# References, and Examples.
+def _str_see_also(self, func_role):
+    return NumpyDocString._str_see_also(self, func_role)
+
+
+SphinxDocString._str_see_also = _str_see_also
+
+
+# -- docstring section order: Parameters, ..., Examples, See Also -------------
+# numpydoc's own template puts "See Also" right after the parameter-ish sections and
+# well before Notes/Examples. Move it to the very end instead -- sphinx-autocodelink's
+# "Used In" (appended after the whole docstring renders, via autodoc-process-docstring)
+# always lands after whatever numpydoc itself renders last, so this also puts "See
+# Also" directly before "Used In".  Identical to numpydoc's own template otherwise --
+# see numpydoc/templates/numpydoc_docstring.rst -- just with {{see_also}} moved down.
+_DOCSTRING_TEMPLATE = SandboxedEnvironment().from_string(
+    '{{index}}\n'
+    '{{summary}}\n'
+    '{{extended_summary}}\n'
+    '{{parameters}}\n'
+    '{{attributes}}\n'
+    '{{methods}}\n'
+    '{{returns}}\n'
+    '{{yields}}\n'
+    '{{receives}}\n'
+    '{{other_parameters}}\n'
+    '{{raises}}\n'
+    '{{warns}}\n'
+    '{{warnings}}\n'
+    '{{notes}}\n'
+    '{{references}}\n'
+    '{{examples}}\n'
+    '{{see_also}}\n'
+)
+
+_original_load_config = SphinxDocString.load_config
+
+
+def _load_config(self, config):
+    _original_load_config(self, config)
+    self.template = _DOCSTRING_TEMPLATE
+
+
+SphinxDocString.load_config = _load_config
 
 
 # -- headings instead of rubrics for docstring sections -----------------------

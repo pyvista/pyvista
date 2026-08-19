@@ -13,6 +13,8 @@ import sys
 from typing import TYPE_CHECKING
 
 from docutils import nodes
+from jinja2.sandbox import SandboxedEnvironment
+from numpydoc.docscrape import NumpyDocString
 from sphinx import addnodes
 
 import pyvista as pv
@@ -65,6 +67,54 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+
+# -- "See Also" as a real section, not a `.. seealso::` admonition ------------
+# Mirrors doc/source/conf.py's own override of the same name: SphinxDocString's own
+# _str_see_also always wraps the base rendering in `.. seealso::`, which isn't a real
+# docutils section. The un-wrapped base rendering already goes through self._str_header,
+# so skipping the wrap turns it into a real heading for free.
+def _str_see_also(self, func_role):
+    return NumpyDocString._str_see_also(self, func_role)
+
+
+SphinxDocString._str_see_also = _str_see_also
+
+
+# -- docstring section order: Parameters, ..., Examples, See Also -------------
+# Mirrors doc/source/conf.py's own override of the same name: moves "See Also" to the
+# very end, after "Examples" -- and so directly before sphinx-autocodelink's "Used In",
+# appended after the whole docstring renders. Identical to numpydoc's own template
+# otherwise, just with {{see_also}} moved down.
+_DOCSTRING_TEMPLATE = SandboxedEnvironment().from_string(
+    '{{index}}\n'
+    '{{summary}}\n'
+    '{{extended_summary}}\n'
+    '{{parameters}}\n'
+    '{{attributes}}\n'
+    '{{methods}}\n'
+    '{{returns}}\n'
+    '{{yields}}\n'
+    '{{receives}}\n'
+    '{{other_parameters}}\n'
+    '{{raises}}\n'
+    '{{warns}}\n'
+    '{{warnings}}\n'
+    '{{notes}}\n'
+    '{{references}}\n'
+    '{{examples}}\n'
+    '{{see_also}}\n'
+)
+
+_original_load_config = SphinxDocString.load_config
+
+
+def _load_config(self, config):
+    _original_load_config(self, config)
+    self.template = _DOCSTRING_TEMPLATE
+
+
+SphinxDocString.load_config = _load_config
 
 
 # -- headings instead of rubrics for docstring sections -----------------------

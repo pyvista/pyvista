@@ -127,12 +127,20 @@ def hoist_target():
 
     Has its own Examples section, so its injected "Used In" section lands
     right after numpydoc's own Examples section in the docstring -- the
-    exact position hoist_docstring_sections must still find it in.
+    exact position hoist_docstring_sections must still find it in. Also has
+    its own See Also section, testing that it renders as a real section (not
+    a ``.. seealso::`` admonition) hoisted to page level after Examples, not
+    in numpydoc's own default position before it.
 
     Examples
     --------
     >>> import pyvista as pv  # must import pyvista for the plotting directive to work
     >>> pv.Sphere()  # doctest: +SKIP
+
+    See Also
+    --------
+    call_hoist_target
+        Calls this function.
 
     """
     return
