@@ -171,6 +171,7 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
+  'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.6',
   { include-group = 'pinned' },
 ]
@@ -280,8 +281,8 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'check_gc: Enable the strict core leak check for this test (see tests/core/conftest.py).',
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
+  'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',

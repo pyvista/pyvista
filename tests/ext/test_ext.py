@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 
+import pyvista as pv
+from pyvista.ext import plot_directive
 from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
 
@@ -101,3 +107,40 @@ def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypat
     assert viewer_uri is None
     assert asset_uri is None
     assert 'is not under outdir/_images; cannot compute asset URI' in caplog.text
+
+
+def test_import_does_not_enable_gallery_mode():
+    """Importing the extension must not change how plotters behave process-wide.
+
+    ``BUILDING_GALLERY`` makes ``_ALL_PLOTTERS`` hold every plotter strongly rather
+    than through a weak proxy, so setting it here at import time meant that merely
+    importing this module -- which collecting this file does -- leaked a plotter for
+    every test that ran afterwards in the same session. A documentation build gets
+    the flag from :func:`~pyvista.ext.plot_directive.setup` instead.
+    """
+    code = (
+        'import pyvista as pv;'
+        'import pyvista.ext.plot_directive;'
+        'print(pv.BUILDING_GALLERY, pv.OFF_SCREEN)'
+    )
+    # A subprocess because this process imported the module long ago, and with the
+    # environment pinned because both flags also have an environment default.
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        capture_output=True,
+        text=True,
+        check=True,
+        env={**os.environ, 'PYVISTA_BUILDING_GALLERY': 'false', 'PYVISTA_OFF_SCREEN': 'false'},
+    )
+    assert result.stdout.split() == ['False', 'False']
+
+
+def test_setup_enables_gallery_mode(monkeypatch):
+    """Loading the extension is what turns gallery mode on."""
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', False)
+    monkeypatch.setattr(pv, 'OFF_SCREEN', False)
+
+    plot_directive.setup(MagicMock())
+
+    assert pv.BUILDING_GALLERY
+    assert pv.OFF_SCREEN

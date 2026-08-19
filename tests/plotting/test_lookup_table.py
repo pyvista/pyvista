@@ -275,10 +275,6 @@ def test_call_scalar(lut):
     assert lut(0.5) == lut.map_value(0.5)
 
 
-# apply_opacity leaves a vtkTypeUInt8Array pinned by an exported buffer
-# (array <- managedbuffer <- memoryview) whose holder is not gc-visible, so it
-# cannot be collected and there is no reference cycle here for us to break.
-@pytest.mark.skip_check_gc
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')

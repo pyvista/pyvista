@@ -6,6 +6,8 @@
 
 <!-- If this fully addresses an issue, please use the keyword `resolves` in front of that issue number. -->
 
+<!-- If an AI tool wrote any part of this pull request, including this description, say so here in your own words. -->
+
 ### Details
 
 - < feature1 or bug1 description >
