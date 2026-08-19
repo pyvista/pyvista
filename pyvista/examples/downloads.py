@@ -667,12 +667,6 @@ def download_bunny(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
 
-        This dataset is used in the following examples:
-
-        * :ref:`read_file_example`
-        * :ref:`clip_with_surface_example`
-        * :ref:`subdivide_example`
-
     """
     return _download_dataset(_dataset_bunny, load=load)
 
@@ -720,10 +714,6 @@ def download_bunny_coarse(load: bool = True) -> PolyData | str:  # noqa: FBT001,
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Bunny Dataset <bunny_dataset>`
-
-        This dataset is used in the following examples:
-
-        * :ref:`clip_with_surface_example`
 
     """
     return _download_dataset(_dataset_bunny_coarse, load=load)
@@ -1232,11 +1222,6 @@ def download_knee(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Knee Full Dataset <knee_full_dataset>`
-
-        This dataset is used in the following examples:
-
-        * :ref:`volume_rendering_example`
-        * :ref:`slider_bar_widget_example`
 
     """
     return _download_dataset(_dataset_knee, load=load)
@@ -8805,6 +8790,9 @@ def download_whole_body_ct_female(
     >>> pl.show()
 
     .. seealso::
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
 
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             See this dataset in the Dataset Gallery for more info.

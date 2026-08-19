@@ -8,9 +8,8 @@ from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 from conftest import BUILD_HTML_DIR
+from conftest import PYVISTA_ROOT_DIR
 import pytest
-
-ROOT_DIR = Path(__file__).parent.parent.parent.parent
 
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
@@ -64,7 +63,7 @@ def test_sphinx_gallery_execution_times(testcase):
 # "Used In" backreferences -- `autocodelink_autodoc_backrefs` -- generated dynamically
 # at build time, so it can't be checked statically like the other direction can).
 
-EXAMPLES_SRC_DIR = ROOT_DIR / 'examples'
+EXAMPLES_SRC_DIR = PYVISTA_ROOT_DIR / 'examples'
 
 _CROSSREF_RE = re.compile(r':(meth|func|class|mod|attr|exc|data|ref|obj):`[^`]+`')
 _ANCHOR_RE = re.compile(r'^\s*\.\.\s+_(.+?):\s*$', re.MULTILINE)
@@ -98,7 +97,7 @@ def generate_example_cases() -> list[_ExampleCase]:
         has_crossref_to_api, anchor = analyze_example_file(file_path)
         cases.append(
             _ExampleCase(
-                test_id=str(file_path.relative_to(ROOT_DIR)),
+                test_id=str(file_path.relative_to(PYVISTA_ROOT_DIR)),
                 file_path=file_path,
                 has_crossref_to_api=has_crossref_to_api,
                 anchor=anchor,
@@ -117,7 +116,7 @@ def example_html_page(file_path: Path) -> Path:
     ``gallery_dirs: ['examples']`` in ``conf.py`` mirrors the source ``examples/`` dir
     under the same name in the built output, so that path segment is kept, not stripped.
     """
-    return Path(BUILD_HTML_DIR) / file_path.relative_to(ROOT_DIR).with_suffix('.html')
+    return Path(BUILD_HTML_DIR) / file_path.relative_to(PYVISTA_ROOT_DIR).with_suffix('.html')
 
 
 def load_backref_target_names() -> set[str]:

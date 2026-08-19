@@ -1586,7 +1586,6 @@ class DataObjectFilters:
         :meth:`~pyvista.DataObjectFilters.validate_mesh`
         :meth:`~pyvista.DataObjectFilters.cell_quality`
         :ref:`mesh_validation_example`
-        :meth:`~pyvista.DataObjectFilters.cell_quality`
 
         Examples
         --------

@@ -3287,8 +3287,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
-        See :ref:`resampling_example` for more examples using this filter.
-
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types
@@ -7294,8 +7292,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             coloring.
 
         :ref:`anatomical_groups_example`
-            Calls this filter on a subscripted access (``dataset['label_map']``), which
-            sphinx-autocodelink's "Used In" can't yet resolve on its own.
+            Additional examples using this filter.
 
         Parameters
         ----------

@@ -2560,8 +2560,7 @@ class ImageDataFilters(DataSetFilters):
             Color labeled data, e.g. labeled volumes or contours.
 
         :ref:`anatomical_groups_example`
-            Calls this filter on a subscripted access (``dataset['label_map']``), which
-            sphinx-autocodelink's "Used In" can't yet resolve on its own.
+            Additional examples using this filter.
 
         References
         ----------

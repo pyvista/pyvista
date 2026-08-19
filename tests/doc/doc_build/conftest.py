@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-_root_dir = Path(__file__).parent.parent.parent.parent
-BUILD_HTML_DIR = str(_root_dir / 'doc' / '_build' / 'html')
+PYVISTA_ROOT_DIR = Path(__file__).parent.parent.parent.parent
+BUILD_HTML_DIR = str(PYVISTA_ROOT_DIR / 'doc' / '_build' / 'html')
 
 _THIS_DIR = Path(__file__).parent
 
