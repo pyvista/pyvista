@@ -138,9 +138,16 @@ original author to relicense the code.
 Generative AI
 -------------
 
-We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_.
+We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_,
+with one difference: disclosure is required here, where the guide only appreciates it.
 The resulting contribution is the responsibility of the contributor, and we value good code,
 concise accurate documentation, and avoiding unneeded code churn.
+
+If an AI tool wrote any part of a pull request -- code, tests, documentation, or the
+description itself -- say so in the description. Write that sentence yourself: it states
+that you reviewed the change and can explain it, which no tool can attest to on your
+behalf. One clause naming the tool and what it did is enough, in the form merged
+descriptions already use, e.g. ``Changes drafted by Claude Opus 5 but fully understood by me``.
 
 That responsibility covers what the contribution costs us to review and to test.
 If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
@@ -682,6 +689,12 @@ changes any given branch is introducing before looking at the code.
 -  ``testing/``: improvements or changes to testing
 -  ``release/``: releases (see below)
 -  ``breaking-change/``: Changes that break backward compatibility
+
+A prefix is unusable on a remote that already has a branch named exactly that, since
+Git cannot store a ref as both a file and a directory: pushing ``doc/my-change`` to a
+fork that still has an old ``doc`` branch is rejected with ``directory file conflict``.
+Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
+either use another prefix or delete the stale branch.
 
 Testing
 ^^^^^^^

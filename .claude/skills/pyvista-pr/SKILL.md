@@ -93,13 +93,17 @@ verification matters, it fits in a clause.
 
 ## Disclosing AI assistance
 
-The `Generative AI` section of `CONTRIBUTING.rst` adopts the Python Developer's Guide
-[policy on AI tools](https://devguide.python.org/getting-started/ai-tools/): disclosure in
-the pull request description is appreciated and not required, and the person opening the
-pull request owns everything in it. When disclosing, use one inline clause naming what the tool did and confirming the
-author understood it, in the form merged descriptions already use:
+The `Generative AI` section of `CONTRIBUTING.rst` requires disclosure, unlike the Python
+Developer's Guide [policy on AI tools](https://devguide.python.org/getting-started/ai-tools/)
+it otherwise follows: a pull request you helped write says so in its description. Use one
+inline clause naming what the tool did and confirming the author understood it, in the form
+merged descriptions already use:
 
 > Changes drafted by Claude Opus 5 but fully understood by me
+
+The second half of that clause is the author's statement, not yours. Put it in the draft so
+the sentence is complete, and say plainly that it is theirs to confirm, reword, or drop —
+you cannot attest that someone else reviewed the change.
 
 No banner, no badge, no separate heading, no generated-with footer. Put it in the
 description rather than only in a commit trailer, because the description is what a
@@ -124,16 +128,20 @@ pull request over.
 
 ## Before opening
 
-1. Draft the title and body.
-2. If the body is longer than the diff deserves and carries no screenshots, cut rather
+1. Check the branch name against `Branch Naming Conventions` in `CONTRIBUTING.rst`, and
+   that the prefix is not itself a branch on the remote (`git ls-remote --heads origin
+refs/heads/doc`) -- pushing `doc/x` to a fork that has a `doc` branch is rejected with
+   `directory file conflict`.
+2. Draft the title and body.
+3. If the body is longer than the diff deserves and carries no screenshots, cut rather
    than restructure.
-3. Confirm every paragraph is a single unbroken line.
-4. Strip anything that reads as generated: section scaffolding, bold labels, hedged
+4. Confirm every paragraph is a single unbroken line.
+5. Strip anything that reads as generated: section scaffolding, bold labels, hedged
    summary sentences, rule-of-three lists.
-5. Add `Resolves #NNNN` when the change fully closes an issue.
-6. Confirm the local gates pass. Continuous integration runs on `pull_request`, so a red
+6. Add `Resolves #NNNN` when the change fully closes an issue.
+7. Confirm the local gates pass. Continuous integration runs on `pull_request`, so a red
    pull request costs the whole matrix.
-7. Open as a draft unless the change is ready for review.
+8. Open as a draft unless the change is ready for review.
 
 ## Example
 
