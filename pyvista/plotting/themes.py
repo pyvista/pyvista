@@ -3663,12 +3663,16 @@ class _TestingTheme(Theme):
     Resampling is also enabled for environment textures since this
     can be very slow without a GPU.
 
+    Notebook mode is pinned off rather than detected, so that a test plots the same
+    way wherever it runs.
+
     """
 
     _default_name: ClassVar[str] = 'testing'
 
     def __init__(self):
         super().__init__()
+        self.notebook = False
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.border_color = 'black'
