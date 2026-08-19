@@ -138,6 +138,21 @@ def _is_nested_desc(node: Element) -> bool:
     return False
 
 
+def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Turn a literal ``.. seealso::`` admonition in a docstring into a real section.
+
+    Mirrors doc/source/conf.py's own copy of this function -- see there for why.
+    """
+    for admonition in list(doctree.findall(addnodes.seealso)):
+        if not _is_nested_desc(admonition):
+            continue
+        section = nodes.section()
+        section += nodes.title(text='See Also')
+        section.extend(admonition.children)
+        doctree.note_implicit_target(section, section)
+        admonition.replace_self(section)
+
+
 def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
     """Move docstring sections out of their ``desc`` node to page level.
 
@@ -164,5 +179,7 @@ def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: AR
 
 def setup(app: Sphinx) -> None:
     """Wire up the same doctree-read priority ordering as doc/source/conf.py."""
-    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc, and
+    # before priority 400 so hoist_docstring_sections below sees the promoted sections
+    app.connect('doctree-read', promote_seealso_admonitions, priority=300)
     app.connect('doctree-read', hoist_docstring_sections, priority=400)

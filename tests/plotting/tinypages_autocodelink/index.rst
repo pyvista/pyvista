@@ -28,6 +28,8 @@ Dynamic Autolink Testing
 
 .. autofunction:: call_hoist_target
 
+.. autofunction:: call_raw_seealso_target
+
 .. currentmodule:: autocodelink_samples.sub
 
 .. autofunction:: make

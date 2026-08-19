@@ -583,6 +583,16 @@ def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
     assert 'sphinx-autocodelink' not in unreferenced
     assert 'No references found' not in unreferenced
 
+    # A literal `.. seealso::` written directly in a docstring's Examples text (as in
+    # pyvista.examples.downloads) must be promoted to a real section the same way.
+    raw_seealso = (html_dir / 'raw_seealso_referenced.html').read_text(encoding='utf-8')
+    assert 'admonition seealso' not in raw_seealso
+    assert '<h2>See Also' in raw_seealso
+    raw_examples_idx = raw_seealso.index('<h2>Examples')
+    raw_see_also_idx = raw_seealso.index('<h2>See Also')
+    raw_used_in_idx = raw_seealso.index('<h2>Used In')
+    assert raw_examples_idx < raw_see_also_idx < raw_used_in_idx
+
 
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):

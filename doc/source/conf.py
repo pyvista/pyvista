@@ -737,6 +737,26 @@ def _is_nested_desc(node: Element) -> bool:
     return False
 
 
+def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Turn a literal ``.. seealso::`` admonition in a docstring into a real section.
+
+    Some docstrings (e.g. ``pyvista.examples.downloads``) write ``.. seealso::``
+    directly rather than using numpydoc's own "See Also" section syntax. Left as
+    an admonition it has no heading, isn't linkable, and is invisible to the "on
+    this page" navbar -- the same problem fixed above for numpydoc's own "See
+    Also" section by not wrapping it in one. Converting it to a section here lets
+    hoist_docstring_sections below lift it to page level the same way.
+    """
+    for admonition in list(doctree.findall(addnodes.seealso)):
+        if not _is_nested_desc(admonition):
+            continue
+        section = nodes.section()
+        section += nodes.title(text='See Also')
+        section.extend(admonition.children)
+        doctree.note_implicit_target(section, section)
+        admonition.replace_self(section)
+
+
 def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
     """Move docstring sections out of their ``desc`` node to page level.
 
@@ -1037,7 +1057,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
 
-    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc, and
+    # before priority 400 so hoist_docstring_sections below sees the promoted sections
+    app.connect('doctree-read', promote_seealso_admonitions, priority=300)
     app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders

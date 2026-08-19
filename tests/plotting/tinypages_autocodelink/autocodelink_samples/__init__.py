@@ -157,3 +157,38 @@ def call_hoist_target():
 
     """
     return
+
+
+def raw_seealso_target():
+    """Referenced by :func:`call_raw_seealso_target`.
+
+    Mirrors ``pyvista.examples.downloads``: a literal ``.. seealso::``
+    admonition written directly in the Examples text, rather than numpydoc's
+    own "See Also" section syntax. Tests that it too gets promoted to a real,
+    hoisted section, landing after Examples and before Used In.
+
+    Examples
+    --------
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
+    >>> pv.Sphere()  # doctest: +SKIP
+
+    .. seealso::
+
+        :func:`hoist_target`
+            A different way to link to another function.
+
+    """
+    return
+
+
+def call_raw_seealso_target():
+    """Call ``raw_seealso_target``, giving it a non-empty backreferences section.
+
+    Examples
+    --------
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
+    >>> from autocodelink_samples import raw_seealso_target
+    >>> raw_seealso_target()
+
+    """
+    return
