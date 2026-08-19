@@ -17,6 +17,22 @@ from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
 
 
+@pytest.fixture(autouse=True)
+def _restore_gallery_globals(monkeypatch):
+    """Put back the globals ``plot_directive.setup`` sets.
+
+    Loading the extension is what turns gallery mode on -- see
+    ``test_setup_enables_gallery_mode`` -- and every ``setup`` call in this module makes
+    that happen in-process, so without this the flag stays on for every test after it in
+    the worker. With it on, ``BasePlotter.show`` exports a vtksz through trame, which
+    launches the process-lifetime ``pyvista-jupyter`` server and leaves a
+    ``vtkWebApplication`` behind for the leak check to blame on an unrelated test
+    (pyvista/pyvista#8929, reported against ``test_command_glob[shell-plot]``).
+    """
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', pv.BUILDING_GALLERY)
+    monkeypatch.setattr(pv, 'OFF_SCREEN', pv.OFF_SCREEN)
+
+
 def test_hash_plot_code_consistency():
     code = 'import matplotlib.pyplot as plt\nplt.plot([1, 2, 3])'
     options = {}
