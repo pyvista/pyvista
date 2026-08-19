@@ -545,10 +545,18 @@ def test_extract_all_edges_no_data():
     assert edges.n_arrays == 0
 
 
-def test_extract_all_edges_composite(multiblock_all):
+def test_extract_all_edges_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.extract_all_edges(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.extract_all_edges(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_extract_all_edges_composite_pointset_raises(multiblock_all):
+    # extract_all_edges hands the whole composite to the underlying VTK
+    # algorithm; on some VTK versions this segfaults instead of raising if a
+    # block is a cell-less PointSet, so PyVista guards against it explicitly.
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.extract_all_edges(progress_bar=True)
 
 
 def test_elevation(uniform):
@@ -592,6 +600,12 @@ def test_elevation(uniform):
 
 def test_elevation_composite(multiblock_all):
     # Now test composite data structures
+    if pv.vtk_version_info < (9, 4):
+        # VTK bug: computing elevation on a MultiBlock containing a PointSet
+        # segfaults the interpreter on VTK < 9.4, so PyVista raises instead.
+        with pytest.raises(pv.PointSetNotSupported):
+            multiblock_all.elevation(progress_bar=True)
+        return
     output = multiblock_all.elevation(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
 
@@ -650,10 +664,18 @@ def test_compute_cell_sizes_multiblock_vertex_count(empty):
         assert 'VertexCount' in poly.array_names
 
 
-def test_compute_cell_sizes_composite(multiblock_all):
+def test_compute_cell_sizes_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.compute_cell_sizes(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.compute_cell_sizes(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_compute_cell_sizes_composite_pointset_raises(multiblock_all):
+    # compute_cell_sizes hands the whole composite to the underlying VTK
+    # algorithm; on some VTK versions this segfaults instead of raising if a
+    # block is a cell-less PointSet, so PyVista guards against it explicitly.
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.compute_cell_sizes(progress_bar=True)
 
 
 def test_cell_centers(datasets):

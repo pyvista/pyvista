@@ -4158,6 +4158,7 @@ class DataObjectFilters:
                 PyVistaDeprecationWarning,
             )
 
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
         # Always use all points since VTK >= 9.2 is required
@@ -4458,6 +4459,17 @@ class DataObjectFilters:
         else:
             scalar_range_ = _validation.validate_data_range(scalar_range)
 
+        if pv.vtk_version_info < (9, 4) and _composite_has_pointset(self):
+            # vtkElevationFilter's composite dispatch segfaults on VTK 9.3 when
+            # a block is a cell-less PointSet, even though elevation is
+            # otherwise perfectly valid on a standalone PointSet. Raise instead
+            # of taking down the interpreter; this is fixed by VTK 9.4.
+            msg = (
+                'Cannot compute elevation for a MultiBlock containing a PointSet '
+                'on VTK < 9.4 due to a VTK bug that crashes the interpreter.'
+            )
+            raise pv.core.errors.PointSetNotSupported(msg)
+
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
@@ -4570,6 +4582,7 @@ class DataObjectFilters:
                 ensure_arrays_if_empty(out)
             return out
 
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
@@ -5275,21 +5288,30 @@ class DataObjectFilters:
         return output
 
 
-def _raise_if_composite_has_pointset(dataset: DataSet | MultiBlock) -> None:
+def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:
+    """Return ``True`` if a MultiBlock (recursively) contains a PointSet block."""
+    return isinstance(dataset, pv.MultiBlock) and any(
+        isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
+    )
+
+
+def _raise_if_composite_has_pointset(
+    dataset: DataSet | MultiBlock,
+    error: type[Exception] | None = None,
+) -> None:
     """Raise if a MultiBlock (recursively) contains a PointSet block.
 
-    ``cell_data_to_point_data`` and ``point_data_to_cell_data`` hand a
-    MultiBlock straight to the underlying :vtk:`vtkAlgorithm`, relying on
-    VTK's own composite-dataset dispatch rather than iterating blocks in
-    Python. On some VTK versions, running these filters on a composite
-    containing a cell-less PointSet block segfaults instead of raising, so
-    guard against it here before ever reaching the algorithm.
+    Several filters (``cell_data_to_point_data``, ``point_data_to_cell_data``,
+    ``extract_all_edges``, ``compute_cell_sizes``) hand a MultiBlock straight
+    to the underlying :vtk:`vtkAlgorithm`, relying on VTK's own
+    composite-dataset dispatch rather than iterating blocks in Python. On
+    some VTK versions, running these filters on a composite containing a
+    cell-less PointSet block segfaults instead of raising, so guard against
+    it here before ever reaching the algorithm.
     """
-    if isinstance(dataset, pv.MultiBlock) and any(
-        isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
-    ):
-        msg = 'PointSets contain no cells or cell data.'
-        raise pv.core.errors.PointSetNotSupported(msg)
+    if _composite_has_pointset(dataset):
+        error_type = error or pv.core.errors.PointSetNotSupported
+        raise error_type()
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
