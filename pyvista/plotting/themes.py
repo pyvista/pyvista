@@ -1801,7 +1801,6 @@ class Theme(_ConfigBase):
         '_slider_styles',
         '_smooth_shading',
         '_split_sharp_edges',
-        '_subplot_seams',
         '_title',
         '_trame',
         '_transparent_background',
@@ -1832,7 +1831,6 @@ class Theme(_ConfigBase):
         self._outline_color = Color('white')
         self._border_color = Color('gray')
         self._border_width = 1.0
-        self._subplot_seams = True
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
@@ -2540,12 +2538,9 @@ class Theme(_ConfigBase):
         .. versionadded:: 0.49
 
         This is the color of the frame drawn around the outer edge of
-        the plotting area when a ``Plotter`` is constructed with
-        ``border=True``, and/or of the line(s) drawn between subplots
-        when a plotter has more than one renderer and
-        ``subplot_seams=True`` (the default for multi-subplot
-        layouts). Used whenever no explicit ``border_color`` is
-        provided.
+        the plotting area, of the line(s) drawn between subplots, or
+        both -- whichever ``border`` is set to draw. Used whenever no
+        explicit ``border_color`` is provided.
 
         Examples
         --------
@@ -2563,8 +2558,8 @@ class Theme(_ConfigBase):
     def border_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default border/subplot seam width in pixels.
 
-        Used when a ``Plotter`` is constructed with ``border=True``
-        or ``subplot_seams=True`` and no explicit ``border_width`` is
+        Used when a ``Plotter`` is constructed with ``border`` set to
+        draw either or both, and no explicit ``border_width`` is
         provided.
 
         Examples
@@ -2578,29 +2573,6 @@ class Theme(_ConfigBase):
     @border_width.setter
     def border_width(self, border_width: float):
         self._border_width = float(border_width)
-
-    @property
-    def subplot_seams(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set whether to draw a line between neighboring subplots by default.
-
-        .. versionadded:: 0.49
-
-        Used when a ``Plotter`` has more than one subplot and no
-        explicit ``subplot_seams`` is provided. Has no effect on a
-        single-subplot ``Plotter``, since there are no neighbors to
-        separate.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pv.global_theme.subplot_seams = False
-
-        """
-        return self._subplot_seams
-
-    @subplot_seams.setter
-    def subplot_seams(self, subplot_seams: bool):
-        self._subplot_seams = bool(subplot_seams)
 
     @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
@@ -3188,7 +3160,6 @@ class Theme(_ConfigBase):
             'Edge color': 'edge_color',
             'Border color': 'border_color',
             'Border width': 'border_width',
-            'Subplot seams': 'subplot_seams',
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',

@@ -135,6 +135,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BackfaceArgs
+    from pyvista.plotting._typing import BorderOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
@@ -304,15 +305,22 @@ class BasePlotter(_BoundsSizeMixin):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, default: False
-        Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots, regardless of ``shape``.
+    border : bool | 'interior' | 'exterior', optional
+        Draw a border around the plotting area. ``True`` draws both
+        an outer frame and lines between subplots; ``False`` draws
+        neither. ``'interior'`` draws only the lines between
+        subplots, and ``'exterior'`` only the outer frame. For a
+        single subplot, there are no neighbors to separate, so
+        ``'interior'`` has no effect and ``'exterior'`` draws the
+        same thing as ``True``. Defaults to ``False`` for a single
+        subplot and ``'interior'`` for more than one.
 
         .. versionchanged:: 0.49
 
-            Now draws a single frame around the whole plotting area,
-            rather than a frame around each subplot individually. Use
-            ``subplot_seams`` for lines between subplots instead.
+            Previously a plain ``bool`` that, when ``True``, drew a
+            border around every individual subplot rather than the
+            plotting area as a whole, and defaulted to ``True`` for
+            more than one subplot.
 
     border_color : ColorLike, optional
         Color of the border and/or subplot seams. Defaults to
@@ -329,13 +337,6 @@ class BasePlotter(_BoundsSizeMixin):
         Width of the border and/or subplot seams in pixels, when
         enabled. Defaults to :attr:`pyvista.global_theme.border_width
         <pyvista.plotting.themes.Theme.border_width>`.
-
-    subplot_seams : bool, optional
-        Draw a thin line between neighboring subplots. Defaults to
-        :attr:`pyvista.global_theme.subplot_seams
-        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
-        for a single subplot, since there are no neighbors to
-        separate.
 
     title : str, optional
         Window title.
@@ -389,10 +390,9 @@ class BasePlotter(_BoundsSizeMixin):
     def __init__(  # noqa: PLR0917
         self,
         shape: Sequence[int] | str = (1, 1),
-        border: bool | None = None,  # noqa: FBT001
+        border: bool | BorderOptions | None = None,  # noqa: FBT001
         border_color: ColorLike | None = None,
         border_width: float | None = None,
-        subplot_seams: bool | None = None,  # noqa: FBT001
         title: str | None = None,
         splitting_position: float | None = None,
         groups: Sequence[int] | None = None,
@@ -450,8 +450,6 @@ class BasePlotter(_BoundsSizeMixin):
             border_color = self._theme.border_color
         if border_width is None:
             border_width = self._theme.border_width
-        if subplot_seams is None:
-            subplot_seams = self._theme.subplot_seams
 
         # add renderers
         self.renderers = Renderers(
@@ -464,7 +462,6 @@ class BasePlotter(_BoundsSizeMixin):
             border=border,
             border_color=border_color,
             border_width=border_width,
-            subplot_seams=subplot_seams,
         )
 
         # track if the camera has been set up
@@ -8061,15 +8058,22 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, default: False
-        Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots, regardless of ``shape``.
+    border : bool | 'interior' | 'exterior', optional
+        Draw a border around the plotting area. ``True`` draws both
+        an outer frame and lines between subplots; ``False`` draws
+        neither. ``'interior'`` draws only the lines between
+        subplots, and ``'exterior'`` only the outer frame. For a
+        single subplot, there are no neighbors to separate, so
+        ``'interior'`` has no effect and ``'exterior'`` draws the
+        same thing as ``True``. Defaults to ``False`` for a single
+        subplot and ``'interior'`` for more than one.
 
         .. versionchanged:: 0.49
 
-            Now draws a single frame around the whole plotting area,
-            rather than a frame around each subplot individually. Use
-            ``subplot_seams`` for lines between subplots instead.
+            Previously a plain ``bool`` that, when ``True``, drew a
+            border around every individual subplot rather than the
+            plotting area as a whole, and defaulted to ``True`` for
+            more than one subplot.
 
     border_color : ColorLike, optional
         Color of the border and/or subplot seams. Defaults to
@@ -8086,13 +8090,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Width of the border and/or subplot seams in pixels, when
         enabled. Defaults to :attr:`pyvista.global_theme.border_width
         <pyvista.plotting.themes.Theme.border_width>`.
-
-    subplot_seams : bool, optional
-        Draw a thin line between neighboring subplots. Defaults to
-        :attr:`pyvista.global_theme.subplot_seams
-        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
-        for a single subplot, since there are no neighbors to
-        separate.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
@@ -8155,10 +8152,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         groups: Sequence[int] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
-        border: bool | None = None,  # noqa: FBT001
+        border: bool | BorderOptions | None = None,  # noqa: FBT001
         border_color: ColorLike | None = None,
         border_width: float | None = None,
-        subplot_seams: bool | None = None,  # noqa: FBT001
         window_size: list[int] | None = None,
         line_smoothing: bool = False,  # noqa: FBT001, FBT002
         point_smoothing: bool = False,  # noqa: FBT001, FBT002
@@ -8176,7 +8172,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             border=border,
             border_color=border_color,
             border_width=border_width,
-            subplot_seams=subplot_seams,
             groups=groups,
             row_weights=row_weights,
             col_weights=col_weights,

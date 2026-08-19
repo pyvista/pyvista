@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from pyvista import PartitionedDataSet
     from pyvista import Plotter
     from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting._typing import BorderOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
@@ -473,10 +474,9 @@ def plot_compare(  # noqa: ANN201
     off_screen: bool | None = None,
     notebook: bool | None = None,
     window_size: list[int] | None = None,
-    border: bool | None = None,
+    border: bool | BorderOptions | None = None,
     border_color: ColorLike | None = None,
     border_width: float | None = None,
-    subplot_seams: bool | None = None,
     theme: Theme | ThemeOptions | str | None = None,
     screenshot: str | bool | None = None,
     full_screen: bool | None = None,
@@ -667,9 +667,12 @@ def plot_compare(  # noqa: ANN201
     window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
 
-    border : bool, default: False
-        Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots, regardless of ``shape``.
+    border : bool | 'interior' | 'exterior', optional
+        Draw a border around the plotting area. ``True`` draws both
+        an outer frame and lines between subplots; ``False`` draws
+        neither. ``'interior'`` draws only the lines between
+        subplots, and ``'exterior'`` only the outer frame. Defaults
+        to ``'interior'``.
 
     border_color : ColorLike, optional
         Color of the border and/or subplot seams. Defaults to
@@ -686,11 +689,6 @@ def plot_compare(  # noqa: ANN201
         Width of the border and/or subplot seams in pixels, when
         enabled. Defaults to :attr:`pyvista.global_theme.border_width
         <pyvista.plotting.themes.Theme.border_width>`.
-
-    subplot_seams : bool, optional
-        Draw a thin line between neighboring subplots. Defaults to
-        :attr:`pyvista.global_theme.subplot_seams
-        <pyvista.plotting.themes.Theme.subplot_seams>`.
 
     theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme. Accepts a ``Theme`` instance or a registered
@@ -813,7 +811,8 @@ def plot_compare(  # noqa: ANN201
     ...     normalize=True,
     ... )
 
-    Draw a border around each subplot to tell them apart.
+    Add a border around the whole comparison, on top of the lines already
+    separating the subplots by default.
 
     >>> pv.plot_compare(blocks, border=True, border_color='grey')
 
@@ -880,7 +879,6 @@ def plot_compare(  # noqa: ANN201
         border_color=border_color,
         border_width=border_width,
         theme=theme,
-        subplot_seams=subplot_seams,
     )
 
     n_subplots = len(pl.renderers)
