@@ -186,8 +186,6 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-# must enable BUILDING_GALLERY to keep windows active
-# enable offscreen to hide figures when generating them.
 import pyvista as pv
 
 try:
@@ -204,9 +202,6 @@ if TYPE_CHECKING:
     from sphinx.config import Config
     from sphinx.environment import BuildEnvironment
 
-
-pv.BUILDING_GALLERY = True
-pv.OFF_SCREEN = True
 
 # CSS class marking the ``.. container::`` node that wraps this directive's generated source code
 _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
@@ -279,7 +274,19 @@ class PlotDirective(Directive):
 
 
 def setup(app: Sphinx):
-    """Set up the plot directive."""
+    """Set up the plot directive.
+
+    Sphinx calls this when it loads the extension, which is where the two globals
+    below belong: setting them at import time made merely importing this module
+    change how plotters behave for the rest of the process. ``BUILDING_GALLERY``
+    keeps render windows active (and holds each plotter strongly rather than
+    through a weak proxy), and ``OFF_SCREEN`` hides the figures while they are
+    generated -- both wanted for a documentation build, both surprising anywhere
+    else.
+    """
+    pv.BUILDING_GALLERY = True
+    pv.OFF_SCREEN = True
+
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir

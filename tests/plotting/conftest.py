@@ -84,6 +84,7 @@ def check_gc(request):
         request.node,
         (pv.plotting.plotter.BasePlotter, _vtk.vtkObjectBase),
         'VTK/plotter',
+        owner=__name__,
     )
     yield
 
@@ -100,9 +101,7 @@ def pytest_runtest_teardown(item):
     # plotter open leaves a render window open for every test after it, whether or not
     # this run is checking for leaks.
     pv.close_all()
-    # flush_ghosts: plotter teardown leaves stale ghosts behind, so a leak that a ghost
-    # sweep clears is deferred bookkeeping rather than a real one (unlike tests/core)
-    assert_no_leaks(item, flush_ghosts=True)
+    assert_no_leaks(item, owner=__name__, flush_ghosts=True)
 
 
 @pytest.fixture

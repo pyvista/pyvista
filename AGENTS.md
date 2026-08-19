@@ -26,10 +26,16 @@ them is Claude-specific.
 **Do not use CI as your test runner.** Every push to an open pull request starts the unit
 test matrix on three operating systems and five Python versions, a separate VTK matrix,
 the documentation build, and the integration tests. You have a shell and the same `make`
-targets CI runs, so run them: `make lint`, then `make test-core` or `make test-plotting`
-scoped to what you touched, plus `make doctest` for a changed docstring example. Amend or
-squash locally and push once. `CONTRIBUTING.rst` states this as
-`Continuous Integration Etiquette`.
+targets CI runs, so run them: `make lint`, `make docstyle`, `make doctest`, and
+`make test-core` or `make test-plotting` scoped to what you touched. Run the style and
+docstring gates before you call a change finished, not only when the diff looks related
+to them: `make doctest` executes every docstring example in the package, so a change to
+import-time behavior or to a plotting default fails it with no docstring in the diff.
+Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
+`Continuous Integration Etiquette`. Some jobs run only when a label asks for them
+(`vtk-dev-testing`, `vtk-master-testing`, `integration-testing`, `docker`) -- see
+`.claude/skills/pyvista-pr/SKILL.md` for which to suggest, and say so when you hand the
+change over, since a label applied after the last push does nothing until the next one.
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
 means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk`
@@ -64,6 +70,9 @@ baseline the run collected.
 
 ## Disclosing agent use
 
-`CONTRIBUTING.rst` follows the Python Developer's Guide: disclosure in the pull request
-description is appreciated and not required, and whoever opens the pull request is
-responsible for its content and for what each push costs the project.
+`CONTRIBUTING.rst` requires it: when you write any part of a pull request, its
+description has to say so. Draft that clause along with the rest of the description, and
+hand it to the author to confirm or reword — it is their statement that they reviewed the
+change and can explain it, so never write it as though you were them and never assert on
+their behalf that they understood it. Whoever opens the pull request is responsible for
+its content and for what each push costs the project.

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import gc
 import re
-from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -42,12 +41,29 @@ def test_copies_are_not_associated():
     assert not np.shares_memory(points, points_2)
 
 
+class _CallCounter:
+    """Count observer calls, without recording who made them.
+
+    Not ``unittest.mock.Mock``: a mock keeps every call's arguments, one of which is
+    the VTK object the observer is attached to. That cycle runs through a VTK wrapper,
+    which the collector can neither traverse nor clear, so the object it observes is
+    leaked for the life of the process. The same cycle between two ordinary Python
+    objects is collected.
+    """
+
+    def __init__(self) -> None:
+        self.call_count = 0
+
+    def __call__(self, *args) -> None:  # noqa: ARG002
+        self.call_count += 1
+
+
 def test_modifying_modifies_dataset():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
 
-    dataset_modified = Mock()
-    array_modified = Mock()
+    dataset_modified = _CallCounter()
+    array_modified = _CallCounter()
     dataset.AddObserver(_vtk.vtkCommand.ModifiedEvent, dataset_modified)
     points.AddObserver(_vtk.vtkCommand.ModifiedEvent, array_modified)
 
