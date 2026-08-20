@@ -40,7 +40,6 @@ extensions = [
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
     'sphinx.ext.autosummary',
-    'sphinx_codeautolink',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxext.opengraph',

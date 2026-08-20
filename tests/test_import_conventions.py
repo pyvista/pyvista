@@ -10,17 +10,18 @@ every stdlib module the repository actually imports.
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 import re
 import sys
 from typing import TYPE_CHECKING
 
 import pytest
 
+from tests.conftest import PYVISTA_ROOT_DIR
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
-REPO_ROOT = Path(__file__).parent.parent
 SOURCE_DIRS = ('pyvista', 'tests', 'doc', 'examples')
 SKIP_PARTS = {'build', 'dist', '_build', '__pycache__', '.git'}
 
@@ -35,7 +36,7 @@ WAIVED = {
 
 def _iter_source_files() -> Iterator[Path]:
     for directory in SOURCE_DIRS:
-        for path in sorted((REPO_ROOT / directory).rglob('*.py')):
+        for path in sorted((PYVISTA_ROOT_DIR / directory).rglob('*.py')):
             if not SKIP_PARTS.isdisjoint(path.parts):
                 continue
             yield path
@@ -47,7 +48,7 @@ def _namespace_modules() -> set[str]:
         pytest.skip('tomllib requires Python 3.11+')
     import tomllib
 
-    with (REPO_ROOT / 'pyproject.toml').open('rb') as file:
+    with (PYVISTA_ROOT_DIR / 'pyproject.toml').open('rb') as file:
         config = tomllib.load(file)
     conventions = config['tool']['ruff']['lint']['flake8-import-conventions']
     return set(conventions['banned-from'])
@@ -55,7 +56,7 @@ def _namespace_modules() -> set[str]:
 
 def _member_modules() -> set[str]:
     """Modules the pygrep hook requires to be member-imported."""
-    text = (REPO_ROOT / '.pre-commit-config.yaml').read_text(encoding='utf-8')
+    text = (PYVISTA_ROOT_DIR / '.pre-commit-config.yaml').read_text(encoding='utf-8')
     hook = re.search(
         r'- id: namespace-stdlib-imports\b.*?^\s*entry: \'(?P<entry>.*?)\'$',
         text,
@@ -75,7 +76,7 @@ def _member_modules() -> set[str]:
 
 def _documented_member_modules() -> set[str]:
     """The member list as spelled out in CONTRIBUTING.rst."""
-    text = (REPO_ROOT / 'CONTRIBUTING.rst').read_text(encoding='utf-8')
+    text = (PYVISTA_ROOT_DIR / 'CONTRIBUTING.rst').read_text(encoding='utf-8')
     listing = re.search(
         r'The member list is closed and short:(?P<body>.*?)\.\n\n', text, flags=re.DOTALL
     )
@@ -103,7 +104,7 @@ def _imported_stdlib_modules() -> dict[str, set[str]]:
                 continue
             for name in names:
                 if name.split('.')[0] in sys.stdlib_module_names:
-                    found.setdefault(name, set()).add(str(path.relative_to(REPO_ROOT)))
+                    found.setdefault(name, set()).add(str(path.relative_to(PYVISTA_ROOT_DIR)))
     return found
 
 

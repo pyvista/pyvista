@@ -344,8 +344,6 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_operations_example` for more examples using this filter.
-
         """
         return self._boolean(
             'difference', other_mesh, tolerance=tolerance, progress_bar=progress_bar
@@ -697,9 +695,6 @@ class PolyDataFilters(DataSetFilters):
     def curvature(self, curv_type='mean', progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Return the pointwise curvature of a mesh.
 
-        See :ref:`connectivity_example` for more examples using this
-        filter.
-
         Parameters
         ----------
         curv_type : str, default: "mean"
@@ -928,8 +923,6 @@ class PolyDataFilters(DataSetFilters):
         'Sharp Edges on Smooth Cube: 12'
         >>> smooth_cube.plot()
 
-        See :ref:`surface_smoothing_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkSmoothPolyDataFilter()
         alg.SetInputData(self)
@@ -1075,8 +1068,6 @@ class PolyDataFilters(DataSetFilters):
         ...     cpos=cpos,
         ... )
 
-        See :ref:`surface_smoothing_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkWindowedSincPolyDataFilter()
         alg.SetInputData(self)
@@ -1221,8 +1212,6 @@ class PolyDataFilters(DataSetFilters):
         >>> decimated = sphere.decimate_pro(0.75)
         >>> decimated.plot(show_edges=True, line_width=2)
 
-        See :ref:`decimate_example` for more examples using this filter.
-
         """
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             msg = 'Input mesh for decimation must be all triangles.'
@@ -1349,8 +1338,6 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_legend(face='line', size=(0.25, 0.25))
         >>> pl.show()
 
-        See :ref:`decimate_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkDecimatePolylineFilter()
         alg.SetInputData(self)
@@ -1433,8 +1420,6 @@ class PolyDataFilters(DataSetFilters):
         >>> f'Tube Cells: {tube.n_cells}'
         'Tube Cells: 22'
         >>> tube.plot(color='lightblue')
-
-        See :ref:`create_spline_example` for more examples using this filter.
 
         """
         poly_data = self
@@ -1713,7 +1698,6 @@ class PolyDataFilters(DataSetFilters):
           ``scalars``, ``vectors``, ``normals``, ``tcoords`` and ``tensors`` are now disabled by
           default. They can be enabled all together using ``enable_all_attribute_error``.
 
-
         Parameters
         ----------
         target_reduction : float
@@ -1834,8 +1818,6 @@ class PolyDataFilters(DataSetFilters):
         >>> decimated = sphere.decimate(
         ...     0.5, enable_all_attribute_error=True, normals=False
         ... )
-
-        See :ref:`decimate_example` for more examples using this filter.
 
         """
         if not self.is_all_triangles:  # type: ignore[attr-defined]
@@ -2021,8 +2003,6 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
 
-        See :ref:`compute_normals_example` for more examples using this filter.
-
         """
         # track original point indices
         if split_vertices:
@@ -2155,8 +2135,6 @@ class PolyDataFilters(DataSetFilters):
         >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
-        See :ref:`clip_closed_surface_example` for more examples using this filter.
-
         """
         # verify it is manifold
         if self.n_open_edges > 0:
@@ -2232,8 +2210,6 @@ class PolyDataFilters(DataSetFilters):
         ...     feature_edges=False, manifold_edges=False
         ... )  # doctest:+SKIP
         >>> assert edges.n_cells == 0  # doctest:+SKIP
-
-        See :ref:`fill_holes_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkFillHolesFilter()
@@ -2421,8 +2397,6 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(path, line_width=5, color='k')
         >>> pl.show()
 
-        See :ref:`geodesic_example` for more examples using this filter.
-
         """
         if not (0 <= start_vertex < self.n_points and 0 <= end_vertex < self.n_points):  # type: ignore[attr-defined]
             msg = 'Invalid point indices.'
@@ -2498,8 +2472,6 @@ class PolyDataFilters(DataSetFilters):
         >>> f'Length is {length:.3f}'
         'Length is 0.812'
 
-        See :ref:`geodesic_example` for more examples using this filter.
-
         """
         path = self.geodesic(start_vertex, end_vertex, use_scalar_weights=use_scalar_weights)
         sizes = path.compute_cell_sizes(
@@ -2570,6 +2542,7 @@ class PolyDataFilters(DataSetFilters):
         DataSet.find_cells_within_bounds
         :ref:`ray_trace_moeller_example`
             Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -2586,8 +2559,6 @@ class PolyDataFilters(DataSetFilters):
         Show a plot of the ray trace.
 
         >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
-
-        See :ref:`ray_trace_example` for more examples using this filter.
 
         """
         intersection_points, intersection_cells = self.intersect_with_line(
@@ -3137,8 +3108,6 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_flipped.point_data['Normals'][0]
         pyvista_ndarray([0., 0., 1.], dtype=float32)
 
-        See :ref:`boolean_operations_example` for more examples using this filter.
-
         """
         return self._reverse_sense(
             reverse_cells=True,
@@ -3312,8 +3281,6 @@ class PolyDataFilters(DataSetFilters):
         >>> tess = comb.delaunay_2d(edge_source=comb)
         >>> tess.plot(cpos='xy', show_edges=True)
 
-        See :ref:`create_tri_surface_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(_vtk.VTK_BEST_FITTING_PLANE)
@@ -3423,7 +3390,6 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        :ref:`project_plane_example`
         :ref:`project_points_tessellate_example`
 
         Examples
@@ -3759,10 +3725,6 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Rotationally extruded mesh.
 
-        See Also
-        --------
-        :ref:`extrude_rotate_example`
-
         Examples
         --------
         Create a "spring" using the rotational extrusion filter.
@@ -3890,10 +3852,6 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Extruded mesh trimmed by a surface.
-
-        See Also
-        --------
-        :ref:`extrude_trim_example`
 
         Examples
         --------
@@ -4165,8 +4123,6 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> collision.plot()
 
-        See :ref:`collision_example` for more examples using this filter.
-
         """
         # other mesh must be a polydata
         if not isinstance(other_mesh, pv.PolyData):
@@ -4436,9 +4392,6 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(surf, color=True, show_edges=True)
         >>> _ = pl.add_title('Reconstructed Surface')
         >>> pl.show()
-
-        See :ref:`surface_reconstruction_example` for more examples
-        using this filter.
 
         """
         alg = _vtk.vtkSurfaceReconstructionFilter()

@@ -16,6 +16,7 @@ import warnings
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
+from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
 if TYPE_CHECKING:
     from docutils.nodes import Element
@@ -133,7 +134,6 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
-    'sphinx_codeautolink',  # Add hyperlinks inside docstring/page code blocks to pyvista methods
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -582,8 +582,9 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
-    'image_scrapers': (DynamicScraper(), 'matplotlib'),
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods. Only
+    # resolves an example's own top-level (module) scope; see sphinx-autocodelink's README.
+    'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
@@ -594,21 +595,13 @@ sphinx_gallery_conf = {
 suppress_warnings = [
     'config.cache',
     'image.not_readable',
-    # sphinx-codeautolink fails to match any line with a `# doctest: +OPTION` comment
-    # back to its rendered HTML; it just skips linking that one block, harmlessly.
-    'codeautolink.match_block',
 ]
-
-# Without this, sphinx-codeautolink treats each `>>>` group in a docstring's Examples
-# section as its own isolated scope, so an `import pyvista as pv` in an earlier group
-# (a very common numpydoc pattern: several short examples separated by prose) doesn't
-# carry over to later ones, and `pv` ends up undefined -- nothing after the first group
-# resolves. This makes all groups on a page share one running scope instead.
-codeautolink_concat_default = True
 
 import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
+from jinja2.sandbox import SandboxedEnvironment
+from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
@@ -620,6 +613,20 @@ __s_p_t('document_build')
 del __s_p_t
 """
 pyvista_plot_cleanup = pyvista_plot_setup
+
+# Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
+pyvista_plot_autocodelink = True
+
+# Append a "Used In" backreferences section to every autodoc-documented object's own
+# docstring (empty ones get nothing appended, not "No references found.").
+autocodelink_autodoc_backrefs = True
+
+# Rename backreferences group headings.
+autocodelink_category_labels = {
+    'Sphinx Gallery': 'Gallery Examples',
+    'Docstring Examples': 'Docstring Examples',
+    'Documentation': 'Guides',
+}
 
 
 def _str_examples(self):
@@ -650,6 +657,58 @@ def _str_examples(self):
 SphinxDocString._str_examples = _str_examples
 
 
+# -- "See Also" as a real section, not a `.. seealso::` admonition ------------
+# SphinxDocString's own _str_see_also always wraps the base rendering in
+# `.. seealso::`, which isn't a real docutils section: no heading, unlinkable,
+# invisible to the "on this page" navbar. The un-wrapped base rendering already
+# goes through self._str_header, so skipping the wrap turns it into a real
+# heading for free, the same way _str_header below already does for Notes,
+# References, and Examples.
+def _str_see_also(self, func_role):
+    return NumpyDocString._str_see_also(self, func_role)
+
+
+SphinxDocString._str_see_also = _str_see_also
+
+
+# -- docstring section order: Parameters, ..., Examples, See Also -------------
+# numpydoc's own template puts "See Also" right after the parameter-ish sections and
+# well before Notes/Examples. Move it to the very end instead -- sphinx-autocodelink's
+# "Used In" (appended after the whole docstring renders, via autodoc-process-docstring)
+# always lands after whatever numpydoc itself renders last, so this also puts "See
+# Also" directly before "Used In".  Identical to numpydoc's own template otherwise --
+# see numpydoc/templates/numpydoc_docstring.rst -- just with {{see_also}} moved down.
+_DOCSTRING_TEMPLATE = SandboxedEnvironment().from_string(
+    '{{index}}\n'
+    '{{summary}}\n'
+    '{{extended_summary}}\n'
+    '{{parameters}}\n'
+    '{{attributes}}\n'
+    '{{methods}}\n'
+    '{{returns}}\n'
+    '{{yields}}\n'
+    '{{receives}}\n'
+    '{{other_parameters}}\n'
+    '{{raises}}\n'
+    '{{warns}}\n'
+    '{{warnings}}\n'
+    '{{notes}}\n'
+    '{{references}}\n'
+    '{{examples}}\n'
+    '{{see_also}}\n'
+)
+
+_original_load_config = SphinxDocString.load_config
+
+
+def _load_config(self, config):
+    _original_load_config(self, config)
+    self.template = _DOCSTRING_TEMPLATE
+
+
+SphinxDocString.load_config = _load_config
+
+
 # -- headings instead of rubrics for docstring sections -----------------------
 # numpydoc renders section headers (Notes, References, Examples) as
 # `.. rubric::` by default. Rubrics aren't real docutils sections, so they're
@@ -678,8 +737,37 @@ def _is_nested_desc(node: Element) -> bool:
     return False
 
 
+def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Turn a literal ``.. seealso::`` admonition in a docstring into a real section.
+
+    Some docstrings (e.g. ``pyvista.examples.downloads``) write ``.. seealso::``
+    directly rather than using numpydoc's own "See Also" section syntax. Left as
+    an admonition it has no heading, isn't linkable, and is invisible to the "on
+    this page" navbar -- the same problem fixed above for numpydoc's own "See
+    Also" section by not wrapping it in one. Converting it to a section here lets
+    hoist_docstring_sections below lift it to page level the same way.
+    """
+    for admonition in list(doctree.findall(addnodes.seealso)):
+        if not _is_nested_desc(admonition):
+            continue
+        section = nodes.section()
+        section += nodes.title(text='See Also')
+        section.extend(admonition.children)
+        doctree.note_implicit_target(section, section)
+        admonition.replace_self(section)
+
+
 def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
-    """Move docstring sections out of their ``desc`` node to page level."""
+    """Move docstring sections out of their ``desc`` node to page level.
+
+    Finds sections at any depth inside ``desc_content``, not just its direct
+    children: a section appended after numpydoc's own Examples section (e.g.
+    sphinx-autocodelink's "Used In", via ``autodoc-process-docstring``) lands
+    *inside* Examples' own section rather than beside it, since nothing closed
+    Examples' heading first. Hoisting it from wherever it actually is keeps it
+    a sibling of Notes/References/Examples/etc., not a subsection of one of
+    them.
+    """
     for desc in list(doctree.findall(addnodes.desc)):
         if _is_nested_desc(desc):
             continue
@@ -693,10 +781,10 @@ def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: AR
         content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
         if content is None:
             continue
-        sections = [node for node in content if isinstance(node, nodes.section)]
+        sections = list(content.findall(nodes.section))
         index = parent.index(desc)
         for offset, section in enumerate(sections):
-            content.remove(section)
+            section.parent.remove(section)
             parent.insert(index + 1 + offset, section)
 
 
@@ -801,7 +889,6 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
-    'codeautolink.css',  # style sphinx-codeautolink links like sphinx-gallery's
     'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
 ]
 
@@ -970,7 +1057,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
 
-    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc, and
+    # before priority 400 so hoist_docstring_sections below sees the promoted sections
+    app.connect('doctree-read', promote_seealso_admonitions, priority=300)
     app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders

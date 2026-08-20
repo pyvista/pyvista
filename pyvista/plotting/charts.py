@@ -4950,10 +4950,6 @@ class Charts(_NoNewAttrMixin):
         *charts : Chart2D | Chart3D
             One or more chart objects to be added to the collection.
 
-        See Also
-        --------
-        :ref:`chart_overlays_example`
-
         """
         if self._scene is None:
             self._setup_scene()

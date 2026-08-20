@@ -477,6 +477,123 @@ def test_tinypages_all_extensions_integration(tmp_path: Path):
     )
 
 
+@flaky_test(exceptions=(AssertionError,))
+def test_autocodelink(tmp_path: Path):
+    """Check that ``pyvista_plot_autocodelink`` hyperlinks identifiers resolved from execution."""
+    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'index.html').read_text(encoding='utf-8')
+
+    # no nested anchors from overlapping substitution passes
+    assert (
+        re.search(r'sphinx-autocodelink-a" href="[^"]*"><a class="sphinx-autocodelink-a"', html)
+        is None
+    )
+
+    expected_targets = {
+        '#autocodelink_samples.make_widget',
+        '#autocodelink_samples.make_widget_or_string',
+        '#autocodelink_samples.Widget',
+        '#autocodelink_samples.Widget.draw',
+        '#autocodelink_samples.make_derived',
+        '#autocodelink_samples.Derived',
+        '#autocodelink_samples.Derived.meth',
+        '#autocodelink_samples.sub.make',
+    }
+    found_targets = set(re.findall(r'sphinx-autocodelink-a" href="([^"]*)"', html))
+    assert expected_targets <= found_targets, (
+        f'missing expected autocodelink targets: {expected_targets - found_targets}'
+    )
+
+    # Widget.draw is referenced 4x: 2 >>> groups, partial(widget.draw), and make_widget().draw().
+    assert html.count('sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw"') == 4
+
+    # make_widget() and .draw() on its result link separately, with `()` outside both.
+    assert (
+        '<a class="sphinx-autocodelink-a" href="#autocodelink_samples.make_widget">'
+        '<span class="n">make_widget</span></a><span class="p">()</span>'
+        '<a class="sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw">'
+        '<span class="o">.</span><span class="n">draw</span></a>' in html
+    )
+
+    # functools.partial instances used to crash the resolver (see make_partial_method).
+    assert '__qualname__' not in out
+    assert '__qualname__' not in err
+
+
+@flaky_test(exceptions=(AssertionError,))
+def test_autocodelink_idempotent_rebuild(tmp_path: Path):
+    """Rebuilding into the same output dir must not nest a second anchor."""
+    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+    cmd = _sphinx_build_cmd(source_dir, html_dir, doctree_dir)
+
+    for _ in range(2):
+        returncode, out, err = _run_sphinx_build(cmd)
+        assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    html = (html_dir / 'index.html').read_text(encoding='utf-8')
+    assert (
+        re.search(r'sphinx-autocodelink-a" href="[^"]*"><a class="sphinx-autocodelink-a"', html)
+        is None
+    )
+    assert html.count('sphinx-autocodelink-a" href="#autocodelink_samples.Widget.draw"') == 4
+
+
+@flaky_test(exceptions=(AssertionError,))
+def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
+    """``autocodelink_autodoc_backrefs`` sections must hoist exactly like numpydoc's own."""
+    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    referenced = (html_dir / 'hoist_referenced.html').read_text(encoding='utf-8')
+    # hoisted: </section> (closing Examples) directly precedes it, as a sibling -- not
+    # nested inside <dd> (unhoisted) or inside Examples' own <section> (hoisted, but only
+    # one level deep -- the bug this fixture and hoist_docstring_sections' recursive scan
+    # both exist to catch, since "Used In" is appended after Examples' own text with no
+    # closing heading in between, so it starts out nested inside Examples, not beside it).
+    assert re.search(r'</section>\s*<section class="sphinx-autocodelink-backrefs"', referenced)
+    assert '<h2>Used In' in referenced  # same heading level as Examples' own <h2>, not <h3>
+    assert 'href="index.html"' in referenced
+
+    # "See Also" is a real, hoisted section -- not a `.. seealso::` admonition -- and sits
+    # between Examples and Used In, not in numpydoc's own default position before Examples.
+    assert 'admonition seealso' not in referenced
+    assert '<h2>See Also' in referenced
+    examples_idx = referenced.index('<h2>Examples')
+    see_also_idx = referenced.index('<h2>See Also')
+    used_in_idx = referenced.index('<h2>Used In')
+    assert examples_idx < see_also_idx < used_in_idx
+
+    unreferenced = (html_dir / 'hoist_unreferenced.html').read_text(encoding='utf-8')
+    assert 'sphinx-autocodelink' not in unreferenced
+    assert 'No references found' not in unreferenced
+
+    # A literal `.. seealso::` written directly in a docstring's Examples text (as in
+    # pyvista.examples.downloads) must be promoted to a real section the same way.
+    raw_seealso = (html_dir / 'raw_seealso_referenced.html').read_text(encoding='utf-8')
+    assert 'admonition seealso' not in raw_seealso
+    assert '<h2>See Also' in raw_seealso
+    raw_examples_idx = raw_seealso.index('<h2>Examples')
+    raw_see_also_idx = raw_seealso.index('<h2>See Also')
+    raw_used_in_idx = raw_seealso.index('<h2>Used In')
+    assert raw_examples_idx < raw_see_also_idx < raw_used_in_idx
+
+
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
     from http.server import SimpleHTTPRequestHandler

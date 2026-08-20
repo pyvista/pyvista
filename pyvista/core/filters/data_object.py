@@ -1230,7 +1230,6 @@ class DataObjectFilters:
         :meth:`~pyvista.DataObjectFilters.cell_validator`
         :meth:`~pyvista.DataObjectFilters.cell_quality`
         :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points`
-        :ref:`mesh_validation_example`
 
         Examples
         --------
@@ -2140,8 +2139,6 @@ class DataObjectFilters:
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)
-
-        See the :ref:`reflect_example` for more examples using this filter.
 
         """
         t = Transform().reflect(normal, point=point)
@@ -3355,8 +3352,6 @@ class DataObjectFilters:
         >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
         >>> clipped_cube.plot()
 
-        See :ref:`clip_with_plane_box_example` for more examples using this filter.
-
         """
         if bounds is None:
 
@@ -3720,8 +3715,6 @@ class DataObjectFilters:
         >>> slices = slice_x + slice_y + slice_z
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
@@ -3798,8 +3791,6 @@ class DataObjectFilters:
         >>> hills = examples.load_random_hills()
         >>> slices = hills.slice_orthogonal(contour=False)
         >>> slices.plot(line_width=5)
-
-        See :ref:`slice_example` for more examples using this filter.
 
         """
         # Create the three slices
@@ -3941,8 +3932,6 @@ class DataObjectFilters:
         >>> slices = hills.slice_along_axis(n=10, axis='z')
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         # parse axis input
         XYZLiteral = Literal['x', 'y', 'z']
@@ -4081,8 +4070,6 @@ class DataObjectFilters:
         >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
         >>> pl.show()
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
@@ -4147,8 +4134,6 @@ class DataObjectFilters:
         >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> edges = hex_beam.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
-
-        See :ref:`cell_centers_example` for more examples using this filter.
 
         """
         if use_all_points is not None:
@@ -4288,9 +4273,6 @@ class DataObjectFilters:
         Note that in the "vtkOriginalCellIds" array, the same original cells
         appears multiple times since this array represents the original cell of
         each surface cell extracted.
-
-        See the :ref:`extract_surface_example` and :ref:`surface_smoothing_example`
-        for more examples using this filter.
 
         """
 
@@ -4435,8 +4417,6 @@ class DataObjectFilters:
 
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
         array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
-
-        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         # Fix the projection line:
@@ -4622,8 +4602,6 @@ class DataObjectFilters:
         ...     point_size=20,
         ... )
         >>> pl.show()
-
-        See :ref:`cell_centers_example` for more examples using this filter.
 
         """
         input_mesh = self.cast_to_poly_points() if isinstance(self, pv.PointSet) else self
@@ -5025,9 +5003,6 @@ class DataObjectFilters:
         >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
-        See :ref:`resampling_example` and :ref:`interpolate_sample_example`
-        for more examples using this filter.
-
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
@@ -5178,8 +5153,6 @@ class DataObjectFilters:
          'scaled_jacobian',
          'shape',
          'shape_and_size']
-
-        See :ref:`mesh_quality_example` for more examples using this filter.
 
         """
         # Validate measures

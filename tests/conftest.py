@@ -8,6 +8,7 @@ from importlib.metadata import version
 import importlib.util
 import inspect
 import os
+from pathlib import Path
 import platform
 import re
 
@@ -61,6 +62,8 @@ from tests.gc_check import stash_phase_report
 from tests.gc_check import take_snapshot
 
 pv.OFF_SCREEN = True
+
+PYVISTA_ROOT_DIR = Path(__file__).parent.parent
 
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),

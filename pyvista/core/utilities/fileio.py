@@ -1548,10 +1548,6 @@ def from_trimesh(
     --------
     to_trimesh, from_meshio, :func:`~pyvista.wrap`
 
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
-
     """
     try:
         import trimesh  # noqa: PLC0415
@@ -1640,10 +1636,6 @@ def to_trimesh(  # numpydoc ignore=RT01
     See Also
     --------
     from_trimesh, to_meshio, :func:`~pyvista.wrap`
-
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
 
     """
     try:
