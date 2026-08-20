@@ -3943,7 +3943,8 @@ class _FRDReader(BaseVTKReader):
 class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``).
 
-    Supported element types include: HE8, PE6, PE15, TE4, HE20, TE10, TR3, TR6, QU4, QU8, BE2, BE3.
+    Supported element types include: HE8, PE6, PE15, TE4, HE20, TE10, TR3, TR6, QU4, QU8, BE2, BE3,
+    PY5, PY13.
 
     For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically
     pre-computes and appends the following derived scalar arrays to the output mesh:
