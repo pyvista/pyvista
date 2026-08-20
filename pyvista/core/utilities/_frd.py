@@ -57,11 +57,8 @@ class FRDElementType(IntEnum):
     QU8 = 10
     BE2 = 11
     BE3 = 12
-    # Experimental pyramid-type elements (CCX: C3D5 / C3D13), not part of the
-    # official CalculiX/FRD spec. Added via a community patch (CalculiX
-    # forum, "fgr"): https://calculix.discourse.group/t/pyramid-elements-c3d5-c3d13/1881
-    PY5 = 15
-    PY13 = 16
+    PY5 = 15  # experimental pyramid, CCX: C3D5
+    PY13 = 16  # experimental pyramid, CCX: C3D13
 
 
 # CalculiX element type -> VTK cell type
@@ -192,17 +189,7 @@ class _FRDParser:
             return [node_ids[0], node_ids[2], node_ids[1], node_ids[3], node_ids[5], node_ids[4]]
         if etype == FRDElementType.PE15:
             return node_ids[:9] + node_ids[12:15] + node_ids[9:12]
-        # PY5 / PY13 (CCX: C3D5 / C3D13): CCX (Abaqus-style) numbering for
-        # these elements is 4 base-quad corners ordered counter-clockwise as
-        # seen from the apex, then the apex node -- and, for PY13, followed
-        # by the 4 base-edge midside nodes and then the 4 apex-edge midside
-        # nodes. That is already identical to VTK_PYRAMID /
-        # VTK_QUADRATIC_PYRAMID, unlike HE20/PE15 above, so no reordering is
-        # needed here. Kept as an explicit branch (rather than silently
-        # falling through) so the "identity" mapping is documented, not
-        # accidental.
-        if etype in (FRDElementType.PY5, FRDElementType.PY13):
-            return node_ids
+        # PY5/PY13: CCX order already matches VTK, no permutation needed.
         return node_ids
 
     @staticmethod
@@ -505,3 +492,4 @@ class _FRDParser:
                     _FRDParser._compute_derived_strain(grid, name, arr)
 
         return grid
+        
