@@ -57,6 +57,17 @@ Two assumptions cause most of the rework here, and both are one `grep` from cert
 Where a design question has two defensible answers that lead to different code, ask
 rather than picking one silently and building on it.
 
+## Comments and docstrings
+
+Less is more. A comment earns its place by explaining why, not what; if the code already
+says what, delete the comment. Keep docstrings to what the numpydoc sections require, not
+a narrative.
+
+Never describe how the change came to be -- no "fix", "bug", "temporary workaround", "now
+we", "previously", or reference to a prior version of the code. Write both as if the
+current diff were the first and only version of the file: they describe the code that
+exists on this branch relative to `main`, not the debugging path taken to get there.
+
 ## Size
 
 Merged pull requests here are small: the median adds tens of lines, not hundreds. One
