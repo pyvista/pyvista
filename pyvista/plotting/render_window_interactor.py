@@ -190,10 +190,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             A callable that takes one argument. It will be passed
             `step`, which is the number of times the timer event has occurred.
 
-        See Also
-        --------
-        :ref:`animation_example`
-
         Examples
         --------
         Add a timer to a Plotter to move a sphere across a scene.
