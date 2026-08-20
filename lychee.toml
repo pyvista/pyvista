@@ -13,11 +13,11 @@ cache_exclude_status = ['400..=429', '500..=599']
 exclude = [
   'file:///home/*',
   'http://861c873f6352:8888/*',
-'https://github.com/pyvista/pyvista/settings/branches',
+  'https://communityinviter.com/apps/pyvista/pyvista', # Slack join link: 404 for bots, resolves for humans
+  'https://github.com/pyvista/pyvista/settings/branches',
   'https://github.com/pyvista/pyvista/stargazers', # 404 for bots, resolves for humans
   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
   'https://repology.org',
-  'https://communityinviter.com/apps/pyvista/pyvista', # Slack join link: 404 for bots, resolves for humans
 ]
 exclude_all_private = true # exclude 'localhost', '127.0.0.1', etc.
 exclude_path = ['pyvista/core/utilities/docs.py']
