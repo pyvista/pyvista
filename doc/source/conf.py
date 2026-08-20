@@ -748,20 +748,14 @@ def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa:
     hoist_docstring_sections below lift it to page level the same way.
 
     A literal ``.. seealso::`` is written wherever the docstring author put it --
-    usually right after the summary, well before References/Examples -- unlike
-    numpydoc's own "See Also", which _DOCSTRING_TEMPLATE above always renders last.
-    Reposition the promoted section to match: directly before "Used In" if present,
-    otherwise at the very end.
+    usually right before References/Examples -- unlike numpydoc's own "See Also",
+    which _DOCSTRING_TEMPLATE above always renders last. Reposition the promoted
+    section to match: directly before "Used In" if present, otherwise at the end.
 
-    "Used In" (sphinx-autocodelink's backreferences section, appended after the whole
-    docstring) is *not* necessarily a sibling of this one: nothing textually closes the
-    docstring's last real heading (usually Examples) before it, so the directive that
-    builds it lands *nested inside* that heading's section instead -- it only reads as
-    a sibling in the rendered page because hoist_docstring_sections below extracts
-    every section it finds, at any depth, up to page level. Search the whole enclosing
-    ``desc_content`` for "Used In", at any depth, and slot directly before it wherever
-    that turns out to be, so hoist_docstring_sections' document-order walk still finds
-    "See Also" first.
+    "Used In" isn't necessarily a sibling: nothing closes off the docstring's last
+    heading before its directive runs, so it lands nested inside that heading's
+    section instead, and only reads as a sibling once hoist_docstring_sections
+    below extracts every section it finds. Search at any depth to still find it.
     """
     for admonition in list(doctree.findall(addnodes.seealso)):
         if not _is_nested_desc(admonition):
