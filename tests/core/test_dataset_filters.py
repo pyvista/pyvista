@@ -170,7 +170,14 @@ def test_clip_scalar_filter(datasets, both, invert):
 
         for clp, expect_le in zip(clps, expect_les, strict=True):
             assert clp is not None
-            if isinstance(dataset, pv.PolyData):
+            if isinstance(dataset, pv.PointSet):
+                # PointSet has no cells, so clipping produces another PointSet
+                assert isinstance(clp, pv.PointSet)
+                if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+                    # Same underlying vtkTableBasedClipDataSet bug as clip():
+                    # the PointSet result comes back empty on VTK 9.4.
+                    pytest.xfail("VTK 9.4 bug where clipping PointSet doesn't work")
+            elif isinstance(dataset, pv.PolyData):
                 assert isinstance(clp, pv.PolyData)
             else:
                 assert isinstance(clp, pv.UnstructuredGrid)
@@ -257,7 +264,10 @@ def test_clip_surface():
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
-        clp = dataset.clip_surface(dataset.extract_surface(algorithm=None), crinkle=crinkle)
+        # PointSet has no cells so it cannot generate its own surface; clip
+        # against an enclosing sphere instead, which works for all dataset types.
+        surface = pv.Sphere(radius=dataset.length, center=dataset.center)
+        clp = dataset.clip_surface(surface, crinkle=crinkle)
         assert clp is not None
         if isinstance(dataset, pv.PointSet):
             assert isinstance(clp, pv.PointSet)
@@ -730,6 +740,14 @@ def test_gaussian_splatting(sphere: PolyData):
 
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
+        if isinstance(dataset, pv.PointSet):
+            # PointSet has no cells, so it has no geometry to extract
+            with (
+                pytest.warns(pv.PyVistaDeprecationWarning),
+                pytest.raises(pv.PointSetCellOperationError),
+            ):
+                dataset.extract_geometry(progress_bar=True)
+            continue
         with pytest.warns(pv.PyVistaDeprecationWarning):
             geom = dataset.extract_geometry(progress_bar=True)
         assert geom is not None
@@ -3824,7 +3842,10 @@ def test_integrate_data_datasets(datasets):
     """Test multiple dataset types."""
     for dataset in datasets:
         integrated = dataset.integrate_data()
-        if 'Area' in integrated.array_names:
+        if isinstance(dataset, pv.PointSet):
+            # PointSet has no cells, so there is no area or volume to integrate
+            assert integrated.array_names == []
+        elif 'Area' in integrated.array_names:
             assert integrated['Area'] > 0
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0

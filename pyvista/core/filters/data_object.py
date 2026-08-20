@@ -4143,6 +4143,7 @@ class DataObjectFilters:
                 PyVistaDeprecationWarning,
             )
 
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
         # Always use all points since VTK >= 9.2 is required
@@ -4438,6 +4439,17 @@ class DataObjectFilters:
         else:
             scalar_range_ = _validation.validate_data_range(scalar_range)
 
+        if pv.vtk_version_info < (9, 4) and _composite_has_pointset(self):
+            # vtkElevationFilter's composite dispatch segfaults on VTK 9.3 when
+            # a block is a cell-less PointSet, even though elevation is
+            # otherwise perfectly valid on a standalone PointSet. Raise instead
+            # of taking down the interpreter; this is fixed by VTK 9.4.
+            msg = (
+                'Cannot compute elevation for a MultiBlock containing a PointSet '
+                'on VTK < 9.4 due to a VTK bug that crashes the interpreter.'
+            )
+            raise pv.core.errors.PointSetNotSupported(msg)
+
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
@@ -4550,6 +4562,7 @@ class DataObjectFilters:
                 ensure_arrays_if_empty(out)
             return out
 
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
@@ -4671,6 +4684,7 @@ class DataObjectFilters:
         >>> surf.plot(scalars='Area')
 
         """
+        _raise_if_composite_has_pointset(self)
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
@@ -4791,6 +4805,7 @@ class DataObjectFilters:
         >>> sphere.plot()
 
         """
+        _raise_if_composite_has_pointset(self)
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
@@ -5172,8 +5187,15 @@ class DataObjectFilters:
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
+        def _call_dataset_cell_quality(dataset, **kwargs):
+            # Dispatch through the instance (rather than binding directly to
+            # `DataObjectFilters._dataset_cell_quality`) so that a block-level
+            # override, e.g. PointSet's, is honored when this runs per-block
+            # through `generic_filter`.
+            return dataset._dataset_cell_quality(**kwargs)
+
         cell_quality = functools.partial(
-            DataObjectFilters._dataset_cell_quality,
+            _call_dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
             keep_valid_only=keep_valid_only,
@@ -5237,6 +5259,32 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
         return output
+
+
+def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:
+    """Return ``True`` if a MultiBlock (recursively) contains a PointSet block."""
+    return isinstance(dataset, pv.MultiBlock) and any(
+        isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
+    )
+
+
+def _raise_if_composite_has_pointset(
+    dataset: DataSet | MultiBlock,
+    error: type[Exception] | None = None,
+) -> None:
+    """Raise if a MultiBlock (recursively) contains a PointSet block.
+
+    Several filters (``cell_data_to_point_data``, ``point_data_to_cell_data``,
+    ``extract_all_edges``, ``compute_cell_sizes``) hand a MultiBlock straight
+    to the underlying :vtk:`vtkAlgorithm`, relying on VTK's own
+    composite-dataset dispatch rather than iterating blocks in Python. On
+    some VTK versions, running these filters on a composite containing a
+    cell-less PointSet block segfaults instead of raising, so guard against
+    it here before ever reaching the algorithm.
+    """
+    if _composite_has_pointset(dataset):
+        error_type = error or pv.core.errors.PointSetNotSupported
+        raise error_type()
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
@@ -5400,9 +5448,10 @@ class _Crinkler:
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
-            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
-                block.n_cells, dtype=_Crinkler.INT_DTYPE
-            )
+            if not isinstance(block, pv.PointSet):
+                block.cell_data[_Crinkler.CELL_IDS] = np.arange(
+                    block.n_cells, dtype=_Crinkler.INT_DTYPE
+                )
         return active_scalars_info
 
 

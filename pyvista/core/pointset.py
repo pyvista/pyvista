@@ -561,6 +561,27 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
+    def extract_all_edges(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def compute_cell_sizes(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def cell_quality(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def _dataset_cell_quality(self, *args, **kwargs):  # noqa: ARG002
+        """Raise cell operations are not supported.
+
+        This backs ``cell_quality`` when applied to a block within a
+        :class:`~pyvista.MultiBlock` via ``generic_filter``, which dispatches
+        per-block rather than through the public ``cell_quality`` method.
+        """
+        raise PointSetCellOperationError
+
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).

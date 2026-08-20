@@ -337,6 +337,18 @@ def test_raise_unsupported(pointset):
         with pytest.warns(pv.PyVistaDeprecationWarning):
             pointset.extract_geometry()
 
+    with pytest.raises(PointSetCellOperationError):
+        pointset.cell_validator()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_all_edges()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.compute_cell_sizes()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.cell_quality()
+
 
 def test_rotate_x():
     np_points = np.array([1, 1, 1], dtype=float)

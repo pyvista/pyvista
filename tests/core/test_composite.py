@@ -1397,7 +1397,7 @@ def test_flatten(multiblock_all_with_nested_and_none):
     expected_n_blocks = len(root_names) + len(nested_names)
 
     match = (
-        "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
+        "Block at index [7][0] with name 'Block-00' cannot be flattened. Another block \n"
         "with the same name already exists. Use `name_mode='reset'` "
         'or `check_duplicate_keys=False`.'
     )
@@ -1477,8 +1477,8 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     # Test root MultiBlock
     assert (input_ is output) == inplace
     # Test nested MultiBlock container
-    assert isinstance(input_[6], pv.MultiBlock)
-    assert (input_[6] is output[6]) == inplace
+    nested_index = next(i for i, block in enumerate(input_) if isinstance(block, pv.MultiBlock))
+    assert (input_[nested_index] is output[nested_index]) == inplace
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
@@ -1521,6 +1521,7 @@ def test_block_types(multiblock_all_with_nested_and_none):
         pv.PolyData,
         pv.UnstructuredGrid,
         pv.StructuredGrid,
+        pv.PointSet,
     }
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)

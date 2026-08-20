@@ -367,7 +367,7 @@ def test_default_pickle_format():
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_serialize_deserialize(datasets, pickle_format):
+def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
     """Test in-memory pickle protocol (multiprocessing/dask use case).
 
     Pickle is NOT a supported mesh file format — only the in-memory
@@ -375,7 +375,7 @@ def test_pickle_serialize_deserialize(datasets, pickle_format):
     here. File-format refusal is covered in ``test_reader.py``.
     """
     pv.set_pickle_format(pickle_format)
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
@@ -407,19 +407,19 @@ def n_points(dataset):
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_multiprocessing(datasets, pickle_format):
+def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
-        res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets, strict=True):
+        res = p.map(n_points, datasets_no_pointset)
+    for r, dataset in zip(res, datasets_no_pointset, strict=True):
         assert r == dataset.n_points
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
+def test_pickle_multiblock(multiblock_all_no_pointset_with_nested_and_none, pickle_format):
     pv.set_pickle_format(pickle_format)
-    multiblock = multiblock_all_with_nested_and_none
+    multiblock = multiblock_all_no_pointset_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
         match = (
