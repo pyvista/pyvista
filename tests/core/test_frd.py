@@ -603,4 +603,3 @@ def test_frd_reader_pyramid_no_permutation(pyramid_frd_file):
         ]
     )
     np.testing.assert_allclose(mesh.get_cell(1).points, expected_py13)
-    
