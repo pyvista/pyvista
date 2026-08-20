@@ -1128,8 +1128,9 @@ def test_macos_offscreen_render_window_configured(case):
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 def test_macos_activate_foreground_app():
-    """Test the activation policy is promoted and the app is activated."""
+    """Test the activation policy is promoted and the app is activated once suppressed."""
     appkit_mock = MagicMock()
+    tools_mod._macos_dock_icon_suppressed = True
     with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
         _activate_macos_foreground_app()
 
@@ -1138,12 +1139,29 @@ def test_macos_activate_foreground_app():
         appkit_mock.NSApplicationActivationPolicyRegular,
     )
     app_mock.activateIgnoringOtherApps_.assert_called_once_with(True)
+    assert not tools_mod._macos_dock_icon_suppressed
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+def test_macos_activate_foreground_app_noop_when_never_suppressed():
+    """Test an on-screen show() never touches NSApplication unless PyVista itself suppressed it.
+
+    A host application embedding PyVista and managing its own window
+    activation must not have that overridden by a plain, unrelated show().
+    """
+    appkit_mock = MagicMock()
+    tools_mod._macos_dock_icon_suppressed = False
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        _activate_macos_foreground_app()
+
+    appkit_mock.NSApplication.assert_not_called()
 
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 def test_macos_show_reclaims_foreground_after_depth_peeling(sphere):
     """Regression test for #8934: depth peeling must not block show() from coming forward."""
     check_depth_peeling.cache_clear()
+    tools_mod._macos_dock_icon_suppressed = False
     appkit_mock = MagicMock()
     pl = pv.Plotter(off_screen=False)
     pl.add_mesh(sphere)

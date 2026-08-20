@@ -37,6 +37,13 @@ SUPPORTS_PLOTTING = None
 # serialize every read-or-write of it through this lock.
 _MACOS_ACTIVATION_POLICY_LOCK = threading.Lock()
 
+# Set only while PyVista's own off-screen path has demoted the activation
+# policy. The on-screen path checks this before touching NSApplication at
+# all, so a host application that embeds PyVista and manages its own window
+# activation (or deliberately runs as an Accessory app) is never overridden
+# by a Plotter.show() call that never went through an off-screen probe.
+_macos_dock_icon_suppressed = False
+
 
 def _prepare_offscreen_macos_render_window(  # pragma: no cover
     render_window: _vtk.vtkRenderWindow | None,
@@ -62,6 +69,7 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
     def _suppress_dock_icon():
         if sys.platform != 'darwin':
             return
+        global _macos_dock_icon_suppressed  # noqa: PLW0603
         try:  # type:ignore[unreachable]
             from AppKit import NSApplication  # noqa: PLC0415
             from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
@@ -70,6 +78,7 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
                 NSApplication.sharedApplication().setActivationPolicy_(
                     NSApplicationActivationPolicyProhibited,
                 )
+                _macos_dock_icon_suppressed = True
         except ImportError:
             pass
 
@@ -84,26 +93,32 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
 
 
 def _activate_macos_foreground_app():  # pragma: no cover
-    """Promote this process to a regular, activated macOS app.
+    """Undo PyVista's own Dock icon suppression, if it is still in effect.
 
     An earlier off-screen probe (:func:`check_depth_peeling`,
     :func:`supports_open_gl`) may have left ``NSApplication``'s activation
     policy at ``Prohibited`` via :func:`_prepare_offscreen_macos_render_window`,
     which stops the process from ever becoming the foreground app again and
     keeps a real, on-screen render window from coming forward. Call this
-    right before creating one to undo that unconditionally.
+    right before creating one to undo that -- but only when PyVista's own
+    off-screen path is what caused it, never touching activation state a
+    host application manages on its own.
     """
     if sys.platform != 'darwin':
         return
-    try:
-        from AppKit import NSApplication  # noqa: PLC0415
-        from AppKit import NSApplicationActivationPolicyRegular  # noqa: PLC0415
-    except ImportError:
-        return
+    global _macos_dock_icon_suppressed  # noqa: PLW0603
     with _MACOS_ACTIVATION_POLICY_LOCK:
+        if not _macos_dock_icon_suppressed:
+            return
+        try:
+            from AppKit import NSApplication  # noqa: PLC0415
+            from AppKit import NSApplicationActivationPolicyRegular  # noqa: PLC0415
+        except ImportError:
+            return
         app = NSApplication.sharedApplication()
         app.setActivationPolicy_(NSApplicationActivationPolicyRegular)
         app.activateIgnoringOtherApps_(True)
+        _macos_dock_icon_suppressed = False
 
 
 def supports_open_gl():
