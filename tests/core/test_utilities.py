@@ -87,8 +87,6 @@ from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
-from tests.vtk_backend_divergence import NO_ENSIGHT_WRITER
-from tests.vtk_backend_divergence import NO_POPENFOAM_READER
 from tests.vtk_backend_divergence import NO_SNAKE_CASE
 
 if TYPE_CHECKING:
@@ -398,7 +396,6 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_POPENFOAM_READER)
 def test_read_reader_kwargs():
     file = ex.download_openfoam_tubes(load=False)
 
@@ -3505,7 +3502,6 @@ def test_try_callback_warns_every_time():
     assert 'callback failed' in str(messages[0].message)
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_ENSIGHT_WRITER)
 def test_write_path_of_ensight_writer(tmp_path, hexbeam):
 
     path = tmp_path / 'hexbeam.case'

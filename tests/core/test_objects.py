@@ -12,13 +12,11 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
-from tests.vtk_backend_divergence import NO_DELIMITED_TEXT_READER
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_DELIMITED_TEXT_READER)
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.csv'))
