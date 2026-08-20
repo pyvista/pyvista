@@ -24,7 +24,7 @@ from pyvista import examples
 # See `Matplotlib's complete list of available colormaps`_,
 # `Colorcet's complete list`_, and `cmocean's complete list`_.
 #
-# .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/tutorials/colors/colormaps.html
+# .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/stable/tutorials/colors/colormaps.html
 # .. _Colorcet's complete list: https://colorcet.holoviz.org/user_guide/index.html
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 

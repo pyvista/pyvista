@@ -16,8 +16,8 @@
   <a href="https://pypi.org/project/pyvista/"><img src="https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white" alt="PyPI" /></a>
   <a href="https://anaconda.org/conda-forge/pyvista"><img src="https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white" alt="Conda" /></a>
   <a href="https://numfocus.org/sponsored-projects/affiliated-projects"><img src="https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A" alt="NumFOCUS Affiliated" /></a>
-  <a href="https://doi.org/10.21105/joss.01450"><img src="http://joss.theoj.org/papers/10.21105/joss.01450/status.svg" alt="JOSS paper" /></a>
-  <a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" /></a>
+  <a href="https://doi.org/10.21105/joss.01450"><img src="https://joss.theoj.org/papers/10.21105/joss.01450/status.svg" alt="JOSS paper" /></a>
+  <a href="https://opensource.org/license/mit"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" /></a>
 </p>
 
 <p align="center">
@@ -230,7 +230,7 @@ If you use PyVista in scientific research, please cite the
 [![Good first issue](https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue)](https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 **Citation:**
-[![JOSS](http://joss.theoj.org/papers/10.21105/joss.01450/status.svg)](https://doi.org/10.21105/joss.01450)
+[![JOSS](https://joss.theoj.org/papers/10.21105/joss.01450/status.svg)](https://doi.org/10.21105/joss.01450)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg)](https://zenodo.org/records/8415866)
 
 **Community:**

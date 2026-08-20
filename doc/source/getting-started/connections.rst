@@ -62,16 +62,16 @@ Many More
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _discretize: https://discretize.simpeg.xyz/en/main/
 .. _gemgis: https://github.com/cgre-aachen/gemgis
-.. _gimli: https://github.com/gimli-org/gimli
+.. _gimli: https://github.com/gimli-org/pyGIMLi
 .. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 .. _mne-python: https://github.com/mne-tools/mne-python
-.. _omfvista: https://github.com/OpenGeoVis/omfvista
+.. _omfvista: https://github.com/pyvista/omfvista
 .. _pyleecan: https://github.com/Eomys/pyleecan
 .. _pymapdl: https://github.com/ansys/pymapdl
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _pyprocar: https://github.com/romerogroup/pyprocar
 .. _tetgen: https://github.com/pyvista/tetgen
-.. _GemPy: https://github.com/cgre-aachen/gempy
+.. _GemPy: https://github.com/gempy-project/gempy
 .. _Ptera: https://github.com/camurban/pterasoftware
 .. _VesselVio: https://github.com/JacobBumgarner/VesselVio
 .. _AeroSandbox: https://github.com/peterdsharpe/AeroSandbox
@@ -83,4 +83,4 @@ Many More
 .. _torch-points3d: https://github.com/torch-points3d/torch-points3d
 .. _FEniCSx: https://github.com/FEniCS/dolfinx/
 .. _PyViewFactor: https://gitlab.com/arep-dev/pyViewFactor/
-.. _vision6D: https://github.com/ykzzyk/vision6D/
+.. _vision6D: https://github.com/InteractiveGL/vision6D

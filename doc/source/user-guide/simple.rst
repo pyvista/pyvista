@@ -219,7 +219,7 @@ your use case:
   is interactive and does not pause the code execution (for more
   information see the `pyvistaqt`_ library)
 
-.. _pyvistaqt: https://qtdocs.pyvista.org/
+.. _pyvistaqt: https://qt.pyvista.org/
 
 Command Line
 ------------

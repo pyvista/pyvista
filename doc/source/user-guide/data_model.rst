@@ -39,8 +39,8 @@ structures them in a more pythonic manner for ease of use.
 If you'd like some background for how VTK structures its data, see
 `Introduction to VTK in Python by Kitware
 <https://vimeo.com/32232190>`_, as well as the numerous code examples
-on `Kitware's GitHub site
-<https://kitware.github.io/vtk-examples/site/>`_. An excellent
+on `Kitware's VTK examples site
+<https://examples.vtk.org/site/>`_. An excellent
 introduction to mathematical concepts relevant to 3D modeling in
 general implemented in VTK is provided by the `Discrete Differential
 Geometry YouTube Series

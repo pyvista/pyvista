@@ -38,7 +38,7 @@ articles = dict(
     ),
     discretize=Example(
         title='3D Rendering with Discretize',
-        link='http://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html',
+        link='https://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html',
         image='discretize.png',
     ),
     aero_sandbox=Example(
@@ -58,12 +58,12 @@ articles = dict(
     ),
     tetgen=Example(
         title="TetGen's example gallery",
-        link='http://tetgen.pyvista.org/examples/index.html',
+        link='https://tetgen.pyvista.org/examples/index.html',
         image='tetgen.png',
     ),
     mesh_fix=Example(
         title="PyMeshFix's example gallery",
-        link='http://pymeshfix.pyvista.org/examples/index.html',
+        link='https://pymeshfix.pyvista.org/examples/index.html',
         image='pymeshfix.png',
     ),
     orvisu=Example(
@@ -173,7 +173,7 @@ articles = dict(
     ),
     gemgis=Example(
         title='GemGIS',
-        link='https://gemgis.readthedocs.io/en/latest',
+        link='https://gemgis.readthedocs.io/en/latest/',
         image='gemgis.png',
     ),
     air_racing_optimization=Example(
@@ -208,7 +208,7 @@ articles = dict(
     ),
     comet_fenicsx=Example(
         title='Numerical Tours of Computational Mechanics with FEniCSx',
-        link='https://bleyerj.github.io/comet-fenicsx',
+        link='https://bleyerj.github.io/comet-fenicsx/',
         image='comet_fenicsx.png',
     ),
     # entry=Example(title="",

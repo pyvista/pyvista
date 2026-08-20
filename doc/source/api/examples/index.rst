@@ -147,7 +147,7 @@ If you want to override this local cache path, set the
 
 Data Sources
 ~~~~~~~~~~~~
-PyVista uses `pyvista/data <https://github.com/pyvista/data.git>`_ as
+PyVista uses `pyvista/data <https://github.com/pyvista/data>`_ as
 the main source for example data. If you do not have internet access or you
 prefer using a local or network directory instead, you can override this
 source with the ``VTK_DATA_PATH`` environment variable.
