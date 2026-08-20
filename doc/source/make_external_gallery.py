@@ -33,7 +33,7 @@ class Example:  # noqa: D101
 articles = dict(
     omf=Example(
         title='3D visualization for the Open Mining Format (omf)',
-        link='https://omf.pyvista.org',
+        link='https://github.com/pyvista/omfvista',
         image='omfvista.png',
     ),
     discretize=Example(
@@ -88,7 +88,7 @@ articles = dict(
     ),
     damavand=Example(
         title='Damavand Volcano',
-        link='https://nbviewer.jupyter.org/github/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb',
+        link='https://github.com/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb',
         image='damavand_volcano.gif',
     ),
     atmos_conv=Example(

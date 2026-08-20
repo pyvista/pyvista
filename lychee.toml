@@ -1,5 +1,6 @@
 accept = [
   200, # Link is OK
+  202, # Skip domains (e.g. IEEE via doi.org) returning "202 Accepted" to bots
   403, # Skip domains known to return 403 Forbidden to bots
   418, # Skip domains (e.g. IEEE via doi.org) returning "I'm a teapot" to bots
   429, # Network error: Too Many Requests
@@ -12,9 +13,17 @@ cache_exclude_status = ['400..=429', '500..=599']
 exclude = [
   'file:///home/*',
   'http://861c873f6352:8888/*',
+  # GitHub returns 404 to bots for the stargazers page; it resolves in a browser.
+  'https://github.com/pyvista/pyvista/stargazers',
   'https://github.com/pyvista/pyvista/settings/branches',
   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
   'https://repology.org',
+  # Slack join link: the third-party invite backend currently 404s; regenerating
+  # the community invite is a maintainer action outside this repo.
+  'https://communityinviter.com/apps/pyvista/pyvista',
+  # CLI reference added in #8814: live on the dev docs, publishes to the stable
+  # docs site on the next release. Drop this exclusion once it is live.
+  'https://docs.pyvista.org/api/cli',
 ]
 exclude_all_private = true # exclude 'localhost', '127.0.0.1', etc.
 exclude_path = ['pyvista/core/utilities/docs.py']
