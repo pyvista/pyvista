@@ -14,8 +14,8 @@ exclude = [
   'file:///home/*',
   'http://861c873f6352:8888/*',
   # GitHub returns 404 to bots for the stargazers page; it resolves in a browser.
-  'https://github.com/pyvista/pyvista/stargazers',
   'https://github.com/pyvista/pyvista/settings/branches',
+  'https://github.com/pyvista/pyvista/stargazers',
   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
   'https://repology.org',
   # Slack join link: the third-party invite backend currently 404s; regenerating
