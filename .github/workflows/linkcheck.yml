@@ -20,7 +20,7 @@ defaults:
 
 jobs:
   linkcheck:
-    runs-on: "ubuntu-22.04"
+    runs-on: ubuntu-latest
 
     permissions:
       issues: write # required to open/comment the linkcheck failure issue
