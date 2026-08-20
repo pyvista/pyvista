@@ -7,6 +7,7 @@ import os
 
 from pyvista import _vtk
 from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
+from pyvista.plotting.tools import _restore_macos_activation_policy
 
 
 def _offscreen_probe_render_window():
@@ -68,17 +69,18 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     # requires opacity < 1
     actor.GetProperty().SetOpacity(0.5)
     renderer = _vtk.vtkRenderer()
-    renderWindow = _offscreen_probe_render_window()
-    renderWindow.SetOffScreenRendering(True)
-    _prepare_offscreen_macos_render_window(renderWindow)
-    renderWindow.AddRenderer(renderer)
-    renderWindow.SetAlphaBitPlanes(True)
-    renderWindow.SetMultiSamples(0)
-    renderer.AddActor(actor)
-    renderer.SetUseDepthPeeling(True)
-    renderer.SetMaximumNumberOfPeels(number_of_peels)
-    renderer.SetOcclusionRatio(occlusion_ratio)
-    renderWindow.Render()
+    with _restore_macos_activation_policy():
+        renderWindow = _offscreen_probe_render_window()
+        renderWindow.SetOffScreenRendering(True)
+        _prepare_offscreen_macos_render_window(renderWindow)
+        renderWindow.AddRenderer(renderer)
+        renderWindow.SetAlphaBitPlanes(True)
+        renderWindow.SetMultiSamples(0)
+        renderer.AddActor(actor)
+        renderer.SetUseDepthPeeling(True)
+        renderer.SetMaximumNumberOfPeels(number_of_peels)
+        renderer.SetOcclusionRatio(occlusion_ratio)
+        renderWindow.Render()
     return renderer.GetLastRenderingUsedDepthPeeling() == 1
 
 

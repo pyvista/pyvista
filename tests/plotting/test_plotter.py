@@ -15,6 +15,7 @@ import sys
 import threading
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
+from unittest.mock import call
 from unittest.mock import patch
 
 import numpy as np
@@ -1099,15 +1100,19 @@ def _invoke_plotter_offscreen():
 class _MacOSFixCase:
     id: str
     invoke: Callable[[], MagicMock]
+    restores_policy: bool
 
 
 # Test cases for functions that create off-screen render windows.
 # These functions all call `_prepare_offscreen_macos_render_window` internally.
+# `check_depth_peeling` and `supports_open_gl` probe with a throwaway window and must
+# restore the activation policy afterward (#8934); an off-screen `Plotter` keeps it
+# suppressed for the plotter's lifetime.
 # NOTE: report.py has a script that creates an off-screen renderer but is not covered here
 _MACOS_FIX_CASES = [
-    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling),
-    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl),
-    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen),
+    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling, restores_policy=True),
+    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl, restores_policy=True),
+    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen, restores_policy=False),
 ]
 
 
@@ -1120,6 +1125,12 @@ def test_macos_offscreen_render_window_configured(case):
         render_window = case.invoke()
 
     assert render_window.GetConnectContextToNSView() is False
-    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
-        appkit_mock.NSApplicationActivationPolicyProhibited,
-    )
+    app_mock = appkit_mock.NSApplication.sharedApplication()
+    prohibited = appkit_mock.NSApplicationActivationPolicyProhibited
+    if case.restores_policy:
+        assert app_mock.setActivationPolicy_.call_args_list == [
+            call(prohibited),
+            call(app_mock.activationPolicy.return_value),
+        ]
+    else:
+        app_mock.setActivationPolicy_.assert_called_once_with(prohibited)

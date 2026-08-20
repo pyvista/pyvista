@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from enum import Enum
 import os
 import platform
@@ -75,6 +76,31 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
     _disable_cocoa_nsview_context()
 
 
+@contextlib.contextmanager
+def _restore_macos_activation_policy():
+    """Restore the current NSApplication activation policy on exit.
+
+    A transient off-screen probe window has no business leaving the whole
+    process unable to be brought forward for the rest of its life. Wrap any
+    such probe in this so ``_prepare_offscreen_macos_render_window``'s Dock
+    icon suppression is undone once the probe window is discarded.
+    """
+    if sys.platform != 'darwin':
+        yield
+        return
+    try:
+        from AppKit import NSApplication  # noqa: PLC0415
+    except ImportError:
+        yield
+        return
+    app = NSApplication.sharedApplication()
+    previous_policy = app.activationPolicy()
+    try:
+        yield
+    finally:
+        app.setActivationPolicy_(previous_policy)
+
+
 def supports_open_gl():
     """Return if the system supports OpenGL.
 
@@ -89,10 +115,11 @@ def supports_open_gl():
     """
     global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
-        ren_win = _vtk.vtkRenderWindow()
-        ren_win.SetOffScreenRendering(True)
-        _prepare_offscreen_macos_render_window(ren_win)
-        SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
+        with _restore_macos_activation_policy():
+            ren_win = _vtk.vtkRenderWindow()
+            ren_win.SetOffScreenRendering(True)
+            _prepare_offscreen_macos_render_window(ren_win)
+            SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
 
