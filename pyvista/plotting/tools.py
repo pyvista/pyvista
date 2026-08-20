@@ -31,17 +31,10 @@ class FONTS(Enum):
 SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
 
-# NSApplication's activation policy is one piece of state shared by the whole
-# process. check_depth_peeling and supports_open_gl can run off-screen on a
-# background thread while another thread opens an on-screen Plotter, so
-# serialize every read-or-write of it through this lock.
+# Serializes reads and writes of NSApplication's activation policy, shared process-wide.
 _MACOS_ACTIVATION_POLICY_LOCK = threading.Lock()
 
-# Set only while PyVista's own off-screen path has demoted the activation
-# policy. The on-screen path checks this before touching NSApplication at
-# all, so a host application that embeds PyVista and manages its own window
-# activation (or deliberately runs as an Accessory app) is never overridden
-# by a Plotter.show() call that never went through an off-screen probe.
+# Set only while PyVista's own off-screen path has demoted the activation policy.
 _macos_dock_icon_suppressed = False
 
 
@@ -93,17 +86,7 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
 
 
 def _activate_macos_foreground_app():  # pragma: no cover
-    """Undo PyVista's own Dock icon suppression, if it is still in effect.
-
-    An earlier off-screen probe (:func:`check_depth_peeling`,
-    :func:`supports_open_gl`) may have left ``NSApplication``'s activation
-    policy at ``Prohibited`` via :func:`_prepare_offscreen_macos_render_window`,
-    which stops the process from ever becoming the foreground app again and
-    keeps a real, on-screen render window from coming forward. Call this
-    right before creating one to undo that -- but only when PyVista's own
-    off-screen path is what caused it, never touching activation state a
-    host application manages on its own.
-    """
+    """Undo PyVista's own Dock icon suppression, if it is still in effect."""
     if sys.platform != 'darwin':
         return
     global _macos_dock_icon_suppressed  # noqa: PLW0603

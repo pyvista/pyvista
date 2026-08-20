@@ -8535,11 +8535,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         if not self.off_screen:
-            # An off-screen probe elsewhere in the process (e.g.
-            # enable_depth_peeling's check_depth_peeling call) may have left
-            # this process unable to become the foreground app on macOS.
-            # Reclaim it unconditionally, right before this on-screen window
-            # is actually created, so it comes forward.
+            # Undo an earlier off-screen probe's Dock icon suppression, if any (macOS).
             _activate_macos_foreground_app()
         self.render()
 

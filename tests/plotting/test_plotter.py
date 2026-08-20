@@ -1144,11 +1144,7 @@ def test_macos_activate_foreground_app():
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 def test_macos_activate_foreground_app_noop_when_never_suppressed():
-    """Test an on-screen show() never touches NSApplication unless PyVista itself suppressed it.
-
-    A host application embedding PyVista and managing its own window
-    activation must not have that overridden by a plain, unrelated show().
-    """
+    """Test an on-screen show() never touches NSApplication unless PyVista itself suppressed it."""
     appkit_mock = MagicMock()
     tools_mod._macos_dock_icon_suppressed = False
     with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
