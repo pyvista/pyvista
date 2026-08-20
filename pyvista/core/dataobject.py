@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 
     from pyvista import MultiBlock
 
+    from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
     from .utilities.writer import BaseWriter
 
@@ -539,7 +540,7 @@ class DataObject(
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
-    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def add_field_data(self: Self, array: ArrayLike[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -548,7 +549,7 @@ class DataObject(
 
         Parameters
         ----------
-        array : sequence
+        array : ArrayLike[float]
             Array of data to add to the dataset as a field array.
 
         name : str
