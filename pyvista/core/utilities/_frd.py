@@ -491,4 +491,3 @@ class _FRDParser:
                     _FRDParser._compute_derived_strain(grid, name, arr)
 
         return grid
-        
