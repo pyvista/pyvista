@@ -133,6 +133,21 @@ a variable before being raised (`EM`), and boolean arguments are keyword-only
 `namespace-stdlib-imports` is ruff's `banned-from` list (`ICN003`) in `pyproject.toml`,
 which forbids the opposite direction; `Import Conventions` explains why both exist.
 
+## Editing TOML
+
+`taplo-format` runs `reorder_keys=true` and `reorder_arrays=true`, so keys and array
+entries in `pyproject.toml` and other TOML files get sorted. A comment on its own line
+above an entry is attached to that entry and breaks the sort -- `taplo` will not reorder
+past it. Put a comment inline, on the same line as the value it documents, so sorting
+still works. Keep it short for the same reason as everywhere else: less is more.
+
+A comment line is legitimate only when it deliberately splits the array or table into
+independently-sorted sections -- `filterwarnings` in `pyproject.toml` keeps `'error'`
+first with a blank line rather than a comment because pytest applies filters in order, and
+the `pytest-pyvista options` comment splits the `pytest-pyvista` keys from pytest's own so
+each group sorts on its own. Reach for that only when order or grouping is load-bearing,
+not to leave a note.
+
 ## Tests
 
 The heaviest review axis by a wide margin. `CONTRIBUTING.rst` and `context7.json` cover
