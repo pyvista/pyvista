@@ -25,8 +25,8 @@ from pyvista import _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
-from pyvista.plotting.tools import _activate_macos_foreground_app
 from pyvista.plotting.tools import supports_open_gl
+from pyvista.plotting.utilities.gl_checks import _check_depth_peeling
 from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 if TYPE_CHECKING:
@@ -1127,37 +1127,9 @@ def test_macos_offscreen_render_window_configured(case):
 
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
-def test_macos_activate_foreground_app():
-    """Test the activation policy is promoted and the app is activated once suppressed."""
-    appkit_mock = MagicMock()
-    tools_mod._macos_dock_icon_suppressed = True
-    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
-        _activate_macos_foreground_app()
-
-    app_mock = appkit_mock.NSApplication.sharedApplication()
-    app_mock.setActivationPolicy_.assert_called_once_with(
-        appkit_mock.NSApplicationActivationPolicyRegular,
-    )
-    app_mock.activateIgnoringOtherApps_.assert_called_once_with(True)
-    assert not tools_mod._macos_dock_icon_suppressed
-
-
-@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
-def test_macos_activate_foreground_app_noop_when_never_suppressed():
-    """Test an on-screen show() never touches NSApplication unless PyVista itself suppressed it."""
-    appkit_mock = MagicMock()
-    tools_mod._macos_dock_icon_suppressed = False
-    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
-        _activate_macos_foreground_app()
-
-    appkit_mock.NSApplication.assert_not_called()
-
-
-@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
-def test_macos_show_reclaims_foreground_after_depth_peeling(sphere):
+def test_macos_depth_peeling_does_not_touch_foreground_when_on_screen(sphere):
     """Regression test for #8934: depth peeling must not block show() from coming forward."""
-    check_depth_peeling.cache_clear()
-    tools_mod._macos_dock_icon_suppressed = False
+    _check_depth_peeling.cache_clear()
     appkit_mock = MagicMock()
     pl = pv.Plotter(off_screen=False)
     pl.add_mesh(sphere)
@@ -1168,14 +1140,29 @@ def test_macos_show_reclaims_foreground_after_depth_peeling(sphere):
             'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
             return_value=_make_fake_render_window(),
         ),
-        patch.object(pl, 'render'),
     ):
         pl.enable_depth_peeling()
-        pl.show(interactive=False)
 
-    app_mock = appkit_mock.NSApplication.sharedApplication()
-    prohibited = appkit_mock.NSApplicationActivationPolicyProhibited
-    regular = appkit_mock.NSApplicationActivationPolicyRegular
-    policy_calls = [c.args[0] for c in app_mock.setActivationPolicy_.call_args_list]
-    assert policy_calls == [prohibited, regular]
-    app_mock.activateIgnoringOtherApps_.assert_called_once_with(True)
+    appkit_mock.NSApplication.assert_not_called()
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+def test_macos_depth_peeling_suppresses_dock_icon_when_off_screen():
+    """Test an off-screen Plotter's depth peeling probe still suppresses the Dock icon."""
+    _check_depth_peeling.cache_clear()
+    appkit_mock = MagicMock()
+    pl = pv.Plotter(off_screen=True)
+    with (
+        patch('sys.platform', 'darwin'),
+        patch.dict(sys.modules, {'AppKit': appkit_mock}),
+        patch(
+            'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
+            return_value=_make_fake_render_window(),
+        ),
+    ):
+        pl.enable_depth_peeling()
+
+    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
+        appkit_mock.NSApplicationActivationPolicyProhibited,
+    )
+    pl.close()

@@ -95,7 +95,6 @@ from .text import TextProperty
 from .texture import numpy_to_texture
 from .theme_registry import _resolve_theme_like
 from .themes import Theme
-from .tools import _activate_macos_foreground_app
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -8534,9 +8533,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if jupyter_backend is None or jupyter_backend.lower() != 'none':
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
-        if not self.off_screen:
-            # Undo an earlier off-screen probe's Dock icon suppression, if any (macOS).
-            _activate_macos_foreground_app()
         self.render()
 
         # initial double render needed for certain passes when offscreen

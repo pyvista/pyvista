@@ -7,7 +7,6 @@ import os
 import platform
 import subprocess
 import sys
-import threading
 
 import numpy as np
 
@@ -31,15 +30,11 @@ class FONTS(Enum):
 SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
 
-# Serializes reads and writes of NSApplication's activation policy, shared process-wide.
-_MACOS_ACTIVATION_POLICY_LOCK = threading.Lock()
-
-# Set only while PyVista's own off-screen path has demoted the activation policy.
-_macos_dock_icon_suppressed = False
-
 
 def _prepare_offscreen_macos_render_window(  # pragma: no cover
     render_window: _vtk.vtkRenderWindow | None,
+    *,
+    suppress_dock_icon: bool = True,
 ):
     """Configure ``render_window`` for quiet, off-screen use on macOS.
 
@@ -51,6 +46,8 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
        in ``CreateAWindow()`` unconditionally, even for off-screen use,
        is enough for an unbundled Python process to get a Dock icon. VTK
        never reverses this, so we demote the activation policy via PyObjC.
+       Pass ``suppress_dock_icon=False`` to skip only this step, for a
+       probe window whose caller is not actually staying off-screen.
     2. ``SetConnectContextToNSView(False)`` stops this particular render
        window from creating a real NSWindow.
 
@@ -60,18 +57,15 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
     """
 
     def _suppress_dock_icon():
-        if sys.platform != 'darwin':
+        if sys.platform != 'darwin' or not suppress_dock_icon:
             return
-        global _macos_dock_icon_suppressed  # noqa: PLW0603
         try:  # type:ignore[unreachable]
             from AppKit import NSApplication  # noqa: PLC0415
             from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
 
-            with _MACOS_ACTIVATION_POLICY_LOCK:
-                NSApplication.sharedApplication().setActivationPolicy_(
-                    NSApplicationActivationPolicyProhibited,
-                )
-                _macos_dock_icon_suppressed = True
+            NSApplication.sharedApplication().setActivationPolicy_(
+                NSApplicationActivationPolicyProhibited,
+            )
         except ImportError:
             pass
 
@@ -83,25 +77,6 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
         return
     _suppress_dock_icon()
     _disable_cocoa_nsview_context()
-
-
-def _activate_macos_foreground_app():  # pragma: no cover
-    """Undo PyVista's own Dock icon suppression, if it is still in effect."""
-    if sys.platform != 'darwin':
-        return
-    global _macos_dock_icon_suppressed  # noqa: PLW0603
-    with _MACOS_ACTIVATION_POLICY_LOCK:
-        if not _macos_dock_icon_suppressed:
-            return
-        try:
-            from AppKit import NSApplication  # noqa: PLC0415
-            from AppKit import NSApplicationActivationPolicyRegular  # noqa: PLC0415
-        except ImportError:
-            return
-        app = NSApplication.sharedApplication()
-        app.setActivationPolicy_(NSApplicationActivationPolicyRegular)
-        app.activateIgnoringOtherApps_(True)
-        _macos_dock_icon_suppressed = False
 
 
 def supports_open_gl():
