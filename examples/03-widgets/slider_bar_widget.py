@@ -66,5 +66,4 @@ pl.show()
 #
 # .. image:: ../../images/gifs/slider-widget-resolution.gif
 #
-# %%
 # .. tags:: widgets

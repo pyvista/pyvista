@@ -65,5 +65,4 @@ pl.show()
 #
 # .. image:: ../../images/gifs/line-widget-streamlines.gif
 #
-# %%
 # .. tags:: widgets
