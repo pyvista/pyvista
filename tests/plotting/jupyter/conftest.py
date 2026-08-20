@@ -60,6 +60,3 @@ def _eager_resolve_trame_component():
     jupyter_mod._ensure_entry_points()
 
 
-# _trame_array_cache moved up to tests/plotting/conftest.py: test_cli.py also
-# exports scenes, and scoping the cleanup to this directory left those arrays
-# to be blamed on whichever plotting test xdist ran next.

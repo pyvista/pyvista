@@ -118,8 +118,6 @@ def vtk_backend() -> str:
     ...     raise RuntimeError(msg)
 
     """
-    # `_VTK_ROOT` is the import root; report the familiar distribution name for
-    # stock VTK rather than leaking the `vtkmodules` package name.
     return 'vtk' if _vtk._VTK_ROOT == 'vtkmodules' else _vtk._VTK_ROOT
 
 
