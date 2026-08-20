@@ -189,7 +189,6 @@ class _FRDParser:
             return [node_ids[0], node_ids[2], node_ids[1], node_ids[3], node_ids[5], node_ids[4]]
         if etype == FRDElementType.PE15:
             return node_ids[:9] + node_ids[12:15] + node_ids[9:12]
-        # PY5/PY13: CCX order already matches VTK, no permutation needed.
         return node_ids
 
     @staticmethod
