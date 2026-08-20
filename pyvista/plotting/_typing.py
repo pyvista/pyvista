@@ -91,6 +91,7 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
 # 'testing'/'document_build' (internal-only, for pytest/doc builds). All four

@@ -2270,28 +2270,29 @@ def test_array_volume_rendering(uniform, verify_image_cache):
 @pytest.mark.parametrize(
     ('func', 'datasets', 'kwargs'),
     [
-        (pv.plot, [pv.Sphere()], {}),
-        (pv.plot_compare, [pv.Sphere(), pv.Cone()], {'subplot_seams': False}),
+        (pv.plot, [pv.Sphere()], {'border': True}),
+        (pv.plot_compare, [pv.Sphere(), pv.Cone()], {'border': 'exterior'}),
     ],
     ids=['pv.plot (single subplot)', 'pv.plot_compare (multiple subplots)'],
 )
 @pytest.mark.usefixtures('verify_image_cache')
 def test_border_outer_frame_top_level_plot_functions(func, datasets, kwargs):
-    """``border=True`` draws the same kind of outer frame from ``pv.plot`` and ``pv.plot_compare``.
+    """``border='exterior'`` draws the same outer frame from ``pv.plot`` and ``pv.plot_compare``.
 
     Exercises the public, top-level plotting entry points directly --
-    rather than ``Plotter``/``Renderers`` internals -- with
-    ``subplot_seams`` off so only the outer frame shows. Default
-    appearance (border/seam styling with no explicit kwargs) already
-    has plenty of coverage elsewhere: the other multi-subplot tests in
-    this file, and the doc gallery's own image regression tests.
+    rather than ``Plotter``/``Renderers`` internals. ``'exterior'``
+    and ``True`` are equivalent for ``pv.plot``, which is always a
+    single subplot. Default appearance (border/seam styling with no
+    explicit kwargs) already has plenty of coverage elsewhere: the
+    other multi-subplot tests in this file, and the doc gallery's own
+    image regression tests.
     """
-    func(datasets, border=True, border_color='red', border_width=10, **kwargs)
+    func(datasets, border_color='red', border_width=10, **kwargs)
 
 
 @pytest.mark.usefixtures('verify_image_cache')
 def test_border_outer_frame_and_seams_dark_theme():
-    """``border=True`` layers on top of the default ``subplot_seams=True``.
+    """``border=True`` draws both the outer frame and the default interior seams.
 
     Regression test: the outer frame sits exactly on the shared
     overlay renderer's own viewport boundary, where roughly half of a

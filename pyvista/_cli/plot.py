@@ -16,7 +16,6 @@ from .utils import Groups
 from .utils import _kwargs_converter
 from .utils import anti_aliasing
 from .utils import background
-from .utils import border
 from .utils import border_color
 from .utils import border_width
 from .utils import call_or_exit
@@ -75,7 +74,7 @@ def _plot(
     return_cpos: return_cpos = False,
     anti_aliasing: anti_aliasing = None,
     zoom: zoom = None,
-    border: border = None,
+    border: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
     border_color: border_color = None,
     border_width: border_width = None,
     theme: theme = None,

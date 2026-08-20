@@ -1229,6 +1229,7 @@ def test_compare_cli_synced(missing_compare_arguments: set[str]):
     from pyvista import PartitionedDataSet  # noqa: F401
     from pyvista import Plotter  # noqa: F401
     from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
+    from pyvista.plotting._typing import BorderOptions  # noqa: F401
     from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
     from pyvista.plotting._typing import ColorLike  # noqa: F401
     from pyvista.plotting._typing import PlottableType  # noqa: F401
@@ -1261,6 +1262,7 @@ def test_compare_cli_synced(missing_compare_arguments: set[str]):
         'theme',  # The CLI takes a theme by name only, not a `Theme` instance
         'shape',  # The CLI takes a string it parses itself, not a sequence or descriptor
         'labels',  # The CLI takes a concrete `list`, one token per label, not any sequence
+        'border',  # The CLI takes 0-1 raw string tokens; see `_converter_border` in compare.py
     }
     compare_annotations = {k: v for k, v in compare_annotations.items() if k not in excludes}
     cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
@@ -2059,6 +2061,12 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         ('--label-size best_fit', 'label_size', 'best_fit'),
         ('', 'label_position', None),
         ('--label-position lower_right', 'label_position', 'lower_right'),
+        ('', 'border', None),
+        ('--border', 'border', True),
+        ('--border=true', 'border', True),
+        ('--border=false', 'border', False),
+        ('--border interior', 'border', 'interior'),
+        ('--border=exterior', 'border', 'exterior'),
     ],
     ids=[
         'link_default',
@@ -2075,6 +2083,12 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         'label_size_mode',
         'label_position_default',
         'label_position',
+        'border_default',
+        'border_bare',
+        'border_true',
+        'border_false',
+        'border_interior',
+        'border_exterior',
     ],
 )
 def test_compare_forwards_arguments(
@@ -2089,6 +2103,37 @@ def test_compare_forwards_arguments(
     main(shlex.split(f'compare {names} {tokens}'))
 
     assert mock_plot_compare.call_args.kwargs[argument] == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_compare_border_invalid_args(tmp_compare_files: list[Path], capsys: pytest.CaptureFixture):
+    """``--border`` takes 0 or 1 tokens, and only from its fixed set of values."""
+    names = ' '.join(path.name for path in tmp_compare_files)
+    command = f'compare {names} --border foo'
+    with pytest.raises(SystemExit) as e:
+        main(command)
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        "│ Invalid value for --border: expected one of 'true', 'false',       │\n"
+        "│ 'interior', 'exterior' or no value. Got 'foo'.                     │\n"
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in err
+    assert e.value.code == 1
+
+    with pytest.raises(SystemExit) as e:
+        main(command + ' bar')
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for --border: accepts 0 or 1 arguments. Got 2.       │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in err
+    assert e.value.code == 1
 
 
 @pytest.mark.parametrize(

@@ -434,7 +434,6 @@ def test_set_hidden_line_removal(default_theme):
         ('edge_color', (1.0, 0.0, 0.0)),
         ('border_color', (0.25, 0.5, 0.75)),
         ('border_width', 2.5),
-        ('subplot_seams', False),
         ('outline_color', (1.0, 0.0, 0.0)),
         ('floor_color', (1.0, 0.0, 0.0)),
         ('show_scalar_bar', False),

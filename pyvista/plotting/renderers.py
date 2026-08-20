@@ -12,6 +12,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
@@ -19,6 +20,14 @@ from .colors import Color
 from .renderer import Renderer
 
 _SeamSegment = tuple[tuple[float, float], tuple[float, float]]
+
+# What each accepted `border` value draws, as (draw_interior, draw_exterior).
+_BORDER_MODES: dict[bool | str, tuple[bool, bool]] = {
+    True: (True, True),
+    False: (False, False),
+    'interior': (True, False),
+    'exterior': (False, True),
+}
 
 
 def _merge_intervals(
@@ -164,15 +173,22 @@ class Renderers(_NoNewAttrMixin):
     groups : list, optional
         A list of sequences that defines the grouping of the sub-datasets.
 
-    border : bool, default: False
-        Draw a frame around the outer edge of the plotting area, i.e.
-        around the whole grid of subplots, regardless of ``shape``.
+    border : bool | 'interior' | 'exterior', optional
+        Draw a border around the plotting area. ``True`` draws both
+        an outer frame and lines between subplots; ``False`` draws
+        neither. ``'interior'`` draws only the lines between
+        subplots, and ``'exterior'`` only the outer frame. For a
+        single subplot, there are no neighbors to separate, so
+        ``'interior'`` has no effect and ``'exterior'`` draws the
+        same thing as ``True``. Defaults to ``False`` for a single
+        subplot and ``'interior'`` for more than one.
 
         .. versionchanged:: 0.49
 
-            Now draws a single frame around the whole plotting area,
-            rather than a frame around each subplot individually. Use
-            ``subplot_seams`` for lines between subplots instead.
+            Previously a plain ``bool`` that, when ``True``, drew a
+            border around every individual subplot rather than the
+            plotting area as a whole, and defaulted to ``True`` for
+            more than one subplot.
 
     border_color : str, optional
         The color of the border and/or subplot seams. Defaults to
@@ -183,13 +199,6 @@ class Renderers(_NoNewAttrMixin):
         The width of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_width
         <pyvista.plotting.themes.Theme.border_width>`.
-
-    subplot_seams : bool, optional
-        Draw a thin line between neighboring subplots. Defaults to
-        :attr:`pyvista.global_theme.subplot_seams
-        <pyvista.plotting.themes.Theme.subplot_seams>`. Has no effect
-        for a single subplot, since there are no neighbors to
-        separate.
 
     """
 
@@ -205,7 +214,6 @@ class Renderers(_NoNewAttrMixin):
         border=None,
         border_color=None,
         border_width=None,
-        subplot_seams=None,
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
@@ -213,17 +221,14 @@ class Renderers(_NoNewAttrMixin):
         self._renderers = []
         self._shadow_renderer = None
 
-        # `border` always means "draw a frame around the outer edge of
-        # the occupied plotting area" -- the same concept whether there's
-        # one render window or a grid of them -- so it no longer turns
-        # itself on implicitly for multi-subplot layouts. That look now
-        # lives behind `subplot_seams`, which theme.subplot_seams defaults
-        # on -- it only ever has an effect once there's more than one
-        # renderer, so a single subplot is unaffected either way.
+        # `np.array_equal` (rather than `shape == (1, 1)`) also accepts a list or
+        # array `shape`, and never raises on a shape it can't compare (e.g. a
+        # string descriptor -- always multiple subplots regardless).
         if border is None:
-            border = False
-        if subplot_seams is None:
-            subplot_seams = plotter.theme.subplot_seams
+            is_single_subplot = not isinstance(shape, str) and np.array_equal(shape, (1, 1))
+            border = False if is_single_subplot else 'interior'
+        _validation.check_contains(list(_BORDER_MODES), must_contain=border, name='border')
+        draw_interior, draw_exterior = _BORDER_MODES[border]
         if border_color is None:
             border_color = plotter.theme.border_color
         if border_width is None:
@@ -263,7 +268,7 @@ class Renderers(_NoNewAttrMixin):
             for i in rangen:
                 arenderer = Renderer(
                     self._plotter,
-                    border=border,
+                    border=draw_exterior,
                     border_color=border_color,
                     border_width=border_width,
                 )
@@ -275,7 +280,7 @@ class Renderers(_NoNewAttrMixin):
             for i in rangem:
                 arenderer = Renderer(
                     self._plotter,
-                    border=border,
+                    border=draw_exterior,
                     border_color=border_color,
                     border_width=border_width,
                 )
@@ -389,7 +394,7 @@ class Renderers(_NoNewAttrMixin):
                 if nb_rows is not None:
                     renderer = Renderer(
                         self._plotter,
-                        border=border,
+                        border=draw_exterior,
                         border_color=border_color,
                         border_width=border_width,
                     )
@@ -414,14 +419,14 @@ class Renderers(_NoNewAttrMixin):
         # direction or disappear entirely, because the boundary falls
         # right at each viewport's clip edge and rounds inconsistently.
         self._border_overlay_renderer: Renderer | None = None
-        if len(self._renderers) > 1 and (border or subplot_seams):
+        if len(self._renderers) > 1 and (draw_interior or draw_exterior):
             for renderer in self._renderers:
                 renderer._drop_border_actor()
             self._border_overlay_renderer = self._build_border_overlay_renderer(
                 border_color=border_color,
                 border_width=border_width,
-                interior=subplot_seams,
-                exterior=border,
+                interior=draw_interior,
+                exterior=draw_exterior,
             )
 
         # each render will also have an associated background renderer
@@ -431,7 +436,10 @@ class Renderers(_NoNewAttrMixin):
 
         # create a shadow renderer that lives on top of all others
         self._shadow_renderer = Renderer(
-            self._plotter, border=border, border_color=border_color, border_width=border_width
+            self._plotter,
+            border=draw_exterior,
+            border_color=border_color,
+            border_width=border_width,
         )
         self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
