@@ -48,7 +48,7 @@ jobs:
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
-      runs-on: "blacksmith-8vcpu-ubuntu-2204"
+      runs-on: blacksmith-8vcpu-ubuntu-2204
 
   doc:
     name: Build Documentation
@@ -150,7 +150,7 @@ jobs:
 
   test:
     name: Test Documentation
-    runs-on: ubuntu-22.04
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     needs: doc
     if: ${{ !cancelled() }}
     env:
