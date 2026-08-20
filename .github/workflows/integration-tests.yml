@@ -56,16 +56,7 @@ jobs:
           - project: playwright
             timeout: 6 # usually takes ~2
           - project: cvista
-            # The whole suite against a second VTK build, so it is the slowest
-            # integration by some way: ~26 min for the 13.5k tests on a runner
-            # where -n auto only yields 2 workers. The retry wrapper gives each
-            # attempt timeout/2, so this is ~2x the real runtime plus headroom.
             timeout: 80
-            # Pinned to match Linux Unit Testing, which is also pinned. This job
-            # compares against the committed image_cache, and llvmpipe renders
-            # differently across Mesa releases: ubuntu-latest (24.04, Mesa 25.2 /
-            # LLVM 20) fails cache comparisons that pass on 22.04 (Mesa 23.2 /
-            # LLVM 15) for any VTK build, stock included.
             runner: ubuntu-22.04
     runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     timeout-minutes: ${{ matrix.timeout }}
