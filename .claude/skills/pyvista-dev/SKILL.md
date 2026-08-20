@@ -63,6 +63,10 @@ Less is more. A comment earns its place by explaining why, not what; if the code
 says what, delete the comment. Keep docstrings to what the numpydoc sections require, not
 a narrative.
 
+Every function and class gets a docstring, including small private helpers -- a one-line
+summary is enough when there is nothing more to say. Only the full numpydoc sections
+(`Parameters`, `Returns`, examples, ...) are reserved for the public API.
+
 Never describe how the change came to be -- no "fix", "bug", "temporary workaround", "now
 we", "previously", or reference to a prior version of the code. Write both as if the
 current diff were the first and only version of the file: they describe the code that
