@@ -58,5 +58,3 @@ def _eager_resolve_trame_component():
     jupyter_mod._custom_backend_sources.clear()
     jupyter_mod._entry_points_loaded = False
     jupyter_mod._ensure_entry_points()
-
-
