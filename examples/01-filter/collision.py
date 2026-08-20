@@ -21,7 +21,7 @@ sphere.
    single collision tests, but it is recommended to use a
    combination of ``pyvista`` and ``vtk`` for rapidly computing
    repeated collisions.  See the `Collision Detection Example
-   <https://kitware.github.io/vtk-examples/site/Python/Visualization/CollisionDetection/>`_
+   <https://examples.vtk.org/site/Python/Visualization/CollisionDetection/>`_
 
 
 """

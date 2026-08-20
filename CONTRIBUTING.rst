@@ -324,7 +324,7 @@ section <#creating-a-new-pull-request>`_.
 Coding Style
 ^^^^^^^^^^^^
 
-We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
+We adhere to `PEP 8 <https://peps.python.org/pep-0008/>`_
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
 the exception rather than the norm. A uniform code style is enforced
@@ -341,7 +341,7 @@ As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
 Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
-Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
+Python <https://peps.python.org/pep-0020/>`_. When in doubt:
 
 .. code-block:: python
 
@@ -1843,7 +1843,7 @@ created the following will occur:
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 #.  Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
+    `@regro-cf-autotick-bot <https://github.com/conda-forge/conda-forge-bot>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.

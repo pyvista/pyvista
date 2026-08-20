@@ -11,7 +11,7 @@ simulation node value already on the mesh.
 This was originally posted to `pyvista/pyvista-support#83 <https://github.com/pyvista/pyvista-support/issues/83>`_.
 
 The modeling results are courtesy of `Urruty Benoit <https://github.com/BenoitURRUTY>`_
-and  are from the `Elmer/Ice <http://elmerice.elmerfem.org>`_ simulation
+and  are from the `Elmer/Ice <https://elmerice.elmerfem.org>`_ simulation
 software.
 
 """
