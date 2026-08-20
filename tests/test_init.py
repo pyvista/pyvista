@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import textwrap
 
 import pytest
 
@@ -132,6 +133,37 @@ def test_large_dependencies_not_imported(module: str):
     https://github.com/pyvista/pyvista/pull/7023
     """
     assert not _module_is_loaded(module), error_msg
+
+
+def test_plotting_import_has_no_direct_pillow_imports():
+    code = textwrap.dedent(
+        """
+        import builtins
+
+        original_import = builtins.__import__
+        pyvista_pillow_imports = []
+
+        def tracked_import(name, globals=None, locals=None, fromlist=(), level=0):
+            caller_name = globals.get('__name__', '') if globals else ''
+            if caller_name.startswith('pyvista') and (
+                name == 'PIL' or name.startswith('PIL.')
+            ):
+                pyvista_pillow_imports.append((caller_name, name))
+            return original_import(name, globals, locals, fromlist, level)
+
+        builtins.__import__ = tracked_import
+        import pyvista.plotting  # noqa: F401
+
+        assert pyvista_pillow_imports == [], pyvista_pillow_imports
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
 
 
 def test_pyvista_oo_flag():
