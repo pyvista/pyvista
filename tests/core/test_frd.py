@@ -396,8 +396,7 @@ VALID_ELEMENT_DEFINITIONS = {
         '    1 0.0 0.0 0.0\n -1    2 1.0 0.0 0.0\n -1    3 0.5 0.0 0.0',
         '    1    2    3',
     ),
-    # Experimental pyramid elements (CCX: C3D5 / C3D13). Base quad CCW as
-    # seen from the apex, apex last -- matches VTK directly, no permutation.
+    # Experimental pyramid elements (CCX: C3D5 / C3D13), no permutation needed.
     'PY5': (
         15,
         (
@@ -531,14 +530,7 @@ def test_frd_reader_coverage_edge_cases(coverage_edge_cases_frd):
 
 @pytest.fixture
 def pyramid_frd_file(tmp_path):
-    """Fixture with a PY5 and a PY13 element sharing the same base+apex shape.
-
-    Node order follows the actual CCX (Abaqus-style) convention used by the
-    community patch: 4 base-quad corners CCW as seen from the apex, then the
-    apex, then (for PY13) the 4 base-edge midside nodes, then the 4
-    apex-edge midside nodes. This is the same order found in real .frd/.inp
-    output, e.g. `pyvista/pyvista#8923 <https://github.com/pyvista/pyvista/issues/8923>`_.
-    """
+    """FRD file with a PY5 and a PY13 element, in real CCX node order."""
     content = """1C Pyramid element test
 2C
  -1    1 0.0 0.0 0.0
@@ -568,7 +560,7 @@ def pyramid_frd_file(tmp_path):
 
 
 def test_frd_reader_pyramid_types(pyramid_frd_file):
-    """PY5/PY13 map to the right VTK cell types and keep their point count."""
+    """PY5/PY13 map to the right VTK cell types and point counts."""
     mesh = pv.FRDReader(pyramid_frd_file).read()
 
     assert mesh.n_cells == 2
@@ -579,15 +571,7 @@ def test_frd_reader_pyramid_types(pyramid_frd_file):
 
 
 def test_frd_reader_pyramid_no_permutation(pyramid_frd_file):
-    """CCX order for PY5/PY13 already matches VTK -- points must land unchanged.
-
-    Unlike HE20/PE15, no reordering is applied for these two element types
-    (see `_FRDParser._permute_nodes`). This directly checks that each of the
-    13 points of the PY13 cell -- corners, apex, base-edge midsides, then
-    apex-edge midsides -- ends up at the coordinate it was defined with,
-    i.e. that the identity mapping is actually correct and not just
-    "positive volume by accident".
-    """
+    """PY5/PY13 points, incl. PY13 midsides, must land unpermuted."""
     mesh = pv.FRDReader(pyramid_frd_file).read()
 
     expected_py5 = np.array(
@@ -619,3 +603,4 @@ def test_frd_reader_pyramid_no_permutation(pyramid_frd_file):
         ]
     )
     np.testing.assert_allclose(mesh.get_cell(1).points, expected_py13)
+    
