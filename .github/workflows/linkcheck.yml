@@ -65,10 +65,19 @@ jobs:
             --description "Tracks the recurring linkcheck failure" \
             --force || true
 
+          # lychee's markdown report always lists every redirect in full,
+          # which drowns out the actual failures. Strip that section; the
+          # summary table (with its redirect count) is kept.
+          report=$(awk '
+            /^## Redirects per input/ {skip=1; next}
+            skip && /^##? [^#]/ {skip=0}
+            !skip
+          ' ./lychee/out.md)
+
           body=$(cat <<EOF
           See [the linkcheck run](${RUN_URL}) for the full output.
 
-          $(cat ./lychee/out.md)
+          $report
           EOF
           )
 
