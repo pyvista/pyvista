@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import contextlib
 from enum import Enum
 import os
 import platform
 import subprocess
 import sys
+import threading
 
 import numpy as np
 
@@ -30,6 +30,12 @@ class FONTS(Enum):
 # Track render window support and plotting
 SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
+
+# NSApplication's activation policy is one piece of state shared by the whole
+# process. check_depth_peeling and supports_open_gl can run off-screen on a
+# background thread while another thread opens an on-screen Plotter, so
+# serialize every read-or-write of it through this lock.
+_MACOS_ACTIVATION_POLICY_LOCK = threading.Lock()
 
 
 def _prepare_offscreen_macos_render_window(  # pragma: no cover
@@ -60,9 +66,10 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
             from AppKit import NSApplication  # noqa: PLC0415
             from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
 
-            NSApplication.sharedApplication().setActivationPolicy_(
-                NSApplicationActivationPolicyProhibited,
-            )
+            with _MACOS_ACTIVATION_POLICY_LOCK:
+                NSApplication.sharedApplication().setActivationPolicy_(
+                    NSApplicationActivationPolicyProhibited,
+                )
         except ImportError:
             pass
 
@@ -76,29 +83,27 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
     _disable_cocoa_nsview_context()
 
 
-@contextlib.contextmanager
-def _restore_macos_activation_policy():
-    """Restore the current NSApplication activation policy on exit.
+def _activate_macos_foreground_app():  # pragma: no cover
+    """Promote this process to a regular, activated macOS app.
 
-    A transient off-screen probe window has no business leaving the whole
-    process unable to be brought forward for the rest of its life. Wrap any
-    such probe in this so ``_prepare_offscreen_macos_render_window``'s Dock
-    icon suppression is undone once the probe window is discarded.
+    An earlier off-screen probe (:func:`check_depth_peeling`,
+    :func:`supports_open_gl`) may have left ``NSApplication``'s activation
+    policy at ``Prohibited`` via :func:`_prepare_offscreen_macos_render_window`,
+    which stops the process from ever becoming the foreground app again and
+    keeps a real, on-screen render window from coming forward. Call this
+    right before creating one to undo that unconditionally.
     """
     if sys.platform != 'darwin':
-        yield
         return
     try:
         from AppKit import NSApplication  # noqa: PLC0415
+        from AppKit import NSApplicationActivationPolicyRegular  # noqa: PLC0415
     except ImportError:
-        yield
         return
-    app = NSApplication.sharedApplication()
-    previous_policy = app.activationPolicy()
-    try:
-        yield
-    finally:
-        app.setActivationPolicy_(previous_policy)
+    with _MACOS_ACTIVATION_POLICY_LOCK:
+        app = NSApplication.sharedApplication()
+        app.setActivationPolicy_(NSApplicationActivationPolicyRegular)
+        app.activateIgnoringOtherApps_(True)
 
 
 def supports_open_gl():
@@ -115,11 +120,10 @@ def supports_open_gl():
     """
     global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
-        with _restore_macos_activation_policy():
-            ren_win = _vtk.vtkRenderWindow()
-            ren_win.SetOffScreenRendering(True)
-            _prepare_offscreen_macos_render_window(ren_win)
-            SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
+        ren_win = _vtk.vtkRenderWindow()
+        ren_win.SetOffScreenRendering(True)
+        _prepare_offscreen_macos_render_window(ren_win)
+        SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
 

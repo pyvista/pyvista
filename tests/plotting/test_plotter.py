@@ -15,7 +15,6 @@ import sys
 import threading
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
-from unittest.mock import call
 from unittest.mock import patch
 
 import numpy as np
@@ -26,6 +25,7 @@ from pyvista import _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
+from pyvista.plotting.tools import _activate_macos_foreground_app
 from pyvista.plotting.tools import supports_open_gl
 from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
@@ -1100,19 +1100,15 @@ def _invoke_plotter_offscreen():
 class _MacOSFixCase:
     id: str
     invoke: Callable[[], MagicMock]
-    restores_policy: bool
 
 
 # Test cases for functions that create off-screen render windows.
 # These functions all call `_prepare_offscreen_macos_render_window` internally.
-# `check_depth_peeling` and `supports_open_gl` probe with a throwaway window and must
-# restore the activation policy afterward (#8934); an off-screen `Plotter` keeps it
-# suppressed for the plotter's lifetime.
 # NOTE: report.py has a script that creates an off-screen renderer but is not covered here
 _MACOS_FIX_CASES = [
-    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling, restores_policy=True),
-    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl, restores_policy=True),
-    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen, restores_policy=False),
+    _MacOSFixCase('check_depth_peeling', _invoke_check_depth_peeling),
+    _MacOSFixCase('supports_open_gl', _invoke_supports_open_gl),
+    _MacOSFixCase('plotter_off_screen', _invoke_plotter_offscreen),
 ]
 
 
@@ -1125,12 +1121,47 @@ def test_macos_offscreen_render_window_configured(case):
         render_window = case.invoke()
 
     assert render_window.GetConnectContextToNSView() is False
+    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
+        appkit_mock.NSApplicationActivationPolicyProhibited,
+    )
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+def test_macos_activate_foreground_app():
+    """Test the activation policy is promoted and the app is activated."""
+    appkit_mock = MagicMock()
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        _activate_macos_foreground_app()
+
+    app_mock = appkit_mock.NSApplication.sharedApplication()
+    app_mock.setActivationPolicy_.assert_called_once_with(
+        appkit_mock.NSApplicationActivationPolicyRegular,
+    )
+    app_mock.activateIgnoringOtherApps_.assert_called_once_with(True)
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+def test_macos_show_reclaims_foreground_after_depth_peeling(sphere):
+    """Regression test for #8934: depth peeling must not block show() from coming forward."""
+    check_depth_peeling.cache_clear()
+    appkit_mock = MagicMock()
+    pl = pv.Plotter(off_screen=False)
+    pl.add_mesh(sphere)
+    with (
+        patch('sys.platform', 'darwin'),
+        patch.dict(sys.modules, {'AppKit': appkit_mock}),
+        patch(
+            'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
+            return_value=_make_fake_render_window(),
+        ),
+        patch.object(pl, 'render'),
+    ):
+        pl.enable_depth_peeling()
+        pl.show(interactive=False)
+
     app_mock = appkit_mock.NSApplication.sharedApplication()
     prohibited = appkit_mock.NSApplicationActivationPolicyProhibited
-    if case.restores_policy:
-        assert app_mock.setActivationPolicy_.call_args_list == [
-            call(prohibited),
-            call(app_mock.activationPolicy.return_value),
-        ]
-    else:
-        app_mock.setActivationPolicy_.assert_called_once_with(prohibited)
+    regular = appkit_mock.NSApplicationActivationPolicyRegular
+    policy_calls = [c.args[0] for c in app_mock.setActivationPolicy_.call_args_list]
+    assert policy_calls == [prohibited, regular]
+    app_mock.activateIgnoringOtherApps_.assert_called_once_with(True)
