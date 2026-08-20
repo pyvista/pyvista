@@ -313,6 +313,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkResampleWithDataSet',
         'vtkReverseSense',
         'vtkSmoothPolyDataFilter',
+        'vtkStaticCleanPolyData',
         'vtkStaticCleanUnstructuredGrid',
         'vtkStripper',
         'vtkSurfaceNets3D',
