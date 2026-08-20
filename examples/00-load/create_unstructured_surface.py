@@ -135,7 +135,9 @@ celltypes = np.full(8, pv.CellType.HEXAHEDRON, dtype=np.uint8)
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
-grid = pv.UnstructuredGrid({pv.CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
+grid = pv.UnstructuredGrid(
+    {pv.CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points
+)
 grid = pv.UnstructuredGrid(
     {pv.CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))},
     points,
