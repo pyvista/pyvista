@@ -10,7 +10,6 @@ This example uses :class:`pyvista.UnstructuredGrid`.
 
 import numpy as np
 import pyvista as pv
-from pyvista import CellType
 
 # %%
 # An unstructured grid can be created directly from NumPy arrays.
@@ -24,7 +23,7 @@ from pyvista import CellType
 cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
 
 # cell type array. Contains the cell type of each cell
-cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON])
+cell_type = np.array([pv.CellType.HEXAHEDRON, pv.CellType.HEXAHEDRON])
 
 # in this example, each cell uses separate points
 cell1 = np.array(
@@ -65,7 +64,7 @@ grid = pv.UnstructuredGrid(cells, cell_type, points)
 # added to the dictionary.
 cells_hex = np.arange(16).reshape([2, 8])
 # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
-grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex}, points)
+grid = pv.UnstructuredGrid({pv.CellType.HEXAHEDRON: cells_hex}, points)
 
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)
@@ -128,7 +127,7 @@ cells = np.array(
 ).ravel()
 
 # each cell is a HEXAHEDRON
-celltypes = np.full(8, CellType.HEXAHEDRON, dtype=np.uint8)
+celltypes = np.full(8, pv.CellType.HEXAHEDRON, dtype=np.uint8)
 
 
 # %%
@@ -136,9 +135,9 @@ celltypes = np.full(8, CellType.HEXAHEDRON, dtype=np.uint8)
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
-grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
+grid = pv.UnstructuredGrid({pv.CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
 grid = pv.UnstructuredGrid(
-    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))},
+    {pv.CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))},
     points,
 )
 
@@ -171,7 +170,7 @@ cells = np.array(
     ],
 )
 
-celltypes = np.full(10, fill_value=CellType.TETRA, dtype=np.uint8)
+celltypes = np.full(10, fill_value=pv.CellType.TETRA, dtype=np.uint8)
 
 # These are the 10 points. The number of cells does not need to match the
 # number of points, they just happen to in this example
