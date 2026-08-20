@@ -894,10 +894,9 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     ``CellType``.
 
     >>> import numpy as np
-    >>> from pyvista import CellType
     >>> import pyvista as pv
     >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
-    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
+    >>> cell_type = np.array([pv.CellType.HEXAHEDRON], np.int8)
     >>> points = np.array(
     ...     [
     ...         [0, 0, 0],
