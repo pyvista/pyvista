@@ -23,4 +23,4 @@ and how you can help develop PyVista.
    pyvista_data
    extending_pyvista
 
-.. _pyinstaller: https://pyinstaller.org/en/stable/
+.. _pyinstaller: https://pyinstaller.org/
