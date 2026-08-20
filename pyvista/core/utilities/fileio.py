@@ -1204,7 +1204,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         points = np.hstack((points, zero_points))
 
     grid = pv.UnstructuredGrid(
-        np.concatenate(cells).astype(np.int64, copy=False),
+        np.concatenate(cells).astype(pv.ID_TYPE, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
     )
@@ -1325,7 +1325,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     # Mixed cell types
     else:
         cells = []
-        offset = mesh.offset
+        offset = mesh.cell_offsets
 
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
@@ -1548,10 +1548,6 @@ def from_trimesh(
     --------
     to_trimesh, from_meshio, :func:`~pyvista.wrap`
 
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
-
     """
     try:
         import trimesh  # noqa: PLC0415
@@ -1640,10 +1636,6 @@ def to_trimesh(  # numpydoc ignore=RT01
     See Also
     --------
     from_trimesh, to_meshio, :func:`~pyvista.wrap`
-
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
 
     """
     try:

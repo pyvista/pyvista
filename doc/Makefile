@@ -82,8 +82,11 @@ ci-build:
 	@echo "Building documentation via tox (matches CI)"
 	@cd .. && uv run tox -e docs-build -- $(ARGS)
 
-# Test the built documentation via tox (matches CI `tox -e docs-test`).
-# Requires a prior successful `make ci-build` (or `make docs` at the root).
+# Test the built documentation via tox (matches CI `tox -e docs-test-build` and
+# `tox -e docs-test-images`, run together here). tox runs every listed env even
+# if an earlier one fails, so docs-test-images still runs after a docs-test-build
+# failure, matching CI. Requires a prior successful `make ci-build` (or `make docs`
+# at the root).
 ci-test:
 	@echo "Testing built documentation via tox (matches CI)"
-	@cd .. && uv run tox -e docs-test -- $(ARGS)
+	@cd .. && uv run tox -e docs-test-build,docs-test-images -- $(ARGS)

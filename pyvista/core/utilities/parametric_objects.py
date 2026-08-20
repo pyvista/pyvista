@@ -84,11 +84,6 @@ def Spline(
     pyvista.PolyData
         Line mesh of spline.
 
-    See Also
-    --------
-    :ref:`create_spline_example`
-    :ref:`distance_along_spline_example`
-
     Examples
     --------
     Construct a spline.
@@ -237,8 +232,6 @@ def KochanekSpline(  # noqa: PLR0917
     >>> points = np.column_stack((x, y, z))
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color='k')
-
-    See :ref:`create_kochanek_spline_example` for an additional example.
 
     """
     if tension is None:

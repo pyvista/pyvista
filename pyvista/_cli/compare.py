@@ -6,6 +6,9 @@ import re
 from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
+from typing import Literal
+from typing import cast
+from typing import get_args
 import warnings
 
 from cyclopts import Parameter
@@ -16,22 +19,42 @@ import pyvista as pv
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
 from .utils import HELP_KWARGS
-from .utils import CposView
 from .utils import Groups
 from .utils import LabelPosition
 from .utils import LabelSize
 from .utils import _kwargs_converter
-from .utils import _validator_window_size
+from .utils import anti_aliasing
+from .utils import background
+from .utils import border_color
+from .utils import border_width
 from .utils import call_or_exit
+from .utils import cpos
+from .utils import eye_dome_lighting
+from .utils import full_screen
+from .utils import interactive
+from .utils import off_screen
+from .utils import parallel_projection
 from .utils import print_error_and_exit
 from .utils import read_meshes
+from .utils import return_cpos
+from .utils import screenshot
+from .utils import show_axes
+from .utils import show_bounds
 from .utils import skip_unreadable
+from .utils import ssao
+from .utils import theme
 from .utils import validate_paths
+from .utils import volume
+from .utils import window_size
+from .utils import zoom
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Sequence
     from pathlib import Path
     from typing import TextIO
+
+    from cyclopts import Token
 
 _HELP_SHAPE = """\
 Shape of the subplot grid, as either the number of rows and columns, e.g. ``2,2``,
@@ -74,6 +97,56 @@ A font size is used as given, and may be too large for a label to fit in its sub
 draws them all at the size of the one which has to be smallest to fit. By default,
 ``uniform`` is used when the subplots are all the same size, and ``best_fit`` otherwise.
 """
+
+_HELP_BORDER = """\
+Draw a border around the plotting area. On its own, draws both an outer frame and the
+lines between subplots. Give it one of:
+- ``true`` to draw both, same as passing no value at all.
+- ``false`` to draw neither.
+- ``interior`` to draw only the lines between subplots.
+- ``exterior`` to draw only the outer frame.
+
+``interior`` is used by default if ``--border`` isn't given at all.
+"""
+
+# cyclopts can't union bool (0 tokens) with Literal[str, ...] (1 token), so this
+# takes 0-1 string tokens instead, like --report in validate.py.
+_CompareBorderOptions = Literal['true', 'false', 'interior', 'exterior']
+
+
+def _converter_border(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_CompareBorderOptions]:
+    values: list[str] = [t.value for t in tokens]
+    n_values = len(values)
+    if n_values > 1:
+        msg = f'Invalid value for {tokens[0].keyword}: accepts 0 or 1 arguments. Got {n_values}.'
+        raise ValueError(msg)
+    value = values[0]
+    allowed = get_args(_CompareBorderOptions)
+    if value in allowed:
+        return cast('list[_CompareBorderOptions]', [value])
+    msg = f'expected one of {str(allowed)[1:-1]} or no value. Got {value!r}.'
+    raise ValueError(msg)
+
+
+def _resolve_border(
+    border: list[_CompareBorderOptions] | None,
+) -> bool | Literal['interior', 'exterior'] | None:
+    """Turn 0-or-1 raw CLI tokens into the value `plot_compare`'s own `border` expects."""
+    if border is None:
+        return None
+    if not border:
+        # `--border` given bare, with no value.
+        return True
+    value = border[0]
+    if value == 'true':
+        return True
+    if value == 'false':
+        return False
+    return value
+
 
 # What to do about a dataset which is too small to make out, in terms of the options
 # this command has rather than the arguments of `plot_compare`, which it does not
@@ -174,25 +247,18 @@ def _compare(
     /,
     *,
     skip_unreadable: skip_unreadable = False,
-    off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
-    full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
-    screenshot: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
-    interactive: Annotated[bool, Parameter(group=Groups.PLOTTER)] = True,
-    window_size: Annotated[
-        list[int] | None,
-        Parameter(
-            consume_multiple=True,
-            validator=_validator_window_size,
-            group=Groups.PLOTTER,
-        ),
-    ] = None,
+    off_screen: off_screen = None,
+    full_screen: full_screen = None,
+    screenshot: screenshot = None,
+    interactive: interactive = True,
+    window_size: window_size = None,
     shape: Annotated[str | None, Parameter(help=_HELP_SHAPE, group=Groups.PLOTTER)] = None,
     labels: Annotated[
         list[str] | None,
         Parameter(consume_multiple=True, help=_HELP_LABELS, group=Groups.RENDERING),
     ] = None,
     link: Annotated[bool | None, Parameter(help=_HELP_LINK, group=Groups.RENDERING)] = None,
-    cpos: Annotated[CposView | None, Parameter(group=Groups.RENDERING)] = None,
+    cpos: cpos = None,
     outline: Annotated[bool, Parameter(help=_HELP_OUTLINE, group=Groups.RENDERING)] = False,
     normalize: Annotated[bool, Parameter(help=_HELP_NORMALIZE, group=Groups.RENDERING)] = False,
     label_size: Annotated[
@@ -201,18 +267,37 @@ def _compare(
     label_position: Annotated[
         LabelPosition | None, Parameter(help=_HELP_LABEL_POSITION, group=Groups.RENDERING)
     ] = None,
-    show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
-    show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
-    zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
-    border: Annotated[bool, Parameter(group=Groups.PLOTTER)] = False,
-    border_color: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
-    border_width: Annotated[float | None, Parameter(group=Groups.PLOTTER)] = None,
+    show_bounds: show_bounds = False,
+    show_axes: show_axes = None,
+    background: background = None,
+    eye_dome_lighting: eye_dome_lighting = False,
+    parallel_projection: parallel_projection = False,
+    return_cpos: return_cpos = False,
+    anti_aliasing: anti_aliasing = None,
+    zoom: zoom = None,
+    volume: volume = False,
+    ssao: ssao = False,
+    border: Annotated[
+        list[_CompareBorderOptions] | None,
+        Parameter(
+            consume_multiple=True,
+            converter=_converter_border,
+            negative=[],
+            help=_HELP_BORDER,
+            group=Groups.PLOTTER,
+        ),
+    ] = None,
+    border_color: border_color = None,
+    border_width: border_width = None,
+    theme: theme = None,
+    static: Annotated[bool, Parameter(group=Groups.SUPP)] = False,
     **kwargs: Annotated[
         Any,
         Parameter(help=HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
     """Compare two or more mesh files side-by-side."""
+    resolved_border = _resolve_border(border)
     meshes = read_meshes(paths, skip_unreadable=skip_unreadable)
     if len(meshes) < 2:
         msg = (
@@ -223,6 +308,9 @@ def _compare(
 
     # Label each subplot with the name of the file it was read from
     names = labels if labels is not None else _label_paths(validate_paths(paths))
+
+    if static:
+        kwargs['static'] = True
 
     with warnings.catch_warnings():
         warnings.simplefilter('always')
@@ -245,15 +333,22 @@ def _compare(
             label_position=label_position,
             show_bounds=show_bounds,
             show_axes=show_axes,
+            background=background,
+            eye_dome_lighting=eye_dome_lighting,
+            parallel_projection=parallel_projection,
+            return_cpos=return_cpos,
+            anti_aliasing=anti_aliasing,
             zoom=zoom,
+            volume=volume,
+            ssao=ssao,
             screenshot=screenshot,
-            plotter_kwargs={
-                'off_screen': off_screen,
-                'window_size': window_size,
-                'border': border,
-                'border_color': border_color,
-                'border_width': border_width,
-            },
-            show_kwargs={'full_screen': full_screen, 'interactive': interactive},
-            dataset_kwargs=kwargs,
+            off_screen=off_screen,
+            window_size=window_size,
+            border=resolved_border,
+            border_color=border_color,
+            border_width=border_width,
+            theme=theme,
+            full_screen=full_screen,
+            interactive=interactive,
+            **kwargs,
         )

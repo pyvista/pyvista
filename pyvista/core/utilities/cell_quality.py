@@ -215,7 +215,6 @@ def cell_quality_info(
 
     .. include:: /api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
 
-
     .. note::
 
         The information returned by this function is based on the
@@ -298,8 +297,6 @@ def cell_quality_info(
 
     >>> info_quad.unit_cell_value
     1.0
-
-    See :ref:`mesh_quality_example` for more examples using this function.
 
     """
 

@@ -55,8 +55,7 @@ from .opts import PointSpriteShape
 from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
-from .theme_registry import _resolve_dotted_path
-from .theme_registry import _resolve_theme
+from .theme_registry import _resolve_theme_like
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -66,6 +65,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import ThemeOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -110,7 +110,7 @@ def load_theme(filename):
     return Theme.from_dict(theme_dict)
 
 
-def set_plot_theme(theme):
+def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     """Set plotting parameters to a predefined theme using a string or ``Theme``.
 
     Parameters
@@ -164,27 +164,7 @@ def set_plot_theme(theme):
     """
     import pyvista  # noqa: PLC0415
 
-    if isinstance(theme, str):
-        if ':' in theme:
-            cls = _resolve_dotted_path(theme)
-            pyvista.global_theme.load_theme(cls())
-            return
-        resolved = _resolve_theme(theme)
-        if resolved is None:
-            allowed = ', '.join(_available_theme_names())
-            msg = (
-                f'Theme "{theme}" not found. Available themes: {allowed}. '
-                'To load from an arbitrary module use "package.module:ClassName".'
-            )
-            raise ValueError(msg)
-        pyvista.global_theme.load_theme(resolved)
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        msg = (
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
-        raise TypeError(msg)
+    pyvista.global_theme.load_theme(_resolve_theme_like(theme))
 
 
 class _LightingConfig(_ConfigBase):
@@ -1821,7 +1801,6 @@ class Theme(_ConfigBase):
         '_slider_styles',
         '_smooth_shading',
         '_split_sharp_edges',
-        '_subplot_seams',
         '_title',
         '_trame',
         '_transparent_background',
@@ -1852,7 +1831,6 @@ class Theme(_ConfigBase):
         self._outline_color = Color('white')
         self._border_color = Color('gray')
         self._border_width = 1.0
-        self._subplot_seams = True
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
@@ -2560,12 +2538,9 @@ class Theme(_ConfigBase):
         .. versionadded:: 0.49
 
         This is the color of the frame drawn around the outer edge of
-        the plotting area when a ``Plotter`` is constructed with
-        ``border=True``, and/or of the line(s) drawn between subplots
-        when a plotter has more than one renderer and
-        ``subplot_seams=True`` (the default for multi-subplot
-        layouts). Used whenever no explicit ``border_color`` is
-        provided.
+        the plotting area, of the line(s) drawn between subplots, or
+        both -- whichever ``border`` is set to draw. Used whenever no
+        explicit ``border_color`` is provided.
 
         Examples
         --------
@@ -2583,8 +2558,8 @@ class Theme(_ConfigBase):
     def border_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default border/subplot seam width in pixels.
 
-        Used when a ``Plotter`` is constructed with ``border=True``
-        or ``subplot_seams=True`` and no explicit ``border_width`` is
+        Used when a ``Plotter`` is constructed with ``border`` set to
+        draw either or both, and no explicit ``border_width`` is
         provided.
 
         Examples
@@ -2598,29 +2573,6 @@ class Theme(_ConfigBase):
     @border_width.setter
     def border_width(self, border_width: float):
         self._border_width = float(border_width)
-
-    @property
-    def subplot_seams(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set whether to draw a line between neighboring subplots by default.
-
-        .. versionadded:: 0.49
-
-        Used when a ``Plotter`` has more than one subplot and no
-        explicit ``subplot_seams`` is provided. Has no effect on a
-        single-subplot ``Plotter``, since there are no neighbors to
-        separate.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pv.global_theme.subplot_seams = False
-
-        """
-        return self._subplot_seams
-
-    @subplot_seams.setter
-    def subplot_seams(self, subplot_seams: bool):
-        self._subplot_seams = bool(subplot_seams)
 
     @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
@@ -3208,7 +3160,6 @@ class Theme(_ConfigBase):
             'Edge color': 'edge_color',
             'Border color': 'border_color',
             'Border width': 'border_width',
-            'Subplot seams': 'subplot_seams',
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',
@@ -3683,12 +3634,16 @@ class _TestingTheme(Theme):
     Resampling is also enabled for environment textures since this
     can be very slow without a GPU.
 
+    Notebook mode is pinned off rather than detected, so that a test plots the same
+    way wherever it runs.
+
     """
 
     _default_name: ClassVar[str] = 'testing'
 
     def __init__(self):
         super().__init__()
+        self.notebook = False
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.border_color = 'black'

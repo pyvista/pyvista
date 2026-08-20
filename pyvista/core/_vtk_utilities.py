@@ -112,6 +112,22 @@ _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 # to check for. `check_attribute` runs on every attribute access, so bind it once here.
 _VTK_SNAKE_CASE_MIN_VERSION_MET = vtk_version_info >= (9, 4)
 
+# VTK 9.6.2 adds fixed-size cell array storage (regular cell arrays store their
+# connectivity without an explicit offsets array). Bind the capability check once
+# here and reuse it everywhere instead of re-inlining the version comparison.
+_SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
+
+# Since VTK 9.6, `vtkCellArray.SetData` references the arrays handed to it (their
+# reference count goes 1 -> 2). Before that it does not, so the caller must keep them
+# alive itself -- see `CellArray._set_data`.
+_SETDATA_TAKES_OWNERSHIP = vtk_version_info >= (9, 6)
+
+# VTK 9.4 keeps the polyhedron faces and face locations in two cell arrays, reachable
+# from `GetPolyhedronFaces` and `GetPolyhedronFaceLocations`. Before that a polyhedron
+# is a single padded face stream with no offsets or connectivity of its own, so the
+# properties built on those cell arrays have nothing to read.
+_SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
+
 
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""

@@ -15,7 +15,7 @@ This example highlights some applications of the
 #
 # Use connectivity to remove noisy isosurfaces.
 #
-# This section is similar to `this VTK example <https://kitware.github.io/vtk-examples/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
+# This section is similar to `this VTK example <https://examples.vtk.org/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
 
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np

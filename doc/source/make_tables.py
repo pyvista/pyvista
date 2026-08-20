@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Iterable
-from collections.abc import Iterator
 from collections.abc import Sequence
 import colorsys
 from dataclasses import dataclass
@@ -13,9 +11,11 @@ from enum import auto
 import inspect
 from io import StringIO
 import itertools
+import json
 import os
 from pathlib import Path
 import re
+import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
@@ -33,6 +33,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import linregress
 from sphinx.util import logging
+from sphinx.util.console import bold
+from sphinx.util.console import color_terminal
+from sphinx.util.console import darkgreen
+from sphinx.util.console import nocolor
 
 import pyvista as pv
 from pyvista import _validation
@@ -42,13 +46,11 @@ from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
-from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
-from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
@@ -97,10 +99,28 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
 # If there is no image, a dummy "Not Available" image is used instead.
 DATASET_GALLERY_IMAGE_NOT_AVAILABLE_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
 
-DATASET_GALLERY_MODULES = [
-    pv.examples.examples,
-    pv.examples.downloads,
-    pv.examples.planets,
+# Module -> display label shown in the dataset gallery's "Module" field/filter.
+DATASET_GALLERY_MODULES: dict[ModuleType, str] = {
+    pv.examples.examples: 'Built-in',
+    pv.examples.downloads: 'Downloads',
+    pv.examples.planets: 'Planets',
+}
+
+# Module -> sphinx-design badge color for the dataset gallery's module badge.
+DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
+    pv.examples.examples: 'primary',
+    pv.examples.downloads: 'secondary',
+    pv.examples.planets: 'success',
+}
+
+# File size bin edges, in decimal MB (matches `_format_file_size` in
+# pyvista/examples/_dataset_loader.py) and calibrated to the real size
+# distribution of the gallery's datasets.
+DATASET_GALLERY_SIZE_BINS: list[tuple[float, str, str]] = [
+    (1, '< 1 MB', 'lt-1'),
+    (10, '1 - 10 MB', '1-10'),
+    (25, '10 - 25 MB', '10-25'),
+    (float('inf'), '> 25 MB', 'gt-25'),
 ]
 
 SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
@@ -142,7 +162,7 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
-        print(f'generating tables... {cls.__name__}', flush=True)
+        print(f'{bold("generating tables...")} {darkgreen(cls.__name__)}', flush=True)
         assert cls.path is not None, f'Subclass {cls} should specify a path.'
         if isinstance(cls.path, property):
             cls.path = cls.path.fget(cls)
@@ -1293,6 +1313,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'grayCS'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'okabe_ito'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2'),
@@ -1840,6 +1861,27 @@ def _get_fullname(typ: type[Any]) -> str:
     return f'{typ.__module__}.{typ.__qualname__}'
 
 
+def _facet_slugify(text: str) -> str:
+    """Turn a facet label into a CSS-class-safe slug, e.g. ``POLY_LINE`` -> ``poly-line``.
+
+    Dashes underscores too, matching what docutils' class-option parser does
+    to `:class-card:` on its own, so the slug agrees with the rendered class.
+    """
+    text = re.sub(r'(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])', '-', text)
+    return text.lower().replace(' ', '-').replace('_', '-')
+
+
+def _facet_size_bin(total_size_bytes: int | None) -> tuple[str, str] | None:
+    """Bucket a file size in bytes into a (label, slug) range bin, or None if there's no file."""
+    if total_size_bytes is None:
+        return None
+    size_mb = total_size_bytes / 1e6
+    for edge, label, slug in DATASET_GALLERY_SIZE_BINS:
+        if size_mb < edge:
+            return label, slug
+    return DATASET_GALLERY_SIZE_BINS[-1][1], DATASET_GALLERY_SIZE_BINS[-1][2]
+
+
 def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
     """Left-justify a list of lines."""
     min_width = min_width or _max_width(lines)
@@ -1980,6 +2022,9 @@ class DatasetCard:
     card_template = _aligned_dedent(
         """
         |.. card::
+        |   :class-card: {}
+        |
+        |   {}
         |
         |   {}
         |
@@ -2033,7 +2078,7 @@ class DatasetCard:
     GRID_ITEM_FIELDS_INDENT_LEVEL = 4
     REF_ANCHOR_INDENT_LEVEL = 2
 
-    # Template for dataset name and badges
+    # Template for the dataset name and its module badge
     header_template = _aligned_dedent(
         """
         |.. grid:: 1
@@ -2081,6 +2126,15 @@ class DatasetCard:
         """,
     )[1:-1]
 
+    # Hidden search corpus for the gallery's live search box.
+    search_text_template = _aligned_dedent(
+        """
+        |.. raw:: html
+        |
+        |   <span class="gallery-search-text" hidden>{}</span>
+        """,
+    )[1:-1]
+
     seealso_template = _aligned_dedent(
         """
         |See also {}
@@ -2114,6 +2168,10 @@ class DatasetCard:
     #       |       LongerValue |
     #       |    ExtraLongValue |
     #       |     Value3 Value4 |
+    #
+    # sd-text-right only handles the shared-row case; the wrapped case needs
+    # help from custom CSS (.gallery-card .field-value-primary) in
+    # dataset_gallery_filter.css.
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
@@ -2131,7 +2189,7 @@ class DatasetCard:
         |
         |   .. grid-item::
         |      :columns: auto
-        |      :class: sd-text-right sd-text-nowrap
+        |      :class: sd-text-right sd-text-nowrap field-value-primary
         |      :child-align: justify
         |
         |      {}
@@ -2171,12 +2229,8 @@ class DatasetCard:
     ):
         self.dataset_name = dataset_name
         self.loader = loader
-        self._badges: list[_BaseDatasetBadge | None] = []
         self.card = None
         self.ref = None
-
-    def add_badge(self, badge: _BaseDatasetBadge):
-        self._badges.append(badge)
 
     def generate(self):
         # Get rst dataset name-related info
@@ -2202,7 +2256,9 @@ class DatasetCard:
             file_ext,
             reader_type,
             importer_meth,
+            module_badge,
             dataset_type,
+            celltype_field,
             datasource_links,
             n_cells,
             n_points,
@@ -2217,21 +2273,17 @@ class DatasetCard:
             self.dataset_name, index_name, header_name
         )
 
-        # Generate rst for badges
-        carousel_badges = self._generate_carousel_badges(self._badges)
-        celltype_badges = self._generate_celltype_badges(self._badges)
+        class_card, facet_labels = DatasetCard._generate_facet_classes(self.loader)
+        DatasetCardFetcher.FACET_LABELS.update(facet_labels)
 
         # Assemble rst parts into main blocks used by the card
-        header_block, header_ref_block = self._create_header_block(
-            index_name,
-            header_name,
-            carousel_badges,
-        )
+        header_block = self._create_header_block(index_name, header_name, module_badge)
+        search_text_block = self._create_search_text_block(header_name, func_name, func_doc)
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
         dataset_props_block = self._create_dataset_props_block(
             dataset_type=dataset_type,
-            celltype_badges=celltype_badges,
+            celltype_field=celltype_field,
             n_cells=n_cells,
             n_points=n_points,
             length=length,
@@ -2250,10 +2302,10 @@ class DatasetCard:
         seealso_block = self._create_seealso_block(cross_references)
         footer_block = self._create_footer_block(datasource_links)
 
-        # Create two versions of the card
-        # First version has no ref label
-        card_no_ref = self.card_template.format(
+        return self.card_template.format(
+            class_card,
             header_block,
+            search_text_block,
             info_block,
             img_block,
             dataset_props_block,
@@ -2261,18 +2313,6 @@ class DatasetCard:
             seealso_block,
             footer_block,
         )
-        # Second version has a ref label in header
-        card_with_ref = self.card_template.format(
-            header_ref_block,
-            info_block,
-            img_block,
-            dataset_props_block,
-            file_info_block,
-            seealso_block,
-            footer_block,
-        )
-
-        return card_no_ref, card_with_ref
 
     @staticmethod
     def _generate_dataset_properties(loader):
@@ -2286,7 +2326,9 @@ class DatasetCard:
         file_ext = DatasetPropsGenerator.generate_file_ext(loader)
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
         importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
+        module_badge = DatasetPropsGenerator.generate_module_badge(loader)
         dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+        celltype_field = DatasetPropsGenerator.generate_celltype_field(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
         # properties collected directly from the dataset
@@ -2303,7 +2345,9 @@ class DatasetCard:
             file_ext,
             reader_type,
             importer_meth,
+            module_badge,
             dataset_type,
+            celltype_field,
             datasource_links,
             n_cells,
             n_points,
@@ -2413,36 +2457,6 @@ class DatasetCard:
         return ', '.join(keep_refs)
 
     @staticmethod
-    def _generate_carousel_badges(badges: list[_BaseDatasetBadge]):
-        """Sort badges by type and join all badge rst into a single string."""
-        module_badges, datatype_badges, special_badges, category_badges = [], [], [], []
-        for badge in badges:
-            if isinstance(badge, ModuleBadge):
-                module_badges.append(badge)
-            elif isinstance(badge, DataTypeBadge):
-                datatype_badges.append(badge)
-            elif isinstance(badge, SpecialDataTypeBadge):
-                special_badges.append(badge)
-            elif isinstance(badge, CategoryBadge):
-                category_badges.append(badge)
-            elif isinstance(badge, CellTypeBadge):
-                pass  # process these separately
-            elif isinstance(badge, _BaseDatasetBadge):
-                msg = f'No implementation for badge type {type(badge)}.'
-                raise NotImplementedError(msg)
-        all_badges = module_badges + datatype_badges + special_badges + category_badges
-        return ' '.join([badge.generate() for badge in all_badges])
-
-    @staticmethod
-    def _generate_celltype_badges(badges: list[_BaseDatasetBadge]):
-        """Sort badges by type and join all badge rst into a single string."""
-        celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
-        rst = '\n'.join([badge.generate() for badge in celltype_badges])
-        if rst == '':
-            rst = '``None``'
-        return rst
-
-    @staticmethod
     def _create_default_image():
         """Process the thumbnail image to ensure it's the right size."""
         from PIL import Image
@@ -2502,29 +2516,20 @@ class DatasetCard:
         return _indent_multi_line_string(block, indent_level=indent_level)
 
     @classmethod
-    def _create_header_block(cls, index_name, header_name, carousel_badges):
-        """Generate header rst block."""
-        # Two headers are created: one with a reference target and one without
-        header = cls._format_and_indent_from_template(
-            header_name,
-            carousel_badges,
-            template=cls.header_template,
-            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
-        )
-
+    def _create_header_block(cls, index_name, header_name, module_badge):
+        """Generate header rst block with a reference target and module badge."""
         header_name_with_ref = DatasetCard._format_and_indent_from_template(
             index_name,
             header_name,
             template=cls.dataset_title_with_ref_template,
             indent_level=cls.REF_ANCHOR_INDENT_LEVEL,
         )
-        header_ref = DatasetCard._format_and_indent_from_template(
+        return DatasetCard._format_and_indent_from_template(
             header_name_with_ref,
-            carousel_badges,
+            module_badge,
             template=cls.header_template,
             indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
         )
-        return header, header_ref
 
     @classmethod
     def _create_image_block(cls, img_path):
@@ -2534,6 +2539,66 @@ class DatasetCard:
             template=cls.image_template,
             indent_level=cls.GRID_ITEM_INDENT_LEVEL,
         )
+
+    @classmethod
+    def _create_search_text_block(cls, header_name, func_name, func_doc):
+        """Generate the hidden search-text span used by the gallery's search box."""
+        search_text = ' '.join([header_name, func_name, func_doc or '']).lower()
+        return cls._format_and_indent_from_template(
+            search_text,
+            template=cls.search_text_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
+
+    @staticmethod
+    def _generate_facet_classes(loader: _DatasetLoader) -> tuple[str, dict[str, str]]:
+        """Compute `:class-card:` CSS classes (and their labels) for the filter toolbar.
+
+        A dataset gets one class per value per facet (e.g. multiple cell
+        types). Cell Type, Reader, and File Size get an explicit "N/A"
+        value when they don't apply, rather than being omitted.
+        """
+        labels: dict[str, str] = {}
+        classes: list[str] = ['gallery-card']
+
+        def add(prefix: str, value_name: str, slug: str | None = None) -> None:
+            # 'N/A (...)' labels aren't CSS-class-safe, so they need an explicit slug.
+            slug = slug if slug is not None else _facet_slugify(value_name)
+            classes.append(f'{prefix}-{slug}')
+            labels[f'{prefix}-{slug}'] = value_name
+
+        add('mod', DATASET_GALLERY_MODULES[loader._module])
+
+        dataset_types = loader.unique_dataset_type
+        if not isinstance(dataset_types, tuple):
+            dataset_types = (dataset_types,)
+        for dataset_type in dataset_types:
+            name = 'None' if dataset_type is type(None) else dataset_type.__name__
+            add('dtype', name)
+
+        cell_types = loader.unique_cell_types
+        if cell_types:
+            for cell_type in cell_types:
+                add('ctype', cell_type.name)
+        else:
+            add('ctype', 'N/A (no cells)', slug='na')
+
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if reader_types is None:
+            add('reader', 'N/A (generated in code)', slug='na')
+        else:
+            if not isinstance(reader_types, tuple):
+                reader_types = (reader_types,)
+            for reader_type in reader_types:
+                add('reader', reader_type.__name__)
+
+        # Uses DATASET_GALLERY_SIZE_BINS' own slugs so bins sort numerically, not alphabetically.
+        total_size_bytes = DatasetPropsGenerator._try_getattr(loader, '_total_size_bytes')
+        size_bin = _facet_size_bin(total_size_bytes)
+        size_label, size_slug = size_bin or ('N/A (no file)', 'na')
+        add('size', size_label, slug=size_slug)
+
+        return ' '.join(classes), labels
 
     @classmethod
     def _create_info_block(cls, func_ref, func_doc):
@@ -2549,7 +2614,7 @@ class DatasetCard:
         cls,
         *,
         dataset_type,
-        celltype_badges,
+        celltype_field,
         n_cells,
         n_points,
         length,
@@ -2559,7 +2624,7 @@ class DatasetCard:
     ):
         dataset_fields = [
             ('Data Type', dataset_type),
-            ('Cell Type', celltype_badges),
+            ('Cell Type', celltype_field),
             ('N Cells', n_cells),
             ('N Points', n_points),
             ('Length', length),
@@ -2629,7 +2694,7 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_file_size(loader: _DatasetLoader):
         sz = DatasetPropsGenerator._try_getattr(loader, 'total_size')
-        return '``' + sz + '``' if sz else None
+        return '``' + sz + '``' if sz else '``N/A (no file)``'
 
     @staticmethod
     def generate_num_files(loader: _DatasetLoader):
@@ -2663,7 +2728,7 @@ class DatasetPropsGenerator:
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_type is None:
-            return '``None``'
+            return '``N/A (generated in code)``'
         else:
             reader_type = (
                 repr(loader.unique_reader_type)
@@ -2690,13 +2755,32 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
         """Format dataset type(s) with doc references to dataset class(es)."""
-        return (
-            repr(loader.unique_dataset_type)
-            .replace("<class '", ':class:`~')
-            .replace("'>", '`')
-            .replace('(', '')
-            .replace(')', '')
-        ).replace(', ', '\n')
+        dataset_types = loader.unique_dataset_type
+        if not isinstance(dataset_types, tuple):
+            dataset_types = (dataset_types,)
+        return '\n'.join(
+            '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
+            for cls in dataset_types
+        )
+
+    @staticmethod
+    def generate_module_badge(loader: _DatasetLoader):
+        """Format the dataset's source module as a small badge linking to its module page."""
+        label = DATASET_GALLERY_MODULES[loader._module]
+        color = DATASET_GALLERY_MODULE_BADGE_COLORS[loader._module]
+        module_path = loader._module.__name__
+        return f':bdg-ref-{color}:`{label} <{module_path}>`'
+
+    @staticmethod
+    def generate_celltype_field(loader: _DatasetLoader):
+        """Format cell type(s) as badges linking to their `pyvista.CellType` member."""
+        cell_types = loader.unique_cell_types
+        if not cell_types:
+            return '``N/A (no cells)``'
+        return '\n'.join(
+            f':bdg-ref-muted-line:`{cell_type.name} <pyvista.CellType.{cell_type.name}>`'
+            for cell_type in cell_types
+        )
 
     @staticmethod
     def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
@@ -2808,8 +2892,10 @@ class DatasetCardFetcher:
     DATASET_CARDS_OBJ: ClassVar[dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
-    DATASET_CARDS_RST_REF: ClassVar[dict[str, str]] = {}
     DATASET_CARDS_RST: ClassVar[dict[str, str]] = {}
+
+    # Facet CSS class -> display label, e.g. "dtype-unstructuredgrid" -> "UnstructuredGrid".
+    FACET_LABELS: ClassVar[dict[str, str]] = {}
 
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
@@ -2827,18 +2913,20 @@ class DatasetCardFetcher:
 
     @classmethod
     def init_cards(cls):
-        """Download and load all datasets and initialize a card object for each dataset."""
+        """Load a single dataset at a time - avoid loading all datasets into memory."""
+        type_mismatches: dict[str, str] = {}
         for module in DATASET_GALLERY_MODULES:
-            cls._init_cards_from_module(module)
+            cls._init_cards_from_module(module, type_mismatches)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
+        cls.DATASET_CARDS_RST = dict(sorted(cls.DATASET_CARDS_RST.items()))
+
+        if type_mismatches:
+            mismatches = '\n'.join(sorted(type_mismatches.values()))
+            msg = f'Type mismatches:\n{mismatches}'
+            raise RuntimeError(msg)
 
     @classmethod
-    def clear_datasets(cls):
-        """Clear loaded datasets."""
-        [loader.clear_dataset() for _, loader in cls.fetch_all_dataset_loaders()]
-
-    @classmethod
-    def _init_cards_from_module(cls, module: ModuleType):
+    def _init_cards_from_module(cls, module: ModuleType, type_mismatches: dict[str, str]):
         # Collect all `_dataset_<name>` file loaders from the module
         module_members: dict[str, FunctionType] = dict(inspect.getmembers(module))
 
@@ -2859,419 +2947,115 @@ class DatasetCardFetcher:
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
-                # Load data
                 module_name = module.__name__.removeprefix('pyvista.')
-                print(f'loading datasets from {module_name}... {dataset_name}', flush=True)
+                summary = bold(f'generating rst for {module_name}...')
+                print(f'{summary} {darkgreen(dataset_name)}', flush=True)
                 if isinstance(dataset_loader, _Downloadable):
                     dataset_loader.download()
                 dataset_loader.load_and_store_dataset()
                 assert dataset_loader.dataset is not None
 
-    @classmethod
-    def generate_rst_all_cards(cls):
-        """Generate formatted rst output for all cards."""
-        for name in cls.DATASET_CARDS_OBJ:
-            card, card_with_ref = cls.DATASET_CARDS_OBJ[name].generate()
-            # indent one level from the carousel header directive
-            cls.DATASET_CARDS_RST_REF[name] = _pad_lines(card_with_ref, pad_left='   ')
-            cls.DATASET_CARDS_RST[name] = _pad_lines(card, pad_left='   ')
+                card = cls.DATASET_CARDS_OBJ[dataset_name]
+                # indent one level from the carousel header directive
+                cls.DATASET_CARDS_RST[dataset_name] = _pad_lines(card.generate(), pad_left='   ')
+
+                if mismatch := _validate_function_annotation(card):
+                    type_mismatches[dataset_name] = mismatch
+
+                dataset_loader.clear_dataset()
 
     @classmethod
-    def generate_alphabet_index(cls, dataset_names):
-        """Generate single-letter index buttons to link to the datasets by their first letter."""
+    def generate_filter_toolbar(cls) -> str:
+        """Generate the raw-HTML filter toolbar shown above the dataset gallery grid.
 
-        def _generate_button(string, ref):
-            return _indent_multi_line_string(
-                f'.. button-ref:: {ref}\n\n   {string}\n',
-                indent_level=1,
-            )
-
-        def _generate_grid_item(string):
-            return _aligned_dedent(
-                """
-                    |.. grid-item::
-                    |   :columns: auto
-                    |
-                    |   {}
-                    """,
-            )[1:].format(_indent_multi_line_string(string, indent_level=1))
-
-        def _generate_grid(string):
-            return _aligned_dedent(
-                """
-                |.. grid::
-                |   :margin: 1
-                |   :padding: 0
-                |   :gutter: 1
-                |
-                |   {}
-                """,
-            )[1:].format(_indent_multi_line_string(string, indent_level=1))
-
-        # Get mapping of alphabet letters to first dataset name which begins with each letter
-        alphabet_dict = {}
-        for dataset_name in sorted(dataset_names):
-            index_character = dataset_name[0].upper()
-            try:
-                int(index_character)
-            except ValueError:
-                pass
-            else:
-                index_character = '#'
-
-            alphabet_dict.setdefault(index_character, dataset_name)
-
-        buttons = []
-        for letter, dataset_name in alphabet_dict.items():
-            # Get reference target for this dataset
-            target_name = DatasetCard._generate_dataset_name(dataset_name)[0]
-            button_rst = _generate_grid_item(_generate_button(letter, target_name))
-            buttons.append(button_rst)
-        return _generate_grid('\n'.join(buttons))
-
-    @classmethod
-    def add_badge_to_cards(cls, dataset_names: list[str], badge: _BaseDatasetBadge | None):
-        """Add a single badge to all specified datasets."""
-        if badge:
-            for dataset_name in dataset_names:
-                cls.DATASET_CARDS_OBJ[dataset_name].add_badge(badge)
-
-    @classmethod
-    def add_cell_badges_to_all_cards(cls):
-        """Add cell type badge(s) to every dataset."""
-        for card in cls.DATASET_CARDS_OBJ.values():
-            for cell_type in card.loader.unique_cell_types:
-                name = cell_type.name
-                card.add_badge(CellTypeBadge(name, 'pyvista.CellType.' + name))
-
-    @classmethod
-    def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:
-        for name, dataset_iterable in cls.fetch_all_dataset_objects():
-            if datatype in [type(data) for data in dataset_iterable]:
-                yield name
-
-    @classmethod
-    def fetch_dataset_names_by_module(cls, module) -> Iterator[str]:
-        for name, loader in cls.fetch_all_dataset_loaders():
-            if loader._module is module:  # type: ignore[attr-defined]
-                yield name
-
-    @classmethod
-    def fetch_all_dataset_objects(cls) -> Iterator[tuple[str, Iterable[DatasetObject]]]:
-        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-            yield name, card.loader.dataset_iterable
-
-    @classmethod
-    def fetch_all_dataset_loaders(cls) -> Iterator[tuple[str, _DatasetLoader]]:
-        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-            yield name, card.loader
-
-    @classmethod
-    def fetch_and_filter(
-        cls,
-        filter_func: Callable[..., bool],
-        *,
-        fetch_by: Literal['dataset', 'loader'] = 'dataset',
-    ) -> list[str]:
-        """Return dataset names where any dataset object returns 'True' for a given function."""
-        names_dict: dict[str, None] = {}  # Use dict as an ordered set
-        all_objects = (
-            cls.fetch_all_dataset_objects()
-            if fetch_by == 'dataset'
-            else cls.fetch_all_dataset_loaders()
+        See _static/dataset_gallery_filter.js for the filtering behavior.
+        """
+        groups = [
+            ('mod', 'Module'),
+            ('dtype', 'Data Type'),
+            ('ctype', 'Cell Type'),
+            ('reader', 'Reader'),
+            ('size', 'File Size'),
+        ]
+        group_html = '\n'.join(
+            f'  <div class="facet-dropdown" data-facet="{facet}">\n'
+            f'    <button type="button" class="facet-toggle" aria-expanded="false">\n'
+            f'      <span class="facet-toggle-label">{label}</span>\n'
+            f'      <span class="facet-toggle-count"></span>\n'
+            f'    </button>\n'
+            f'    <div class="facet-panel" hidden></div>\n'
+            f'  </div>'
+            for facet, label in groups
         )
-        for name, content in all_objects:
-            iterable = content if fetch_by == 'dataset' else [content]
-            for obj in iterable:
-                try:
-                    keep = filter_func(obj)
-                except AttributeError:
-                    keep = False
-                if keep:
-                    names_dict[name] = None
-        names_list = list(names_dict.keys())
-        assert len(names_list) > 0, f'No datasets were matched by the filter {filter_func}.'
-        return names_list
+        # Fixes File Size's bin order to be numeric rather than alphabetical.
+        manifest = {
+            'labels': cls.FACET_LABELS,
+            'order': {'size': [slug for _, _, slug in DATASET_GALLERY_SIZE_BINS]},
+        }
+        html = (
+            '<div class="gallery-toolbar-wrap">\n'
+            '<div class="gallery-nav-slot" id="gallery-prev-slot">\n'
+            '<button id="gallery-prev" class="gallery-nav-button"\n'
+            '        type="button" aria-label="Previous dataset">&lsaquo;</button>\n'
+            '</div>\n'
+            '<div id="gallery-filter-bar" class="gallery-filter-bar">\n'
+            '  <input id="gallery-search" type="search"\n'
+            '         placeholder="Search datasets by name..."\n'
+            '         aria-label="Search datasets by name">\n'
+            f'{group_html}\n'
+            '  <button id="filter-clear" type="button">Clear filters</button>\n'
+            '  <span id="filter-count" class="gallery-filter-count"></span>\n'
+            '</div>\n'
+            '<div class="gallery-nav-slot" id="gallery-next-slot">\n'
+            '<button id="gallery-next" class="gallery-nav-button"\n'
+            '        type="button" aria-label="Next dataset">&rsaquo;</button>\n'
+            '</div>\n'
+            '</div>\n'
+            '<script id="facet-manifest" type="application/json">\n'
+            f'{json.dumps(manifest)}\n'
+            '</script>\n'
+        )
+        return cls._wrap_raw_html(html)
 
-    @classmethod
-    def fetch_multiblock(cls, kind: Literal['hetero', 'homo', 'single']):
-        dataset_names = []
-        for name, dataset_objects in cls.fetch_all_dataset_objects():
-            types_list = [type(obj) for obj in dataset_objects]
-            if pv.MultiBlock in types_list:
-                types_list.remove(pv.MultiBlock)
-                num_datasets = len(types_list)
-                num_types = len(set(types_list))
-
-                is_single = num_datasets == 1
-                is_homo = num_datasets >= 2 and num_types == 1
-                is_hetero = num_datasets >= 2 and num_types > 1
-                if (
-                    (is_single and kind == 'single')
-                    or (is_homo and kind == 'homo')
-                    or (is_hetero and kind == 'hetero')
-                ):
-                    dataset_names.append(name)
-        return dataset_names
-
-
-@dataclass
-class _BaseDatasetBadge:
-    class SemanticColorEnum(StrEnum):
-        """Enum of badge colors.
-
-        See: https://sphinx-design.readthedocs.io/en/pydata-theme/badges_buttons.html
-        """
-
-        primary = auto()
-        secondary = auto()
-        success = auto()
-        muted = auto()
-
-    # Name of the badge
-    name: str
-
-    # Internal reference label for the badge to link to
-    ref: str = None  # type: ignore[assignment]
-
-    def __post_init__(self: _BaseDatasetBadge):
-        """Use post-init to set private variables.
-
-        Sub classes should configure these options as required.
-        """
-        # Configure whether the badge should appear filled or not.
-        # If False, a badge outline is shown.
-        self.filled: bool = True
-
-        # Set the badge's color
-        self.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None  # type: ignore[assignment]
-
-    def generate(self):
-        # Generate rst
-        color = self.semantic_color.name
-        name = self.name
-        line = '-line' if hasattr(self, 'filled') and not self.filled else ''
-        if self.ref:
-            # the badge's bdg-ref uses :any: under the hood to find references
-            # so we use _gallery to point to the explicit reference instead
-            # of the carousel's rst file
-            ref_name = self.ref.replace('_carousel', '_gallery')
-            ref_link_rst = f' <{ref_name}>'
-            bdg_ref_rst = 'ref-'
-        else:
-            bdg_ref_rst = ''
-            ref_link_rst = ''
-        return f':bdg-{bdg_ref_rst}{color}{line}:`{name}{ref_link_rst}`'
+    @staticmethod
+    def _wrap_raw_html(html: str) -> str:
+        """Indent literal HTML and wrap it in a rst ``raw:: html`` block."""
+        indented = '\n'.join('   ' + line if line else line for line in html.splitlines())
+        return f'.. raw:: html\n\n{indented}\n'
 
 
-@dataclass
-class ModuleBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based on its source module.
+class DatasetCarousel(DocTable):
+    """Class to generate the carousel with cards for every dataset.
 
-    e.g. 'Downloads' for datasets from `pyvista.examples.downloads`.
+    Cards carry their metadata as ``:class-card:`` CSS classes, filtered
+    client-side by the toolbar from ``DatasetCardFetcher.generate_filter_toolbar``.
     """
 
-    name: str
-    ref: str
+    path = f'{DATASET_GALLERY_DIR}/dataset_carousel.rst'
 
-    @classmethod
-    def __post_init__(cls):
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.primary
-
-
-@dataclass
-class DataTypeBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based strictly on its type.
-
-    The badge name should correspond to the type of the dataset.
-    e.g. 'UnstructuredGrid'.
-    """
-
-    name: str
-    ref: str
-
-    @classmethod
-    def __post_init__(cls):
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
-
-
-@dataclass
-class SpecialDataTypeBadge(_BaseDatasetBadge):
-    """Badge given to a dataset with special properties.
-
-    Use this badge for specializations of data types (e.g. 2D ImageData
-    as a special kind of ImageData, or Cubemap as a special kind of Texture),
-    or for special classifications of datasets (e.g. point clouds).
-    """
-
-    name: str
-    ref: str
-
-    @classmethod
-    def __post_init__(cls):
-        cls.filled = False
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
-
-
-@dataclass
-class CategoryBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based on its application or use.
-
-    e.g. 'Medical' for medical datasets.
-    """
-
-    name: str
-    ref: str
-
-    @classmethod
-    def __post_init__(cls):
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.success
-
-
-@dataclass
-class CellTypeBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based with a specific cell type."""
-
-    name: str
-    ref: str
-
-    @classmethod
-    def __post_init__(cls):
-        cls.filled = False
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.muted
-
-
-class DatasetGalleryCarousel(DocTable):
-    # Print the doc, badges, and dataset count
-    # The header defines the start of the card carousel
     header_template = _aligned_dedent(
         """
         |{}
-        |
-        |{}
-        |:Dataset Count: ``{}``
         |
         |.. card-carousel:: 1
         |
         """,
     )[1:-1]
 
-    # Subclasses should give the carousel a name
-    # The name should end with '_carousel'
-    name: str = None  # type: ignore[assignment]
-
-    # Subclasses should give the carousel a short description
-    # describing the carousel's contents
-    doc: str = None  # type: ignore[assignment]
-
-    # Subclasses may optionally define a badge for the carousel
-    # All datasets in the carousel will be given this badge.
-    badge: _BaseDatasetBadge | None = None
-
-    dataset_names: list[str] = None  # type: ignore[assignment]
-
-    @property
-    @final
-    def path(self):
-        assert isinstance(self.name, str), 'Table name must be defined.'
-        assert self.name.endswith('_carousel'), 'Table name must end with "_carousel".'
-        return f'{DATASET_GALLERY_DIR}/{self.name}.rst'
-
     @classmethod
     def fetch_data(cls):
-        return list(cls.dataset_names)
+        return list(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
 
     @classmethod
-    @abstractmethod
-    def fetch_dataset_names(cls) -> list[str]:
-        """Return all dataset names to include in the gallery."""
-
-    @classmethod
-    @final
-    def init_dataset_names(cls):
-        names = list(cls.fetch_dataset_names())
-        assert names is not None, (
-            f'Dataset names cannot be None, {cls.fetch_dataset_names} must return '
-            f'a string iterable.'
-        )
-        cls.dataset_names = names
-
-    @classmethod
-    @final
     def get_header(cls, data):
         """Generate the rst for the carousel's header."""
-        assert isinstance(cls.name, str), f'Carousel {cls} must have a name.'
-        # Get doc value
-        doc = cls.doc.fget(cls) if isinstance(cls.doc, property) else cls.doc
-        assert isinstance(doc, str), f'Carousel {cls} must have a doc string.'
-
-        badge_info = f':Section Badge: {cls.badge.generate()}' if cls.badge else ''
-        num_datasets = len(data)
-        assert num_datasets > 0, f'No datasets were found for carousel {cls}.'
-        return cls.header_template.format(cls.doc, badge_info, num_datasets)
+        assert len(data) > 0, 'No datasets were found.'
+        return cls.header_template.format(DatasetCardFetcher.generate_filter_toolbar())
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
-        """Generate the rst card for a given dataset.
-
-        A standard card is returned by default. Subclasses
-        should override this method to customize the card.
-        """
-        assert isinstance(
-            dataset_name,
-            str,
-        ), f'Dataset name {dataset_name} for {cls} must be a string.'
+        """Generate the rst card for a given dataset."""
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
-
-
-class AllDatasetsCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards for all datasets.
-
-    Cards in this carousel also include a reference target to link directly
-    to the card.
-    """
-
-    name = 'all_datasets_carousel'
-
-    @_classproperty
-    def doc(cls):  # noqa: N805
-        return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
-
-    @classmethod
-    def get_row(cls, _, dataset_name):
-        # Override method since we want to include a reference label for each card
-        return DatasetCardFetcher.DATASET_CARDS_RST_REF[dataset_name]
-
-
-class BuiltinCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards for built-in datasets."""
-
-    name = 'builtin_carousel'
-    doc = (
-        'Built-in datasets that ship with pyvista. Available through '
-        ':mod:`examples <pyvista.examples.examples>` module.'
-    )
-    badge = ModuleBadge('Built-in', ref='modules_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.examples)
-
-
-class DownloadsCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards from the downloads module."""
-
-    name = 'downloads_carousel'
-    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
-    badge = ModuleBadge('Downloads', ref='modules_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.downloads)
 
     @classmethod
     def generate(cls):
@@ -3287,487 +3071,124 @@ class DownloadsCarousel(DatasetGalleryCarousel):
             assert real_url in content
 
 
-class PlanetsCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards from the planets module."""
+def _validate_function_annotation(card: DatasetCard) -> str | None:
+    """Return a mismatch message if the download/load function's return annotation is wrong."""
+    if card.loader._module not in DATASET_GALLERY_MODULES:
+        return None
 
-    name = 'planets_carousel'
-    doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
-    badge = ModuleBadge('Planets', ref='modules_gallery')
+    runtime_name = type(card.loader.dataset).__name__
+    function = card.loader._function
+    params = inspect.signature(function).parameters
 
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
+    expected_annotation = runtime_name
+    if 'texture' in params:
+        expected_annotation = f'Texture | {expected_annotation}'
+    if 'load' in params:
+        expected_annotation += ' | str'
 
-
-class PlotterImportCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of cards for formats that can be imported by Plotter."""
-
-    name = 'plotter_import_carousel'
-    doc = 'File formats with a :class:`~pyvista.Plotter` import method.'
-    badge = SpecialDataTypeBadge('Plotter Import', ref='plotter_import_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        importable_filter = lambda loader: (
-            DatasetPropsGenerator.generate_importer_method(loader) is not None
+    ann = inspect.signature(function).return_annotation
+    ann_name = ann if isinstance(ann, str) else ann.__name__
+    if expected_annotation != ann_name:
+        return (
+            f'{function.__name__!r} annotated type is {ann_name!r}, '
+            f'expected {expected_annotation!r}'
         )
-        importable_names = DatasetCardFetcher.fetch_and_filter(
-            importable_filter, fetch_by='loader'
-        )
-        return sorted(importable_names)
+    return None
 
 
-class PointSetCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of PointSet cards."""
+def make_dataset_carousel() -> str:  # noqa: D103
+    # Skip the expensive dataset download/load step on incremental builds
+    if Path(DatasetCarousel.path).exists():
+        print(bold('Carousel RST file already exists, skipping dataset loading'), flush=True)
+        return DatasetCarousel.path
 
-    name = 'pointset_carousel'
-    doc = ':class:`~pyvista.PointSet` datasets.'
-    badge = DataTypeBadge('PointSet', ref='pointset_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
-
-
-class PolyDataCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of PolyData cards."""
-
-    name = 'polydata_carousel'
-    doc = ':class:`~pyvista.PolyData` datasets.'
-    badge = DataTypeBadge('PolyData', ref='pointset_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PolyData)
-
-
-class UnstructuredGridCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of UnstructuredGrid cards."""
-
-    name = 'unstructuredgrid_carousel'
-    doc = ':class:`~pyvista.UnstructuredGrid` datasets.'
-    badge = DataTypeBadge('UnstructuredGrid', ref='pointset_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.UnstructuredGrid)
-
-
-class StructuredGridCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of StructuredGrid cards."""
-
-    name = 'structuredgrid_carousel'
-    doc = ':class:`~pyvista.StructuredGrid` datasets.'
-    badge = DataTypeBadge('StructuredGrid', ref='pointset_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.StructuredGrid)
-
-
-class ExplicitStructuredGridCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of ExplicitStructuredGrid cards."""
-
-    name = 'explicitstructuredgrid_carousel'
-    doc = ':class:`~pyvista.ExplicitStructuredGrid` datasets.'
-    badge = DataTypeBadge('ExplicitStructuredGrid', ref='pointset_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.ExplicitStructuredGrid)
-
-
-class PointCloudCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of point cloud cards."""
-
-    name = 'pointcloud_carousel'
-    doc = (
-        'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or '
-        ':class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
-    )
-    badge = SpecialDataTypeBadge('Point Cloud', ref='pointcloud_surfacemesh_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        pointset_names = DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
-        vertex_polydata_filter = lambda poly: (
-            isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
-        )
-        vertex_polydata_names = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
-        return sorted(list(pointset_names) + list(vertex_polydata_names))
-
-
-class SurfaceMeshCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of surface mesh cards."""
-
-    name = 'surfacemesh_carousel'
-    doc = ':class:`~pyvista.PolyData` surface meshes.'
-    badge = SpecialDataTypeBadge('Surface Mesh', ref='pointcloud_surfacemesh_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        surface_polydata_filter = lambda poly: (
-            isinstance(poly, pv.PolyData) and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
-        )
-        surface_polydata_names = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
-        return sorted(surface_polydata_names)
-
-
-class RectilinearGridCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of RectilinearGrid cards."""
-
-    name = 'rectilineargrid_carousel'
-    doc = ':class:`~pyvista.RectilinearGrid` datasets.'
-    badge = DataTypeBadge('RectilinearGrid', ref='grid_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.RectilinearGrid)
-
-
-class ImageDataCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of ImageData cards."""
-
-    name = 'imagedata_carousel'
-    doc = ':class:`~pyvista.ImageData` datasets.'
-    badge = DataTypeBadge('ImageData', ref='grid_datatype_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.ImageData)
-
-
-class ImageData3DCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of 3D ImageData cards."""
-
-    name = 'imagedata_3d_carousel'
-    doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
-    badge = SpecialDataTypeBadge('3D Volume', ref='imagedata_texture_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        image_3d_filter = lambda img: (
-            isinstance(img, pv.ImageData)
-            and not np.any(
-                np.array(img.dimensions) == 1,
-            )
-        )
-        return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
-
-
-class ImageData2DCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of 2D ImageData cards."""
-
-    name = 'imagedata_2d_carousel'
-    doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
-    badge = SpecialDataTypeBadge('2D Image', ref='imagedata_texture_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        image_2d_filter = lambda img: (
-            isinstance(img, pv.ImageData)
-            and np.any(
-                np.array(img.dimensions) == 1,
-            )
-        )
-        return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
-
-
-class TextureCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of all Texture cards."""
-
-    name = 'texture_carousel'
-    doc = ':class:`~pyvista.Texture` datasets.'
-    badge = DataTypeBadge('Texture', ref='imagedata_texture_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.Texture)
-
-
-class CubemapCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of cubemap cards."""
-
-    name = 'cubemap_carousel'
-    doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
-    badge = SpecialDataTypeBadge('Cubemap', ref='imagedata_texture_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        cube_map_filter = lambda cubemap: isinstance(cubemap, pv.Texture) and cubemap.cube_map
-        return DatasetCardFetcher.fetch_and_filter(cube_map_filter)
-
-
-class MultiBlockCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of MultiBlock dataset cards."""
-
-    name = 'multiblock_carousel'
-    doc = ':class:`~pyvista.MultiBlock` datasets.'
-    badge = DataTypeBadge('MultiBlock', ref='composite_dataset_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.MultiBlock)
-
-
-class MultiBlockHeteroCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of heterogeneous MultiBlock dataset cards."""
-
-    name = 'multiblock_hetero_carousel'
-    doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of different mesh types.'
-    badge = SpecialDataTypeBadge('Heterogeneous', ref='composite_dataset_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_multiblock('hetero')
-
-
-class MultiBlockHomoCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of homogeneous MultiBlock dataset cards."""
-
-    name = 'multiblock_homo_carousel'
-    doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of the same mesh type.'
-    badge = SpecialDataTypeBadge('Homogeneous', ref='composite_dataset_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_multiblock('homo')
-
-
-class MultiBlockSingleCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of MultiBlock dataset cards which contain a single mesh."""
-
-    name = 'multiblock_single_carousel'
-    doc = ':class:`~pyvista.MultiBlock` datasets which contain a single mesh.'
-    badge = SpecialDataTypeBadge('Single Block', ref='composite_dataset_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_multiblock('single')
-
-
-class MiscCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of misc dataset cards."""
-
-    name = 'misc_carousel'
-    doc = 'Datasets which have a non-standard representation.'
-    badge = DataTypeBadge('Misc', ref='misc_dataset_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        misc_dataset_filter = lambda obj: (
-            not isinstance(
-                obj,
-                (pv.MultiBlock, pv.Texture, pv.DataSet),
-            )
-        )
-        return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
-
-
-class MedicalCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel of medical dataset cards."""
-
-    name = 'medical_carousel'
-    doc = 'Medical datasets.'
-    badge = CategoryBadge('Medical', ref='medical_dataset_gallery')
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return sorted(
-            [
-                'brain',
-                'brain_atlas_with_sides',
-                'chest',
-                'carotid',
-                'dicom_stack',
-                'embryo',
-                'foot_bones',
-                'frog',
-                'frog_tissues',
-                'head',
-                'head_2',
-                'knee',
-                'knee_full',
-                'prostate',
-                'whole_body_ct_female',
-                'whole_body_ct_male',
-            ],
-        )
-
-
-def _resolve_path(cls):
-    """Resolve a DocTable class path, handling property descriptors."""
-    path = cls.path
-    if isinstance(path, property):
-        path = path.fget(cls)
-    return path
-
-
-def _validate_function_annotations(
-    dataset_cards: dict[str, DatasetCard],
-) -> None:
-    """Validate that download/load function return annotations match runtime types."""
-    type_mismatches: dict[str, str] = {}
-    for name, card in dataset_cards.items():
-        if card.loader._module not in [
-            pv.examples.downloads,
-            pv.examples.examples,
-            pv.examples.planets,
-        ]:
-            continue
-        runtime_name = type(card.loader.dataset).__name__
-        function = card.loader._function
-        params = inspect.signature(function).parameters
-
-        expected_annotation = runtime_name
-        if 'texture' in params:
-            expected_annotation = f'Texture | {expected_annotation}'
-        if 'load' in params:
-            expected_annotation += ' | str'
-
-        ann = inspect.signature(function).return_annotation
-        ann_name = ann if isinstance(ann, str) else ann.__name__
-        if expected_annotation != ann_name:
-            type_mismatches[name] = (
-                f'{function.__name__!r} annotated type is {ann_name!r}, '
-                f'expected {expected_annotation!r}'
-            )
-    if type_mismatches:
-        mismatches = '\n'.join(sorted(type_mismatches.values()))
-        msg = f'Type mismatches:\n{mismatches}'
-        raise RuntimeError(msg)
-
-
-def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
-    # Check if all carousel RST files already exist - if so, skip the
-    # expensive dataset download/load step on incremental builds
-    carousel_paths = [_resolve_path(carousel) for carousel in carousels]
-    all_exist = all(Path(p).exists() for p in carousel_paths)
-    if all_exist:
-        print('All carousel RST files already exist, skipping dataset loading', flush=True)
-        return carousel_paths
-
-    # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
+    DatasetCarousel.generate()
 
-    # Create lists of dataset names for each carousel
-    [carousel.init_dataset_names() for carousel in carousels]
-
-    # Add carousel badges to cards
-    [
-        DatasetCardFetcher.add_badge_to_cards(carousel.dataset_names, carousel.badge)
-        for carousel in carousels
-    ]
-    # Add celltype badges to cards
-    DatasetCardFetcher.add_cell_badges_to_all_cards()
-
-    # Generate rst for all card objects
-    DatasetCardFetcher.generate_rst_all_cards()
-
-    # Generate rst for all carousels
-    [carousel.generate() for carousel in carousels]
-
-    # Validate function annotations
-    _validate_function_annotations(DatasetCardFetcher.DATASET_CARDS_OBJ)
-
-    # Clear loaded datasets from memory
-    DatasetCardFetcher.clear_datasets()
-
-    return [carousel.path for carousel in carousels]
+    return DatasetCarousel.path
 
 
-CAROUSEL_LIST = [
-    AllDatasetsCarousel,
-    BuiltinCarousel,
-    DownloadsCarousel,
-    PlanetsCarousel,
-    PlotterImportCarousel,
-    PointSetCarousel,
-    PolyDataCarousel,
-    UnstructuredGridCarousel,
-    StructuredGridCarousel,
-    ExplicitStructuredGridCarousel,
-    PointCloudCarousel,
-    SurfaceMeshCarousel,
-    RectilinearGridCarousel,
-    ImageDataCarousel,
-    ImageData3DCarousel,
-    ImageData2DCarousel,
-    TextureCarousel,
-    CubemapCarousel,
-    MultiBlockCarousel,
-    MultiBlockHomoCarousel,
-    MultiBlockHeteroCarousel,
-    MultiBlockSingleCarousel,
-    MiscCarousel,
-    MedicalCarousel,
-]
+def make_tables() -> list[str]:  # noqa: D103
+    paths = []
 
+    def generate(*classes: type[DocTable]):
+        for cls in classes:
+            cls.generate()
+            paths.append(cls.path)
 
-def make_all_tables() -> list[str]:  # noqa: D103
     # Make reader tables
     os.makedirs(READERS_DIR, exist_ok=True)
-    ReadersTable.generate()
+    generate(ReadersTable)
 
     # Make mesh IO tables
     os.makedirs(MESHIO_DIR, exist_ok=True)
-    ImageDataIOTable.generate()
-    RectilinearGridIOTable.generate()
-    StructuredGridIOTable.generate()
-    PolyDataIOTable.generate()
-    UnstructuredGridIOTable.generate()
-    MultiBlockIOTable.generate()
-    PartitionedDataSetIOTable.generate()
-    ExplicitStructuredGridIOTable.generate()
+    generate(
+        ImageDataIOTable,
+        RectilinearGridIOTable,
+        StructuredGridIOTable,
+        PolyDataIOTable,
+        UnstructuredGridIOTable,
+        MultiBlockIOTable,
+        PartitionedDataSetIOTable,
+        ExplicitStructuredGridIOTable,
+    )
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
-    CellQualityMeasuresTable.generate()
-    CellQualityInfoTableTRIANGLE.generate()
-    CellQualityInfoTableQUAD.generate()
-    CellQualityInfoTableHEXAHEDRON.generate()
-    CellQualityInfoTableTETRA.generate()
-    CellQualityInfoTableWEDGE.generate()
-    CellQualityInfoTablePYRAMID.generate()
+    generate(
+        CellQualityMeasuresTable,
+        CellQualityInfoTableTRIANGLE,
+        CellQualityInfoTableQUAD,
+        CellQualityInfoTableHEXAHEDRON,
+        CellQualityInfoTableTETRA,
+        CellQualityInfoTableWEDGE,
+        CellQualityInfoTablePYRAMID,
+    )
 
     # Make colormap tables
     os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
-    ColormapTableLINEAR.generate()
-    ColormapTableDIVERGING.generate()
-    ColormapTableMULTISEQUENTIAL.generate()
-    ColormapTableCYCLIC.generate()
-    ColormapTableCATEGORICAL.generate()
-    ColormapTableMISC.generate()
-    CETColormapTableLINEAR.generate()
-    CETColormapTableDIVERGING.generate()
-    CETColormapTableCYCLIC.generate()
-    CETColormapTableRAINBOW.generate()
-    CETColormapTableISOLUMINANT.generate()
+    generate(
+        ColormapTableLINEAR,
+        ColormapTableDIVERGING,
+        ColormapTableMULTISEQUENTIAL,
+        ColormapTableCYCLIC,
+        ColormapTableCATEGORICAL,
+        ColormapTableMISC,
+        CETColormapTableLINEAR,
+        CETColormapTableDIVERGING,
+        CETColormapTableCYCLIC,
+        CETColormapTableRAINBOW,
+        CETColormapTableISOLUMINANT,
+    )
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
-    LineStyleTable.generate()
-    MarkerStyleTable.generate()
-    ColorSchemeTable.generate()
-    ColorTable.generate()
-    ColorTableGRAY.generate()
-    ColorTableWHITE.generate()
-    ColorTableBLACK.generate()
-    ColorTableRED.generate()
-    ColorTableORANGE.generate()
-    ColorTableBROWN.generate()
-    ColorTableYELLOW.generate()
-    ColorTableGREEN.generate()
-    ColorTableCYAN.generate()
-    ColorTableBLUE.generate()
-    ColorTableVIOLET.generate()
-    ColorTableMAGENTA.generate()
+    generate(
+        LineStyleTable,
+        MarkerStyleTable,
+        ColorSchemeTable,
+        ColorTable,
+        ColorTableGRAY,
+        ColorTableWHITE,
+        ColorTableBLACK,
+        ColorTableRED,
+        ColorTableORANGE,
+        ColorTableBROWN,
+        ColorTableYELLOW,
+        ColorTableGREEN,
+        ColorTableCYAN,
+        ColorTableBLUE,
+        ColorTableVIOLET,
+        ColorTableMAGENTA,
+    )
 
-    # Make dataset gallery carousels
+    # Make dataset gallery carousel
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    return make_all_carousels(CAROUSEL_LIST)
+    paths.append(make_dataset_carousel())
+
+    return paths
 
 
 def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
@@ -3816,6 +3237,12 @@ def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname:
 
 
 if __name__ == '__main__':
-    new_rsts = make_all_tables()
-    print('Generated rsts:', flush=True)
-    print('\n'.join(new_rsts), flush=True)
+    # Merge stderr into stdout (reader errors/warnings included) so everything
+    # lands on one ordered stream instead of interleaving unpredictably.
+    os.dup2(sys.stdout.fileno(), sys.stderr.fileno())
+    if not color_terminal():
+        nocolor()
+
+    new_rsts = make_tables()
+    print(bold('Generated rsts:'), flush=True)
+    print('\n'.join(darkgreen(path) for path in new_rsts), flush=True)

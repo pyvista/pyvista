@@ -16,6 +16,7 @@ import pyvista as pv
 from pyvista import CellType
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
@@ -216,8 +217,10 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     grid = pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
-    assert np.all(grid.offset == offsets)
+    assert np.all(grid.cell_offsets == offsets)
     assert grid.n_cells == (3 if multiple_cell_types else 2)
+    if not multiple_cell_types and _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert grid.GetCells().IsStorageFixedSize()
     assert np.all(grid.cells == vtk_cell_format)
     assert np.allclose(
         grid.cell_connectivity,
@@ -294,6 +297,8 @@ def test_init_from_dict_variable_length():
     assert grid.celltypes[0] == CellType.LAGRANGE_TRIANGLE
     assert grid.get_cell(0).n_points == 10
     assert np.all(grid.cells_dict[CellType.LAGRANGE_TRIANGLE] == conn)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert grid.GetCells().IsStorageFixedSize()
 
     # Ragged polygons (a triangle and a pentagon) passed as a sequence of index
     # arrays of differing length, and the resulting mesh has the expected geometry.
@@ -442,7 +447,7 @@ def test_cells_dict_alternating_cells():
 
     cells_dict = grid.cells_dict
 
-    assert np.all(grid.offset == np.array([0, 4, 7, 11]))
+    assert np.all(grid.cell_offsets == np.array([0, 4, 7, 11]))
     assert np.all(cells_dict[CellType.QUAD] == np.array([cells[1:5], cells[-4:]]))
     assert np.all(cells_dict[CellType.TRIANGLE] == [0, 1, 2])
 
@@ -1807,6 +1812,8 @@ def test_explicit_structured_grid_init():
     grid = pv.ExplicitStructuredGrid(dims, cells, points)
     assert grid.n_cells == 2
     assert grid.n_points == 16
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert grid.GetCells().IsStorageFixedSize()
 
 
 def test_explicit_structured_grid_cast_to_unstructured_grid():

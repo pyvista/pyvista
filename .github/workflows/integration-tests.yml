@@ -111,6 +111,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      actions: read # to look up which matrix jobs failed
+      contents: read # to look up the commit title
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
@@ -118,14 +120,53 @@ jobs:
       - name: Report integration test failure
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
           REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
+          # Who to @-mention when a given integration breaks; leave empty to not ping anyone
+          declare -A maintainers=(
+            [mne]="@larsoner"
+            [trame]="@user27182"
+            [pyvistaqt]="@larsoner"
+            [geovista]="@bjlittle"
+            [playwright]="@user27182"
+          )
+
+          # The matrix job names are just the project names (see `name:` above)
+          failed=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+
+          projects=""
+          pings=""
+          while IFS=$'\t' read -r project url; do
+            [ -n "$project" ] || continue
+            who="${maintainers[$project]:-}"
+            projects+="- [\`${project}\`](${url})${who:+ — ${who}}"$'\n'
+            case " $pings " in
+              *" $who "*) ;;
+              *) pings+="${who:+$who }" ;;
+            esac
+          done <<< "$failed"
+
+          [ -n "$projects" ] || projects="- (could not determine which jobs failed, see the run)"$'\n'
+
+          # Names the PR that landed; no `| head` since SIGPIPE under pipefail kills the step
+          title=$(gh api "repos/{owner}/{repo}/commits/${SHA}" \
+            --jq '.commit.message | split("\n")[0]' || true)
+
           body=$(cat <<EOF
           ### Integration Test Failure
 
           **Date:** $(date -u +%Y-%m-%d)
           **Run:** ${RUN_URL}
           **Ref:** \`${REF}\`
+          **Commit:** [\`${SHA:0:8}\`](${COMMIT_URL})${title:+ — ${title}}
+
+          **Failing integrations:**
+          ${projects}
+          ${pings:+${pings}please take a look.}
           EOF
           )
 

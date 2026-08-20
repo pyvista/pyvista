@@ -28,7 +28,7 @@ dependencies = [
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
-  'vtk<9.7.0',
+  'vtk<9.8.0',
   'vtk>=9.3.1',
 ]
 description = '3D visualization and mesh analysis for science and engineering.'
@@ -57,6 +57,9 @@ pinned = [ # Pinned versions of core dependencies
   'typing-extensions<4.17.0',
 ]
 
+# Deliberately empty: integration envs use the target project's test deps, not ours (see tox.ini)
+integration = []
+
 typing = [
   'meshio<5.4.0',
   'mypy<2.4.0',
@@ -82,6 +85,7 @@ test = [
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
+  'polars<=1.44',
   'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
@@ -91,15 +95,17 @@ test = [
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-zstd>=0.2.3,<0.3.0',
-  'refleak>=0.2.1,<0.3.0',
+  'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
+  'sphinx-autocodelink>=0.6,<0.7',
+  'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.2.0',
-  'sphinx-codeautolink<0.20.0',
   'sphinx-design<0.7.0',
   'sphinx-examples-as-code>=0.5,<0.6',
   'sphinx-gallery<0.22.0',
   'sphinx<8.3.0',
+  'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
   'tqdm<4.70.0',
   'trame-pyvista<0.2.0',
@@ -116,7 +122,6 @@ docs = [
   'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
-  'enum-tools==0.13.0',
   'erbsland-sphinx-ansi==1.2.4',
   'fsspec==2026.6.0',
   'imageio-ffmpeg==0.6.0',
@@ -139,8 +144,9 @@ docs = [
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
+  'sphinx-autocodelink==0.6.2',
+  'sphinx-autoopengraph==0.2.1',
   'sphinx-book-theme==1.1.4',
-  'sphinx-codeautolink==0.19.0',
   'sphinx-copybutton==0.5.2',
   'sphinx-design==0.6.1',
   'sphinx-examples-as-code==0.5.0',
@@ -165,6 +171,7 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
+  'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.6',
   { include-group = 'pinned' },
 ]
@@ -274,7 +281,8 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'expect_check_gc_fail: Expect vtk leak.',
+  'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
+  'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
@@ -620,6 +628,13 @@ pyvista = "pv"
 'pyvista/examples/planets.py' = ['ANN']
 'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
+'pyvista/ext/_autoenum.py' = [
+  'ARG002', # overrides of fixed third-party (Sphinx) method signatures
+  'ARG003',
+  'FBT001',
+  'FBT002',
+  'PLR0917',
+]
 'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_property.py' = ['ANN']
@@ -672,6 +687,8 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
+# Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
+'tests/plotting/tinypages/gallery_src/*' = ['I002']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

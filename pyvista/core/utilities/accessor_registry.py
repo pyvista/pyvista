@@ -28,8 +28,6 @@ pyvista.registered_accessors
 
 from __future__ import annotations
 
-import contextlib
-
 # ICN003 waived: tests patch this module-level name to intercept plugin
 # imports. Patching `importlib.import_module` instead would apply globally,
 # for every importer, for the duration of the test.
@@ -41,7 +39,9 @@ from typing import NamedTuple
 from typing import Protocol
 from typing import TypedDict
 from typing import runtime_checkable
+import weakref
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
@@ -138,21 +138,58 @@ class _AccessorRegistryState(TypedDict):
     pending: dict[str, str]
 
 
+# Cached-accessor bookkeeping lives in the instance dict under this prefix. It is
+# stripped from the pickled state (see ``pyvista.core.dataobject``): a weak reference
+# cannot be pickled, and a cache is not state worth carrying to another process.
+_ACCESSOR_CACHE_PREFIX = '_pyvista_accessor_'
+
+# The anchor below observes an event nothing invokes -- not VTK, not PyVista. It exists
+# only to hold a reference. ``UserEvent`` is VTK's documented base for ids that VTK
+# itself will never fire; should another library fire this exact id, the anchor is a
+# no-op callable and nothing happens.
+_ACCESSOR_ANCHOR_EVENT = _vtk.vtkCommand.UserEvent + 1701
+
+
+class _AccessorAnchor:
+    """Hold an accessor from its dataset's observer list.
+
+    See :class:`_CachedAccessor` for why the observer list, of all places.
+    """
+
+    __slots__ = ('accessor',)
+
+    def __init__(self, accessor: Any) -> None:
+        self.accessor = accessor
+
+    def __call__(self, *args: Any) -> None:
+        """Do nothing: the event this observes is never invoked."""
+
+
 class _CachedAccessor:
-    """Non-data descriptor implementing the pandas/xarray accessor pattern.
+    """Data descriptor implementing the pandas/xarray accessor pattern.
 
-    The first time ``obj.<name>`` is accessed, ``accessor_cls(obj)`` is
-    constructed and stored in ``obj.__dict__[name]``. Subsequent lookups
-    bypass the descriptor and hit ``__dict__`` directly because a
-    non-data descriptor yields to instance ``__dict__``.
+    The first time ``obj.<name>`` is accessed, ``accessor_cls(obj)`` is constructed
+    and cached for as long as ``obj`` lives, so repeated access returns the same
+    accessor and ``__init__`` runs once per dataset.
 
-    When the target class uses ``__slots__`` and no ``__dict__`` is
-    available, the accessor is constructed fresh on each access — slower
-    but still correct.
+    The cache is deliberately indirect: the instance ``__dict__`` holds a weak
+    reference, and the accessor is kept alive by an observer on ``obj``. Caching it
+    the obvious way, as ``obj.__dict__[name] = accessor``, leaks the dataset outright.
+    An accessor that stores the dataset -- the documented pattern, ``self._mesh =
+    mesh`` -- closes a reference cycle through the instance dict of a VTK object, and
+    VTK's ``tp_traverse`` reports observers but never that dict (nor is there a
+    ``tp_clear``), so the collector cannot see the cycle and neither object is ever
+    freed. The observer list is the one place a VTK object's Python references *are*
+    reported, so a cycle anchored there collects normally.
+
+    When the target uses ``__slots__`` and has no ``__dict__``, or is not a
+    ``vtkObject`` and so has nowhere to anchor, the accessor is constructed fresh on
+    each access -- slower but still correct.
     """
 
     def __init__(self, name: str, accessor_cls: type) -> None:
         self._name = name
+        self._cache_key = _ACCESSOR_CACHE_PREFIX + name
         self._accessor_cls = accessor_cls
 
     def __repr__(self) -> str:  # pragma: no cover - trivial
@@ -163,12 +200,63 @@ class _CachedAccessor:
             # Class-level access returns the accessor class itself so
             # ``help(cls.<name>)`` shows the accessor docstring.
             return self._accessor_cls
-        accessor_instance = self._accessor_cls(obj)
-        # Skip the cache on ``__slots__`` targets (no ``__dict__``) and
-        # construct fresh on each access.
-        with contextlib.suppress(AttributeError):
-            obj.__dict__[self._name] = accessor_instance
-        return accessor_instance
+        obj_dict = getattr(obj, '__dict__', None)
+        if obj_dict is None:
+            return self._accessor_cls(obj)
+        if self._name in obj_dict:
+            # A value assigned over the accessor wins, as it did when this was a
+            # non-data descriptor and the instance dict shadowed it.
+            return obj_dict[self._name]
+        cached = obj_dict.get(self._cache_key)
+        if cached is not None:
+            owner_id, accessor_ref, _tag = cached
+            accessor = accessor_ref()
+            # The id guards against an entry that reached a *copy* of ``obj``: a live
+            # accessor holds its own dataset, so while the weak reference is alive that
+            # dataset cannot have been freed and its id cannot have been reused.
+            if accessor is not None and owner_id == id(obj):
+                return accessor
+        accessor = self._accessor_cls(obj)
+        self._cache(obj, obj_dict, accessor)
+        return accessor
+
+    def _cache(self, obj: Any, obj_dict: dict[str, Any], accessor: Any) -> None:
+        """Anchor the accessor to ``obj`` and record how to find it again."""
+        add_observer = getattr(obj, 'AddObserver', None)
+        if add_observer is None:
+            return  # not a vtkObject: nowhere to anchor it, so do not cache
+        try:
+            accessor_ref = weakref.ref(accessor)
+        except TypeError:
+            return  # accessor class is not weak-referenceable (``__slots__``)
+        tag = add_observer(_ACCESSOR_ANCHOR_EVENT, _AccessorAnchor(accessor))
+        obj_dict[self._cache_key] = (id(obj), accessor_ref, tag)
+
+    def __set__(self, obj: Any, value: Any) -> None:
+        # Defining __delete__ makes this a data descriptor, which takes precedence over
+        # the instance dict, so assignment has to be forwarded there explicitly to keep
+        # shadowing an accessor working as it did.
+        obj.__dict__[self._name] = value
+
+    def __delete__(self, obj: Any) -> None:
+        obj_dict = getattr(obj, '__dict__', None)
+        deleted = False
+        if obj_dict is not None:
+            if obj_dict.pop(self._name, _MISSING) is not _MISSING:
+                deleted = True
+            cached = obj_dict.pop(self._cache_key, None)
+            if cached is not None:
+                obj.RemoveObserver(cached[2])  # drop the anchor, so the accessor dies
+                deleted = True
+        if not deleted:
+            msg = self._name
+            raise AttributeError(msg)
+
+
+def _clear_accessor_cache(dict_: dict[str, Any]) -> None:
+    """Drop cached-accessor bookkeeping from an instance dict."""
+    for key in [key for key in dict_ if key.startswith(_ACCESSOR_CACHE_PREFIX)]:
+        del dict_[key]
 
 
 # ``_MISSING`` marks "attribute did not exist on the target class dict

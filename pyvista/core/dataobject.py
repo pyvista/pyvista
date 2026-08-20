@@ -21,6 +21,7 @@ from pyvista.typing.mypy_plugin import promote_type
 
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.accessor_registry import _clear_accessor_cache
 from .utilities.accessor_registry import _pending_accessor_names
 from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import FieldAssociation
@@ -896,6 +897,8 @@ class DataObject(
         # Any cached vtk objects (e.g. vtkLocator objects) must be removed since
         # these cannot be serialized
         _clear_vtk_objects_from_dict(data_dict)
+        # Nor can a cached accessor's weak reference, and a cache is not worth carrying
+        _clear_accessor_cache(data_dict)
 
         state_dict['_PYVISTA_STATE_DICT'] = data_dict
 
@@ -924,6 +927,7 @@ class DataObject(
             )
             raise TypeError(msg)
         state = self.__dict__.copy()
+        _clear_accessor_cache(state)  # a weak reference cannot be pickled
 
         if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does

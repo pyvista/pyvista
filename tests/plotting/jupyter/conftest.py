@@ -69,10 +69,8 @@ def _trame_array_cache():
     exporting test's arrays would otherwise survive it.
     """
     yield
-    try:
-        from trame_vtk.modules.vtk import HELPERS_PER_SERVER
-    except ImportError:
-        return
+    from trame_vtk.modules.vtk import HELPERS_PER_SERVER
+
     for helper in HELPERS_PER_SERVER.values():
         protocol = helper._root_protocol
         if protocol is None:

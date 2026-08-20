@@ -1,65 +1,17 @@
-"""Test the images generated from building the documentation."""
+"""Test that docstring sections are hoisted into the "on this page" navbar.
+
+`conf.py` patches numpydoc to emit real headings instead of rubrics, then hoists
+those sections out of the autodoc `desc` node so Sphinx's TocTreeCollector can see
+them. Both halves are needed, and neither fails loudly if it breaks -- the navbar
+entries just silently disappear.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 import re
-from xml.etree import ElementTree as ET
 
-import pytest
-
-ROOT_DIR = str(Path(__file__).parent.parent.parent)
-BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-HTML_DIR = str(Path(BUILD_DIR) / 'html')
-
-
-# Same value as `sphinx_gallery_conf['junit']` in `conf.py`
-SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
-SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds
-XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
-
-
-def load_test_cases() -> list[dict[str, str]]:
-    """Return the sphinx-gallery junit test cases, or none if the docs aren't built.
-
-    Parametrization happens at collection time, so this can't raise on a missing
-    file without failing every test in the module.
-    ``test_sphinx_gallery_junit_results_exist`` reports that instead.
-    """
-    if not XML_FILE.is_file():
-        return []
-    return [dict(case.attrib) for case in ET.parse(XML_FILE).getroot().iterfind('testcase')]
-
-
-test_cases = load_test_cases()
-test_ids = [case['classname'] for case in test_cases]
-
-
-def test_top_level_module_target():
-    index_html = (Path(HTML_DIR) / 'index.html').read_text(encoding='utf-8')
-
-    assert 'id="module-pyvista"' in index_html
-
-
-def test_sphinx_gallery_junit_results_exist():
-    assert XML_FILE.is_file(), f'{XML_FILE} not found. Build the documentation first.'
-
-
-@pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
-def test_sphinx_gallery_execution_times(testcase):
-    if float(testcase['time']) > SPHINX_GALLERY_EXAMPLE_MAX_TIME:
-        pytest.fail(
-            f'Gallery example {testcase["name"]!r} from {testcase["file"]!r}\n'
-            f'Took too long to run: '
-            f'Duration {testcase["time"]}s > {SPHINX_GALLERY_EXAMPLE_MAX_TIME}s',
-        )
-
-
-# -- docstring sections in the "on this page" navbar --------------------------
-# `conf.py` patches numpydoc to emit real headings instead of rubrics, then
-# hoists those sections out of the autodoc `desc` node so Sphinx's
-# TocTreeCollector can see them. Both halves are needed, and neither fails
-# loudly if it breaks -- the navbar entries just silently disappear.
+from conftest import BUILD_HTML_DIR
 
 # Minimum number of API pages expected to gain a docstring-section entry. The
 # real count is in the thousands; this only needs to be high enough that a
@@ -85,15 +37,16 @@ def find_api_page(filename: str) -> Path:
     Fails rather than skips when the page is missing: skipping would silently
     stop testing the feature, and nobody would know to update the test.
     """
-    page = next(Path(HTML_DIR).rglob(filename), None)
+    page = next(Path(BUILD_HTML_DIR).rglob(filename), None)
     assert page is not None, (
-        f'{filename} not found under {HTML_DIR}. If the API doc layout changed, point '
+        f'{filename} not found under {BUILD_HTML_DIR}. If the API doc layout changed, point '
         f'this test at another single-object page with Notes and Examples sections.'
     )
     return page
 
 
 def test_docstring_sections_are_hoisted_into_page_toc():
+    """Confirm Notes and Examples sections are hoisted into the navbar."""
     html = find_api_page(API_PAGE).read_text()
     anchors = page_toc_anchors(html)
 
@@ -102,6 +55,7 @@ def test_docstring_sections_are_hoisted_into_page_toc():
 
 
 def test_hoisted_sections_are_not_rubrics():
+    """Confirm hoisted sections render as real headings, not rubrics."""
     html = find_api_page(API_PAGE).read_text()
 
     # A rubric would render as <p class="rubric">Examples</p> and never reach
@@ -111,9 +65,10 @@ def test_hoisted_sections_are_not_rubrics():
 
 
 def test_multi_object_page_does_not_hoist_sections():
+    """Confirm pages documenting several objects via `:members:` skip hoisting."""
     # `helpers.rst` documents several objects on one page via `:members:`, so
     # hoisting is skipped there to avoid colliding sections at page level.
-    page = Path(HTML_DIR) / 'api' / 'core' / 'helpers.html'
+    page = Path(BUILD_HTML_DIR) / 'api' / 'core' / 'helpers.html'
     assert page.is_file(), (
         f'{page} not found. If the API doc layout changed, point this test at another '
         f'page that documents several objects via `:members:`.'
@@ -125,6 +80,7 @@ def test_multi_object_page_does_not_hoist_sections():
 
 
 def test_page_toc_anchors_resolve():
+    """Confirm every navbar anchor has a matching id on the page."""
     html = find_api_page(API_PAGE).read_text()
 
     for anchor in page_toc_anchors(html):
@@ -132,9 +88,10 @@ def test_page_toc_anchors_resolve():
 
 
 def test_docstring_sections_hoisted_across_api_pages():
-    api_pages = list(Path(HTML_DIR).rglob('_autosummary/*.html'))
+    """Confirm enough API pages gained a hoisted docstring-section entry."""
+    api_pages = list(Path(BUILD_HTML_DIR).rglob('_autosummary/*.html'))
     assert api_pages, (
-        f'no generated API pages found under {HTML_DIR}. If autosummary no longer '
+        f'no generated API pages found under {BUILD_HTML_DIR}. If autosummary no longer '
         f'writes to `_autosummary`, update this glob.'
     )
 
@@ -145,8 +102,3 @@ def test_docstring_sections_hoisted_across_api_pages():
     ]
 
     assert len(pages_with_sections) > MIN_PAGES_WITH_HOISTED_SECTIONS
-
-
-def test_contributing_edit_button_points_to_contributing():
-    html = (Path(HTML_DIR) / 'contributing.html').read_text(encoding='utf-8')
-    assert 'https://github.com/pyvista/pyvista/edit/main/CONTRIBUTING.rst' in html

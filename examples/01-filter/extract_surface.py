@@ -82,7 +82,7 @@ surf.plot(show_scalar_bar=False)
 # generate a smooth surface based on the position of the
 # "mid-edge" nodes.  This allows the plotting of cells
 # containing curvature.  For additional reference, please see:
-# https://prod.sandia.gov/techlib-noauth/access-control.cgi/2004/041617.pdf
+# https://www.osti.gov/biblio/919127
 
 surf_subdivided = grid.extract_surface(
     algorithm='dataset_surface', nonlinear_subdivision=5

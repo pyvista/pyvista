@@ -1,5 +1,7 @@
 .. title:: PyVista
 
+.. autoopengraph_thumbnail:: none
+
 .. raw:: html
 
     <div class="banner">
@@ -307,7 +309,7 @@ Status
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/license/mit/
+   :target: https://opensource.org/license/mit
 
 .. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
    :target: https://communityinviter.com/apps/pyvista/pyvista

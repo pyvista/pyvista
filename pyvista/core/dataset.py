@@ -1074,10 +1074,6 @@ class DataSet(DataSetFilters, DataObject):
         pandas.DataFrame
             DataFrame with one column per (expanded) array.
 
-        See Also
-        --------
-        :ref:`dataframe_export_example`
-
         Examples
         --------
         >>> import pyvista as pv
@@ -1917,10 +1913,6 @@ class DataSet(DataSetFilters, DataObject):
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
-        See Also
-        --------
-        :ref:`create_pointset_example`
-
         Examples
         --------
         >>> import pyvista as pv
@@ -2040,8 +2032,6 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
         PolyDataFilters.ray_trace
-        :ref:`point_cloud_distance_example`
-        :ref:`point_cloud_neighbors_example`
 
         Examples
         --------
@@ -2132,7 +2122,6 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
         PolyDataFilters.ray_trace
-        :ref:`distance_between_surfaces_example`
 
         Examples
         --------
@@ -3314,7 +3303,7 @@ class DataSet(DataSetFilters, DataObject):
         False
 
         """
-        return self.n_points == 0
+        return self.n_points == 0 and self.n_cells == 0
 
     @property
     def dimensionality(self) -> _Dimensionality:
