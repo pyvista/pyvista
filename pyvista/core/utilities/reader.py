@@ -113,6 +113,12 @@ def get_reader(filename, force_ext=None):
     pyvista.BaseReader
         A subclass of :class:`pyvista.BaseReader` is returned based on file type.
 
+    See Also
+    --------
+    pyvista.register_reader
+        Register a :class:`BaseReader` subclass for an extension PyVista
+        does not ship a reader for.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -130,8 +136,16 @@ def get_reader(filename, force_ext=None):
     >>> mesh.plot(color='lightblue')
 
     """
+    # Circular import: reader_registry -> reader
+    from pyvista.core.utilities.reader_registry import _get_ext_reader_class  # noqa: PLC0415
+
     ext = _get_ext_force(filename, force_ext)
-    reader_class = CLASS_READERS.get(ext)
+
+    # Plugin classes are consulted first so that a registration made with
+    # ``override=True`` wins here as well as in ``pyvista.read``. Without an
+    # override, ``register_reader`` refuses an extension already in
+    # ``CLASS_READERS``, so this cannot shadow a built-in by accident.
+    reader_class = _get_ext_reader_class(ext) or CLASS_READERS.get(ext)
 
     if reader_class is None:
         reader_class = next(
@@ -154,7 +168,18 @@ def get_reader(filename, force_ext=None):
         msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
         raise ValueError(msg)
 
+    from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+
     msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+    if _get_ext_handler(ext) is not None:
+        # A plugin claims the extension, but with a bare callable rather than
+        # a reader class, so there is no reader object to hand back. Say so
+        # instead of letting the user think nothing is registered at all.
+        msg += (
+            f'.\nA custom reader is registered for {ext}, but as a plain callable, so it is '
+            f'only reachable through `pyvista.read`. Ask the provider to register a '
+            f'`pyvista.BaseReader` subclass to make it available here too.'
+        )
     raise ValueError(msg)
 
 
@@ -256,7 +281,14 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
-        return [CLASS_READERS]
+        # Includes the plugin registry so that ``extensions`` answers for a
+        # reader class registered through :func:`pyvista.register_reader` the
+        # same way it does for a built-in. Reads the already-populated dict
+        # rather than forcing entry-point discovery: holding a reference to
+        # the class means its own registration has already happened.
+        from pyvista.core.utilities.reader_registry import _custom_class_readers  # noqa: PLC0415
+
+        return [CLASS_READERS, _custom_class_readers]  # type: ignore[list-item]
 
     @classmethod
     def _get_extension_pattern_mappings(

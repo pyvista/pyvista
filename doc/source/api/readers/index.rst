@@ -99,15 +99,71 @@ for zero-config discovery at install time.
 .. autofunction:: pyvista.registered_readers
 .. autoclass:: pyvista.ReaderRegistration
 
+**Two forms of reader**
+
+A registration is either a plain callable or a
+:class:`pyvista.BaseReader` subclass, and the choice decides how much
+of PyVista's reader machinery the format gets:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 30 30
+
+   * - Capability
+     - Callable
+     - ``BaseReader`` subclass
+   * - :func:`pyvista.read`
+     - yes
+     - yes
+   * - :func:`pyvista.get_reader`
+     - no
+     - yes
+   * - Keyword arguments to :func:`pyvista.read`
+     - dropped
+     - set as reader attributes
+   * - ``progress_bar=True``, ``validate=``
+     - ignored
+     - honored
+   * - :class:`pyvista.TimeReader`,
+       :class:`pyvista.PointCellDataSelection`
+     - unavailable
+     - available
+
+A callable is the lighter option and is the right choice for a format
+with no reader-level state to expose. Register a
+:class:`pyvista.BaseReader` subclass for anything a user will want to
+configure, step through in time, or select arrays from.
+
+To write a reader class for a format VTK has no reader for, subclass
+:class:`pyvista.BaseVTKReader` for the parsing and point a
+:class:`pyvista.BaseReader` subclass at it::
+
+   import pyvista as pv
+
+
+   class _MyVTKReader(pv.BaseVTKReader):
+       def UpdateInformation(self):
+           pass
+
+       def Update(self):
+           self._data_object = _parse(self._filename)
+
+
+   @pv.register_reader('.myformat')
+   class MyReader(pv.BaseReader):
+       _class_reader = _MyVTKReader
+
 **Entry points**
 
 Packages can also register readers in ``pyproject.toml`` so they are
-discovered automatically when installed:
+discovered automatically when installed. The entry-point value may name
+either a callable or a :class:`pyvista.BaseReader` subclass:
 
 .. code-block:: toml
 
    [project.entry-points."pyvista.readers"]
    ".myformat" = "my_package:read_my_format"
+   ".myotherformat" = "my_package:MyOtherReader"
 
 **Remote URI support**
 
@@ -253,10 +309,19 @@ support inspecting and setting data related to point and cell arrays.
 The :class:`TimeReader` is inherited by readers that support inspecting
 and setting time or iterations for reading.
 
+The :class:`BaseVTKReader` is the base for a reader implemented in pure
+Python rather than by a VTK reader class. Subclass it, implement
+``UpdateInformation`` and ``Update``, and point a
+:class:`pyvista.BaseReader` subclass at it through ``_class_reader``.
+This is how :class:`pyvista.PVDReader` and :class:`pyvista.FRDReader`
+are built, and it is the supported base for a third-party reader
+registered with :func:`pyvista.register_reader`.
+
 .. autosummary::
    :toctree: _autosummary
 
    BaseReader
+   BaseVTKReader
    PointCellDataSelection
    PVDDataSet
    SeriesDataSet

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from importlib.metadata import EntryPoint
 import importlib.util
 from io import BytesIO
 from pathlib import Path
@@ -535,3 +536,265 @@ def test_registered_readers_forces_full_discovery():
     assert len(matches) == 1
     assert matches[0].handler is _mock_reader
     mock_ep.load.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Registering a ``BaseReader`` subclass
+# ---------------------------------------------------------------------------
+
+
+class _MockVTKReader(pv.BaseVTKReader):
+    """Pure-Python stand-in for a VTK reader, as third-party readers use."""
+
+    def __init__(self):
+        super().__init__()
+        self.theta_resolution = 10
+
+    def UpdateInformation(self):  # noqa: N802
+        pass
+
+    def Update(self):  # noqa: N802
+        self._data_object = pv.Sphere(theta_resolution=self.theta_resolution)
+
+
+class _MockReader(pv.BaseReader['PolyData']):
+    """Reader class a plugin would register."""
+
+    _class_reader = _MockVTKReader
+
+    @property
+    def theta_resolution(self):
+        return self.reader.theta_resolution
+
+    @theta_resolution.setter
+    def theta_resolution(self, value):
+        self.reader.theta_resolution = value
+
+
+class _MockTimeReader(pv.BaseReader['PolyData'], pv.TimeReader):
+    """Reader class exercising the :class:`pyvista.TimeReader` protocol."""
+
+    _class_reader = _MockVTKReader
+
+    def __init__(self, path):
+        super().__init__(path)
+        self._active = 0
+
+    @property
+    def number_time_points(self):
+        return 3
+
+    def time_point_value(self, time_point):
+        return float(time_point) * 10.0
+
+    @property
+    def active_time_value(self):
+        return self.time_point_value(self._active)
+
+    def set_active_time_value(self, time_value):
+        self._active = self.time_values.index(time_value)
+
+    def set_active_time_point(self, time_point):
+        self._active = time_point
+
+
+@pytest.fixture
+def custom_file(tmp_path):
+    path = tmp_path / 'data.myclassfmt'
+    path.touch()
+    return path
+
+
+def test_register_reader_class_lands_in_class_registry():
+    pv.register_reader('.myclassfmt', _MockReader)
+    assert _reg_mod._custom_class_readers['.myclassfmt'] is _MockReader
+    assert '.myclassfmt' not in _reg_mod._custom_ext_readers
+
+
+def test_register_reader_class_as_decorator():
+    @pv.register_reader('.decoratedcls')
+    class Decorated(pv.BaseReader['PolyData']):
+        _class_reader = _MockVTKReader
+
+    assert _reg_mod._custom_class_readers['.decoratedcls'] is Decorated
+
+
+def test_get_reader_resolves_registered_class(custom_file):
+    pv.register_reader('.myclassfmt', _MockReader)
+    reader = pv.get_reader(custom_file)
+    assert isinstance(reader, _MockReader)
+    assert reader.path == str(custom_file)
+
+
+def test_read_uses_registered_class(custom_file):
+    pv.register_reader('.myclassfmt', _MockReader)
+    mesh = pv.read(custom_file)
+    assert isinstance(mesh, pv.PolyData)
+
+
+def test_read_forwards_kwargs_to_registered_class(custom_file):
+    """A class reader gets ``pv.read`` kwargs as reader attributes.
+
+    This is what a bare callable handler cannot do: ``pv.read`` drops its
+    kwargs on that path.
+    """
+    pv.register_reader('.myclassfmt', _MockReader)
+    default = pv.read(custom_file)
+    denser = pv.read(custom_file, theta_resolution=30)
+    assert denser.n_points > default.n_points
+
+
+def test_read_rejects_unknown_kwarg_on_registered_class(custom_file):
+    pv.register_reader('.myclassfmt', _MockReader)
+    with pytest.raises(AttributeError):
+        pv.read(custom_file, not_an_attribute=1)
+
+
+def test_registered_class_supports_time_reader(custom_file):
+    pv.register_reader('.myclassfmt', _MockTimeReader)
+    reader = pv.get_reader(custom_file)
+    assert isinstance(reader, pv.TimeReader)
+    assert reader.time_values == [0.0, 10.0, 20.0]
+    reader.set_active_time_value(20.0)
+    assert reader.active_time_value == 20.0
+
+
+def test_registered_class_may_override_builtin(tmp_path):
+    """``override=True`` replaces a built-in on *both* dispatch paths."""
+    builtin_file = tmp_path / 'data.vtp'
+    builtin_file.touch()
+    with pytest.raises(ValueError, match='collides with built-in VTK reader'):
+        pv.register_reader('.vtp', _MockReader)
+
+    pv.register_reader('.vtp', _MockReader, override=True)
+    assert isinstance(pv.get_reader(builtin_file), _MockReader)
+
+
+def test_builtin_readers_unaffected_by_registry(tmp_path):
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    pv.register_reader('.myclassfmt', _MockReader)
+    assert isinstance(pv.get_reader(mesh_file), pv.XMLPolyDataReader)
+
+
+def test_get_reader_still_raises_for_callable_registration(custom_file):
+    """A bare callable is reachable from ``pv.read`` but not ``pv.get_reader``.
+
+    The error names the reason rather than claiming nothing is registered.
+    """
+    pv.register_reader('.myclassfmt', _mock_reader)
+    with pytest.raises(ValueError, match=re.escape('only reachable through `pyvista.read`')):
+        pv.get_reader(custom_file)
+
+
+def test_get_reader_message_unchanged_for_unknown_extension(tmp_path):
+    unknown = tmp_path / 'data.nosuchfmt'
+    unknown.touch()
+    with pytest.raises(
+        ValueError, match=re.escape('does not support a file with the .nosuchfmt extension')
+    ):
+        pv.get_reader(unknown)
+
+
+def test_reregistering_switches_between_forms():
+    """An extension resolves to exactly one reader, whichever form is last."""
+    pv.register_reader('.myclassfmt', _MockReader)
+    pv.register_reader('.myclassfmt', _mock_reader, override=True)
+    assert '.myclassfmt' not in _reg_mod._custom_class_readers
+    assert _reg_mod._custom_ext_readers['.myclassfmt'] is _mock_reader
+
+    pv.register_reader('.myclassfmt', _MockReader, override=True)
+    assert '.myclassfmt' not in _reg_mod._custom_ext_readers
+    assert _reg_mod._custom_class_readers['.myclassfmt'] is _MockReader
+
+
+def test_registered_readers_marks_reader_class():
+    pv.register_reader('.myclassfmt', _MockReader)
+    pv.register_reader('.myfuncfmt', _mock_reader)
+    records = {r.extension: r for r in pv.registered_readers()}
+    assert records['.myclassfmt'].reader_class is True
+    assert records['.myclassfmt'].handler is _MockReader
+    assert records['.myfuncfmt'].reader_class is False
+
+
+def test_registry_state_roundtrips_class_registrations():
+    pv.register_reader('.snapshotfmt', _MockReader)
+    state = _reg_mod._save_registry_state()
+    _reg_mod._custom_class_readers.clear()
+    _reg_mod._restore_registry_state(state)
+    assert _reg_mod._custom_class_readers['.snapshotfmt'] is _MockReader
+
+
+# ---------------------------------------------------------------------------
+# Entry-point discovery of a reader class
+# ---------------------------------------------------------------------------
+
+
+def _fake_entry_point(name, module_name, attr, obj):
+    """Build a real ``EntryPoint`` backed by a module injected into ``sys.modules``.
+
+    Uses the genuine :class:`importlib.metadata.EntryPoint` rather than a
+    mock so that ``ep.load()`` exercises the real import machinery, which
+    is the code path an installed distribution would take.
+    """
+    module = SimpleNamespace(**{attr: obj})
+    return EntryPoint(name=name, value=f'{module_name}:{attr}', group='pyvista.readers'), module
+
+
+def test_entry_point_resolving_to_class_reaches_get_reader(tmp_path, monkeypatch):
+    ep, module = _fake_entry_point('.eprfmt', 'fake_reader_plugin', 'PluginReader', _MockReader)
+    monkeypatch.setitem(sys.modules, 'fake_reader_plugin', module)
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    path = tmp_path / 'data.eprfmt'
+    path.touch()
+    reader = pv.get_reader(path)
+    assert isinstance(reader, _MockReader)
+    assert _reg_mod._custom_class_readers['.eprfmt'] is _MockReader
+    record = next(r for r in pv.registered_readers() if r.extension == '.eprfmt')
+    assert record.reader_class is True
+    assert record.source == 'fake_reader_plugin:PluginReader'
+
+
+def test_entry_point_resolving_to_callable_still_lands_in_handler_table(monkeypatch):
+    ep, module = _fake_entry_point('.epffmt', 'fake_func_plugin', 'read', _mock_reader)
+    monkeypatch.setitem(sys.modules, 'fake_func_plugin', module)
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    assert _reg_mod._get_ext_handler('.epffmt') is _mock_reader
+    assert '.epffmt' not in _reg_mod._custom_class_readers
+
+
+def test_get_reader_does_not_import_plugins_for_builtin_extensions(tmp_path, monkeypatch):
+    """Resolving a built-in extension must not import a third-party plugin."""
+    loaded = []
+
+    class _CountingEntryPoint(EntryPoint):
+        def load(self):
+            loaded.append(self.name)
+            return _MockReader
+
+    ep = _CountingEntryPoint(name='.neverloaded', value='x:y', group='pyvista.readers')
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    pv.get_reader(mesh_file)
+    assert loaded == []
+
+
+def test_registered_class_reports_its_extensions():
+    """``BaseReader.extensions`` answers for a plugin class, as for a built-in.
+
+    Raised by user27182 on pyvista/pyvista#8547.
+    """
+    assert _MockReader.extensions == ()
+    pv.register_reader('.myclassfmt', _MockReader)
+    assert _MockReader.extensions == ('.myclassfmt',)
+    assert pv.XMLPolyDataReader.extensions == ('.vtp',)
