@@ -709,7 +709,7 @@ class _CellTypeMeta(EnumMeta):
         Returns
         -------
         dict
-            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            Dictionary with cell dimensions ``0``, ``1``, ``2``, ``3`` as keys, and frozen sets as
             values with the respective :class:`CellType` members.
 
         See Also

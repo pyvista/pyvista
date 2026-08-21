@@ -785,7 +785,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
     mesh. The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and
-    ``GetVerts`` return the underlying ``CellArray``s for the ``faces``,
+    ``GetVerts`` return the underlying ``CellArray`` objects for the ``faces``,
     ``lines``, ``strips``, and ``verts`` properties respectively.
     Reusing cell arrays like this can be a performance optimization for
     large meshes because it avoids allocating new arrays.

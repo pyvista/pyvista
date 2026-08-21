@@ -190,7 +190,7 @@ class MultiBlock(
                 raise TypeError(msg)
 
         elif len(args) > 1:
-            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.'
+            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock`` supports 0 or 1 arguments.'
             raise ValueError(msg)
 
         # Upon creation make sure all nested structures are wrapped

@@ -528,8 +528,8 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a
-    ```pyvista-plot::`` directive.  In the later case, the doctest parser will
-    present the code-block again with the ```pyvista-plot::`` directive
+    ``pyvista-plot::`` directive.  In the later case, the doctest parser will
+    present the code-block again with the ``pyvista-plot::`` directive
     and its options removed.
 
     Import a Python module from a path, and run the function given by
@@ -582,8 +582,8 @@ def render_figures(
     page for a reader to click through to. *state* is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
     """
-    # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
-    # The doctest parser will present the code-block once again with the ```pyvista-plot::``
+    # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
+    # The doctest parser will present the code-block once again with the ``pyvista-plot::``
     # directive and its options properly parsed.
     if _contains_pyvista_plot(code):
         is_doctest = True
