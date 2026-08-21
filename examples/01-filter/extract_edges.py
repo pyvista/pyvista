@@ -79,7 +79,7 @@ pl.add_mesh(mesh, color=True)
 pl.add_mesh(edges, color='red', line_width=5)
 pl.camera_position = pv.CameraPosition(
     position=(-0.2, -0.13, 0.12),
-    focal_point=(-0.015, 0.10, -0.0),
+    focal_point=(-0.015, 0.1, 0.0),
     viewup=(0.28, 0.26, 0.9),
 )
 pl.show()

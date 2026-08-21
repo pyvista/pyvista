@@ -28,8 +28,8 @@ pine_roots = examples.download_pine_roots()
 
 # Plot the raw data
 cpos = pv.CameraPosition(
-    position=(40.6018, -280.533, 47.0172),
-    focal_point=(40.6018, 37.2813, 50.1953),
+    position=(40.6, -280.5, 47.02),
+    focal_point=(40.6, 37.28, 50.2),
     viewup=(0.0, 0.0, 1.0),
 )
 pl = pv.Plotter()

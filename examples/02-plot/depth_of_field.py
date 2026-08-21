@@ -48,8 +48,8 @@ colors = colors.astype(np.uint8)
 
 # obtained camera position with `cpos = pl.show(return_cpos)`
 cpos = pv.CameraPosition(
-    position=(11.6159, -1.2803, 1.5338),
-    focal_point=(4.1354, 1.4796, 1.2711),
+    position=(11.62, -1.28, 1.534),
+    focal_point=(4.135, 1.48, 1.271),
     viewup=(-0.0352, -0.0004, 1.0),
 )
 

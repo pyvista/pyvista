@@ -103,9 +103,9 @@ pl.add_mesh(
     silhouette=dict(decimate=None, feature_angle=True, line_width=8, color='white'),
 )
 pl.camera_position = pv.CameraPosition(
-    position=(-0.2936731887752889, 0.2389060430625446, 0.35138839367034236),
-    focal_point=(-0.005878899246454239, 0.12495124898850918, -0.004603400826454163),
-    viewup=(0.34348225747312017, 0.8567703221182346, -0.38466160965007384),
+    position=(-0.2937, 0.2389, 0.3514),
+    focal_point=(-0.005879, 0.125, -0.004603),
+    viewup=(0.3435, 0.8568, -0.3847),
 )
 pl.show()
 # %%

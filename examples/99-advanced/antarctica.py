@@ -77,8 +77,8 @@ pl = pv.Plotter()
 pl.add_mesh(a.glyph(orient='ssavelocity', factor=20), **vel_dargs)
 pl.add_mesh(b.glyph(orient='ssavelocity', factor=20), **vel_dargs)
 pl.camera_position = pv.CameraPosition(
-    position=(-1114684.6969340036, 293863.65389149904, 752186.603224546),
-    focal_point=(-1114684.6969340036, 293863.65389149904, 0.0),
+    position=(-1115000.0, 293900.0, 752200.0),
+    focal_point=(-1115000.0, 293900.0, 0.0),
     viewup=(0.0, 1.0, 0.0),
 )
 pl.show()
@@ -100,8 +100,8 @@ pl.add_arrows(a.points, flow_a, mag=10000, color='b', label='flow_a')
 pl.add_arrows(b.points, flow_b, mag=10000, color='r', label='flow_b')
 pl.add_legend()
 pl.camera_position = pv.CameraPosition(
-    position=(-1044239.3240694795, 354805.0268606294, 484178.24825854995),
-    focal_point=(-1044239.3240694795, 354805.0268606294, 0.0),
+    position=(-1044000.0, 354800.0, 484200.0),
+    focal_point=(-1044000.0, 354800.0, 0.0),
     viewup=(0.0, 1.0, 0.0),
 )
 pl.show()

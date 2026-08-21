@@ -24,7 +24,7 @@ data = examples.download_gourds()
 
 # Define a good point of view
 cp = pv.CameraPosition(
-    position=(319.5, 239.5, 1053.7372980874645),
+    position=(319.5, 239.5, 1054.0),
     focal_point=(319.5, 239.5, 0.0),
     viewup=(0.0, 1.0, 0.0),
 )

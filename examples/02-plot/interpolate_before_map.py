@@ -58,7 +58,7 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
+    position=(-1.67, -5.1, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.37, 0.93)
 )
 pl.show()
 
@@ -89,7 +89,7 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
+    position=(-1.67, -5.1, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.37, 0.93)
 )
 pl.show()
 

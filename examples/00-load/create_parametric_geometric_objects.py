@@ -36,8 +36,8 @@ ellipsoid.plot(color='lightblue')
 
 # cool plotting direction
 cpos = pv.CameraPosition(
-    position=(21.9930, 21.1810, -30.3780),
-    focal_point=(-1.1640, -1.3098, -0.1061),
+    position=(21.99, 21.18, -30.38),
+    focal_point=(-1.164, -1.31, -0.1061),
     viewup=(0.8498, -0.2515, 0.4631),
 )
 

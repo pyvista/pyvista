@@ -33,9 +33,9 @@ pl.add_mesh(a + b + c, line_width=10, color='red', label='Geodesic Path')
 pl.add_mesh(land, show_edges=True)
 pl.add_legend()
 pl.camera_position = pv.CameraPosition(
-    position=(3.5839785524183934, 2.3915238111304924, 1.3993738227478327),
-    focal_point=(-0.06842917033182638, 0.15467201157962263, -0.07331693636555875),
-    viewup=(-0.34851770951584765, -0.04724188391065845, 0.9361108965066047),
+    position=(3.584, 2.392, 1.399),
+    focal_point=(-0.06843, 0.1547, -0.07332),
+    viewup=(-0.3485, -0.04724, 0.9361),
 )
 
 pl.show()

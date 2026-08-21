@@ -5947,7 +5947,7 @@ def test_show_bounds_no_labels(verify_image_cache):
     )
     pl.camera_position = pv.CameraPosition(
         position=(1.97, 1.89, 1.66),
-        focal_point=(0.05, -0.05, 0.00),
+        focal_point=(0.05, -0.05, 0.0),
         viewup=(-0.36, -0.36, 0.85),
     )
     pl.show()
@@ -5971,7 +5971,7 @@ def test_show_bounds_n_labels(verify_image_cache):
     )
     pl.camera_position = pv.CameraPosition(
         position=(1.97, 1.89, 1.66),
-        focal_point=(0.05, -0.05, 0.00),
+        focal_point=(0.05, -0.05, 0.0),
         viewup=(-0.36, -0.36, 0.85),
     )
     pl.show()
@@ -7100,7 +7100,7 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         show_edges=True,
         link=False,
         cpos=pv.CameraPosition(
-            position=(1.087430244328325, 1.087430244328325, 1.087430244328325),
+            position=(1.087, 1.087, 1.087),
             focal_point=(0.0, 0.0, 0.0),
             viewup=(0.0, 0.0, 1.0),
         ),

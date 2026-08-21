@@ -64,7 +64,7 @@ pl.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(43.6, 49.5, 19.8), focal_point=(0.0, 2.25, 0.0), viewup=(-0.57, 0.70, -0.42)
+    position=(43.6, 49.5, 19.8), focal_point=(0.0, 2.25, 0.0), viewup=(-0.57, 0.7, -0.42)
 )
 
 pl.show()
