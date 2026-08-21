@@ -80,7 +80,7 @@ The ``pyvista-plot`` directive supports the following options:
         directive is executed is controlled by the ``pyvista_plot_skip_optional``
         boolean variable in :file:`conf.py`.
 
-Additionally, this directive supports all the options of the `image`
+Additionally, this directive supports all the options of the ``image``
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 

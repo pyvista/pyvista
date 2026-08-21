@@ -161,11 +161,11 @@ def _fix_clipping_range_on_render(
     """Reset the clipping range to the given bounds before every future render.
 
     Linked renderers share one camera but not one clipping range: an interactor style
-    narrows the range before every render it drives, from `ComputeVisiblePropBounds`
+    narrows the range before every render it drives, from ``ComputeVisiblePropBounds``
     of whichever renderer the interaction is in, which is one subplot's worth of
     bounds where every subplot needs fitting. Undo that here, every time, from the
     same bounds the camera itself was fit to, rather than from an actor standing in
-    for them, which would leave `renderer.bounds` itself, and anything that relies on
+    for them, which would leave ``renderer.bounds`` itself, and anything that relies on
     it, reporting more than what is actually in each subplot.
     """
     # The render window holds this callback for as long as it lives, so hold nothing of

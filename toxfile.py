@@ -75,11 +75,11 @@ def tox_on_install(  # noqa: PLR0917
     of_type: str,
 ) -> None:
     """Before installing:
-    * save environment `deps` to a constraints file
-    * apply constraints file during `install_package_deps` step.
+    * save environment ``deps`` to a constraints file
+    * apply constraints file during ``install_package_deps`` step.
 
     This is needed since dependencies installed in subsequent steps (eg. `dependency-groups`) may
-    override the `deps` ones.
+    override the ``deps`` ones.
     See https://github.com/pyvista/pyvista/issues/8635.
 
     Mostly inspired by https://github.com/tox-dev/tox/issues/2386#issuecomment-1396105380
@@ -117,7 +117,7 @@ def _get_freezed_requirements(lines: list[str]) -> Generator[tuple[str, Version]
 
 @impl
 def tox_before_run_commands(tox_env: ToxEnv) -> None:
-    """Check that deps declared in the constraints_file (ie. during the `deps` step above)
+    """Check that deps declared in the constraints_file (ie. during the ``deps`` step above)
     are indeed installed in the environment before running the tests using a freeze command.
     """  # noqa: D205
     # Load requirements from the constraints file

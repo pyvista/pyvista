@@ -782,7 +782,7 @@ class Renderers(_NoNewAttrMixin):
         0/1 viewport boundary -- the render window's edge -- where VTK's
         2D rasterizer clips away roughly half of a line's width. They're
         drawn from a separate actor at double the requested width to
-        compensate, so the frame actually renders at `border_width`,
+        compensate, so the frame actually renders at ``border_width``,
         matching any interior seams drawn at the same nominal width.
         Two actors are only needed when both kinds of segment are
         present; either alone still uses one.

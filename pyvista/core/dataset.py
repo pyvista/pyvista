@@ -105,7 +105,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     """Active array info tuple for arrays that exist.
 
     This named tuple is similar to ActiveArrayInfoTuple except the
-    `name` attribute cannot be `None`.
+    ``name`` attribute cannot be ``None``.
     """
 
     association: FieldAssociation

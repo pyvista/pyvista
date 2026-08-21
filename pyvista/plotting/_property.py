@@ -122,9 +122,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
     Examples
     --------
@@ -463,9 +463,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
         Examples
         --------

@@ -130,7 +130,7 @@ _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
 
 
 class DisableVtkSnakeCase:
-    """Base class to raise error if using VTK's `snake_case` API."""
+    """Base class to raise error if using VTK's ``snake_case`` API."""
 
     @staticmethod
     def check_attribute(target, attr):

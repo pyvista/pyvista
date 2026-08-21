@@ -1610,8 +1610,9 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
         For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still
-        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the
-        output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
+        needs to compute ``Velocity``. If ``preserve_intermediate_functions`` is
+        ``False``, then the output will not have ``Velocity`` array, only the requested
+        ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
         """
@@ -2688,7 +2689,7 @@ class _GRDECLReader(BaseVTKReader):
         """Update information from file."""
 
     def Update(self) -> None:
-        """Read the GRDECL file and store internally to `_data_object`."""
+        """Read the GRDECL file and store internally to ``_data_object``."""
         self._data_object = _read_grdecl(
             self._filename,
             elevation=self._elevation,
@@ -2774,7 +2775,7 @@ class _GIFReader(BaseVTKReader):
         return self._current_frame / self._n_frames
 
     def Update(self) -> None:
-        """Read the GIF and store internally to `_data_object`."""
+        """Read the GIF and store internally to ``_data_object``."""
         from PIL import Image  # noqa: PLC0415
         from PIL import ImageSequence  # noqa: PLC0415
         from PIL import __version__ as pillow_version  # noqa: PLC0415
@@ -2845,7 +2846,7 @@ class _VRMLReader(BaseVTKReader):
     """Simulate a VTK reader for VRML files."""
 
     def Update(self) -> None:
-        """Read the VRML and store internally to `_data_object`."""
+        """Read the VRML and store internally to ``_data_object``."""
         self._data_object = _read_from_plotter(self._filename, 'vrml')
 
     def UpdateInformation(self):
@@ -2892,7 +2893,7 @@ class _ThreeDSReader(BaseVTKReader):
     """Simulate a VTK reader for 3DS files."""
 
     def Update(self) -> None:
-        """Read the 3DS and store internally to `_data_object`."""
+        """Read the 3DS and store internally to ``_data_object``."""
         self._data_object = _read_from_plotter(self._filename, '3ds')
 
     def UpdateInformation(self):

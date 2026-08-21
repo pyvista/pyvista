@@ -136,7 +136,7 @@ for ext, reader in CLASS_READERS.items():
 
 
 def _aligned_dedent(txt):
-    """Variant of `textwrap.dedent`.
+    """Variant of ``textwrap.dedent``.
 
     Helper method to dedent the provided text up to the special alignment character ``'|'``.
     """
@@ -1894,7 +1894,7 @@ def _max_width(lines: list[str]) -> int:
 
 
 def _repeat_string(string: str, num_repeat: int) -> str:
-    """Repeat `string` `num_repeat` times."""
+    """Repeat ``string`` ``num_repeat`` times."""
     return ''.join([string] * num_repeat)
 
 
@@ -2509,7 +2509,7 @@ class DatasetCard:
     def _generate_field_block(fields: list[tuple[str, str | None]], indent_level: int = 0):
         """Generate a grid for each field and combine them into an indented multi-line rst block.
 
-        Any fields with a `None` value are completely excluded from the block.
+        Any fields with a ``None`` value are completely excluded from the block.
         """
         field_grids = list(itertools.starmap(DatasetCard._generate_field_grid, fields))
         block = '\n'.join([grid for grid in field_grids if grid])
@@ -2773,7 +2773,7 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_celltype_field(loader: _DatasetLoader):
-        """Format cell type(s) as badges linking to their `pyvista.CellType` member."""
+        """Format cell type(s) as badges linking to their ``pyvista.CellType`` member."""
         cell_types = loader.unique_cell_types
         if not cell_types:
             return '``N/A (no cells)``'

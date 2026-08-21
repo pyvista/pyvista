@@ -32,7 +32,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     Notes
     -----
-    This function is used by the `sphinx.ext.linkcode` extension to create the "[Source]"
+    This function is used by the ``sphinx.ext.linkcode`` extension to create the "[Source]"
     button whose link is edited in this function.
 
     This has been adapted to deal with our "verbose" decorator.

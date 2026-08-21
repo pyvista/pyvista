@@ -2408,7 +2408,7 @@ def color_scheme_to_cycler(scheme):
     Raises
     ------
     ValueError
-        If the provided `scheme` is not a valid color scheme.
+        If the provided ``scheme`` is not a valid color scheme.
 
     """
     if not isinstance(scheme, _vtk.vtkColorSeries):
