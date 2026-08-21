@@ -1049,7 +1049,7 @@ _CLI_ONLY_PARAMS = {'skip_unreadable', 'paths', 'static'}
 
 @fixture
 def missing_plot_arguments():
-    """Argument names in the :func:`pyvista.plot` signature which are intentionally
+    """Argument names in the ``pyvista.plot`` signature which are intentionally
     removed from the ``pv.cli.plot._plot`` function.
     """
     return {
@@ -1065,7 +1065,7 @@ def missing_plot_arguments():
 
 @fixture
 def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
-    """Default arguments of :func:`pyvista.plot`."""
+    """Default arguments of ``pyvista.plot``."""
     params = inspect.signature(pv.plot).parameters
     return {
         p: v.default
@@ -1078,8 +1078,8 @@ def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
 
 def test_plot_cli_synced(missing_plot_arguments: set[str]):
     """
-    Since the ``pyvista plot`` CLI exposes a subset of the original :func:`pyvista.plot` arguments,
-    any changes made in the signature of :func:`pyvista.plot` must be synced (or not) in the
+    Since the ``pyvista plot`` CLI exposes a subset of the original ``pyvista.plot`` arguments,
+    any changes made in the signature of ``pyvista.plot`` must be synced (or not) in the
     ``pyvista plot`` CLI.
 
     This test will fail if any:
@@ -1160,7 +1160,7 @@ _CLI_ONLY_COMPARE_PARAMS = {'skip_unreadable', 'paths', 'static', 'outline'}
 
 @fixture
 def missing_compare_arguments():
-    """Argument names in the :func:`pyvista.plot_compare` signature which are intentionally removed
+    """Argument names in the ``pyvista.plot_compare`` signature which are intentionally removed
     from the ``pv.cli.compare._compare`` function."""
     return {
         'jupyter_backend',
@@ -1178,8 +1178,8 @@ def missing_compare_arguments():
 
 def test_compare_cli_synced(missing_compare_arguments: set[str]):
     """
-    Since the ``pyvista compare`` CLI exposes a subset of the original :func:`pyvista.plot_compare`
-    arguments, any changes made in the signature of :func:`pyvista.plot_compare` must be synced (or
+    Since the ``pyvista compare`` CLI exposes a subset of the original ``pyvista.plot_compare``
+    arguments, any changes made in the signature of ``pyvista.plot_compare`` must be synced (or
     not) in the ``pyvista compare`` CLI.
 
     This test will fail if any:
@@ -2099,7 +2099,7 @@ def test_compare_forwards_arguments(
     argument: str,
     expected: Any,
 ):
-    """Test that each argument of the command reaches :func:`pyvista.plot_compare` as
+    """Test that each argument of the command reaches ``pyvista.plot_compare`` as
     it is spelled there.
     """
     names = ' '.join(path.name for path in tmp_compare_files)
@@ -2240,7 +2240,7 @@ def test_compare_too_small_warning_advises_the_command(
 ):
     """Test that the advice for a barely visible mesh names the options of this command.
 
-    :func:`pyvista.plot_compare` suggests its own arguments, which are not the ones a command line
+    ``pyvista.plot_compare`` suggests its own arguments, which are not the ones a command line
     user has to hand: the outline is drawn by this command rather than given to it.
     """
     for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
@@ -2266,7 +2266,7 @@ def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
 ):
     """Test that the advice is printed before the window opens, not after it closes.
 
-    :func:`pyvista.plot_compare` raises every one of its warnings well before it shows the window,
+    ``pyvista.plot_compare`` raises every one of its warnings well before it shows the window,
     but the interactive window blocks until it is closed, and warnings only caught
     with ``warnings.catch_warnings(record=True)`` are not printed until whoever caught
     them chooses to. Printing them only after ``show`` returns would leave a command
