@@ -5,6 +5,7 @@ Plotting Bounds
 ~~~~~~~~~~~~~~~
 
 Show bounds within a :class:`~pyvista.Plotter` using :func:`~pyvista.Plotter.show_grid`.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

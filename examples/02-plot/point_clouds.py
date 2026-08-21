@@ -5,6 +5,7 @@ Plotting Point Clouds
 ~~~~~~~~~~~~~~~~~~~~~
 
 Plot point clouds using PyVista's ``'points'`` and ``'points_gaussian'`` styles.
+
 """
 
 import numpy as np

@@ -5,6 +5,7 @@ Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
 Create a spline/polyline from a numpy array of XYZ vertices using :func:`pyvista.Spline`.
+
 """
 
 import numpy as np

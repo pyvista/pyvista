@@ -5,6 +5,7 @@ Extract Edges
 ~~~~~~~~~~~~~
 
 Extract edges from a surface.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

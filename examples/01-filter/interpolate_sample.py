@@ -20,6 +20,7 @@ Here the two methods are compared and contrasted using a simple example of
 sampling data from a mesh in a rectangular domain. This example demonstrates the
 main differences above. For more complex uses, see :ref:`interpolate_example`
 and :ref:`resampling_example`.
+
 """
 
 # sphinx_gallery_thumbnail_number = 7

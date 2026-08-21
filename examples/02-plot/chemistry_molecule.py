@@ -5,6 +5,7 @@ Build a Ball-and-Stick Molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Assemble a simple molecule from :func:`~pyvista.Sphere` atoms and cylinder bonds.
+
 """
 
 import numpy as np

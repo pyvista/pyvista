@@ -5,6 +5,7 @@ Surface Smoothing
 ~~~~~~~~~~~~~~~~~
 
 Smoothing rough edges of a surface mesh.
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

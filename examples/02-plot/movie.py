@@ -12,6 +12,7 @@ This example uses :meth:`~pyvista.Plotter.open_movie` and
 .. Note::
     This movie will appear static since MP4 movies will not be
     rendered on a sphinx gallery example.
+
 """
 
 import numpy as np

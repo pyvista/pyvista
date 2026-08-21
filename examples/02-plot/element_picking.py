@@ -17,6 +17,7 @@ The different elements of a mesh are:
 * Point: pick a single point on the mesh
 
 These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum class.
+
 """
 
 # sphinx_gallery_thumbnail_number = 1

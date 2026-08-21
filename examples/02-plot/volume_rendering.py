@@ -9,6 +9,7 @@ Volume render uniform mesh types like :class:`pyvista.ImageData` or 3D NumPy arr
 This also explores how to extract a volume of interest (VOI) from a
 :class:`pyvista.ImageData` using the
 :func:`pyvista.ImageDataFilters.extract_subset` filter.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

@@ -5,6 +5,7 @@ Picking points on a mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pick points on a mesh using :func:`~pyvista.Plotter.enable_point_picking`.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

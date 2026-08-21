@@ -5,6 +5,7 @@ Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating parametric objects from :ref:`parametric_api`.
+
 """
 
 import math

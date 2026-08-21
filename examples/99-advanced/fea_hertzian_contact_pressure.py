@@ -17,6 +17,7 @@ Hertz, a German physicist who first described the phenomenon in the late
 1800s. Hertzian contact stress is an important concept in materials science,
 engineering, and other fields where the behavior of materials under stress is a
 critical consideration.
+
 """
 
 import matplotlib.pyplot as plt

@@ -11,6 +11,7 @@ This example uses :func:`pyvista.DataSetFilters.interpolate`.
 
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

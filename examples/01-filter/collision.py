@@ -24,7 +24,6 @@ sphere.
    repeated collisions.  See the `Collision Detection Example
    <https://examples.vtk.org/site/Python/Visualization/CollisionDetection/>`_
 
-
 """
 
 import numpy as np

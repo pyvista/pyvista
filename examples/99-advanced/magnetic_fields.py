@@ -14,6 +14,7 @@ This dataset was created from the `Coil Field Lines
 <https://magpylib.readthedocs.io/en/stable/_pages/user_guide/examples/examples_app_coils.html>`_
 example from the awesome `magpylib <https://github.com/magpylib/magpylib>`_
 library.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

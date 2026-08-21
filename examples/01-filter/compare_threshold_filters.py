@@ -10,6 +10,7 @@ The goal of this example is to compare some of these filters to show how each ca
 
 We will be differentiating them based on the input type they take, as well as the output
 type they produce.
+
 """
 
 import numpy as np

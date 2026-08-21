@@ -5,6 +5,7 @@ Extract Surface
 ---------------
 
 Extract nearly any object surface with :meth:`~pyvista.DataObjectFilters.extract_surface`.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

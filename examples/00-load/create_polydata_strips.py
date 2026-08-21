@@ -8,6 +8,7 @@ This example shows how to build a simple :class:`pyvista.PolyData` using triangl
 
 Triangle strips are a more efficient way of storing the connectivity of
 adjacent triangles.
+
 """
 
 # sphinx_gallery_start_ignore

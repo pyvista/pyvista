@@ -5,6 +5,7 @@ Color Several Lines
 ~~~~~~~~~~~~~~~~~~~
 
 Render several :func:`~pyvista.MultipleLines` polylines colored by a scalar value.
+
 """
 
 import numpy as np

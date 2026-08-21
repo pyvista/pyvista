@@ -20,6 +20,7 @@ classes are nearly always used for particular types of DataSets.
     This is for advanced usage only.  Automatic managing of types
     will not work in all situations, in particular when a builtin dataset is directly
     instantiated.  See examples below.
+
 """
 
 import numpy as np

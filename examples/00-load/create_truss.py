@@ -7,6 +7,7 @@ Plot Truss-like FEA Solution with Cylinders
 Plot connections between points in 3D as cylinders, colored by scalars.
 
 Lines are created in a :class:`pyvista.PolyData` and then rendered as cylinders.
+
 """
 
 # sphinx_gallery_start_ignore

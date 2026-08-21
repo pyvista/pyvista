@@ -11,6 +11,7 @@ scene.
 
 Inspired by `VTK Animation Examples
 <https://examples.vtk.org/site/Python/Utilities/Animation/>`_.
+
 """
 
 import pyvista as pv

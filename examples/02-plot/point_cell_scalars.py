@@ -5,6 +5,7 @@ Point Cell Scalars
 ~~~~~~~~~~~~~~~~~~
 
 This example demonstrates how to add point scalars for each individual cell to a dataset.
+
 """
 
 import numpy as np

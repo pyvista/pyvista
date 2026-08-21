@@ -5,6 +5,7 @@ Measuring distance
 ~~~~~~~~~~~~~~~~~~
 
 Measure distance between two points using :func:`~pyvista.Plotter.add_measurement_widget`.
+
 """
 
 import pyvista as pv

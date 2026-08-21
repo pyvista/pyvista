@@ -5,6 +5,7 @@ Repair a Surface with fill_holes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Seal small openings in a surface with :func:`pyvista.PolyDataFilters.fill_holes`.
+
 """
 
 import numpy as np

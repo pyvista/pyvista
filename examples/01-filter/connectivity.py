@@ -5,6 +5,7 @@ Connectivity
 ~~~~~~~~~~~~
 
 Highlight some applications of the :func:`~pyvista.DataSetFilters.connectivity` filter.
+
 """
 
 # %%

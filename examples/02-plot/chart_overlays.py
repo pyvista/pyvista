@@ -12,6 +12,7 @@ click on top of it. Note that this will disable interaction with the 3D scene. T
 interacting with the chart, perform another double left click. This will either enable
 interaction with another chart (if clicked on top of it) or re-enable interaction with the
 3D scene.
+
 """
 
 import matplotlib.pyplot as plt

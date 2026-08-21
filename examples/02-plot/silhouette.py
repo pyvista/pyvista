@@ -8,6 +8,7 @@ Extract an outline (silhouette) of a polygonal mesh's edges.
 
 The silhouette may be created using the `silhouette` keyword with
 :meth:`~pyvista.Plotter.add_mesh`, or by using `~pyvista.Plotter.add_silhouette` directly.
+
 """
 
 import pyvista as pv

@@ -10,6 +10,7 @@ This example uses :func:`pyvista.DataObjectFilters.sample`.
 :ref:`interpolate_sample_example`.
 
 Resample one mesh's point/cell arrays onto another mesh's nodes.
+
 """
 
 # %%

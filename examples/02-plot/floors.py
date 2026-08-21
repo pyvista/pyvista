@@ -5,6 +5,7 @@ Plot with Floors
 ~~~~~~~~~~~~~~~~
 
 Add a floor/wall at the scene boundary using :func:`~pyvista.Plotter.add_floor`.
+
 """
 
 import pyvista as pv

@@ -12,6 +12,7 @@ a custom shape via a GLSL fragment shader.
 The ``point_shape`` parameter can be passed directly to
 :func:`pyvista.Plotter.add_mesh` or set globally via
 :attr:`pyvista.global_theme.point_shape <pyvista.plotting.themes.Theme.point_shape>`.
+
 """
 
 # sphinx_gallery_start_ignore
