@@ -1174,6 +1174,12 @@ def test_linkcode_resolve():
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
     assert 'dataset.py' in link
 
+    # test metaclass property (e.g. CellType.dimension_map, defined on the metaclass)
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.CellType.dimension_map'}
+    )
+    assert 'celltype.py' in link
+
     # test wrapped function
     link = linkcode_resolve(
         'py',

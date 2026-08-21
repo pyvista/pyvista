@@ -6,6 +6,7 @@ import inspect
 import os
 import os.path as op
 import sys
+from typing import Any
 
 
 def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001, FBT002
@@ -56,8 +57,14 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     if submod is None:
         return None
 
-    obj = submod
+    obj: Any = submod
     for part in fullname.split('.'):
+        # A metaclass property (e.g. CellType.dimension_map) is invoked by a plain
+        # getattr, losing the property itself -- grab it off the metaclass instead.
+        metaclass_prop = getattr(type(obj), part, None) if inspect.isclass(obj) else None
+        if isinstance(metaclass_prop, property):
+            obj = metaclass_prop
+            continue
         try:
             obj = getattr(obj, part)
         except Exception:  # noqa: BLE001
