@@ -1,4 +1,4 @@
-"""```pyvista report``` CLI."""
+"""``pyvista validate`` CLI."""
 
 from __future__ import annotations
 
