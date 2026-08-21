@@ -440,8 +440,9 @@ PyVista follows the `Google Developer Documentation Style
   "PyVista Developers", which can be anyone who contributes to PyVista.
 - Future tense is permitted.
 
-These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
-and partially enforced for Python source files.
+These rules are enforced for text files (for example, ``*.md``, ``*.rst``) under
+``doc/``, ``pyvista/``, and ``examples/``, and partially enforced for Python
+source files.
 
 These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
 GitHub Actions, and you can run Vale locally with:
@@ -457,6 +458,12 @@ invocation (kept in sync with CI, see ``.github/workflows/style-docstring.yml``)
 .. code-block:: bash
 
    make docstyle
+
+.. note::
+
+   Root-level files, including this one, aren't covered by the Vale CI job.
+   To check this file locally, add its path to the command above, e.g.
+   ``vale --config doc/.vale.ini CONTRIBUTING.rst``.
 
 
 Docstrings
@@ -1863,8 +1870,8 @@ created the following will occur:
 
 #.  Locally test and build the documentation. Be sure to run ``make -C doc clean``
     to ensure no results are cached. Run these commands from the repository
-    root, since ``tox`` (and the ``make`` targets that wrap it) must be
-    invoked from where ``tox.ini`` lives, not from ``doc/``.
+    root, using the ``make`` targets from `Quick Development Commands`_ so
+    they match CI:
 
     .. code-block:: bash
 
