@@ -3186,11 +3186,6 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     grid : bool, default: True
         Show the background grid in the plot.
 
-    See Also
-    --------
-    :ref:`chart_basics_example`
-    :ref:`chart_overlays_example`
-
     Examples
     --------
     Plot a simple sine wave as a scatter and line plot.
@@ -4624,10 +4619,6 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         Flag indicating whether the chart should be redrawn when
         the plotter is rendered. For static charts, setting this
         to ``False`` can improve performance.
-
-    See Also
-    --------
-    :ref:`chart_overlays_example`
 
     Examples
     --------

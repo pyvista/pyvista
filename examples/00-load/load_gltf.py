@@ -3,7 +3,10 @@
 
 Working with glTF Files
 ~~~~~~~~~~~~~~~~~~~~~~~
-Import a glTF file directly into a PyVista plotting scene.  For more
+
+Import a glTF file directly into a PyVista plotting scene.
+
+For more
 details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 

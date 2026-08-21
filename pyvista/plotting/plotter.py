@@ -1958,16 +1958,16 @@ class BasePlotter(_BoundsSizeMixin):
         Show the camera position. This implicitly calls ``repr(cpos)``.
 
         >>> cpos
-        CameraPosition(position=(0.02430, 0.0336, 0.9446),
-                       focal_point=(0.02430, 0.0336, -0.02225),
+        CameraPosition(position=(0.0243, 0.0336, 0.9446),
+                       focal_point=(0.0243, 0.0336, -0.02225),
                        viewup=(0.0, 1.0, 0.0))
 
         Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the repr and
         prepending the pyvista module, i.e. ``pv.``.
 
         >>> new_cpos = pv.CameraPosition(
-        ...     position=(0.02430, 0.0336, 0.9446),
-        ...     focal_point=(0.02430, 0.0336, -0.02225),
+        ...     position=(0.0243, 0.0336, 0.9446),
+        ...     focal_point=(0.0243, 0.0336, -0.02225),
         ...     viewup=(0.0, 1.0, 0.0),
         ... )
 
@@ -1985,7 +1985,7 @@ class BasePlotter(_BoundsSizeMixin):
         Reposition it via a list of tuples.
 
         >>> pl.camera_position = [
-        ...     (0.3914, 0.4542, 0.7670),
+        ...     (0.3914, 0.4542, 0.767),
         ...     (0.0243, 0.0336, -0.0222),
         ...     (-0.2148, 0.8998, -0.3796),
         ... ]
@@ -8467,7 +8467,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.show(return_cpos=True)  # doctest:+SKIP
-        CameraPosition(position=(1.9264, 1.9264, 1.9264),
+        CameraPosition(position=(1.926, 1.926, 1.926),
                        focal_point=(0.0, 0.0, 0.0),
                        viewup=(0.0, 0.0, 1.0))
 

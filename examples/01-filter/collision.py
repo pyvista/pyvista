@@ -3,9 +3,10 @@
 
 Collision
 ~~~~~~~~~
+
 Perform a collision detection between two meshes.
 
-This example use the :meth:`~pyvista.PolyDataFilters.collision`
+This example uses the :meth:`~pyvista.PolyDataFilters.collision`
 filter to detect the faces from one sphere colliding with another
 sphere.
 
@@ -22,7 +23,6 @@ sphere.
    combination of ``pyvista`` and ``vtk`` for rapidly computing
    repeated collisions.  See the `Collision Detection Example
    <https://examples.vtk.org/site/Python/Visualization/CollisionDetection/>`_
-
 
 """
 

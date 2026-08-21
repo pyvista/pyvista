@@ -4,8 +4,7 @@
 Triangle Strips
 ~~~~~~~~~~~~~~~
 
-This example shows how to build a simple :class:`pyvista.PolyData` using
-triangle strips.
+This example shows how to build a simple :class:`pyvista.PolyData` using triangle strips.
 
 Triangle strips are a more efficient way of storing the connectivity of
 adjacent triangles.

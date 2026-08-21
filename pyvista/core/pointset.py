@@ -2797,12 +2797,13 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Examples
         --------
         >>> import numpy as np
-        >>> from pyvista import CellType
         >>> import pyvista as pv
         >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
         >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
         >>> cells = np.hstack((cell0_ids, cell1_ids))
-        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
+        >>> cell_type = np.array(
+        ...     [pv.CellType.HEXAHEDRON, pv.CellType.HEXAHEDRON], np.int8
+        ... )
 
         >>> cell1 = np.array(
         ...     [
@@ -3853,10 +3854,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
 
-    See Also
-    --------
-    :ref:`create_structured_surface_example`
-
     Examples
     --------
     >>> import pyvista as pv
@@ -4271,10 +4268,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         combination of fields allowed by ``validate_mesh``.
 
         .. versionadded:: 0.47
-
-    See Also
-    --------
-    :ref:`create_explicit_structured_grid_example`
 
     Examples
     --------
