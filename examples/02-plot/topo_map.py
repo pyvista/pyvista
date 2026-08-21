@@ -70,8 +70,8 @@ pl.add_mesh(local, texture=topo_map)
 pl.add_mesh(surrounding, color='white')
 pl.enable_eye_dome_lighting()
 pl.camera_position = pv.CameraPosition(
-    position=(1831000.0, 5642000.0, 8168.0),
-    focal_point=(1821000.0, 5649000.0, 1104.0),
+    position=(1831100.0, 5642142.0, 8168.0),
+    focal_point=(1820841.0, 5648745.0, 1104.0),
     viewup=(-0.435, 0.248, 0.865),
 )
 pl.show()
