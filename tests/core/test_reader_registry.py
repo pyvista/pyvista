@@ -798,3 +798,22 @@ def test_registered_class_reports_its_extensions():
     pv.register_reader('.myclassfmt', _MockReader)
     assert _MockReader.extensions == ('.myclassfmt',)
     assert pv.XMLPolyDataReader.extensions == ('.vtp',)
+
+
+def test_entry_point_shadowing_builtin_warns(tmp_path, monkeypatch):
+    """An entry point may take over a built-in extension, but not quietly.
+
+    ``register_reader`` raises on this without ``override=True``; an entry
+    point cannot pass one, so the shadowing is announced instead.
+    """
+    ep, module = _fake_entry_point('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)
+    monkeypatch.setitem(sys.modules, 'shadow_plugin', module)
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    with pytest.warns(UserWarning, match='overrides the built-in reader'):
+        reader = pv.get_reader(mesh_file)
+    assert isinstance(reader, _MockReader)

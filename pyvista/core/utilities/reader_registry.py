@@ -520,6 +520,16 @@ def _resolve_pending_reader(ext: str) -> bool:
             f'Failed to load pyvista.readers entry point "{winner.value}" for "{ext}": {err}'
         )
         return False
+    if ext in CLASS_READERS:
+        # ``register_reader`` refuses this outright without ``override=True``,
+        # but an entry point has no way to pass one, and shadowing a shipped
+        # reader silently is worse than either answer. Say which plugin took
+        # the extension over so ``pv.read('x.vtp')`` returning something
+        # unexpected is traceable to its cause.
+        warn_external(
+            f'The pyvista.readers entry point "{winner.value}" overrides the built-in '
+            f'reader for "{ext}". Reads of "{ext}" files now go through that plugin.'
+        )
     if _is_reader_class(handler):
         _custom_class_readers[ext] = handler
     else:
