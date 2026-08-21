@@ -4252,6 +4252,24 @@ def test_pack_labels(labeled_image):
     assert 'packed_labels' in packed.array_names
 
 
+def test_pack_labels_numpy_fallback(labeled_image):
+    # Force the numpy fallback path (used when vtkPackLabels is unavailable)
+    # to exercise it regardless of the VTK version under test.
+    with patch.object(_vtk, 'has_attr', return_value=False):
+        packed = labeled_image.pack_labels()
+    assert np.array_equal(packed['packed_labels'], [0, 2, 2, 2, 2, 0, 1, 1])
+
+
+def test_pack_labels_numpy_fallback_contiguous_labels(labeled_image):
+    # Regression test: labels already contiguous from 0 (i.e. max(labels) ==
+    # n_unique - 1) previously caused the last label to be dropped and mapped
+    # to 0 instead of its own value.
+    labeled_image['labels'] = [0, 1, 1, 1, 1, 0, 2, 2]
+    with patch.object(_vtk, 'has_attr', return_value=False):
+        packed = labeled_image.pack_labels()
+    assert np.array_equal(packed['packed_labels'], [0, 1, 1, 1, 1, 0, 2, 2])
+
+
 def test_pack_labels_inplace(uniform):
     assert uniform.pack_labels() is not uniform  # default False
     assert uniform.pack_labels(inplace=False) is not uniform

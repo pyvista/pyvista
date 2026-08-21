@@ -7209,12 +7209,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
-            label_range_in = np.arange(0, np.max(label_numbers_in))
-            label_numbers_out = label_range_in[: len(label_numbers_in)]
+            label_numbers_out = np.arange(len(label_numbers_in))
 
             # Pack/sort array
             packed_array = np.zeros_like(arr)
-            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=False):
+            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=True):
                 packed_array[arr == num_in] = num_out
 
             result = self if inplace else self.copy(deep=True)
