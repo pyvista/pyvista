@@ -177,16 +177,17 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
 
 .. code-block:: bash
 
-    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
-    make lint           # run pre-commit on all files
-    make docstyle       # run Vale on doc/pyvista/examples (matches CI)
-    make typecheck      # run mypy via tox (matches CI)
-    make test           # run the full test suite via tox (matches CI flags)
-    make test-core      # run the core test suite via tox (matches CI)
-    make test-plotting  # run the plotting test suite via tox (matches CI)
-    make doctest        # run all docstring tests via tox (matches CI)
-    make docs           # build the full documentation via tox (matches CI)
-    make docs-test      # test the built documentation via tox (matches CI)
+    make sync-deps         # install dev dependencies via uv (includes tox + tox-uv)
+    make lint              # run pre-commit on all files
+    make docstyle          # run Vale on doc/pyvista/examples (matches CI)
+    make typecheck         # run mypy via tox (matches CI)
+    make test              # run the full test suite via tox (matches CI flags)
+    make test-core         # run the core test suite via tox (matches CI)
+    make test-plotting     # run the plotting test suite via tox (matches CI)
+    make doctest           # run all docstring tests via tox (matches CI)
+    make docs              # build the full documentation via tox (matches CI)
+    make docs-test-build   # sanity-check the built documentation via tox (matches CI)
+    make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
     make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
@@ -1486,14 +1487,14 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
         .. code-block:: bash
 
-            tox run -e docs-test
+            tox run -e docs-test-images
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make docs-test
+            make docs-test-images
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
@@ -1593,14 +1594,14 @@ To test that interactive plots do not exceed this limit, run:
 
         .. code-block:: bash
 
-            tox run -e docs-test
+            tox run -e docs-test-images
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make docs-test
+            make docs-test-images
 
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
