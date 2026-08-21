@@ -3173,7 +3173,7 @@ def test_convex_hull_dimensionality_1():
         assert hull.n_points == 2
         assert hull.n_cells == 1
     else:
-        with pytest.raises(VTKVersionError, match='dimensionality=1'):
+        with pytest.raises(pv.VTKVersionError, match='dimensionality=1'):
             sphere.convex_hull(dimensionality=1)
 
 
@@ -3192,7 +3192,6 @@ def test_convex_hull_auto_dimensionality():
 
 
 def test_convex_hull_scipy_3d():
-    pytest.importorskip('scipy')
     points = pv.Sphere().points
     hull = _convex_hull_scipy(points, dimensionality=3)
     assert hull.n_points > 0
@@ -3200,21 +3199,18 @@ def test_convex_hull_scipy_3d():
 
 
 def test_convex_hull_scipy_2d():
-    pytest.importorskip('scipy')
     points = pv.Circle(radius=0.5).points
     hull = _convex_hull_scipy(points, dimensionality=2)
     assert hull.n_cells == 1
 
 
 def test_convex_hull_scipy_dimensionality_1_raises():
-    pytest.importorskip('scipy')
     points = pv.Sphere().points
-    with pytest.raises(VTKVersionError, match='dimensionality=1'):
+    with pytest.raises(pv.VTKVersionError, match='dimensionality=1'):
         _convex_hull_scipy(points, dimensionality=1)
 
 
 def test_convex_hull_scipy_degenerate_raises():
-    pytest.importorskip('scipy')
     points = pv.Circle(radius=0.5).points  # planar, degenerate for a 3D hull
     with pytest.raises(ValueError, match='degenerate'):
         _convex_hull_scipy(points, dimensionality=3)
