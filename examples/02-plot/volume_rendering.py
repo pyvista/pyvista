@@ -33,8 +33,8 @@ vol
 
 # A nice camera position
 cpos = pv.CameraPosition(
-    position=(-381.74, -46.02, 216.54),
-    focal_point=(74.8305, 89.2905, 100.0),
+    position=(-381.7, -46.02, 216.5),
+    focal_point=(74.83, 89.29, 100.0),
     viewup=(0.23, 0.072, 0.97),
 )
 
@@ -134,7 +134,7 @@ pl = pv.Plotter()
 pl.add_volume(frog, cmap='viridis', opacity='sigmoid_6', show_scalar_bar=False)
 pl.camera_position = pv.CameraPosition(
     position=(929.0, 1067.0, -278.9),
-    focal_point=(249.5, 234.5, 101.25),
+    focal_point=(249.5, 234.5, 101.2),
     viewup=(-0.2048, -0.2632, -0.9427),
 )
 pl.camera.zoom(1.5)
@@ -190,9 +190,9 @@ pl.show()
 pl = pv.Plotter()
 pl.add_volume(voi, cmap='magma', clim=clim, opacity=opacity, opacity_unit_distance=2000)
 pl.camera_position = pv.CameraPosition(
-    position=(531554.5542909054, 3944331.800171338, 26563.04809259223),
-    focal_point=(599088.1433822059, 3982089.287834022, -11965.14728669936),
-    viewup=(0.3738545892415734, 0.244312810377319, 0.8947312427698892),
+    position=(531600.0, 3944000.0, 26560.0),
+    focal_point=(599100.0, 3982000.0, -11970.0),
+    viewup=(0.3739, 0.2443, 0.8947),
 )
 pl.show()
 

@@ -55,9 +55,9 @@ result = mesh.sample(data_to_probe)
 # %%
 threshold = lambda m: m.threshold(75.0, scalars='SLCImage')
 cpos = pv.CameraPosition(
-    position=(468.9075585873713, -152.8280322856109, 152.13046602188035),
-    focal_point=(121.65121514580106, 140.29327609542105, 112.28137570357188),
-    viewup=(-0.10881224951051659, 0.006229357618166009, 0.9940428006178236),
+    position=(468.9, -152.8, 152.1),
+    focal_point=(121.7, 140.3, 112.3),
+    viewup=(-0.1088, 0.006229, 0.994),
 )
 dargs = dict(clim=[0, 200], cmap='rainbow')
 

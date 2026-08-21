@@ -43,9 +43,9 @@ pl = pv.Plotter()
 pl.add_mesh(mesh.outline(), color='k')
 pl.add_mesh(contours, opacity=0.25, clim=[0, 200])
 pl.camera_position = pv.CameraPosition(
-    position=(-130.99381142132086, 644.4868354828589, 163.80447435848686),
-    focal_point=(125.21748748157661, 123.94368717158413, 108.83283586619626),
-    viewup=(0.2780372840777734, 0.03547871361794171, 0.9599148553609699),
+    position=(-131.0, 644.5, 163.8),
+    focal_point=(125.2, 123.9, 108.8),
+    viewup=(0.278, 0.03548, 0.9599),
 )
 pl.show()
 

@@ -178,7 +178,7 @@ stream, src = mesh.streamlines(
 )
 # %%
 cpos = pv.CameraPosition(
-    position=(1.2, 1.2, 1.2), focal_point=(-0.0, -0.0, -0.0), viewup=(0.0, 0.0, 1.0)
+    position=(1.2, 1.2, 1.2), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.0, 1.0)
 )
 stream.tube(radius=0.0015).plot(cpos=cpos)
 # %%

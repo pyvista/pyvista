@@ -51,9 +51,9 @@ dataset
 # bracket.
 
 cpos = pv.CameraPosition(
-    position=(0.744, -0.502, -0.830),
-    focal_point=(0.0520, -0.160, 0.0743),
-    viewup=(-0.180, -0.958, 0.224),
+    position=(0.744, -0.502, -0.83),
+    focal_point=(0.052, -0.16, 0.0743),
+    viewup=(-0.18, -0.958, 0.224),
 )
 
 dataset.plot(

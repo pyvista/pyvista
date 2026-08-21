@@ -5,9 +5,9 @@ plot_logo(screenshot='pyvista_logo.png', window_size=(1920, 1080))
 plot_logo(screenshot='pyvista_logo_sm.png', window_size=(960, 400), off_screen=True)
 
 # different camera angle for square plot
-cpos = [(-0.3654543687422538, 1.1098808905156292, 9.073223697728247),
-        (2.553950615449191, 0.34145688392081264, 0.06127122762851659),
-        (0.019308531920309947, 0.996708840795678, -0.07873161547192065)]
+cpos = [(-0.3655, 1.11, 9.073),
+        (2.554, 0.3415, 0.06127),
+        (0.01931, 0.9967, -0.07873)]
 
 plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos,
           off_screen=True)

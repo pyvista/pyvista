@@ -1255,8 +1255,8 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
     >>> import pyvista as pv
     >>> dataset = examples.download_knee_full()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-381.74, -46.02, 216.54),
-    ...     focal_point=(74.8305, 89.2905, 100.0),
+    ...     position=(-381.7, -46.02, 216.5),
+    ...     focal_point=(74.83, 89.29, 100.0),
     ...     viewup=(0.23, 0.072, 0.97),
     ... )
     >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
@@ -2531,9 +2531,9 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(8.4287e02, -5.7418e02, -4.4085e02),
-    ...     focal_point=(2.4950e02, 2.3450e02, 1.0125e02),
-    ...     viewup=(-3.2000e-01, 3.5000e-01, -8.8000e-01),
+    ...     position=(842.9, -574.2, -440.8),
+    ...     focal_point=(249.5, 234.5, 101.2),
+    ...     viewup=(-0.32, 0.35, -0.88),
     ... )
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
@@ -3654,8 +3654,8 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(220.96, -24.38, -69.96),
-    ...     focal_point=(135.86, 106.55, 17.72),
+    ...     position=(221.0, -24.38, -69.96),
+    ...     focal_point=(135.9, 106.6, 17.72),
     ...     viewup=(-0.25, 0.42, -0.87),
     ... )
     >>> dataset = examples.download_carotid()
@@ -3754,9 +3754,9 @@ def download_shark(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(-2.3195e02, -3.3930e01, 1.2981e02),
-    ...     focal_point=(-8.7100e00, 1.9000e-01, -1.1740e01),
-    ...     viewup=(-1.4000e-01, 9.9000e-01, 2.0000e-02),
+    ...     position=(-232.0, -33.93, 129.8),
+    ...     focal_point=(-8.71, 0.19, -11.74),
+    ...     viewup=(-0.14, 0.99, 0.02),
     ... )
     >>> dataset = examples.download_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
@@ -3882,8 +3882,8 @@ def download_grey_nurse_shark(load: bool = True) -> PolyData | str:  # noqa: FBT
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
     ...     position=(-200, -100, -16.0),
-    ...     focal_point=(-20.0, 20.0, -2.00),
-    ...     viewup=(0.00, 0.00, 1.00),
+    ...     focal_point=(-20.0, 20.0, -2.0),
+    ...     viewup=(0.0, 0.0, 1.0),
     ... )
     >>> dataset = examples.download_grey_nurse_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
@@ -4476,7 +4476,7 @@ def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001
     >>> cpos = pv.CameraPosition(
     ...     position=(66.0, 73.0, -382.6),
     ...     focal_point=(66.0, 73.0, 0.0),
-    ...     viewup=(-0.0, -1.0, 0.0),
+    ...     viewup=(0.0, -1.0, 0.0),
     ... )
     >>> texture = examples.download_crater_imagery()
     >>> texture.plot(cpos=cpos)
@@ -4574,9 +4574,9 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
     Plot it.
 
     >>> cpos = pv.CameraPosition(
-    ...     position=(4.66316700e04, 4.32796241e06, -3.82467050e05),
-    ...     focal_point=(5.52532740e05, 3.98017300e06, -2.47450000e04),
-    ...     viewup=(4.10000000e-01, -2.90000000e-01, -8.60000000e-01),
+    ...     position=(46630.0, 4328000.0, -382500.0),
+    ...     focal_point=(552500.0, 3980000.0, -24740.0),
+    ...     viewup=(0.41, -0.29, -0.86),
     ... )
     >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
@@ -5294,7 +5294,7 @@ def download_woman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
     >>> import pyvista as pv
     >>> dataset = examples.download_woman()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-2600.0, 1970.6, 1836.9),
+    ...     position=(-2600.0, 1971.0, 1837.0),
     ...     focal_point=(48.5, -20.3, 843.9),
     ...     viewup=(0.23, -0.168, 0.958),
     ... )
@@ -5418,9 +5418,9 @@ def download_urn(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(-7.123e02, 5.715e02, 8.601e02),
-    ...     focal_point=(4.700e00, 2.705e02, -1.010e01),
-    ...     viewup=(2.000e-01, 1.000e00, -2.000e-01),
+    ...     position=(-712.3, 571.5, 860.1),
+    ...     focal_point=(4.7, 270.5, -10.1),
+    ...     viewup=(0.2, 1.0, -0.2),
     ... )
     >>> dataset = examples.download_urn()
     >>> dataset.plot(cpos=cpos)
@@ -6276,9 +6276,9 @@ def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa:
     Plot the displacement of the 4th mode shape as scalars.
 
     >>> cpos = pv.CameraPosition(
-    ...     position=(0.744, -0.502, -0.830),
-    ...     focal_point=(0.0520, -0.160, 0.0743),
-    ...     viewup=(-0.180, -0.958, 0.224),
+    ...     position=(0.744, -0.502, -0.83),
+    ...     focal_point=(0.052, -0.16, 0.0743),
+    ...     viewup=(-0.18, -0.958, 0.224),
     ... )
     >>> dataset.plot(
     ...     scalars='disp_3',
@@ -7539,8 +7539,8 @@ def download_ivan_angel(load: bool = True, *, high_resolution: bool = False) -> 
     >>> import pyvista as pv
     >>> mesh = examples.download_ivan_angel()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-476.14, -393.73, 282.14),
-    ...     focal_point=(-15.00, 11.25, 44.08),
+    ...     position=(-476.1, -393.7, 282.1),
+    ...     focal_point=(-15.0, 11.25, 44.08),
     ...     viewup=(0.26, 0.24, 0.93),
     ... )
     >>> mesh.plot(cpos=cpos)
@@ -7705,8 +7705,8 @@ def download_owl(load: bool = True, *, high_resolution: bool = False) -> PolyDat
     >>> import pyvista as pv
     >>> mesh = examples.download_owl()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-315.18, -402.21, 230.71),
-    ...     focal_point=(6.06, -1.74, 101.48),
+    ...     position=(-315.2, -402.2, 230.7),
+    ...     focal_point=(6.06, -1.74, 101.5),
     ...     viewup=(0.108, 0.226, 0.968),
     ... )
     >>> mesh.plot(cpos=cpos)
@@ -9601,7 +9601,7 @@ def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
     >>> pl.camera_position = pv.CameraPosition(
     ...     position=(25.0, 32.0, 44.0),
     ...     focal_point=(0.0, 0.931, -6.68),
-    ...     viewup=(-0.20, 0.90, -0.44),
+    ...     viewup=(-0.2, 0.9, -0.44),
     ... )
     >>> pl.show()
 

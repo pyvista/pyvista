@@ -22,9 +22,9 @@ from pyvista import examples
 mesh = examples.download_bunny_coarse().triangulate().clean()
 
 cpos = pv.CameraPosition(
-    position=(-0.02788175062966399, 0.19293295656233056, 0.4334449972621349),
-    focal_point=(-0.053260899930287015, 0.08881197167521734, -9.016948161029588e-05),
-    viewup=(-0.10170607813337212, 0.9686438023715356, -0.22668272496584665),
+    position=(-0.02788, 0.1929, 0.4334),
+    focal_point=(-0.05326, 0.08881, -9.017e-05),
+    viewup=(-0.1017, 0.9686, -0.2267),
 )
 
 # %%

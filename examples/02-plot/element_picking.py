@@ -35,9 +35,9 @@ pl.add_mesh(mesh, show_edges=True, pickable=True)
 pl.enable_element_picking(mode=ElementType.FACE)
 
 pl.camera_position = pv.CameraPosition(
-    position=(13.523728057554308, 9.910583926360937, 11.827103195167833),
-    focal_point=(2.229008884793069, -2.782397236304676, 6.84282248642347),
-    viewup=(-0.17641568583704878, -0.21978122178947299, 0.9594653304520027),
+    position=(13.52, 9.911, 11.83),
+    focal_point=(2.229, -2.782, 6.843),
+    viewup=(-0.1764, -0.2198, 0.9595),
 )
 
 pl.show(auto_close=False)
@@ -62,9 +62,9 @@ pl.add_mesh(sphere, show_edges=True, pickable=True)
 pl.enable_element_picking(mode=ElementType.EDGE)
 
 pl.camera_position = pv.CameraPosition(
-    position=(0.7896646029990011, 0.7520805261169909, 0.5148524767495051),
-    focal_point=(-0.014748048334009667, -0.0257133671899262, 0.07194025085895145),
-    viewup=(-0.26016740957025775, -0.2603941863919363, 0.9297891087180916),
+    position=(0.7897, 0.7521, 0.5149),
+    focal_point=(-0.01475, -0.02571, 0.07194),
+    viewup=(-0.2602, -0.2604, 0.9298),
 )
 
 pl.show(auto_close=False)

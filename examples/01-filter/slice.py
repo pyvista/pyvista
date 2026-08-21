@@ -204,7 +204,7 @@ colored = surface.color_labels()
 cpos = pv.CameraPosition(
     position=(520.0, 461.0, -402.0),
     focal_point=(372.0, 243.0, 52.0),
-    viewup=(-0.73, -0.50, -0.47),
+    viewup=(-0.73, -0.5, -0.47),
 )
 colored.plot(cpos=cpos)
 
