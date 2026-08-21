@@ -4344,7 +4344,7 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    def convex_hull(
+    def convex_hull(  # type: ignore[misc]
         self: DataSet | MultiBlock,
         *,
         dimensionality: Literal[1, 2, 3, 'auto'] = 3,
