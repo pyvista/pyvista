@@ -19,8 +19,8 @@ from pyvista import examples
 mesh = examples.download_st_helens().warp_by_scalar()
 
 cpos = pv.CameraPosition(
-    position=(575800.0, 5128000.0, 22290.0),
-    focal_point=(562800.0, 5115000.0, 2294.0),
+    position=(575848.0, 5128459.0, 22289.0),
+    focal_point=(562835.0, 5114981.5, 2294.5),
     viewup=(-0.5, -0.5, 0.7),
 )
 

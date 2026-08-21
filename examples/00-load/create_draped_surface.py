@@ -92,8 +92,9 @@ grid['values'] = data.ravel(order='F')
 # mesh and the possibilities are endless with PyVista.
 
 cpos = pv.CameraPosition(
-    position=(1217000.0, 345400.0, 3817.0),
-    focal_point=(1216000.0, 344000.0, 3331.0),
+    # whole-unit precision here (not 4 sig figs): these are large UTM-like coordinates
+    position=(1217002.0, 345364.0, 3817.0),
+    focal_point=(1216322.0, 344033.0, 3331.0),
     viewup=(-0.1772, -0.2563, 0.9502),
 )
 # sphinx_gallery_start_ignore
