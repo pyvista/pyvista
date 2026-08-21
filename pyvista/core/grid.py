@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import wraps
+import functools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -665,10 +665,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.47
 
-    See Also
-    --------
-    :ref:`create_uniform_grid_example`
-
     Examples
     --------
     Create an empty ImageData.
@@ -1260,7 +1256,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)
+    @functools.wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01

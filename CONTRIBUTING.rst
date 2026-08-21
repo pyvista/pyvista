@@ -138,9 +138,21 @@ original author to relicense the code.
 Generative AI
 -------------
 
-We follow the Python Developer's Guide on `Generative AI <https://devguide.python.org/getting-started/generative-ai/>`_.
+We follow the Python Developer's Guide on `AI tools <https://devguide.python.org/getting-started/ai-tools/>`_,
+with one difference: disclosure is required here, where the guide only appreciates it.
 The resulting contribution is the responsibility of the contributor, and we value good code,
 concise accurate documentation, and avoiding unneeded code churn.
+
+If an AI tool wrote any part of a pull request -- code, tests, documentation, or the
+description itself -- say so in the description. Write that sentence yourself: it states
+that you reviewed the change and can explain it, which no tool can attest to on your
+behalf. One clause naming the tool and what it did is enough, in the form merged
+descriptions already use, e.g. ``Changes drafted by Claude Opus 5 but fully understood by me``.
+
+That responsibility covers what the contribution costs us to review and to test.
+If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
+which routes to the task guides and repeats the rules agents get wrong most often,
+and read `Continuous Integration Etiquette`_ before it pushes anything.
 
 --------------
 
@@ -199,6 +211,56 @@ specific ``vtk`` or ``numpy`` version, or building documentation), see
 the `Unit Testing`_, `Style Checking`_, and `Building the
 Documentation`_ sections below, which document the underlying tools
 directly.
+
+Continuous Integration Etiquette
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Opening a pull request, and every push to it afterwards, starts the full
+continuous integration suite: unit tests on Linux, macOS, and Windows across
+every supported Python version, a separate VTK version matrix, the
+documentation build, the integration tests, type checking, and the style and
+docstring jobs. Every one of those runs costs the project paid runner time.
+Push when the change is ready, and use the local gates rather than CI to find
+out whether it works.
+
+Before you push:
+
+#. Run ``make lint``. It runs ``pre-commit`` on all files and catches most of
+   what the style jobs would report.
+#. Run the tests covering what you changed, for example
+   ``make test-core ARGS="-k threshold"`` or ``make test-plotting``. These
+   targets use the same ``tox`` environments and ``pytest`` flags as CI, so a
+   green local run means the same run is green in CI.
+#. Run ``make typecheck`` when you change type annotations, and ``make
+   doctest`` when you change a docstring example.
+
+While you iterate, keep the pull request in draft and amend or squash locally,
+so a single push carries the finished change instead of five pushes carrying a
+debugging session. A new push cancels the runs still in progress for the same
+branch, but it cannot refund a run that already finished.
+
+When a job fails:
+
+-  Read the log and find the failing assertion before changing anything. The
+   job name alone does not identify the cause.
+-  Reproduce it locally with the matching ``make`` target or ``tox``
+   environment. When the failure needs a Python or VTK version you cannot run,
+   say so in the pull request instead of pushing speculative fixes.
+-  Check whether the same failure occurs on ``main``. If it does, the failure
+   is not yours to chase in this pull request.
+-  Diagnose a flaky test rather than re-running the job until it passes. A
+   re-run costs what the first run cost, and a test that only passes on the
+   second attempt is worth reporting.
+-  For image regression failures, download the failed image artifact from the
+   job and compare it against the committed baseline (see `Notes Regarding
+   Image Regression Testing`_) instead of pushing baseline updates to see
+   which ones stick.
+
+This applies with particular force to contributions made with coding agents,
+which can run every gate above locally in a shell. Configure yours to do that
+and review its work before it reaches CI. Whoever opens the pull request is
+responsible for what each push costs the project, in the same way they are
+responsible for the content of the contribution.
 
 Guidelines
 ~~~~~~~~~~
@@ -262,7 +324,7 @@ section <#creating-a-new-pull-request>`_.
 Coding Style
 ^^^^^^^^^^^^
 
-We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
+We adhere to `PEP 8 <https://peps.python.org/pep-0008/>`_
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
 the exception rather than the norm. A uniform code style is enforced
@@ -279,7 +341,7 @@ As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
 Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
-Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
+Python <https://peps.python.org/pep-0020/>`_. When in doubt:
 
 .. code-block:: python
 
@@ -288,6 +350,83 @@ Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
 further details.
+
+Import Conventions
+^^^^^^^^^^^^^^^^^^
+
+Standard library imports follow one rule: **import the name that carries its
+own meaning at the call site.**
+
+Modules that export *types* are imported by member. "Type" here means a name
+that appears in a type position -- an annotation, a base class, or a
+class-defining decorator -- where the module prefix is pure noise:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from collections.abc import Sequence
+    from dataclasses import dataclass
+
+
+    @dataclass
+    class Config:
+        path: Path
+        names: Sequence[str]
+
+Everything else keeps the namespace prefix, because the module name supplies
+the domain that makes the call readable:
+
+.. code-block:: python
+
+    import functools
+    import re
+
+    pattern = re.escape(text)  # not `escape` -- shell? HTML? regex?
+
+
+    @functools.wraps(func)  # not `wraps` -- wraps what?
+    def wrapper(*args, **kwargs): ...
+
+
+Some member imports also shadow their own module (``from time import time``,
+``from glob import glob``), which the namespace form avoids.
+
+The unit is the module, not the name. ``argparse`` exports ``ArgumentParser``
+but is namespace-imported, because one type does not make a type module;
+``argparse.ArgumentParser`` reads fine. The member list is closed and short:
+``__future__``, ``abc``, ``collections``, ``collections.abc``, ``dataclasses``,
+``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
+``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
+
+How this is enforced
+""""""""""""""""""""
+
+Two lists, because ``ruff`` can only express one direction:
+
+* ``banned-from`` under ``[tool.ruff.lint.flake8-import-conventions]`` in
+  ``pyproject.toml`` rejects ``from re import escape`` (``ICN003``).
+* the ``namespace-stdlib-imports`` pygrep hook in ``.pre-commit-config.yaml``
+  rejects ``import pathlib``. Ruff cannot do this direction --
+  ``flake8-tidy-imports``' ``banned-api`` matches the resolved symbol, so
+  banning ``pathlib`` would reject ``from pathlib import Path`` too.
+
+``tests/test_import_conventions.py`` asserts the lists stay disjoint and
+jointly govern every standard library module the repository imports, so a
+module governed by neither fails CI instead of settling into whichever form its
+first author picked. When it fails, add the module to the matching list.
+
+Two details:
+
+* ``banned-from`` does not match submodules -- banning ``importlib`` still
+  permits ``from importlib.metadata import entry_points``. Govern the submodule
+  explicitly when it is used directly.
+* Aliased imports (``import xml.dom.minidom as md``) are an intentional escape
+  hatch and neither list matches them.
+
+Prefer fixing the code over adding a waiver: a local variable shadowing a
+module is a reason to rename the variable. The sole exception in the tree is
+``contextlib.AbstractContextManager``, a type in a base-class position inside
+an otherwise action-shaped module, carrying a ``# noqa: ICN003``.
 
 Documentation Style
 ^^^^^^^^^^^^^^^^^^^
@@ -551,6 +690,12 @@ changes any given branch is introducing before looking at the code.
 -  ``release/``: releases (see below)
 -  ``breaking-change/``: Changes that break backward compatibility
 
+A prefix is unusable on a remote that already has a branch named exactly that, since
+Git cannot store a ref as both a file and a directory: pushing ``doc/my-change`` to a
+fork that still has an old ``doc`` branch is rejected with ``directory file conflict``.
+Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
+either use another prefix or delete the stale branch.
+
 Testing
 ^^^^^^^
 
@@ -619,8 +764,8 @@ The top-level ``Makefile`` also wraps the most common invocations — see
 
             .. code-block:: bash
 
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
-                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.4.2 and numpy==2.0
 
             By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
             To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
@@ -703,8 +848,8 @@ such that:
 
             .. code-block:: bash
 
-                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
-                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
     .. tab-item:: make
         :sync: make
@@ -763,22 +908,72 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage (note t
     def test():
         """Test is skipped with a custom message"""
 
-VTK Dev Wheel Testing
-^^^^^^^^^^^^^^^^^^^^^
-Most unit testing is run with stable VTK releases. However, it is sometimes useful to
-run tests with the latest VTK dev wheels. To install these locally, run
+Testing Against VTK master
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Most unit testing is run against stable VTK releases. However, when developing features that depend on upstream VTK
+changes or when investigating regressions, it can be useful to test against the latest VTK development code.
+VTK publishes development wheels to the VTK wheels index, which are snapshots of recent development builds.
+To install them locally, run:
 
 .. code-block:: shell
 
     pip install vtk --upgrade --pre --extra-index-url https://wheels.vtk.org
 
-For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
-the VTK dev wheels. The tests only run when the label is applied.
+For pull requests, applying the ``vtk-dev-testing`` label enables an additional CI job that installs these development
+wheels and runs the unit test suite against them. Although these wheels are official VTK builds, they are only published
+periodically (typically once per week) and may not include the latest commits from the VTK repository. As a result,
+passing ``vtk-dev-testing`` does not guarantee compatibility with the current VTK master branch.
+
+To test against the very latest upstream VTK source, apply the ``vtk-master-testing`` label instead. This enables a CI
+job that clones the VTK repository, builds VTK directly from the current master branch, and runs the unit tests against
+that build. This provides the most up-to-date compatibility testing and is recommended when changes depend on recent VTK
+development.
+
+The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and may be applied separately or together.
 
 .. note::
 
     The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
+
+Garbage Collection Checks
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Every test is checked for reference leaks: no plotter or VTK object created by a test
+may outlive it. The autouse ``check_gc`` fixture in ``tests/conftest.py`` covers the
+whole repository, and ``tests/plotting/conftest.py`` overrides it with a version that
+also watches plotters. A leaking test fails at teardown with a rendered chain of what
+still holds a reference; see the
+`refleak <https://github.com/mne-tools/refleak>`_ documentation for how to read it.
+
+The check freezes the heap rather than scanning it, so it costs no measurable time and
+every CI job runs it. ``--no_check_gc`` turns it off for a whole run, for local
+iteration where the report is in the way:
+
+.. code-block:: bash
+
+    tox run -e test-plotting-no_check_gc
+
+The cause of a leak is usually a reference cycle, and fixing it (e.g. with
+:mod:`weakref`) is preferred over silencing the check with either of these markers:
+
+.. code-block:: python
+
+    @pytest.mark.skip_check_gc
+    def test():
+        """Do not check this test for leaks.
+
+        Use sparingly, with a comment saying why the leak is not fixable here,
+        e.g. an upstream VTK issue or a module-level cache pinning the object.
+        """
+
+
+    @pytest.mark.expect_check_gc_fail
+    def test():
+        """This test is expected to leak; fail if it does *not*."""
+
+``expect_check_gc_fail`` outranks ``--no_check_gc``, so the tests that exercise the
+check itself (``tests/core/test_gc.py``, ``tests/plotting/test_gc.py``) cannot pass
+while nothing is running.
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
@@ -905,17 +1100,50 @@ example:
 
             make test ARGS="tests/plotting --reset_image_cache"
 
-Running ``--reset_image_cache`` creates a new image for each test in
-``tests/plotting/test_plotting.py`` and is not recommended except for
-testing or for potentially a major or minor release. You can use
-``--ignore_image_cache`` if you’re running on Linux and want to
-temporarily ignore regression testing. Realize that regression testing
-will still occur on our CI testing.
+Running ``--reset_image_cache`` regenerates the baseline of every test the
+run collected, including tests that were failing for reasons unrelated to
+your change. Reserve it for a deliberate regeneration of the whole cache at
+a major or minor release, and use the scoped flags below for everything
+else. ``--ignore_image_cache`` skips the comparison locally while you
+iterate; regression testing still runs in our CI.
 
-Images are currently only cached from tests in
-``tests/plotting/test_plotting.py``. By default, any test that uses
-``Plotter.show`` will cache images automatically. To skip image caching,
-the ``verify_image_cache`` fixture can be utilized:
+Two scoped flags cover day-to-day work. Give both of them a test node id so
+they cannot touch a baseline you did not mean to change:
+
+.. code-block:: bash
+
+    # a new test that has no baseline yet
+    make test-plotting ARGS="tests/plotting/test_plotting.py::test_new_render --add_missing_images"
+
+    # a render that legitimately changed: overwrite only the failed baselines
+    make test-plotting ARGS="tests/plotting/test_plotting.py::test_my_render --reset_only_failed"
+
+Arguments passed through ``ARGS`` replace the environment's whole-suite defaults
+rather than adding to them, so the node id above is the entire run and neither
+the ``tests/plotting`` collection root nor ``--disallow_unused_cache`` comes
+along with it. Plain ``pytest`` with the same arguments works too.
+
+Look at every image before committing it. ``failed_image_dir`` and
+``generated_image_dir`` are already configured in ``pyproject.toml``, so a
+failing run writes ``_failed_test_images/`` with no extra flag: the committed
+baseline under ``from_cache/`` and the new render under ``from_test/``. For a
+run with many failures, build the HTML report:
+
+.. code-block:: bash
+
+    tox run -e image-report -- _failed_test_images _image_report
+
+Since the baselines are the Linux CI renders, the most reliable way to accept
+a change is to download the ``failed_test_images-*`` artifact from the failing
+job and copy its ``from_test`` images over the cache, instead of re-rendering
+on your own hardware.
+
+Any test that requests the ``verify_image_cache`` fixture and calls
+``Plotter.show`` (or ``mesh.plot``) caches and compares an image. The
+comparison runs from a callback that ``show`` registers, so a test that builds
+a plotter and only calls ``close`` compares nothing while still passing. To
+skip image caching within a test, the ``verify_image_cache`` fixture can be
+utilized:
 
 .. code-block:: python
 
@@ -1484,91 +1712,15 @@ For example:
    ``See Also`` heading due to limitations with how ``numpydoc`` parses
    explicit references.
 
-Extending the Dataset Gallery
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If you have multiple related datasets to contribute, or would like to
-group any existing datasets together that share similar properties,
-the :ref:`dataset_gallery` can easily be extended to feature these
-datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
-
-For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
-featuring two datasets of musical instruments, e.g.
-
-#.  :func:`pyvista.examples.downloads.download_guitar`
-#.  :func:`pyvista.examples.downloads.download_trumpet`
-
-complete the following steps:
-
-#. Define a new carousel in ``doc/source/make_tables.py``, e.g.:
-
-    .. code-block:: python
-
-        class InstrumentCarousel(DatasetGalleryCarousel):
-            """Class to generate a carousel of instrument dataset cards."""
-
-            name = 'instrument_carousel'
-            doc = 'Instrument datasets.'
-            badge = CategoryBadge('Instrument', ref='instrument_gallery')
-
-            @classmethod
-            def fetch_dataset_names(cls):
-                return sorted(
-                    (
-                        'guitar',
-                        'trumpet',
-                    )
-                )
-
-   where
-
-   -  ``name`` is used internally to define the name of the generated
-      ``.rst`` file for the carousel.
-
-   -  ``doc`` is a short text description of the carousel which will
-      appear in the documentation in the header above the carousel.
-
-   -  ``badge`` is used to give all datasets in the carousel a reference
-      tag. The ``ref`` argument for the badge should be a new reference
-      target (details below).
-
-   -  ``fetch_dataset_names`` should return a list of any/all dataset names
-      to be included in the carousel. The dataset names should not include
-      any ``load_``, ``download_``, or ``dataset_`` prefix.
-
-#. Add the new carousel class to the ``CAROUSEL_LIST`` variable defined
-   in ``doc/source/make_tables.py``. This will enable the rst to be
-   auto-generated for the carousel.
-
-#. Update the ``doc/source/api/examples/dataset_gallery.rst`` file to
-   include the new generated ``<name>_carousel.rst`` file. E.g. to add the
-   carousel as a new drop-down item, add the following:
-
-   .. code-block:: rst
-
-      .. dropdown:: Instrument Datasets
-         :name: instrument_gallery
-
-         .. include:: /api/examples/dataset-gallery/instrument_carousel.rst
-
-   where:
-
-   -  The dropdown name ``:name: <reference>`` should be the badge's ``ref``
-      variable defined earlier. This will make it so that clicking on the new
-      badge will link to the new dropdown menu.
-
-   -  The name of the included ``.rst`` file should match the ``name``
-      variable defined in the new ``Carousel`` class.
-
-After building the documentation, the carousel should now be part
-of the gallery.
-
 Creating a New Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have tested your branch locally, create a pull request on
 `pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
 main. This will automatically run continuous integration (CI) testing
-and verify your changes will work across several platforms.
+and verify your changes will work across several platforms. See
+`Continuous Integration Etiquette`_ for what that run costs and how to
+keep it to one.
 
 To ensure someone else reviews your code, at least one other member of
 the pyvista contributors group must review and verify your code meets
@@ -1691,7 +1843,7 @@ created the following will occur:
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 #.  Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
+    `@regro-cf-autotick-bot <https://github.com/conda-forge/conda-forge-bot>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.

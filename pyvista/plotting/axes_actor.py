@@ -30,9 +30,6 @@ class AxesActor(
     --------
     :class:`~pyvista.AxesAssembly`
 
-    :ref:`axes_objects_example`
-        Example showing different axes objects.
-
     Examples
     --------
     Customize the axis shaft color and shape.

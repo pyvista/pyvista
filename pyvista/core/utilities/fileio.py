@@ -16,7 +16,7 @@ from typing import TextIO
 from typing import TypeVar
 from typing import cast
 from typing import overload
-from urllib.parse import urlparse
+import urllib.parse
 
 import numpy as np
 
@@ -33,6 +33,7 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    import re
 
     import imageio
     import meshio
@@ -101,6 +102,12 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @abstractmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
 
+    @classmethod
+    def _get_extension_pattern_mappings(
+        cls,
+    ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
+        return []
+
     @_classproperty
     def extensions(cls) -> tuple[str, ...]:  # noqa: N805
         """Return the file extension(s) associated with this class.
@@ -115,6 +122,21 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
                 if typ is cls:  # type: ignore[comparison-overlap]
                     extensions.add(ext)  # type: ignore[unreachable]
         return tuple(sorted(extensions))
+
+    @_classproperty
+    def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805
+        """Return mapping from regex pattern matching associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
+        patterns = {
+            pattern
+            for pattern, typ in cls._get_extension_pattern_mappings()
+            if typ is cls  # type: ignore[comparison-overlap, redundant-expr]
+        }
+        return tuple(sorted(patterns, key=lambda pattern: pattern.pattern))
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
@@ -183,9 +205,6 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
         raise ValueError(msg)
-    if format_ == 'vtk' and pv.vtk_version_info < (9, 3):
-        msg = "'vtk' pickle format requires VTK >= 9.3"
-        raise ValueError(msg)
 
     pv.PICKLE_FORMAT = format_
 
@@ -216,6 +235,13 @@ def get_ext(filename: str | Path) -> str:
 
     """
     path = Path(filename)
+
+    from .reader import PExodusIIReader  # noqa: PLC0415
+
+    for pattern in PExodusIIReader.extension_patterns:
+        if match := pattern.search(path.name):
+            return match.group().lower()
+
     base = str(path.parent / path.stem)
     ext = path.suffix
     ext = ext.lower()
@@ -258,6 +284,10 @@ def read(  # noqa: PLR0917
     **kwargs,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
+
+    .. note::
+        Reading a file and saving it in another format is also available via
+        command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
@@ -434,7 +464,7 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and has_scheme(filename):
-        uri_ext = get_ext(urlparse(filename).path)
+        uri_ext = get_ext(urllib.parse.urlparse(filename).path)
         if uri_ext.lower() in _PICKLE_FILE_EXT:
             _raise_pickle_removed()
         # If a custom reader is registered for this extension, try it
@@ -1174,7 +1204,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         points = np.hstack((points, zero_points))
 
     grid = pv.UnstructuredGrid(
-        np.concatenate(cells).astype(np.int64, copy=False),
+        np.concatenate(cells).astype(pv.ID_TYPE, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
     )
@@ -1295,7 +1325,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     # Mixed cell types
     else:
         cells = []
-        offset = mesh.offset
+        offset = mesh.cell_offsets
 
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
@@ -1518,10 +1548,6 @@ def from_trimesh(
     --------
     to_trimesh, from_meshio, :func:`~pyvista.wrap`
 
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
-
     """
     try:
         import trimesh  # noqa: PLC0415
@@ -1610,10 +1636,6 @@ def to_trimesh(  # numpydoc ignore=RT01
     See Also
     --------
     from_trimesh, to_meshio, :func:`~pyvista.wrap`
-
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
 
     """
     try:

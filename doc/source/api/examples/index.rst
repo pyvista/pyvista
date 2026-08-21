@@ -75,24 +75,6 @@ API reference for details:
 
    examples.planets
 
-3D Scene Datasets
------------------
-Some file formats are imported directly by the :class:`pyvista.Plotter`
-instead of using :func:`pyvista.read`. These formats represent 3D geometry,
-materials, and scene structure.
-
-Examples of file formats supported by PyVista include ``VRML``
-(VirtualReality Modeling Language), ``3DS`` (3D Studio), and
-``glTF`` (Graphics Library Transmission Format).
-See the API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.vrml
-   examples.download_3ds
-   examples.gltf
-
 Cells
 -----
 Many examples of VTK :class:`cell types <pyvista.CellType>` are
@@ -165,7 +147,7 @@ If you want to override this local cache path, set the
 
 Data Sources
 ~~~~~~~~~~~~
-PyVista uses `pyvista/data <https://github.com/pyvista/data.git>`_ as
+PyVista uses `pyvista/data <https://github.com/pyvista/data>`_ as
 the main source for example data. If you do not have internet access or you
 prefer using a local or network directory instead, you can override this
 source with the ``VTK_DATA_PATH`` environment variable.

@@ -67,6 +67,12 @@ def test_interpolate_before_map(dataset_mapper):
     assert dataset_mapper.interpolate_before_map is True
 
 
+def test_static(dataset_mapper):
+    assert dataset_mapper.static is False
+    dataset_mapper.static = True
+    assert dataset_mapper.static is True
+
+
 def test_color_mode(dataset_mapper):
     assert isinstance(dataset_mapper.color_mode, str)
 
@@ -584,7 +590,6 @@ def test_add_mesh_smooth_shading_multi_component_cell_scalars_mapper_output():
     pl.close()
 
 
-@pytest.mark.skip_check_gc  # Mapper-array inspection retains a vtkWeakReference.
 def test_add_mesh_smooth_shading_multi_component_scalars_mapper_output():
     mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
     mesh.clear_data()

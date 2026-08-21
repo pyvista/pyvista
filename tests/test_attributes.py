@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import is_dataclass
 from enum import Enum
 import importlib.util
@@ -30,7 +31,6 @@ def test_vtk_namespace():
         _ = _vtk.does_not_exist
 
 
-@pytest.mark.needs_vtk_version((9, 3, 0), reason='Test hangs in CI on Linux')
 def test_vtk_module_does_not_exist(monkeypatch):
     # Test module does not exist
     cls, module = 'foo', 'bar'
@@ -56,6 +56,43 @@ def test_vtk_class_does_not_exist(monkeypatch):
     )
     with pytest.raises(ImportError, match=match):
         _ = getattr(_vtk, cls)
+
+
+@pytest.mark.parametrize(
+    'mapping',
+    [
+        _vtk._CORE_MODULES,
+        _vtk._PLOTTING_MODULES,
+        _vtk._OPENGL_MODULES,
+    ],
+    ids=['core', 'plotting', 'opengl'],
+)
+def test_vtk_module_mapping_is_sorted_and_unique(mapping):
+    # Modules are alphabetically ordered
+    assert list(mapping) == sorted(mapping)
+
+    # Classes are alphabetically ordered within each module
+    for module, classes in mapping.items():
+        assert classes == tuple(sorted(classes)), module
+
+    # Classes are unique within this mapping
+    counts = Counter(cls for classes in mapping.values() for cls in classes)
+    duplicates = {cls: count for cls, count in counts.items() if count > 1}
+    assert not duplicates
+
+
+def test_vtk_classes_are_globally_unique():
+    mappings = (
+        _vtk._CORE_MODULES,
+        _vtk._PLOTTING_MODULES,
+        _vtk._OPENGL_MODULES,
+    )
+
+    counts = Counter(
+        cls for mapping in mappings for classes in mapping.values() for cls in classes
+    )
+    duplicates = {cls: count for cls, count in counts.items() if count > 1}
+    assert not duplicates
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
@@ -141,7 +178,7 @@ def try_init_pyvista_object(class_):
     kwargs = get_default_class_init_kwargs(class_)
     try:
         instance = class_(**kwargs)
-    except (ImportError, VTKVersionError):
+    except (VTKVersionError, ImportError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:
         if 'abstract' in repr(e):
@@ -248,6 +285,9 @@ def get_default_class_init_kwargs(pyvista_class):
     elif pyvista_class is pv.XMLPartitionedDataSetWriter:
         kwargs['path'] = ''
         kwargs['data_object'] = pv.PartitionedDataSet()
+    elif pyvista_class is pv.EnSightWriter:
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.UnstructuredGrid()
     elif issubclass(pyvista_class, pv.BaseWriter):
         kwargs['path'] = ''
         kwargs['data_object'] = pv.PolyData()

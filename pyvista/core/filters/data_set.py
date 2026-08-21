@@ -164,8 +164,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> np.abs(dist).mean()  # doctest:+SKIP
         9.997635192915073e-05
 
-        See :ref:`icp_registration_example` for more examples using this filter.
-
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
@@ -523,10 +521,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(sphere, color='w', style='wireframe')
         >>> pl.show()
 
-        See :ref:`clip_with_surface_example` and
-        :ref:`voxelize_example` for more examples using
-        this filter.
-
         """
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
@@ -619,12 +613,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     scalars='sample_point_scalars', value=(200, 250)
         ... )
         >>> clipped.plot()
-
-        .. seealso::
-
-            :ref:`compare_threshold_filters_example`
-                This example showcases this filter and
-                other similar ones.
 
         """
         if isinstance(self, _vtk.vtkPolyData):
@@ -735,9 +723,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped = cube.clip_surface(sphere)
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
-
-        See :ref:`clip_with_surface_example` for more examples using
-        this filter.
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
@@ -870,10 +855,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Threshold-like filter for ``ImageData`` to keep some values and replace others.
-        :ref:`compare_threshold_filters_example`
-            This example showcases this filter and
-            other similar ones.
-
 
         Returns
         -------
@@ -924,9 +905,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_scalar_bar=False,
         ...     show_edges=True,
         ... )
-
-        See :ref:`using_filters_example` and :ref:`image_representations_example`
-        for more examples using this filter.
 
         """
         # set the scalars to threshold on
@@ -1202,9 +1180,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> bool(np.any(np.isnan(cleaned.point_data['values'])))
         False
 
-        See :ref:`using_filters_example` for an end-to-end filter pipeline
-        that begins with this filter.
-
         """
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
@@ -1267,8 +1242,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> sphere = pv.Sphere()
         >>> outline = sphere.outline()
         >>> pv.plot([sphere, outline], line_width=5)
-
-        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkOutlineFilter()
@@ -1381,8 +1354,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation  # noqa: PLC0415
-
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()
@@ -1591,10 +1562,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> out.plot(color='lightblue', smooth_shading=True)
 
-        See :ref:`using_filters_example`, :ref:`marching_cubes_example`, or
-        :ref:`gyroid_example` for more examples using this
-        filter.
-
         """
         if method == 'contour':
             alg = _vtk.vtkContourFilter()
@@ -1720,10 +1687,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Original dataset with texture coordinates if
             ``inplace=True``, otherwise a copied dataset.
 
-        Examples
-        --------
-        See :ref:`topo_map_example`
-
         """
         if use_bounds:
             _validation.check_instance(use_bounds, bool, name='use_bounds')
@@ -1806,10 +1769,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.DataSet
             Dataset containing the texture mapped to a sphere.  Return
             type matches input.
-
-        Examples
-        --------
-        See :ref:`texture_example`.
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -1945,9 +1904,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_scalar_bar=False,
         ... )
         >>> pl.show()
-
-        See :ref:`glyph_example`, :ref:`movie_glyphs_example`, and
-        :ref:`glyph_table_example` for more examples using this filter.
 
         """
         dataset = self
@@ -2110,7 +2066,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Glyphs')
 
-        output = _get_output(alg)
+        # Glyphs always produce cell geometry (e.g. arrows), so the output
+        # should remain PolyData even if the input was a cell-less PointSet.
+        output = _get_output(alg, keep_pointset=False)
 
         # Storing geom on the algorithm, for later use in legends.
         output._glyph_geom = geoms
@@ -2152,9 +2110,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         share a point. However, if a ``scalar_range`` is provided, cells
         must also have at least one point with scalar values in the
         specified range to be considered connected.
-
-        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
-        more examples using this filter.
 
         .. versionadded:: 0.43.0
 
@@ -2292,7 +2247,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> conn = mesh.connectivity('all')
         >>> np.unique(conn['RegionId'])
-        pyvista_ndarray([0, 1, 2])
+        pyvista_ndarray([0, 1, 2]...)
 
         Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
 
@@ -2711,8 +2666,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> len(bodies)
         2
 
-        See :ref:`split_vol` for more examples using this filter.
-
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
@@ -2790,8 +2743,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
-
-        See :ref:`compute_normals_example` for more examples using this filter.
 
         """
         factor = kwargs.pop('scale_factor', factor)
@@ -2880,9 +2831,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vector_example` and :ref:`warp_by_vector_eigenmodes_example` for
-        more examples using this filter.
-
         """
         vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
         arr = get_array(self, vectors_, preference='point')
@@ -2961,8 +2909,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = sphere.delaunay_3d()
         >>> edges = grid.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
-
-        See :ref:`convex_hull_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkDelaunay3D()
@@ -3171,7 +3117,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See Also
         --------
         compute_implicit_distance, extract_points, extract_cells
-        :ref:`extract_cells_inside_surface_example`
 
         Examples
         --------
@@ -3344,9 +3289,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
-        See :ref:`interpolate_example`, :ref:`interpolate_sample_example`,
-        and :ref:`resampling_example` for more examples using this filter.
-
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types
@@ -3465,10 +3407,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         source : pyvista.PolyData
             The points of the source are the seed points for the streamlines.
             Only returned if ``return_source=True``.
-
-        Examples
-        --------
-        See the :ref:`streamlines_example` example.
 
         """
         if source_center is None:
@@ -3632,10 +3570,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             stored in the cell data, whereas those associated with
             streamline-points are stored in the point data.
 
-        Examples
-        --------
-        See the :ref:`streamlines_example` example.
-
         """
         integration_direction_lower = str(integration_direction).strip().lower()
         if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
@@ -3717,9 +3651,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetIntegratorTypeToRungeKutta45()
         # set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocatorToStaticCellLocator()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 7):
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
+
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg)
@@ -3839,8 +3780,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.view_xy()
         >>> pl.show()
 
-        See :ref:`streamlines_2D_example` for more examples using this filter.
-
         """
         if integrator_type not in [2, 4]:
             msg = 'Integrator type must be one of `2` or `4`.'
@@ -3896,7 +3835,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocatorToModifiedBSPTree()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 7):
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
@@ -3933,10 +3878,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         pyvista.PolyData
             Decimated boundary.
-
-        Examples
-        --------
-        See the :ref:`linked_views_example` example.
 
         """
         return (
@@ -4082,10 +4023,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Set component of vector-valued scalars to plot. Must be
             nonnegative and less than the number of components. If ``None``,
             all components are plotted.
-
-        Examples
-        --------
-        See the :ref:`plot_over_line_example` example.
 
         """
         from matplotlib import pyplot as plt  # noqa: PLC0415
@@ -4578,10 +4515,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        See Also
-        --------
-        :ref:`plot_over_circular_arc_example`
-
         Examples
         --------
         Sample a dataset along a high resolution circular arc and plot.
@@ -4738,22 +4671,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
         extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
-        if pv.vtk_version_info >= (9, 3, 0):
-            # We set the arrays manually earlier
-            extract.SetPassThroughCellIds(False)
+        # We set the arrays manually earlier
+        extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract)
 
         # Make active scalars match input
         info = self.active_scalars_info
         subgrid.set_active_scalars(info.name, info.association)
-
-        if pv.vtk_version_info >= (9, 3, 0):
-            return subgrid
-
-        # Process output arrays
-        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
-            del data[name]
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -4863,18 +4788,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
-        values: None
-        | (
+        values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        ) = None,
+        )
+        | None = None,
         *,
-        ranges: None
-        | (
+        ranges: (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
             | dict[tuple[float, float], str]
-        ) = None,
+        )
+        | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -4963,7 +4888,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> image = examples.load_channels()
         >>> np.unique(image.active_scalars)
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
 
         Split the image into its separate regions. Here, we also remove the first
         region for visualization.
@@ -5192,9 +5117,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar filter for thresholding a mesh by value.
         partition
             Split a mesh into a number of sub-parts.
-        :ref:`compare_threshold_filters_example`
-            This example showcases this filter and
-            other similar ones.
 
         Returns
         -------
@@ -5742,7 +5664,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
         >>> ind[:10]
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]...)
 
         """
         surf = DataObjectFilters.extract_surface(
@@ -5814,8 +5736,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> feat_edges = hex_beam.extract_feature_edges()
         >>> feat_edges.clear_data()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
-
-        See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
         dataset: DataSet = self
@@ -6109,9 +6029,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
@@ -6196,8 +6113,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> hills = examples.load_random_hills()
         >>> deriv = hills.compute_derivative()
         >>> deriv.plot(scalars='gradient')
-
-        See the :ref:`gradients_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkGradientFilter()
@@ -6396,8 +6311,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         np.float64(3.14)
         >>> integrated['data'][0]
         np.float64(6.28)
-
-        See the :ref:`integrate_data_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkIntegrateAttributes()
@@ -6951,7 +6864,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        split.points += np.repeat(vec, np.diff(split.cell_offsets), axis=0)
         return split
 
     def separate_cells(  # type: ignore[misc]
@@ -6981,9 +6894,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> sep_grid = grid.separate_cells()
         >>> sep_grid.n_points
         320
-
-        See the :ref:`point_cell_scalars_example` for a more detailed example
-        using this filter.
 
         """
         return self.shrink(1.0)
@@ -7484,7 +7394,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(image_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
 
         Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
@@ -7513,7 +7423,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(subset_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([1, 2, 3])
+        pyvista_ndarray([1, 2, 3]...)
 
         Despite the changes to the dataset, the regions have the same coloring
         as before.
@@ -7551,7 +7461,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> scalars = image_labels.active_scalars
         >>> scalars[scalars > 2] *= -1
         >>> np.unique(scalars)
-        pyvista_ndarray([-4, -3,  0,  1,  2])
+        pyvista_ndarray([-4, -3,  0,  1,  2]...)
 
         Color the mesh and enable ``negative_indexing``. With this option enabled,
         the ``'index'`` coloring mode is used by default, and therefore the positive
@@ -7582,7 +7492,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> labeled_data = dataset.connectivity()
         >>> np.unique(labeled_data.active_scalars)
         pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
-                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]...)
 
         Color the dataset with default arguments. Despite having 26 separately colored
         regions, the colors from the default glasbey-style colormap are all relatively
@@ -8380,7 +8290,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
         >>> cpos = pv.CameraPosition(
-        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 0, 0)
+        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 1, 0)
         ... )
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 

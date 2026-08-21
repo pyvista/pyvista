@@ -4,6 +4,8 @@
 Light Types
 ~~~~~~~~~~~
 
+Demonstrate PyVista's three types of lights.
+
 Lights come in three types:
 
   * headlights, the axis of which always coincides with the view of the camera,

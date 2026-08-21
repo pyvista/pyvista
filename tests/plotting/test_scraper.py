@@ -23,7 +23,6 @@ class QApplication:
 
 def test_scraper_with_app(tmpdir, monkeypatch):
     n_win = 2
-    pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
 
@@ -74,7 +73,6 @@ def test_scraper_with_app(tmpdir, monkeypatch):
 @pytest.mark.parametrize('scraper_type', ['static', 'dynamic'])
 @pytest.mark.parametrize('n_win', [1, 2])
 def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
-    pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
     plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
@@ -127,7 +125,6 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
 
 
 def test_scraper_raise(tmpdir):
-    pytest.importorskip('sphinx_gallery')
     pv.close_all()
     pl = pv.Plotter(off_screen=True)
     scraper = Scraper()

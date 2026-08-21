@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from itertools import product
-import pathlib
+import itertools
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,7 +11,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -996,10 +995,6 @@ class WidgetComponent(_NoNewAttrMixin):
         output : :vtk:`vtkPlaneWidget` | :vtk:`vtkImplicitPlaneWidget`
             The VTK plane widget depending on the value of ``implicit``.
 
-        See Also
-        --------
-        :ref:`clip_volume_widget_example`
-
         """
         if isinstance(volume, (pv.ImageData, pv.RectilinearGrid)):
             volume = self._plotter.add_volume(volume, **kwargs)
@@ -1620,10 +1615,6 @@ class WidgetComponent(_NoNewAttrMixin):
         -------
         :vtk:`vtkSliderWidget`
             Slider widget.
-
-        See Also
-        --------
-        :ref:`multi_slider_widget_example`
 
         Examples
         --------
@@ -2371,10 +2362,6 @@ class WidgetComponent(_NoNewAttrMixin):
         :vtk:`vtkDistanceWidget`
             The newly created distance widget.
 
-        See Also
-        --------
-        :ref:`distance_measurement_example`
-
         """
         msg = 'Cannot add a widget to a closed plotter.'
         iren = self._plotter._get_iren_not_none(msg)
@@ -2510,10 +2497,6 @@ class WidgetComponent(_NoNewAttrMixin):
         -------
         :vtk:`vtkSphereWidget`
             The sphere widget.
-
-        See Also
-        --------
-        :ref:`sphere_widget_example`
 
         """
         if color is None:
@@ -2923,7 +2906,7 @@ class WidgetComponent(_NoNewAttrMixin):
             rad_outer = centre
             rad_inner = centre - border_size
             # Paint radio button with simple anti-aliasing
-            for i, j in product(range(size), range(size)):
+            for i, j in itertools.product(range(size), range(size)):
                 distance = np.sqrt((i - size / 2) ** 2 + (j - size / 2) ** 2)
                 if distance < rad_inner:
                     arr[i, j] = fg_color
@@ -3025,9 +3008,6 @@ class WidgetComponent(_NoNewAttrMixin):
         :meth:`~pyvista.Plotter.add_box_axes`
             Add an axes box as an orientation widget.
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-
         Examples
         --------
         Add a camera orientation widget to the scene.
@@ -3063,7 +3043,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['logo'])
     def add_logo_widget(  # noqa: PLR0917
         self,
-        logo: ImageData | str | pathlib.Path | None = None,
+        logo: ImageData | str | Path | None = None,
         position: VectorLike[float] = (0.75, 0.8),
         size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,
@@ -3115,7 +3095,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
             logo = examples.logofile
 
-        if isinstance(logo, (str, pathlib.Path)):
+        if isinstance(logo, (str, Path)):
             logo = pv.read(logo, cls=pv.ImageData)
         elif not isinstance(logo, pv.ImageData):
             # Defensive runtime check: Python does not enforce type hints,
@@ -3166,11 +3146,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show(cpos=pl.camera_position)
 
         """
-        if vtk_version_info < (9, 3, 0):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
-            raise VTKVersionError(msg)
         representation = _vtk.vtkCamera3DRepresentation()
         representation.SetCamera(self._plotter.renderer.GetActiveCamera())
         widget = _vtk.vtkCamera3DWidget()

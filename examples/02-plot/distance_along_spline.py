@@ -4,8 +4,7 @@
 Label based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a spline and generate labels along the spline based on distance along a
-spline.
+Create a spline and generate labels along the spline based on distance along a spline.
 
 This is an extension of the :ref:`create_spline_example`.
 

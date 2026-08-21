@@ -33,12 +33,12 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
 
@@ -70,10 +70,10 @@ jobs:
 
       # `tox -e test -- --collect-only` forwards `--collect-only` to pytest,
       # validating the tox env, the Makefile target, and the pytest CLI in
-      # one go. `test-core`, `test-plotting`, `doctest`, `docs`, `docs-test`,
-      # and `integration` use the same `tox -e <env> -- $(ARGS)` pattern, so
-      # `make -n` is enough to catch recipe drift without rebuilding each
-      # tox env.
+      # one go. `test-core`, `test-plotting`, `doctest`, `docs`, `docs-test-build`,
+      # `docs-test-images`, and `integration` use the same
+      # `tox -e <env> -- $(ARGS)` pattern, so `make -n` is enough to catch
+      # recipe drift without rebuilding each tox env.
       - name: make test (pytest --collect-only)
         run: make test ARGS="--collect-only -q"
 
@@ -83,16 +83,18 @@ jobs:
           make -n test-plotting
           make -n doctest
           make -n docs
-          make -n docs-test
+          make -n docs-test-build
+          make -n docs-test-images
           make -n integration PROJECT=trame
 
       # Confirm every tox env referenced by the Makefile exists in tox.ini.
       - name: Check tox env names
         run: |
           uv run tox list | tee tox-envs.txt
-          for env in test test-core test-plotting mypy docs-build docs-test \
-                     integration-trame integration-geovista integration-mne \
-                     integration-pyvistaqt doctest-modules doctest-local; do
+          for env in test test-core test-plotting mypy docs-build docs-test-build \
+                     docs-test-images integration-trame integration-geovista \
+                     integration-mne integration-pyvistaqt doctest-modules \
+                     doctest-local; do
             grep -q "^${env}\b" tox-envs.txt || {
               echo "ERROR: tox env '${env}' referenced by Makefile not found in tox.ini"
               exit 1

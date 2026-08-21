@@ -4,12 +4,14 @@
 Lighting Properties
 ~~~~~~~~~~~~~~~~~~~
 
-Control aspects of the rendered mesh's lighting such as Ambient, Diffuse,
-and Specular. These options only work if the ``lighting`` argument to
+Control aspects of the rendered mesh's lighting such as Ambient, Diffuse, and Specular.
+
+These options only work if the ``lighting`` argument to
 ``add_mesh`` is ``True`` (it's ``True`` by default).
 
 You can turn off all lighting for the given mesh by passing ``lighting=False``
 to ``add_mesh``.
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

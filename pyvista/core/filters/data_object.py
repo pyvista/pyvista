@@ -581,7 +581,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                         else:
                             cell_types.remove(ctype)
                     return _MeshValidator._invalid_cell_msg(
-                        name, tuple(arrays), cell_type=cell_types
+                        name,
+                        tuple(arrays),  # type: ignore[arg-type]
+                        cell_type=cell_types,
                     )
                 else:
                     return _MeshValidator._invalid_cell_msg(name, array_, cell_type=cell_types[0])
@@ -780,6 +782,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Highlight cell types in yellow
         # Reverse sort to ensure we replace things like 'QUADRATIC_HEXAHEDRON' before 'QUAD'
         cell_names = sorted(celltype.name for celltype in CellType)[::-1]
+        # Ensure single-word cell types are last so that POLY_VERTEX is replaced before VERTEX
+        for name in cell_names.copy():
+            if '_' not in name:
+                cell_names.remove(name)
+                cell_names.append(name)
         string = _format_style(string, cell_names, 'yellow')
 
         # Highlight mesh types in purple
@@ -1150,6 +1157,10 @@ class DataObjectFilters:
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
 
+        .. note::
+            This filter is also available via a command-line interface. See
+            :ref:`pyvista validate <cli_validate>` for details.
+
         .. versionadded:: 0.47
 
         .. versionchanged:: 0.48
@@ -1220,7 +1231,6 @@ class DataObjectFilters:
         :meth:`~pyvista.DataObjectFilters.cell_validator`
         :meth:`~pyvista.DataObjectFilters.cell_quality`
         :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points`
-        :ref:`mesh_validation_example`
 
         Examples
         --------
@@ -1761,7 +1771,7 @@ class DataObjectFilters:
             )
 
             conn = ugrid.cell_connectivity
-            offset = ugrid.offset
+            offset = ugrid.cell_offsets
             n_cells = ugrid.n_cells
             n_points = ugrid.n_points
 
@@ -2130,8 +2140,6 @@ class DataObjectFilters:
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)
-
-        See the :ref:`reflect_example` for more examples using this filter.
 
         """
         t = Transform().reflect(normal, point=point)
@@ -2610,6 +2618,7 @@ class DataObjectFilters:
         bounds_size: float | VectorLike[float] | None = None,
         length: float | None = None,
         center: VectorLike[float] | None = None,
+        preserve_aspect_ratio: bool | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ) -> _MeshType_co:
@@ -2657,6 +2666,21 @@ class DataObjectFilters:
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
             :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` or ``length``
             is specified.
+
+        preserve_aspect_ratio : bool, optional
+            Whether to preserve the dataset's aspect ratio during resizing.
+
+            - If ``True``, a uniform scale factor is applied. For ``bounds`` and
+              ``bounds_size``, the specified values are treated as maximum extents
+              rather than exact targets.
+            - If ``False``, each axis is scaled independently to exactly match the
+              requested ``bounds`` or ``bounds_size``.
+
+            By default, ``bounds`` and ``bounds_size`` use independent axis scaling,
+            while ``length`` preserves the aspect ratio. This parameter can be used to
+            enable aspect ratio preservation for ``bounds`` and ``bounds_size``.
+
+            .. versionadded:: 0.49
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
@@ -2739,6 +2763,22 @@ class DataObjectFilters:
                     z_min = -0.5,
                     z_max =  0.5)
 
+        Normalize it again, but preserve the aspect ratio. Its 1:2:3 x-y-z bounds
+        ratio is preserved.
+
+        >>> resized = mesh.resize(
+        ...     bounds_size=1.0, center=(0.0, 0.0, 0.0), preserve_aspect_ratio=True
+        ... )
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.1666,
+                    x_max =  0.1666,
+                    y_min = -0.3333,
+                    y_max =  0.3333,
+                    z_min = -0.5,
+                    z_max =  0.5)
+        >>> resized.bounds_size
+        (0.3333, 0.6666, 1.0)
+
         """
         if self.is_empty:
             return self.copy()
@@ -2756,6 +2796,13 @@ class DataObjectFilters:
             msg = (
                 'Cannot specify more than one resizing method. Choose either `bounds`, '
                 '`bounds_size`, or `length` independently.'
+            )
+            raise ValueError(msg)
+
+        if preserve_aspect_ratio is False and length_set:
+            msg = (
+                '`preserve_aspect_ratio=False` cannot be used with `length` since '
+                '`length` resizing always preserves the aspect ratio.'
             )
             raise ValueError(msg)
 
@@ -2796,6 +2843,9 @@ class DataObjectFilters:
 
         current_size = self.bounds_size
         scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        if preserve_aspect_ratio:
+            scale_factors = np.full(3, scale_factors.min())
 
         # Apply transformation
         transform = pv.Transform()
@@ -3303,8 +3353,6 @@ class DataObjectFilters:
         >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
         >>> clipped_cube.plot()
 
-        See :ref:`clip_with_plane_box_example` for more examples using this filter.
-
         """
         if bounds is None:
 
@@ -3668,8 +3716,6 @@ class DataObjectFilters:
         >>> slices = slice_x + slice_y + slice_z
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
@@ -3746,8 +3792,6 @@ class DataObjectFilters:
         >>> hills = examples.load_random_hills()
         >>> slices = hills.slice_orthogonal(contour=False)
         >>> slices.plot(line_width=5)
-
-        See :ref:`slice_example` for more examples using this filter.
 
         """
         # Create the three slices
@@ -3889,8 +3933,6 @@ class DataObjectFilters:
         >>> slices = hills.slice_along_axis(n=10, axis='z')
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         # parse axis input
         XYZLiteral = Literal['x', 'y', 'z']
@@ -4029,8 +4071,6 @@ class DataObjectFilters:
         >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
         >>> pl.show()
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
@@ -4096,8 +4136,6 @@ class DataObjectFilters:
         >>> edges = hex_beam.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
 
-        See :ref:`cell_centers_example` for more examples using this filter.
-
         """
         if use_all_points is not None:
             warn_external(
@@ -4106,6 +4144,7 @@ class DataObjectFilters:
                 PyVistaDeprecationWarning,
             )
 
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
         # Always use all points since VTK >= 9.2 is required
@@ -4223,7 +4262,7 @@ class DataObjectFilters:
                          42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
                          56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
                          70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
-                         84, 85, 86, 87, 88, 89])
+                         84, 85, 86, 87, 88, 89]...)
         >>> surf['vtkOriginalCellIds']
         pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
                          36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
@@ -4231,14 +4270,11 @@ class DataObjectFilters:
                           8,  8, 12, 12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32,
                           7,  7, 11, 11, 15, 15, 19, 19, 23, 23, 27, 27, 31, 31,
                          35, 35,  6,  6, 10, 10, 14, 14, 18, 18, 22, 22, 26, 26,
-                         30, 30, 34, 34])
+                         30, 30, 34, 34]...)
 
         Note that in the "vtkOriginalCellIds" array, the same original cells
         appears multiple times since this array represents the original cell of
         each surface cell extracted.
-
-        See the :ref:`extract_surface_example` and :ref:`surface_smoothing_example`
-        for more examples using this filter.
 
         """
 
@@ -4485,8 +4521,6 @@ class DataObjectFilters:
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
         array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
 
-        See :ref:`using_filters_example` for more examples using this filter.
-
         """
         # Fix the projection line:
         if low_point is None:
@@ -4506,6 +4540,17 @@ class DataObjectFilters:
             scalar_range_ = self.get_data_range(scalar_range, preference=preference)
         else:
             scalar_range_ = _validation.validate_data_range(scalar_range)
+
+        if pv.vtk_version_info < (9, 4) and _composite_has_pointset(self):
+            # vtkElevationFilter's composite dispatch segfaults on VTK 9.3 when
+            # a block is a cell-less PointSet, even though elevation is
+            # otherwise perfectly valid on a standalone PointSet. Raise instead
+            # of taking down the interpreter; this is fixed by VTK 9.4.
+            msg = (
+                'Cannot compute elevation for a MultiBlock containing a PointSet '
+                'on VTK < 9.4 due to a VTK bug that crashes the interpreter.'
+            )
+            raise pv.core.errors.PointSetNotSupported(msg)
 
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
@@ -4601,27 +4646,33 @@ class DataObjectFilters:
 
         """
 
-        def ensure_vertex_count_array(dataset: DataSet):
-            if dataset.n_cells == 0:
-                dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
+        def ensure_arrays_if_empty(dataset: DataSet):
+            if vertex_count:
+                dataset.cell_data['VertexCount'] = np.zeros(shape=(0,))
+            if area:
+                dataset.cell_data['Area'] = np.empty(shape=(0,))
+            if length:
+                dataset.cell_data['Length'] = np.empty(shape=(0,))
+            if volume:
+                dataset.cell_data['Volume'] = np.empty(shape=(0,))
 
-        # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
-        vert_count = vertex_count and getattr(self, 'n_cells', True)
+        if self.is_empty:
+            # Ensure outputs have arrays so things like `mesh.area` and `mesh.volume` still work
+            # Also guard against seg fault https://gitlab.kitware.com/vtk/vtk/-/issues/19978
+            out = self.copy()
+            if not isinstance(out, pv.MultiBlock):
+                ensure_arrays_if_empty(out)
+            return out
 
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
-        alg.SetComputeVertexCount(vert_count)
+        alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        out = _get_output(alg)
-        if vertex_count:
-            if isinstance(out, pv.MultiBlock):
-                out.generic_filter(ensure_vertex_count_array)
-            else:
-                ensure_vertex_count_array(out)
-        return out
+        return _get_output(alg)
 
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
@@ -4666,8 +4717,6 @@ class DataObjectFilters:
         ...     point_size=20,
         ... )
         >>> pl.show()
-
-        See :ref:`cell_centers_example` for more examples using this filter.
 
         """
         input_mesh = self.cast_to_poly_points() if isinstance(self, pv.PointSet) else self
@@ -4737,6 +4786,7 @@ class DataObjectFilters:
         >>> surf.plot(scalars='Area')
 
         """
+        _raise_if_composite_has_pointset(self)
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
@@ -4857,6 +4907,7 @@ class DataObjectFilters:
         >>> sphere.plot()
 
         """
+        _raise_if_composite_has_pointset(self)
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
@@ -5069,9 +5120,6 @@ class DataObjectFilters:
         >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
-        See :ref:`resampling_example` and :ref:`interpolate_sample_example`
-        for more examples using this filter.
-
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
@@ -5102,7 +5150,11 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
-            alg.SetCellLocatorPrototype(locator)
+
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocator(locator)
+            else:
+                alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:
@@ -5219,8 +5271,6 @@ class DataObjectFilters:
          'shape',
          'shape_and_size']
 
-        See :ref:`mesh_quality_example` for more examples using this filter.
-
         """
         # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
@@ -5239,8 +5289,15 @@ class DataObjectFilters:
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
+        def _call_dataset_cell_quality(dataset, **kwargs):
+            # Dispatch through the instance (rather than binding directly to
+            # `DataObjectFilters._dataset_cell_quality`) so that a block-level
+            # override, e.g. PointSet's, is honored when this runs per-block
+            # through `generic_filter`.
+            return dataset._dataset_cell_quality(**kwargs)
+
         cell_quality = functools.partial(
-            DataObjectFilters._dataset_cell_quality,
+            _call_dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
             keep_valid_only=keep_valid_only,
@@ -5353,6 +5410,32 @@ def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 
         remap[vertex_ids] = np.arange(len(vertex_ids))
         faces = remap[hull.simplices]
     return pv.PolyData.from_regular_faces(hull_points, faces)
+
+
+def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:
+    """Return ``True`` if a MultiBlock (recursively) contains a PointSet block."""
+    return isinstance(dataset, pv.MultiBlock) and any(
+        isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
+    )
+
+
+def _raise_if_composite_has_pointset(
+    dataset: DataSet | MultiBlock,
+    error: type[Exception] | None = None,
+) -> None:
+    """Raise if a MultiBlock (recursively) contains a PointSet block.
+
+    Several filters (``cell_data_to_point_data``, ``point_data_to_cell_data``,
+    ``extract_all_edges``, ``compute_cell_sizes``) hand a MultiBlock straight
+    to the underlying :vtk:`vtkAlgorithm`, relying on VTK's own
+    composite-dataset dispatch rather than iterating blocks in Python. On
+    some VTK versions, running these filters on a composite containing a
+    cell-less PointSet block segfaults instead of raising, so guard against
+    it here before ever reaching the algorithm.
+    """
+    if _composite_has_pointset(dataset):
+        error_type = error or pv.core.errors.PointSetNotSupported
+        raise error_type()
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
@@ -5516,9 +5599,10 @@ class _Crinkler:
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
-            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
-                block.n_cells, dtype=_Crinkler.INT_DTYPE
-            )
+            if not isinstance(block, pv.PointSet):
+                block.cell_data[_Crinkler.CELL_IDS] = np.arange(
+                    block.n_cells, dtype=_Crinkler.INT_DTYPE
+                )
         return active_scalars_info
 
 

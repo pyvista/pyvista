@@ -4,8 +4,10 @@
 Plot a 3D Graph Network
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Render a node-edge network with labels and weighted edges using
-:func:`pyvista.line_segments_from_points`.
+Render a node-edge network with labels and weighted edges.
+
+Uses :func:`pyvista.line_segments_from_points`.
+
 """
 
 import numpy as np

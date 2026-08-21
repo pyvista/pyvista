@@ -161,10 +161,6 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         range to annotate on the scalar bar and the values are the string
         annotations.
 
-    See Also
-    --------
-    :ref:`lookup_table_example`
-
     Examples
     --------
     Plot the lookup table with the default VTK color map.
@@ -960,9 +956,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if vtk_values is None:
             return {}  # type: ignore[unreachable]
         n_items = (
-            vtk_values.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else vtk_values.GetCapacity()  # type: ignore[attr-defined]
+            vtk_values.GetSize() if pv.vtk_version_info < (9, 7) else vtk_values.GetCapacity()
         )
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
@@ -1168,9 +1162,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)
-        else:
-            try:
-                return np.array([self.map_value(item) for item in value])
-            except (TypeError, ValueError):
-                msg = 'LookupTable __call__ expects a single value or an iterable.'
-                raise TypeError(msg)
+
+        try:
+            vtk_values: _vtk.vtkAbstractArray
+            if isinstance(value, _vtk.vtkDataArray):
+                vtk_values = value
+            else:
+                values = np.asarray(value)
+                if values.dtype == np.bool_:
+                    values = values.astype(np.uint8)
+                vtk_values = convert_array(values)
+            if not isinstance(vtk_values, _vtk.vtkDataArray):
+                raise TypeError
+            # Use VTK_COLOR_MODE_MAP_SCALARS to preserve lookup-table mapping for uint8 arrays.
+            rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
+        except (TypeError, ValueError) as err:
+            msg = 'LookupTable __call__ expects a single value or an iterable.'
+            raise TypeError(msg) from err
+
+        return rgba.reshape(-1, 4) / 255.0

@@ -86,7 +86,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
+            .. image:: /../_build/pyvista_plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
@@ -691,7 +691,7 @@ class _CellTypeMeta(EnumMeta):
             _warn_deprecated_renamed(name)
         return member
 
-    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]  # noqa: ANN
+    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]
         member = super().__call__(value, *args, **kwargs)  # type: ignore[var-annotated]
         name = member.name
         if name in _DEPRECATED_CELL_TYPES:
@@ -863,12 +863,6 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 
-        :ref:`linear_cells_example`
-            Detailed example using linear cells.
-
-        :ref:`create_polyhedron_example`
-            Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
-
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
@@ -888,14 +882,15 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 13
+
     Create a single cube. Notice how the cell type is defined using the
     ``CellType``.
 
     >>> import numpy as np
-    >>> from pyvista import CellType
     >>> import pyvista as pv
     >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
-    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
+    >>> cell_type = np.array([pv.CellType.HEXAHEDRON], np.int8)
     >>> points = np.array(
     ...     [
     ...         [0, 0, 0],

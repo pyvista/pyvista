@@ -10,7 +10,7 @@ VTK, this requires some extra steps to setup.
 When running VTK v9, you need to add several additional
 ``hiddenimports``.  For clarity and completeness, create a spec file
 (we'll name it ``pyvista.spec``) following the directions given at
-`Using Spec Files <https://pyinstaller.readthedocs.io/en/stable/spec-files.html>`__.  Modify the ``Analysis`` and add the following hidden imports:
+`Using Spec Files <https://pyinstaller.org/en/stable/spec-files.html>`__.  Modify the ``Analysis`` and add the following hidden imports:
 
 .. code-block:: python
 

@@ -4,8 +4,7 @@
 3D Earth and Celestial Bodies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Plot the solar system in PyVista using datasets from the
-:mod:`~pyvista.examples.planets` module.
+Plot the solar system using datasets from :mod:`~pyvista.examples.planets`.
 
 This example is inspired by `planet3D-MATLAB
 <https://github.com/tamaskis/planet3D-MATLAB>`_.

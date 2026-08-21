@@ -13,7 +13,7 @@ forward to the component for backward compatibility.
 
 from __future__ import annotations
 
-from functools import partial
+import functools
 from typing import TYPE_CHECKING
 import weakref
 
@@ -315,7 +315,7 @@ class PickingComponent(_NoNewAttrMixin):
         # Mesh-aware picking state
         self._picked_actor = None
         self._picked_mesh = None
-        self._picked_cell: None | pv.MultiBlock | pv.UnstructuredGrid = None
+        self._picked_cell: pv.MultiBlock | pv.UnstructuredGrid | None = None
         self._picking_text = None
         self._picked_block_index = None
         # Path / geodesic / horizon state
@@ -356,7 +356,7 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_mesh
 
     @property
-    def picked_cells(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
+    def picked_cells(self) -> pv.UnstructuredGrid | pv.MultiBlock | None:
         r"""Return the cell-picked object.
 
         Returns
@@ -433,12 +433,12 @@ class PickingComponent(_NoNewAttrMixin):
         if left_clicking:
             self._picking_left_clicking_observer = self._plotter.iren.add_observer(
                 'LeftButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
         else:
             self._picking_right_clicking_observer = self._plotter.iren.add_observer(
                 'RightButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
 
     def _validate_picker_not_in_use(self):
@@ -1010,8 +1010,8 @@ class PickingComponent(_NoNewAttrMixin):
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -1559,11 +1559,6 @@ class PickingComponent(_NoNewAttrMixin):
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
-
-        See Also
-        --------
-        :ref:`element_picking_example`
-
 
         """
         mode = ElementType.from_any(mode)

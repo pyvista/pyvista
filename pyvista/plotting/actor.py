@@ -528,10 +528,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         pyvista.Property
             The object describing backfaces.
 
-        See Also
-        --------
-        :ref:`backface_prop_example`
-
         Examples
         --------
         Clip a sphere by a plane and color the inside of the clipped sphere
@@ -754,10 +750,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         ``opacity < 1`` unless depth peeling is enabled. See
         :func:`pyvista.Plotter.enable_depth_peeling`.
 
-        See Also
-        --------
-        :ref:`maximum_intensity_projection_example`
-
         References
         ----------
         Cowan, E.J., 2014. 'X-ray Plunge Projection' - Understanding
@@ -779,10 +771,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.enable_maximum_intensity_projection()
 
         """
-        if pv.vtk_version_info < (9, 3):
-            msg = 'Maximum intensity projection requires VTK >= 9.3.'
-            raise RuntimeError(msg)
-
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:

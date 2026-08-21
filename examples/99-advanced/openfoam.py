@@ -3,6 +3,9 @@
 
 Plot OpenFOAM data
 ~~~~~~~~~~~~~~~~~~
+
+Read and plot data from a lid-driven cavity flow simulation.
+
 """
 
 import pyvista as pv
