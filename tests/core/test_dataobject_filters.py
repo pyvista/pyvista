@@ -3120,6 +3120,7 @@ def test_convex_hull_3d():
     sphere = pv.Sphere()
     hull = sphere.convex_hull()
     assert isinstance(hull, pv.PolyData)
+    assert hull.dimensionality == 3
     assert hull.n_points > 0
     assert hull.n_cells > 1
     assert np.allclose(hull.bounds, sphere.bounds, atol=1e-3)
@@ -3130,6 +3131,7 @@ def test_convex_hull_3d():
 def test_convex_hull_2d():
     circle = pv.Circle(radius=0.5)
     hull = circle.convex_hull(dimensionality=2)
+    assert hull.dimensionality == 2
     assert hull.n_cells == 1
     assert np.allclose(hull.bounds, circle.bounds, atol=1e-3)
 
@@ -3139,6 +3141,7 @@ def test_convex_hull_2d_tilted_plane():
     # when that plane is not axis-aligned.
     circle = pv.Circle(radius=0.5).rotate_vector((1, 2, 3), 40)
     hull = circle.convex_hull(dimensionality=2)
+    assert hull.dimensionality == 2
     assert hull.n_cells == 1
     assert np.allclose(hull.bounds, circle.bounds, atol=1e-3)
 
@@ -3170,6 +3173,7 @@ def test_convex_hull_dimensionality_1():
     sphere = pv.Sphere()
     if pv.vtk_version_info >= (9, 7, 0):
         hull = sphere.convex_hull(dimensionality=1)
+        assert hull.dimensionality == 1
         assert hull.n_points == 2
         assert hull.n_cells == 1
     else:
@@ -3180,20 +3184,17 @@ def test_convex_hull_dimensionality_1():
 def test_convex_hull_auto_dimensionality():
     circle = pv.Circle(radius=0.5)
     hull2d = circle.convex_hull(dimensionality='auto')
-    assert hull2d.n_cells == 1
+    assert hull2d.dimensionality == 2
 
     sphere = pv.Sphere()
     hull3d = sphere.convex_hull(dimensionality='auto')
-    assert hull3d.n_cells > 1
-
-
-# The tests below exercise the scipy fallback (`_convex_hull_scipy`) directly so they
-# run regardless of which vtk is actually installed.
+    assert hull3d.dimensionality == 3
 
 
 def test_convex_hull_scipy_3d():
     points = pv.Sphere().points
     hull = _convex_hull_scipy(points, dimensionality=3)
+    assert hull.dimensionality == 3
     assert hull.n_points > 0
     assert hull.n_cells > 1
 
@@ -3201,6 +3202,7 @@ def test_convex_hull_scipy_3d():
 def test_convex_hull_scipy_2d():
     points = pv.Circle(radius=0.5).points
     hull = _convex_hull_scipy(points, dimensionality=2)
+    assert hull.dimensionality == 2
     assert hull.n_cells == 1
 
 
