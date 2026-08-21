@@ -3,9 +3,10 @@
 
 Visualize Modal Analysis of a Pump Bracket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The following example demonstrates how to use PyVista to visualize the modal
-analysis of a pump bracket based on point arrays representing mode shapes for
-different modes of vibration.
+
+Visualize the modal analysis of a pump bracket.
+
+Based on point arrays representing mode shapes for different modes of vibration.
 
 **Background**
 Modal analysis is the study of the dynamic properties of mechanical structures

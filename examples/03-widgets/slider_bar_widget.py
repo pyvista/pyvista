@@ -4,11 +4,13 @@
 Slider Bar Widget
 ~~~~~~~~~~~~~~~~~
 
-The slider widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_slider_widget` and
-:func:`pyvista.Plotter.clear_slider_widgets` methods respectively.
-This is one of the most versatile widgets as it can control a value that can
-be used for just about anything.
+Enable and disable the slider widget to control an arbitrary value.
+
+Uses :func:`pyvista.Plotter.add_slider_widget` and
+:func:`pyvista.Plotter.clear_slider_widgets`. This is one of the most
+versatile widgets as it can control a value that can be used for just
+about anything.
+
 """
 
 # sphinx_gallery_start_ignore

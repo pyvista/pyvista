@@ -5,6 +5,7 @@ Create Connected Lines from Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Build a polyline from ordered points with :func:`pyvista.MultipleLines`.
+
 """
 
 import numpy as np

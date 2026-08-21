@@ -64,7 +64,7 @@ OPENGRAPH_PAGES = (
         id='gallery',
         # A gallery example selecting its image with ``sphinx_gallery_thumbnail_number``
         path='examples/00-load/create_circular_arc.html',
-        description='Generate arc geometry with pyvista.CircularArc()',
+        description='Generate circular arc geometry.',
         image_number=2,
     ),
     OpenGraphPage(

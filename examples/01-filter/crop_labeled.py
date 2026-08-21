@@ -4,8 +4,7 @@
 Crop Labeled ImageData
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Use :meth:`~pyvista.ImageDataFilters.crop` to crop labeled data such as segmented medical
-images.
+Use :meth:`~pyvista.ImageDataFilters.crop` to crop labeled medical image data.
 
 """
 

@@ -4,8 +4,8 @@
 Volumetric Analysis
 ~~~~~~~~~~~~~~~~~~~
 
+Calculate mass properties such as the volume or area of datasets.
 
-Calculate mass properties such as the volume or area of datasets
 """
 
 # sphinx_gallery_thumbnail_number = 4

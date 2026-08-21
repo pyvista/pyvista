@@ -5,6 +5,7 @@ Streamlines
 ~~~~~~~~~~~
 
 Integrate a vector field to generate streamlines.
+
 """
 
 # %%

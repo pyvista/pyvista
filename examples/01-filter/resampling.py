@@ -5,10 +5,12 @@ Detailed Resampling
 ~~~~~~~~~~~~~~~~~~~
 
 This example uses :func:`pyvista.DataObjectFilters.sample`.
+
 :func:`pyvista.DataSetFilters.interpolate` is similar, and the two
 methods are compared in :ref:`interpolate_sample_example`.
 
 Resample one mesh's point/cell arrays onto another mesh's nodes.
+
 """
 
 # %%

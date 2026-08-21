@@ -4,8 +4,9 @@
 Rotations
 ~~~~~~~~~
 
-Rotations of a mesh about its axes using
-:meth:`~pyvista.DataObjectFilters.rotate_x`,
+Rotate a mesh about its axes.
+
+Uses :meth:`~pyvista.DataObjectFilters.rotate_x`,
 :meth:`~pyvista.DataObjectFilters.rotate_y`, and
 :meth:`~pyvista.DataObjectFilters.rotate_z`.
 In this model, the x axis is from the left to right;

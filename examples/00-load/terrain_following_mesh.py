@@ -16,6 +16,7 @@ In this example, we demonstrate a simple way to make a 3D grid/mesh that
 follows a given topographic surface. In this example, it is important to note
 that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
+
 """
 
 import numpy as np

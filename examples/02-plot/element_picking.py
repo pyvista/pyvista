@@ -3,8 +3,8 @@
 
 Picking elements of a mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-This example demonstrates how to pick different elements on meshes using
-:func:`enable_element_picking() <pyvista.Plotter.enable_element_picking>`.
+
+Pick different elements on meshes using :func:`~pyvista.Plotter.enable_element_picking`.
 
 The different elements of a mesh are:
 

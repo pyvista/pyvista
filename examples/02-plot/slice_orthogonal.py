@@ -8,6 +8,7 @@ View three orthogonal slices from a mesh.
 
 Use the :func:`pyvista.DataObjectFilters.slice_orthogonal` filter to create these
 slices simultaneously.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
