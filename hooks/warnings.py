@@ -1,7 +1,7 @@
 """Enforce warnings style.
 
-Python script to enforce using the custom `warn_external` function instead of
-plain `warnings.warn`, to allow for dynamic stacklevel value.
+Python script to enforce using the custom ``warn_external`` function instead of
+plain ``warnings.warn``, to allow for dynamic stacklevel value.
 """
 
 from __future__ import annotations

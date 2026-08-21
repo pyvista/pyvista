@@ -37,9 +37,9 @@ if TYPE_CHECKING:
 def _add_axes_widget(
     renderers: Iterable[Renderer], *, show_axes: bool | None, theme: Theme
 ) -> None:
-    """Add the axes orientation widget to each of the renderers, as `pyvista.plot` does.
+    """Add the axes orientation widget to each of the renderers, as :func:`pyvista.plot` does.
 
-    `show_axes` defaults to the theme, which also decides whether the widget drawn is
+    ``show_axes`` defaults to the theme, which also decides whether the widget drawn is
     box axes or the plain orientation widget.
     """
     if show_axes is None:
@@ -50,12 +50,12 @@ def _add_axes_widget(
 
 
 def _set_background(pl: Plotter, background: ColorLike | None) -> None:
-    """Set the background `pyvista.plot` and `pyvista.plot_compare` take.
+    """Set the background :func:`pyvista.plot` and :func:`pyvista.plot_compare` take.
 
-    A color is set as the background of every renderer at once, since `set_background`
+    A color is set as the background of every renderer at once, since ``set_background``
     is a property of the whole collection of them rather than of any one. A path to an
     image file is shown as a background image instead, behind every subplot alike for
-    the same reason, since `set_background` only takes a color and raises otherwise.
+    the same reason, since ``set_background`` only takes a color and raises otherwise.
     """
     try:
         pl.set_background(background)  # type: ignore[arg-type]
@@ -78,12 +78,12 @@ def _apply_render_options(
     parallel_projection: bool,
     ssao: bool,
 ) -> None:
-    """Apply the rendering options `pyvista.plot` takes, in the terms it takes them.
+    """Apply the rendering options :func:`pyvista.plot` takes, in the terms it takes them.
 
-    `anti_aliasing` is a property of the render window, so it is applied once to the
-    plotter. `eye_dome_lighting`, `parallel_projection` and `ssao` are each a
-    renderer's own, so they are applied to every one of `renderers`; a plot with a
-    single renderer gives `[pl.renderer]`.
+    ``anti_aliasing`` is a property of the render window, so it is applied once to the
+    plotter. ``eye_dome_lighting``, ``parallel_projection`` and ``ssao`` are each a
+    renderer's own, so they are applied to every one of ``renderers``; a plot with a
+    single renderer gives ``[pl.renderer]``.
     """
     if anti_aliasing is None:
         pass

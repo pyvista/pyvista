@@ -2150,7 +2150,7 @@ class PlanesAssembly(_XYZAssembly):
     def label_edge(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Edge on which to position each plane's label.
 
-        Edge can be ``'top'``,``'bottom'``,``'right'``, or ``'left'``, and can be
+        Edge can be ``'top'``, ``'bottom'``, ``'right'``, or ``'left'``, and can be
         set independently for each plane or to the same edge for all planes.
 
         The edge is relative to each plane's local ``i`` and ``j`` coordinates.

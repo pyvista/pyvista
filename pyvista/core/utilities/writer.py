@@ -181,7 +181,7 @@ class BaseWriter(_FileIOBase):
         self._written_path = Path(path)
 
     def _execute_before_write(self) -> None:
-        """Execute code before calling `write()`.
+        """Execute code before calling ``write()``.
 
         Subclasses may optionally define this, e.g. to issue warnings.
         """

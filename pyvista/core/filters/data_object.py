@@ -4501,7 +4501,7 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock
-            Dataset with `cell_data` containing the ``"VertexCount"``,
+            Dataset with ``cell_data`` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.  Return type matches input.
 
@@ -4923,11 +4923,11 @@ class DataObjectFilters:
     ):
         """Resample array data from a passed mesh onto this mesh.
 
-        For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
-        the points of `mesh1`.  This function interpolates within an
+        For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
+        the points of ``mesh1``.  This function interpolates within an
         enclosing cell.  This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
-        weighting for nearby points.  If there is cell topology, `sample` is
+        weighting for nearby points.  If there is cell topology, ``sample`` is
         usually preferred.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled

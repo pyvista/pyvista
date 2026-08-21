@@ -306,7 +306,7 @@ def _download_archive_file_or_folder(filename: str, target_file: str | None = No
     """Download an archive.
 
     This function is similar to _download_archive, but also allows
-    setting `target_file` as a folder. The target folder path must be
+    setting ``target_file`` as a folder. The target folder path must be
     fully specified relative to the root path of the archive.
 
     Set ``target_file=''`` (empty string) to download the entire

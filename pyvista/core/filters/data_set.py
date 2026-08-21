@@ -3687,7 +3687,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """Generate evenly spaced streamlines on a 2D dataset.
 
         This filter only supports datasets that lie on the xy plane, i.e. ``z=0``.
-        Particular care must be used to choose a `separating_distance`
+        Particular care must be used to choose a ``separating_distance``
         that do not result in too much memory being utilized.  The
         default unit is cell length.
 
@@ -7702,7 +7702,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         .. note::
             This filter does not discard internal surfaces, due, for instance, to
             intersecting meshes. Instead, the intersection will be considered as
-            background which may produce unexpected results. See `Examples`.
+            background which may produce unexpected results. See Examples.
 
         Parameters
         ----------
@@ -8517,7 +8517,7 @@ def _swap_axes(vectors, values):
     axis is +Y, second is +X, and third is +Z. This function will swap the first two
     axes so that the order is XYZ instead of YXZ.
 
-    This function is intended to be used by `align_xyz` and is only exposed as a
+    This function is intended to be used by ``align_xyz`` and is only exposed as a
     module-level function for testing purposes.
     """
 

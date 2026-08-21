@@ -1270,12 +1270,12 @@ def _validate_color_sequence(
 ) -> tuple[Color, ...]:
     """Validate a color sequence.
 
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
+    If ``n_colors`` is specified, the output will have ``n`` colors. For single-color
+    inputs, the color is copied and a sequence of ``n`` identical colors is returned.
     For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
+    match ``n_colors``.
 
-    If `n_colors` is None, no broadcasting or length-checking is performed.
+    If ``n_colors`` is None, no broadcasting or length-checking is performed.
     """
     from pyvista.plotting.colors import Color  # noqa: PLC0415
 

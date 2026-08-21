@@ -84,7 +84,7 @@ def voxelize(  # noqa: PLR0917
     fit_bounds : bool, default: False
         If enabled, the end bound of the input mesh is used as the end bound of the
         voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if `enclosed` is enabled.
+        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
 
     Returns
     -------
@@ -171,7 +171,7 @@ def _voxelize_legacy(
 ):
     """Voxelize mesh to UnstructuredGrid.
 
-    The public `voxelize` function is deprecated but we need to keep it for
+    The public :func:`~pyvista.voxelize` function is deprecated but we need to keep it for
     generating the PyVista logo.
 
     """
@@ -294,7 +294,7 @@ def voxelize_volume(  # noqa: PLR0917
     fit_bounds : bool, default: False
         If enabled, the end bound of the input mesh is used as the end bound of the
         voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if `enclosed` is enabled.
+        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
 
     Returns
     -------

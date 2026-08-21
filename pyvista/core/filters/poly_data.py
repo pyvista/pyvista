@@ -3134,7 +3134,7 @@ class PolyDataFilters(DataSetFilters):
             are consistent with this implicit definition, consider also using
             :meth:`~pyvista.PolyDataFilters.flip_faces` or re-computing normals with
             :meth:`~pyvista.PolyDataFilters.compute_normals` and enabling the
-            `flip_normals` option.
+            ``flip_normals`` option.
 
         .. versionadded:: 0.45
 

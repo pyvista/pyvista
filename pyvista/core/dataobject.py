@@ -909,7 +909,7 @@ class DataObject(
     def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
         """Support pickle by serializing the VTK object data.
 
-        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT`
+        The format of the serialized VTK object data depends on ``pyvista.PICKLE_FORMAT``
         (case-insensitive).
         - If ``'xml'``, the data is serialized as an XML-formatted string.
         - If ``'legacy'``, the data is serialized to bytes in VTK's binary format.

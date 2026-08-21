@@ -327,7 +327,7 @@ def check_integer(
         Number or array to check.
 
     strict : bool, default: False
-        If ``True``, the array's data must be a subtype of `int` or
+        If ``True``, the array's data must be a subtype of ``int`` or
         ``np.integer``. Otherwise, floats are allowed but must be
         whole numbers.
 

@@ -709,7 +709,7 @@ class _CellTypeMeta(EnumMeta):
         Returns
         -------
         dict
-            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            Dictionary with cell dimensions ``0``, ``1``, ``2``, ``3`` as keys, and frozen sets as
             values with the respective :class:`CellType` members.
 
         See Also
@@ -961,19 +961,19 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             the cell.
 
         _variable_points: bool, optional
-            Override the value shown for this cell type's `Points` badge. May be
+            Override the value shown for this cell type's ``Points`` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_edges: bool, optional
-            Override the value shown for this cell type's `Edges` badge. May be
+            Override the value shown for this cell type's ``Edges`` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_faces: bool, optional
-            Override the value shown for this cell type's `Faces` badge. May be
+            Override the value shown for this cell type's ``Faces`` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.

@@ -764,7 +764,7 @@ def test_sample():
     data_to_probe = examples.load_uniform()
 
     def sample_test(**kwargs):
-        """Test `sample` with kwargs."""
+        """Test ``sample`` with kwargs."""
         result = mesh.sample(data_to_probe, **kwargs)
         name = 'Spatial Point Data'
         assert name in result.array_names
