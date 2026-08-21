@@ -55,7 +55,7 @@ reader will not follow either.
 | Documentation | Directives, examples, and pages that actually render              |
 | Naming        | Does the name say what the thing is, without being long?          |
 | Consistency   | Does it match the surrounding module?                             |
-| Comments      | Do they explain why, rather than what?                            |
+| Comments      | Do they explain why, rather than what? Less is more               |
 | Style         | Automated. Prefix anything left over with `nit:`.                 |
 
 Tests and complexity lead because they are what this repository sends back most often.
@@ -91,6 +91,14 @@ new or changed, with the right version.
 **Reuse.** Constants, `Literal` aliases, capability probes, and test guards should be
 defined once and imported. A re-derived version check where a shared constant exists is a
 certain comment.
+
+**Comments and docstrings that narrate the PR instead of describing the code.** Less is
+more: challenge anything that could be deleted without losing information. Anything that
+reads as a debugging note or a description of a fix -- "temporary", "workaround", "now
+we", "previously", a reference to what the code used to do -- is a finding. Judge each
+comment and docstring against the full diff relative to `main`, not against the commit
+that introduced it: it should describe the code as it stands, not the story of how it got
+there.
 
 **Deprecation discipline.** Nothing pre-existing is removed or silently changed, private
 helpers included. Watch for a name being changed for the second time; a rename followed
