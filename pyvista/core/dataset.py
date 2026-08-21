@@ -3630,7 +3630,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if self.n_cells == 0:
             return set()
-        if hasattr(self, 'dimensions') and not self._has_hidden_cells:
+        has_hidden_cells = self._has_hidden_cells
+        if hasattr(self, 'dimensions') and not has_hidden_cells:
             # Fast path for dimensioned grids without hidden/ghost cells
             cell_dimension = next(iter(self._distinct_cell_dimensions))
             if isinstance(self, pv.Grid):
@@ -3660,7 +3661,13 @@ class DataSet(DataSetFilters, DataObject):
                 self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
             )
             types_array = np.unique(grid.celltypes)
-        return {pv.CellType(cell_num) for cell_num in types_array}
+        distinct_types = {pv.CellType(cell_num) for cell_num in types_array}
+        if has_hidden_cells:
+            # Casting to an unstructured grid (or VTK's own type-collection methods, depending
+            # on version) doesn't reliably preserve hidden cells as `EMPTY_CELL`, so add it
+            # explicitly whenever the ghost-cell array marks any cells as hidden.
+            distinct_types.add(pv.CellType.EMPTY_CELL)
+        return distinct_types
 
     @property
     def has_nonlinear_cells(self) -> bool:  # numpydoc ignore=RT01
