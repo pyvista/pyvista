@@ -8791,9 +8791,6 @@ def download_whole_body_ct_female(
 
     .. seealso::
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this dataset.
-
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             See this dataset in the Dataset Gallery for more info.
 

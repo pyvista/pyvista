@@ -746,6 +746,16 @@ def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa:
     this page" navbar -- the same problem fixed above for numpydoc's own "See
     Also" section by not wrapping it in one. Converting it to a section here lets
     hoist_docstring_sections below lift it to page level the same way.
+
+    A literal ``.. seealso::`` is written wherever the docstring author put it --
+    usually right before References/Examples -- unlike numpydoc's own "See Also",
+    which _DOCSTRING_TEMPLATE above always renders last. Reposition the promoted
+    section to match: directly before "Used In" if present, otherwise at the end.
+
+    "Used In" isn't necessarily a sibling: nothing closes off the docstring's last
+    heading before its directive runs, so it lands nested inside that heading's
+    section instead, and only reads as a sibling once hoist_docstring_sections
+    below extracts every section it finds. Search at any depth to still find it.
     """
     for admonition in list(doctree.findall(addnodes.seealso)):
         if not _is_nested_desc(admonition):
@@ -754,7 +764,26 @@ def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa:
         section += nodes.title(text='See Also')
         section.extend(admonition.children)
         doctree.note_implicit_target(section, section)
+
+        container = admonition.parent
+        while container is not None and not isinstance(container, addnodes.desc_content):
+            container = container.parent
+
         admonition.replace_self(section)
+        section.parent.remove(section)
+
+        used_in = (
+            next(
+                (s for s in container.findall(nodes.section) if s[0].astext() == 'Used In'),
+                None,
+            )
+            if container is not None
+            else None
+        )
+        if used_in is not None:
+            used_in.parent.insert(used_in.parent.index(used_in), section)
+        else:
+            (container if container is not None else admonition.parent).append(section)
 
 
 def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
