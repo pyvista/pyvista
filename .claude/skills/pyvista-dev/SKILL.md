@@ -67,7 +67,7 @@ Every function and class gets a docstring, including small private helpers -- a 
 summary is enough when there is nothing more to say. Only the full numpydoc sections
 (`Parameters`, `Returns`, examples, ...) are reserved for the public API.
 
-`numpydoc: ignore=RT01` (no `Returns` section) is fine for a simple property getter or
+`numpydoc ignore=RT01` (no `Returns` section) is fine for a simple property getter or
 setter, where the summary line already says what comes back. A function whose return
 type or meaning is not obvious from the name and summary needs a real `Returns` section
 instead of the ignore, however small the function is.
