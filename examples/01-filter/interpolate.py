@@ -66,9 +66,8 @@ grid.dimensions = (60, 75, 100)
 # %%
 dargs = dict(cmap='coolwarm', clim=[0, 300], scalars='temperature (C)')
 cpos = pv.CameraPosition(
-    # whole-unit precision here (not 4 sig figs): these are large UTM-like coordinates
-    position=(364281.0, 4285326.0, 14093.0),
-    focal_point=(337749.0, 4261154.0, -637.0),
+    position=(364300.0, 4285000.0, 14090.0),
+    focal_point=(337700.0, 4261000.0, -637.1),
     viewup=(-0.2963, -0.2384, 0.9249),
 )
 

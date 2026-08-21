@@ -69,9 +69,8 @@ mesh
 
 # %%
 cpos = pv.CameraPosition(
-    # whole-unit precision here (not 4 sig figs): these are large UTM-like coordinates
-    position=(1826737.0, 5655837.0, 4677.0),
-    focal_point=(1821066.0, 5649249.0, 943.0),
+    position=(1827000.0, 5656000.0, 4677.0),
+    focal_point=(1821000.0, 5649000.0, 943.1),
     viewup=(-0.2798, -0.2797, 0.9184),
 )
 
