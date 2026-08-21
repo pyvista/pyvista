@@ -10,14 +10,11 @@ Uses the downloadable datasets
 :func:`~pyvista.examples.downloads.download_whole_body_ct_female` and
 :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
-Uses the downloadable datasets
-:func:`~pyvista.examples.downloads.download_whole_body_ct_female` and
-:func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
-
 These datasets include labels for 117 anatomical structures. In this example,
 the labels are grouped by filtering the list of labels and coloring the
 labels with the recommended RGB values used by the 3DSlicer
 `TotalSegmentator Extension <https://github.com/lassoan/SlicerTotalSegmentator>`_.
+
 """
 
 import pyvista as pv

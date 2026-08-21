@@ -8,7 +8,6 @@ Color a point cloud by its distance to the nearest neighbors in a target cloud.
 
 Uses :func:`pyvista.DataSet.find_closest_point`.
 
-Uses :func:`pyvista.DataSet.find_closest_point`.
 """
 
 import numpy as np

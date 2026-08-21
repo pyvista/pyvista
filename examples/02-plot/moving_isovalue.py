@@ -10,9 +10,6 @@ Uses :func:`~pyvista.examples.downloads.download_brain` and
 :meth:`~pyvista.Plotter.open_gif`/:meth:`~pyvista.Plotter.write_frame` to
 create the animation.
 
-Uses :func:`~pyvista.examples.downloads.download_brain` and
-:meth:`~pyvista.Plotter.open_gif`/:meth:`~pyvista.Plotter.write_frame` to
-create the animation.
 """
 
 import numpy as np

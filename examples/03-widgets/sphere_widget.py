@@ -11,16 +11,12 @@ Uses :func:`pyvista.Plotter.add_sphere_widget` and
 widget as it can control vertex location that can be used to control or
 update the location of just about anything.
 
-Uses :func:`pyvista.Plotter.add_sphere_widget` and
-:func:`pyvista.Plotter.clear_sphere_widgets`. This is a very versatile
-widget as it can control vertex location that can be used to control or
-update the location of just about anything.
-
 We don't have any convenient helper methods that utilize this widget out of
 the box, but we have added a lot of ways to use this widget so that you can
 easily add several widgets to a scene.
 
 Let's look at a few use cases that all update a surface mesh.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

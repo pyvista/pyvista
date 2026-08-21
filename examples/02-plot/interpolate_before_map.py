@@ -9,14 +9,12 @@ The ``interpolate_before_map`` argument affects how scalar data is colored.
 Set via the :func:`add_mesh <pyvista.Plotter.add_mesh>` method. The effect
 can vary depending on the dataset's topology and the chosen colormap.
 
-Set via the :func:`add_mesh <pyvista.Plotter.add_mesh>` method. The effect
-can vary depending on the dataset's topology and the chosen colormap.
-
 This example serves to demo the difference and why we've chosen to enable this
 by default.
 
 For more details, please see `What is InterpolateScalarsBeforeMapping in VTK?
 <https://www.kitware.com/what-is-interpolatescalarsbeforemapping-in-vtk/>`_
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

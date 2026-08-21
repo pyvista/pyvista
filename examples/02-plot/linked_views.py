@@ -10,9 +10,6 @@ Camera movements in one view are synchronized with other views. This is
 particularly useful when comparing different versions or representations of
 the same model.
 
-Camera movements in one view are synchronized with other views. This is
-particularly useful when comparing different versions or representations of
-the same model.
 """
 
 import numpy as np

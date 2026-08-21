@@ -11,15 +11,11 @@ Uses :func:`pyvista.Plotter.add_spline_widget` and
 interactively create a poly line (spline) through a scene and use that
 spline.
 
-Uses :func:`pyvista.Plotter.add_spline_widget` and
-:func:`pyvista.Plotter.clear_spline_widgets`. This widget allows users to
-interactively create a poly line (spline) through a scene and use that
-spline.
-
 A common task with splines is to slice a volumetric dataset using an irregular
 path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.DataObjectFilters.slice_along_line` filter named
 :func:`pyvista.Plotter.add_mesh_slice_spline`.
+
 """
 
 import numpy as np

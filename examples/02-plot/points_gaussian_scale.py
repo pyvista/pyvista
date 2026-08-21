@@ -8,7 +8,6 @@ Plot spheres using the ``'points_gaussian'`` style, scaled by a dynamic radius.
 
 Uses :func:`~pyvista.Plotter.add_mesh`.
 
-Uses :func:`~pyvista.Plotter.add_mesh`.
 """
 
 import numpy as np

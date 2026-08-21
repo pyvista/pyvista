@@ -8,7 +8,6 @@ Apply :meth:`~pyvista.DataSetFilters.warp_by_vector` to a sphere mesh.
 
 The sphere has 3D displacement vectors defined at each node.
 
-The sphere has 3D displacement vectors defined at each node.
 """
 
 # %%

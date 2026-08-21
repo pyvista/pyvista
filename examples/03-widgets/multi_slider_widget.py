@@ -9,12 +9,10 @@ Track multiple slider widgets updating a single mesh.
 Uses :func:`~pyvista.Plotter.add_slider_widget` with a class-based
 callback.
 
-Uses :func:`~pyvista.Plotter.add_slider_widget` with a class-based
-callback.
-
 In this example we simply change a few parameters for the
 :func:`pyvista.Sphere` method, but this could easily be applied to any
 mesh-generating/altering code.
+
 """
 
 # sphinx_gallery_start_ignore

@@ -9,8 +9,6 @@ Contour an implicit gyroid field into a periodic surface.
 Uses a field stored on :class:`pyvista.ImageData` with
 :func:`pyvista.DataSetFilters.contour`.
 
-Uses a field stored on :class:`pyvista.ImageData` with
-:func:`pyvista.DataSetFilters.contour`.
 """
 
 import numpy as np

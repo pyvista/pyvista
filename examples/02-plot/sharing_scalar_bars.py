@@ -8,7 +8,6 @@ Share scalar bars among plotted arrays, or use a unique bar for each.
 
 Uses :meth:`~pyvista.Plotter.subplot` and ``show``.
 
-Uses :meth:`~pyvista.Plotter.subplot` and ``show``.
 """
 
 # sphinx_gallery_thumbnail_number = 3

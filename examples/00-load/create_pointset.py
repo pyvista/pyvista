@@ -8,10 +8,9 @@ A :class:`~pyvista.PointSet` explicitly stores point arrays to represent geometr
 
 This class is useful for improving the performance of filters on point clouds.
 
-This class is useful for improving the performance of filters on point clouds.
-
 This example shows the performance improvement when clipping using the
 :func:`pyvista.DataObjectFilters.clip` filter on a :class:`pyvista.PointSet`.
+
 """
 
 import time

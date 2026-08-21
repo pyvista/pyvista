@@ -8,7 +8,6 @@ Walk through the different capabilities of scalar bars.
 
 Shows how a user can customize scalar bars.
 
-Shows how a user can customize scalar bars.
 """
 
 # sphinx_gallery_thumbnail_number = 2

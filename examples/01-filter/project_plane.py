@@ -9,8 +9,6 @@ Project a :class:`~pyvista.PolyData` surface or pointset to a plane.
 Uses :meth:`~pyvista.PolyDataFilters.project_points_to_plane` with a normal
 and origin.
 
-Uses :meth:`~pyvista.PolyDataFilters.project_points_to_plane` with a normal
-and origin.
 """
 
 # sphinx_gallery_thumbnail_number = 2

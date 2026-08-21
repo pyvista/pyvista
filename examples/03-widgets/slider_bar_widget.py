@@ -11,10 +11,6 @@ Uses :func:`pyvista.Plotter.add_slider_widget` and
 versatile widgets as it can control a value that can be used for just
 about anything.
 
-Uses :func:`pyvista.Plotter.add_slider_widget` and
-:func:`pyvista.Plotter.clear_slider_widgets`. This is one of the most
-versatile widgets as it can control a value that can be used for just
-about anything.
 """
 
 # sphinx_gallery_start_ignore

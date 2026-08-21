@@ -8,7 +8,6 @@ Show the edges of all geometries within a mesh.
 
 Uses the :attr:`~pyvista.Property.show_edges` property.
 
-Uses the :attr:`~pyvista.Property.show_edges` property.
 """
 
 # %%

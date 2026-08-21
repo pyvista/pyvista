@@ -10,10 +10,6 @@ It darkens each pixel based on how much nearer its neighbors are in screen
 space, which makes depth ordering readable even on flat-shaded geometry or
 unshaded point clouds. To learn more, see `this blog post`_.
 
-It darkens each pixel based on how much nearer its neighbors are in screen
-space, which makes depth ordering readable even on flat-shaded geometry or
-unshaded point clouds. To learn more, see `this blog post`_.
-
 .. _this blog post: https://www.kitware.com/eye-dome-lighting-a-non-photorealistic-shading-technique/
 
 EDL is most useful when standard Lambertian shading is insufficient, for
@@ -23,6 +19,7 @@ example:
 * Dense or intertwined geometry where overlapping surfaces collapse into a
   visually flat mass.
 * Noisy or raw-scanned meshes with many features at similar depths.
+
 """
 
 # %%

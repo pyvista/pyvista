@@ -8,7 +8,6 @@ Extract the cells inside or outside a closed surface.
 
 Uses :meth:`~pyvista.DataSetFilters.select_interior_points`.
 
-Uses :meth:`~pyvista.DataSetFilters.select_interior_points`.
 """
 
 # %%

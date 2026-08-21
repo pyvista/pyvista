@@ -8,7 +8,6 @@ Single line segment ray tracing for :class:`~pyvista.PolyData` objects.
 
 Uses :meth:`~pyvista.PolyDataFilters.ray_trace`.
 
-Uses :meth:`~pyvista.PolyDataFilters.ray_trace`.
 """
 
 import pyvista as pv

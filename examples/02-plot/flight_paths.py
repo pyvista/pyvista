@@ -8,7 +8,6 @@ Connect cities with elevated circular arcs to create a simple route map.
 
 Uses :func:`pyvista.CircularArc`.
 
-Uses :func:`pyvista.CircularArc`.
 """
 
 import numpy as np

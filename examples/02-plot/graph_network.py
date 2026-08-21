@@ -8,7 +8,6 @@ Render a node-edge network with labels and weighted edges.
 
 Uses :func:`pyvista.line_segments_from_points`.
 
-Uses :func:`pyvista.line_segments_from_points`.
 """
 
 import numpy as np

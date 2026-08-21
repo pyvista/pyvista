@@ -13,12 +13,6 @@ In this model, the x axis is from the left to right;
 the y axis is from bottom to top; and the z axis emerges from the
 image. The camera location is the same in all four images.
 
-Uses :meth:`~pyvista.DataObjectFilters.rotate_x`,
-:meth:`~pyvista.DataObjectFilters.rotate_y`, and
-:meth:`~pyvista.DataObjectFilters.rotate_z`.
-In this model, the x axis is from the left to right;
-the y axis is from bottom to top; and the z axis emerges from the
-image. The camera location is the same in all four images.
 """
 
 # sphinx_gallery_thumbnail_number = 3

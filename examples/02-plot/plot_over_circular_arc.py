@@ -8,7 +8,6 @@ Interpolate the scalars of a dataset over a circular arc.
 
 Uses :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 
-Uses :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 """
 
 # sphinx_gallery_thumbnail_number = 2

@@ -8,7 +8,6 @@ Plot aerial imagery from a GeoTIFF on top of a topography mesh.
 
 Similar to the :ref:`texture_example` example.
 
-Similar to the :ref:`texture_example` example.
 """
 
 # sphinx_gallery_thumbnail_number = 4

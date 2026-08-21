@@ -11,14 +11,10 @@ generated from the `Thermal Management Tutorial: CHT Analysis of an
 Electronics Box
 <https://www.simscale.com/docs/tutorials/thermal-management-cht-analysis-electronics-box/>`_.
 
-From the `SimScale Project Library <https://www.simscale.com/projects/>`_,
-generated from the `Thermal Management Tutorial: CHT Analysis of an
-Electronics Box
-<https://www.simscale.com/docs/tutorials/thermal-management-cht-analysis-electronics-box/>`_.
-
 This example dataset was read using the :class:`pyvista.POpenFOAMReader` and
 post processed according to this `README.md
 <https://github.com/pyvista/data/blob/master/Data/fvm/cooling_electronics/README.md>`_.
+
 """
 
 import numpy as np

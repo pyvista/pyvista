@@ -8,7 +8,6 @@ Explore different cases where a mesh may not be considered valid.
 
 As defined by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 
-As defined by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 """
 
 # sphinx_gallery_thumbnail_number = 5

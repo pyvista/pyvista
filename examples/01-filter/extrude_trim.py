@@ -8,7 +8,6 @@ Extrude a :class:`~pyvista.PolyData` with a :func:`pyvista.Plane`.
 
 Uses :func:`extrude_trim() <pyvista.PolyDataFilters.extrude_trim>`.
 
-Uses :func:`extrude_trim() <pyvista.PolyDataFilters.extrude_trim>`.
 """
 
 import pyvista as pv

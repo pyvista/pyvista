@@ -8,14 +8,13 @@ Apply a Fast Fourier Transform (FFT) to a :class:`~pyvista.ImageData`.
 
 Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
-Uses the :func:`pyvista.ImageDataFilters.fft` filter.
-
 Here, we demonstrate FFT usage by denoising an image, effectively removing any
 "high frequency" content by performing a `low pass filter
 <https://en.wikipedia.org/wiki/Low-pass_filter>`_.
 
 This example was inspired by `Image denoising by FFT
 <https://scipy-lectures.org/intro/scipy/auto_examples/solutions/plot_fft_image_denoise.html>`_.
+
 """
 
 import numpy as np

@@ -12,13 +12,8 @@ provide a custom callback method to utilize that plane. Considering that
 planes are most commonly used for clipping and slicing meshes, we have
 included two helper methods for doing those tasks.
 
-Uses :func:`pyvista.Plotter.add_plane_widget` and
-:func:`pyvista.Plotter.clear_plane_widgets`. As with all widgets, you must
-provide a custom callback method to utilize that plane. Considering that
-planes are most commonly used for clipping and slicing meshes, we have
-included two helper methods for doing those tasks.
-
 Let's use a plane to clip a mesh:
+
 """
 
 # sphinx_gallery_start_ignore

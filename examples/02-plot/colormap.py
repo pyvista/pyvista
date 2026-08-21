@@ -8,7 +8,6 @@ Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalars.
 
 Works with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 
-Works with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 """
 
 from matplotlib.colors import LinearSegmentedColormap

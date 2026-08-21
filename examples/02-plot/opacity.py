@@ -8,7 +8,6 @@ Plot a mesh's scalar array with an opacity transfer function or mapping.
 
 Uses :class:`~pyvista.opacity_transfer_function`.
 
-Uses :class:`~pyvista.opacity_transfer_function`.
 """
 
 # sphinx_gallery_thumbnail_number = 2

@@ -9,8 +9,6 @@ Create an animated GIF by generating glyphs from a scalar field.
 Uses :func:`glyph() <pyvista.DataSetFilters.glyph>` with
 :func:`pyvista.Sphere`.
 
-Uses :func:`glyph() <pyvista.DataSetFilters.glyph>` with
-:func:`pyvista.Sphere`.
 """
 
 # sphinx_gallery_thumbnail_number = 1

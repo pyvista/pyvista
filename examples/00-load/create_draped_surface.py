@@ -13,8 +13,7 @@ into how to create a 2.5D sectional mesh from typical data in those use cases.
 For this example, we have an instrument path on the ground surface (the line)
 and a 2D array of the collected image under that line.
 
-Originally posted in `this support issue
-<https://github.com/pyvista/pyvista-support/issues/135>`_.
+Originally posted in `this support issue <https://github.com/pyvista/pyvista-support/issues/135>`_.
 
 Suppose you have some GPR data (or anything that produces a line of data with
 values at depth). With these data, you'll have a 2D image/array of your data
@@ -32,6 +31,7 @@ have are technically shifted up and we have some NaN filler above the surface
 - its weird and just ignore it. You'll typically have a more uniform looking
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
+
 """
 
 import matplotlib.pyplot as plt
