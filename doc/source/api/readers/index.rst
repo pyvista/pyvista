@@ -165,6 +165,50 @@ either a callable or a :class:`pyvista.BaseReader` subclass:
    ".myformat" = "my_package:read_my_format"
    ".myotherformat" = "my_package:MyOtherReader"
 
+**Replacing a built-in reader**
+
+An entry point in the ``pyvista.readers`` group may only claim an
+extension PyVista does not already read.  Claiming one it does
+(``.vtp``, ``.stl``, ``.frd``) would silently change what every
+:func:`pyvista.read` call in the environment returns, so PyVista
+refuses and raises :class:`ValueError` naming the package, the built-in
+reader, and this section.
+
+To replace a built-in reader on purpose, declare the entry point in the
+``pyvista.readers.override`` group instead.  The two groups are
+identical except that the override group is permitted to take an
+extension PyVista ships a reader for, and does so silently:
+
+.. code-block:: toml
+
+   [project.entry-points."pyvista.readers.override"]
+   ".frd" = "my_package:MyFRDReader"
+
+This is the entry-point equivalent of ``override=True`` on
+:func:`pyvista.register_reader`.  Both groups accept both forms, a
+callable or a :class:`pyvista.BaseReader` subclass.
+
+Declaring an override for an extension PyVista does *not* currently
+read is allowed and silent.  It costs nothing and keeps the package
+working if a later PyVista release adds a reader for that extension.
+
+Because an override changes the meaning of a format the user did not
+choose, it is visible from :func:`pyvista.registered_readers`: the
+record for the extension reports ``override=True`` along with the
+``source`` that claimed it.  That is the first call to make when a
+built-in format reads differently than expected.
+
+.. code-block:: python
+
+    import pyvista as pv
+
+    taken = [
+        (r.extension, r.source)
+        for r in pv.registered_readers()
+        if r.override
+    ]
+    # [('.frd', 'my_package:MyFRDReader')]
+
 **Remote URI support**
 
 When :func:`pyvista.read` is given a remote URI (``https://``,

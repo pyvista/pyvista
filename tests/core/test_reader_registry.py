@@ -800,20 +800,201 @@ def test_registered_class_reports_its_extensions():
     assert pv.XMLPolyDataReader.extensions == ('.vtp',)
 
 
-def test_entry_point_shadowing_builtin_warns(tmp_path, monkeypatch):
-    """An entry point may take over a built-in extension, but not quietly.
+# ---------------------------------------------------------------------------
+# The ``pyvista.readers.override`` entry-point group
+# ---------------------------------------------------------------------------
 
-    ``register_reader`` raises on this without ``override=True``; an entry
-    point cannot pass one, so the shadowing is announced instead.
+
+def _install_plugin(monkeypatch, *, readers=(), overrides=()):
+    """Fake an installed distribution declaring reader entry points.
+
+    Each of *readers* and *overrides* is a sequence of
+    ``(extension, module_name, attribute, object)``. The patched
+    ``entry_points`` honors its ``group`` argument, which is what lets a
+    test distinguish an ordinary declaration from a declared override.
     """
-    ep, module = _fake_entry_point('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)
-    monkeypatch.setitem(sys.modules, 'shadow_plugin', module)
-    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    groups = {_reg_mod.READER_GROUP: [], _reg_mod.READER_OVERRIDE_GROUP: []}
+    for group, specs in (
+        (_reg_mod.READER_GROUP, readers),
+        (_reg_mod.READER_OVERRIDE_GROUP, overrides),
+    ):
+        for ext, module_name, attr, obj in specs:
+            monkeypatch.setitem(sys.modules, module_name, SimpleNamespace(**{attr: obj}))
+            groups[group].append(EntryPoint(name=ext, value=f'{module_name}:{attr}', group=group))
+
+    monkeypatch.setattr(
+        'pyvista.core.utilities.reader_registry.entry_points',
+        lambda group: groups.get(group, []),
+    )
     _reg_mod._entry_points_loaded = False
     _reg_mod._pending_ext_readers.clear()
+    _reg_mod._override_ext_readers.clear()
 
+
+def test_undeclared_entry_point_shadowing_builtin_raises(tmp_path, monkeypatch):
+    """The ordinary group may not take an extension PyVista already reads."""
+    _install_plugin(monkeypatch, readers=[('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)])
     mesh_file = tmp_path / 'mesh.vtp'
     pv.Sphere().save(mesh_file)
-    with pytest.warns(UserWarning, match='overrides the built-in reader'):
+
+    with pytest.raises(ValueError, match=re.escape('already reads ".vtp" with XMLPolyDataReader')):
+        pv.read(mesh_file)
+
+
+def test_undeclared_override_error_names_everything_needed(tmp_path, monkeypatch):
+    """The error has to be actionable without reading PyVista's source."""
+    _install_plugin(monkeypatch, readers=[('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)])
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with pytest.raises(ValueError, match='refuses rather than guess') as excinfo:
+        pv.get_reader(mesh_file)
+    message = str(excinfo.value)
+    assert 'shadow_plugin' in message  # the package
+    assert '.vtp' in message  # the extension
+    assert 'XMLPolyDataReader' in message  # the reader it would have shadowed
+    assert 'pyvista.readers.override' in message  # the supported route
+    assert 'shadow_plugin:PluginReader' in message  # a copy-pasteable declaration
+
+
+def test_undeclared_override_raises_every_time(tmp_path, monkeypatch):
+    """The refusal is idempotent: it must not decay into a silent fallback."""
+    _install_plugin(monkeypatch, readers=[('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)])
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    for _ in range(3):
+        with pytest.raises(ValueError, match='refuses rather than guess'):
+            pv.read(mesh_file)
+
+
+def test_declared_override_replaces_builtin_silently(tmp_path, monkeypatch):
+    """Declaring the intent in metadata is the whole point: no warning."""
+    _install_plugin(
+        monkeypatch, overrides=[('.vtp', 'override_plugin', 'PluginReader', _MockReader)]
+    )
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
         reader = pv.get_reader(mesh_file)
+        mesh = pv.read(mesh_file)
     assert isinstance(reader, _MockReader)
+    assert isinstance(mesh, pv.PolyData)
+
+
+def test_declared_override_accepts_a_callable_too(tmp_path, monkeypatch):
+    """Both groups take both forms; the loading path is not forked."""
+    _install_plugin(
+        monkeypatch, overrides=[('.vtp', 'override_func_plugin', 'read', _mock_reader)]
+    )
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(pv.read(mesh_file), pv.PolyData)
+    assert _reg_mod._custom_ext_readers['.vtp'] is _mock_reader
+
+
+def test_ordinary_group_accepts_a_reader_class_for_a_new_extension(tmp_path, monkeypatch):
+    """The rule is about built-in collisions, not about which group or form."""
+    _install_plugin(
+        monkeypatch, readers=[('.plainfmt', 'plain_plugin', 'PluginReader', _MockReader)]
+    )
+    path = tmp_path / 'data.plainfmt'
+    path.touch()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(pv.get_reader(path), _MockReader)
+
+
+def test_declared_override_on_a_new_extension_is_allowed_silently(tmp_path, monkeypatch):
+    """Declaring an override for a format PyVista does not ship is harmless.
+
+    It future-proofs the package: if PyVista later adds a reader for the
+    extension, the plugin keeps working instead of breaking on upgrade.
+    Requiring the package to know which extensions PyVista serves would
+    couple it to a moving target.
+    """
+    _install_plugin(
+        monkeypatch, overrides=[('.futurefmt', 'future_plugin', 'PluginReader', _MockReader)]
+    )
+    path = tmp_path / 'data.futurefmt'
+    path.touch()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(pv.get_reader(path), _MockReader)
+
+
+def test_registered_readers_reports_override(tmp_path, monkeypatch):
+    """A user asking "who took .vtp?" gets an answer from one call."""
+    _install_plugin(
+        monkeypatch, overrides=[('.vtp', 'override_plugin', 'PluginReader', _MockReader)]
+    )
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    pv.get_reader(mesh_file)
+
+    record = next(r for r in pv.registered_readers() if r.extension == '.vtp')
+    assert record.override is True
+    assert record.source == 'override_plugin:PluginReader'
+
+
+def test_registered_readers_marks_programmatic_override():
+    pv.register_reader('.vtp', _MockReader, override=True)
+    pv.register_reader('.myclassfmt', _MockReader)
+    records = {r.extension: r for r in pv.registered_readers()}
+    assert records['.vtp'].override is True
+    assert records['.myclassfmt'].override is False
+
+
+def test_registered_readers_warns_instead_of_raising_on_a_refused_plugin(monkeypatch):
+    """Introspection must not be the call that explodes."""
+    _install_plugin(
+        monkeypatch,
+        readers=[
+            ('.vtp', 'shadow_plugin', 'PluginReader', _MockReader),
+            ('.goodfmt', 'good_plugin', 'read', _mock_reader),
+        ],
+    )
+    with pytest.warns(UserWarning, match='refuses rather than guess'):
+        records = pv.registered_readers()
+
+    extensions = {r.extension for r in records}
+    assert '.goodfmt' in extensions  # the healthy plugin still resolved
+    assert '.vtp' not in extensions  # the refused one did not register
+    # Still pending, so reading a .vtp keeps raising rather than silently
+    # falling back to the built-in after an introspection call.
+    assert '.vtp' in _reg_mod._pending_ext_readers
+
+
+def test_registry_state_roundtrips_overrides():
+    pv.register_reader('.snapshotfmt', _MockReader, override=True)
+    state = _reg_mod._save_registry_state()
+    _reg_mod._override_ext_readers.clear()
+    _reg_mod._restore_registry_state(state)
+    assert '.snapshotfmt' in _reg_mod._override_ext_readers
+
+
+def test_real_installed_plugin_still_round_trips(tmp_path):
+    """The one plugin PyVista actually ships against must keep working.
+
+    ``pyvista-zstd`` is a test dependency and declares ``.pv`` and
+    ``.zvtk`` in the ordinary ``pyvista.readers`` group as plain
+    callables. Neither extension collides with a built-in, so the
+    override rules must leave it completely alone. Every other test here
+    fakes a distribution; this one exercises the real entry-point
+    metadata of a real installed package.
+    """
+    mesh = pv.Sphere()
+    path = tmp_path / 'mesh.pv'
+    mesh.save(path)
+    assert pv.read(path).n_points == mesh.n_points
+
+    record = next(r for r in pv.registered_readers() if r.extension == '.pv')
+    assert record.source.startswith('pyvista_zstd')
+    assert record.override is False
