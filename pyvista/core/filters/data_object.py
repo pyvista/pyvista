@@ -4352,9 +4352,9 @@ class DataObjectFilters:
     ) -> PolyData:
         """Compute the convex hull from this mesh's points.
 
-        With :vtk:`vtk>=9.7`, this uses :vtk:`vtkConvexHull`. With older VTK, ``scipy``
+        With ``vtk>=9.7``, this uses :vtk:`vtkConvexHull`. With older VTK, ``scipy``
         (Qhull) is used instead for ``dimensionality=2`` or ``3``; ``dimensionality=1``
-        requires :vtk:`vtk>=9.7`.
+        requires ``vtk>=9.7``.
 
         .. versionadded:: 0.49
 
@@ -5366,7 +5366,7 @@ class DataObjectFilters:
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
     """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
 
-    Fallback for :vtk:`vtk<9.7`, which lacks :vtk:`vtkConvexHull`.
+    Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
     """
     try:
         from scipy.spatial import ConvexHull  # noqa: PLC0415
