@@ -1,11 +1,15 @@
 """Enforce Sphinx-Gallery example docstring structure.
 
-Ruff's D400/D415 (first line ends in punctuation) can't be enabled for
-``examples/`` because Sphinx-Gallery requires the docstring to start with a
-``.. _label:`` target followed by a title/underline pair, which those rules
-would force us to break. This hook instead enforces the shape directly: a
-ref label, a title with a matching underline, and a summary right after the
-title that fits on a single line and ends in punctuation, mirroring D400.
+This hook emulates ruff's D400/D415 rules and applies them to Sphinx Gallery
+examples. D400/D415 cannot be used directly here because Sphinx-Gallery
+requires the docstring to start with a ``.. _label:`` target followed by a
+title/underline pair, which those rules would fail on. This hook applies
+the same single-line, ends-in-punctuation check to the summary right after
+the title, rather than to the docstring's first line.
+
+A valid docstring here has a ref label, a title with a matching underline, and that
+summary.
+
 """
 
 from __future__ import annotations
