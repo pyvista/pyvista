@@ -88,11 +88,11 @@ class PlotterComponent(Protocol):
     --------
     Declare a component that satisfies the protocol.
 
-    >>> from pyvista import PlotterComponent
+    >>> import pyvista as pv
     >>> class MyComponent:
     ...     def __init__(self, plotter):
     ...         self._plotter = plotter
-    >>> isinstance(MyComponent(None), PlotterComponent)
+    >>> isinstance(MyComponent(None), pv.PlotterComponent)
     True
 
     """

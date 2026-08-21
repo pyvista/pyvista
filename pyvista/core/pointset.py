@@ -2797,12 +2797,13 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Examples
         --------
         >>> import numpy as np
-        >>> from pyvista import CellType
         >>> import pyvista as pv
         >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
         >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
         >>> cells = np.hstack((cell0_ids, cell1_ids))
-        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
+        >>> cell_type = np.array(
+        ...     [pv.CellType.HEXAHEDRON, pv.CellType.HEXAHEDRON], np.int8
+        ... )
 
         >>> cell1 = np.array(
         ...     [

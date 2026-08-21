@@ -11,7 +11,6 @@ using the :meth:`~pyvista.DataObjectFilters.extract_surface` filter.
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
 import pyvista as pv
-from pyvista import CellType
 
 # %%
 # Surface extraction of nonlinear cells
@@ -65,7 +64,7 @@ pts = np.vstack((lin_pts, quad_pts))
 # %%
 # Create the grid
 cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
-celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
+celltypes = np.array([pv.CellType.QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # %%
@@ -160,7 +159,7 @@ pl.show()
 
 grid = pv.ImageData(dimensions=(2, 2, 2))
 assert grid.n_cells == 1
-assert grid.distinct_cell_types == {CellType.VOXEL}
+assert grid.distinct_cell_types == {pv.CellType.VOXEL}
 assert grid.max_cell_dimensionality == 3
 
 # %%
@@ -169,12 +168,12 @@ assert grid.max_cell_dimensionality == 3
 
 poly_geometry = grid.extract_surface(algorithm='geometry')
 assert poly_geometry.n_cells == 6
-assert poly_geometry.distinct_cell_types == {CellType.QUAD}
+assert poly_geometry.distinct_cell_types == {pv.CellType.QUAD}
 assert poly_geometry.max_cell_dimensionality == 2
 
 poly_surface = grid.extract_surface(algorithm='dataset_surface')
 assert poly_surface.n_cells == 6
-assert poly_surface.distinct_cell_types == {CellType.QUAD}
+assert poly_surface.distinct_cell_types == {pv.CellType.QUAD}
 assert poly_geometry.max_cell_dimensionality == 2
 
 # %%
