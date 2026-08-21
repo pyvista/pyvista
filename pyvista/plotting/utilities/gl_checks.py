@@ -9,6 +9,9 @@ import sys
 from pyvista import _vtk
 from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
 
+# Qt GUI modules that would expose a live QGuiApplication, newest binding first
+_QT_GUI_MODULES = ('PySide6.QtGui', 'PyQt6.QtGui', 'PySide2.QtGui', 'PyQt5.QtGui')
+
 
 def _qt_platform_name() -> str | None:
     """Return the platform name of a live Qt application, if there is one.
@@ -23,7 +26,7 @@ def _qt_platform_name() -> str | None:
         application is running in this process.
 
     """
-    for module_name in ('PySide6.QtGui', 'PyQt6.QtGui', 'PySide2.QtGui', 'PyQt5.QtGui'):
+    for module_name in _QT_GUI_MODULES:
         # getattr rather than an import, and tolerant of a module that is in
         # sys.modules but still initializing
         qgui = getattr(sys.modules.get(module_name), 'QGuiApplication', None)

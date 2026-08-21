@@ -16,6 +16,7 @@ from pyvista import examples
 from pyvista.plotting._plotting import _resolve_scalars_field
 from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.helpers import view_vectors
+from pyvista.plotting.utilities.gl_checks import _QT_GUI_MODULES
 from pyvista.plotting.utilities.gl_checks import _offscreen_probe_render_window
 from pyvista.plotting.utilities.gl_checks import _process_uses_egl
 from pyvista.plotting.utilities.gl_checks import _qt_platform_name
@@ -324,7 +325,7 @@ def _fake_binding(monkeypatch, module_name, platform_name):
     monkeypatch.setitem(sys.modules, module_name, module)
 
 
-@pytest.mark.parametrize('module_name', ['PySide6.QtGui', 'PyQt6.QtGui', 'PyQt5.QtGui'])
+@pytest.mark.parametrize('module_name', _QT_GUI_MODULES)
 def test_qt_platform_name(monkeypatch, module_name):
     """A live Qt application reports the platform it actually connected to."""
     _fake_binding(monkeypatch, module_name, 'xcb')
@@ -333,9 +334,9 @@ def test_qt_platform_name(monkeypatch, module_name):
 
 def test_qt_platform_name_no_application(monkeypatch):
     """An imported binding with no application running answers nothing."""
-    _fake_binding(monkeypatch, 'PySide6.QtGui', None)
-    for name in ('PyQt6.QtGui', 'PySide2.QtGui', 'PyQt5.QtGui'):
+    for name in _QT_GUI_MODULES[1:]:
         monkeypatch.delitem(sys.modules, name, raising=False)
+    _fake_binding(monkeypatch, _QT_GUI_MODULES[0], None)
     assert _qt_platform_name() is None
 
 
@@ -359,10 +360,10 @@ def test_process_uses_egl(monkeypatch, wayland_display, platform_name, expected)
     monkeypatch.delenv('WAYLAND_DISPLAY', raising=False)
     if wayland_display is not None:
         monkeypatch.setenv('WAYLAND_DISPLAY', wayland_display)
-    for name in ('PySide6.QtGui', 'PyQt6.QtGui', 'PySide2.QtGui', 'PyQt5.QtGui'):
+    for name in _QT_GUI_MODULES:
         monkeypatch.delitem(sys.modules, name, raising=False)
     if platform_name is not None:
-        _fake_binding(monkeypatch, 'PySide6.QtGui', platform_name)
+        _fake_binding(monkeypatch, _QT_GUI_MODULES[0], platform_name)
     assert _process_uses_egl() is expected
 
 
@@ -377,8 +378,8 @@ def test_offscreen_probe_follows_qt_platform(monkeypatch):
     if not pv._vtk.has_attr('vtkEGLRenderWindow'):
         pytest.skip('VTK build lacks vtkEGLRenderWindow')
 
-    _fake_binding(monkeypatch, 'PySide6.QtGui', 'xcb')
+    _fake_binding(monkeypatch, _QT_GUI_MODULES[0], 'xcb')
     assert not isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
 
-    _fake_binding(monkeypatch, 'PySide6.QtGui', 'wayland')
+    _fake_binding(monkeypatch, _QT_GUI_MODULES[0], 'wayland')
     assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
