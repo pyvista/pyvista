@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from copy import deepcopy
-from functools import cached_property
-from functools import partial
+import copy
+import functools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -34,6 +33,7 @@ from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -149,11 +149,6 @@ class DataSet(DataSetFilters, DataObject):
         attribute resolution finds the newly-attached accessor
         descriptor.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
-            _resolve_pending_accessor,
-        )
-
         if _resolve_pending_accessor(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)
@@ -940,8 +935,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if deep:
-            self._association_complex_names = deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
+            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
@@ -1078,10 +1073,6 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pandas.DataFrame
             DataFrame with one column per (expanded) array.
-
-        See Also
-        --------
-        :ref:`dataframe_export_example`
 
         Examples
         --------
@@ -1922,10 +1913,6 @@ class DataSet(DataSetFilters, DataObject):
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
-        See Also
-        --------
-        :ref:`create_pointset_example`
-
         Examples
         --------
         >>> import pyvista as pv
@@ -2045,8 +2032,6 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
         PolyDataFilters.ray_trace
-        :ref:`point_cloud_distance_example`
-        :ref:`point_cloud_neighbors_example`
 
         Examples
         --------
@@ -2137,7 +2122,6 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_cells_within_bounds
         DataSet.intersect_with_line
         PolyDataFilters.ray_trace
-        :ref:`distance_between_surfaces_example`
 
         Examples
         --------
@@ -3089,7 +3073,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        method = partial(self.cell_neighbors, connections=connections)
+        method = functools.partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def _get_levels_neihgbors(
@@ -3319,7 +3303,7 @@ class DataSet(DataSetFilters, DataObject):
         False
 
         """
-        return self.n_points == 0
+        return self.n_points == 0 and self.n_cells == 0
 
     @property
     def dimensionality(self) -> _Dimensionality:
@@ -3745,22 +3729,22 @@ class DataSet(DataSetFilters, DataObject):
         r2 = grid.GetCell(0).ComputeBoundingSphere(center)
         return float(r2**0.5), (center[0], center[1], center[2])
 
-    @cached_property
+    @functools.cached_property
     def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkStaticCellLocator)
 
-    @cached_property
+    @functools.cached_property
     def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkCellTreeLocator)
 
-    @cached_property
+    @functools.cached_property
     def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         return _build_locator(self, _vtk.vtkPointLocator)
 
-    @cached_property
+    @functools.cached_property
     def _obb_tree(self) -> _vtk.vtkOBBTree:  # numpydoc ignore=RT01
         """Return the pre-built locator for this dataset."""
         msg = (

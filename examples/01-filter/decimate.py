@@ -4,7 +4,7 @@
 Decimation
 ~~~~~~~~~~
 
-Decimate a mesh
+Decimate a mesh.
 
 """
 
@@ -19,10 +19,10 @@ mesh = examples.download_face()
 cpos = pv.CameraPosition(
     position=(0.4, -0.07, -0.31), focal_point=(0.05, -0.13, -0.06), viewup=(-0.1, 1, 0.08)
 )
-dargs = dict(show_edges=True, color=True)
+plot_kwargs = dict(show_edges=True, color=True)
 
 # Preview the mesh
-mesh.plot(cpos=cpos, **dargs)
+mesh.plot(cpos=cpos, **plot_kwargs)
 
 # %%
 # Now let's define a target reduction and compare the
@@ -34,13 +34,13 @@ print(f'Reducing {target_reduction * 100.0} percent out of the original mesh')
 # %%
 decimated = mesh.decimate(target_reduction)
 
-decimated.plot(cpos=cpos, **dargs)
+decimated.plot(cpos=cpos, **plot_kwargs)
 
 
 # %%
 pro_decimated = mesh.decimate_pro(target_reduction, preserve_topology=True)
 
-pro_decimated.plot(cpos=cpos, **dargs)
+pro_decimated.plot(cpos=cpos, **plot_kwargs)
 
 
 # %%
@@ -59,9 +59,9 @@ datasets = {
 
 pv.plot_compare(
     datasets,
-    dataset_kwargs=dargs,
     label_size=24,
     cpos=cpos,
+    **plot_kwargs,
 )
 
 # %%

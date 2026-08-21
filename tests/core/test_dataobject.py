@@ -5,7 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
-from unittest import mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -106,7 +106,9 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
     copy = hexbeam.copy()
-    hexbeam.cell_connectivity[0] += 1
+    connectivity = hexbeam.cell_connectivity.copy()
+    connectivity[0] += 1
+    hexbeam.cell_connectivity = connectivity
     assert hexbeam != copy
 
     # test changing polyfaces is detected
@@ -206,8 +208,9 @@ def test_save_nested_multiblock_field_data(tmp_path, file_ext):
     root.save(tmp_path / filename)
 
 
-@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
-def test_user_dict(data_object):
+@pytest.mark.parametrize('data_object_type', [pv.PolyData, pv.MultiBlock])
+def test_user_dict(data_object_type):
+    data_object = data_object_type()
     assert USER_DICT_KEY not in data_object.field_data.keys()
 
     data_object.user_dict['abc'] = 123
@@ -231,9 +234,11 @@ def test_user_dict(data_object):
         data_object.user_dict = 42
 
 
-@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
+@pytest.mark.parametrize('data_object_type', [pv.PolyData, pv.MultiBlock])
 @pytest.mark.parametrize('method', ['set_none', 'clear', 'clear_field_data'])
-def test_user_dict_removal(data_object, method):
+def test_user_dict_removal(data_object_type, method):
+    data_object = data_object_type()
+
     def clear_user_dict():
         if method == 'clear':
             data_object.field_data.clear()
@@ -287,16 +292,18 @@ def test_user_dict_repr(ant):
 
 
 @pytest.mark.parametrize(
-    ('data_object', 'ext'),
+    ('make_data_object', 'ext'),
     [
-        (pv.MultiBlock([examples.load_ant()]), '.vtm'),
-        (examples.load_ant(), '.vtp'),
-        (examples.load_ant(), '.vtkhdf'),
+        (lambda: pv.MultiBlock([examples.load_ant()]), '.vtm'),
+        (examples.load_ant, '.vtp'),
+        (examples.load_ant, '.vtkhdf'),
     ],
 )
-def test_user_dict_write_read(tmp_path, data_object, ext):
+def test_user_dict_write_read(tmp_path, make_data_object, ext):
     if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
         return  # can't use VTKHDF on VTK<9.4.0
+
+    data_object = make_data_object()
 
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
@@ -360,7 +367,7 @@ def test_default_pickle_format():
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_serialize_deserialize(datasets, pickle_format):
+def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
     """Test in-memory pickle protocol (multiprocessing/dask use case).
 
     Pickle is NOT a supported mesh file format — only the in-memory
@@ -368,7 +375,7 @@ def test_pickle_serialize_deserialize(datasets, pickle_format):
     here. File-format refusal is covered in ``test_reader.py``.
     """
     pv.set_pickle_format(pickle_format)
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
@@ -400,19 +407,19 @@ def n_points(dataset):
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_multiprocessing(datasets, pickle_format):
+def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
-        res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets, strict=True):
+        res = p.map(n_points, datasets_no_pointset)
+    for r, dataset in zip(res, datasets_no_pointset, strict=True):
         assert r == dataset.n_points
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
+def test_pickle_multiblock(multiblock_all_no_pointset_with_nested_and_none, pickle_format):
     pv.set_pickle_format(pickle_format)
-    multiblock = multiblock_all_with_nested_and_none
+    multiblock = multiblock_all_no_pointset_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
         match = (
@@ -532,7 +539,7 @@ def test_raise_error_when_output_directory_is_missing(tmp_path):
 def test_raise_error_when_writing_is_failed(tmp_path):
     cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
 
-    with mock.patch.object(
+    with patch.object(
         BaseWriter,
         'write',
         return_value=None,

@@ -13,7 +13,7 @@ forward to the component for backward compatibility.
 
 from __future__ import annotations
 
-from functools import partial
+import functools
 from typing import TYPE_CHECKING
 import weakref
 
@@ -433,12 +433,12 @@ class PickingComponent(_NoNewAttrMixin):
         if left_clicking:
             self._picking_left_clicking_observer = self._plotter.iren.add_observer(
                 'LeftButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
         else:
             self._picking_right_clicking_observer = self._plotter.iren.add_observer(
                 'RightButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
 
     def _validate_picker_not_in_use(self):
@@ -1559,11 +1559,6 @@ class PickingComponent(_NoNewAttrMixin):
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
-
-        See Also
-        --------
-        :ref:`element_picking_example`
-
 
         """
         mode = ElementType.from_any(mode)

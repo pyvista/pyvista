@@ -4,10 +4,10 @@
 Maximum Intensity Projection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Maximum Intensity Projection (MIP) is a rendering technique for point
-clouds that reorders vertex depth so points with higher scalar values
-are always rendered in front, regardless of their actual distance from
-the camera.
+Maximum Intensity Projection (MIP) reorders point-cloud depth by scalar value.
+
+Points with higher scalar values are always rendered in front, regardless
+of their actual distance from the camera.
 
 This is useful for dense point cloud visualization where high-value
 data points would otherwise be hidden behind lower-value points that
@@ -19,6 +19,7 @@ MIP works by replacing the z-coordinate in OpenGL clip space with the
 negated, normalized scalar value via a custom vertex shader. This
 means that depth ordering is driven entirely by scalar magnitude
 rather than spatial position.
+
 """
 
 # sphinx_gallery_start_ignore

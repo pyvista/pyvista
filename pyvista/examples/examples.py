@@ -803,9 +803,6 @@ def load_frog_tissues() -> ImageData:
 
         :ref:`Frog Dataset <frog_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
     """
     return _dataset_frog_tissues.load()
 

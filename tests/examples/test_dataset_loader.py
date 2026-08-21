@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from dataclasses import dataclass
 import inspect
-from itertools import starmap
+import itertools
 import os
 from pathlib import Path
 import shutil
@@ -85,7 +85,7 @@ def _generate_dataset_loader_test_cases_from_module(
     }
     # Remove special case which is not a dataset function
     dataset_functions.pop('download_file', None)
-    list(starmap(add_to_dict, dataset_functions.items()))
+    list(itertools.starmap(add_to_dict, dataset_functions.items()))
 
     # Collect all `_dataset_<name>` file loaders
     dataset_file_loaders = {
@@ -93,7 +93,7 @@ def _generate_dataset_loader_test_cases_from_module(
         for name, item in module_members.items()
         if name.startswith('_dataset_') and isinstance(item, _DatasetLoader)
     }
-    list(starmap(add_to_dict, dataset_file_loaders.items()))
+    list(itertools.starmap(add_to_dict, dataset_file_loaders.items()))
 
     # Flatten dict
     test_cases_list: list[DatasetLoaderTestCase] = []
@@ -661,7 +661,11 @@ def test_load_dataset_no_reader():
 def test_unique_cell_types_explicit_structured_grid():
     loader = examples._dataset_explicit_structured
     loader.load_and_store_dataset()
-    assert loader.unique_cell_types == (pv.CellType.HEXAHEDRON,)
+    try:
+        assert loader.unique_cell_types == (pv.CellType.HEXAHEDRON,)
+    finally:
+        # The loader is module-level, so a stored dataset outlives this test
+        loader.clear_dataset()
 
 
 def test_format_file_size():

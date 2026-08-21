@@ -24,7 +24,7 @@ data = examples.download_gourds()
 
 # Define a good point of view
 cp = pv.CameraPosition(
-    position=(319.5, 239.5, 1053.7372980874645),
+    position=(319.5, 239.5, 1054.0),
     focal_point=(319.5, 239.5, 0.0),
     viewup=(0.0, 1.0, 0.0),
 )
@@ -40,7 +40,7 @@ for std_dev in [2.0, 4.0, 8.0]:
 
 pv.plot_compare(
     datasets,
-    dataset_kwargs={'rgb': True},
+    rgb=True,
     label_size=14,
     cpos=cp,
 )

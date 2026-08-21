@@ -999,6 +999,9 @@ def test_download_embryo():
     dataset = examples.download_embryo()
     assert isinstance(dataset, pv.ImageData)
     assert not np.any(dataset['SLCImage'] == 255)
+    # Guards the uninitialized voxels vtkSLCReader leaves behind (see _embryo_load_func); when
+    # they leak through, the range varies per read and silently rescales gallery color mapping
+    assert dataset.get_data_range() == (0, 197)
 
 
 def test_download_antarctica_velocity():

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib import import_module
+import importlib
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
@@ -294,6 +294,36 @@ def registered_themes() -> tuple[ThemeRegistration, ...]:
     return tuple(sorted(records, key=lambda r: r.name))
 
 
+def _resolve_theme_like(theme: str | Theme) -> Theme:
+    """Coerce a theme name, dotted path, or ``Theme`` instance to a ``Theme``.
+
+    Shared by ``set_plot_theme`` and ``Plotter`` so name resolution and
+    error messages stay consistent. Raises ``ValueError`` for an
+    unresolvable string, ``TypeError`` for any other non-``Theme`` input.
+    """
+    from .themes import Theme  # local import breaks circular dependency  # noqa: PLC0415
+
+    if isinstance(theme, str):
+        if ':' in theme:
+            cls = _resolve_dotted_path(theme)
+            return cls()
+        resolved = _resolve_theme(theme)
+        if resolved is None:
+            allowed = ', '.join(_available_theme_names())
+            msg = (
+                f'Theme "{theme}" not found. Available themes: {allowed}. '
+                'To load from an arbitrary module use "package.module:ClassName".'
+            )
+            raise ValueError(msg)
+        return resolved
+    if isinstance(theme, Theme):
+        return theme
+    msg = (  # type: ignore[unreachable]
+        f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+    )
+    raise TypeError(msg)
+
+
 def _resolve_dotted_path(spec: str) -> type[Theme]:
     """Resolve a ``'package.module:ClassName'`` spec to a ``Theme`` subclass."""
     from .themes import Theme  # local import breaks circular dependency  # noqa: PLC0415
@@ -306,7 +336,7 @@ def _resolve_dotted_path(spec: str) -> type[Theme]:
         msg = f'Invalid theme spec "{spec}".'
         raise ValueError(msg)
     try:
-        module = import_module(module_path)
+        module = importlib.import_module(module_path)
     except ImportError as exc:
         msg = f'Cannot import "{module_path}" from theme spec "{spec}": {exc}'
         raise ValueError(msg) from exc

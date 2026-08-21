@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-import contextlib
 import inspect
 import itertools
 import json
@@ -20,7 +19,8 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import get_args
-from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 import warnings
 
 from hypothesis import given
@@ -37,6 +37,7 @@ from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
@@ -85,9 +86,6 @@ from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
-
-with contextlib.suppress(ImportError):
-    import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -237,6 +235,8 @@ def test_vtk_version_info_raises(operation):
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_min_supported_vtk_version_matches_pyproject():
+    import tomllib
+
     def get_min_vtk_version_from_pyproject():
         # locate pyproject.toml relative to package
         root = Path(
@@ -385,9 +385,9 @@ def test_read_force_ext(tmpdir):
         assert isinstance(data, type_)
 
 
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
-@mock.patch('pyvista.BaseReader.show_progress')
+@patch('pyvista.BaseReader.read')
+@patch('pyvista.BaseReader.reader')
+@patch('pyvista.BaseReader.show_progress')
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
@@ -596,16 +596,23 @@ def test_line_segments_from_points():
     cells = poly.lines
     assert np.allclose(cells[:3], [2, 0, 1])
     assert np.allclose(cells[3:], [2, 2, 3])
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert poly.GetLines().IsStorageFixedSize()
 
 
-def test_lines_from_points():
+@pytest.mark.parametrize('close', [False, True])
+def test_lines_from_points(close):
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-    poly = pv.lines_from_points(points)
-    assert poly.n_cells == 2
+    poly = pv.lines_from_points(points, close=close)
+    assert poly.n_cells == (3 if close else 2)
     assert poly.n_points == 3
     cells = poly.lines
     assert np.allclose(cells[:3], [2, 0, 1])
-    assert np.allclose(cells[3:], [2, 1, 2])
+    assert np.allclose(cells[3:6], [2, 1, 2])
+    if close:
+        assert np.allclose(cells[6:], [2, 2, 0])
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert poly.GetLines().IsStorageFixedSize()
 
 
 def test_grid_from_sph_coords():
@@ -1105,7 +1112,7 @@ def test_copy_implicit_vtk_array(plane):
     # Use the connectivity filter to generate an implicit vtkDataArray
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if pv.vtk_version_info >= (9, 7):
         assert isinstance(vtk_object, _vtk.VTKImplicitArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
@@ -1117,7 +1124,7 @@ def test_copy_implicit_vtk_array(plane):
     plane['test'] = conn['RegionId']
 
     new_vtk_object = plane['test'].VTKObject
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if pv.vtk_version_info >= (9, 7):
         assert isinstance(new_vtk_object, _vtk.VTKAOSArray)
     elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
@@ -1177,13 +1184,22 @@ def test_linkcode_resolve():
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
 
-    # edit mode should still include the line span, just under /edit/ instead
-    # of /blob/, so the edit page opens at the same lines as [source] does
-    link = linkcode_resolve(
-        'py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}, edit=True
-    )
-    assert '/edit/' in link
-    assert '#L' in link
+    # the blob view highlights the full definition
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    blob_link = linkcode_resolve('py', info)
+    blob_match = re.search(r'#L(\d+)-L(\d+)$', blob_link)
+    assert blob_match is not None
+    start, end = int(blob_match[1]), int(blob_match[2])
+    assert end > start + 1  # DataObject spans many lines
+
+    # the edit view gets a short two-line range at the same starting line: a
+    # single-line #Lxx anchor doesn't reliably scroll the edit view there
+    edit_link = linkcode_resolve('py', info, edit=True)
+    assert '/edit/' in edit_link
+    edit_match = re.search(r'#L(\d+)-L(\d+)$', edit_link)
+    assert edit_match is not None
+    assert int(edit_match[1]) == start
+    assert int(edit_match[2]) == start + 1
 
 
 def test_fix_edit_link_button_gallery_example():
@@ -1201,14 +1217,17 @@ def test_fix_edit_link_button_gallery_index_falls_through():
 
 
 def test_fix_edit_link_button_autosummary_stub():
-    # Autosummary stubs should resolve to the same location as the page's
-    # [source] button -- same file, same line span -- just in edit mode
+    # Autosummary stubs should resolve to the same file and starting line as
+    # the page's [source] button, in a short two-line range rather than the
+    # full one -- a single-line anchor doesn't reliably scroll the edit view
     pagename = 'api/core/_autosummary/pyvista.core.DataObject'
     link = fix_edit_link_button(pagename, 'default-link')
     assert link is not None
     assert '/edit/' in link
     assert 'dataobject.py' in link
-    assert '#L' in link
+    match = re.search(r'#L(\d+)-L(\d+)$', link)
+    assert match is not None
+    assert int(match[2]) == int(match[1]) + 1
 
 
 def test_fix_edit_link_button_autosummary_stub_falls_back_when_unresolved():
@@ -1975,32 +1994,40 @@ def test_transform_invert(transform):
 
 
 class CasesTransformApply:
+    """Each case returns a *factory*, not an object.
+
+    ``pytest_cases`` caches a case's return value for the whole session, so a case that
+    returned a dataset directly would keep it alive to the end of the run (a leak the
+    ``check_gc`` fixture reports) and share one mutable object between the ``copy=True``
+    and ``copy=False`` runs.
+    """
+
     def case_list_int(self):
-        return list(VECTOR), False, np.ndarray, float
+        return lambda: list(VECTOR), False, np.ndarray, float
 
     def case_tuple_int(self):
-        return VECTOR, False, np.ndarray, float
+        return lambda: VECTOR, False, np.ndarray, float
 
     def case_array1d_int(self):
-        return np.array(VECTOR), False, np.ndarray, float
+        return lambda: np.array(VECTOR), False, np.ndarray, float
 
     def case_array2d_int(self):
-        return np.array([VECTOR]), False, np.ndarray, float
+        return lambda: np.array([VECTOR]), False, np.ndarray, float
 
     def case_array1d_float(self):
-        return np.array(VECTOR, dtype=float), True, np.ndarray, float
+        return lambda: np.array(VECTOR, dtype=float), True, np.ndarray, float
 
     def case_array2d_float(self):
-        return np.array([VECTOR], dtype=float), True, np.ndarray, float
+        return lambda: np.array([VECTOR], dtype=float), True, np.ndarray, float
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
-        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+        return lambda: pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
         return (
-            pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
+            lambda: pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
             True,
             pv.PolyData,
             np.float32,
@@ -2008,7 +2035,7 @@ class CasesTransformApply:
 
     def case_polydata_float(self):
         return (
-            pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
+            lambda: pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
             True,
             pv.PolyData,
             float,
@@ -2016,7 +2043,7 @@ class CasesTransformApply:
 
     def case_multiblock_float(self):
         return (
-            pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
+            lambda: pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
             True,
             pv.MultiBlock,
             float,
@@ -2025,9 +2052,11 @@ class CasesTransformApply:
 
 @parametrize(copy=[True, False])
 @parametrize_with_cases(
-    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
+    ('make_obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
-def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
+def test_transform_apply(transform, make_obj, return_self, return_type, return_dtype, copy):
+    obj = make_obj()
+
     def _get_points_from_object(obj_):
         return (
             obj_.points
@@ -2715,9 +2744,9 @@ def test_vtk_verbosity_set_get():
 def test_vtk_verbosity_logging_disabled():
     # VTK built with VTK_ENABLE_LOGGING=OFF returns -10 (loguru Verbosity_OFF
     # sentinel) from GetCurrentVerbosityCutoff. It must map to 'off', not raise.
-    mock_logger = mock.MagicMock()
+    mock_logger = MagicMock()
     mock_logger.GetCurrentVerbosityCutoff.return_value = -10
-    with mock.patch.object(_vtk, 'vtkLogger', mock_logger):
+    with patch.object(_vtk, 'vtkLogger', mock_logger):
         assert pv.vtk_verbosity() == 'off'
 
 
@@ -2862,14 +2891,20 @@ def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools)
     reason='Requires runtime SMP backend selection support in VTK.',
 )
 def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    # vtkSMPTools clamps the requested count to the runner's hardware concurrency,
+    # so keep the requested counts within whatever the machine actually has.
+    available = os.cpu_count() or 1
+    outer_threads = min(2, available)
+    inner_threads = min(4, available)
+
     _vtk.vtkSMPTools.SetBackend('Sequential')
     _vtk.vtkSMPTools.Initialize(1)
 
-    with pv.enable_smp_tools(n_threads=2):
-        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
-        with pv.enable_smp_tools(n_threads=4):
-            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
-        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+    with pv.enable_smp_tools(n_threads=outer_threads):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == outer_threads
+        with pv.enable_smp_tools(n_threads=inner_threads):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == inner_threads
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == outer_threads
 
     assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
     assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
@@ -3317,6 +3352,8 @@ def test_deprecate_positional_args_decorator_not_needed():
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_max_positional_args_matches_pyproject():
+    import tomllib
+
     root = Path(
         os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
     )  # to make the test work when pyvista is installed via tox

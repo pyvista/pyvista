@@ -4,7 +4,8 @@
 Surface Smoothing
 ~~~~~~~~~~~~~~~~~
 
-Smoothing rough edges of a surface mesh
+Smoothing rough edges of a surface mesh.
+
 """
 
 # sphinx_gallery_thumbnail_number = 4
@@ -113,14 +114,7 @@ cube_smoothed = {
 
 datasets = {'original': cube, **cube_smoothed}
 
-pl = pv.Plotter(shape=(1, len(datasets)))
-for i, (name, mesh) in enumerate(datasets.items()):
-    pl.subplot(0, i)
-    pl.add_mesh(mesh, show_edges=True)
-    pl.add_text(name)
-pl.link_views()
-pl.reset_camera()
-pl.show()
+pv.plot_compare(datasets, show_edges=True)
 
 # %%
 # Print the number of sharp edges of each mesh
@@ -156,14 +150,7 @@ plane_smoothed = {
 
 datasets = {'original': plane, **plane_smoothed}
 
-pl = pv.Plotter(shape=(1, len(datasets)))
-for i, (name, mesh) in enumerate(datasets.items()):
-    pl.subplot(0, i)
-    pl.add_mesh(mesh, show_edges=True)
-    pl.add_text(name)
-pl.link_views()
-pl.reset_camera()
-pl.show()
+pv.plot_compare(datasets, show_edges=True)
 
 # %%
 # Print the height of the rippled boundary of each mesh

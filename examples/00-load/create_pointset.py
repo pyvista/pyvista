@@ -4,10 +4,9 @@
 Create a PointSet
 ~~~~~~~~~~~~~~~~~
 
-A :class:`pyvista.PointSet` is a concrete class representing a set of points
-that specifies the interface for datasets that explicitly use "point" arrays to
-represent geometry. This class is useful for improving the performance of
-filters on point clouds.
+A :class:`~pyvista.PointSet` explicitly stores point arrays to represent geometry.
+
+This class is useful for improving the performance of filters on point clouds.
 
 This example shows the performance improvement when clipping using the
 :func:`pyvista.DataObjectFilters.clip` filter on a :class:`pyvista.PointSet`.

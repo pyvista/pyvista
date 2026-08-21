@@ -156,9 +156,14 @@ def test_screenshot_fail_suppressed_rendering():
 def test_plotter_theme_raises():
     with pytest.raises(
         TypeError,
-        match=re.escape('Expected ``pyvista.plotting.themes.Theme`` for ``theme``, not int.'),
+        match=re.escape(
+            'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not int',
+        ),
     ):
         pv.Plotter(theme=1)
+
+    with pytest.raises(ValueError, match='Theme "not-a-real-theme" not found'):
+        pv.Plotter(theme='not-a-real-theme')
 
     pl = pv.Plotter()
     with pytest.raises(
@@ -166,6 +171,17 @@ def test_plotter_theme_raises():
         match=r'Assigning a theme for a plotter instance is deprecated',
     ):
         pl.theme = pv.themes.DarkTheme()
+
+
+@pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
+def test_plotter_theme_by_name(theme):
+    pl = pv.Plotter(theme=theme.name)
+    assert pl.theme == theme.value()
+
+
+def test_plotter_theme_by_dotted_path():
+    pl = pv.Plotter(theme='pyvista.plotting.themes:DarkTheme')
+    assert pl.theme == pv.themes.DarkTheme()
 
 
 def test_plotter_anti_aliasing_raises():

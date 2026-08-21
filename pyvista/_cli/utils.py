@@ -6,8 +6,8 @@ Mostly contains converters, validators, console error helper and help formatters
 
 from __future__ import annotations
 
-from ast import literal_eval
-from glob import glob
+import ast
+import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
@@ -32,6 +32,7 @@ from rich.text import Text
 import pyvista as pv
 from pyvista import _validation
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
+from pyvista.plotting._typing import ThemeOptions
 
 from .app import CLI_APP
 
@@ -129,7 +130,7 @@ def _expand_globs(values: list[str]) -> list[str]:
     for v in values:
         v = str(Path(v).expanduser())  # noqa: PLW2901
         if any(c in v for c in _GLOB_CHARS):
-            matches = sorted(glob(v, recursive=True))  # noqa: PTH207
+            matches = sorted(glob.glob(v, recursive=True))  # noqa: PTH207
             if matches:
                 expanded.extend(matches)
             else:
@@ -306,6 +307,36 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
         raise ValueError(msg)
 
 
+# Arguments of `pyvista plot` and `pyvista compare` which mean the same thing in both,
+# declared once so the two commands cannot drift apart from each other. Named after the
+# parameter each stands in for, as `skip_unreadable` above already is, since a command
+# uses one as both the annotation and, shadowing it, the parameter's own name.
+off_screen = Annotated[bool | None, Parameter(group=Groups.PLOTTER)]
+full_screen = Annotated[bool | None, Parameter(group=Groups.RENDERING)]
+screenshot = Annotated[str | None, Parameter(group=Groups.PLOTTER)]
+interactive = Annotated[bool, Parameter(group=Groups.PLOTTER)]
+window_size = Annotated[
+    list[int] | None,
+    Parameter(consume_multiple=True, validator=_validator_window_size, group=Groups.PLOTTER),
+]
+cpos = Annotated[CposView | None, Parameter(group=Groups.RENDERING)]
+show_bounds = Annotated[bool, Parameter(group=Groups.RENDERING)]
+show_axes = Annotated[bool | None, Parameter(group=Groups.RENDERING)]
+zoom = Annotated[float | str | None, Parameter(group=Groups.RENDERING)]
+volume = Annotated[bool, Parameter(group=Groups.RENDERING)]
+border_color = Annotated[str | None, Parameter(group=Groups.PLOTTER)]
+border_width = Annotated[float | None, Parameter(group=Groups.PLOTTER)]
+theme = Annotated[ThemeOptions | str | None, Parameter(group=Groups.PLOTTER)]
+background = Annotated[str | None, Parameter(group=Groups.RENDERING)]
+eye_dome_lighting = Annotated[bool, Parameter(group=Groups.RENDERING)]
+parallel_projection = Annotated[bool, Parameter(group=Groups.RENDERING)]
+anti_aliasing = Annotated[
+    Literal['ssaa', 'msaa', 'fxaa'] | None, Parameter(group=Groups.RENDERING)
+]
+ssao = Annotated[bool, Parameter(group=Groups.RENDERING)]
+return_cpos = Annotated[bool, Parameter(group=Groups.RETURN)]
+
+
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
     """Coerce supplementary keyword arguments to Python values."""
     for token in tokens:
@@ -323,7 +354,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
 
         # Coerce using literal_eval with fallback to str value
         try:
-            return literal_eval(token.value)
+            return ast.literal_eval(token.value)
         except (ValueError, SyntaxError):
             return token.value
     return None

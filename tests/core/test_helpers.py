@@ -10,6 +10,7 @@ import trimesh
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities import reader as reader_module
@@ -105,6 +106,62 @@ def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
     monkeypatch.setattr(pv.global_config, 'validate_on_wrap', True)
     with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
         pv.wrap(vtk_poly_with_invalid_arrays)
+
+
+@pytest.mark.parametrize(
+    ('vtk_composite_cls', 'set_block'),
+    [
+        (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiBlockDataSet.SetBlock),
+        (_vtk.vtkPartitionedDataSet, _vtk.vtkPartitionedDataSet.SetPartition),
+    ],
+)
+def test_wrap_composite_valid_data_does_not_warn(sphere, vtk_composite_cls, set_block):
+    # No explicit warnings.catch_warnings needed: the project's pytest config
+    # already turns any unexpected warning into a test failure.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    vtk_composite = vtk_composite_cls()
+    set_block(vtk_composite, 0, vtk_poly)
+    pv.wrap(vtk_composite)
+
+
+def test_wrap_nested_multiblock_valid_data_does_not_warn(sphere):
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk_poly)
+    outer = _vtk.vtkMultiBlockDataSet()
+    outer.SetBlock(0, nested)
+    pv.wrap(outer)
+
+
+@pytest.mark.parametrize(
+    ('vtk_composite_cls', 'set_block'),
+    [
+        (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiBlockDataSet.SetBlock),
+        (_vtk.vtkPartitionedDataSet, _vtk.vtkPartitionedDataSet.SetPartition),
+    ],
+)
+def test_wrap_composite_with_invalid_dataset_warns(
+    vtk_poly_with_invalid_arrays,
+    vtk_composite_cls,
+    set_block,
+):
+    # The invalid DataSet is a block directly inside the composite.
+    vtk_composite = vtk_composite_cls()
+    set_block(vtk_composite, 0, vtk_poly_with_invalid_arrays)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_composite)
+
+
+def test_wrap_nested_multiblock_with_invalid_dataset_warns(vtk_poly_with_invalid_arrays):
+    # The invalid DataSet is inside a nested MultiBlock (PartitionedDataSet can't nest).
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk_poly_with_invalid_arrays)
+    outer = _vtk.vtkMultiBlockDataSet()
+    outer.SetBlock(0, nested)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(outer)
 
 
 def test_wrap_auto_names_unnamed_arrays():
@@ -231,7 +288,11 @@ def test_wrap_raises_unable():
     [
         (np.float64, _vtk.vtkDoubleArray),
         (np.float32, _vtk.vtkFloatArray),
-        (np.int64, _vtk.vtkTypeInt64Array),
+        # Pair with ``np.longlong``, not ``np.int64``: since VTK 9.7 the numpy-to-VTK
+        # mapping follows the underlying C type, so ``vtkTypeInt64Array`` (C ``long
+        # long``) corresponds to ``np.longlong`` on every platform, whereas ``np.int64``
+        # is C ``long`` on LP64 and maps to ``vtkLongArray`` there.
+        (np.longlong, _vtk.vtkTypeInt64Array),
         (np.int32, _vtk.vtkTypeInt32Array),
         (np.int8, _vtk.vtkSignedCharArray),
         (np.uint8, _vtk.vtkUnsignedCharArray),
@@ -586,6 +647,8 @@ def test_make_tri_mesh(sphere):
 
     assert np.allclose(sphere.points, mesh.points)
     assert np.allclose(sphere.faces, mesh.faces)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_wrappers():

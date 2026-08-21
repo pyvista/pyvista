@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from contextlib import contextmanager
-from functools import partial
-from inspect import signature
+import contextlib
+import functools
+import inspect
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -168,7 +168,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if not callable(callback):
             msg = 'callback must be callable.'
             raise TypeError(msg)
-        for param in signature(callback).parameters.values():
+        for param in inspect.signature(callback).parameters.values():
             if param.default is param.empty:
                 msg = '`callback` must not have any arguments without default values.'
                 raise TypeError(msg)
@@ -189,10 +189,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         callback : callable
             A callable that takes one argument. It will be passed
             `step`, which is the number of times the timer event has occurred.
-
-        See Also
-        --------
-        :ref:`animation_example`
 
         Examples
         --------
@@ -250,7 +246,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
-        call = partial(try_callback, call)
+        call = functools.partial(try_callback, call)
         event = self._get_event_str(event)
 
         if (
@@ -789,7 +785,9 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                 shift_release_action()
                 button_release()
 
-            return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
+            return functools.partial(try_callback, _press_callback), functools.partial(
+                try_callback, _release_callback
+            )
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
             button='left',
@@ -1120,7 +1118,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                     self._plotter.reset_camera_clipping_range()
                 self._plotter.render()
 
-            callback = partial(try_callback, wheel_zoom_callback)
+            callback = functools.partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
                 self.style.add_observer(event, callback)
@@ -1138,7 +1136,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                     self.style.EndPan()  # type: ignore[union-attr]
                     self.style.OnLeftButtonUp()  # type: ignore[union-attr]
 
-            callback = partial(try_callback, pan_on_shift_callback)
+            callback = functools.partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
                 self.style.add_observer(event, callback)
@@ -1447,7 +1445,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         msg = 'Poked renderer not found in Plotter.'
         raise RuntimeError(msg)
 
-    @contextmanager
+    @contextlib.contextmanager
     def poked_subplot(self):
         """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
@@ -1679,12 +1677,12 @@ class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtk
         # Ignore typing.
         self._observers = []
         self._observers.append(
-            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),  # type: ignore[arg-type]
+            self.AddObserver('LeftButtonPressEvent', functools.partial(try_callback, self._press)),  # type: ignore[arg-type]
         )
         self._observers.append(
             self.AddObserver(
                 'LeftButtonReleaseEvent',  # type: ignore[arg-type]
-                partial(try_callback, self._release),
+                functools.partial(try_callback, self._release),
             ),
         )
 

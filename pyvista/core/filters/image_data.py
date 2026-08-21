@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
+import contextlib
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -136,8 +137,6 @@ class ImageDataFilters(DataSetFilters):
 
         >>> smoothed = grid.gaussian_smooth()
         >>> smoothed.plot(show_scalar_bar=False)
-
-        See :ref:`gaussian_smoothing_example` for a full example using this filter.
 
         """
         alg = _vtk.vtkImageGaussianSmooth()
@@ -393,8 +392,6 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced == sliced2
         True
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
 
         def _set_default_start_and_stop(rng, default_start, default_stop):
@@ -523,8 +520,8 @@ class ImageDataFilters(DataSetFilters):
             min_ind = axis * 2
             max_ind = axis * 2 + 1
 
-            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
-            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))
         return out
 
     def crop(  # type: ignore[misc]
@@ -689,11 +686,10 @@ class ImageDataFilters(DataSetFilters):
         extract_subset
             Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
 
-        :ref:`crop_labeled_example`
-            Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
-
         Examples
         --------
+        .. autoopengraph_thumbnail:: 4
+
         Load a grayscale image.
 
         >>> import numpy as np
@@ -1318,6 +1314,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 3
+
         .. pyvista-plot::
             :force_static:
 
@@ -1848,8 +1846,6 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh = uni.image_threshold(100)
         >>> ithresh.plot()
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         if scalars is None:
             set_default_active_scalars(self)
@@ -1942,9 +1938,7 @@ class ImageDataFilters(DataSetFilters):
             return _get_output(alg)
 
         threshold_filter = (
-            _binary_image_threshold
-            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
-            else _image_threshold
+            _binary_image_threshold if pv.vtk_version_info >= (9, 7) else _image_threshold
         )
         output = threshold_filter(
             threshold_val=threshold_val,
@@ -2015,8 +2009,6 @@ class ImageDataFilters(DataSetFilters):
         Active Normals  : None
         Contains arrays :
         PNGImage                complex128 (298620,)          SCALARS
-
-        See :ref:`image_fft_example` for a full example using this filter.
 
         """
         # check for active scalars, otherwise risk of segfault
@@ -2101,8 +2093,6 @@ class ImageDataFilters(DataSetFilters):
         Contains arrays :
             PNGImage                complex128 (298620,)            SCALARS
 
-        See :ref:`image_fft_example` for a full example using this filter.
-
         """
         self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
@@ -2180,10 +2170,6 @@ class ImageDataFilters(DataSetFilters):
         rfft : Reverse fast Fourier transform.
         high_pass : High-pass filtering of FFT output.
 
-        Examples
-        --------
-        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
-
         """
         self._check_fft_scalars()
         alg = _vtk.vtkImageButterworthLowPass()
@@ -2260,10 +2246,6 @@ class ImageDataFilters(DataSetFilters):
         fft : Direct fast Fourier transform.
         rfft : Reverse fast Fourier transform.
         low_pass : Low-pass filtering of FFT output.
-
-        Examples
-        --------
-        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()
@@ -2577,18 +2559,18 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.color_labels`
             Color labeled data, e.g. labeled volumes or contours.
 
-        :ref:`contouring_example`, :ref:`anatomical_groups_example`
+        :ref:`anatomical_groups_example`
             Additional examples using this filter.
 
         References
         ----------
         S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
         Sharp Boundaries, J. Computer Graphics Techniques, 2022. Available online:
-        http://jcgt.org/published/0011/01/03/
+        https://jcgt.org/published/0011/01/03/
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
         Discrete Isocontouring Algorithm. arXiv:2401.14906. 2024. Available online:
-        `http://arxiv.org/abs/2401.14906 <http://arxiv.org/abs/2401.14906>`__
+        `https://arxiv.org/abs/2401.14906 <https://arxiv.org/abs/2401.14906>`__
 
         Examples
         --------
@@ -2601,7 +2583,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image = examples.load_channels()
         >>> label_ids = np.unique(image.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
         >>> image.dimensions
         (251, 251, 101)
 
@@ -2638,7 +2620,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([1, 2, 3, 4])
+        pyvista_ndarray([1, 2, 3, 4]...)
 
         Set ``simplify_output`` to ``False`` to generate a two-component
         array instead showing the two boundary regions associated with each polygon.
@@ -2655,7 +2637,7 @@ class ImageDataFilters(DataSetFilters):
         array([[1, 0],
                [2, 0],
                [3, 0],
-               [4, 0]])
+               [4, 0]]...)
 
         Repeat the example but this time generate internal contours only. The generated
         array is 2D by default.
@@ -2674,7 +2656,7 @@ class ImageDataFilters(DataSetFilters):
                [1, 4],
                [2, 3],
                [2, 4],
-               [3, 4]])
+               [3, 4]]...)
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
@@ -2685,7 +2667,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([-5, -4, -3, -2, -1])
+        pyvista_ndarray([-5, -4, -3, -2, -1]...)
 
         >>> labels_plotter(contours, zoom=1.5).show()
 
@@ -2870,6 +2852,10 @@ class ImageDataFilters(DataSetFilters):
 
         output: pv.PolyData = _get_output(alg)
 
+        # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
+        with contextlib.suppress(KeyError):
+            del output.point_data['NonManifoldTableIndices']
+
         if select_outputs is not None:
             output_ids = _validate_selection(select_outputs)
             ugrid = output.extract_values(
@@ -2897,12 +2883,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
-        is_external = 'external' in boundary_style
+        want_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = is_external
+            simplify_output = want_external
         if simplify_output:
             # Simplify scalars to a single component
-            if not is_external:
+            if not want_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -3127,8 +3113,6 @@ class ImageDataFilters(DataSetFilters):
         (101, 101, 2)
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
-
-        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:
@@ -4352,6 +4336,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 9
+
         Create a small 2D grayscale image with dimensions ``3 x 2`` for demonstration.
 
         >>> import pyvista as pv
@@ -5665,7 +5651,7 @@ class ImageDataFilters(DataSetFilters):
                             needs_padding = (dimensions_diff > 0) & (np.arange(3) != axis_num)
                             dimensions_padding[needs_padding] = dimensions_diff[needs_padding]
                             pad_size = np.zeros((6,), dtype=int)
-                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1  # type: ignore[assignment]
+                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1
                             pad_size[pad_ind] = dimensions_padding[needs_padding]
                             img_copy = img_copy.pad_image(
                                 pad_size=pad_size, pad_value=background_value

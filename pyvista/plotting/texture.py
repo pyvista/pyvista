@@ -110,6 +110,9 @@ class Texture(DataObject, _vtk.vtkTexture):
         * MIRRORED_REPEAT
         * CLAMP_TO_BORDER
 
+        Members accept either their ``int`` value or ``str`` annotation, e.g.
+        ``WrapType.from_any('Repeat')``.
+
         See :attr:`Texture.wrap` for usage.
 
         """

@@ -3,7 +3,9 @@
 
 Working with VRML Files
 ~~~~~~~~~~~~~~~~~~~~~~~
+
 Import a VRML file directly into a PyVista plotting scene.
+
 For more details regarding the VRML format, see:
 https://en.wikipedia.org/wiki/VRML
 

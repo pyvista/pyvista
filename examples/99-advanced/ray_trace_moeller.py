@@ -4,8 +4,9 @@
 Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates the Moeller-Trumbore intersection algorithm
-using :class:`~pyvista.PolyData`.
+Demonstrate the Moeller-Trumbore ray/triangle intersection algorithm.
+
+Uses :class:`~pyvista.PolyData`.
 
 For additional details, please reference the following:
 
@@ -13,6 +14,7 @@ For additional details, please reference the following:
 - `Fast Minimum Storage Ray Triangle Intersectio <https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf>`_
 
 First, define the ray triangle intersection method.
+
 """
 
 import numpy as np

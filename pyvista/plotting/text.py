@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -76,8 +75,8 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
     --------
     Create text annotation in four corners.
 
-    >>> from pyvista import CornerAnnotation
-    >>> text = CornerAnnotation(0, 'text')
+    >>> import pyvista as pv
+    >>> text = pv.CornerAnnotation(0, 'text')
     >>> prop = text.prop
 
     """
@@ -207,8 +206,8 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     --------
     Create a text with text's property.
 
-    >>> from pyvista import Text
-    >>> text = Text()
+    >>> import pyvista as pv
+    >>> text = pv.Text()
     >>> prop = text.prop
 
     """
@@ -524,8 +523,8 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
     --------
     Create a text's property.
 
-    >>> from pyvista import TextProperty
-    >>> prop = TextProperty()
+    >>> import pyvista as pv
+    >>> prop = pv.TextProperty()
     >>> prop.opacity = 0.5
     >>> prop.background_color = 'b'
     >>> prop.background_opacity = 0.5
@@ -773,7 +772,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
             Font file path.
 
         """
-        path = pathlib.Path(font_file)
+        path = Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
             msg = f'Unable to locate {path}'

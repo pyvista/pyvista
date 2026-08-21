@@ -10,5 +10,5 @@ curl -L https://imageio.readthedocs.io/en/stable/objects.inv >imageio-objects.in
 curl -L https://pandas.pydata.org/pandas-docs/stable/objects.inv >pandas-objects.inv
 curl -L https://arrow.apache.org/docs/objects.inv >pyarrow-objects.inv
 curl -L https://docs.pytest.org/en/stable/objects.inv >pytest-objects.inv
-curl -L https://qtdocs.pyvista.org/objects.inv >pyvistaqt-objects.inv
+curl -L https://qt.pyvista.org/objects.inv >pyvistaqt-objects.inv
 curl -L https://trimesh.org/objects.inv >trimesh-objects.inv

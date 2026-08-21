@@ -4,11 +4,13 @@
 Export Mesh Data to a DataFrame
 -------------------------------
 
-Convert a mesh's :attr:`point_data <pyvista.DataSet.point_data>` or
-:attr:`cell_data <pyvista.DataSet.cell_data>` to a :class:`pandas.DataFrame`
-or :class:`pyarrow.Table` for downstream analytics, export, or interactive
-exploration in IDEs like Positron's Data Explorer, JupyterLab, or VS Code's
-data viewer.
+Convert a mesh's point or cell data to a pandas or PyArrow table.
+
+Uses :attr:`point_data <pyvista.DataSet.point_data>` or
+:attr:`cell_data <pyvista.DataSet.cell_data>` and converts to a
+:class:`pandas.DataFrame` or :class:`pyarrow.Table` for downstream
+analytics, export, or interactive exploration in IDEs like Positron's
+Data Explorer, JupyterLab, or VS Code's data viewer.
 
 This example uses a classic CFD-style workflow: a scalar field and a vector
 field attached to a mesh, then filtered / aggregated / exported using

@@ -140,6 +140,8 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
             -DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES
             -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES
+            -DVTK_MODULE_ENABLE_VTK_IOImport=YES
+            -DVTK_MODULE_ENABLE_VTK_IOParallelExodus=YES
             -DVTK_MODULE_ENABLE_VTK_IOXdmf2=YES
             -DVTK_MODULE_ENABLE_VTK_WebCore=YES
             -DVTK_MODULE_ENABLE_VTK_WebGLExporter=YES
@@ -150,7 +152,21 @@ jobs:
           cmake "${cmake_args[@]}"
 
       - name: Build
-        run: cmake --build vtk-build --parallel
+        shell: bash
+        run: |
+          # MSVC in particular dumps huge multi-line warning/template-instantiation
+          # traces for VTK's ThirdParty code that overwhelm the Actions log viewer.
+          # Stream a filtered view live, but keep the full log to print on failure.
+          noisy_pattern=': warning C[0-9]+:|: note:|^[[:space:]]+(with|\[|\])[[:space:]]*$|^[[:space:]]+[A-Za-z_][A-Za-z0-9_]*='
+          set +e
+          cmake --build vtk-build --parallel 2>&1 | tee build.log | grep -Ev --line-buffered "$noisy_pattern"
+          build_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            echo "::error::VTK build failed (exit $build_status); full unfiltered log follows"
+            cat build.log
+            exit "$build_status"
+          fi
 
       - name: Show compiler cache statistics
         shell: bash
@@ -444,3 +460,68 @@ jobs:
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  alert-on-failure:
+    needs:
+      [
+        check-should-run,
+        build-vtk,
+        cache-github-hosted,
+        test-linux,
+        test-macOS,
+        test-windows,
+      ]
+    if: >-
+      failure() &&
+      needs.check-should-run.outputs.run == 'true' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      actions: read # to look up which matrix jobs failed
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Report VTK master wheel failure
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          # Ensure the dedup label exists (idempotent).
+          gh label create vtk-master-wheel-failure \
+            --color cbb230 \
+            --description "Tracks the recurring VTK master wheel build/test failure" \
+            --force || true
+
+          # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
+          failed=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+
+          jobs_list=""
+          while IFS=$'\t' read -r name url; do
+            [ -n "$name" ] || continue
+            jobs_list+="- [\`${name}\`](${url})"$'\n'
+          done <<< "$failed"
+
+          [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+
+          body=$(cat <<EOF
+          ### VTK Master Wheel Failure
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Run:** ${RUN_URL}
+
+          **Failing jobs:**
+          ${jobs_list}
+          EOF
+          )
+
+          # Check for an existing open issue
+          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "VTK master wheel failure" --label "vtk-master-wheel-failure" --body "$body"
+          fi

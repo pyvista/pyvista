@@ -260,7 +260,7 @@ class _DatasetLoader:
                 return [obj]
 
         flat = _flat(dataset)
-        if isinstance(dataset, pv.MultiBlock):
+        if isinstance(dataset, (pv.MultiBlock, pv.PartitionedDataSet)):
             flat.insert(0, dataset)
         return tuple(flat)
 

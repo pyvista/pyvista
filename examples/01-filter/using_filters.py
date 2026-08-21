@@ -5,6 +5,7 @@ Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~
 
 Using common filters like thresholding and clipping.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -72,7 +73,7 @@ datasets = {
 
 pv.plot_compare(
     datasets,
-    dataset_kwargs={'show_scalar_bar': False},
+    show_scalar_bar=False,
     reference_mesh=outline,
     cpos=[-2, 5, 3],
 )

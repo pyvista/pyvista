@@ -32,7 +32,7 @@ file:
 Plotting a Mesh using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Using this `example
-<https://kitware.github.io/vtk-examples/site/Python/IO/ReadSTL/>`_ as
+<https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ as
 a baseline, loading and plotting an STL file requires a lot of code
 when using only the `vtk`_ library. PyVista on the other hand only
 requires a few lines of code.

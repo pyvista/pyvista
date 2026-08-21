@@ -4,8 +4,8 @@
 Wrap a Point Cloud in a Convex Hull
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a convex hull from a point cloud using tetrahedralization and surface
-extraction.
+Create a convex hull from a point cloud using tetrahedralization and surface extraction.
+
 """
 
 import numpy as np

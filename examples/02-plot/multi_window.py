@@ -4,8 +4,8 @@
 Multi-Window Plot
 ~~~~~~~~~~~~~~~~~
 
+Subplotting: having multiple scenes in a single window.
 
-Subplotting: having multiple scenes in a single window
 """
 
 import pyvista as pv

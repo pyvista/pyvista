@@ -197,6 +197,233 @@ def test_border(has_border):
         assert pl.renderer.border_width == 0
 
 
+def test_border_defaults_from_theme():
+    """Plotter should pick up border color/width from the theme when unset."""
+    pl = pv.Plotter(shape=(1, 2))
+    try:
+        expected_color = pv.global_theme.border_color
+        expected_width = pv.global_theme.border_width
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay.border_color == expected_color
+        assert overlay.border_width == expected_width
+    finally:
+        pl.close()
+
+
+def test_border_explicit_overrides_theme():
+    pl = pv.Plotter(shape=(1, 2), border_color='red', border_width=3)
+    try:
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay.border_color == pv.Color('red')
+        assert overlay.border_width == 3
+    finally:
+        pl.close()
+
+
+@pytest.mark.parametrize('side', ['top', 'left', 'bottom', 'right'])
+def test_add_border_edges_single_side(side):
+    """add_border should honor the ``edges`` kwarg and draw only the requested line."""
+    pl = pv.Plotter()
+    try:
+        # Remove the default (full) border actor before adding a single-side one.
+        if pl.renderer.has_border:
+            pl.renderer.RemoveViewProp(pl.renderer._border_actor)
+            pl.renderer._border_actor = None
+        actor = pl.renderer.add_border(edges=[side])
+        poly = actor.GetMapper().GetInput()
+        assert poly.GetNumberOfLines() == 1
+    finally:
+        pl.close()
+
+
+def _overlay_seam_count(pl):
+    overlay = pl.renderers.border_overlay_renderer
+    if overlay is None:
+        return 0
+    count = 0
+    for actor in (overlay._border_actor, overlay._border_actor_secondary):
+        if actor is not None:
+            count += actor.GetMapper().GetInput().GetNumberOfLines()
+    return count
+
+
+def _per_renderer_has_border(pl):
+    return [renderer.has_border for renderer in pl.renderers]
+
+
+def test_interior_border_overlay_1x2():
+    """A 1x2 plotter gets one interior seam, drawn from the overlay renderer."""
+    pl = pv.Plotter(shape=(1, 2))
+    try:
+        # Per-subplot borders are dropped in favor of the shared overlay.
+        assert _per_renderer_has_border(pl) == [False, False]
+        # One vertical seam between the two subplots.
+        assert _overlay_seam_count(pl) == 1
+    finally:
+        pl.close()
+
+
+def test_interior_border_overlay_2x2():
+    """A 2x2 plotter produces exactly two interior seams (one H, one V)."""
+    pl = pv.Plotter(shape=(2, 2))
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 4
+        # Two seams total: one horizontal and one vertical.
+        assert _overlay_seam_count(pl) == 2
+    finally:
+        pl.close()
+
+
+def test_interior_border_overlay_3x1():
+    """A 3x1 plotter produces two horizontal seams from the overlay."""
+    pl = pv.Plotter(shape=(3, 1))
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 3
+        # Two horizontal seams between the three stacked rows.
+        assert _overlay_seam_count(pl) == 2
+    finally:
+        pl.close()
+
+
+def test_interior_border_overlay_string_shape():
+    """String-shape layouts also route seams through the overlay renderer."""
+    pl = pv.Plotter(shape='1|3')
+    try:
+        assert all(h is False for h in _per_renderer_has_border(pl))
+        # "1|3" has one vertical seam separating the big left panel from
+        # the right column, plus two horizontal seams inside the right
+        # column — 3 segments total.
+        assert _overlay_seam_count(pl) == 3
+    finally:
+        pl.close()
+
+
+def test_interior_border_disabled_single_plotter():
+    """A 1x1 plotter should not grow an interior border (there are no neighbors)."""
+    pl = pv.Plotter()
+    try:
+        assert not pl.renderer.has_border
+        assert pl.renderers.border_overlay_renderer is None
+    finally:
+        pl.close()
+
+
+def test_interior_border_preserves_full_border_on_explicit_single():
+    """Explicit border=True on a 1x1 plotter keeps the full rectangle.
+
+    The interior-only refactor is gated on multi-subplot layouts so that
+    users who opt in on a single plotter still see all four edges.
+    """
+    pl = pv.Plotter(border=True)
+    try:
+        assert pl.renderer.has_border
+        # The lone renderer keeps all four edges of its own border actor.
+        assert pl.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines() == 4
+        assert pl.renderers.border_overlay_renderer is None
+    finally:
+        pl.close()
+
+
+def test_border_exterior_same_as_true_for_single_subplot():
+    """``border='exterior'`` and ``border=True`` are equivalent on a single subplot."""
+    pl_true = pv.Plotter(border=True)
+    pl_exterior = pv.Plotter(border='exterior')
+    try:
+        lines_true = pl_true.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines()
+        lines_exterior = (
+            pl_exterior.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines()
+        )
+        assert lines_true == lines_exterior == 4
+    finally:
+        pl_true.close()
+        pl_exterior.close()
+
+
+def test_border_interior_has_no_effect_for_single_subplot():
+    """``border='interior'`` draws nothing on a single subplot."""
+    pl = pv.Plotter(border='interior')
+    try:
+        assert not pl.renderer.has_border
+        assert pl.renderers.border_overlay_renderer is None
+    finally:
+        pl.close()
+
+
+@pytest.mark.parametrize(
+    ('border', 'expected_lines'),
+    [
+        (None, 2),  # default: interior seams only
+        (False, 0),  # nothing at all
+        (True, 6),  # outer frame (4) + interior seams (2)
+        ('interior', 2),  # interior seams only, same as the default
+        ('exterior', 4),  # outer frame only
+        (np.bool_(True), 6),  # a numpy bool is not `True` by identity, only by value
+        (np.bool_(False), 0),
+    ],
+)
+def test_border_literal_modes(border, expected_lines):
+    """Each of ``border``'s bool, ``numpy.bool_``, and string-literal values resolves correctly."""
+    pl = pv.Plotter(shape=(2, 2), border=border)
+    try:
+        assert _per_renderer_has_border(pl) == [False] * 4
+        assert _overlay_seam_count(pl) == expected_lines
+    finally:
+        pl.close()
+
+
+def test_border_invalid_value_raises():
+    """An unrecognized ``border`` value raises, rather than silently drawing nothing."""
+    with pytest.raises(ValueError, match='interior'):
+        pv.Plotter(shape=(2, 2), border='sideways')
+
+
+def test_drop_border_actor_removes_both_primary_and_secondary_actor():
+    """``_drop_border_actor`` removes the secondary actor too, when one exists.
+
+    A secondary actor only ever exists on the shared overlay renderer,
+    and only when both interior seams and the exterior frame are drawn
+    together (they need different line widths, so they can't share one
+    actor -- see ``Renderers._build_border_overlay_renderer``). No
+    other renderer ever has one, so exercising this on the overlay is
+    the only way to cover the branch that removes it.
+    """
+    pl = pv.Plotter(shape=(2, 2), border=True)  # both interior and exterior
+    try:
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay._border_actor is not None
+        assert overlay._border_actor_secondary is not None
+
+        overlay._drop_border_actor()
+
+        assert overlay._border_actor is None
+        assert overlay._border_actor_secondary is None
+    finally:
+        pl.close()
+
+
+@pytest.mark.parametrize(
+    ('shape', 'expects_overlay'),
+    [
+        ((1, 1), False),
+        ([1, 1], False),
+        (np.array([1, 1]), False),
+        ((2, 2), True),
+        (np.array([2, 2]), True),
+        ('3|1', True),
+    ],
+)
+def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
+    """``border``'s default resolution doesn't choke on a list/array ``shape``."""
+    pl = pv.Plotter(shape=shape)
+    try:
+        assert (pl.renderers.border_overlay_renderer is not None) is expects_overlay
+    finally:
+        pl.close()
+
+
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
     pl = pv.Plotter()

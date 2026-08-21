@@ -414,9 +414,6 @@ def download_masonry_texture(load: bool = True) -> Texture | str:  # noqa: FBT00
         :ref:`Masonry Texture Dataset <masonry_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`texture_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_masonry_texture, load=load)
 
@@ -501,9 +498,6 @@ def download_puppy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001,
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Puppy Dataset <puppy_dataset>`
-
-        :ref:`texture_example`
-            Example which uses this dataset.
 
     """
     return _download_dataset(_dataset_puppy_texture, load=load)
@@ -625,16 +619,6 @@ def download_st_helens(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
         :ref:`St Helens Dataset <st_helens_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`colormap_example`
-        * :ref:`lighting_mesh_example`
-        * :ref:`opacity_example`
-        * :ref:`orbit_example`
-        * :ref:`plot_over_line_example`
-        * :ref:`plotter_lighting_example`
-        * :ref:`themes_example`
-
     """
     return _download_dataset(_dataset_st_helens, load=load)
 
@@ -682,15 +666,6 @@ def download_bunny(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
-
-        This dataset is used in the following examples:
-
-        * :ref:`read_file_example`
-        * :ref:`clip_with_surface_example`
-        * :ref:`extract_edges_example`
-        * :ref:`subdivide_example`
-        * :ref:`silhouette_example`
-        * :ref:`light_types_example`
 
     """
     return _download_dataset(_dataset_bunny, load=load)
@@ -740,12 +715,6 @@ def download_bunny_coarse(load: bool = True) -> PolyData | str:  # noqa: FBT001,
 
         :ref:`Bunny Dataset <bunny_dataset>`
 
-        This dataset is used in the following examples:
-
-        * :ref:`read_file_example`
-        * :ref:`clip_with_surface_example`
-        * :ref:`subdivide_example`
-
     """
     return _download_dataset(_dataset_bunny_coarse, load=load)
 
@@ -792,14 +761,6 @@ def download_cow(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Cow Head Dataset <cow_head_dataset>`
-
-        This dataset is used in the following examples:
-
-        * :ref:`extract_edges_example`
-        * :ref:`mesh_quality_example`
-        * :ref:`rotate_example`
-        * :ref:`linked_views_example`
-        * :ref:`light_actors_example`
 
     """
     return _download_dataset(_dataset_cow, load=load)
@@ -961,12 +922,6 @@ def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Head 2 Dataset <head_2_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        :ref:`volume_rendering_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_head, load=load)
 
@@ -1015,9 +970,6 @@ def download_head_2(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Head Dataset <head_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
     """
     return _download_dataset(_dataset_head_2, load=load)
@@ -1068,9 +1020,6 @@ def download_bolt_nut(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, F
 
         :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`volume_rendering_example`
-            Example which uses this dataset.
 
     """
     return _download_dataset(_dataset_bolt_nut, load=load)
@@ -1159,11 +1108,6 @@ def download_topo_global(load: bool = True) -> PolyData | str:  # noqa: FBT001, 
         :ref:`Topo Global Dataset <topo_global_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`compute_normals_example`
-        * :ref:`background_image_example`
-
     """
     return _download_dataset(_dataset_topo_global, load=load)
 
@@ -1200,11 +1144,6 @@ def download_topo_land(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
         :ref:`Topo Land Dataset <topo_land_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        This dataset is used in the following examples:
-
-        * :ref:`geodesic_example`
-        * :ref:`background_image_example`
 
     """
     return _download_dataset(_dataset_topo_land, load=load)
@@ -1284,15 +1223,6 @@ def download_knee(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Knee Full Dataset <knee_full_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        This dataset is used in the following examples:
-
-        * :ref:`opacity_example`
-        * :ref:`volume_rendering_example`
-        * :ref:`slider_bar_widget_example`
-
     """
     return _download_dataset(_dataset_knee, load=load)
 
@@ -1325,8 +1255,8 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
     >>> import pyvista as pv
     >>> dataset = examples.download_knee_full()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-381.74, -46.02, 216.54),
-    ...     focal_point=(74.8305, 89.2905, 100.0),
+    ...     position=(-381.7, -46.02, 216.5),
+    ...     focal_point=(74.83, 89.29, 100.0),
     ...     viewup=(0.23, 0.072, 0.97),
     ... )
     >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
@@ -1337,14 +1267,6 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Knee Dataset <knee_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        This dataset is used in the following examples:
-
-        * :ref:`volume_rendering_example`
-        * :ref:`slider_bar_widget_example`
 
     """
     return _download_dataset(_dataset_knee_full, load=load)
@@ -1385,11 +1307,6 @@ def download_lidar(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         :ref:`Lidar Dataset <lidar_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        This dataset is used in the following examples:
-
-        * :ref:`create_point_cloud_example`
-        * :ref:`edl_example`
 
     """
     return _download_dataset(_dataset_lidar, load=load)
@@ -1640,12 +1557,6 @@ def download_blood_vessels(load: bool = True) -> UnstructuredGrid | str:  # noqa
         :ref:`Blood Vessels Dataset <blood_vessels_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`read_parallel_example`
-        * :ref:`streamlines_example`
-        * :ref:`integrate_data_example`
-
     """
     return _download_dataset(_dataset_blood_vessels, load=load)
 
@@ -1769,9 +1680,6 @@ def download_saddle_surface(load: bool = True) -> PolyData | str:  # noqa: FBT00
         :ref:`Saddle Surface Dataset <saddle_surface_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`interpolate_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_saddle_surface, load=load)
 
@@ -1810,9 +1718,6 @@ def download_sparse_points(load: bool = True) -> PolyData | str:  # noqa: FBT001
 
         :ref:`Sparse Points Dataset <sparse_points_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`interpolate_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_sparse_points, load=load)
@@ -1868,13 +1773,6 @@ def download_foot_bones(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
 
         :ref:`Foot Bones Dataset <foot_bones_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`voxelize_example`
-            Example using this dataset.
-
-        :ref:`compare_threshold_filters_example`
-            Example using this dataset.
-
 
     """
     return _download_dataset(_dataset_foot_bones, load=load)
@@ -2073,9 +1971,6 @@ def download_office(load: bool = True) -> StructuredGrid | str:  # noqa: FBT001,
         :ref:`Office Dataset <office_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`clip_with_plane_box_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_office, load=load)
 
@@ -2115,9 +2010,6 @@ def download_horse_points(load: bool = True) -> PolyData | str:  # noqa: FBT001,
 
         :ref:`Horse Dataset <horse_dataset>`
 
-        :ref:`farthest_point_sampling_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_horse_points, load=load)
 
@@ -2156,9 +2048,6 @@ def download_horse(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Horse Points Dataset <horse_points_dataset>`
-
-        :ref:`mesh_lighting_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_horse, load=load)
@@ -2323,9 +2212,6 @@ def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
 
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
-
-        :ref:`gaussian_smoothing_example`
-            Example using this dataset.
 
     """
     example = __gourds2 if zoom else _dataset_gourds
@@ -2540,9 +2426,6 @@ def download_letter_a(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT
 
         :ref:`Letter K Dataset <letter_k_dataset>`
 
-        :ref:`cell_centers_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_letter_a, load=load)
 
@@ -2617,9 +2500,6 @@ def download_cad_model(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
         :ref:`Cad Model Dataset <cad_model_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`read_file_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_cad_model, load=load)
 
@@ -2651,9 +2531,9 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(8.4287e02, -5.7418e02, -4.4085e02),
-    ...     focal_point=(2.4950e02, 2.3450e02, 1.0125e02),
-    ...     viewup=(-3.2000e-01, 3.5000e-01, -8.8000e-01),
+    ...     position=(842.9, -574.2, -440.8),
+    ...     focal_point=(249.5, 234.5, 101.2),
+    ...     viewup=(-0.32, 0.35, -0.88),
     ... )
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
@@ -2665,12 +2545,6 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
         :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
             Segmentation labels associated with this dataset.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        :ref:`volume_rendering_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_frog, load=load)
@@ -2716,9 +2590,6 @@ def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
         :ref:`Chest Dataset <chest_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
         :ref:`volume_rendering_example`
             Example using this dataset.
 
@@ -2761,9 +2632,6 @@ def download_brain_atlas_with_sides(load: bool = True) -> ImageData | str:  # no
 
         :ref:`Brain Dataset <brain_dataset>`
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
     """
     return _download_dataset(_dataset_brain_atlas_with_sides, load=load)
 
@@ -2800,9 +2668,6 @@ def download_prostate(load: bool = True) -> ImageData | str:  # noqa: FBT001, FB
 
         :ref:`Prostate Dataset <prostate_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
     """
     return _download_dataset(_dataset_prostate, load=load)
@@ -2894,9 +2759,6 @@ def download_doorman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT0
 
         :ref:`Doorman Dataset <doorman_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`read_file_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_doorman, load=load)
@@ -3165,11 +3027,6 @@ def download_teapot(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
         :ref:`Teapot Dataset <teapot_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`read_file_example`
-        * :ref:`cell_centers_example`
-
     """
     return _download_dataset(_dataset_teapot, load=load)
 
@@ -3208,17 +3065,6 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        This dataset is used in the following examples:
-
-        * :ref:`gaussian_smoothing_example`
-        * :ref:`slice_example`
-        * :ref:`depth_peeling_example`
-        * :ref:`moving_isovalue_example`
-        * :ref:`plane_widget_example`
 
     """
     return _download_dataset(_dataset_brain, load=load)
@@ -3411,9 +3257,6 @@ def download_face(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Face2 Dataset <face2_dataset>`
-
-        :ref:`decimate_example`
-            Example using this dataset.
 
     """
     # TODO: there is a texture with this
@@ -3811,8 +3654,8 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(220.96, -24.38, -69.96),
-    ...     focal_point=(135.86, 106.55, 17.72),
+    ...     position=(221.0, -24.38, -69.96),
+    ...     focal_point=(135.9, 106.6, 17.72),
     ...     viewup=(-0.25, 0.42, -0.87),
     ... )
     >>> dataset = examples.download_carotid()
@@ -3822,17 +3665,6 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
 
         :ref:`Carotid Dataset <carotid_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        This dataset is used in the following examples:
-
-        * :ref:`glyph_example`
-        * :ref:`gradients_example`
-        * :ref:`streamlines_example`
-        * :ref:`plane_widget_example`
-        * :ref:`compare_threshold_filters_example`
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -3922,9 +3754,9 @@ def download_shark(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(-2.3195e02, -3.3930e01, 1.2981e02),
-    ...     focal_point=(-8.7100e00, 1.9000e-01, -1.1740e01),
-    ...     viewup=(-1.4000e-01, 9.9000e-01, 2.0000e-02),
+    ...     position=(-232.0, -33.93, 129.8),
+    ...     focal_point=(-8.71, 0.19, -11.74),
+    ...     viewup=(-0.14, 0.99, 0.02),
     ... )
     >>> dataset = examples.download_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
@@ -4050,8 +3882,8 @@ def download_grey_nurse_shark(load: bool = True) -> PolyData | str:  # noqa: FBT
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
     ...     position=(-200, -100, -16.0),
-    ...     focal_point=(-20.0, 20.0, -2.00),
-    ...     viewup=(0.00, 0.00, 1.00),
+    ...     focal_point=(-20.0, 20.0, -2.0),
+    ...     viewup=(0.0, 0.0, 1.0),
     ... )
     >>> dataset = examples.download_grey_nurse_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
@@ -4105,13 +3937,6 @@ def download_dragon(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
 
         :ref:`Dragon Dataset <dragon_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        This dataset is used in the following examples:
-
-        * :ref:`floors_example`
-        * :ref:`orbit_example`
-        * :ref:`silhouette_example`
-        * :ref:`shadows_example`
 
     """
     return _download_dataset(_dataset_dragon, load=load)
@@ -4289,11 +4114,6 @@ def download_kitchen(split: bool = False, load: bool = True) -> StructuredGrid |
         :ref:`Kitchen Dataset <kitchen_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`plot_over_line_example`
-        * :ref:`line_widget_example`
-
     """
     if load and split:
         return _download_dataset(__kitchen_split, load=load)
@@ -4435,9 +4255,6 @@ def download_model_with_variance(load: bool = True) -> UnstructuredGrid | str:  
         :ref:`Model With Variance Dataset <model_with_variance_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`opacity_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_model_with_variance, load=load)
 
@@ -4474,9 +4291,6 @@ def download_thermal_probes(load: bool = True) -> PolyData | str:  # noqa: FBT00
 
         :ref:`Thermal Probes Dataset <thermal_probes_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`interpolate_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_thermal_probes, load=load)
@@ -4589,9 +4403,6 @@ def download_pine_roots(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
         :ref:`Pine Roots Dataset <pine_roots_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`connectivity_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_pine_roots, load=load)
 
@@ -4632,11 +4443,6 @@ def download_crater_topo(load: bool = True) -> ImageData | str:  # noqa: FBT001,
         :ref:`Crater Topo Dataset <crater_topo_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        This dataset is used in the following examples:
-
-        * :ref:`terrain_following_mesh_example`
-        * :ref:`topo_map_example`
-
     """
     return _download_dataset(_dataset_crater_topo, load=load)
 
@@ -4670,7 +4476,7 @@ def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001
     >>> cpos = pv.CameraPosition(
     ...     position=(66.0, 73.0, -382.6),
     ...     focal_point=(66.0, 73.0, 0.0),
-    ...     viewup=(-0.0, -1.0, 0.0),
+    ...     viewup=(0.0, -1.0, 0.0),
     ... )
     >>> texture = examples.download_crater_imagery()
     >>> texture.plot(cpos=cpos)
@@ -4679,9 +4485,6 @@ def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001
 
         :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`topo_map_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_crater_imagery, load=load)
@@ -4771,9 +4574,9 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
     Plot it.
 
     >>> cpos = pv.CameraPosition(
-    ...     position=(4.66316700e04, 4.32796241e06, -3.82467050e05),
-    ...     focal_point=(5.52532740e05, 3.98017300e06, -2.47450000e04),
-    ...     viewup=(4.10000000e-01, -2.90000000e-01, -8.60000000e-01),
+    ...     position=(46630.0, 4328000.0, -382500.0),
+    ...     focal_point=(552500.0, 3980000.0, -24740.0),
+    ...     viewup=(0.41, -0.29, -0.86),
     ... )
     >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
@@ -4781,9 +4584,6 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
 
         :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`volume_rendering_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_damavand_volcano, load=load)
@@ -4867,23 +4667,17 @@ def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
         :ref:`Embryo Dataset <embryo_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        This dataset is used in the following examples:
-
-        * :ref:`contouring_example`
-        * :ref:`resampling_example`
-        * :ref:`slice_orthogonal_example`
-
     """
     return _download_dataset(_dataset_embryo, load=load)
 
 
 def _embryo_load_func(dataset):  # noqa: ANN001
-    # cleanup artifact
-    mask = dataset['SLCImage'] == 255
-    dataset['SLCImage'][mask] = 0
+    # This file's RLE stream is one byte short on every plane, and vtkSLCReader copies a full
+    # plane out of an uninitialized buffer, so the last voxel of each plane is heap garbage.
+    # It varies per read and lands in the z=75 slice used by the slice_orthogonal example,
+    # where a value above 195 silently rescales the color mapping.
+    nx, ny, nz = dataset.dimensions
+    dataset['SLCImage'].reshape(nz, ny, nx)[:, -1, -1] = 0
     return dataset
 
 
@@ -4919,9 +4713,6 @@ def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: 
 
         :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`antarctica_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_antarctica_velocity, load=load)
@@ -4964,9 +4755,6 @@ def download_room_surface_mesh(load: bool = True) -> PolyData | str:  # noqa: FB
 
         :ref:`Room Surface Mesh Dataset <room_surface_mesh_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`depth_peeling_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_room_surface_mesh, load=load)
@@ -5041,9 +4829,6 @@ def download_rgba_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, 
 
         :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`texture_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_rgba_texture, load=load)
@@ -5134,9 +4919,6 @@ def download_sky_box_cube_map(load: bool = True) -> Texture | str:  # noqa: FBT0
 
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
 
-        :ref:`pbr_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_sky_box_cube_map, load=load)
 
@@ -5170,7 +4952,7 @@ def download_cubemap_park(load: bool = True) -> Texture | str:  # noqa: FBT001, 
     Downloaded from http://www.humus.name/index.php?page=Textures
     by David Eck, and converted to a smaller 512x512 size for use
     with WebGL in his free, on-line textbook at
-    http://math.hws.edu/graphicsbook
+    https://math.hws.edu/graphicsbook/
 
     This work is licensed under a Creative Commons Attribution 3.0 Unported
     License.
@@ -5432,9 +5214,6 @@ def download_gpr_data_array(load: bool = True) -> ndarray | str:  # noqa: FBT001
 
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
 
-        :ref:`create_draped_surface_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_gpr_data_array, load=load)
 
@@ -5477,9 +5256,6 @@ def download_gpr_path(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
 
-        :ref:`create_draped_surface_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_gpr_path, load=load)
 
@@ -5518,7 +5294,7 @@ def download_woman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
     >>> import pyvista as pv
     >>> dataset = examples.download_woman()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-2600.0, 1970.6, 1836.9),
+    ...     position=(-2600.0, 1971.0, 1837.0),
     ...     focal_point=(48.5, -20.3, 843.9),
     ...     viewup=(0.23, -0.168, 0.958),
     ... )
@@ -5642,9 +5418,9 @@ def download_urn(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> cpos = pv.CameraPosition(
-    ...     position=(-7.123e02, 5.715e02, 8.601e02),
-    ...     focal_point=(4.700e00, 2.705e02, -1.010e01),
-    ...     viewup=(2.000e-01, 1.000e00, -2.000e-01),
+    ...     position=(-712.3, 571.5, 860.1),
+    ...     focal_point=(4.7, 270.5, -10.1),
+    ...     viewup=(0.2, 1.0, -0.2),
     ... )
     >>> dataset = examples.download_urn()
     >>> dataset.plot(cpos=cpos)
@@ -5950,9 +5726,6 @@ def download_louis_louvre(load: bool = True) -> PolyData | str:  # noqa: FBT001,
         :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`pbr_example`
-            Example using this dataset.
-
     """
     return _download_dataset(_dataset_louis_louvre, load=load)
 
@@ -5989,9 +5762,6 @@ def download_cylinder_crossflow(load: bool = True) -> MultiBlock | str:  # noqa:
 
         :ref:`Cylinder Crossflow Dataset <cylinder_crossflow_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`streamlines_2D_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_cylinder_crossflow, load=load)
@@ -6049,9 +5819,6 @@ def download_naca(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT00
 
         :ref:`Naca Dataset <naca_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`reader_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_naca, load=load)
@@ -6150,9 +5917,6 @@ def download_wavy(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT00
 
         :ref:`Wavy Dataset <wavy_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`reader_example`
-            Example using this dataset.
 
     """
     return _download_dataset(_dataset_wavy, load=load)
@@ -6321,9 +6085,6 @@ def download_cavity(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT
         :ref:`Cavity Dataset <cavity_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`openfoam_example`
-            Full example using this dataset.
-
     """
     return _download_dataset(_dataset_cavity, load=load)
 
@@ -6384,9 +6145,6 @@ def download_openfoam_tubes(load: bool = True) -> MultiBlock | str:  # noqa: FBT
 
         :ref:`Openfoam Tubes Dataset <openfoam_tubes_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`openfoam_tubes_example`
-            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_openfoam_tubes, load=load)
@@ -6518,9 +6276,9 @@ def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa:
     Plot the displacement of the 4th mode shape as scalars.
 
     >>> cpos = pv.CameraPosition(
-    ...     position=(0.744, -0.502, -0.830),
-    ...     focal_point=(0.0520, -0.160, 0.0743),
-    ...     viewup=(-0.180, -0.958, 0.224),
+    ...     position=(0.744, -0.502, -0.83),
+    ...     focal_point=(0.052, -0.16, 0.0743),
+    ...     viewup=(-0.18, -0.958, 0.224),
     ... )
     >>> dataset.plot(
     ...     scalars='disp_3',
@@ -6534,9 +6292,6 @@ def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa:
 
         :ref:`Pump Bracket Dataset <pump_bracket_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`pump_bracket_example`
-            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_pump_bracket, load=load)
@@ -6624,9 +6379,6 @@ def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa
 
         :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`openfoam_cooling_example`
-            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_electronics_cooling, load=load)
@@ -6802,7 +6554,7 @@ def download_tecplot_ascii(load: bool = True) -> MultiBlock | str:  # noqa: FBT0
     """Download the single block ASCII Tecplot dataset.
 
     Originally downloaded from Paul Bourke's
-    `Sample file <http://paulbourke.net/dataformats/tp/sample.tp>`_
+    `Sample file <https://paulbourke.net/dataformats/tp/sample.tp>`_
 
     Parameters
     ----------
@@ -6969,9 +6721,6 @@ def download_dicom_stack(
         :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
     """
     return _download_dataset(_dataset_dicom_stack, load=load)
 
@@ -7118,9 +6867,6 @@ def download_moonlanding_image(load: bool = True) -> ImageData | str:  # noqa: F
         :ref:`Moonlanding Image Dataset <moonlanding_image_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`image_fft_example`
-            Full example using this dataset.
-
     """
     return _download_dataset(_dataset_moonlanding_image, load=load)
 
@@ -7219,7 +6965,7 @@ def download_particles_lethe(load: Literal[True] = True) -> UnstructuredGrid: ..
 def download_particles_lethe(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_particles_lethe(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
-    """Download a particles dataset generated by `lethe <https://github.com/lethe-cfd/lethe>`_ .
+    """Download a particles dataset generated by `lethe <https://github.com/chaos-polymtl/lethe>`_.
 
     See `PyVista discussions #1984
     <https://github.com/pyvista/pyvista/discussions/1984>`_
@@ -7374,9 +7120,6 @@ def download_cloud_dark_matter(load: bool = True) -> PointSet | str:  # noqa: FB
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
-
-        :ref:`point_clouds_example`
-            Full example using this dataset
 
     """
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
@@ -7648,8 +7391,6 @@ def download_fea_hertzian_contact_cylinder(load: bool = True) -> UnstructuredGri
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`fea_hertzian_contact_pressure_example`
-
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
 
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
@@ -7657,7 +7398,6 @@ def download_fea_hertzian_contact_cylinder(load: bool = True) -> UnstructuredGri
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
 
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
-
 
     """
     return _download_dataset(_dataset_fea_hertzian_contact_cylinder, load=load)
@@ -7799,8 +7539,8 @@ def download_ivan_angel(load: bool = True, *, high_resolution: bool = False) -> 
     >>> import pyvista as pv
     >>> mesh = examples.download_ivan_angel()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-476.14, -393.73, 282.14),
-    ...     focal_point=(-15.00, 11.25, 44.08),
+    ...     position=(-476.1, -393.7, 282.1),
+    ...     focal_point=(-15.0, 11.25, 44.08),
     ...     viewup=(0.26, 0.24, 0.93),
     ... )
     >>> mesh.plot(cpos=cpos)
@@ -7965,8 +7705,8 @@ def download_owl(load: bool = True, *, high_resolution: bool = False) -> PolyDat
     >>> import pyvista as pv
     >>> mesh = examples.download_owl()
     >>> cpos = pv.CameraPosition(
-    ...     position=(-315.18, -402.21, 230.71),
-    ...     focal_point=(6.06, -1.74, 101.48),
+    ...     position=(-315.2, -402.2, 230.7),
+    ...     focal_point=(6.06, -1.74, 101.5),
     ...     viewup=(0.108, 0.226, 0.968),
     ... )
     >>> mesh.plot(cpos=cpos)
@@ -8207,9 +7947,6 @@ def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT00
 
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             Another HDR texture.
-
-        :ref:`load_gltf_example`
-            See additional examples using this dataset.
 
     """
     return _download_dataset(_dataset_dikhololo_night, load=load)
@@ -8473,9 +8210,6 @@ def download_coil_magnetic_field(load: bool = True) -> ImageData | str:  # noqa:
         :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`magnetic_fields_example`
-            More details on how to plot with this dataset.
-
     """
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
 
@@ -8588,7 +8322,7 @@ def download_reservoir(load: bool = True) -> ExplicitStructuredGrid | str:  # no
     and performance of different techniques, simulators, algorithms, among others.
     See more at https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview
 
-    This dataset is licenced under the Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/
+    This dataset is licenced under the Database Contents License: https://opendatacommons.org/licenses/dbcl/1-0/
 
     Parameters
     ----------
@@ -8814,15 +8548,6 @@ def download_whole_body_ct_male(
 
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             Similar dataset of a female subject.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-        :ref:`crop_labeled_example`
-            Example cropping this dataset using a segmentation mask.
-
-        :ref:`volume_with_mask_example`
-            See additional examples using this dataset.
 
     """
     if high_resolution:
@@ -9066,17 +8791,11 @@ def download_whole_body_ct_female(
 
     .. seealso::
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this dataset.
-
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
             Similar dataset of a male subject.
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
 
         :ref:`crop_labeled_example`
             Example cropping this dataset using a segmentation mask.
@@ -9441,6 +9160,7 @@ def download_particles(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
     >>> reader = pv.get_reader(filename)
     >>> reader.reader.SetDataByteOrderToBigEndian()
     >>> reader.reader.Update()
+    True
     >>> mesh = reader.read()
     >>> mesh.plot()
 
@@ -9878,7 +9598,7 @@ def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
     >>> pl.camera_position = pv.CameraPosition(
     ...     position=(25.0, 32.0, 44.0),
     ...     focal_point=(0.0, 0.931, -6.68),
-    ...     viewup=(-0.20, 0.90, -0.44),
+    ...     viewup=(-0.2, 0.9, -0.44),
     ... )
     >>> pl.show()
 

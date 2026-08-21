@@ -41,7 +41,7 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
-    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
+    if pv.vtk_version_info >= (9, 7):
         to_be_updated: Any = alg
     else:
         try:
@@ -74,6 +74,7 @@ def _get_output(
     oport=0,
     active_scalars=None,
     active_scalars_field='point',
+    keep_pointset=True,
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
@@ -84,8 +85,9 @@ def _get_output(
             data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
-    # return a PointSet if input is a pointset
-    if isinstance(ido, pv.PointSet):
+    # return a PointSet if input is a pointset, unless the algorithm generates
+    # cells (e.g. glyph), in which case flattening to a PointSet would drop them
+    if keep_pointset and isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
 

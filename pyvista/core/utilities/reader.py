@@ -5,18 +5,21 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
-import enum
+from enum import Enum
+from enum import IntEnum
 import json
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import ForwardRef
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
 from typing import cast
 from typing import get_args
+from typing import get_origin
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -871,11 +874,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
         item = self.reader.GetTimeSets().GetItem(self.active_time_set)
         if item is None:
             return 0
-        return (
-            item.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else item.GetCapacity()
-        )
+        return item.GetSize() if pv.vtk_version_info < (9, 7) else item.GetCapacity()
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
@@ -1451,7 +1450,7 @@ class Plot3DMetaReader(BaseReader['MultiBlock']):
     _vtk_class_name = 'vtkPlot3DMetaReader'
 
 
-class Plot3DFunctionEnum(enum.IntEnum):
+class Plot3DFunctionEnum(IntEnum):
     """An enumeration for the functions used in :class:`MultiBlockPlot3DReader`."""
 
     DENSITY = 100
@@ -1583,7 +1582,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         ... )  # add a function by enumeration via class variable alias
 
         """
-        if isinstance(value, enum.Enum):
+        if isinstance(value, Enum):
             value = value.value
         self.reader.AddFunction(value)
 
@@ -1598,7 +1597,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
             The function to remove.
 
         """
-        if isinstance(value, enum.Enum):
+        if isinstance(value, Enum):
             value = value.value
         self.reader.RemoveFunction(value)
 
@@ -4463,17 +4462,15 @@ def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     class's ``__name__``). Returns ``None`` when the class is not a
     parameterized :class:`BaseReader` subclass.
     """
-    import typing as _typing  # noqa: PLC0415
-
     for base in getattr(cls, '__orig_bases__', ()):
-        origin = _typing.get_origin(base)
+        origin = get_origin(base)
         if origin is None or not (isinstance(origin, type) and issubclass(origin, BaseReader)):
             continue
-        args = _typing.get_args(base)
+        args = get_args(base)
         if not args:
             continue
         arg = args[0]
-        if isinstance(arg, _typing.ForwardRef):
+        if isinstance(arg, ForwardRef):
             return arg.__forward_arg__
         if isinstance(arg, type):
             return arg.__name__

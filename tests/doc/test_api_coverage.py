@@ -10,15 +10,14 @@ names referenced under ``doc/source/api/``.
 from __future__ import annotations
 
 import inspect
-from pathlib import Path
 import re
 
 import pytest
 
 import pyvista as pv
+from tests.conftest import PYVISTA_ROOT_DIR
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_API_DOC_ROOT = _REPO_ROOT / 'doc' / 'source' / 'api'
+_API_DOC_ROOT = PYVISTA_ROOT_DIR / 'doc' / 'source' / 'api'
 
 # Directives whose body is an indented block of symbol names.
 _BLOCK_DIRECTIVES = frozenset({'autosummary'})
