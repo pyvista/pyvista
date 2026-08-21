@@ -501,14 +501,19 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             # the archive already exists in the cache
             fullpath = None
             if Path(self.path).is_file():
+                unzip_dir = Path(USER_DATA_PATH, path + '.unzip')
+                extracted_files = (
+                    [str(p) for p in unzip_dir.rglob('*') if p.is_file()]
+                    if unzip_dir.is_dir()
+                    else []
+                )
                 try:
-                    # Get file path (note: `self.path` is a single str, not the list
-                    # `file_from_files` expects, so this branch never actually matches)
-                    fullpath = file_from_files(target_file, self.path)  # type: ignore[arg-type]
+                    # Get file path
+                    fullpath = file_from_files(target_file, extracted_files)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
-                    unzip_dir = Path(USER_DATA_PATH, path + '.unzip', target_file)
-                    fullpath = str(unzip_dir) if unzip_dir.is_dir() else None
+                    folder = unzip_dir / target_file
+                    fullpath = str(folder) if folder.is_dir() else None
             # set the file path as the relative path of the target file if
             # the fullpath could not be resolved (i.e. not yet downloaded)
             self._path = target_file if fullpath is None else fullpath
