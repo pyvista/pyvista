@@ -834,3 +834,16 @@ def test_get_all_nested_filepaths_missing_path_raises(tmp_path):
     missing = str(tmp_path / 'does-not-exist')
     with pytest.raises(ValueError, match='Expected a file or folder path'):
         _get_all_nested_filepaths(missing)
+
+
+def test_load_as_multiblock_non_loadable_file_before_loadable_file():
+    # A non-loadable metafile listed before a loadable file must not cause the
+    # loadable file to be dropped from the result.
+    not_loadable = _DownloadableFile('HeadMRVolume.raw')
+    loadable = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
+    not_loadable.download()
+    loadable.download()
+
+    multi = _load_as_multiblock((not_loadable, loadable))
+    assert multi.keys() == ['HeadMRVolume']
+    assert isinstance(multi['HeadMRVolume'], pv.ImageData)

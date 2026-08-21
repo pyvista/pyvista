@@ -778,6 +778,21 @@ def _download_dataset(
 _MultiBlockFile = _SingleFileDatasetLoader | _MultiFileDatasetLoader | _DownloadableFile
 
 
+def _default_multiblock_name(file: _MultiBlockFile) -> str:
+    """Return the default MultiBlock key for a loadable file, derived from its path."""
+    path_loadable = getattr(file, 'path_loadable', None)
+    if isinstance(path_loadable, str):
+        path_str = path_loadable
+    elif isinstance(path_loadable, Sequence) and len(path_loadable) == 1:
+        # A nested multi-file loader with exactly one loadable path
+        path_str = path_loadable[0]
+    else:
+        # Not loadable, or ambiguous nesting; unused either way
+        return ''
+    path = Path(path_str)
+    return path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
+
+
 def _load_as_multiblock(
     files: Sequence[_MultiBlockFile],
     names: Sequence[str] | None = None,
@@ -790,17 +805,11 @@ def _load_as_multiblock(
     """
     multi = pv.MultiBlock()
     if names is None:
-        # set names, use filename without ext by default or dirname
-        loadable_paths = _flatten_nested_sequence(
-            [file.path_loadable for file in files if isinstance(file, _DatasetLoader)],
-        )
-        paths = [Path(loadable_path) for loadable_path in loadable_paths]
-        names = [
-            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
-            for path in paths
-        ]
+        # set names, use filename without ext by default or dirname; one name per file
+        # (not per loadable path) so this list stays aligned with `files` for `zip` below
+        names = [_default_multiblock_name(file) for file in files]
 
-    for file, name in zip(files, names, strict=False):
+    for file, name in zip(files, names, strict=True):
         # Non-loadable metafiles (e.g. a header file only used by another entry) are skipped
         if not isinstance(file, _DatasetLoader):
             continue
