@@ -3,6 +3,7 @@
 
 Picking a Point on the Surface of a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This example demonstrates how to pick meshes using
 :func:`enable_surface_point_picking() <pyvista.Plotter.enable_surface_point_picking>`.
 

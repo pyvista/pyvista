@@ -3,7 +3,9 @@
 
 Create a GIF Movie
 ~~~~~~~~~~~~~~~~~~
+
 Generate a moving gif from an active plotter.
+
 This example uses :meth:`~pyvista.Plotter.open_gif` and
 :meth:`~pyvista.Plotter.write_frame` to create the gif.
 

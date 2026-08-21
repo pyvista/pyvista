@@ -3,6 +3,7 @@
 
 Image Data Representations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This example demonstrates how to use :meth:`~pyvista.ImageDataFilters.points_to_cells`
 and :meth:`~pyvista.ImageDataFilters.cells_to_points` to re-mesh
 :class:`~pyvista.ImageData`.

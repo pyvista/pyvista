@@ -109,6 +109,12 @@ repos:
         language: pygrep
         entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
+      - id: gallery-docstring-structure
+        name: "Gallery examples need a '.. _label:', a title/underline, and a summary sentence"
+        language: python
+        entry: python hooks/gallery_docstrings.py
+        files: ^examples/.*\.py$
+        types: [python]
       - id: no-lint-suppression-comments
         name: "No lint suppression comments (fix it, or use pyproject.toml per-file-ignores)"
         language: pygrep

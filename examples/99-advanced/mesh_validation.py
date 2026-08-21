@@ -3,6 +3,7 @@
 
 Mesh Validation
 ~~~~~~~~~~~~~~~
+
 This example explores different cases where a mesh may not be considered valid as defined
 by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 

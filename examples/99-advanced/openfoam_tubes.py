@@ -3,6 +3,7 @@
 
 Plot CFD Data
 -------------
+
 Plot a CFD example from OpenFoam hosted on the public SimScale examples at
 `SimScale Project Library <https://www.simscale.com/projects/>`_.
 

@@ -3,6 +3,7 @@
 
 Visualize Anatomical Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This example visualizes different anatomical groups using the segmentation
 labels available from the downloadable datasets
 :func:`~pyvista.examples.downloads.download_whole_body_ct_female` and

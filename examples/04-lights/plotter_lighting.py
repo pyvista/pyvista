@@ -4,6 +4,8 @@
 Plotter Lighting Systems
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+Compare the :class:`pyvista.Plotter` class's three default lighting systems.
+
 The :class:`pyvista.Plotter` class comes with three options for the default
 lighting system:
 

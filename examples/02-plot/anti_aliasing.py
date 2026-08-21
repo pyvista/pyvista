@@ -3,6 +3,7 @@
 
 Anti-Aliasing
 ~~~~~~~~~~~~~
+
 Demonstrate anti-aliasing within PyVista.
 
 PyVista supports three types of anti-aliasing:

@@ -3,7 +3,8 @@
 
 Measuring distance
 ~~~~~~~~~~~~~~~~~~
-This example demonstrates how to measure distance between two points.
+
+This example demonstrates how to measure distance between two points using
 :func:`add_measurement_widget() <pyvista.Plotter.add_measurement_widget>`.
 
 """

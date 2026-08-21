@@ -3,6 +3,7 @@ r"""
 
 Adding a New Gallery Example
 ----------------------------
+
 This example demonstrates how to add a new PyVista `Sphinx Gallery
 <https://sphinx-gallery.github.io/>`_ example as well as being a template that
 can be used in their creation.

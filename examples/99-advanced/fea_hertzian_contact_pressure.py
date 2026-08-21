@@ -3,6 +3,7 @@
 
 Visualize Hertzian Contact Stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The following example demonstrates how to use PyVista to visualize
 Hertzian contact stress between a cylinder and a flat plate.
 

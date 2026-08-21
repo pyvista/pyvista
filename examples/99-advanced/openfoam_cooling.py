@@ -3,6 +3,7 @@
 
 Electronics Cooling CFD
 -----------------------
+
 Plot an electronics cooling CFD example from OpenFoam hosted on the public
 SimScale examples at `SimScale Project Library
 <https://www.simscale.com/projects/>`_ and generated from the `Thermal

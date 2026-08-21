@@ -3,6 +3,7 @@
 
 Blurring
 ~~~~~~~~
+
 This example shows how you can use :func:`add_blurring
 <pyvista.Plotter.add_blurring>` to blur a plot, or use
 :func:`enable_depth_of_field <pyvista.Plotter.enable_depth_of_field>`

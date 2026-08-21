@@ -3,6 +3,8 @@
 
 Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use a class based reader to have more control over reading data files.
 """
 
 # sphinx_gallery_start_ignore

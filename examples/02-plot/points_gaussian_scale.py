@@ -3,6 +3,7 @@
 
 Scaled Gaussian Points
 ----------------------
+
 This example demonstrates how to plot spheres using the ``'points_gaussian'``
 style with :func:`~pyvista.Plotter.add_mesh` and scale them by a dynamic radius.
 

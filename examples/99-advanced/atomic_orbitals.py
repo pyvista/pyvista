@@ -3,6 +3,7 @@
 
 Plot Atomic Orbitals
 --------------------
+
 Visualize the wave functions (orbitals) of the hydrogen atom.
 
 """

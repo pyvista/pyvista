@@ -3,6 +3,7 @@
 
 Extrude Trim
 ~~~~~~~~~~~~
+
 Extrude a :class:`pyvista.PolyData` with a :func:`pyvista.Plane` using
 :func:`extrude_trim() <pyvista.PolyDataFilters.extrude_trim>`.
 

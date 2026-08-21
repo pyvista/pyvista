@@ -3,6 +3,7 @@
 
 Extrude Rotation
 ~~~~~~~~~~~~~~~~
+
 Sweep polygonal data creating "skirt" from free edges and lines, and
 lines from vertices using the :meth:`~pyvista.PolyDataFilters.extrude_rotate`
 filter.
