@@ -4,12 +4,17 @@
 Spline Widget
 ~~~~~~~~~~~~~
 
+Enable and disable the spline widget to interactively create a poly line.
 
-A spline widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_spline_widget` and
-:func:`pyvista.Plotter.clear_spline_widgets` methods respectively.
-This widget allows users to interactively create a poly line (spline) through
-a scene and use that spline.
+Uses :func:`pyvista.Plotter.add_spline_widget` and
+:func:`pyvista.Plotter.clear_spline_widgets`. This widget allows users to
+interactively create a poly line (spline) through a scene and use that
+spline.
+
+Uses :func:`pyvista.Plotter.add_spline_widget` and
+:func:`pyvista.Plotter.clear_spline_widgets`. This widget allows users to
+interactively create a poly line (spline) through a scene and use that
+spline.
 
 A common task with splines is to slice a volumetric dataset using an irregular
 path. To do this, we have added a convenient helper method which leverages the

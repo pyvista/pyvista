@@ -4,9 +4,7 @@
 Reflect Meshes
 ~~~~~~~~~~~~~~
 
-This example reflects a mesh across a plane using
-:meth:`~pyvista.DataObjectFilters.reflect`.
-
+Reflect a mesh across a plane using :meth:`~pyvista.DataObjectFilters.reflect`.
 """
 
 import pyvista as pv

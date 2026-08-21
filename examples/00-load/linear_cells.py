@@ -4,16 +4,17 @@
 Linear Cells
 ~~~~~~~~~~~~
 
-This example extends the :ref:`create_unstructured_surface_example` example by
-including an explanation of linear VTK cell types and how you can create them in
-PyVista.
+Explains linear VTK cell types and how to create them in PyVista.
+
+This example extends the :ref:`create_unstructured_surface_example` example.
+
+This example extends the :ref:`create_unstructured_surface_example` example.
 
 Linear cells are cells where points only occur at the edges of each
 cell. Non-linear cells contain additional points along the edges of the cell.
 
 For more details regarding what a :class:`pyvista.UnstructuredGrid` is, please
 see :ref:`point_sets_api`.
-
 """
 
 # sphinx_gallery_start_ignore

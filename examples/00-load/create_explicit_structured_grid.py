@@ -4,9 +4,7 @@
 Creating an Explicit Structured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create an explicit structured grid from NumPy arrays using
-:class:`pyvista.ExplicitStructuredGrid`.
-
+Create an :class:`~pyvista.ExplicitStructuredGrid` from NumPy arrays.
 """
 
 import numpy as np

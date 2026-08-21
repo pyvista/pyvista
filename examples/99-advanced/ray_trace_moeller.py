@@ -4,8 +4,11 @@
 Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates the Moeller-Trumbore intersection algorithm
-using :class:`~pyvista.PolyData`.
+Demonstrate the Moeller-Trumbore ray/triangle intersection algorithm.
+
+Uses :class:`~pyvista.PolyData`.
+
+Uses :class:`~pyvista.PolyData`.
 
 For additional details, please reference the following:
 

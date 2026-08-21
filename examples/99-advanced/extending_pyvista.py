@@ -4,9 +4,10 @@
 Extending PyVista
 ~~~~~~~~~~~~~~~~~
 
-A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended
-by users.  For example, if the user wants to keep track of the location of the
-maximum point in the (1, 0, 1) direction on the mesh.
+A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended by users.
+
+For example, if the user wants to keep track of the location of the maximum point in the
+(1, 0, 1) direction on the mesh.
 
 There are two methods by which users can handle subclassing.  One is directly managing
 the types objects.  This may require checking types during filter
@@ -19,7 +20,6 @@ classes are nearly always used for particular types of DataSets.
     This is for advanced usage only.  Automatic managing of types
     will not work in all situations, in particular when a builtin dataset is directly
     instantiated.  See examples below.
-
 """
 
 import numpy as np

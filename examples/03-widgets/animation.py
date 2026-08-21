@@ -5,10 +5,12 @@ Animation
 ~~~~~~~~~
 
 This example demonstrates how to create a simple animation.
-A timer is used with :meth:`~pyvista.Plotter.add_timer_event`
-to move a sphere across a scene.
 
-Inspired by `VTK Animation Examples <https://examples.vtk.org/site/Python/Utilities/Animation/>`_.
+A timer is used with :meth:`~pyvista.Plotter.add_timer_event` to move a sphere across a
+scene.
+
+Inspired by `VTK Animation Examples
+<https://examples.vtk.org/site/Python/Utilities/Animation/>`_.
 """
 
 import pyvista as pv

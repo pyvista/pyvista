@@ -5,8 +5,9 @@ Chart Basics
 ~~~~~~~~~~~~
 
 This example shows how different types of charts can be added to the scene.
-A more complex example, showing how to combine multiple charts as overlays
-in the same renderer, is given in :ref:`chart_overlays_example`.
+
+A more complex example, showing how to combine multiple charts as overlays in the same
+renderer, is given in :ref:`chart_overlays_example`.
 """
 
 import numpy as np

@@ -4,8 +4,12 @@
 Eye Dome Lighting
 ~~~~~~~~~~~~~~~~~
 
-Eye-Dome Lighting (EDL) is a non-photorealistic, image-based shading technique
-designed to improve depth perception in scientific visualization images.
+Eye-Dome Lighting (EDL) improves depth perception in scientific visualization.
+
+It darkens each pixel based on how much nearer its neighbors are in screen
+space, which makes depth ordering readable even on flat-shaded geometry or
+unshaded point clouds. To learn more, see `this blog post`_.
+
 It darkens each pixel based on how much nearer its neighbors are in screen
 space, which makes depth ordering readable even on flat-shaded geometry or
 unshaded point clouds. To learn more, see `this blog post`_.
@@ -19,7 +23,6 @@ example:
 * Dense or intertwined geometry where overlapping surfaces collapse into a
   visually flat mass.
 * Noisy or raw-scanned meshes with many features at similar depths.
-
 """
 
 # %%

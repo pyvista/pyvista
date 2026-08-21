@@ -4,11 +4,17 @@
 Line Widget
 ~~~~~~~~~~~
 
-The line widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_line_widget` and
-:func:`pyvista.Plotter.clear_line_widgets` methods respectively.
-Unfortunately, PyVista does not have any helper methods to utilize this
-widget, so it is necessary to pass a custom callback method.
+Enable and disable the line widget with a custom callback method.
+
+Uses :func:`pyvista.Plotter.add_line_widget` and
+:func:`pyvista.Plotter.clear_line_widgets`. Unfortunately, PyVista does not
+have any helper methods to utilize this widget, so it is necessary to pass
+a custom callback method.
+
+Uses :func:`pyvista.Plotter.add_line_widget` and
+:func:`pyvista.Plotter.clear_line_widgets`. Unfortunately, PyVista does not
+have any helper methods to utilize this widget, so it is necessary to pass
+a custom callback method.
 
 One particularly fun example is to use the line widget to create a source for
 the :func:`pyvista.DataSetFilters.streamlines` filter. Again note the use of

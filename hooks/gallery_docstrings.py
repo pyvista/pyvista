@@ -4,8 +4,8 @@ Ruff's D400/D415 (first line ends in punctuation) can't be enabled for
 ``examples/`` because Sphinx-Gallery requires the docstring to start with a
 ``.. _label:`` target followed by a title/underline pair, which those rules
 would force us to break. This hook instead enforces the shape directly: a
-ref label, a title with a matching underline, and a one-sentence summary
-paragraph (ending in punctuation) right after the title.
+ref label, a title with a matching underline, and a summary right after the
+title that fits on a single line and ends in punctuation, mirroring D400.
 """
 
 from __future__ import annotations
@@ -34,8 +34,10 @@ def _title_error(paragraph: str) -> str | None:
 
 
 def _summary_error(paragraph: str) -> str | None:
-    """Check that the summary paragraph is a sentence ending in punctuation."""
-    summary = ' '.join(paragraph.strip().split())
+    """Check that the summary paragraph is a single line ending in punctuation."""
+    summary = paragraph.strip('\n')
+    if '\n' in summary:
+        return f'summary must fit on a single line, not wrap: {summary!r}'
     if summary.startswith('.. '):
         return 'summary paragraph is a directive, not a summary sentence'
     return (

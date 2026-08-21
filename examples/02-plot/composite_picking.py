@@ -4,9 +4,11 @@
 Composite Picking
 ~~~~~~~~~~~~~~~~~
 
-Demonstrate how to pick individual blocks of a :class:`pyvista.MultiBlock`
-using :func:`pyvista.Plotter.enable_block_picking`.
+Pick individual blocks of a :class:`~pyvista.MultiBlock`.
 
+Uses :func:`pyvista.Plotter.enable_block_picking`.
+
+Uses :func:`pyvista.Plotter.enable_block_picking`.
 """
 
 import numpy as np

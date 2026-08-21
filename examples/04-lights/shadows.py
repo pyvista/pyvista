@@ -4,8 +4,11 @@
 Shadows
 ~~~~~~~
 
-Demonstrate the usage of lights and shadows in PyVista with :class:`~pyvista.Light`
-objects and the :meth:`~pyvista.Plotter.enable_shadows` plotting method.
+Demonstrate the usage of lights and shadows in PyVista.
+
+Uses :class:`~pyvista.Light` objects and :meth:`~pyvista.Plotter.enable_shadows`.
+
+Uses :class:`~pyvista.Light` objects and :meth:`~pyvista.Plotter.enable_shadows`.
 """
 
 import numpy as np

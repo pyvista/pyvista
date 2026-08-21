@@ -4,8 +4,11 @@
 Plot a Lorenz Attractor
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Integrate the Lorenz system and render the trajectory as a colored tube
-built from :func:`pyvista.lines_from_points`.
+Integrate the Lorenz system and render the trajectory as a colored tube.
+
+Built from :func:`pyvista.lines_from_points`.
+
+Built from :func:`pyvista.lines_from_points`.
 """
 
 import numpy as np

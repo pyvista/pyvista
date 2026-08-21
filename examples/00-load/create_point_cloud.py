@@ -4,9 +4,7 @@
 Create Point Cloud
 ~~~~~~~~~~~~~~~~~~
 
-Create a :class:`pyvista.PolyData` object from a point cloud of vertices and
-scalar arrays for those points.
-
+Create a :class:`~pyvista.PolyData` point cloud from vertices and scalar arrays.
 """
 
 import numpy as np

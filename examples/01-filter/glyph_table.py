@@ -4,8 +4,9 @@
 Table of Glyphs
 ~~~~~~~~~~~~~~~
 
-``vtk`` supports tables of glyphs from which glyphs are looked
-up. This example demonstrates this functionality.
+``vtk`` supports tables of glyphs from which glyphs are looked up.
+
+This example demonstrates this functionality.
 """
 
 import numpy as np

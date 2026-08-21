@@ -4,16 +4,20 @@
 Compare Field Across Mesh Regions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here is some velocity data from a glacier modelling simulation that is compared
-across nodes in the simulation. We have simplified the mesh to have the
-simulation node value already on the mesh.
+Plot glacier velocity data from a modelling simulation.
 
-This was originally posted to `pyvista/pyvista-support#83 <https://github.com/pyvista/pyvista-support/issues/83>`_.
+This is compared across nodes in the simulation. We have simplified the
+mesh to have the simulation node value already on the mesh.
+
+This is compared across nodes in the simulation. We have simplified the
+mesh to have the simulation node value already on the mesh.
+
+This was originally posted to `pyvista/pyvista-support#83
+<https://github.com/pyvista/pyvista-support/issues/83>`_.
 
 The modeling results are courtesy of `Urruty Benoit <https://github.com/BenoitURRUTY>`_
 and  are from the `Elmer/Ice <https://elmerice.elmerfem.org>`_ simulation
 software.
-
 """
 
 import numpy as np

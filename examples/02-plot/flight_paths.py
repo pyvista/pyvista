@@ -4,8 +4,11 @@
 Plot Curved Flight Paths on a Globe
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Connect cities with elevated circular arcs from :func:`pyvista.CircularArc` to
-create a simple route map.
+Connect cities with elevated circular arcs to create a simple route map.
+
+Uses :func:`pyvista.CircularArc`.
+
+Uses :func:`pyvista.CircularArc`.
 """
 
 import numpy as np

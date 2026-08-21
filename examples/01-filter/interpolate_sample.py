@@ -4,12 +4,12 @@
 Compare interpolation/sampling methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are two main methods of interpolating or sampling data from a target mesh
-in PyVista. :func:`pyvista.DataSetFilters.interpolate` uses a distance weighting
-kernel to interpolate point data from nearby points of the target mesh onto
-the desired points.
-:func:`pyvista.DataObjectFilters.sample` interpolates data using the
-interpolation scheme of the enclosing cell from the target mesh.
+Compare two methods for interpolating or sampling data from a target mesh.
+
+:func:`pyvista.DataSetFilters.interpolate` uses a distance weighting kernel to interpolate
+point data from nearby points of the target mesh onto the desired points.
+:func:`pyvista.DataObjectFilters.sample` interpolates data using the interpolation scheme
+of the enclosing cell from the target mesh.
 
 If the target mesh is a point cloud, i.e. there is no connectivity in the cell
 structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
@@ -20,7 +20,6 @@ Here the two methods are compared and contrasted using a simple example of
 sampling data from a mesh in a rectangular domain. This example demonstrates the
 main differences above. For more complex uses, see :ref:`interpolate_example`
 and :ref:`resampling_example`.
-
 """
 
 # sphinx_gallery_thumbnail_number = 7

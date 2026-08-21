@@ -4,8 +4,11 @@
 Clipping with a Surface
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Clip any PyVista dataset by a :class:`pyvista.PolyData` surface mesh using
-the :func:`pyvista.DataSetFilters.clip_surface` filter.
+Clip any PyVista dataset by a :class:`~pyvista.PolyData` surface mesh.
+
+Uses the :func:`pyvista.DataSetFilters.clip_surface` filter.
+
+Uses the :func:`pyvista.DataSetFilters.clip_surface` filter.
 
 Note that we first demonstrate how the clipping is performed by computing an
 implicit distance and thresholding the mesh. This thresholding is one approach

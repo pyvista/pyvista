@@ -4,8 +4,11 @@
 Plot Over Line
 ~~~~~~~~~~~~~~
 
-Plot the values of a dataset over a line through that dataset
-using the :meth:`~pyvista.DataSetFilters.plot_over_line` filter.
+Plot the values of a dataset over a line through that dataset.
+
+Uses the :meth:`~pyvista.DataSetFilters.plot_over_line` filter.
+
+Uses the :meth:`~pyvista.DataSetFilters.plot_over_line` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 2

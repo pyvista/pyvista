@@ -4,8 +4,7 @@
 Create Circular Arcs
 ~~~~~~~~~~~~~~~~~~~~
 
-Generate arc geometry with :func:`pyvista.CircularArc` and
-:func:`pyvista.CircularArcFromNormal`.
+Generate arc geometry with :func:`pyvista.CircularArc`.
 """
 
 import numpy as np

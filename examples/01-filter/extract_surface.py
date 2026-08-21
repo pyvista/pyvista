@@ -4,8 +4,7 @@
 Extract Surface
 ---------------
 
-You can extract the surface of nearly any object within ``pyvista``
-using the :meth:`~pyvista.DataObjectFilters.extract_surface` filter.
+Extract nearly any object surface with :meth:`~pyvista.DataObjectFilters.extract_surface`.
 """
 
 # sphinx_gallery_thumbnail_number = 2

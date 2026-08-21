@@ -4,12 +4,14 @@
 Plot CFD Data
 -------------
 
-Plot a CFD example from OpenFoam hosted on the public SimScale examples at
-`SimScale Project Library <https://www.simscale.com/projects/>`_.
+Plot a CFD example hosted on the public SimScale examples.
+
+From `SimScale Project Library <https://www.simscale.com/projects/>`_.
+
+From `SimScale Project Library <https://www.simscale.com/projects/>`_.
 
 This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 :ref:`openfoam_example` for a full example using this reader.
-
 """
 
 import numpy as np

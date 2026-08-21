@@ -4,8 +4,7 @@
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a StructuredGrid surface from NumPy arrays
-using :class:`pyvista.StructuredGrid`.
+Create a StructuredGrid surface from NumPy arrays using :class:`pyvista.StructuredGrid`.
 """
 
 import numpy as np

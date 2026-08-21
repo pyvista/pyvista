@@ -4,9 +4,11 @@
 Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VTK 9 introduced Physically Based Rendering (PBR) and we have exposed
-that functionality in PyVista. Read the `blog about PBR
-<https://www.kitware.com/vtk-pbr/>`_ for more details.
+VTK 9 introduced Physically Based Rendering (PBR), exposed in PyVista.
+
+Read the `blog about PBR <https://www.kitware.com/vtk-pbr/>`_ for more details.
+
+Read the `blog about PBR <https://www.kitware.com/vtk-pbr/>`_ for more details.
 
 PBR is only supported for :class:`pyvista.PolyData` and can be
 triggered via the ``pbr`` keyword argument of ``add_mesh``. Also use
@@ -14,7 +16,6 @@ the ``metallic`` and ``roughness`` arguments for further control.
 
 Let's show off this functionality by rendering a high quality mesh of
 a statue as though it were metallic.
-
 """
 
 # sphinx_gallery_start_ignore

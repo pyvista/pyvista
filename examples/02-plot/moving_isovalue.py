@@ -4,11 +4,15 @@
 Moving Isovalue
 ~~~~~~~~~~~~~~~
 
-Make an animation of an isovalue through a volumetric dataset
-such as :func:`~pyvista.examples.downloads.download_brain`.
-This example uses :meth:`~pyvista.Plotter.open_gif` and
-:meth:`~pyvista.Plotter.write_frame` to create the animation.
+Animate an isovalue moving through a volumetric dataset.
 
+Uses :func:`~pyvista.examples.downloads.download_brain` and
+:meth:`~pyvista.Plotter.open_gif`/:meth:`~pyvista.Plotter.write_frame` to
+create the animation.
+
+Uses :func:`~pyvista.examples.downloads.download_brain` and
+:meth:`~pyvista.Plotter.open_gif`/:meth:`~pyvista.Plotter.write_frame` to
+create the animation.
 """
 
 import numpy as np

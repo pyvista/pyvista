@@ -4,8 +4,11 @@
 Register a Surface with ICP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Recover the rigid transform between two surfaces with the iterative closest
-point implementation behind :func:`pyvista.DataSetFilters.align`.
+Recover the rigid transform between two surfaces with iterative closest point.
+
+Implemented behind :func:`pyvista.DataSetFilters.align`.
+
+Implemented behind :func:`pyvista.DataSetFilters.align`.
 """
 
 import numpy as np

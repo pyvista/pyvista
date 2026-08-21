@@ -4,8 +4,11 @@
 Colormap Choices
 ~~~~~~~~~~~~~~~~
 
-Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
-values with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
+Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalars.
+
+Works with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
+
+Works with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 """
 
 from matplotlib.colors import LinearSegmentedColormap
