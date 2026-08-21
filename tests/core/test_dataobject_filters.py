@@ -28,6 +28,7 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
+from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -2931,3 +2932,116 @@ def test_extract_surface_nonlinear(as_multiblock):
         algorithm=None, nonlinear_subdivision=0, progress_bar=True
     )
     assert surf_no_subdivide.n_faces == 6
+
+
+def test_convex_hull_3d():
+    # Exercises whichever backend (vtkConvexHull or the scipy fallback) matches
+    # the vtk actually installed; the tox matrix covers vtk<9.7 and vtk>=9.7.
+    sphere = pv.Sphere()
+    hull = sphere.convex_hull()
+    assert isinstance(hull, pv.PolyData)
+    assert hull.n_points > 0
+    assert hull.n_cells > 1
+    assert np.allclose(hull.bounds, sphere.bounds, atol=1e-3)
+    assert hull.point_data.keys() == []
+    assert hull.cell_data.keys() == []
+
+
+def test_convex_hull_2d():
+    circle = pv.Circle(radius=0.5)
+    hull = circle.convex_hull(dimensionality=2)
+    assert hull.n_cells == 1
+    assert np.allclose(hull.bounds, circle.bounds, atol=1e-3)
+
+
+def test_convex_hull_2d_tilted_plane():
+    # A 2D hull is computed from points projected onto the best-fit plane, even
+    # when that plane is not axis-aligned.
+    circle = pv.Circle(radius=0.5).rotate_vector((1, 2, 3), 40)
+    hull = circle.convex_hull(dimensionality=2)
+    assert hull.n_cells == 1
+    assert np.allclose(hull.bounds, circle.bounds, atol=1e-3)
+
+
+def test_convex_hull_multiblock():
+    circle1 = pv.Circle(radius=0.5)
+    circle2 = pv.Circle(radius=0.25).translate((1.0, 0.0, 0.0))
+    mesh = pv.MultiBlock([circle1, circle2])
+    hull = mesh.convex_hull(dimensionality=2)
+    assert hull.n_cells == 1
+    combined_bounds = pv.merge([circle1, circle2]).bounds
+    assert np.allclose(hull.bounds, combined_bounds, atol=1e-3)
+
+
+def test_convex_hull_planar_default_dimensionality():
+    # dimensionality defaults to 3, which is degenerate for planar input
+    circle = pv.Circle(radius=0.5)
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        # vtkConvexHull degrades gracefully for degenerate input
+        hull = circle.convex_hull()
+        assert hull.n_points > 0
+    else:
+        # the scipy fallback raises instead of silently returning an empty mesh
+        with pytest.raises(ValueError, match='degenerate'):
+            circle.convex_hull()
+
+
+def test_convex_hull_dimensionality_1():
+    sphere = pv.Sphere()
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        hull = sphere.convex_hull(dimensionality=1)
+        assert hull.n_points == 2
+        assert hull.n_cells == 1
+    else:
+        with pytest.raises(VTKVersionError, match='dimensionality=1'):
+            sphere.convex_hull(dimensionality=1)
+
+
+def test_convex_hull_auto_dimensionality():
+    circle = pv.Circle(radius=0.5)
+    hull2d = circle.convex_hull(dimensionality='auto')
+    assert hull2d.n_cells == 1
+
+    sphere = pv.Sphere()
+    hull3d = sphere.convex_hull(dimensionality='auto')
+    assert hull3d.n_cells > 1
+
+
+# The tests below exercise the scipy fallback (`_convex_hull_scipy`) directly so they
+# run regardless of which vtk is actually installed.
+
+
+def test_convex_hull_scipy_3d():
+    pytest.importorskip('scipy')
+    points = pv.Sphere().points
+    hull = _convex_hull_scipy(points, dimensionality=3)
+    assert hull.n_points > 0
+    assert hull.n_cells > 1
+
+
+def test_convex_hull_scipy_2d():
+    pytest.importorskip('scipy')
+    points = pv.Circle(radius=0.5).points
+    hull = _convex_hull_scipy(points, dimensionality=2)
+    assert hull.n_cells == 1
+
+
+def test_convex_hull_scipy_dimensionality_1_raises():
+    pytest.importorskip('scipy')
+    points = pv.Sphere().points
+    with pytest.raises(VTKVersionError, match='dimensionality=1'):
+        _convex_hull_scipy(points, dimensionality=1)
+
+
+def test_convex_hull_scipy_degenerate_raises():
+    pytest.importorskip('scipy')
+    points = pv.Circle(radius=0.5).points  # planar, degenerate for a 3D hull
+    with pytest.raises(ValueError, match='degenerate'):
+        _convex_hull_scipy(points, dimensionality=3)
+
+
+def test_convex_hull_scipy_not_installed(monkeypatch):
+    monkeypatch.setitem(sys.modules, 'scipy', None)
+    monkeypatch.setitem(sys.modules, 'scipy.spatial', None)
+    with pytest.raises(ImportError, match='scipy'):
+        _convex_hull_scipy(pv.Sphere().points, dimensionality=3)

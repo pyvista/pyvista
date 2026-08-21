@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from pyvista import TransformLike
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -4308,16 +4309,29 @@ class DataObjectFilters:
         )
 
     def convex_hull(
-        self: DataSet | MultiBlock, *, dimensionality: Literal[1, 2, 3] = 3, progress_bar=False
+        self: DataSet | MultiBlock,
+        *,
+        dimensionality: Literal[1, 2, 3, 'auto'] = 3,
+        progress_bar=False,
     ) -> PolyData:
         """Compute the convex hull from this mesh's points.
+
+        With :vtk:`vtk>=9.7`, this uses :vtk:`vtkConvexHull`. With older VTK, ``scipy``
+        (Qhull) is used instead for ``dimensionality=2`` or ``3``; ``dimensionality=1``
+        requires :vtk:`vtk>=9.7`.
 
         .. versionadded:: 0.49
 
         Parameters
         ----------
-        dimensionality : int | 'auto', optional
-            The dimensionality of the hull.
+        dimensionality : int | 'auto', default: 3
+            The dimensionality of the hull. If ``'auto'``, the dimensionality is set to
+            this mesh's :attr:`~pyvista.DataSet.dimensionality`, i.e. points are not
+            assumed to span all three dimensions. Auto-detection has a computational cost
+            and is not enabled by default. Note that a 2D hull is computed from points
+            projected onto this mesh's best-fit plane, so requesting ``dimensionality=2``
+            (or an auto-detected ``2``) for points that are not coplanar will discard
+            information.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4374,24 +4388,23 @@ class DataObjectFilters:
             )
             alg_input = pv.PointSet(points)
         else:
+            points = self.points
             alg_input = self
+
+        dimensionality_: Literal[1, 2, 3] = (
+            cast('Literal[1, 2, 3]', int(np.clip(alg_input.dimensionality, 1, 3)))
+            if dimensionality == 'auto'
+            else dimensionality
+        )
 
         if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
-            alg.SetDimension(dimensionality)
+            alg.SetDimension(dimensionality_)
             _update_alg(alg, progress_bar=progress_bar)
             output = pv.wrap(alg.GetOutput())
         else:
-            if dimensionality != 3:
-                msg = (
-                    f'Only 3D convex hulls are supported. '
-                    f'Upgrade to vtk>=9.7 to use `dimensionality={dimensionality}`'
-                )
-                raise VTKVersionError(msg)
-            output = alg_input.delaunay_3d(progress_bar=progress_bar).extract_surface(
-                algorithm='geometry', progress_bar=progress_bar
-            )
+            output = _convex_hull_scipy(points, dimensionality=dimensionality_)
         output.point_data.clear()
         output.cell_data.clear()
         return output
@@ -5291,6 +5304,55 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
         return output
+
+
+def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
+    """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
+
+    Fallback for :vtk:`vtk<9.7`, which lacks :vtk:`vtkConvexHull`.
+    """
+    try:
+        from scipy.spatial import ConvexHull  # noqa: PLC0415
+        from scipy.spatial import QhullError  # noqa: PLC0415
+    except ImportError:
+        msg = (
+            "The 'scipy' package must be installed to compute the convex hull with "
+            f'vtk<9.7 (found vtk {".".join(map(str, pv.vtk_version_info))}).'
+        )
+        raise ImportError(msg)
+
+    if dimensionality == 1:
+        msg = (
+            'Only dimensionality=2 or dimensionality=3 convex hulls are supported with '
+            f'vtk<9.7 (found vtk {".".join(map(str, pv.vtk_version_info))}). '
+            'Upgrade to vtk>=9.7 to use `dimensionality=1`.'
+        )
+        raise VTKVersionError(msg)
+
+    # Project onto the best-fit plane for a 2D hull; use the points as-is for a 3D hull.
+    proj = pv.PointSet(points).align_xyz().points[:, :2] if dimensionality == 2 else points
+    try:
+        hull = ConvexHull(proj)
+    except QhullError as e:
+        msg = (
+            f'Failed to compute a {dimensionality}D convex hull from the input points. The '
+            f'points may be degenerate (e.g. collinear or coplanar) for dimensionality='
+            f'{dimensionality}.'
+        )
+        raise ValueError(msg) from e
+
+    # `vertices` are the hull's boundary points; output only those points (matching
+    # vtkConvexHull's compact output), remapped to the range [0, n_hull_points).
+    vertex_ids = hull.vertices
+    hull_points = points[vertex_ids]
+    if dimensionality == 2:
+        # `vertices` is already an ordered boundary loop for a 2D hull: one polygon face.
+        faces = np.arange(len(vertex_ids)).reshape(1, -1)
+    else:
+        remap = np.full(points.shape[0], -1, dtype=int)
+        remap[vertex_ids] = np.arange(len(vertex_ids))
+        faces = remap[hull.simplices]
+    return pv.PolyData.from_regular_faces(hull_points, faces)
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
