@@ -176,5 +176,4 @@ pl.show()
 #
 # .. image:: ../../images/gifs/sphere-widget-c.gif
 #
-# %%
 # .. tags:: widgets
