@@ -6,7 +6,8 @@ Working with glTF Files
 
 Import a glTF file directly into a PyVista plotting scene.
 
-For more details regarding the glTF format, see:
+For more
+details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 
 First, download the examples.  Note that here we're using a high

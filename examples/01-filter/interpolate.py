@@ -6,8 +6,8 @@ Detailed Interpolating Points
 
 This example uses :func:`pyvista.DataSetFilters.interpolate`.
 
-:func:`pyvista.DataObjectFilters.sample` is similar, and the two methods are compared in
-:ref:`interpolate_sample_example`.
+:func:`pyvista.DataObjectFilters.sample` is similar, and the two
+methods are compared in :ref:`interpolate_sample_example`.
 
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
