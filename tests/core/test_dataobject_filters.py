@@ -3156,7 +3156,7 @@ def test_convex_hull_multiblock():
 def test_convex_hull_planar_default_dimensionality():
     # dimensionality defaults to 3, which is degenerate for planar input
     circle = pv.Circle(radius=0.5)
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if pv.vtk_version_info >= (9, 7, 0):
         # vtkConvexHull degrades gracefully for degenerate input
         hull = circle.convex_hull()
         assert hull.n_points > 0
@@ -3168,7 +3168,7 @@ def test_convex_hull_planar_default_dimensionality():
 
 def test_convex_hull_dimensionality_1():
     sphere = pv.Sphere()
-    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+    if pv.vtk_version_info >= (9, 7, 0):
         hull = sphere.convex_hull(dimensionality=1)
         assert hull.n_points == 2
         assert hull.n_cells == 1

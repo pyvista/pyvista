@@ -4433,7 +4433,7 @@ class DataObjectFilters:
             else dimensionality
         )
 
-        if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
+        if pv.vtk_version_info >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
             alg.SetDimension(dimensionality_)
