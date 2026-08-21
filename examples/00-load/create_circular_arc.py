@@ -6,7 +6,7 @@ Create Circular Arcs
 
 Generate circular arc geometry.
 
-Demonstrates usage of:func:`pyvista.CircularArc` and
+Demonstrates usage of :func:`pyvista.CircularArc` and
 :func:`pyvista.CircularArcFromNormal`.
 
 """
