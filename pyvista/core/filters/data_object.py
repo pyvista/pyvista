@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
+    from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
@@ -4424,7 +4425,6 @@ class DataObjectFilters:
             )
             alg_input = pv.PointSet(points)
         else:
-            points = self.points
             alg_input = self
 
         dimensionality_: Literal[1, 2, 3] = (
@@ -4440,7 +4440,7 @@ class DataObjectFilters:
             _update_alg(alg, progress_bar=progress_bar)
             output = pv.wrap(alg.GetOutput())
         else:
-            output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+            output = _convex_hull_scipy(alg_input.points, dimensionality=dimensionality_)
         output.point_data.clear()
         output.cell_data.clear()
         return output
@@ -5363,7 +5363,7 @@ class DataObjectFilters:
         return output
 
 
-def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
+def _convex_hull_scipy(mesh: PointSet, dimensionality: Literal[1, 2, 3]) -> PolyData:
     """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
 
     Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
@@ -5387,7 +5387,7 @@ def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 
         raise VTKVersionError(msg)
 
     # Project onto the best-fit plane for a 2D hull; use the points as-is for a 3D hull.
-    proj = pv.PointSet(points).align_xyz().points[:, :2] if dimensionality == 2 else points
+    proj = mesh.align_xyz().points[:, :2] if dimensionality == 2 else mesh.points
     try:
         hull = ConvexHull(proj)
     except QhullError as e:
