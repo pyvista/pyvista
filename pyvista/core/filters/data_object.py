@@ -4428,7 +4428,7 @@ class DataObjectFilters:
             alg_input = self
 
         dimensionality_: Literal[1, 2, 3] = (
-            cast('Literal[1, 2, 3]', int(np.clip(alg_input.dimensionality, 1, 3)))
+            cast('Literal[1, 2, 3]', alg_input.dimensionality)
             if dimensionality == 'auto'
             else dimensionality
         )
@@ -4436,7 +4436,7 @@ class DataObjectFilters:
         if pv.vtk_version_info >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
-            alg.SetDimension(dimensionality_)
+            alg.SetDimension(int(dimensionality_))
             _update_alg(alg, progress_bar=progress_bar)
             output = pv.wrap(alg.GetOutput())
         else:
