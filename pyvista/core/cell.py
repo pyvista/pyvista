@@ -660,6 +660,18 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
+def _expected_legacy_cell_array_size(cells: NumpyArray[int]) -> int:
+    """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies."""
+    cells = np.ravel(cells)
+    size = 0
+    pos = 0
+    while pos < cells.size:
+        npts = int(cells[pos])
+        size += 1 + npts
+        pos += 1 + npts
+    return size
+
+
 class CellArray(
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
@@ -724,16 +736,21 @@ class CellArray(
     def cells(self: Self, cells: CellsLike) -> None:
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
-        self.ImportLegacyFormat(vtk_idarr)
+        output = self.ImportLegacyFormat(vtk_idarr)
 
-        imported_size = self.GetNumberOfCells() + self.GetNumberOfConnectivityIds()
-
+        # VTK's ImportLegacyFormat started returning a bool (success/corrupt) instead of None
+        # https://gitlab.kitware.com/vtk/vtk/-/commit/82af9fa1e5a0ea5c0a827e91672cd42fe09575de
+        valid_size = (
+            self.GetNumberOfCells() + self.GetNumberOfConnectivityIds() == cells.size
+            if output is None
+            else output
+        )
         # https://github.com/pyvista/pyvista/pull/5404
-        if imported_size != cells.size:
+        if not valid_size:
             msg = (
                 f'Cell array size is invalid. Size ({cells.size}) does not'
-                f' match expected size ({imported_size}). This is likely'
-                ' due to invalid connectivity array.'
+                f' match expected size ({_expected_legacy_cell_array_size(cells)}). This'
+                ' is likely due to invalid connectivity array.'
             )
             raise CellSizeError(msg)
         self.__offsets = self.__connectivity = None

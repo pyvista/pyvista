@@ -281,7 +281,7 @@ class PolyDataFilters(DataSetFilters):
             if inter.is_empty and s1.is_empty and s2.is_empty:
                 warn_external(
                     'Unable to compute boolean intersection when one PolyData is '
-                    'contained within another and no faces intersect.',
+                    'contained within another and no faces intersect.'
                 )
         return bool_inter
 
