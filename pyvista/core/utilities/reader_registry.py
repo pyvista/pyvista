@@ -38,11 +38,7 @@ class ReaderHandler(Protocol):
         """Read *path* and return the resulting dataset."""
 
 
-#: What a plugin may register against an extension: either a bare callable
-#: (dispatched straight from :func:`pyvista.read`) or a
-#: :class:`~pyvista.BaseReader` subclass (resolved by
-#: :func:`pyvista.get_reader` and then driven through the same code path as
-#: every built-in reader).
+# A bare callable, or a BaseReader subclass.
 ReaderProvider = Union[ReaderHandler, type['BaseReader[Any]']]  # noqa: UP007
 
 
@@ -51,13 +47,10 @@ def _is_reader_class(obj: object) -> bool:
     return isinstance(obj, type) and issubclass(obj, BaseReader)
 
 
-#: Entry-point group a plugin declares a reader in.
 READER_GROUP = 'pyvista.readers'
 
-#: Entry-point group a plugin declares a reader in when it means to replace a
-#: reader PyVista already ships. Declaring the intent in metadata is what
-#: separates a deliberate replacement from a package that claimed a built-in
-#: extension by accident, so the former is silent and the latter is an error.
+# Declaring the intent in metadata is what separates a deliberate replacement
+# from an accidental one, so this group is silent and the other is an error.
 READER_OVERRIDE_GROUP = 'pyvista.readers.override'
 
 
@@ -135,19 +128,13 @@ class LocalFileRequiredError(Exception):
 
 
 _custom_ext_readers: dict[str, ReaderHandler] = {}
-# :class:`~pyvista.BaseReader` subclasses registered against an extension.
-# Kept separate from ``_custom_ext_readers`` because the two are dispatched
-# differently: a bare handler is called directly by :func:`pyvista.read`,
-# while a class is returned by :func:`pyvista.get_reader` and then driven
-# through the same kwargs/progress-bar/observer path as every built-in.
-# An extension appears in at most one of the two.
+# Separate from ``_custom_ext_readers`` because the two dispatch differently:
+# a handler is called by ``pv.read``, a class is returned by ``pv.get_reader``.
+# An extension appears in at most one.
 _custom_class_readers: dict[str, type[BaseReader[Any]]] = {}
 _custom_ext_reader_sources: dict[str, str] = {}
-# Extensions whose registration deliberately replaces a built-in reader,
-# either via ``register_reader(..., override=True)`` or via the
-# ``pyvista.readers.override`` entry-point group. Recorded even when no
-# built-in currently serves the extension, so that a plugin declaring the
-# intent up front keeps working if PyVista later ships a reader for it.
+# Recorded even when no built-in serves the extension, so a plugin that
+# declares the intent up front survives PyVista later shipping a reader for it.
 _override_ext_readers: set[str] = set()
 # Entry-point metadata, populated by ``_ensure_entry_points``. Maps each
 # extension to the list of ``EntryPoint`` records that declared it.
@@ -441,9 +428,8 @@ def _register(
             f'Registering reader for "{key}" replaces an existing custom '
             f'reader from {existing_source}.',
         )
-    # An extension resolves to exactly one custom reader, so a re-registration
-    # in either form must clear the other table or the loser would keep
-    # answering on whichever dispatch path consults it.
+    # One reader per extension: clear both, or the loser keeps answering on
+    # whichever dispatch path consults it.
     _custom_ext_readers.pop(key, None)
     _custom_class_readers.pop(key, None)
     if override:
@@ -473,24 +459,10 @@ def _get_ext_handler(ext: str) -> ReaderHandler | None:
 
 
 def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
-    """Look up a custom :class:`~pyvista.BaseReader` subclass for *ext*.
+    """Look up a registered reader class, importing the plugin lazily.
 
-    Called by :func:`pyvista.get_reader` before it consults
-    :data:`~pyvista.core.utilities.reader.CLASS_READERS`, so a plugin
-    registered with ``override=True`` wins on both the
-    :func:`pyvista.get_reader` and the :func:`pyvista.read` path.
-
-    Parameters
-    ----------
-    ext : str
-        Normalized file extension, including the leading dot.
-
-    Returns
-    -------
-    type[pyvista.BaseReader] or None
-        The registered reader class, or ``None`` when no plugin claims
-        *ext* with a class.
-
+    Consulted by :func:`pyvista.get_reader` ahead of ``CLASS_READERS``, so an
+    override wins on that path as well as on :func:`pyvista.read`.
     """
     ext = _normalize_ext(ext)
     _resolve_ext(ext)
@@ -531,12 +503,9 @@ def _ensure_entry_points() -> None:
     seen: set[tuple[str, str]] = set()
     for group, is_override in ((READER_GROUP, False), (READER_OVERRIDE_GROUP, True)):
         for ep in entry_points(group=group):
-            # A real installation never yields one entry point from two
-            # groups. A caller that replaces ``entry_points`` without
-            # honoring its ``group`` argument does, and cannot express the
-            # distinction at all, so deduplicate and let the strict reading
-            # from the first pass stand rather than granting an override
-            # nobody declared.
+            # Only a double that ignores ``group=`` yields one entry point
+            # twice; let the strict first pass stand rather than granting an
+            # override nobody declared.
             identity = (str(ep.name), str(ep.value))
             if identity in seen:
                 continue
@@ -550,23 +519,10 @@ def _ensure_entry_points() -> None:
 
 
 def _entry_point_package(ep: EntryPoint) -> str:
-    """Return the installed distribution name behind *ep*, best effort.
+    """Return the distribution name behind *ep*, best effort.
 
-    ``EntryPoint.dist`` is populated when the entry point came from
-    :func:`importlib.metadata.entry_points`, but not for one constructed
-    by hand, so fall back to the module half of the entry-point value.
-
-    Parameters
-    ----------
-    ep : importlib.metadata.EntryPoint
-        The entry point to name.
-
-    Returns
-    -------
-    str
-        A distribution name such as ``'pyvista-zstd'``, or the module
-        path when no distribution is attached.
-
+    ``EntryPoint.dist`` is unset for one constructed by hand, so fall back to
+    the module half of its value.
     """
     dist = getattr(ep, 'dist', None)
     name = getattr(dist, 'name', None)
@@ -576,22 +532,7 @@ def _entry_point_package(ep: EntryPoint) -> str:
 
 
 def _undeclared_override_message(ext: str, ep: EntryPoint) -> str:
-    """Build the error raised when a plugin shadows a built-in by accident.
-
-    Parameters
-    ----------
-    ext : str
-        The contested file extension, including the leading dot.
-    ep : importlib.metadata.EntryPoint
-        The entry point that claimed *ext*.
-
-    Returns
-    -------
-    str
-        A message naming the package, the extension, the built-in reader
-        that would have been shadowed, and the supported route.
-
-    """
+    """Build the error raised when a plugin shadows a built-in by accident."""
     builtin = CLASS_READERS[ext].__name__
     return (
         f'The package "{_entry_point_package(ep)}" declares a "{ext}" reader in the '
@@ -634,9 +575,8 @@ def _resolve_pending_reader(ext: str) -> bool:
         return False
     winner = eps[0]
     if ext in CLASS_READERS and ext not in _override_ext_readers:
-        # Checked before the pop, so the pending entry survives and every
-        # later lookup of this extension raises the same way rather than
-        # silently falling through to the built-in on the second call.
+        # Before the pop, so the entry survives and the second read raises
+        # too rather than falling through to the built-in.
         raise ValueError(_undeclared_override_message(ext, winner))
     del _pending_ext_readers[ext]
     try:
@@ -719,10 +659,8 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
         try:
             _resolve_pending_reader(ext)
         except ValueError as err:
-            # Introspection must never be the thing that raises: a user
-            # calling this is already trying to work out what went wrong.
-            # Report the refused plugin and carry on with the rest. The
-            # entry stays pending, so reading that extension still raises.
+            # Introspection must not be the thing that raises. The entry
+            # stays pending, so reading that extension still does.
             warn_external(str(err))
     registered: list[tuple[str, ReaderProvider, bool]] = [
         *((ext, handler, False) for ext, handler in _custom_ext_readers.items()),

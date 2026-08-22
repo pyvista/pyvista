@@ -141,10 +141,8 @@ def get_reader(filename, force_ext=None):
 
     ext = _get_ext_force(filename, force_ext)
 
-    # Plugin classes are consulted first so that a registration made with
-    # ``override=True`` wins here as well as in ``pyvista.read``. Without an
-    # override, ``register_reader`` refuses an extension already in
-    # ``CLASS_READERS``, so this cannot shadow a built-in by accident.
+    # Plugins first, so ``override=True`` wins here as it does in ``pv.read``.
+    # Without it, registration refuses an extension already in CLASS_READERS.
     reader_class = _get_ext_reader_class(ext) or CLASS_READERS.get(ext)
 
     if reader_class is None:
@@ -172,9 +170,7 @@ def get_reader(filename, force_ext=None):
 
     msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
     if _get_ext_handler(ext) is not None:
-        # A plugin claims the extension, but with a bare callable rather than
-        # a reader class, so there is no reader object to hand back. Say so
-        # instead of letting the user think nothing is registered at all.
+        # Claimed by a callable, so there is no reader object to hand back.
         msg += (
             f'.\nA custom reader is registered for {ext}, but as a plain callable, so it is '
             f'only reachable through `pyvista.read`. Ask the provider to register a '
@@ -281,11 +277,9 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
-        # Includes the plugin registry so that ``extensions`` answers for a
-        # reader class registered through :func:`pyvista.register_reader` the
-        # same way it does for a built-in. Reads the already-populated dict
-        # rather than forcing entry-point discovery: holding a reference to
-        # the class means its own registration has already happened.
+        # Includes plugins, so ``extensions`` answers for a registered class.
+        # Holding the class means its registration already happened, so this
+        # need not force entry-point discovery.
         from pyvista.core.utilities.reader_registry import _custom_class_readers  # noqa: PLC0415
 
         return [CLASS_READERS, _custom_class_readers]

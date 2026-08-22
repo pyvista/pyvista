@@ -434,11 +434,9 @@ def test_register_custom_collision_override_silent():
         return pv.PolyData()
 
     with warnings.catch_warnings():
-        # UserWarning, not every warning: the registry only ever warns through
-        # warn_external, whose default category this is. A bare 'error' also
-        # promotes third-party noise -- NumPy 2.5 deprecates setting .shape,
-        # which vtkmodules does on the way back from a real read -- and turns
-        # a silent-registration test into a test of the VTK wheel.
+        # UserWarning is what warn_external emits; a bare 'error' would also
+        # promote third-party noise such as NumPy's .shape deprecation, which
+        # vtkmodules triggers returning from a real read.
         warnings.simplefilter('error', UserWarning)
         pv.register_reader('.collide', replacement, override=True)
     assert _reg_mod._custom_ext_readers['.collide'] is replacement
@@ -541,11 +539,6 @@ def test_registered_readers_forces_full_discovery():
     assert len(matches) == 1
     assert matches[0].handler is _mock_reader
     mock_ep.load.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# Registering a ``BaseReader`` subclass
-# ---------------------------------------------------------------------------
 
 
 class _MockVTKReader(pv.BaseVTKReader):
@@ -730,11 +723,6 @@ def test_registry_state_roundtrips_class_registrations():
     assert _reg_mod._custom_class_readers['.snapshotfmt'] is _MockReader
 
 
-# ---------------------------------------------------------------------------
-# Entry-point discovery of a reader class
-# ---------------------------------------------------------------------------
-
-
 def _fake_entry_point(name, module_name, attr, obj):
     """Build a real ``EntryPoint`` backed by a module injected into ``sys.modules``.
 
@@ -803,11 +791,6 @@ def test_registered_class_reports_its_extensions():
     pv.register_reader('.myclassfmt', _MockReader)
     assert _MockReader.extensions == ('.myclassfmt',)
     assert pv.XMLPolyDataReader.extensions == ('.vtp',)
-
-
-# ---------------------------------------------------------------------------
-# The ``pyvista.readers.override`` entry-point group
-# ---------------------------------------------------------------------------
 
 
 def _install_plugin(monkeypatch, *, readers=(), overrides=()):
@@ -882,11 +865,6 @@ def test_declared_override_replaces_builtin_silently(tmp_path, monkeypatch):
     pv.Sphere().save(mesh_file)
 
     with warnings.catch_warnings():
-        # UserWarning, not every warning: the registry only ever warns through
-        # warn_external, whose default category this is. A bare 'error' also
-        # promotes third-party noise -- NumPy 2.5 deprecates setting .shape,
-        # which vtkmodules does on the way back from a real read -- and turns
-        # a silent-registration test into a test of the VTK wheel.
         warnings.simplefilter('error', UserWarning)
         reader = pv.get_reader(mesh_file)
         mesh = pv.read(mesh_file)
@@ -903,11 +881,6 @@ def test_declared_override_accepts_a_callable_too(tmp_path, monkeypatch):
     pv.Sphere().save(mesh_file)
 
     with warnings.catch_warnings():
-        # UserWarning, not every warning: the registry only ever warns through
-        # warn_external, whose default category this is. A bare 'error' also
-        # promotes third-party noise -- NumPy 2.5 deprecates setting .shape,
-        # which vtkmodules does on the way back from a real read -- and turns
-        # a silent-registration test into a test of the VTK wheel.
         warnings.simplefilter('error', UserWarning)
         assert isinstance(pv.read(mesh_file), pv.PolyData)
     assert _reg_mod._custom_ext_readers['.vtp'] is _mock_reader
@@ -922,11 +895,6 @@ def test_ordinary_group_accepts_a_reader_class_for_a_new_extension(tmp_path, mon
     path.touch()
 
     with warnings.catch_warnings():
-        # UserWarning, not every warning: the registry only ever warns through
-        # warn_external, whose default category this is. A bare 'error' also
-        # promotes third-party noise -- NumPy 2.5 deprecates setting .shape,
-        # which vtkmodules does on the way back from a real read -- and turns
-        # a silent-registration test into a test of the VTK wheel.
         warnings.simplefilter('error', UserWarning)
         assert isinstance(pv.get_reader(path), _MockReader)
 
@@ -946,11 +914,6 @@ def test_declared_override_on_a_new_extension_is_allowed_silently(tmp_path, monk
     path.touch()
 
     with warnings.catch_warnings():
-        # UserWarning, not every warning: the registry only ever warns through
-        # warn_external, whose default category this is. A bare 'error' also
-        # promotes third-party noise -- NumPy 2.5 deprecates setting .shape,
-        # which vtkmodules does on the way back from a real read -- and turns
-        # a silent-registration test into a test of the VTK wheel.
         warnings.simplefilter('error', UserWarning)
         assert isinstance(pv.get_reader(path), _MockReader)
 
