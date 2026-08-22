@@ -83,14 +83,14 @@ Contributor Covenant is stewarded by the Organization for Ethical Source and lic
 To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/][cc-by-sa].
 
 For answers to common questions about Contributor Covenant, see the FAQ at
-[https://www.contributor-covenant.org/faq][FAQ]. Translations are provided at
-[https://www.contributor-covenant.org/translations][translations]. Additional enforcement and community
-guideline resources can be found at [https://www.contributor-covenant.org/resources][resources].
+[https://www.contributor-covenant.org/faq/][FAQ]. Translations are provided at
+[https://www.contributor-covenant.org/translations/][translations]. Additional enforcement and community
+guideline resources can be found at [https://www.contributor-covenant.org/resources/][resources].
 The enforcement ladder was inspired by the work of [Mozilla's code of conduct team][Mozilla CoC].
 
 [v3.0]: https://www.contributor-covenant.org/version/3/0/
 [cc-by-sa]: https://creativecommons.org/licenses/by-sa/4.0/
-[FAQ]: https://www.contributor-covenant.org/faq
-[translations]: https://www.contributor-covenant.org/translations
-[resources]: https://www.contributor-covenant.org/resources
+[FAQ]: https://www.contributor-covenant.org/faq/
+[translations]: https://www.contributor-covenant.org/translations/
+[resources]: https://www.contributor-covenant.org/resources/
 [Mozilla CoC]: https://github.com/mozilla/inclusion

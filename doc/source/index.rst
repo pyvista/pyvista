@@ -1,5 +1,7 @@
 .. title:: PyVista
 
+.. autoopengraph_thumbnail:: none
+
 .. raw:: html
 
     <div class="banner">
@@ -27,6 +29,13 @@
    </p>
 
 
+.. Register the top-level ``pyvista`` module so that ``:mod:`pyvista``` and the
+   Python module index resolve to this page. This must not be immediately
+   followed by a ``raw`` directive: docutils propagates the empty target's id
+   onto the next node, and a raw node is written verbatim without an ``id``.
+
+.. py:module:: pyvista
+
 Overview
 ********
 
@@ -44,7 +53,7 @@ Use PyVista for figures in papers and presentations, interactive analysis in
 notebooks, and as the visualization layer of larger Python tools.
 
 
-Built for production
+Built for Production
 ~~~~~~~~~~~~~~~~~~~~
 
 3D code has to keep working when the underlying graphics stack changes.
@@ -61,7 +70,7 @@ what science and engineering teams reach for when code written today has to
 still produce the same picture two years from now.
 
 
-Built to extend
+Built to Extend
 ~~~~~~~~~~~~~~~
 
 Downstream libraries build on PyVista through a small, lazily evaluated
@@ -108,6 +117,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    examples/index
    api/index
    extras/index
+   contributing
 
 
 Brief Examples
@@ -299,7 +309,7 @@ Status
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/license/mit/
+   :target: https://opensource.org/license/mit
 
 .. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
    :target: https://communityinviter.com/apps/pyvista/pyvista

@@ -70,6 +70,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolum
 from .opts import PointSpriteShape as PointSpriteShape
 from .opts import ShaderType as ShaderType
 from .picking import PickingComponent as PickingComponent
+from .plot_compare import plot_compare as plot_compare
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
 from .plotter import Plotter as Plotter
@@ -110,7 +111,7 @@ from .widgets import WidgetComponent as WidgetComponent
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01
-    """Deprecation Error for features that moved to `pyvistaqt`."""
+    """Deprecation Error for features that moved to ``pyvistaqt``."""
 
     message = """`{}` has moved to pyvistaqt.
     You can install this from PyPI with: `pip install pyvistaqt`

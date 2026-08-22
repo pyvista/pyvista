@@ -3,7 +3,8 @@
 
 Lookup Tables
 ~~~~~~~~~~~~~
-Demonstrate the usage of a lookup table within PyVista
+
+Demonstrate the usage of a lookup table within PyVista.
 
 The :class:`pyvista.LookupTable` can be used to have fine-tuned control over
 the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
@@ -237,7 +238,7 @@ make_double_slider('saturation_range', 3)
 make_double_slider('scalar_range', 4)
 
 pl.camera_position = pv.CameraPosition(
-    position=(9.021, 5.477, 7.780),
+    position=(9.021, 5.477, 7.78),
     focal_point=(-0.679, 1.349, 0.874),
     viewup=(-0.498, -0.228, 0.836),
 )

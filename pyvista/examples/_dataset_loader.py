@@ -260,7 +260,7 @@ class _DatasetLoader:
                 return [obj]
 
         flat = _flat(dataset)
-        if isinstance(dataset, pv.MultiBlock):
+        if isinstance(dataset, (pv.MultiBlock, pv.PartitionedDataSet)):
             flat.insert(0, dataset)
         return tuple(flat)
 
@@ -360,7 +360,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         as an argument to the loader.
 
     load_func
-        Specify the function used to load the file. Defaults to `None`. This is typically
+        Specify the function used to load the file. Defaults to ``None``. This is typically
         used to specify any processing of the dataset after reading. The load function
         typically will accept a dataset as an input and return a dataset.
 
@@ -791,7 +791,7 @@ def _format_file_size(size: int) -> str:
 
 
 def _get_file_or_folder_ext(path: str):
-    """Wrap the `get_ext` function to handle special cases for directories."""
+    """Wrap the ``get_ext`` function to handle special cases for directories."""
     if os.path.isfile(path):
         return get_ext(path)
     assert os.path.isdir(path), 'Expected a file or folder path.'

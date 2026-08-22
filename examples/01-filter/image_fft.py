@@ -4,9 +4,9 @@
 Fast Fourier Transform
 ~~~~~~~~~~~~~~~~~~~~~~
 
-This example shows how to apply a Fast Fourier Transform (FFT) to a
-:class:`pyvista.ImageData` using :func:`pyvista.ImageDataFilters.fft`
-filter.
+Apply a Fast Fourier Transform (FFT) to a :class:`~pyvista.ImageData`.
+
+Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
 Here, we demonstrate FFT usage by denoising an image, effectively removing any
 "high frequency" content by performing a `low pass filter

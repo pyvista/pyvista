@@ -5,7 +5,7 @@ from __future__ import annotations
 import atexit
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
-import pathlib
+from pathlib import Path
 import shutil
 import tempfile
 from typing import TYPE_CHECKING
@@ -103,7 +103,7 @@ _temp_files: list[str] = []
 def _cleanup_temp_files() -> None:
     """Remove temporary files created by :func:`_download_uri`."""
     for path in _temp_files:
-        pathlib.Path(path).unlink(missing_ok=True)
+        Path(path).unlink(missing_ok=True)
     _temp_files.clear()
 
 
@@ -200,7 +200,7 @@ def _download_uri(uri: str, ext: str) -> str:
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp_name = tmp.name
         _temp_files.append(tmp_name)
-        with fsspec.open(uri, 'rb') as remote, pathlib.Path(tmp_name).open('wb') as local:
+        with fsspec.open(uri, 'rb') as remote, Path(tmp_name).open('wb') as local:
             shutil.copyfileobj(remote, local)
     except Exception as e:
         msg = f'Failed to download "{uri}": {e}'

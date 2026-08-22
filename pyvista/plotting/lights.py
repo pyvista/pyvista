@@ -666,10 +666,6 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         If the light's cone angle is increased to 90 degrees or above,
         its actor (if previously shown) is automatically hidden.
 
-        See Also
-        --------
-        :ref:`beam_shape_example`
-
         Examples
         --------
         Plot three planes lit by three spotlights with varying cone
@@ -711,10 +707,6 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         describe three different profiles for dampening with
         distance. A larger attenuation constant corresponds to more
         rapid decay with distance.
-
-        See Also
-        --------
-        :ref:`attenuation_example`
 
         Examples
         --------

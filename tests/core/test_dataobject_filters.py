@@ -23,6 +23,7 @@ import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core.cell import _get_connectivity_array
 from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
@@ -77,7 +78,9 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
             clips = [clips]
 
         for clip in clips:
-            if isinstance(dataset, pv.PolyData):
+            if isinstance(dataset, pv.PointSet):
+                assert isinstance(clip, pv.PointSet)
+            elif isinstance(dataset, pv.PolyData):
                 assert isinstance(clip, pv.PolyData)
             elif isinstance(dataset, pv.MultiBlock):
                 assert isinstance(clip, pv.MultiBlock)
@@ -86,6 +89,12 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
                 assert isinstance(clip, pv.UnstructuredGrid)
 
             bounds_after_clip = clip.bounds
+            if (
+                isinstance(dataset, pv.PointSet)
+                and pv.vtk_version_info >= (9, 4)
+                and pv.vtk_version_info < (9, 5)
+            ):
+                pytest.xfail("VTK 9.4 bug where clipping PointSet doesn't work")
             assert not np.allclose(bounds_before_clip, bounds_after_clip)
 
 
@@ -113,7 +122,7 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
-        dataset.clip(normal=normals[i], invert=True)
+        dataset.clip(normal=normals[i % len(normals)], invert=True)
 
 
 @pytest.mark.parametrize('dataset', [pv.PolyData(), pv.MultiBlock()])
@@ -205,7 +214,7 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
     for dataset in multiblock_all_with_nested_and_none:
         clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock))
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock, pv.PointSet))
         if isinstance(clp, pv.MultiBlock):
             assert all(
                 isinstance(block, pv.UnstructuredGrid)
@@ -428,9 +437,9 @@ def test_clip_slab_matches_two_clip_workaround_polydata():
     assert new.area == pytest.approx(old.area, rel=1e-6)
 
 
-def test_slice_filter(datasets):
+def test_slice_filter(datasets_no_pointset):
     """This tests the slice filter on all datatypes available filters"""
-    for i, dataset in enumerate(datasets):
+    for i, dataset in enumerate(datasets_no_pointset):
         slc = dataset.slice(normal=normals[i], progress_bar=True)
         assert slc is not None
         assert isinstance(slc, pv.PolyData)
@@ -448,9 +457,24 @@ def test_slice_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_orthogonal_filter(datasets):
+def test_slice_filter_composite_pointset_block_is_empty(multiblock_all):
+    """``slice`` runs through :vtk:`vtkCutter`'s own composite dispatch.
+
+    Unlike ``slice_orthogonal``/``slice_along_axis`` (which iterate blocks in
+    Python and hit :class:`~pyvista.PointSet`'s ``PointSetDimensionReductionError``
+    guard directly), ``slice`` never calls into the Python-level override for a
+    ``PointSet`` block, so it does not raise. The block is silently empty instead.
+    """
+    pointset_index = next(
+        i for i, block in enumerate(multiblock_all) if isinstance(block, pv.PointSet)
+    )
+    output = multiblock_all.slice(normal=normals[0], progress_bar=True)
+    assert output[pointset_index].is_empty
+
+
+def test_slice_orthogonal_filter(datasets_no_pointset):
     """This tests the slice filter on all datatypes available filters"""
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         slices = dataset.slice_orthogonal(progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pv.MultiBlock)
@@ -459,17 +483,22 @@ def test_slice_orthogonal_filter(datasets):
             assert isinstance(slc, pv.PolyData)
 
 
-def test_slice_orthogonal_filter_composite(multiblock_all):
+def test_slice_orthogonal_filter_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.slice_orthogonal(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.slice_orthogonal(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
-def test_slice_along_axis(datasets):
+def test_slice_orthogonal_filter_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetDimensionReductionError):
+        multiblock_all.slice_orthogonal(progress_bar=True)
+
+
+def test_slice_along_axis(datasets_no_pointset):
     """Test the many slices along axis filter"""
     axii = ['x', 'y', 'z', 'y', 0]
     ns = [2, 3, 4, 10, 20, 13]
-    for i, dataset in enumerate(datasets):
+    for i, dataset in enumerate(datasets_no_pointset):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i], progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pv.MultiBlock)
@@ -481,26 +510,31 @@ def test_slice_along_axis(datasets):
         dataset.slice_along_axis(axis='u')
 
 
-def test_slice_along_axis_composite(multiblock_all):
+def test_slice_along_axis_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.slice_along_axis(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.slice_along_axis(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
-def test_extract_all_edges(datasets):
-    for dataset in datasets:
+def test_slice_along_axis_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetDimensionReductionError):
+        multiblock_all.slice_along_axis(progress_bar=True)
+
+
+def test_extract_all_edges(datasets_no_pointset):
+    for dataset in datasets_no_pointset:
         edges = dataset.extract_all_edges()
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
     # Test that use_all_points parameter raises a deprecation warning
     with pytest.warns(PyVistaDeprecationWarning, match='use_all_points.*deprecated'):
-        edges = datasets[0].extract_all_edges(use_all_points=True)
+        edges = datasets_no_pointset[0].extract_all_edges(use_all_points=True)
     assert edges.n_lines
 
     # Test that use_all_points=False also raises a deprecation warning
     with pytest.warns(PyVistaDeprecationWarning, match='use_all_points.*deprecated'):
-        edges = datasets[0].extract_all_edges(use_all_points=False)
+        edges = datasets_no_pointset[0].extract_all_edges(use_all_points=False)
     assert edges.n_lines
 
 
@@ -512,10 +546,18 @@ def test_extract_all_edges_no_data():
     assert edges.n_arrays == 0
 
 
-def test_extract_all_edges_composite(multiblock_all):
+def test_extract_all_edges_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.extract_all_edges(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.extract_all_edges(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_extract_all_edges_composite_pointset_raises(multiblock_all):
+    # extract_all_edges hands the whole composite to the underlying VTK
+    # algorithm; on some VTK versions this segfaults instead of raising if a
+    # block is a cell-less PointSet, so PyVista guards against it explicitly.
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.extract_all_edges(progress_bar=True)
 
 
 def test_elevation(uniform):
@@ -559,12 +601,18 @@ def test_elevation(uniform):
 
 def test_elevation_composite(multiblock_all):
     # Now test composite data structures
+    if pv.vtk_version_info < (9, 4):
+        # VTK bug: computing elevation on a MultiBlock containing a PointSet
+        # segfaults the interpreter on VTK < 9.4, so PyVista raises instead.
+        with pytest.raises(pv.PointSetNotSupported):
+            multiblock_all.elevation(progress_bar=True)
+        return
     output = multiblock_all.elevation(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_compute_cell_sizes(datasets):
-    for dataset in datasets:
+def test_compute_cell_sizes(datasets_no_pointset):
+    for dataset in datasets_no_pointset:
         result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True)
         assert result is not None
         assert isinstance(result, type(dataset))
@@ -578,19 +626,57 @@ def test_compute_cell_sizes(datasets):
     assert np.allclose(grid.volume, volume)
 
 
-def test_compute_cell_sizes_multiblock_vertex_count():
-    multi = pv.MultiBlock([pv.PolyData()])
-    result = multi.compute_cell_sizes(vertex_count=True)[0]
-    assert 'Length' in result.array_names
-    assert 'Area' in result.array_names
-    assert 'Volume' in result.array_names
-    assert 'VertexCount' in result.array_names
+@pytest.mark.parametrize(
+    ('keyword', 'array_name'),
+    [
+        ('vertex_count', 'VertexCount'),
+        ('length', 'Length'),
+        ('area', 'Area'),
+        ('volume', 'Volume'),
+    ],
+)
+@pytest.mark.parametrize('empty', [True, False])
+def test_compute_single_cell_sizes(datasets, keyword, array_name, empty):
+    kwargs = {'vertex_count': False, 'length': False, 'area': False, 'volume': False}
+    kwargs[keyword] = True
+
+    for dataset in datasets:
+        dataset_ = dataset.__class__() if empty else dataset
+        dataset_.clear_data()
+        if isinstance(dataset_, pv.PointSet):
+            # PointSet has no cells, so cell sizes cannot be computed
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataset_.compute_cell_sizes(**kwargs)
+            continue
+        result = dataset_.compute_cell_sizes(**kwargs)
+        assert result.array_names == [array_name]
 
 
-def test_compute_cell_sizes_composite(multiblock_all):
+@pytest.mark.parametrize('empty', [True, False])
+def test_compute_cell_sizes_multiblock_vertex_count(empty):
+    content = [] if empty else [pv.PolyData()]
+    multi = pv.MultiBlock(content)
+    result = multi.compute_cell_sizes(vertex_count=True)
+    if content:
+        poly = result[0]
+        assert 'Length' in poly.array_names
+        assert 'Area' in poly.array_names
+        assert 'Volume' in poly.array_names
+        assert 'VertexCount' in poly.array_names
+
+
+def test_compute_cell_sizes_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.compute_cell_sizes(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.compute_cell_sizes(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_compute_cell_sizes_composite_pointset_raises(multiblock_all):
+    # compute_cell_sizes hands the whole composite to the underlying VTK
+    # algorithm; on some VTK versions this segfaults instead of raising if a
+    # block is a cell-less PointSet, so PyVista guards against it explicitly.
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.compute_cell_sizes(progress_bar=True)
 
 
 def test_cell_centers(datasets):
@@ -627,10 +713,18 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
-def test_cell_data_to_point_data_composite(multiblock_all):
+def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.cell_data_to_point_data(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.cell_data_to_point_data(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_cell_data_to_point_data_composite_pointset_raises(multiblock_all):
+    # cell_data_to_point_data hands the whole composite to the underlying VTK
+    # algorithm; on some VTK versions this segfaults instead of raising if a
+    # block is a cell-less PointSet, so PyVista guards against it explicitly.
+    with pytest.raises(pv.PointSetNotSupported):
+        multiblock_all.cell_data_to_point_data(progress_bar=True)
 
 
 def test_point_data_to_cell_data():
@@ -641,10 +735,15 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
-def test_point_data_to_cell_data_composite(multiblock_all):
+def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.point_data_to_cell_data(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.point_data_to_cell_data(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetNotSupported):
+        multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 
 def test_triangulate():
@@ -665,7 +764,7 @@ def test_sample():
     data_to_probe = examples.load_uniform()
 
     def sample_test(**kwargs):
-        """Test `sample` with kwargs."""
+        """Test ``sample`` with kwargs."""
         result = mesh.sample(data_to_probe, **kwargs)
         name = 'Spatial Point Data'
         assert name in result.array_names
@@ -855,15 +954,21 @@ def test_cell_quality_all_valid(ant):
     assert VOLUME not in qual.array_names
 
 
-def test_cell_quality_composite(multiblock_all_with_nested_and_none):
-    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+def test_cell_quality_composite(
+    multiblock_all_with_nested_and_none, multiblock_all_no_pointset_with_nested_and_none
+):
+    match = "could not be applied to the block at index 5 with name 'Block-05' and type PointSet"
+    with pytest.raises(RuntimeError, match=match):
+        qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+
+    qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
     for block in qual.recursive_iterator(skip_none=True):
         assert SHAPE in block.array_names
 
 
-def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
-    iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
-    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+def test_cell_quality_return_type(multiblock_all_no_pointset_with_nested_and_none):
+    iter_in = multiblock_all_no_pointset_with_nested_and_none.recursive_iterator()
+    qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
     iter_out = qual.recursive_iterator()
     for block_in, block_out in zip(iter_in, iter_out, strict=True):
         assert type(block_in) is type(block_out)
@@ -878,7 +983,8 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     tf = pv.Transform().translate((dx, dy, dz))
     for dataset in datasets:
         for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
+            if not isinstance(dataset, pv.PointSet):
+                dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
             dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
@@ -901,13 +1007,20 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         for name, array in dataset.cell_data.items():
             assert transformed.cell_data[name] == pytest.approx(array)
 
-        # verify that the cell connectivity is a deep copy
-        if hasattr(dataset, '_connectivity_array'):
-            transformed._connectivity_array[0] += 1
-            assert not np.array_equal(dataset._connectivity_array, transformed._connectivity_array)
-        if hasattr(dataset, 'cell_connectivity'):
-            transformed.cell_connectivity[0] += 1
-            assert not np.array_equal(dataset.cell_connectivity, transformed.cell_connectivity)
+        # verify that the cell connectivity is a deep copy. The public `connectivity`
+        # property is read-only, so mutate the underlying vtkCellArray in place to
+        # prove the two meshes do not share a buffer.
+        cell_array = None
+        if isinstance(dataset, pv.PolyData):
+            cell_array = pv.core.pointset.PolyData.GetPolys
+        elif isinstance(dataset, pv.UnstructuredGrid):
+            cell_array = pv.core.pointset.UnstructuredGrid._get_cells
+        if cell_array is not None:
+            _get_connectivity_array(cell_array(transformed))[0] += 1
+            assert not np.array_equal(
+                _get_connectivity_array(cell_array(dataset)),
+                _get_connectivity_array(cell_array(transformed)),
+            )
 
 
 @pytest.mark.parametrize(
@@ -918,8 +1031,9 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     sx, sy, sz = -1.1, 2.2, 3.3
     tf = pv.Transform().scale((sx, sy, sz))
     for dataset in datasets:
-        for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
+        if not isinstance(dataset, pv.PointSet):
+            for i in range(num_cell_arrays):
+                dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
             dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
@@ -939,19 +1053,20 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         assert np.allclose(dataset.points[:, 1] * sy, transformed.points[:, 1])
         assert np.allclose(dataset.points[:, 2] * sz, transformed.points[:, 2])
 
-        for i in range(num_cell_arrays):
-            assert np.allclose(
-                dataset.cell_data[f'C{i}'][:, 0] * sx,
-                transformed.cell_data[f'C{i}'][:, 0],
-            )
-            assert np.allclose(
-                dataset.cell_data[f'C{i}'][:, 1] * sy,
-                transformed.cell_data[f'C{i}'][:, 1],
-            )
-            assert np.allclose(
-                dataset.cell_data[f'C{i}'][:, 2] * sz,
-                transformed.cell_data[f'C{i}'][:, 2],
-            )
+        if not isinstance(dataset, pv.PointSet):
+            for i in range(num_cell_arrays):
+                assert np.allclose(
+                    dataset.cell_data[f'C{i}'][:, 0] * sx,
+                    transformed.cell_data[f'C{i}'][:, 0],
+                )
+                assert np.allclose(
+                    dataset.cell_data[f'C{i}'][:, 1] * sy,
+                    transformed.cell_data[f'C{i}'][:, 1],
+                )
+                assert np.allclose(
+                    dataset.cell_data[f'C{i}'][:, 2] * sz,
+                    transformed.cell_data[f'C{i}'][:, 2],
+                )
 
         for i in range(num_point_data):
             assert np.allclose(
@@ -981,9 +1096,9 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     ('num_cell_arrays', 'num_point_data'),
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
-def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+def test_transform_int_vectors_warning(datasets_no_pointset, num_cell_arrays, num_point_data):
     tf = pv.Transform().scale((1, 2, 3))
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().integers(
@@ -1009,18 +1124,21 @@ def test_transform_inplace(datasets):
         pdata_name = 'pdata'
         cdata_name = 'cdata'
         dataset[pdata_name] = pdata_array
-        dataset[cdata_name] = cdata_array
+        if not isinstance(dataset, pv.PointSet):
+            dataset[cdata_name] = cdata_array
 
         copied = dataset.copy()
         inplace = copied.transform(tf, inplace=True)
         assert inplace is copied
         assert np.shares_memory(inplace[pdata_name], copied[pdata_name])
-        assert np.shares_memory(inplace[cdata_name], copied[cdata_name])
+        if not isinstance(dataset, pv.PointSet):
+            assert np.shares_memory(inplace[cdata_name], copied[cdata_name])
 
         not_inplace = dataset.transform(tf, inplace=False)
         assert inplace == not_inplace
         assert not np.shares_memory(not_inplace[pdata_name], copied[pdata_name])
-        assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
+        if not isinstance(dataset, pv.PointSet):
+            assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
 
 
 def test_transform_rectilinear_raises(rectilinear):
@@ -1134,10 +1252,11 @@ def test_reflect_mesh_with_vectors(datasets):
             dataset.compute_normals(inplace=True, progress_bar=True)
 
         # add vector data to cell and point arrays
-        dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * np.array(
-            [1, 2, 3],
-            dtype=float,
-        ).reshape((1, 3))
+        if not isinstance(dataset, pv.PointSet):
+            dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * np.array(
+                [1, 2, 3],
+                dtype=float,
+            ).reshape((1, 3))
         dataset.point_data['P'] = np.arange(dataset.n_points)[:, np.newaxis] * np.array(
             [1, 2, 3],
             dtype=float,
@@ -1176,8 +1295,9 @@ def test_reflect_mesh_with_vectors(datasets):
             )
 
         # assert other vector fields are reflected
-        assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
-        assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
+        if not isinstance(dataset, pv.PointSet):
+            assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
+            assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
         assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
         assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
 
@@ -1585,6 +1705,36 @@ def test_resize_bounds(sphere, bounds, inplace):
     assert (sphere is resized) == inplace
 
 
+def test_resize_bounds_preserve_aspect_ratio(sphere):
+    """Test preserving aspect ratio when resizing bounds."""
+    bounds = (-1, 1, -2, 2, -3, 3)
+
+    resized = sphere.resize(
+        bounds=bounds,
+        preserve_aspect_ratio=True,
+    )
+
+    target_size = np.array([2, 4, 6])
+
+    # Fits within requested bounds
+    assert np.all(np.array(resized.bounds_size) <= target_size + 1e-10)
+
+    # Aspect ratio preserved
+    original_ratio = np.array(sphere.bounds_size) / sphere.length
+    resized_ratio = np.array(resized.bounds_size) / resized.length
+    assert np.allclose(original_ratio, resized_ratio)
+
+    # Center should still match requested bounds center
+    assert np.allclose(
+        resized.center,
+        (
+            (bounds[0] + bounds[1]) / 2,
+            (bounds[2] + bounds[3]) / 2,
+            (bounds[4] + bounds[5]) / 2,
+        ),
+    )
+
+
 @pytest.mark.parametrize('bounds_size', [2.0, (0.5, 2.5, 3.5)])
 @pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
 def test_resize_bounds_size(sphere, bounds_size, center):
@@ -1597,6 +1747,24 @@ def test_resize_bounds_size(sphere, bounds_size, center):
     assert np.allclose(resized.center, expected_center)
 
 
+def test_resize_bounds_size_preserve_aspect_ratio(sphere):
+    """Test preserving aspect ratio when resizing bounds_size."""
+    target_size = (1.0, 2.0, 3.0)
+
+    resized = sphere.resize(
+        bounds_size=target_size,
+        preserve_aspect_ratio=True,
+    )
+
+    # Fits within requested size
+    assert np.all(np.array(resized.bounds_size) <= np.array(target_size) + 1e-10)
+
+    # Aspect ratio preserved
+    original_ratio = np.array(sphere.bounds_size) / sphere.length
+    resized_ratio = np.array(resized.bounds_size) / resized.length
+    assert np.allclose(original_ratio, resized_ratio)
+
+
 @pytest.mark.parametrize('length', [42, 5.0])
 @pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
 def test_resize_length(sphere, length, center):
@@ -1604,9 +1772,13 @@ def test_resize_length(sphere, length, center):
     expected_center = sphere.center if center is None else center
 
     resized = sphere.resize(length=length, center=center)
-    new_length = resized.length
-    assert np.isclose(new_length, length)
+    assert np.isclose(resized.length, length)
     assert np.allclose(resized.center, expected_center)
+
+    # Default preserve_aspect_ratio=None should preserve aspect ratio for length
+    original_ratio = np.array(sphere.bounds_size) / sphere.length
+    resized_ratio = np.array(resized.bounds_size) / resized.length
+    assert np.allclose(original_ratio, resized_ratio)
 
 
 @pytest.mark.parametrize('mesh', [pv.MultiBlock(), pv.PolyData()])
@@ -1644,6 +1816,13 @@ def test_resize_raises(sphere):
         sphere.resize(length=0)
     with pytest.raises(ValueError, match=match.format(name='bounds_size')):
         sphere.resize(bounds_size=[-1, 2, 3])
+
+    match = (
+        '`preserve_aspect_ratio=False` cannot be used with `length` since '
+        '`length` resizing always preserves the aspect ratio.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(length=5, preserve_aspect_ratio=False)
 
 
 def test_resize_zero_extent(plane):
@@ -2837,6 +3016,12 @@ def test_extract_surface_datasets(multiblock_all, algorithm, bool_kwargs):
         pass_pointid=bool_kwargs,
     )
     for dataobj in (*multiblock_all, multiblock_all):
+        if isinstance(dataobj, pv.PointSet):
+            # PointSet has no cells, so it has no surface to extract
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataobj.extract_surface(**kwargs)
+            continue
+
         if algorithm is _SENTINEL:
             with pytest.warns(pv.PyVistaFutureWarning):
                 surf = dataobj.extract_surface(**kwargs)

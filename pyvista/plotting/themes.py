@@ -35,8 +35,8 @@ from __future__ import annotations
 from enum import Enum
 import json
 import os
-import pathlib
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -55,8 +55,7 @@ from .opts import PointSpriteShape
 from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
-from .theme_registry import _resolve_dotted_path
-from .theme_registry import _resolve_theme
+from .theme_registry import _resolve_theme_like
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -66,6 +65,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import ThemeOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -110,7 +110,7 @@ def load_theme(filename):
     return Theme.from_dict(theme_dict)
 
 
-def set_plot_theme(theme):
+def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     """Set plotting parameters to a predefined theme using a string or ``Theme``.
 
     Parameters
@@ -164,27 +164,7 @@ def set_plot_theme(theme):
     """
     import pyvista  # noqa: PLC0415
 
-    if isinstance(theme, str):
-        if ':' in theme:
-            cls = _resolve_dotted_path(theme)
-            pyvista.global_theme.load_theme(cls())
-            return
-        resolved = _resolve_theme(theme)
-        if resolved is None:
-            allowed = ', '.join(_available_theme_names())
-            msg = (
-                f'Theme "{theme}" not found. Available themes: {allowed}. '
-                'To load from an arbitrary module use "package.module:ClassName".'
-            )
-            raise ValueError(msg)
-        pyvista.global_theme.load_theme(resolved)
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        msg = (
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
-        raise TypeError(msg)
+    pyvista.global_theme.load_theme(_resolve_theme_like(theme))
 
 
 class _LightingConfig(_ConfigBase):
@@ -1416,7 +1396,7 @@ class _TrameConfig(_ConfigBase):
             # JupyterHub service prefixes are URL paths, not filesystem paths,
             # so use PurePosixPath to force forward-slash joining on Windows.
             self._server_proxy_prefix = (
-                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+                str(PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
             )
             self._server_proxy_enabled = True
         else:
@@ -1773,6 +1753,8 @@ class Theme(_ConfigBase):
         '_before_close_callback',
         '_before_close_callback',
         '_below_range_color',
+        '_border_color',
+        '_border_width',
         '_camera',
         '_cmap',
         '_color',
@@ -1847,6 +1829,8 @@ class Theme(_ConfigBase):
         self._line_width = 1.0
         self._point_size = 5.0
         self._outline_color = Color('white')
+        self._border_color = Color('gray')
+        self._border_width = 1.0
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
@@ -1984,9 +1968,9 @@ class Theme(_ConfigBase):
         ... )
         >>> pl.link_views()
         >>> pl.camera_position = pv.CameraPosition(
-        ...     position=(-1.67, -5.10, 2.06),
+        ...     position=(-1.67, -5.1, 2.06),
         ...     focal_point=(0.0, 0.0, 0.0),
-        ...     viewup=(0.00, 0.37, 0.93),
+        ...     viewup=(0.0, 0.37, 0.93),
         ... )
         >>> pl.show()  # doctest: +SKIP
 
@@ -2019,9 +2003,9 @@ class Theme(_ConfigBase):
         """Return or set the edges opacity.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
         Examples
         --------
@@ -2546,6 +2530,49 @@ class Theme(_ConfigBase):
     @outline_color.setter
     def outline_color(self, outline_color: ColorLike):
         self._outline_color = Color(outline_color)
+
+    @property
+    def border_color(self) -> Color:  # numpydoc ignore=RT01
+        """Return or set the default border color of a plotter.
+
+        .. versionadded:: 0.49
+
+        This is the color of the frame drawn around the outer edge of
+        the plotting area, of the line(s) drawn between subplots, or
+        both -- whichever ``border`` is set to draw. Used whenever no
+        explicit ``border_color`` is provided.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.border_color = 'white'
+
+        """
+        return self._border_color
+
+    @border_color.setter
+    def border_color(self, border_color: ColorLike):
+        self._border_color = Color(border_color)
+
+    @property
+    def border_width(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the default border/subplot seam width in pixels.
+
+        Used when a ``Plotter`` is constructed with ``border`` set to
+        draw either or both, and no explicit ``border_width`` is
+        provided.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.border_width = 2.0
+
+        """
+        return self._border_width
+
+    @border_width.setter
+    def border_width(self, border_width: float):
+        self._border_width = float(border_width)
 
     @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
@@ -3131,6 +3158,8 @@ class Theme(_ConfigBase):
             'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
+            'Border color': 'border_color',
+            'Border width': 'border_width',
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',
@@ -3412,11 +3441,11 @@ class Theme(_ConfigBase):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: str | pathlib.Path | None):
+    def logo_file(self, logo_file: str | Path | None):
         if logo_file is None:
             path = None
         else:
-            if not pathlib.Path(logo_file).exists():
+            if not Path(logo_file).exists():
                 msg = f'Logo file ({logo_file}) not found.'
                 raise FileNotFoundError(msg)
             path = str(logo_file)
@@ -3454,6 +3483,7 @@ class DarkTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'white'
         self.edge_color = 'white'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
@@ -3490,6 +3520,7 @@ class ParaViewTheme(Theme):
         self.color = 'white'
         self.outline_color = 'white'
         self.edge_color = 'black'
+        self.border_color = 'black'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'gold'
         self.axes.z_color = 'green'
@@ -3537,6 +3568,7 @@ class DocumentTheme(Theme):
         self.color = 'lightblue'
         self.outline_color = 'black'
         self.edge_color = 'black'
+        self.border_color = 'gray'
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
@@ -3602,14 +3634,19 @@ class _TestingTheme(Theme):
     Resampling is also enabled for environment textures since this
     can be very slow without a GPU.
 
+    Notebook mode is pinned off rather than detected, so that a test plots the same
+    way wherever it runs.
+
     """
 
     _default_name: ClassVar[str] = 'testing'
 
     def __init__(self):
         super().__init__()
+        self.notebook = False
         self.multi_samples = 1
         self.window_size = [400, 400]
+        self.border_color = 'black'
         self.axes.show = False
         self.return_cpos = False
         self.resample_environment_texture = True

@@ -16,9 +16,9 @@ from collections.abc import Container
 from collections.abc import Iterable
 from collections.abc import Sequence
 from collections.abc import Sized
-from numbers import Number
+import numbers
 import reprlib
-import types
+from types import UnionType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
@@ -155,8 +155,12 @@ def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array')
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
 
-    # Return early for common cases
-    if array.dtype.type in [np.int32, np.int64, np.float32, np.float64]:
+    # Return early for common cases.
+    # ``np.longlong`` is listed separately from ``np.int64``: on LP64 platforms they are
+    # distinct scalar types (C ``long long`` vs C ``long``) and ``in`` compares type
+    # objects by identity, so ``longlong`` would otherwise miss this fast path. VTK id
+    # arrays (cells, faces, connectivity) are ``longlong``, so this is a hot case.
+    if array.dtype.type in [np.int32, np.int64, np.longlong, np.float32, np.float64]:
         return
 
     # Do not use np.isreal as it will fail in some cases (e.g. scalars).
@@ -323,7 +327,7 @@ def check_integer(
         Number or array to check.
 
     strict : bool, default: False
-        If ``True``, the array's data must be a subtype of `int` or
+        If ``True``, the array's data must be a subtype of ``int`` or
         ``np.integer``. Otherwise, floats are allowed but must be
         whole numbers.
 
@@ -745,7 +749,7 @@ def check_number(num: float, /, *, name: str = 'Object') -> None:
     >>> _validation.check_number(1 + 2j)
 
     """
-    check_instance(num, Number, allow_subclass=True, name=name)
+    check_instance(num, numbers.Number, allow_subclass=True, name=name)
 
 
 def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object') -> None:
@@ -912,7 +916,7 @@ def check_instance(
 
     # Get class info from generics
     origin = get_origin(classinfo)
-    if origin is Union or origin is types.UnionType:
+    if origin is Union or origin is UnionType:
         classinfo = get_args(classinfo)
 
     # Count num classes

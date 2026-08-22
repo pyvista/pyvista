@@ -16,7 +16,7 @@ A ``validate`` function typically:
 from __future__ import annotations
 
 import inspect
-from itertools import product
+import itertools
 import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -734,7 +734,7 @@ def _array_from_vtkmatrix(
 ) -> NumpyArray[float]:
     """Convert a vtk matrix to an array."""
     array = np.zeros(shape)
-    for i, j in product(range(shape[0]), range(shape[1])):
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
         array[i, j] = matrix.GetElement(i, j)
     return array
 
@@ -1270,12 +1270,12 @@ def _validate_color_sequence(
 ) -> tuple[Color, ...]:
     """Validate a color sequence.
 
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
+    If ``n_colors`` is specified, the output will have ``n`` colors. For single-color
+    inputs, the color is copied and a sequence of ``n`` identical colors is returned.
     For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
+    match ``n_colors``.
 
-    If `n_colors` is None, no broadcasting or length-checking is performed.
+    If ``n_colors`` is None, no broadcasting or length-checking is performed.
     """
     from pyvista.plotting.colors import Color  # noqa: PLC0415
 

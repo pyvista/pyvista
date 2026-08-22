@@ -4,9 +4,9 @@
 Topographic Map
 ~~~~~~~~~~~~~~~
 
-This is very similar to the :ref:`texture_example` example except it is
-focused on plotting aerial imagery from a GeoTIFF on top of some topography
-mesh.
+Plot aerial imagery from a GeoTIFF on top of a topography mesh.
+
+Similar to the :ref:`texture_example` example.
 
 """
 

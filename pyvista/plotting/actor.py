@@ -528,10 +528,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         pyvista.Property
             The object describing backfaces.
 
-        See Also
-        --------
-        :ref:`backface_prop_example`
-
         Examples
         --------
         Clip a sphere by a plane and color the inside of the clipped sphere
@@ -753,10 +749,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         Maximum Intensity Projection does not work correctly with
         ``opacity < 1`` unless depth peeling is enabled. See
         :func:`pyvista.Plotter.enable_depth_peeling`.
-
-        See Also
-        --------
-        :ref:`maximum_intensity_projection_example`
 
         References
         ----------

@@ -510,6 +510,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPLYWriter',
     ),
     'vtkIOParallel': (
+        'vtkEnSightWriter',
         'vtkMultiBlockPLOT3DReader',
         'vtkNek5000Reader',
         'vtkPDataSetReader',
@@ -759,11 +760,9 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLRenderer',
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
-        'vtkRenderPassCollection',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
-        'vtkSequencePass',
         'vtkShader',
         'vtkShadowMapPass',
         'vtkXOpenGLRenderWindow',  # optional (Linux X11 builds)
@@ -852,6 +851,16 @@ def has_attr(name: str) -> bool:
     return True
 
 
+def import_all(*, suppress_import_errors: bool = True):
+    """Eagerly import all vtk classes used by PyVista."""
+    for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):
+        if suppress_import_errors:
+            # Use has_attr to suppress import errors
+            has_attr(name)
+        else:
+            __getattr__(name)
+
+
 # Specialized loading functions for irregular imports
 
 
@@ -884,7 +893,29 @@ def _import_vtkCellTypeUtilities():  # noqa: N802
     return vtkCellTypeUtilities
 
 
+def _import_vtkRenderPassCollection():  # noqa: N802
+    try:  # Moved in VTK 10.0.0
+        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
+            vtkRenderPassCollection,
+        )
+    except ImportError:
+        from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection  # noqa: TID251
+    return vtkRenderPassCollection
+
+
+def _import_vtkSequencePass():  # noqa: N802
+    try:  # Moved in VTK 10.0.0
+        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
+            vtkSequencePass,
+        )
+    except ImportError:
+        from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass  # noqa: TID251
+    return vtkSequencePass
+
+
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
+    'vtkRenderPassCollection': _import_vtkRenderPassCollection,
+    'vtkSequencePass': _import_vtkSequencePass,
 }

@@ -5,6 +5,7 @@ Create 3D Text
 ~~~~~~~~~~~~~~
 
 Generate extruded text geometry with :func:`pyvista.Text3D`.
+
 """
 
 import pyvista as pv

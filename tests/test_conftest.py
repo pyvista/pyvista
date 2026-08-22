@@ -60,7 +60,7 @@ def results_parser(monkeypatch: pytest.MonkeyPatch):
     It enables to get the test name (last part of the test path)
     as well as the status.
 
-    Results can be passed to the `RunResultsReport` class to better interact
+    Results can be passed to the ``RunResultsReport`` class to better interact
     with them.
     """
     monkeypatch.setenv('PYTEST_ADDOPTS', '-v')
@@ -645,3 +645,16 @@ def test_skip_mac(
         assert 'test_skipped_platform_machine' in report.skipped
     else:
         assert 'test_skipped_platform_machine' in report.passed
+
+
+def test_notebook_mode_is_pinned_off():
+    """``reset_global_state`` pins notebook mode, rather than leaving it detected.
+
+    Left at its default of ``None``, a plotter asks scooby whether it is running in an
+    ipykernel, so on a machine that answers yes an ordinary plotting test renders through
+    the trame jupyter backend and launches the process-lifetime ``pyvista-jupyter``
+    server. Whichever test does that first is then blamed for the ``vtkWebApplication``
+    it leaves behind (pyvista/pyvista#8929). Tests that want a notebook pass
+    ``notebook=True`` themselves.
+    """
+    assert pv.global_theme.notebook is False

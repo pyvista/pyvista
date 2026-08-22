@@ -1,13 +1,12 @@
 """Enforce warnings style.
 
-Python script to enforce using the custom `warn_external` function instead of
-plain `warnings.warn`, to allow for dynamic stacklevel value.
+Python script to enforce using the custom ``warn_external`` function instead of
+plain ``warnings.warn``, to allow for dynamic stacklevel value.
 """
 
 from __future__ import annotations
 
-from inspect import Parameter
-from inspect import Signature
+import inspect
 import sys
 
 import libcst as cst
@@ -33,22 +32,24 @@ def get_args_kwargs(args: tuple[cst.Arg]) -> tuple[list[cst.Arg], dict[str, cst.
 # Need to manually build the `warnings.warn` signature because `inspect.signature`
 # is raising an error for some builtins https://github.com/python/cpython/issues/123473
 _WARN_PARAMS = [
-    Parameter(
+    inspect.Parameter(
         name='message',
-        kind=Parameter.POSITIONAL_OR_KEYWORD,
+        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
     ),
-    Parameter(name='category', kind=Parameter.POSITIONAL_OR_KEYWORD, default=None),
-    Parameter(name='stacklevel', kind=Parameter.POSITIONAL_OR_KEYWORD, default=1),
-    Parameter(name='source', kind=Parameter.POSITIONAL_OR_KEYWORD, default=None),
+    inspect.Parameter(name='category', kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+    inspect.Parameter(name='stacklevel', kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=1),
+    inspect.Parameter(name='source', kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
 ]
 
 if sys.version_info[:2] >= (3, 12):
     _WARN_PARAMS.append(
-        Parameter(name='skip_file_prefixes', kind=Parameter.KEYWORD_ONLY, default=())
+        inspect.Parameter(
+            name='skip_file_prefixes', kind=inspect.Parameter.KEYWORD_ONLY, default=()
+        )
     )
 
 
-_WARN_SIGNATURE = Signature(parameters=_WARN_PARAMS)
+_WARN_SIGNATURE = inspect.Signature(parameters=_WARN_PARAMS)
 
 
 class ConvertWarningsToExternal(VisitorBasedCodemodCommand):

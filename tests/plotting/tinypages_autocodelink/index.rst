@@ -1,0 +1,35 @@
+#############################
+Dynamic Autolink Testing
+#############################
+
+.. currentmodule:: autocodelink_samples
+
+.. autoclass:: Widget
+
+.. automethod:: Widget.draw
+
+.. autoclass:: Derived
+
+.. automethod:: Derived.meth
+
+.. autofunction:: make_widget
+
+.. autofunction:: call_chain_example
+
+.. autofunction:: make_widget_or_string
+
+.. autofunction:: make_derived
+
+.. autofunction:: multi_block_examples
+
+.. autofunction:: make_partial_method
+
+.. autofunction:: module_attribute_chain
+
+.. autofunction:: call_hoist_target
+
+.. autofunction:: call_raw_seealso_target
+
+.. currentmodule:: autocodelink_samples.sub
+
+.. autofunction:: make

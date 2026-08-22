@@ -178,7 +178,7 @@ def try_init_pyvista_object(class_):
     kwargs = get_default_class_init_kwargs(class_)
     try:
         instance = class_(**kwargs)
-    except (ImportError, VTKVersionError):
+    except (VTKVersionError, ImportError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:
         if 'abstract' in repr(e):
@@ -285,6 +285,9 @@ def get_default_class_init_kwargs(pyvista_class):
     elif pyvista_class is pv.XMLPartitionedDataSetWriter:
         kwargs['path'] = ''
         kwargs['data_object'] = pv.PartitionedDataSet()
+    elif pyvista_class is pv.EnSightWriter:
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.UnstructuredGrid()
     elif issubclass(pyvista_class, pv.BaseWriter):
         kwargs['path'] = ''
         kwargs['data_object'] = pv.PolyData()

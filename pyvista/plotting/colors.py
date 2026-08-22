@@ -7,7 +7,7 @@ Used code from matplotlib.colors.  Thanks for your work.
 # of methods defined in this module.
 from __future__ import annotations
 
-from colorsys import rgb_to_hls
+import colorsys
 import contextlib
 import importlib
 import inspect
@@ -2036,7 +2036,7 @@ class Color(_NoNewAttrMixin):
     @property
     def _float_hls(self) -> tuple[float, float, float]:
         """Get the color as Hue, Lightness, Saturation (HLS) in range [0.0, 1.0]."""
-        return rgb_to_hls(*self.float_rgb)
+        return colorsys.rgb_to_hls(*self.float_rgb)
 
     @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
@@ -2408,7 +2408,7 @@ def color_scheme_to_cycler(scheme):
     Raises
     ------
     ValueError
-        If the provided `scheme` is not a valid color scheme.
+        If the provided ``scheme`` is not a valid color scheme.
 
     """
     if not isinstance(scheme, _vtk.vtkColorSeries):

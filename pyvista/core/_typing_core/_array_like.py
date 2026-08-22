@@ -11,7 +11,7 @@ Some key differences include:
   Here, finite sequences are used instead.
 
 - The npt._array_like definitions use a generic _SupportsArray protocol.
-  Here, we use `ndarray` directly.
+  Here, we use ``ndarray`` directly.
 
 - The npt._array_like definitions include scalar types (e.g. float, int).
   Here they are excluded (i.e. scalars are not considered to be arrays).

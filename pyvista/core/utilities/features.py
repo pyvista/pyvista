@@ -84,7 +84,7 @@ def voxelize(  # noqa: PLR0917
     fit_bounds : bool, default: False
         If enabled, the end bound of the input mesh is used as the end bound of the
         voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if `enclosed` is enabled.
+        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
 
     Returns
     -------
@@ -171,7 +171,7 @@ def _voxelize_legacy(
 ):
     """Voxelize mesh to UnstructuredGrid.
 
-    The public `voxelize` function is deprecated but we need to keep it for
+    The public :func:`~pyvista.voxelize` function is deprecated but we need to keep it for
     generating the PyVista logo.
 
     """
@@ -294,7 +294,7 @@ def voxelize_volume(  # noqa: PLR0917
     fit_bounds : bool, default: False
         If enabled, the end bound of the input mesh is used as the end bound of the
         voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if `enclosed` is enabled.
+        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
 
     Returns
     -------
@@ -327,7 +327,7 @@ def voxelize_volume(  # noqa: PLR0917
     Create an equal density voxel volume and plot the result.
 
     >>> vox = pv.voxelize_volume(mesh, density=0.15)  # doctest:+SKIP
-    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]  # doctest:+SKIP
+    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 1, 0)]  # doctest:+SKIP
     >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)  # doctest:+SKIP
 
     Slice the voxel volume to view ``InsideMesh``.
@@ -455,10 +455,6 @@ def grid_from_sph_coords(theta, phi, r):
     -------
     pyvista.StructuredGrid
         Structured grid.
-
-    See Also
-    --------
-    :ref:`spherical_example`
 
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
@@ -703,11 +699,6 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     :vtk:`vtkPerlinNoise`
         Instance of :vtk:`vtkPerlinNoise` to a Perlin noise field as an
         implicit function. Use with :func:`~pyvista.sample_function`.
-
-    See Also
-    --------
-    :ref:`perlin_noise_2d_example`
-    :ref:`perlin_noise_3d_example`
 
     Examples
     --------

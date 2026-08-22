@@ -16,7 +16,7 @@ from typing import TextIO
 from typing import TypeVar
 from typing import cast
 from typing import overload
-from urllib.parse import urlparse
+import urllib.parse
 
 import numpy as np
 
@@ -285,6 +285,10 @@ def read(  # noqa: PLR0917
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
+    .. note::
+        Reading a file and saving it in another format is also available via
+        command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
+
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
     readers first then tries to use ``meshio``.
@@ -460,7 +464,7 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and has_scheme(filename):
-        uri_ext = get_ext(urlparse(filename).path)
+        uri_ext = get_ext(urllib.parse.urlparse(filename).path)
         if uri_ext.lower() in _PICKLE_FILE_EXT:
             _raise_pickle_removed()
         # If a custom reader is registered for this extension, try it
@@ -1200,7 +1204,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         points = np.hstack((points, zero_points))
 
     grid = pv.UnstructuredGrid(
-        np.concatenate(cells).astype(np.int64, copy=False),
+        np.concatenate(cells).astype(pv.ID_TYPE, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
     )
@@ -1321,7 +1325,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     # Mixed cell types
     else:
         cells = []
-        offset = mesh.offset
+        offset = mesh.cell_offsets
 
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
@@ -1544,10 +1548,6 @@ def from_trimesh(
     --------
     to_trimesh, from_meshio, :func:`~pyvista.wrap`
 
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
-
     """
     try:
         import trimesh  # noqa: PLC0415
@@ -1636,10 +1636,6 @@ def to_trimesh(  # numpydoc ignore=RT01
     See Also
     --------
     from_trimesh, to_meshio, :func:`~pyvista.wrap`
-
-    Examples
-    --------
-    See :ref:`wrap_trimesh_example` for examples.
 
     """
     try:

@@ -4,8 +4,9 @@
 Plot Scalars Over a Circular Arc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Interpolate the scalars of a dataset over a circular arc
-using :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
+Interpolate the scalars of a dataset over a circular arc.
+
+Uses :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 
 """
 

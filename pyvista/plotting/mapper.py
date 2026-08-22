@@ -376,6 +376,22 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def scalar_visibility(self, value: bool) -> None:
         self.SetScalarVisibility(value)
 
+    @property
+    def static(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether the mapper treats its input as static.
+
+        A static mapper skips checking its input pipeline for updates when
+        rendering.
+
+        .. versionadded:: 0.49
+
+        """
+        return bool(self.GetStatic())
+
+    @static.setter
+    def static(self, value: bool) -> None:
+        self.SetStatic(value)
+
     def update(self) -> None:
         """Update this mapper."""
         self.Update()
@@ -476,6 +492,11 @@ class _DataSetMapper(_BaseMapper):
             set_algorithm_input(self, self._active_scalars_algo)
         else:
             set_algorithm_input(self, obj)
+        # Static mappers skip input-pipeline updates during rendering. An
+        # explicit input replacement must therefore update the newly connected
+        # pipeline once before rendering resumes.
+        if self.static:
+            self.update()
         self._maybe_set_default_scalar_range()
 
     @property
@@ -1072,9 +1093,9 @@ class _DataSetMapper(_BaseMapper):
         z-buffer resolution (and hence rendering problems).
 
         If not off, there are two methods to choose from.
-        `polygon_offset` uses graphics systems calls to shift polygons,
+        ``polygon_offset`` uses graphics systems calls to shift polygons,
         lines, and points from each other.
-        `shift_zbuffer` is a legacy method that is used to remap the z-buffer
+        ``shift_zbuffer`` is a legacy method that is used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
         You should only use the polygon_offset method (or none) at this point.
@@ -1083,7 +1104,7 @@ class _DataSetMapper(_BaseMapper):
         -------
         str
             Global flag to avoid z-buffer resolution.
-            Must be either `off`, `polygon_offset` or `shift_zbuffer`.
+            Must be either ``off``, ``polygon_offset`` or ``shift_zbuffer``.
 
         Examples
         --------

@@ -6,6 +6,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -121,9 +122,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
     Examples
     --------
@@ -462,9 +463,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
         Examples
         --------
@@ -972,6 +973,8 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 3
+
         Get the default point size and visualize it.
 
         >>> import pyvista as pv
@@ -1208,8 +1211,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         return self.GetAnisotropy()
@@ -1217,8 +1218,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     @anisotropy.setter
     def anisotropy(self, value: float):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
@@ -1284,8 +1283,6 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
-        from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
         ]

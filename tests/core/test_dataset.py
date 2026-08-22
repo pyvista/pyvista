@@ -1407,7 +1407,11 @@ def test_explode(datasets):
     for dataset in datasets:
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
-        assert out.n_points > dataset.n_points
+        if dataset.n_cells == 0:
+            # no cells to separate, e.g. PointSet
+            assert out.n_points == dataset.n_points
+        else:
+            assert out.n_points > dataset.n_points
 
 
 def test_separate_cells(hexbeam):
@@ -1741,8 +1745,8 @@ def test_dimensionality():
 
 
 @pytest.mark.parametrize('empty', [True, False])
-def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
-    for mesh in datasets_plus_pointset:
+def test_min_max_cell_dimensionality(datasets, empty):
+    for mesh in datasets:
         test_mesh = type(mesh)() if empty else mesh
         min_dimensionality = test_mesh.min_cell_dimensionality
         max_dimensionality = test_mesh.max_cell_dimensionality
@@ -1763,8 +1767,8 @@ def test_distinct_cell_types_unstructured_grid():
     assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
 
 
-def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
-    for dataset in datasets_plus_pointset:
+def test_distinct_cell_types_all_datasets(datasets):
+    for dataset in datasets:
         distinct_cell_types = dataset.distinct_cell_types
         assert all(isinstance(celltype, pv.CellType) for celltype in distinct_cell_types)
         if dataset.n_cells == 0:

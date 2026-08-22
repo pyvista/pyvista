@@ -3,6 +3,7 @@
 
 Anti-Aliasing
 ~~~~~~~~~~~~~
+
 Demonstrate anti-aliasing within PyVista.
 
 PyVista supports three types of anti-aliasing:
@@ -28,7 +29,6 @@ Normally, the default MSAA anti-aliasing should be sufficient as it strikes a
 balance between efficiency and quality. If you desire additional smoothing, you
 can either increase the number of ``multi_samples`` or use SSAA. Low-end PCs
 should consider FXAA.
-
 
 """
 

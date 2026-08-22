@@ -8,13 +8,18 @@ import json
 import locale
 import os
 from pathlib import Path
+import shutil
 import sys
 from typing import TYPE_CHECKING
 import warnings
 
+from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
+from sphinx import addnodes
+from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
 if TYPE_CHECKING:
+    from docutils.nodes import Element
     from sphinx.application import Sphinx
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
@@ -43,10 +48,17 @@ import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
+from pyvista.ext._autoenum import instance_property_names
+from pyvista.ext._autoenum import metaclass_property_descriptions
+from pyvista.ext._autoenum import metaclass_property_names
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
 
 # Manage errors
 pv.set_error_output_file('errors.txt')
@@ -63,6 +75,14 @@ if not Path(pv.FIGURE_PATH).exists():
 # necessary when building the sphinx gallery
 pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+
+# Copy contents of `pyvista/examples` dir so that we have actual mesh files
+# we can run CLI commands on locally without polluting the source dir
+HERE = Path(__file__).parent
+src = HERE.parent.parent / 'pyvista' / 'examples'
+dst = HERE / '_local_examples'
+shutil.rmtree(dst, ignore_errors=True)
+shutil.copytree(src, dst)
 
 # SG warnings
 import warnings
@@ -99,11 +119,14 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'enum_tools.autoenum',
+    'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext._autoenum',
     'pyvista.ext.plot_directive',
+    'sphinx_autoopengraph',
+    'sphinx_examples_as_code',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -115,6 +138,7 @@ extensions = [
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
+    'sphinxcontrib.programoutput',
     'sphinx_togglebutton',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -122,7 +146,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
-    'vtk_xref',
+    'sphinx_vtk_xref',
 ]
 
 
@@ -145,6 +169,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
+programoutput_use_ansi = True
+
 # Needed to address a code-block parsing error by sphinx for an example
 autodoc_mock_imports = ['example']
 
@@ -159,6 +186,12 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+
+sphinx_examples_as_code_conf = {
+    # Replace sphinx-gallery's own per-example download footer/note with
+    # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
+    'gallery_downloads': True,
+}
 
 # Warn if target links or references cannot be found
 nitpicky = True
@@ -280,6 +313,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*BytesIO'),
     (r'py:.*', '.*StringIO'),
     (r'py:.*', '.*Path'),
     (r'py:.*', '.*UserDict'),
@@ -351,20 +385,20 @@ toc_object_entries_show_parents = 'hide'
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
     'python': (
-        'https://docs.python.org/3.11',
+        'https://docs.python.org/3.11/',
         ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', ('../intersphinx/numpy-objects.inv',)),
+    'numpy': ('https://numpy.org/doc/stable/', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
-        'https://matplotlib.org/stable',
+        'https://matplotlib.org/stable/',
         ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
-        'https://imageio.readthedocs.io/en/stable',
+        'https://imageio.readthedocs.io/en/stable/',
         ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
@@ -372,11 +406,11 @@ intersphinx_mapping = {
         ('../intersphinx/pandas-objects.inv',),
     ),
     'pyarrow': (
-        'https://arrow.apache.org/docs',
+        'https://arrow.apache.org/docs/',
         ('../intersphinx/pyarrow-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', ('../intersphinx/pytest-objects.inv',)),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
     'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
 intersphinx_timeout = 5
@@ -395,6 +429,11 @@ autosummary_context = {
     # __init__ should be documented in the class docstring
     # override is a VTK method
     'skipmethods': ['__init__', 'override'],
+    # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
+    # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
+    'instance_property_names': instance_property_names,
+    'metaclass_property_names': metaclass_property_names,
+    'metaclass_property_descriptions': metaclass_property_descriptions,
 }
 
 # The suffix(es) of source filenames.
@@ -431,7 +470,29 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '**.ipynb_checkpoints',
+    '_templates*',
+    # Fragments that only ever get ``.. include::``-ed into another page or into a
+    # docstring. Sphinx exempts included files from the "isn't included in any
+    # toctree" warning but still builds them as standalone documents, which puts 70
+    # title-less pages in the search index, e.g. searching `bunny` returns four
+    # `<no title>` dataset-gallery carousels. Excluding them keeps the text
+    # searchable through the page that includes it.
+    'api/core/cell_quality/*.rst',
+    'api/examples/dataset-gallery/*.rst',
+    'api/plotting/charts/pen_line_styles.rst',
+    'api/plotting/charts/plot_color_schemes.rst',
+    'api/plotting/charts/scatter_marker_styles.rst',
+    'api/readers/readers_table.rst',
+    'api/utilities/color_table/*.rst',
+    'api/utilities/colormap_table/*.rst',
+    'api/utilities/io_table/*.rst',
+    'api/utilities/mesh_io.rst',
+]
 _repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
 _docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
 _context7_data = json.loads(_repo_context7.read_text())
@@ -521,8 +582,9 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
-    'image_scrapers': (DynamicScraper(), 'matplotlib'),
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods. Only
+    # resolves an example's own top-level (module) scope; see sphinx-autocodelink's README.
+    'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
@@ -530,11 +592,16 @@ sphinx_gallery_conf = {
     'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache', 'image.not_readable']
+suppress_warnings = [
+    'config.cache',
+    'image.not_readable',
+]
 
 import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
+from jinja2.sandbox import SandboxedEnvironment
+from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
@@ -546,6 +613,20 @@ __s_p_t('document_build')
 del __s_p_t
 """
 pyvista_plot_cleanup = pyvista_plot_setup
+
+# Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
+pyvista_plot_autocodelink = True
+
+# Append a "Used In" backreferences section to every autodoc-documented object's own
+# docstring (empty ones get nothing appended, not "No references found.").
+autocodelink_autodoc_backrefs = True
+
+# Rename backreferences group headings.
+autocodelink_category_labels = {
+    'Sphinx Gallery': 'Gallery Examples',
+    'Docstring Examples': 'Docstring Examples',
+    'Documentation': 'Guides',
+}
 
 
 def _str_examples(self):
@@ -574,6 +655,166 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+
+# -- "See Also" as a real section, not a `.. seealso::` admonition ------------
+# SphinxDocString's own _str_see_also always wraps the base rendering in
+# `.. seealso::`, which isn't a real docutils section: no heading, unlinkable,
+# invisible to the "on this page" navbar. The un-wrapped base rendering already
+# goes through self._str_header, so skipping the wrap turns it into a real
+# heading for free, the same way _str_header below already does for Notes,
+# References, and Examples.
+def _str_see_also(self, func_role):
+    return NumpyDocString._str_see_also(self, func_role)
+
+
+SphinxDocString._str_see_also = _str_see_also
+
+
+# -- docstring section order: Parameters, ..., Examples, See Also -------------
+# numpydoc's own template puts "See Also" right after the parameter-ish sections and
+# well before Notes/Examples. Move it to the very end instead -- sphinx-autocodelink's
+# "Used In" (appended after the whole docstring renders, via autodoc-process-docstring)
+# always lands after whatever numpydoc itself renders last, so this also puts "See
+# Also" directly before "Used In".  Identical to numpydoc's own template otherwise --
+# see numpydoc/templates/numpydoc_docstring.rst -- just with {{see_also}} moved down.
+_DOCSTRING_TEMPLATE = SandboxedEnvironment().from_string(
+    '{{index}}\n'
+    '{{summary}}\n'
+    '{{extended_summary}}\n'
+    '{{parameters}}\n'
+    '{{attributes}}\n'
+    '{{methods}}\n'
+    '{{returns}}\n'
+    '{{yields}}\n'
+    '{{receives}}\n'
+    '{{other_parameters}}\n'
+    '{{raises}}\n'
+    '{{warns}}\n'
+    '{{warnings}}\n'
+    '{{notes}}\n'
+    '{{references}}\n'
+    '{{examples}}\n'
+    '{{see_also}}\n'
+)
+
+_original_load_config = SphinxDocString.load_config
+
+
+def _load_config(self, config):
+    _original_load_config(self, config)
+    self.template = _DOCSTRING_TEMPLATE
+
+
+SphinxDocString.load_config = _load_config
+
+
+# -- headings instead of rubrics for docstring sections -----------------------
+# numpydoc renders section headers (Notes, References, Examples) as
+# `.. rubric::` by default. Rubrics aren't real docutils sections, so they're
+# invisible to the "on this page" navbar, which is built from actual heading
+# structure. Since pyvista generates one dedicated page per function/method/
+# class (see doc/source/_templates/autosummary/*.rst), each page has at most
+# one docstring, so promoting these to real headings doesn't create the
+# duplicate-heading clutter it would on a page combining many docstrings.
+def _str_header(self, name):  # noqa: ARG001
+    return [name, '-' * len(name), '']
+
+
+SphinxDocString._str_header = _str_header
+
+
+# Making the sections above real headings isn't enough on its own: autodoc wraps
+# the whole docstring in a `desc` node, and Sphinx's TocTreeCollector explicitly
+# skips any section it finds inside one. Lift them out to page level so they show
+# up in the navbar.
+def _is_nested_desc(node: Element) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, addnodes.desc):
+            return True
+        parent = parent.parent
+    return False
+
+
+def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Turn a literal ``.. seealso::`` admonition in a docstring into a real section.
+
+    Some docstrings (e.g. ``pyvista.examples.downloads``) write ``.. seealso::``
+    directly rather than using numpydoc's own "See Also" section syntax. Left as
+    an admonition it has no heading, isn't linkable, and is invisible to the "on
+    this page" navbar -- the same problem fixed above for numpydoc's own "See
+    Also" section by not wrapping it in one. Converting it to a section here lets
+    hoist_docstring_sections below lift it to page level the same way.
+
+    A literal ``.. seealso::`` is written wherever the docstring author put it --
+    usually right before References/Examples -- unlike numpydoc's own "See Also",
+    which _DOCSTRING_TEMPLATE above always renders last. Reposition the promoted
+    section to match: directly before "Used In" if present, otherwise at the end.
+
+    "Used In" isn't necessarily a sibling: nothing closes off the docstring's last
+    heading before its directive runs, so it lands nested inside that heading's
+    section instead, and only reads as a sibling once hoist_docstring_sections
+    below extracts every section it finds. Search at any depth to still find it.
+    """
+    for admonition in list(doctree.findall(addnodes.seealso)):
+        if not _is_nested_desc(admonition):
+            continue
+        section = nodes.section()
+        section += nodes.title(text='See Also')
+        section.extend(admonition.children)
+        doctree.note_implicit_target(section, section)
+
+        container = admonition.parent
+        while container is not None and not isinstance(container, addnodes.desc_content):
+            container = container.parent
+
+        admonition.replace_self(section)
+        section.parent.remove(section)
+
+        used_in = (
+            next(
+                (s for s in container.findall(nodes.section) if s[0].astext() == 'Used In'),
+                None,
+            )
+            if container is not None
+            else None
+        )
+        if used_in is not None:
+            used_in.parent.insert(used_in.parent.index(used_in), section)
+        else:
+            (container if container is not None else admonition.parent).append(section)
+
+
+def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Move docstring sections out of their ``desc`` node to page level.
+
+    Finds sections at any depth inside ``desc_content``, not just its direct
+    children: a section appended after numpydoc's own Examples section (e.g.
+    sphinx-autocodelink's "Used In", via ``autodoc-process-docstring``) lands
+    *inside* Examples' own section rather than beside it, since nothing closed
+    Examples' heading first. Hoisting it from wherever it actually is keeps it
+    a sibling of Notes/References/Examples/etc., not a subsection of one of
+    them.
+    """
+    for desc in list(doctree.findall(addnodes.desc)):
+        if _is_nested_desc(desc):
+            continue
+        parent = desc.parent
+        if parent is None:
+            continue
+        # Only hoist when this object owns the page, otherwise sections from
+        # several objects would collide at page level.
+        if len([node for node in parent if isinstance(node, addnodes.desc)]) != 1:
+            continue
+        content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
+        if content is None:
+            continue
+        sections = list(content.findall(nodes.section))
+        index = parent.index(desc)
+        for offset, section in enumerate(sections):
+            section.parent.remove(section)
+            parent.insert(index + 1 + offset, section)
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -632,11 +873,6 @@ html_theme_options = {
             'icon': 'fa fa-comment fa-fw',
         },
         {
-            'name': 'Contributing',
-            'url': 'https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst',
-            'icon': 'fa fa-gavel fa-fw',
-        },
-        {
             'name': 'The Paper',
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
@@ -682,6 +918,7 @@ html_css_files = [
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
+    'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -749,7 +986,7 @@ texinfo_documents = [
 notfound_context = {
     'body': (
         '<h1>Page not found.</h1>\n\n'
-        'Perhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.'
+        'Perhaps try the <a href="https://docs.pyvista.org/examples/index.html">examples page</a>.'
     ),
 }
 notfound_urls_prefix = None
@@ -845,11 +1082,20 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
-    app.connect('html-page-context', pv_html_page_context)
+    # Priority must stay above the 501 used by sphinx-book-theme's
+    # ``add_source_buttons``, which is what builds the "suggest edit" button.
+    app.connect('html-page-context', pv_html_page_context, priority=502)
+
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc, and
+    # before priority 400 so hoist_docstring_sections below sees the promoted sections
+    app.connect('doctree-read', promote_seealso_admonitions, priority=300)
+    app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_css_file('dataset_gallery_filter.css')
     app.add_js_file('redirect_fragments.js')
+    app.add_js_file('dataset_gallery_filter.js')

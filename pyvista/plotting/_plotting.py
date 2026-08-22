@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import operator
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
+from .utilities.algorithms import SmoothShadingAlgorithm
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
@@ -281,10 +283,6 @@ def _remap_scalars_through_topology_change(  # noqa: PLR0917
         unchanged if no remap is possible.
 
     """
-    # Local import to avoid a top-level circular import: algorithms imports
-    # from core, core imports from plotting indirectly for Actor types.
-    from .utilities.algorithms import SmoothShadingAlgorithm  # noqa: PLC0415
-
     if original_scalar_name is not None:
         resolved = get_array(mesh, original_scalar_name, preference=preference, err=False)
         if resolved is not None:
@@ -304,7 +302,6 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
     Picks ``base_name`` if free on ``point_data``, ``cell_data``, and
     ``field_data``; otherwise appends a numeric suffix.
     """
-    import itertools  # noqa: PLC0415
 
     def _is_free(name: str) -> bool:
         return (

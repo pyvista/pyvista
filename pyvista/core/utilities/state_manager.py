@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-import contextlib
+
+# A type in a base-class position; see "Import Conventions" in CONTRIBUTING.rst.
+from contextlib import AbstractContextManager  # noqa: ICN003
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
@@ -24,12 +26,12 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
+class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:
 
-    - Specify a `Literal` as the subclass' type argument. The literal's
+    - Specify a ``Literal`` as the subclass' type argument. The literal's
       arguments must specify all allowable options for the state variable.
     - Define a getter and setter for the state. Input validation is not
       required - the input is automatically validated when setting the state.
@@ -246,8 +248,8 @@ _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     """Context manager to control access to VTK's pythonic snake_case API.
 
-    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
-    of `GetOutputPort`. These can easily be confused for PyVista attributes
+    VTK 9.4 introduced pythonic snake_case attributes, e.g. ``output_port`` instead
+    of ``GetOutputPort``. These can easily be confused for PyVista attributes
     which also use a snake_case convention. This class controls access to vtk's
     new interface.
 
@@ -273,7 +275,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     >>> pv.vtk_snake_case()
     'error'
 
-    The following will raise an error because the `information` property is defined
+    The following will raise an error because the ``information`` property is defined
     by :vtk:`vtkDataObject` and is not part of PyVista's API.
 
     >>> # pv.PolyData().information

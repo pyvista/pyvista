@@ -142,8 +142,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     Active Texture  : TextureCoordinates
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32    (4, 3)               NORMALS
         TextureCoordinates      float32    (4, 2)               TCOORDS
+        Normals                 float32    (4, 3)               NORMALS
         my-data                 int64      (4,)
         my-other-data           int64      (4,)
         vectors1                float64    (4, 3)               VECTORS
@@ -1484,8 +1484,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Active Texture  : TextureCoordinates
         Active Normals  : Normals
         Contains arrays :
-            Normals                 float32    (4, 3)               NORMALS
             TextureCoordinates      float32    (4, 2)               TCOORDS
+            Normals                 float32    (4, 3)               NORMALS
 
         >>> mesh.point_data.active_normals
         pyvista_ndarray([[0., 0., 1.],

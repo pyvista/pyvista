@@ -35,7 +35,11 @@ pyvista.registered_plotter_components
 from __future__ import annotations
 
 import contextlib
-from importlib import import_module
+
+# ICN003 waived: tests patch this module-level name to intercept plugin
+# imports. Patching `importlib.import_module` instead would apply globally,
+# for every importer, for the duration of the test.
+from importlib import import_module  # noqa: ICN003
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
@@ -84,11 +88,11 @@ class PlotterComponent(Protocol):
     --------
     Declare a component that satisfies the protocol.
 
-    >>> from pyvista import PlotterComponent
+    >>> import pyvista as pv
     >>> class MyComponent:
     ...     def __init__(self, plotter):
     ...         self._plotter = plotter
-    >>> isinstance(MyComponent(None), PlotterComponent)
+    >>> isinstance(MyComponent(None), pv.PlotterComponent)
     True
 
     """

@@ -5,6 +5,7 @@ Axes Objects
 ~~~~~~~~~~~~
 
 PyVista has many axes objects which can be used for plotting.
+
 This example highlights many of these objects and shows how
 to use them with related plotting methods.
 
