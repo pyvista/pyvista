@@ -1794,6 +1794,32 @@ def test_distinct_cell_types_dimensions(dimensions):
     assert_distinct_cell_types(structured)
 
 
+@pytest.mark.parametrize(
+    ('mesh_', 'expected_type'),
+    [
+        (examples.load_explicit_structured(), pv.CellType.HEXAHEDRON),
+        (examples.load_structured(), pv.CellType.QUAD),
+    ],
+)
+def test_distinct_cell_types_hidden_cells(mesh_, expected_type):
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    expected = {pv.CellType.EMPTY_CELL, expected_type}
+    assert hidden.distinct_cell_types == expected
+    assert {cell.type for cell in hidden.cell} == expected
+
+
+def test_min_max_cell_dimensionality_hidden_cells_legacy(monkeypatch):
+    # Simulate legacy VTK to exercise the `_distinct_cell_dimensions` fallback path.
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0, 0))
+
+    mesh_ = examples.load_explicit_structured()
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    assert hidden.min_cell_dimensionality == 0
+    assert hidden.max_cell_dimensionality == 3
+
+
 def test_structured_grid_dimensionality():
     cell_dimension = 2
     cell_types = {pv.CellType.QUAD}
