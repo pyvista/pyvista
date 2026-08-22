@@ -396,6 +396,26 @@ VALID_ELEMENT_DEFINITIONS = {
         '    1 0.0 0.0 0.0\n -1    2 1.0 0.0 0.0\n -1    3 0.5 0.0 0.0',
         '    1    2    3',
     ),
+    # Experimental pyramid elements (CCX: C3D5 / C3D13), no permutation needed.
+    'PY5': (
+        15,
+        (
+            '    1 0.0 0.0 0.0\n -1    2 1.0 0.0 0.0\n -1    3 1.0 1.0 0.0\n'
+            ' -1    4 0.0 1.0 0.0\n -1    5 0.5 0.5 1.0'
+        ),
+        '    1    2    3    4    5',
+    ),
+    'PY13': (
+        16,
+        (
+            '    1 0.0 0.0 0.0\n -1    2 1.0 0.0 0.0\n -1    3 1.0 1.0 0.0\n'
+            ' -1    4 0.0 1.0 0.0\n -1    5 0.5 0.5 1.0\n -1    6 0.5 0.0 0.0\n'
+            ' -1    7 1.0 0.5 0.0\n -1    8 0.5 1.0 0.0\n -1    9 0.0 0.5 0.0\n'
+            ' -1   10 0.25 0.25 0.5\n -1   11 0.75 0.25 0.5\n'
+            ' -1   12 0.75 0.75 0.5\n -1   13 0.25 0.75 0.5'
+        ),
+        '    1    2    3    4    5    6    7    8    9   10   11   12   13',
+    ),
 }
 
 
@@ -501,3 +521,85 @@ def test_frd_reader_coverage_edge_cases(coverage_edge_cases_frd):
     # Validate that the bad node was successfully skipped
     assert str(FRDElementType.HE8.value) not in mesh.point_data['original_node_ids']
     assert str(FRDElementType.PE6.value) in mesh.point_data['original_node_ids']
+
+
+# =============================================================================
+# PY5 / PY13 (experimental CalculiX pyramid elements C3D5 / C3D13)
+# =============================================================================
+
+
+@pytest.fixture
+def pyramid_frd_file(tmp_path):
+    """FRD file with a PY5 and a PY13 element, in real CCX node order."""
+    content = """1C Pyramid element test
+2C
+ -1    1 0.0 0.0 0.0
+ -1    2 1.0 0.0 0.0
+ -1    3 1.0 1.0 0.0
+ -1    4 0.0 1.0 0.0
+ -1    5 0.5 0.5 1.0
+ -1    6 0.5 0.0 0.0
+ -1    7 1.0 0.5 0.0
+ -1    8 0.5 1.0 0.0
+ -1    9 0.0 0.5 0.0
+ -1   10 0.25 0.25 0.5
+ -1   11 0.75 0.25 0.5
+ -1   12 0.75 0.75 0.5
+ -1   13 0.25 0.75 0.5
+ -3
+3C
+ -1    1   15
+ -2    1    2    3    4    5
+ -1    2   16
+ -2    1    2    3    4    5    6    7    8    9   10   11   12   13
+ -3
+"""
+    file_path = tmp_path / 'pyramids.frd'
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path)
+
+
+def test_frd_reader_pyramid_types(pyramid_frd_file):
+    """PY5/PY13 map to the right VTK cell types and point counts."""
+    mesh = pv.FRDReader(pyramid_frd_file).read()
+
+    assert mesh.n_cells == 2
+    assert mesh.celltypes[0] == pv.CellType.PYRAMID
+    assert mesh.celltypes[1] == pv.CellType.QUADRATIC_PYRAMID
+    assert mesh.get_cell(0).n_points == 5
+    assert mesh.get_cell(1).n_points == 13
+
+
+def test_frd_reader_pyramid_no_permutation(pyramid_frd_file):
+    """PY5/PY13 points, incl. PY13 midsides, must land unpermuted."""
+    mesh = pv.FRDReader(pyramid_frd_file).read()
+
+    expected_py5 = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.5, 0.5, 1.0],
+        ]
+    )
+    np.testing.assert_allclose(mesh.get_cell(0).points, expected_py5)
+
+    expected_py13 = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.5, 0.5, 1.0],
+            [0.5, 0.0, 0.0],
+            [1.0, 0.5, 0.0],
+            [0.5, 1.0, 0.0],
+            [0.0, 0.5, 0.0],
+            [0.25, 0.25, 0.5],
+            [0.75, 0.25, 0.5],
+            [0.75, 0.75, 0.5],
+            [0.25, 0.75, 0.5],
+        ]
+    )
+    np.testing.assert_allclose(mesh.get_cell(1).points, expected_py13)

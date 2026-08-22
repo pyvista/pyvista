@@ -57,6 +57,8 @@ class FRDElementType(IntEnum):
     QU8 = 10
     BE2 = 11
     BE3 = 12
+    PY5 = 15  # experimental pyramid, CCX: C3D5
+    PY13 = 16  # experimental pyramid, CCX: C3D13
 
 
 # CalculiX element type -> VTK cell type
@@ -73,6 +75,8 @@ CCX_TO_VTK_TYPE: dict[FRDElementType, CellType] = {
     FRDElementType.QU8: CellType.QUADRATIC_QUAD,
     FRDElementType.BE2: CellType.LINE,
     FRDElementType.BE3: CellType.QUADRATIC_EDGE,
+    FRDElementType.PY5: CellType.PYRAMID,
+    FRDElementType.PY13: CellType.QUADRATIC_PYRAMID,
 }
 
 # Results hierarchy: step_time -> result_name -> node_id -> values
