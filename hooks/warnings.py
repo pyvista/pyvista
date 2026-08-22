@@ -94,18 +94,19 @@ class ConvertWarningsToExternal(VisitorBasedCodemodCommand):
         return updated_node
 
 
-def main() -> int:  # noqa: D103
+def main() -> int:
+    """Codemod each file passed on argv, skipping ones with no `warn(...)` call."""
     changed = False
     for path in sys.argv[1:]:
         source = Path(path).read_text(encoding='utf-8')
         if not _WARN_CALL_RE.search(source):
-            continue
+            continue  # cheap regex bail-out avoids a CST parse for most files
         result = transform_module(ConvertWarningsToExternal(CodemodContext()), source)
         if result.code != source:
             changed = True
             print(f'Fixing {path}')  # noqa: T201
             Path(path).write_text(result.code, encoding='utf-8')
-    return 1 if changed else 0
+    return 1 if changed else 0  # non-zero tells pre-commit files were modified
 
 
 if __name__ == '__main__':
