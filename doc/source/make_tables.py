@@ -3150,77 +3150,93 @@ def make_dataset_carousel(jobs: int = 1) -> str:  # noqa: D103
     return DatasetCarousel.generate()
 
 
-# Every independent table, i.e. one whose `generate()` reads no state written by
-# another table's `generate()`. Each one may run in its own worker process.
-_TABLE_CLASSES: list[type[DocTable]] = [
-    ReadersTable,
-    ImageDataIOTable,
-    RectilinearGridIOTable,
-    StructuredGridIOTable,
-    PolyDataIOTable,
-    UnstructuredGridIOTable,
-    MultiBlockIOTable,
-    PartitionedDataSetIOTable,
-    ExplicitStructuredGridIOTable,
-    CellQualityMeasuresTable,
-    CellQualityInfoTableTRIANGLE,
-    CellQualityInfoTableQUAD,
-    CellQualityInfoTableHEXAHEDRON,
-    CellQualityInfoTableTETRA,
-    CellQualityInfoTableWEDGE,
-    CellQualityInfoTablePYRAMID,
-    ColormapTableLINEAR,
-    ColormapTableDIVERGING,
-    ColormapTableMULTISEQUENTIAL,
-    ColormapTableCYCLIC,
-    ColormapTableCATEGORICAL,
-    ColormapTableMISC,
-    CETColormapTableLINEAR,
-    CETColormapTableDIVERGING,
-    CETColormapTableCYCLIC,
-    CETColormapTableRAINBOW,
-    CETColormapTableISOLUMINANT,
-    LineStyleTable,
-    MarkerStyleTable,
-    ColorSchemeTable,
-    ColorTable,
-    ColorTableGRAY,
-    ColorTableWHITE,
-    ColorTableBLACK,
-    ColorTableRED,
-    ColorTableORANGE,
-    ColorTableBROWN,
-    ColorTableYELLOW,
-    ColorTableGREEN,
-    ColorTableCYAN,
-    ColorTableBLUE,
-    ColorTableVIOLET,
-    ColorTableMAGENTA,
-]
-
-
 def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
-    for directory in (
-        READERS_DIR,
-        MESHIO_DIR,
-        CELL_QUALITY_DIR,
-        COLORMAP_IMAGE_DIR,
-        COLORMAP_TABLE_DIR,
-        CHARTS_IMAGE_DIR,
-        COLORS_TABLE_DIR,
-        DATASET_GALLERY_DIR,
-    ):
-        os.makedirs(directory, exist_ok=True)
+    # Every table is independent of every other one, so collect them here and generate
+    # them all - in parallel if `jobs > 1` - once every table's directory has been made.
+    classes: list[type[DocTable]] = []
+
+    def generate(*table_classes: type[DocTable]):
+        classes.extend(table_classes)
+
+    # Make reader tables
+    os.makedirs(READERS_DIR, exist_ok=True)
+    generate(ReadersTable)
+
+    # Make mesh IO tables
+    os.makedirs(MESHIO_DIR, exist_ok=True)
+    generate(
+        ImageDataIOTable,
+        RectilinearGridIOTable,
+        StructuredGridIOTable,
+        PolyDataIOTable,
+        UnstructuredGridIOTable,
+        MultiBlockIOTable,
+        PartitionedDataSetIOTable,
+        ExplicitStructuredGridIOTable,
+    )
+
+    # Make cell quality tables
+    os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
+    generate(
+        CellQualityMeasuresTable,
+        CellQualityInfoTableTRIANGLE,
+        CellQualityInfoTableQUAD,
+        CellQualityInfoTableHEXAHEDRON,
+        CellQualityInfoTableTETRA,
+        CellQualityInfoTableWEDGE,
+        CellQualityInfoTablePYRAMID,
+    )
+
+    # Make colormap tables
+    os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
+    os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
+    generate(
+        ColormapTableLINEAR,
+        ColormapTableDIVERGING,
+        ColormapTableMULTISEQUENTIAL,
+        ColormapTableCYCLIC,
+        ColormapTableCATEGORICAL,
+        ColormapTableMISC,
+        CETColormapTableLINEAR,
+        CETColormapTableDIVERGING,
+        CETColormapTableCYCLIC,
+        CETColormapTableRAINBOW,
+        CETColormapTableISOLUMINANT,
+    )
+
+    # Make color and chart tables
+    os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
+    generate(
+        LineStyleTable,
+        MarkerStyleTable,
+        ColorSchemeTable,
+        ColorTable,
+        ColorTableGRAY,
+        ColorTableWHITE,
+        ColorTableBLACK,
+        ColorTableRED,
+        ColorTableORANGE,
+        ColorTableBROWN,
+        ColorTableYELLOW,
+        ColorTableGREEN,
+        ColorTableCYAN,
+        ColorTableBLUE,
+        ColorTableVIOLET,
+        ColorTableMAGENTA,
+    )
+
+    # Make dataset gallery carousel
+    os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
 
     if jobs <= 1:
-        paths = [cls.generate() for cls in _TABLE_CLASSES]
+        paths = [cls.generate() for cls in classes]
     else:
         with ProcessPoolExecutor(max_workers=jobs) as executor:
-            futures = [executor.submit(cls.generate) for cls in _TABLE_CLASSES]
+            futures = [executor.submit(cls.generate) for cls in classes]
             paths = [future.result() for future in futures]
 
-    # Make dataset gallery carousel. Each dataset's card may itself be generated
-    # in its own worker process.
+    # Each dataset's gallery card may itself be generated in its own worker process.
     paths.append(make_dataset_carousel(jobs=jobs))
 
     return paths
