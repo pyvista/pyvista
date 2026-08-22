@@ -118,7 +118,7 @@ class LocalFileRequiredError(Exception):
     --------
     >>> import pyvista as pv
     >>> from pyvista.core.utilities.reader_registry import LocalFileRequiredError
-    >>> @pv.register_reader('.myformat')  # doctest: +SKIP
+    >>> @pv.register_reader('.myremoteformat')  # doctest: +SKIP
     ... def my_reader(path, **kwargs):
     ...     if '://' in path:
     ...         raise LocalFileRequiredError
@@ -371,7 +371,7 @@ def register_reader(
 
     Use as a decorator.
 
-    >>> @pv.register_reader('.myformat')  # doctest: +SKIP
+    >>> @pv.register_reader('.myotherformat')  # doctest: +SKIP
     ... def my_reader(path, **kwargs): ...
 
     Register a :class:`~pyvista.BaseReader` subclass so that
