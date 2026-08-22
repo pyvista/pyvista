@@ -3155,16 +3155,16 @@ def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
     # them all - in parallel if `jobs > 1` - once every table's directory has been made.
     classes: list[type[DocTable]] = []
 
-    def generate(*table_classes: type[DocTable]):
+    def collect(*table_classes: type[DocTable]):
         classes.extend(table_classes)
 
     # Make reader tables
     os.makedirs(READERS_DIR, exist_ok=True)
-    generate(ReadersTable)
+    collect(ReadersTable)
 
     # Make mesh IO tables
     os.makedirs(MESHIO_DIR, exist_ok=True)
-    generate(
+    collect(
         ImageDataIOTable,
         RectilinearGridIOTable,
         StructuredGridIOTable,
@@ -3177,7 +3177,7 @@ def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
-    generate(
+    collect(
         CellQualityMeasuresTable,
         CellQualityInfoTableTRIANGLE,
         CellQualityInfoTableQUAD,
@@ -3190,7 +3190,7 @@ def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
     # Make colormap tables
     os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
-    generate(
+    collect(
         ColormapTableLINEAR,
         ColormapTableDIVERGING,
         ColormapTableMULTISEQUENTIAL,
@@ -3207,7 +3207,7 @@ def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
-    generate(
+    collect(
         LineStyleTable,
         MarkerStyleTable,
         ColorSchemeTable,
