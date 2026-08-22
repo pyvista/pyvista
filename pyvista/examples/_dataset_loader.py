@@ -46,11 +46,12 @@ from typing import final
 from typing import runtime_checkable
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from pyvista.core._typing_core import NumpyArray
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -69,8 +70,11 @@ _FilePropIntType_co = TypeVar(
     covariant=True,
 )
 
-DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
-DatasetType = type[pv.DataSet] | type[pv.Texture] | type[NumpyArray[Any]] | type[pv.MultiBlock]
+# Annotations only (never resolved at runtime), so keep these out of the runtime
+# namespace: ``pv.Texture`` would eagerly import rendering and break core-only builds.
+if TYPE_CHECKING:
+    DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
+    DatasetType = type[pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):

@@ -203,8 +203,13 @@ environment.
 >>> pv.version_info
 (0, 44, 0)
 
-VTK Version Information
+VTK Version and Backend
 ~~~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   vtk_backend
+
 The PyVista library is heavily dependent on VTK and provides an easy
 way of getting the version of VTK in your environment.
 

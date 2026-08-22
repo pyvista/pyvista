@@ -882,6 +882,26 @@ class BasePlotter(_BoundsSizeMixin):
                 'Install trame-pyvista: pip install trame-pyvista'
             )
             raise ImportError(msg)
+
+        # A process must use ONE VTK build. trame resolves its via VTK_MODULE_NAME;
+        # a mismatch with PyVista's backend fails deep inside trame on a wrapped-type
+        # mismatch. Prefer the module trame already resolved, else the variable it will.
+        resolved = sys.modules.get('vtk_module')
+        trame_root = (
+            resolved.__name__
+            if resolved is not None
+            else os.environ.get('VTK_MODULE_NAME', 'vtkmodules')
+        )
+        if trame_root != _vtk._VTK_ROOT:
+            msg = (
+                f'trame is using the {trame_root!r} VTK build but PyVista is using '
+                f'{_vtk._VTK_ROOT!r}. Objects cannot be shared between two VTK builds.\n'
+                f'Set VTK_MODULE_NAME={_vtk._VTK_ROOT} in the environment before importing '
+                f'trame to point it at the same build.'
+            )
+            # RuntimeError, not ImportError: `show()` suppresses ImportError (missing
+            # trame degrades quietly), which would swallow this misconfiguration.
+            raise RuntimeError(msg)
         return component
 
     @_deprecate_positional_args(allowed=['filename'])

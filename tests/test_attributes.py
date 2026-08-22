@@ -19,6 +19,9 @@ from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.charts import _vtkWrapper
+from tests.vtk_backend_divergence import NO_SNAKE_CASE
+from tests.vtk_backend_divergence import TRIMMED_CLASS_SET
+from tests.vtk_backend_divergence import TRIMMED_MODULE_SET
 
 
 def test_vtk_namespace():
@@ -31,6 +34,7 @@ def test_vtk_namespace():
         _ = _vtk.does_not_exist
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=TRIMMED_MODULE_SET)
 def test_vtk_module_does_not_exist(monkeypatch):
     # Test module does not exist
     cls, module = 'foo', 'bar'
@@ -45,6 +49,7 @@ def test_vtk_module_does_not_exist(monkeypatch):
 
 
 @pytest.mark.needs_vtk_version((9, 5, 0), reason='Test hangs in CI on Linux')
+@pytest.mark.skip_vtk_backend('cvista', reason=TRIMMED_CLASS_SET)
 def test_vtk_class_does_not_exist(monkeypatch):
     # Test module exists, but class does not
     cls, module = 'foo', 'vtkCommonCore'
@@ -294,6 +299,7 @@ def get_default_class_init_kwargs(pyvista_class):
     return kwargs
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
 def test_vtk_snake_case_api_is_disabled(vtk_subclass):
     if vtk_subclass is VTKObjectWrapperCheckSnakeCase:
         pytest.skip('Class is effectively abstract.')
@@ -417,6 +423,7 @@ def test_dir_snake_case_hidden_when_disallowed(sphere):
 
 
 @pytest.mark.skipif(pv.vtk_version_info < (9, 4), reason='Requires VTK >= 9.4')
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
 def test_dir_snake_case_visible_when_allowed(sphere):
     """Snake_case VTK aliases appear in ``dir`` when snake_case is allowed."""
     with pv.vtk_snake_case('allow'):

@@ -20,6 +20,7 @@ import requests
 
 import pyvista as pv
 from pyvista import examples
+from tests.vtk_backend_divergence import NO_XDMF2
 
 if TYPE_CHECKING:
     import pytest_mock
@@ -974,6 +975,7 @@ def test_download_dolfin():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_XDMF2)
 def test_download_meshio_xdmf():
     dataset = examples.download_meshio_xdmf()
     assert isinstance(dataset, pv.MultiBlock)

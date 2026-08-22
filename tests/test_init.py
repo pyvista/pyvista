@@ -7,6 +7,7 @@ import sys
 import pytest
 
 from pyvista import _vtk
+from tests.vtk_backend_divergence import CVISTA_NAMESPACE
 
 CORE_VTKMODULES = {
     'vtkmodules.numpy_interface',
@@ -143,6 +144,7 @@ def test_pyvista_oo_flag():
     assert result.returncode == 0, f'PyVista failed with -OO flag. stderr: {result.stderr}'
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=CVISTA_NAMESPACE)
 def test_plotting_import_loads_context_opengl2():
     code = (
         'import pyvista.plotting\n'
