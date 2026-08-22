@@ -740,13 +740,13 @@ class CellArray(
 
         # VTK's ImportLegacyFormat started returning a bool (success/corrupt) instead of None
         # https://gitlab.kitware.com/vtk/vtk/-/commit/82af9fa1e5a0ea5c0a827e91672cd42fe09575de
-        valid_size = (
+        size_is_valid = (
             self.GetNumberOfCells() + self.GetNumberOfConnectivityIds() == cells.size
             if output is None  # type: ignore[redundant-expr]
             else output
         )
         # https://github.com/pyvista/pyvista/pull/5404
-        if not valid_size:
+        if not size_is_valid:
             msg = (
                 f'Cell array size is invalid. Size ({cells.size}) does not'
                 f' match expected size ({_expected_legacy_cell_array_size(cells)}). This'
