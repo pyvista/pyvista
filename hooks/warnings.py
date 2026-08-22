@@ -7,13 +7,20 @@ plain ``warnings.warn``, to allow for dynamic stacklevel value.
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
+import re
 import sys
 
 import libcst as cst
+from libcst.codemod import CodemodContext
 from libcst.codemod import VisitorBasedCodemodCommand
+from libcst.codemod import transform_module
 from libcst.codemod.visitors import AddImportsVisitor
 from libcst.codemod.visitors import RemoveImportsVisitor
 import libcst.matchers as m
+
+# Cheap pre-filter so files with no `warn(...)` call skip the CST parse entirely.
+_WARN_CALL_RE = re.compile(r'\bwarn\s*\(')
 
 
 def needs_replace(node: cst.Call) -> bool:  # noqa: D103
@@ -85,3 +92,21 @@ class ConvertWarningsToExternal(VisitorBasedCodemodCommand):
                 args=args,
             )
         return updated_node
+
+
+def main() -> int:  # noqa: D103
+    changed = False
+    for path in sys.argv[1:]:
+        source = Path(path).read_text(encoding='utf-8')
+        if not _WARN_CALL_RE.search(source):
+            continue
+        result = transform_module(ConvertWarningsToExternal(CodemodContext()), source)
+        if result.code != source:
+            changed = True
+            print(f'Fixing {path}')  # noqa: T201
+            Path(path).write_text(result.code, encoding='utf-8')
+    return 1 if changed else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
