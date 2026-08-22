@@ -742,7 +742,7 @@ class CellArray(
         # https://gitlab.kitware.com/vtk/vtk/-/commit/82af9fa1e5a0ea5c0a827e91672cd42fe09575de
         valid_size = (
             self.GetNumberOfCells() + self.GetNumberOfConnectivityIds() == cells.size
-            if output is None # type: ignore[redundant-expr]
+            if output is None  # type: ignore[redundant-expr]
             else output
         )
         # https://github.com/pyvista/pyvista/pull/5404
