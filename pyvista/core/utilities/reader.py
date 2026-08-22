@@ -288,7 +288,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         # the class means its own registration has already happened.
         from pyvista.core.utilities.reader_registry import _custom_class_readers  # noqa: PLC0415
 
-        return [CLASS_READERS, _custom_class_readers]  # type: ignore[list-item]
+        return [CLASS_READERS, _custom_class_readers]
 
     @classmethod
     def _get_extension_pattern_mappings(

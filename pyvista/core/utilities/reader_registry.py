@@ -388,11 +388,17 @@ def register_reader(
     ... def my_reader(path, **kwargs): ...
 
     Register a :class:`~pyvista.BaseReader` subclass so that
-    :func:`pyvista.get_reader` resolves the extension too.
+    :func:`pyvista.get_reader` resolves the extension too. Where VTK has no
+    reader for the format, :class:`~pyvista.BaseVTKReader` supplies the
+    parsing half.
 
-    >>> @pv.register_reader('.myformat')  # doctest: +SKIP
+    >>> class _MyVTKReader(pv.BaseVTKReader):
+    ...     def UpdateInformation(self): ...
+    ...     def Update(self):
+    ...         self._data_object = pv.PolyData()
+    >>> @pv.register_reader('.mybinaryformat')  # doctest: +SKIP
     ... class MyReader(pv.BaseReader):
-    ...     _class_reader = MyVTKStyleReader
+    ...     _class_reader = _MyVTKReader
 
     """
     if handler is None:
