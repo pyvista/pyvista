@@ -85,7 +85,7 @@ repos:
       - id: warn_external
         name: Convert warnings to warn_external
         language: python
-        entry: python -m libcst.tool codemod -x hooks.warnings.ConvertWarningsToExternal --no-format
+        entry: python -m hooks.warnings
         additional_dependencies: [libcst]
         files: ^pyvista/
         types: [file, python]
