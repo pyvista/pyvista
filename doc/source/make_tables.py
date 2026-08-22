@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import colorsys
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from enum import auto
+import importlib
 import inspect
 from io import StringIO
 import itertools
@@ -127,6 +130,13 @@ SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
 ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
 
+def _resolve_jobs(jobs: str) -> int:
+    """Resolve a `-j` job count the same way Sphinx's `-j auto` does."""
+    if jobs == 'auto':
+        return os.cpu_count() or 1
+    return max(1, int(jobs))
+
+
 # Map readers to Plotter import methods
 READER_IMPORTERS: dict[type[pv.BaseReader], str] = {}
 for ext, reader in CLASS_READERS.items():
@@ -194,6 +204,10 @@ class DocTable:
                 fout.write(new_txt)
 
         pv.close_all()
+        # Returned explicitly (rather than re-read from `cls.path` by the caller) since
+        # `generate` may run in a worker process, whose class-attribute mutations above
+        # never propagate back to the process that dispatched it.
+        return cls.path
 
     @classmethod
     def fetch_data(cls):
@@ -2885,11 +2899,78 @@ class DatasetPropsGenerator:
         return f'``{num_fmt}``'
 
 
+def _collect_dataset_targets() -> list[tuple[ModuleType, str]]:
+    """Return the `(module, dataset_name)` pairs for every dataset loader.
+
+    Raises if the same dataset name is defined by more than one module.
+    """
+    seen: dict[str, ModuleType] = {}
+    targets: list[tuple[ModuleType, str]] = []
+    for module in DATASET_GALLERY_MODULES:
+        module_members: dict[str, FunctionType] = dict(inspect.getmembers(module))
+        for name, item in sorted(module_members.items()):
+            if name.startswith('_dataset_') and isinstance(item, _DatasetLoader):
+                dataset_name = name.replace('_dataset_', '')
+                if (existing_module := seen.get(dataset_name)) is not None:
+                    msg = (
+                        f'Cannot add dataset {dataset_name!r} from {module.__name__}.\n'
+                        f'A dataset with this name already exists from '
+                        f'{existing_module.__name__}.\n'
+                        f'The name must be unique'
+                    )
+                    raise RuntimeError(msg)
+                seen[dataset_name] = module
+                targets.append((module, dataset_name))
+    return targets
+
+
+@dataclass
+class _DatasetCardResult:
+    """Result of rendering a single dataset's gallery card."""
+
+    dataset_name: str
+    rst: str
+    facet_labels: dict[str, str]
+    type_mismatch: str | None
+
+
+def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResult:
+    """Download, load, and render a single dataset's gallery card.
+
+    Defined at module level (rather than as a method) so it can be dispatched to a
+    worker process independently of every other dataset's card.
+    """
+    module = importlib.import_module(module_name)
+    dataset_loader: _DatasetLoader = getattr(module, f'_dataset_{dataset_name}')
+    # Store module and function as dynamic properties for access later
+    dataset_loader._module = module
+    try:
+        dataset_loader._function = getattr(module, f'download_{dataset_name}')
+    except AttributeError:
+        dataset_loader._function = getattr(module, f'load_{dataset_name}')
+
+    module_display = module_name.removeprefix('pyvista.')
+    summary = bold(f'generating rst for {module_display}...')
+    print(f'{summary} {darkgreen(dataset_name)}', flush=True)
+    if isinstance(dataset_loader, _Downloadable):
+        dataset_loader.download()
+    dataset_loader.load_and_store_dataset()
+    assert dataset_loader.dataset is not None
+
+    card = DatasetCard(dataset_name, dataset_loader)
+    # indent one level from the carousel header directive
+    DatasetCardFetcher.FACET_LABELS.clear()
+    rst = _pad_lines(card.generate(), pad_left='   ')
+    facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
+
+    type_mismatch = _validate_function_annotation(card)
+    dataset_loader.clear_dataset()
+
+    return _DatasetCardResult(dataset_name, rst, facet_labels, type_mismatch)
+
+
 class DatasetCardFetcher:
     """Class for storing and retrieving dataset card info."""
-
-    # Dict of all card objects
-    DATASET_CARDS_OBJ: ClassVar[dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
     DATASET_CARDS_RST: ClassVar[dict[str, str]] = {}
@@ -2898,71 +2979,33 @@ class DatasetCardFetcher:
     FACET_LABELS: ClassVar[dict[str, str]] = {}
 
     @classmethod
-    def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
-        """Add a new dataset card so that it can be fetched later."""
-        if card := cls.DATASET_CARDS_OBJ.get(dataset_name):
-            existing_module = card.loader._module.__name__
-            new_module = dataset_loader._module.__name__
-            msg = (
-                f'Cannot add dataset {dataset_name!r} from {new_module}.\n'
-                f'A dataset with this name already exists from {existing_module}.\n'
-                f'The name must be unique'
-            )
-            raise RuntimeError(msg)
-        cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
+    def init_cards(cls, jobs: int = 1):
+        """Load every dataset and render its card, optionally across worker processes."""
+        targets = _collect_dataset_targets()
 
-    @classmethod
-    def init_cards(cls):
-        """Load a single dataset at a time - avoid loading all datasets into memory."""
+        if jobs <= 1:
+            results = [_build_dataset_card(module.__name__, name) for module, name in targets]
+        else:
+            with ProcessPoolExecutor(max_workers=jobs) as executor:
+                futures = [
+                    executor.submit(_build_dataset_card, module.__name__, name)
+                    for module, name in targets
+                ]
+                results = [future.result() for future in futures]
+
         type_mismatches: dict[str, str] = {}
-        for module in DATASET_GALLERY_MODULES:
-            cls._init_cards_from_module(module, type_mismatches)
-        cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
+        for result in results:
+            cls.DATASET_CARDS_RST[result.dataset_name] = result.rst
+            cls.FACET_LABELS.update(result.facet_labels)
+            if result.type_mismatch:
+                type_mismatches[result.dataset_name] = result.type_mismatch
+
         cls.DATASET_CARDS_RST = dict(sorted(cls.DATASET_CARDS_RST.items()))
 
         if type_mismatches:
             mismatches = '\n'.join(sorted(type_mismatches.values()))
             msg = f'Type mismatches:\n{mismatches}'
             raise RuntimeError(msg)
-
-    @classmethod
-    def _init_cards_from_module(cls, module: ModuleType, type_mismatches: dict[str, str]):
-        # Collect all `_dataset_<name>` file loaders from the module
-        module_members: dict[str, FunctionType] = dict(inspect.getmembers(module))
-
-        for name, item in sorted(module_members.items()):
-            # Extract data set name from loader name
-
-            if name.startswith('_dataset_') and isinstance(item, _DatasetLoader):
-                # Create a card for this dataset
-                dataset_name = name.replace('_dataset_', '')
-                dataset_loader = item
-                # Store module as a dynamic property for access later
-                dataset_loader._module = module
-                # Store function as a dynamic property for access later
-                try:
-                    dataset_loader._function = getattr(module, f'download_{dataset_name}')
-                except AttributeError:
-                    dataset_loader._function = getattr(module, f'load_{dataset_name}')
-
-                cls._add_dataset_card(dataset_name, dataset_loader)
-
-                module_name = module.__name__.removeprefix('pyvista.')
-                summary = bold(f'generating rst for {module_name}...')
-                print(f'{summary} {darkgreen(dataset_name)}', flush=True)
-                if isinstance(dataset_loader, _Downloadable):
-                    dataset_loader.download()
-                dataset_loader.load_and_store_dataset()
-                assert dataset_loader.dataset is not None
-
-                card = cls.DATASET_CARDS_OBJ[dataset_name]
-                # indent one level from the carousel header directive
-                cls.DATASET_CARDS_RST[dataset_name] = _pad_lines(card.generate(), pad_left='   ')
-
-                if mismatch := _validate_function_annotation(card):
-                    type_mismatches[dataset_name] = mismatch
-
-                dataset_loader.clear_dataset()
 
     @classmethod
     def generate_filter_toolbar(cls) -> str:
@@ -3044,7 +3087,7 @@ class DatasetCarousel(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return list(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
+        return list(DatasetCardFetcher.DATASET_CARDS_RST.keys())
 
     @classmethod
     def get_header(cls, data):
@@ -3059,7 +3102,7 @@ class DatasetCarousel(DocTable):
 
     @classmethod
     def generate(cls):
-        super().generate()
+        path = super().generate()
         # Sanity check to ensure proper URLs are generated due to complexity with
         # using local cached data for downloads
         with open(cls.path) as f:
@@ -3069,6 +3112,7 @@ class DatasetCarousel(DocTable):
             'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
         ):
             assert real_url in content
+        return path
 
 
 def _validate_function_annotation(card: DatasetCard) -> str | None:
@@ -3096,97 +3140,88 @@ def _validate_function_annotation(card: DatasetCard) -> str | None:
     return None
 
 
-def make_dataset_carousel() -> str:  # noqa: D103
+def make_dataset_carousel(jobs: int = 1) -> str:  # noqa: D103
     # Skip the expensive dataset download/load step on incremental builds
     if Path(DatasetCarousel.path).exists():
         print(bold('Carousel RST file already exists, skipping dataset loading'), flush=True)
         return DatasetCarousel.path
 
-    DatasetCardFetcher.init_cards()
-    DatasetCarousel.generate()
-
-    return DatasetCarousel.path
+    DatasetCardFetcher.init_cards(jobs=jobs)
+    return DatasetCarousel.generate()
 
 
-def make_tables() -> list[str]:  # noqa: D103
-    paths = []
+# Every independent table, i.e. one whose `generate()` reads no state written by
+# another table's `generate()`. Each one may run in its own worker process.
+_TABLE_CLASSES: list[type[DocTable]] = [
+    ReadersTable,
+    ImageDataIOTable,
+    RectilinearGridIOTable,
+    StructuredGridIOTable,
+    PolyDataIOTable,
+    UnstructuredGridIOTable,
+    MultiBlockIOTable,
+    PartitionedDataSetIOTable,
+    ExplicitStructuredGridIOTable,
+    CellQualityMeasuresTable,
+    CellQualityInfoTableTRIANGLE,
+    CellQualityInfoTableQUAD,
+    CellQualityInfoTableHEXAHEDRON,
+    CellQualityInfoTableTETRA,
+    CellQualityInfoTableWEDGE,
+    CellQualityInfoTablePYRAMID,
+    ColormapTableLINEAR,
+    ColormapTableDIVERGING,
+    ColormapTableMULTISEQUENTIAL,
+    ColormapTableCYCLIC,
+    ColormapTableCATEGORICAL,
+    ColormapTableMISC,
+    CETColormapTableLINEAR,
+    CETColormapTableDIVERGING,
+    CETColormapTableCYCLIC,
+    CETColormapTableRAINBOW,
+    CETColormapTableISOLUMINANT,
+    LineStyleTable,
+    MarkerStyleTable,
+    ColorSchemeTable,
+    ColorTable,
+    ColorTableGRAY,
+    ColorTableWHITE,
+    ColorTableBLACK,
+    ColorTableRED,
+    ColorTableORANGE,
+    ColorTableBROWN,
+    ColorTableYELLOW,
+    ColorTableGREEN,
+    ColorTableCYAN,
+    ColorTableBLUE,
+    ColorTableVIOLET,
+    ColorTableMAGENTA,
+]
 
-    def generate(*classes: type[DocTable]):
-        for cls in classes:
-            cls.generate()
-            paths.append(cls.path)
 
-    # Make reader tables
-    os.makedirs(READERS_DIR, exist_ok=True)
-    generate(ReadersTable)
+def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
+    for directory in (
+        READERS_DIR,
+        MESHIO_DIR,
+        CELL_QUALITY_DIR,
+        COLORMAP_IMAGE_DIR,
+        COLORMAP_TABLE_DIR,
+        CHARTS_IMAGE_DIR,
+        COLORS_TABLE_DIR,
+        DATASET_GALLERY_DIR,
+    ):
+        os.makedirs(directory, exist_ok=True)
 
-    # Make mesh IO tables
-    os.makedirs(MESHIO_DIR, exist_ok=True)
-    generate(
-        ImageDataIOTable,
-        RectilinearGridIOTable,
-        StructuredGridIOTable,
-        PolyDataIOTable,
-        UnstructuredGridIOTable,
-        MultiBlockIOTable,
-        PartitionedDataSetIOTable,
-        ExplicitStructuredGridIOTable,
-    )
+    if jobs <= 1:
+        paths = [cls.generate() for cls in _TABLE_CLASSES]
+    else:
+        with ProcessPoolExecutor(max_workers=jobs) as executor:
+            futures = [executor.submit(cls.generate) for cls in _TABLE_CLASSES]
+            paths = [future.result() for future in futures]
 
-    # Make cell quality tables
-    os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
-    generate(
-        CellQualityMeasuresTable,
-        CellQualityInfoTableTRIANGLE,
-        CellQualityInfoTableQUAD,
-        CellQualityInfoTableHEXAHEDRON,
-        CellQualityInfoTableTETRA,
-        CellQualityInfoTableWEDGE,
-        CellQualityInfoTablePYRAMID,
-    )
-
-    # Make colormap tables
-    os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
-    os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
-    generate(
-        ColormapTableLINEAR,
-        ColormapTableDIVERGING,
-        ColormapTableMULTISEQUENTIAL,
-        ColormapTableCYCLIC,
-        ColormapTableCATEGORICAL,
-        ColormapTableMISC,
-        CETColormapTableLINEAR,
-        CETColormapTableDIVERGING,
-        CETColormapTableCYCLIC,
-        CETColormapTableRAINBOW,
-        CETColormapTableISOLUMINANT,
-    )
-
-    # Make color and chart tables
-    os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
-    os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
-    generate(
-        LineStyleTable,
-        MarkerStyleTable,
-        ColorSchemeTable,
-        ColorTable,
-        ColorTableGRAY,
-        ColorTableWHITE,
-        ColorTableBLACK,
-        ColorTableRED,
-        ColorTableORANGE,
-        ColorTableBROWN,
-        ColorTableYELLOW,
-        ColorTableGREEN,
-        ColorTableCYAN,
-        ColorTableBLUE,
-        ColorTableVIOLET,
-        ColorTableMAGENTA,
-    )
-
-    # Make dataset gallery carousel
-    os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    paths.append(make_dataset_carousel())
+    # Make dataset gallery carousel. Each dataset's card may itself be generated
+    # in its own worker process.
+    paths.append(make_dataset_carousel(jobs=jobs))
 
     return paths
 
@@ -3237,12 +3272,24 @@ def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '-j',
+        '--jobs',
+        default='auto',
+        help=(
+            "Number of tables/datasets to generate in parallel, or 'auto' to use all "
+            "available cores. Matches Sphinx's own `-j` build option."
+        ),
+    )
+    args = parser.parse_args()
+
     # Merge stderr into stdout (reader errors/warnings included) so everything
     # lands on one ordered stream instead of interleaving unpredictably.
     os.dup2(sys.stdout.fileno(), sys.stderr.fileno())
     if not color_terminal():
         nocolor()
 
-    new_rsts = make_tables()
+    new_rsts = make_tables(jobs=_resolve_jobs(args.jobs))
     print(bold('Generated rsts:'), flush=True)
     print('\n'.join(darkgreen(path) for path in new_rsts), flush=True)
