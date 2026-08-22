@@ -57,6 +57,29 @@ jobs:
           git checkout "$NIGHTLY_SHA"
           echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
 
+          # Record every commit since the *previous* nightly date-stamp so a failure report
+          # can point at exactly what landed on VTK master in between.
+          PREV_NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' --skip=1 -n 1 --format=%H)"
+          {
+            if [ -n "$PREV_NIGHTLY_SHA" ]; then
+              echo "Commits since the previous nightly date-stamp ([\`${PREV_NIGHTLY_SHA:0:8}\`](https://gitlab.kitware.com/vtk/vtk/-/commit/${PREV_NIGHTLY_SHA})):"
+              echo
+              echo "[Compare on GitLab](https://gitlab.kitware.com/vtk/vtk/-/compare/${PREV_NIGHTLY_SHA}...${NIGHTLY_SHA})"
+              echo
+              git log --no-merges --format='- [`%h`](https://gitlab.kitware.com/vtk/vtk/-/commit/%H) %s (%an)' "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}"
+            else
+              echo "Could not find a previous nightly date-stamp commit within the last 200 commits;"
+              echo "showing only the pinned commit: [\`${NIGHTLY_SHA:0:8}\`](https://gitlab.kitware.com/vtk/vtk/-/commit/${NIGHTLY_SHA})"
+            fi
+          } > "$GITHUB_WORKSPACE/vtk-commit-range.md"
+
+      - name: Upload VTK commit range
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: vtk-commit-range-${{ runner.os }}
+          path: vtk-commit-range.md
+
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
@@ -483,10 +506,19 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Download VTK commit range
+        id: download-commit-range
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-commit-range-Linux
+          path: vtk-commit-range
+
       - name: Report VTK master wheel failure
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_ID: ${{ github.run_id }}
+          COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
         run: |
           # Ensure the dedup label exists (idempotent).
           gh label create vtk-master-wheel-failure \
@@ -506,6 +538,12 @@ jobs:
 
           [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
 
+          if [ "$COMMIT_RANGE_OUTCOME" = "success" ] && [ -f vtk-commit-range/vtk-commit-range.md ]; then
+            commit_range="$(cat vtk-commit-range/vtk-commit-range.md)"
+          else
+            commit_range="(could not determine which VTK commits landed since the previous nightly)"
+          fi
+
           body=$(cat <<EOF
           ### VTK Master Wheel Failure
 
@@ -514,6 +552,9 @@ jobs:
 
           **Failing jobs:**
           ${jobs_list}
+
+          **VTK commits:**
+          ${commit_range}
           EOF
           )
 
