@@ -3748,7 +3748,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
-        Only points whose `scalar` value is within the `scalar_range` are considered for
+        Only points whose ``scalar`` value is within the ``scalar_range`` are considered for
         connectivity. A 4-connectivity is used for 2D images or a 6-connectivity for 3D
         images. This filter operates on point-based data. If cell-based data are provided,
         they are re-meshed to a point-based representation using

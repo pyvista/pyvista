@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from pyvista import TransformLike
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -4343,6 +4344,107 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
+    def convex_hull(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
+        *,
+        dimensionality: Literal[1, 2, 3, 'auto'] = 3,
+        progress_bar=False,
+    ) -> PolyData:
+        """Compute the convex hull from this mesh's points.
+
+        With ``vtk>=9.7``, this uses :vtk:`vtkConvexHull`. With older VTK, ``scipy``
+        (Qhull) is used instead for ``dimensionality=2`` or ``3``; ``dimensionality=1``
+        requires ``vtk>=9.7``.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        dimensionality : int | 'auto', default: 3
+            The dimensionality of the hull. If ``'auto'``, the dimensionality is set to
+            this mesh's :attr:`~pyvista.DataSet.dimensionality`, i.e. points are not
+            assumed to span all three dimensions. Auto-detection has a computational cost
+            and is not enabled by default. Note that a 2D hull is computed from points
+            projected onto this mesh's best-fit plane, so requesting ``dimensionality=2``
+            (or an auto-detected ``2``) for points that are not coplanar will discard
+            information.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Examples
+        --------
+        Compute the convex hull of a 3D mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cow_head()
+        >>> hull = mesh.convex_hull()
+
+        Plot the hull with the original input.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(hull, opacity=0.5, show_edges=True)
+        >>> cpos = pv.CameraPosition(
+        ...     position=(9.159, 1.892, -4.015),
+        ...     focal_point=(4.500, 1.731, -0.1015),
+        ...     viewup=(0.08577, 0.9861, 0.1426),
+        ... )
+        >>> pl.camera_position = cpos
+        >>> pl.show()
+
+        Compute the convex hull of two circle meshes comprising a :class:`~pyvista.MultiBlock`.
+
+        >>> circle1 = pv.Circle(radius=0.5)
+        >>> circle2 = pv.Circle(radius=0.25).translate((1.0, 0.0, 0.0))
+        >>> mesh = pv.MultiBlock([circle1, circle2])
+        >>> hull = mesh.convex_hull(dimensionality=2)
+
+        Plot the hull with the original input.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(hull, opacity=0.5, show_edges=True)
+        >>> pl.view_xy()
+        >>> pl.show()
+
+        """
+        if isinstance(self, pv.MultiBlock):
+            points = np.vstack(
+                [
+                    block.points
+                    for block in self.recursive_iterator(skip_empty=True, skip_none=True)
+                ]
+            )
+            alg_input = pv.PointSet(points)
+        else:
+            points = self.points
+            alg_input = self
+
+        dimensionality_: Literal[1, 2, 3] = (
+            cast('Literal[1, 2, 3]', alg_input.dimensionality)
+            if dimensionality == 'auto'
+            else dimensionality
+        )
+
+        if pv.vtk_version_info >= (9, 7, 0):
+            alg = _vtk.vtkConvexHull()
+            alg.SetInputDataObject(alg_input)
+            alg.SetDimension(int(dimensionality_))
+            _update_alg(alg, progress_bar=progress_bar)
+            output = pv.wrap(alg.GetOutput())
+        else:
+            output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+        output.point_data.clear()
+        output.cell_data.clear()
+        return output
+
     @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -4501,7 +4603,7 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock
-            Dataset with `cell_data` containing the ``"VertexCount"``,
+            Dataset with ``cell_data`` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.  Return type matches input.
 
@@ -4923,11 +5025,11 @@ class DataObjectFilters:
     ):
         """Resample array data from a passed mesh onto this mesh.
 
-        For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
-        the points of `mesh1`.  This function interpolates within an
+        For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
+        the points of ``mesh1``.  This function interpolates within an
         enclosing cell.  This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
-        weighting for nearby points.  If there is cell topology, `sample` is
+        weighting for nearby points.  If there is cell topology, ``sample`` is
         usually preferred.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled
@@ -5259,6 +5361,55 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
         return output
+
+
+def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
+    """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
+
+    Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
+    """
+    try:
+        from scipy.spatial import ConvexHull  # noqa: PLC0415
+        from scipy.spatial import QhullError  # noqa: PLC0415
+    except ImportError:
+        msg = (
+            "The 'scipy' package must be installed to compute the convex hull with "
+            f'vtk<9.7 (found vtk {".".join(map(str, pv.vtk_version_info))}).'
+        )
+        raise ImportError(msg)
+
+    if dimensionality == 1:
+        msg = (
+            'Only dimensionality=2 or dimensionality=3 convex hulls are supported with '
+            f'vtk<9.7 (found vtk {".".join(map(str, pv.vtk_version_info))}). '
+            'Upgrade to vtk>=9.7 to use `dimensionality=1`.'
+        )
+        raise VTKVersionError(msg)
+
+    # Project onto the best-fit plane for a 2D hull; use the points as-is for a 3D hull.
+    proj = pv.PointSet(points).align_xyz().points[:, :2] if dimensionality == 2 else points
+    try:
+        hull = ConvexHull(proj)
+    except QhullError as e:
+        msg = (
+            f'Failed to compute a {dimensionality}D convex hull from the input points. The '
+            f'points may be degenerate (e.g. collinear or coplanar) for dimensionality='
+            f'{dimensionality}.'
+        )
+        raise ValueError(msg) from e
+
+    # `vertices` are the hull's boundary points; output only those points (matching
+    # vtkConvexHull's compact output), remapped to the range [0, n_hull_points).
+    vertex_ids = hull.vertices
+    hull_points = points[vertex_ids]
+    if dimensionality == 2:
+        # `vertices` is already an ordered boundary loop for a 2D hull: one polygon face.
+        faces = np.arange(len(vertex_ids)).reshape(1, -1)
+    else:
+        remap = np.full(points.shape[0], -1, dtype=int)
+        remap[vertex_ids] = np.arange(len(vertex_ids))
+        faces = remap[hull.simplices]
+    return pv.PolyData.from_regular_faces(hull_points, faces)
 
 
 def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:

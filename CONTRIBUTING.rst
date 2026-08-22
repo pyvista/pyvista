@@ -394,8 +394,8 @@ Some member imports also shadow their own module (``from time import time``,
 The unit is the module, not the name. ``argparse`` exports ``ArgumentParser``
 but is namespace-imported, because one type does not make a type module;
 ``argparse.ArgumentParser`` reads fine. The member list is closed and short:
-``__future__``, ``abc``, ``collections``, ``collections.abc``, ``dataclasses``,
-``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
+``__future__``, ``abc``, ``collections``, ``collections.abc``, ``concurrent.futures``,
+``dataclasses``, ``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
 ``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
 
 How this is enforced

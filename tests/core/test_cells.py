@@ -993,7 +993,7 @@ requires_polyhedron_face_cell_arrays = pytest.mark.skipif(
 def polyhedron_grid():
     """Return a grid holding one polyhedron and one cell that is not a polyhedron.
 
-    Built from literal arrays rather than by merging two example cells. `merge` appends
+    Built from literal arrays rather than by merging two example cells. ``merge`` appends
     the main mesh last before VTK 9.5 and first from 9.5 on, so a merged grid orders its
     cells and numbers its points differently depending on the VTK in use.
     """

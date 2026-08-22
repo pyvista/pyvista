@@ -785,7 +785,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
     mesh. The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and
-    ``GetVerts`` return the underlying ``CellArray``s for the ``faces``,
+    ``GetVerts`` return the underlying ``CellArray`` objects for the ``faces``,
     ``lines``, ``strips``, and ``verts`` properties respectively.
     Reusing cell arrays like this can be a performance optimization for
     large meshes because it avoids allocating new arrays.
@@ -1193,7 +1193,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         faces: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
+        """Alternate :class:`pyvista.PolyData` constructor from points and regular face arrays.
 
         Parameters
         ----------
@@ -1266,7 +1266,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
-        """Alternate `pyvista.PolyData` convenience constructor from point and ragged face arrays.
+        """Alternate :class:`pyvista.PolyData` constructor from points and ragged face arrays.
 
         Parameters
         ----------
@@ -2943,9 +2943,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         .. deprecated:: 0.45.0
             This property is deprecated and will be removed in a future release.
-            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            VTK has deprecated ``GetFaces`` and ``GetFaceLocations`` in VTK 9.4 and
             may be removed in a future release of VTK. Please use
-            `polyhedron_faces` instead.
+            ``polyhedron_faces`` instead.
 
         Returns
         -------
@@ -3002,9 +3002,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         .. deprecated:: 0.45.0
             This property is deprecated and will be removed in a future release.
-            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            VTK has deprecated ``GetFaces`` and ``GetFaceLocations`` in VTK 9.4 and
             may be removed in a future release of VTK. Please use
-            `polyhedron_face_locations` instead.
+            ``polyhedron_face_locations`` instead.
 
         Returns
         -------
@@ -4769,7 +4769,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
-        Different from `bounds`, which returns the bounding box of the
+        Different from ``bounds``, which returns the bounding box of the
         complete grid, this method returns the bounding box of the
         visible cells, where the ghost cell array is not
         ``HIDDENCELL``.

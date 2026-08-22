@@ -4,14 +4,14 @@ Three independent mechanisms feed into this, none of which fail loudly if they
 regress -- the section just silently reverts to an unlinkable rubric or
 admonition, or disappears from the "on this page" navbar:
 
-- `_str_header` patches numpydoc to emit real headings (not `.. rubric::`) for
-  sections like Examples, and `hoist_docstring_sections` lifts those out of the
-  `desc` node they're generated inside, to page level.
-- `promote_seealso_admonitions` additionally turns a literal `.. seealso::`
+- ``_str_header`` patches numpydoc to emit real headings (not ``.. rubric::``) for
+  sections like Examples, and ``hoist_docstring_sections`` lifts those out of the
+  ``desc`` node they're generated inside, to page level.
+- ``promote_seealso_admonitions`` additionally turns a literal ``.. seealso::``
   admonition -- written directly in a docstring instead of using numpydoc's own
-  "See Also" syntax, as `pyvista.examples.downloads` does -- into a real section
+  "See Also" syntax, as ``pyvista.examples.downloads`` does -- into a real section
   before the hoist above runs.
-- `doc/source/_templates/autosummary/class.rst` renders "Methods" and
+- ``doc/source/_templates/autosummary/class.rst`` renders "Methods" and
   "Attributes" as real page-level headings directly in the class page template,
   outside the docstring entirely.
 """
@@ -51,13 +51,13 @@ def find_api_page(filename: str) -> Path:
 
 
 def assert_is_real_heading(html: str, name: str) -> None:
-    """Assert `name` renders as a real ``<h2>`` heading, not a rubric."""
+    """Assert ``name`` renders as a real ``<h2>`` heading, not a rubric."""
     assert f'<p class="rubric">{name}</p>' not in html
     assert f'<h2>{name}' in html
 
 
 def heading_index(html: str, name: str) -> int:
-    """Return the position of `name`'s real heading in the page."""
+    """Return the position of ``name``'s real heading in the page."""
     return html.index(f'<h2>{name}')
 
 

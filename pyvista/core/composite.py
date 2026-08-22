@@ -190,7 +190,7 @@ class MultiBlock(
                 raise TypeError(msg)
 
         elif len(args) > 1:
-            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.'
+            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock`` supports 0 or 1 arguments.'
             raise ValueError(msg)
 
         # Upon creation make sure all nested structures are wrapped
@@ -757,7 +757,7 @@ class MultiBlock(
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
 
         Any nested :class:`MultiBlock` blocks will have its :attr:`~pyvista.DataObject.field_data`
-        contents moved to the root block, (i.e. `this` ``MultiBock``). By default, this
+        contents moved to the root block, (i.e. `this` ``MultiBlock``). By default, this
         data will be cleared from the nested block(s) but a copy may be made instead.
 
         If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,

@@ -3056,9 +3056,9 @@ class BasePlotter(_BoundsSizeMixin):
             between 0 and 1.
 
             .. note::
-                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-                available, `edge_opacity` is set to 1.
+                available, ``edge_opacity`` is set to 1.
 
         force_opaque : bool, default: False
             Whether to force the returned actor to be opaque. Can be useful for web visualization
@@ -3720,9 +3720,9 @@ class BasePlotter(_BoundsSizeMixin):
             between 0 and 1.
 
             .. note::
-                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-                available, `edge_opacity` is set to 1.
+                available, ``edge_opacity`` is set to 1.
 
         remove_existing_actor : bool, optional
             Remove any existing actor in the renderer with the same name before adding
@@ -3829,7 +3829,7 @@ class BasePlotter(_BoundsSizeMixin):
         ...     show_scalar_bar=False,
         ... )
 
-        Plot spheres using `points_gaussian` style and scale them by radius.
+        Plot spheres using ``'points_gaussian'`` style and scale them by radius.
 
         >>> N_SPHERES = 1_000_000
         >>> rng = np.random.default_rng(seed=0)
@@ -5539,7 +5539,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         font : str, default: 'arial'
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
-            This is ignored if the `font_file` is set.
+            This is ignored if the ``font_file`` is set.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
@@ -6156,7 +6156,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
-            or ``'arial``. This is ignored if the `font_file` is set.
+            or ``'arial'``. This is ignored if the ``font_file`` is set.
 
         font_file : str, default: None
             The absolute file path to a local file containing a freetype

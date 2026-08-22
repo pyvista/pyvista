@@ -207,7 +207,7 @@ _EXAMPLE_HREF_RE = re.compile(r'href="([^"]*/examples/[^"]*)"')
 
 
 def _example_hrefs(blocks: list[str]) -> set[str]:
-    """Return the basename (fragment stripped) of every example page linked from `blocks`."""
+    """Return the basename (fragment stripped) of every example page linked from ``blocks``."""
     hrefs = (href for block in blocks for href in _EXAMPLE_HREF_RE.findall(block))
     return {Path(href.split('#')[0]).name for href in hrefs}
 

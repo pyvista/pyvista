@@ -134,7 +134,7 @@ def _converter_border(
 def _resolve_border(
     border: list[_CompareBorderOptions] | None,
 ) -> bool | Literal['interior', 'exterior'] | None:
-    """Turn 0-or-1 raw CLI tokens into the value `plot_compare`'s own `border` expects."""
+    """Turn 0-or-1 raw CLI tokens into what :func:`pyvista.plot_compare`'s ``border`` expects."""
     if border is None:
         return None
     if not border:
@@ -163,7 +163,7 @@ def _showwarning_with_advice(fallback: Callable[..., None]) -> Callable[..., Non
     """Return a ``showwarning`` which prints a warning as it is raised, with advice.
 
     A warning is otherwise not seen until the interactive window this command opens is
-    closed, since `plot_compare` raises every one of them well before it shows the
+    closed, since :func:`pyvista.plot_compare` raises every one of them well before it shows the
     window, but nothing is printed until the window closes and this call returns.
     """
 
