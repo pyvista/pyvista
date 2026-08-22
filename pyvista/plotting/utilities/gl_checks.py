@@ -91,6 +91,31 @@ def _offscreen_probe_render_window():
 
 
 @functools.cache
+def _check_depth_peeling(number_of_peels, occlusion_ratio, *, suppress_dock_icon):
+    """Run the actual depth peeling probe; see `check_depth_peeling` for the public API."""
+    # Try Depth Peeling with a basic scene
+    source = _vtk.vtkSphereSource()
+    mapper = _vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(source.GetOutputPort())
+    actor = _vtk.vtkActor()
+    actor.SetMapper(mapper)
+    # requires opacity < 1
+    actor.GetProperty().SetOpacity(0.5)
+    renderer = _vtk.vtkRenderer()
+    renderWindow = _offscreen_probe_render_window()
+    renderWindow.SetOffScreenRendering(True)
+    _prepare_offscreen_macos_render_window(renderWindow, suppress_dock_icon=suppress_dock_icon)
+    renderWindow.AddRenderer(renderer)
+    renderWindow.SetAlphaBitPlanes(True)
+    renderWindow.SetMultiSamples(0)
+    renderer.AddActor(actor)
+    renderer.SetUseDepthPeeling(True)
+    renderer.SetMaximumNumberOfPeels(number_of_peels)
+    renderer.SetOcclusionRatio(occlusion_ratio)
+    renderWindow.Render()
+    return renderer.GetLastRenderingUsedDepthPeeling() == 1
+
+
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     """Check if depth peeling is available.
 
@@ -114,27 +139,7 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
         settings.
 
     """
-    # Try Depth Peeling with a basic scene
-    source = _vtk.vtkSphereSource()
-    mapper = _vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(source.GetOutputPort())
-    actor = _vtk.vtkActor()
-    actor.SetMapper(mapper)
-    # requires opacity < 1
-    actor.GetProperty().SetOpacity(0.5)
-    renderer = _vtk.vtkRenderer()
-    renderWindow = _offscreen_probe_render_window()
-    renderWindow.SetOffScreenRendering(True)
-    _prepare_offscreen_macos_render_window(renderWindow)
-    renderWindow.AddRenderer(renderer)
-    renderWindow.SetAlphaBitPlanes(True)
-    renderWindow.SetMultiSamples(0)
-    renderer.AddActor(actor)
-    renderer.SetUseDepthPeeling(True)
-    renderer.SetMaximumNumberOfPeels(number_of_peels)
-    renderer.SetOcclusionRatio(occlusion_ratio)
-    renderWindow.Render()
-    return renderer.GetLastRenderingUsedDepthPeeling() == 1
+    return _check_depth_peeling(number_of_peels, occlusion_ratio, suppress_dock_icon=True)
 
 
 def uses_egl() -> bool:
