@@ -19,12 +19,17 @@ import pyvista as pv
 from pyvista.examples import downloads
 from pyvista.examples import examples
 from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _DownloadableFile
 from pyvista.examples._dataset_loader import _format_file_size
+from pyvista.examples._dataset_loader import _get_all_nested_filepaths
+from pyvista.examples._dataset_loader import _get_file_or_folder_ext
+from pyvista.examples._dataset_loader import _get_file_or_folder_size
 from pyvista.examples._dataset_loader import _load_and_merge
 from pyvista.examples._dataset_loader import _load_as_cubemap
 from pyvista.examples._dataset_loader import _load_as_multiblock
+from pyvista.examples._dataset_loader import _MultiFileDatasetLoader
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
@@ -697,3 +702,148 @@ def test_download_dataset_texture():
 
     loaded = _download_dataset_texture(loader, texture=False, load=False)
     assert isinstance(loaded, str)
+
+
+def test_source_url_invalid_base_url_raises():
+    loader = _DownloadableFile('foo.vtk', base_url='not-a-url')
+    with pytest.raises(ValueError, match='Expected a URL starting with "http"'):
+        _ = loader.web_url
+
+
+def test_source_url_missing_blob_raises():
+    loader = _DownloadableFile('foo.vtk', base_url='https://example.com/no-raw-segment/')
+    with pytest.raises(ValueError, match='Expected "/blob/" in URL'):
+        _ = loader.web_url
+
+
+def test_dataset_loader_load_without_load_func_raises():
+    loader = _DatasetLoader(None)
+    with pytest.raises(RuntimeError, match='No load function has been set'):
+        loader.load()
+
+
+def test_dataset_iterable_flattens_multiple_levels_of_nesting():
+    innermost = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    middle = pv.MultiBlock([innermost])
+    outer = pv.MultiBlock([middle])
+
+    loader = _DatasetLoader(lambda: outer)
+    loader.load_and_store_dataset()
+
+    iterable = loader.dataset_iterable
+    assert len(iterable) == 3
+    assert iterable[0] is outer
+    assert isinstance(iterable[1], pv.PolyData)
+    assert isinstance(iterable[2], pv.PolyData)
+
+
+def test_single_file_dataset_loader_load_without_read_func_raises():
+    loader = _SingleFileDatasetLoader('', read_func=None)
+    with pytest.raises(RuntimeError, match='No read function has been set'):
+        loader.load()
+
+
+def test_downloadable_file_absolute_path_must_be_builtin(tmp_path):
+    with pytest.raises(ValueError, match='Absolute path must point to a built-in dataset'):
+        _DownloadableFile(str(tmp_path / 'not_builtin.vtk'))
+
+
+def test_downloadable_file_download_multiple_paths_raises():
+    loader = _DownloadableFile('foo.vtk', download_func=lambda _: ['a', 'b'])
+    with pytest.raises(TypeError, match='Expected a single downloaded file'):
+        loader.download()
+
+
+def test_downloadable_file_download_missing_path_raises():
+    loader = _DownloadableFile('foo.vtk', download_func=lambda _: '/nonexistent/path/xyz')
+    with pytest.raises(RuntimeError, match='Downloaded path does not exist'):
+        loader.download()
+
+
+def test_multi_file_dataset_loader_files_not_resolved_raises(tmp_path):
+    loader = _MultiFileDatasetLoader(str(tmp_path))
+    with pytest.raises(RuntimeError, match='Files have not been resolved yet'):
+        _ = loader._file_objects
+
+
+def test_multi_file_dataset_loader_load_without_load_func_raises():
+    loader = _MultiFileDatasetLoader(lambda: ())
+    loader._load_func = None
+    with pytest.raises(RuntimeError, match='No load function has been set'):
+        loader.load()
+
+
+def test_multi_file_downloadable_download_missing_path_raises(monkeypatch):
+    loader = _MultiFileDownloadableDatasetLoader(
+        lambda: (_DownloadableFile('foo.vtk', download_func=lambda _: 'unused'),),
+    )
+    monkeypatch.setattr(_DownloadableFile, 'download', lambda self: '/nonexistent/path')  # noqa: ARG005
+    with pytest.raises(RuntimeError, match=r'Downloaded path\(s\) do not exist'):
+        loader.download()
+
+
+def test_download_dataset_returns_scalar_path_for_single_loadable_metafile(
+    dataset_loader_two_files_one_loadable,
+):
+    result = _download_dataset(dataset_loader_two_files_one_loadable, load=False, metafiles=False)
+    assert result == dataset_loader_two_files_one_loadable.path_loadable[0]
+
+
+def test_load_as_multiblock_explicit_names_skips_non_loadable_files():
+    loadable = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
+    not_loadable = _DownloadableFile('HeadMRVolume.raw')
+    loadable.download()
+    not_loadable.download()
+
+    multi = _load_as_multiblock((loadable, not_loadable), names=['head', 'header'])
+    assert multi.keys() == ['head']
+    assert isinstance(multi['head'], pv.ImageData)
+
+
+def test_load_as_multiblock_raises_for_invalid_loaded_type():
+    bad_loader = _DatasetLoader(lambda: np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match='Only MultiBlock or DataSet objects'):
+        _load_as_multiblock([bad_loader], names=['bad'])
+
+
+def test_load_and_merge_raises_when_no_loadable_files():
+    with pytest.raises(ValueError, match='No loadable files were found to merge'):
+        _load_and_merge([_DownloadableFile('foo.vtk')])
+
+
+def test_get_file_or_folder_size_missing_path_raises(tmp_path):
+    missing = str(tmp_path / 'does-not-exist')
+    with pytest.raises(ValueError, match='Expected a file or folder path'):
+        _get_file_or_folder_size(missing)
+
+
+def test_get_file_or_folder_ext_missing_path_raises(tmp_path):
+    missing = str(tmp_path / 'does-not-exist')
+    with pytest.raises(ValueError, match='Expected a file or folder path'):
+        _get_file_or_folder_ext(missing)
+
+
+def test_get_file_or_folder_ext_empty_dir_raises(tmp_path):
+    empty_dir = tmp_path / 'empty'
+    empty_dir.mkdir()
+    with pytest.raises(ValueError, match='No files with extensions were found'):
+        _get_file_or_folder_ext(str(empty_dir))
+
+
+def test_get_all_nested_filepaths_missing_path_raises(tmp_path):
+    missing = str(tmp_path / 'does-not-exist')
+    with pytest.raises(ValueError, match='Expected a file or folder path'):
+        _get_all_nested_filepaths(missing)
+
+
+def test_load_as_multiblock_non_loadable_file_before_loadable_file():
+    # A non-loadable metafile listed before a loadable file must not cause the
+    # loadable file to be dropped from the result.
+    not_loadable = _DownloadableFile('HeadMRVolume.raw')
+    loadable = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
+    not_loadable.download()
+    loadable.download()
+
+    multi = _load_as_multiblock((not_loadable, loadable))
+    assert multi.keys() == ['HeadMRVolume']
+    assert isinstance(multi['HeadMRVolume'], pv.ImageData)
