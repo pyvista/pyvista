@@ -986,3 +986,40 @@ def test_real_installed_plugin_still_round_trips(tmp_path):
     record = next(r for r in pv.registered_readers() if r.extension == '.pv')
     assert record.source.startswith('pyvista_zstd')
     assert record.override is False
+
+
+def test_direct_registration_beats_entry_point_metadata(monkeypatch):
+    """An extension registered in code is not displaced by a plugin declaring it."""
+
+    def in_code(_path, **__):
+        return pv.PolyData()
+
+    pv.register_reader('.bothways', in_code)
+    _install_plugin(
+        monkeypatch, readers=[('.bothways', 'bothways_plugin', 'PluginReader', _MockReader)]
+    )
+    _reg_mod._ensure_entry_points()
+
+    assert '.bothways' not in _reg_mod._pending_ext_readers
+    assert _reg_mod._custom_ext_readers['.bothways'] is in_code
+
+
+def test_error_names_the_distribution_when_the_entry_point_has_one():
+    """A real installed plugin is named by its distribution, not by its module."""
+    # ``_for`` sets ``dist`` on the entry point and returns it, so the two cases
+    # need two objects.
+    spec = {'name': '.vtp', 'value': 'some_module:SomeReader', 'group': _reg_mod.READER_GROUP}
+    installed = EntryPoint(**spec)._for(SimpleNamespace(name='acme-readers'))
+
+    assert _reg_mod._entry_point_package(installed) == 'acme-readers'
+    assert 'acme-readers' in _reg_mod._undeclared_override_message('.vtp', installed)
+    # Without a distribution the module half stands in, which is the shape every
+    # other test in this file builds.
+    assert _reg_mod._entry_point_package(EntryPoint(**spec)) == 'some_module'
+
+
+def test_resolving_an_extension_no_plugin_claimed_loads_nothing():
+    """``_resolve_pending_reader`` reports False rather than raising."""
+    _reg_mod._pending_ext_readers.pop('.nopluginclaims', None)
+
+    assert _reg_mod._resolve_pending_reader('.nopluginclaims') is False
