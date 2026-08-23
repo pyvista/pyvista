@@ -34,7 +34,6 @@ from pyvista._cli.compare import _compare as cli_compare
 from pyvista._cli.plot import _plot as cli_plot
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from tests.core.test_dataobject_filters import _add_vtk_array
-from tests.vtk_backend_divergence import NO_PEXODUS_READER
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -579,7 +578,6 @@ def test_convert_help(capsys: pytest.CaptureFixture):
             examples.download_parallel_exodus,
             '.e.4.0',
             '.vtm',
-            marks=pytest.mark.skip_vtk_backend('cvista', reason=NO_PEXODUS_READER),
         ),
     ],
 )

@@ -3402,23 +3402,11 @@ def get_concrete_classes(module, abc):
 
 WRITER_CLASSES = get_concrete_classes(pv.core.utilities.writer, pv.BaseWriter)
 
-# Writers whose VTK class an alternative build does not ship, as
-# ``writer class name: reason``. Marked per PARAMETRIZATION rather than on the
-# test, so a backend missing one writer does not drop coverage for the others.
-_CVISTA_ABSENT_WRITERS = {
-    'EnSightWriter': 'cvista does not ship vtkEnSightWriter',
-    'XMLPartitionedDataSetWriter': (
-        'cvista does not ship vtkIOParallelXML (vtkXMLPartitionedDataSetWriter)'
-    ),
-}
-
 
 def _writer_params():
-    """Yield the writer classes, marking the ones an alternative build omits."""
+    """Yield the writer classes."""
     for cls in WRITER_CLASSES:
-        reason = _CVISTA_ABSENT_WRITERS.get(cls.__name__)
-        marks = [pytest.mark.skip_vtk_backend('cvista', reason=reason)] if reason else []
-        yield pytest.param(cls, marks=marks)
+        yield pytest.param(cls)
 
 
 READER_CLASSES = get_concrete_classes(pv.core.utilities.reader, pv.BaseReader)

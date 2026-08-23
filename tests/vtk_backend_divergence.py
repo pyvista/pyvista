@@ -4,18 +4,11 @@ Defined once and imported at each site, so when the fork's module set changes a
 single edit covers every test rather than a grep for repeated string literals.
 Each is used with the ``skip_vtk_backend`` marker::
 
-    @pytest.mark.skip_vtk_backend('cvista', reason=NO_PEXODUS_READER)
-    def test_parallel_exodus_reader(): ...
+    @pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
+    def test_snake_case_api(): ...
 """
 
 from __future__ import annotations
-
-# Modules the cvista build does not ship. Each names the VTK module and the class
-# the test needs from it, so the reason is actionable without opening the test.
-# The parallel/CGNS/Infovis IO readers now build into the cvista-io tier, so their
-# skips are gone; PExodus (needs IOParallelExodus) and Xdmf2 remain unshipped.
-NO_PEXODUS_READER = 'cvista does not ship vtkIOParallelExodus (vtkPExodusIIReader)'
-NO_XDMF2 = 'cvista does not ship vtkIOXdmf2'
 
 # Behaviour that differs by design rather than by omission.
 NO_SNAKE_CASE = 'cvista omits the VTK snake_case wrapper API'

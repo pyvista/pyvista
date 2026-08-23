@@ -20,8 +20,6 @@ from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples.downloads import download_file
-from tests.vtk_backend_divergence import NO_PEXODUS_READER
-from tests.vtk_backend_divergence import NO_XDMF2
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -238,7 +236,6 @@ def test_get_reader_fail(tmp_path):
         'mesh.N.12.11',
     ],
 )
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_PEXODUS_READER)
 def test_get_reader_pexodus_pattern(tmp_path, filename):
     path = tmp_path / filename
     path.touch()
@@ -250,7 +247,6 @@ def test_get_reader_pexodus_pattern(tmp_path, filename):
     ('force_ext', 'reader_type'),
     [('.e', pv.ExodusIIReader), ('.e.4.0', pv.PExodusIIReader)],
 )
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_PEXODUS_READER)
 def test_get_reader_pexodus_pattern_force_ext(tmp_path, force_ext, reader_type):
     path = tmp_path / 'mesh.e.4.0'
     path.touch()
@@ -1229,7 +1225,6 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_XDMF2)
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -1897,7 +1892,6 @@ def test_exodus_blocks():
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=NO_PEXODUS_READER)
 def test_parallel_exodus_reader():
     reader = pv.get_reader(examples.download_parallel_exodus(load=False))
     assert isinstance(reader, pv.PExodusIIReader)
