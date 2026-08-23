@@ -42,7 +42,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-cvista = ['cvista[all]>=9.7.0.1,<9.8.0']
+cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
 io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
