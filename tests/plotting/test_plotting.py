@@ -6166,8 +6166,8 @@ def _add_camera_distortion_scene(pl):
             'mediumpurple',
         ),
     ]
-    for mesh, position, scale, color in meshes:
-        mesh = mesh.scale(scale, inplace=False).translate(position, inplace=False)
+    for source, position, scale, color in meshes:
+        mesh = source.scale(scale, inplace=False).translate(position, inplace=False)
         actors.append(pl.add_mesh(mesh, color=color, smooth_shading=True))
 
     pl.add_light(pv.Light(position=(3, -4, 5), focal_point=(0, 0, 0), intensity=0.9))
@@ -6289,6 +6289,72 @@ def test_camera_distortion_zero_matches_default():
     difference = np.abs(zero_image.astype(int) - default_image.astype(int))
     assert difference.mean() < 0.01
     assert np.count_nonzero(difference > 1) < 20
+
+
+@pytest.mark.parametrize(
+    'add_actor_call',
+    [
+        pytest.param(lambda pl: pl.add_mesh(pv.Sphere()), id='add_mesh'),
+        pytest.param(lambda pl: pl.add_points(pv.PolyData(np.zeros((4, 3)))), id='add_points'),
+        pytest.param(
+            lambda pl: pl.add_lines(np.array([[-1.0, -1.0, 0.0], [1.0, 1.0, 0.0]])), id='add_lines'
+        ),
+        pytest.param(lambda pl: pl.add_silhouette(pv.Cube()), id='add_silhouette'),
+        pytest.param(
+            lambda pl: pl.add_composite(pv.MultiBlock([pv.Cube()]))[0], id='add_composite'
+        ),
+    ],
+)
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_reaches_every_actor(add_actor_call):
+    pl = pv.Plotter(camera_distortion_coefficients=(0.18, 0.06, 0.004, -0.003))
+    actor = add_actor_call(pl)
+    assert 'camera_distortion' in actor._shader_replacements
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_leaves_two_dimensional_actors_alone():
+    pl = pv.Plotter(camera_distortion_coefficients=(0.18, 0.06, 0.004, -0.003))
+    text = pl.add_text('text is an overlay, not geometry')
+    assert not hasattr(text, '_shader_replacements')
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_warns_for_volumes():
+    pl = pv.Plotter(camera_distortion_coefficients=(0.18, 0.06, 0.004, -0.003))
+    volume = pv.ImageData(dimensions=(8, 8, 8))
+    with pytest.warns(UserWarning, match='does not apply to volumes'):
+        pl.add_volume(volume, scalars=np.zeros(volume.n_points))
+    pl.close()
+
+
+@pytest.mark.parametrize(
+    'coefficients',
+    [
+        pytest.param(np.array([0.18, 0.06, 0.004, -0.003]), id='array'),
+        pytest.param(np.array([[0.18, 0.06, 0.004, -0.003]]), id='row_vector'),
+        pytest.param([0.18, 0.06, 0.004, -0.003], id='list'),
+    ],
+)
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_accepts_any_array_like(coefficients):
+    pl = pv.Plotter(camera_distortion_coefficients=coefficients)
+    actor = pl.add_mesh(pv.Sphere())
+    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+    values = [0.0, 0.0, 0.0, 0.0]
+    assert uniforms.GetUniform4f('u_distortion_coeffs', values)
+    assert values == pytest.approx(np.ravel(coefficients))
+    pl.close()
+
+
+@pytest.mark.parametrize('coefficients', [(0.1, 0.2), (0.1, 0.2, 0.3, 0.4, 0.5)])
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_rejects_wrong_length(coefficients):
+    match = f'must have four values \\(k1, k2, p1, p2\\), got {len(coefficients)}'
+    with pytest.raises(ValueError, match=match):
+        pv.Plotter(camera_distortion_coefficients=coefficients)
 
 
 def test_create_axes_orientation_box(verify_image_cache):

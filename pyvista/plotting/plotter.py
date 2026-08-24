@@ -158,6 +158,7 @@ if TYPE_CHECKING:
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 FPS_1_OVER_60 = 1 / 60
+_N_DISTORTION_COEFFICIENTS = 4
 
 if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -287,6 +288,31 @@ def _warn_xserver() -> None:  # pragma: no cover
         )
 
 
+def _validate_distortion_coefficients(
+    coefficients: VectorLike[float] | None,
+) -> tuple[float, float, float, float] | None:
+    """Return the Brown-Conrady coefficients as a tuple of four floats.
+
+    Returns
+    -------
+    tuple[float, float, float, float] | None
+        ``(k1, k2, p1, p2)``, or ``None`` when no distortion was requested.
+
+    """
+    if coefficients is None:
+        return None
+    values = np.asarray(coefficients, dtype=float).ravel()
+    if values.size != _N_DISTORTION_COEFFICIENTS:
+        msg = (
+            '`camera_distortion_coefficients` must have four values (k1, k2, p1, p2), '
+            f"got {values.size}. Higher-order radial terms such as OpenCV's k3 are "
+            'not supported.'
+        )
+        raise ValueError(msg)
+    k1, k2, p1, p2 = (float(value) for value in values)
+    return k1, k2, p1, p2
+
+
 @abstract_class
 class BasePlotter(_BoundsSizeMixin):
     """Base plotting class.
@@ -367,6 +393,20 @@ class BasePlotter(_BoundsSizeMixin):
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
 
+    camera_distortion_coefficients : VectorLike[float], optional
+        Brown-Conrady distortion coefficients ``(k1, k2, p1, p2)``, applied to
+        every actor added to this plotter. ``k1`` and ``k2`` are the radial
+        terms, negative for pincushion and positive for barrel; ``p1`` and
+        ``p2`` are the tangential terms. Higher-order radial terms such as
+        OpenCV's ``k3`` are not supported.
+
+        The distortion is a vertex shader replacement, so it moves vertices
+        rather than resampling the rendered image: geometry that is coarse
+        relative to the distortion will not curve smoothly. Volumes are ray
+        cast rather than rasterized and are rendered undistorted.
+
+        .. versionadded:: 0.49
+
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -401,7 +441,7 @@ class BasePlotter(_BoundsSizeMixin):
         lighting: LightingOptions | None = 'light kit',
         theme: Theme | ThemeOptions | str | None = None,
         image_scale: int | None = None,
-        camera_distortion_coefficients: Sequence[float] | None = None,
+        camera_distortion_coefficients: VectorLike[float] | None = None,
         **kwargs,
     ) -> None:
         """Initialize base plotter."""
@@ -512,7 +552,7 @@ class BasePlotter(_BoundsSizeMixin):
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
 
-        self._distortion_coeffs: Sequence[float] | None = camera_distortion_coefficients
+        self._distortion_coeffs = _validate_distortion_coefficients(camera_distortion_coefficients)
 
         self._initialized = True
         self._suppress_rendering = False
@@ -1600,7 +1640,9 @@ class BasePlotter(_BoundsSizeMixin):
         self, *args, **kwargs
     ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
-        return self.renderer.add_actor(*args, **kwargs)
+        actor, prop = self.renderer.add_actor(*args, **kwargs)
+        self._add_camera_distortion_to_actor(actor)
+        return actor, prop
 
     @functools.wraps(Renderer.enable_parallel_projection)
     def enable_parallel_projection(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -1707,8 +1749,17 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
 
-    def _add_camera_distortion_to_actor(self, actor: Actor) -> None:
-        if not self._distortion_coeffs:
+    def _add_camera_distortion_to_actor(self, actor: _vtk.vtkProp) -> None:
+        """Give ``actor`` the vertex shader that applies the camera distortion."""
+        if self._distortion_coeffs is None:
+            return
+        if not isinstance(actor, Actor):
+            if isinstance(actor, Volume):
+                warn_external(
+                    'Camera distortion does not apply to volumes, which are ray cast '
+                    'rather than rasterized from vertices. This volume is rendered '
+                    'undistorted alongside any distorted actors.'
+                )
             return
 
         actor.add_shader_replacement(
@@ -3365,8 +3416,6 @@ class BasePlotter(_BoundsSizeMixin):
             remove_existing_actor=remove_existing_actor,
         )
 
-        self._add_camera_distortion_to_actor(actor)
-
         return actor, mapper
 
     @_deprecate_positional_args(allowed=['mesh'])
@@ -4455,7 +4504,6 @@ class BasePlotter(_BoundsSizeMixin):
             render=render,
             remove_existing_actor=remove_existing_actor,
         )
-        self._add_camera_distortion_to_actor(actor)
 
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':
@@ -8196,6 +8244,20 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     stereo : StereoType | bool, optional
         Enable stereo rendering. If True, defaults to Anaglyph.
 
+    camera_distortion_coefficients : VectorLike[float], optional
+        Brown-Conrady distortion coefficients ``(k1, k2, p1, p2)``, applied to
+        every actor added to this plotter. ``k1`` and ``k2`` are the radial
+        terms, negative for pincushion and positive for barrel; ``p1`` and
+        ``p2`` are the tangential terms. Higher-order radial terms such as
+        OpenCV's ``k3`` are not supported.
+
+        The distortion is a vertex shader replacement, so it moves vertices
+        rather than resampling the rendered image: geometry that is coarse
+        relative to the distortion will not curve smoothly. Volumes are ray
+        cast rather than rasterized and are rendered undistorted.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     pyvista.plot
@@ -8238,7 +8300,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         theme: Theme | ThemeOptions | str | None = None,
         image_scale: int | None = None,
         stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
-        camera_distortion_coefficients: Sequence[float] | None = None,
+        camera_distortion_coefficients: VectorLike[float] | None = None,
     ) -> None:
         """Initialize a vtk plotting object."""
         super().__init__(
