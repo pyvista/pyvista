@@ -574,7 +574,11 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     ('download', 'in_ext', 'out_ext'),
     [
         (examples.download_brain_atlas_with_sides, '.nii.gz', '.vti'),
-        (examples.download_parallel_exodus, '.e.4.0', '.vtm'),
+        pytest.param(
+            examples.download_parallel_exodus,
+            '.e.4.0',
+            '.vtm',
+        ),
     ],
 )
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='Flaky issue with dataset loader')

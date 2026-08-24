@@ -9,6 +9,7 @@ component or raises :class:`ImportError` if the plugin is missing.
 from __future__ import annotations
 
 import importlib.util
+import sys
 
 import pytest
 
@@ -73,3 +74,15 @@ def test_export_vtksz_returns_bytes_when_no_filename(plotter):
         data = plotter.export_vtksz(filename=None)
     assert isinstance(data, (bytes, bytearray))
     assert len(data) > 0
+
+
+def test_trame_component_rejects_a_mismatched_vtk_build(plotter, monkeypatch):
+    """A trame resolved against a different VTK build is refused, with the fix."""
+    monkeypatch.delitem(sys.modules, 'vtk_module', raising=False)
+    monkeypatch.setenv('VTK_MODULE_NAME', 'a_different_vtk_build')
+
+    with pytest.raises(RuntimeError, match='VTK_MODULE_NAME') as excinfo:
+        plotter._trame_component()
+
+    # Not an ImportError: `show()`'s scene-capture guard would swallow it (see plotter.py).
+    assert not isinstance(excinfo.value, ImportError)

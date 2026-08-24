@@ -42,6 +42,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
+cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
 io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
@@ -284,12 +285,15 @@ markers = [
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
   'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
+  'needs_io_extra: this test requires an IO-tier VTK module omitted from a core-only build (vtkIOHDF / vtkIOEnSight / vtkIOChemistry, e.g. .vtkhdf, EnSight .case, PDB/XYZ/GaussianCube readers). Auto-applied (only when the module is actually absent) via the HAS_IO_* probes in conftest.py. Deselect with `-m "not needs_io_extra"` alongside `not needs_rendering` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
+  'needs_rendering: this test requires VTK rendering modules (Plotter, .plot(), screenshots, charts, widgets). Auto-applied to tests/plotting. Deselect with `-m "not needs_rendering"` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'security: security regression test (refusal of unsafe paths, untrusted-input handling). Run with `pytest -m security`.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_vtk_backend(backend, reason="..."): skip test when `pyvista.vtk_backend()` is `backend` (e.g. `cvista`). Use for behaviour that genuinely differs on an alternative VTK build -- attach it to the test itself, with a reason naming what diverges.',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
 ]
 minversion = "7"

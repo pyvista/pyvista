@@ -2,18 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
-
 # isort: off
-import vtkmodules.vtkRenderingContextOpenGL2  # noqa: F401, TID251
-
-# Magic vtk imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
-# Also, VTK may be built without its Matplotlib module. MathText/LaTeX rendering is then
-# unavailable (`check_math_text_support()` returns False), but plotting otherwise works.
-import vtkmodules.vtkRenderingFreeType  # noqa: F401, TID251
-
-with contextlib.suppress(ImportError):
-    import vtkmodules.vtkRenderingMatplotlib  # noqa: F401, TID251
+# Must come first: registers the VTK rendering factories (and LaTeX support) via
+# the active backend before any rendering class below is imported.
+from . import _rendering_imports as _rendering_imports
 
 # isort: on
 
