@@ -100,7 +100,7 @@ def test_minimal_vtkmodules_imported(allowed_modules, module_to_import):
     assert sorted(vtkmodules_loaded) == [], error_msg
 
 
-@pytest.mark.parametrize('module', ['matplotlib', 'scipy'])
+@pytest.mark.parametrize('module', ['PIL', 'matplotlib', 'scipy'])
 def test_large_dependencies_not_imported(module: str):
     error_msg = f"""
     Module `{module}` was loaded at root `import pyvista`.
@@ -112,22 +112,45 @@ def test_large_dependencies_not_imported(module: str):
 
 
 def test_plotting_import_has_no_direct_pillow_imports():
+    """Pillow must stay behind a local import in every plotting module.
+
+    This asks who *performed* the import rather than whether ``PIL`` is in
+    ``sys.modules``, because ``import pyvista.plotting`` pulls in matplotlib,
+    which imports Pillow itself. A ``sys.modules`` check would therefore be red
+    no matter what PyVista does, and the root-import check in
+    ``test_large_dependencies_not_imported`` cannot see a plotting module at
+    all.
+
+    Both ``import PIL`` and ``importlib.import_module('PIL')`` are watched; the
+    latter does not go through ``builtins.__import__``, so hooking only that
+    leaves a way to write the defect and still pass.
+    """
     code = textwrap.dedent(
         """
         import builtins
+        import importlib
+        import sys
 
         original_import = builtins.__import__
+        original_import_module = importlib.import_module
         pyvista_pillow_imports = []
 
-        def tracked_import(name, globals=None, locals=None, fromlist=(), level=0):
-            caller_name = globals.get('__name__', '') if globals else ''
+        def record(caller_name, name):
             if caller_name.startswith('pyvista') and (
                 name == 'PIL' or name.startswith('PIL.')
             ):
                 pyvista_pillow_imports.append((caller_name, name))
+
+        def tracked_import(name, globals=None, locals=None, fromlist=(), level=0):
+            record(globals.get('__name__', '') if globals else '', name)
             return original_import(name, globals, locals, fromlist, level)
 
+        def tracked_import_module(name, package=None):
+            record(sys._getframe(1).f_globals.get('__name__', ''), name)
+            return original_import_module(name, package)
+
         builtins.__import__ = tracked_import
+        importlib.import_module = tracked_import_module
         import pyvista.plotting  # noqa: F401
 
         assert pyvista_pillow_imports == [], pyvista_pillow_imports
