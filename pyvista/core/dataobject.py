@@ -539,7 +539,7 @@ class DataObject(
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
-    def add_field_data(self: Self, array: ArrayLike[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def add_field_data(self: Self, array: ArrayLike[Any], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -548,8 +548,10 @@ class DataObject(
 
         Parameters
         ----------
-        array : ArrayLike[float]
-            Array of data to add to the dataset as a field array.
+        array : ArrayLike[Any]
+            Array of data to add to the dataset as a field array. Field data
+            is not tied to the geometry, so numeric, boolean and string data
+            are all accepted.
 
         name : str
             Name to assign the field array.

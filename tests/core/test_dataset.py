@@ -227,6 +227,12 @@ def test_field_data_string(hexbeam):
     assert returned == field_value
     assert isinstance(returned, str)
 
+    # a sequence of strings, not only a single one
+    field_name = 'spam'
+    field_value = ['I could', 'write', 'notes', 'here']
+    hexbeam.add_field_data(field_value, field_name)
+    assert hexbeam.field_data[field_name].tolist() == field_value
+
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
 def test_add_field_data(hexbeam, field):
