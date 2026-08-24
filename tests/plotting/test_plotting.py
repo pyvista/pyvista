@@ -6257,8 +6257,7 @@ def _add_mesh_lattice_scene(pl: pv.Plotter):
         pytest.param(_add_mesh_lattice_scene, id='mesh_lattice_front'),
     ],
 )
-def test_camera_distortion(scene_builder, distortion_coeffs, verify_image_cache):
-    verify_image_cache.high_variance_test = True
+def test_camera_distortion(scene_builder, distortion_coeffs):
     pl = pv.Plotter(window_size=[400, 400], camera_distortion_coefficients=distortion_coeffs)
     actors = scene_builder(pl)
     for actor in actors:

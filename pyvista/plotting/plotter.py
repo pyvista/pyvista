@@ -1789,19 +1789,22 @@ class BasePlotter(_BoundsSizeMixin):
             float new_x = x * radial + 2*p1*x*y + p2*(rSquared + 2*x*x);
             float new_y = y * radial + 2*p2*x*y + p1*(rSquared + 2*y*y);
 
-            // We need to take our view coordinates, and convert them into
-            // device coordinates to assign to gl_Position. We are given
-            // uniforms for MC --> VC and MC --> DC, but not VC --> DC, so
-            // we must solve for it:
-            //      MCDCMatrix = VCDCMatrix * MCVCMatrix
-            //   => MCDCMatrix * inverse(MCVCMatrix) = VCDCMatrix *
-            //      MCVCMatrix inverse(MCVCMatrix)
-            //   => MCDCMatrix * inverse(MCVCMatrix) = VCDCMatrix * identity
+            // gl_Position already holds MCDCMatrix * vertexMC, the undistorted
+            // position, so only the shift the distortion introduces has to be
+            // carried into device coordinates. That shift lies in the view
+            // plane, so its z and w are zero:
+            //      shift = distorted_VC - vertexVCVSOutput
+            //      gl_Position += VCDCMatrix * shift
+            // where VCDCMatrix = MCDCMatrix * inverse(MCVCMatrix). MCVCMatrix
+            // is affine, so its inverse acts on a zero-w vector through its
+            // upper 3x3 block alone.
 
-            mat4 VCDCMatrix = MCDCMatrix * inverse(MCVCMatrix);
-            gl_Position = VCDCMatrix * vec4(
-                new_x * z_depth, new_y * z_depth, vertexVCVSOutput.zw
+            vec3 shift = vec3(
+                new_x * z_depth - vertexVCVSOutput.x,
+                new_y * z_depth - vertexVCVSOutput.y,
+                0.0
             );
+            gl_Position += MCDCMatrix * vec4(inverse(mat3(MCVCMatrix)) * shift, 0.0);
             """,
             replace_first=True,
             replace_all=False,
