@@ -57,19 +57,41 @@ jobs:
           git checkout "$NIGHTLY_SHA"
           echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
 
-          # Record every commit since the *previous* nightly date-stamp so a failure report
-          # can point at exactly what landed on VTK master in between.
+          # Record every commit since the *previous* nightly date-stamp, grouped by merge
+          # topic (VTK merges each topic branch as a single first-parent merge commit, so
+          # the second parent of each merge is that topic's own commit history), so a
+          # failure report can point at exactly what landed on VTK master in between.
           PREV_NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' --skip=1 -n 1 --format=%H)"
+          BASE_URL="https://gitlab.kitware.com/vtk/vtk/-/commit"
           {
-            if [ -n "$PREV_NIGHTLY_SHA" ]; then
-              echo "Commits since the previous nightly date-stamp ([\`${PREV_NIGHTLY_SHA:0:8}\`](https://gitlab.kitware.com/vtk/vtk/-/commit/${PREV_NIGHTLY_SHA})):"
+            if [ -z "$PREV_NIGHTLY_SHA" ]; then
+              echo "Could not find a previous nightly date-stamp commit within the last 200 commits;"
+              echo "showing only the pinned commit: [\`${NIGHTLY_SHA:0:8}\`](${BASE_URL}/${NIGHTLY_SHA})"
+            else
+              n_commits="$(git rev-list --count "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}")"
+              echo "Commits since the previous nightly date-stamp ([\`${PREV_NIGHTLY_SHA:0:8}\`](${BASE_URL}/${PREV_NIGHTLY_SHA})):"
               echo
               echo "[Compare on GitLab](https://gitlab.kitware.com/vtk/vtk/-/compare/${PREV_NIGHTLY_SHA}...${NIGHTLY_SHA})"
               echo
-              git log --no-merges --format='- [`%h`](https://gitlab.kitware.com/vtk/vtk/-/commit/%H) %s (%an)' "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}"
-            else
-              echo "Could not find a previous nightly date-stamp commit within the last 200 commits;"
-              echo "showing only the pinned commit: [\`${NIGHTLY_SHA:0:8}\`](https://gitlab.kitware.com/vtk/vtk/-/commit/${NIGHTLY_SHA})"
+              echo "<details>"
+              echo "<summary>${n_commits} commits (grouped by merge topic)</summary>"
+              echo
+              git log --first-parent --reverse --format='%H%x09%h%x09%s%x09%an' \
+                "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}" |
+                while IFS=$'\t' read -r full short subject author; do
+                  echo "- [\`${short}\`](${BASE_URL}/${full}) ${subject} (${author})"
+                  read -r -a parents <<<"$(git log -1 --format='%P' "$full")"
+                  if [ "${#parents[@]}" -ge 2 ]; then
+                    # Second parent is the topic branch tip; list what it added over the mainline.
+                    git log --no-merges --reverse --format='%H%x09%h%x09%s%x09%an' \
+                      "${parents[0]}..${parents[1]}" |
+                      while IFS=$'\t' read -r sfull sshort ssubject sauthor; do
+                        echo "  - [\`${sshort}\`](${BASE_URL}/${sfull}) ${ssubject} (${sauthor})"
+                      done
+                  fi
+                done
+              echo
+              echo "</details>"
             fi
           } > "$GITHUB_WORKSPACE/vtk-commit-range.md"
 
@@ -520,6 +542,10 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
         run: |
+          # Individual gh/api lookups below are best-effort (wrapped in `|| true`); a single
+          # missing log or issue comment should not abort the whole report.
+          set -uo pipefail
+
           # Ensure the dedup label exists (idempotent).
           gh label create vtk-master-wheel-failure \
             --color cbb230 \
@@ -527,22 +553,80 @@ jobs:
             --force || true
 
           # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
-          failed=$(gh run view "$RUN_ID" --json jobs \
-            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+          failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.databaseId, .name, .url] | @tsv')
+
+          failed_jobs=()
+          while IFS=$'\t' read -r job_id name url; do
+            [ -n "$job_id" ] || continue
+            failed_jobs+=("${job_id}"$'\t'"${name}"$'\t'"${url}")
+          done <<< "$failed_jobs_raw"
 
           jobs_list=""
-          while IFS=$'\t' read -r name url; do
-            [ -n "$name" ] || continue
-            jobs_list+="- [\`${name}\`](${url})"$'\n'
-          done <<< "$failed"
+          failure_sections=""
 
+          if [ "${#failed_jobs[@]}" -eq 0 ]; then
+            jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+          else
+            for row in "${failed_jobs[@]}"; do
+              IFS=$'\t' read -r job_id name url <<< "$row"
+              jobs_list+="- [\`${name}\`](${url})"$'\n'
+
+              # Pull the job log and try to isolate a useful failure summary: a pytest
+              # short-summary section, or the marker the Build step prints on a VTK build
+              # failure, falling back to the tail of the log if neither is found.
+              log="$(gh api "repos/${GH_REPO}/actions/jobs/${job_id}/logs" 2>/dev/null || true)"
+              if [ -z "$log" ]; then
+                summary="(could not retrieve the log for this job)"
+              else
+                start_line="$(printf '%s\n' "$log" | grep -n -m1 -E '=+ short test summary info =+|^::error::VTK build failed' | head -n1 | cut -d: -f1)"
+                if [ -n "$start_line" ]; then
+                  summary="$(printf '%s\n' "$log" | tail -n "+${start_line}" | tail -c 8000)"
+                else
+                  summary="$(printf '%s\n' "$log" | tail -c 8000)"
+                fi
+              fi
+
+              hash="$(printf '%s' "$summary" | sha256sum | cut -d' ' -f1)"
+
+              # The HTML comment marker records this job's failure signature so a later run
+              # can detect "same failure as before" without any external state.
+              failure_sections+="<!-- failure-hash:${name}:${hash} -->"$'\n'
+              failure_sections+="<details>"$'\n'
+              failure_sections+="<summary>❌ ${name} — failure output</summary>"$'\n\n'
+              failure_sections+='```text'$'\n'"${summary}"$'\n''```'$'\n'
+              failure_sections+="</details>"$'\n\n'
+            done
+          fi
           [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
 
           if [ "$COMMIT_RANGE_OUTCOME" = "success" ] && [ -f vtk-commit-range/vtk-commit-range.md ]; then
-            commit_range="$(cat vtk-commit-range/vtk-commit-range.md)"
+            commit_range_body="$(cat vtk-commit-range/vtk-commit-range.md)"
           else
-            commit_range="(could not determine which VTK commits landed since the previous nightly)"
+            commit_range_body="(could not determine which VTK commits landed since the previous nightly)"
           fi
+
+          # Check for an existing open issue, and compare each failed job's signature
+          # against the most recently posted report (the last comment, or the issue body
+          # if there are no comments yet).
+          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          repeat_note=""
+          if [ -n "$existing" ]; then
+            prev_text="$(gh issue view "$existing" --json body,comments \
+              --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)"
+            prev_url="$(gh issue view "$existing" --json url,comments \
+              --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
+            for row in "${failed_jobs[@]}"; do
+              IFS=$'\t' read -r job_id name url <<< "$row"
+              cur_hash="$(printf '%s' "$failure_sections" | grep -F "failure-hash:${name}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/')"
+              prev_hash="$(printf '%s' "$prev_text" | grep -F "failure-hash:${name}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/')"
+              if [ -n "$cur_hash" ] && [ -n "$prev_hash" ] && [ "$cur_hash" = "$prev_hash" ]; then
+                repeat_note+="- \`${name}\`: same failure signature as the [previous report](${prev_url})."$'\n'
+              fi
+            done
+          fi
+          [ -z "$repeat_note" ] || repeat_note="**Repeat failures:**"$'\n'"${repeat_note}"
 
           body=$(cat <<EOF
           ### VTK Master Wheel Failure
@@ -552,14 +636,12 @@ jobs:
 
           **Failing jobs:**
           ${jobs_list}
+          ${repeat_note}
+          ${commit_range_body}
 
-          **VTK commits:**
-          ${commit_range}
+          ${failure_sections}
           EOF
           )
-
-          # Check for an existing open issue
-          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
 
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
