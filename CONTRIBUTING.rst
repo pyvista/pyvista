@@ -446,14 +446,34 @@ GitHub Actions, and you can run Vale locally with:
 
 .. code-block:: bash
 
-   pip install vale
-   vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
+   pip install vale 'docutils<0.22' 'sphinx-gallery<0.22.0'
+   python3 doc/extract_rst_from_py_for_vale.py examples .vale-examples-rst
+   python3 doc/extract_rst_from_py_for_vale.py pyvista .vale-docstrings-rst --mode docstrings
+   vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale-examples-rst .vale-docstrings-rst
 
 If you are on Linux or macOS, you can run:
 
 .. code-block:: bash
 
    make docstyle
+
+Vale cannot parse prose written inside a Python file directly (for example,
+the ``# %%`` cell headings in a gallery example, or a docstring's
+``Parameters`` section), so ``doc/extract_rst_from_py_for_vale.py`` first
+converts the relevant ``.py`` files into ``.rst`` files that mirror them line
+for line, padding out everything else with blank lines. Vale only ever sees
+those generated files, so it reports errors against them instead of the
+original source -- look for the same path and line number under
+``.vale-examples-rst/`` or ``.vale-docstrings-rst/`` instead of ``examples/``
+or ``pyvista/``, with the ``.py`` extension swapped for ``.rst``. For example:
+
+- A gallery heading error reported as
+  ``.vale-examples-rst/02-plot/point_picking.rst:31:1`` refers to
+  ``examples/02-plot/point_picking.py:31:1``.
+- A docstring error reported as
+  ``.vale-docstrings-rst/core/pointset.rst:105:1`` refers to
+  ``pyvista/core/pointset.py:105:1`` (the ``Flag for using the mesh scalars as
+  weights.`` line of ``PointSet.center_of_mass``'s docstring).
 
 
 Docstrings
