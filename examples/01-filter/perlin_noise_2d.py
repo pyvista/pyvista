@@ -22,7 +22,7 @@ import pyvista as pv
 # Generate Perlin Noise over a StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
-# the "mountains."  For example, lowering the frequency will make the
+# the "mountains".  For example, lowering the frequency will make the
 # terrain seem more like hills rather than mountains.
 freq = [0.689, 0.562, 0.683]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))

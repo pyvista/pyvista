@@ -200,7 +200,7 @@ grid.plot(show_edges=True)
 
 # %%
 # For fun, let's separate all the cells and plot out the individual cells. Shift
-# them a little bit from the center to create an "exploded view."
+# them a little bit from the center to create an "exploded view".
 
 split_cells = grid.explode(0.5)
 split_cells.plot(show_edges=True, ssao=True)

@@ -435,7 +435,7 @@ PyVista follows the `Google Developer Documentation Style
 <https://developers.google.com/style>`_ with the following exceptions:
 
 - Allow first person pronouns. These pronouns (for example, "We") refer to
-  "PyVista Developers," which can be anyone who contributes to PyVista.
+  "PyVista Developers", which can be anyone who contributes to PyVista.
 - Future tense is permitted.
 
 These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)

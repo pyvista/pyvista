@@ -12,7 +12,7 @@ uniform random draw, it gives a much more even covering of the input cloud.
 
 References
 ----------
-Y. Eldar et al., "The farthest point strategy for progressive image sampling,"
+Y. Eldar et al., "The farthest point strategy for progressive image sampling",
 *Proc. 12th IAPR Int. Conf. on Pattern Recognition*, Vol. 2, 1994, pp. 93-97,
 `doi:10.1109/ICPR.1994.577129 <https://doi.org/10.1109/ICPR.1994.577129>`_.
 

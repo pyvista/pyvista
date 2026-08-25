@@ -183,7 +183,7 @@ the underlying C array to the :class:`numpy.ndarray`, meaning
 that the two arrays are now efficiently linked (in NumPy terminology,
 the returned array is a view into the underlying VTK data). This means
 that we can change the array using numpy array indexing and have it
-modified on the "VTK side."
+modified on the "VTK side".
 
 .. jupyter-execute::
 
@@ -261,7 +261,7 @@ and to do that we need to specify the cells (or faces) of this surface.
 Geometry and Mesh Connectivity/Topology Within PyVista
 ------------------------------------------------------
 With our previous example, we defined our "mesh" as three disconnected
-points. While this is useful for representing "point clouds," if we
+points. While this is useful for representing "point clouds", if we
 want to create a surface, we have to describe the connectivity of the
 mesh. To do this, let's define a single cell composed of three points
 in the same order as we defined earlier.

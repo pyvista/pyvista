@@ -45,7 +45,7 @@ structure using VTK Python's bindings, one would write the following:
 
 As you can see, there is quite a bit of boilerplate that goes into
 the creation of a simple :vtk:`vtkImageData` dataset. PyVista provides
-much more concise syntax that is more "Pythonic." The equivalent code in
+much more concise syntax that is more "Pythonic". The equivalent code in
 PyVista is:
 
 
@@ -104,7 +104,7 @@ Here, PyVista has done several things for us:
    example, the first argument to ``SetValue()`` was written as
    ``x*300 + y``. Here, numpy takes care of this for us quite nicely
    and it's made more explicit in the code, following the Python best
-   practice of "Explicit is better than implicit."
+   practice of "Explicit is better than implicit".
 
 Finally, with PyVista, each geometry class contains methods that allow
 you to immediately plot the mesh without also setting up the plot.

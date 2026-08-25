@@ -143,7 +143,7 @@ cpos = pv.Sphere().plot()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we create a custom theme from the base "default"
 # theme and then apply it to a single plotter.  Note that this does
-# not change the behavior of the global "defaults," which are still
+# not change the behavior of the global "defaults", which are still
 # set to the modified ``DarkTheme``.
 #
 # This approach carries the advantage that you can maintain several

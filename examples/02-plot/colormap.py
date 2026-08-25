@@ -103,7 +103,7 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # The "hot" version washes out detail at the high end, as if the image is
 # overexposed, while "fire" makes detail visible throughout the data range.
 #
-# Please note that in order to use Colorcet's colormaps including "fire," you
+# Please note that in order to use Colorcet's colormaps including "fire", you
 # must have Colorcet installed in your Python environment:
 # ``pip install colorcet``
 

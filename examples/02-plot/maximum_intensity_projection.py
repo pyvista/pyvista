@@ -13,7 +13,7 @@ This is useful for dense point cloud visualization where high-value
 data points would otherwise be hidden behind lower-value points that
 happen to be closer to the viewer. The technique was proposed by
 Cowan (2014) for visualizing grade data in mining applications, where
-it is referred to as "X-ray plunge projection."
+it is referred to as "X-ray plunge projection".
 
 MIP works by replacing the z-coordinate in OpenGL clip space with the
 negated, normalized scalar value via a custom vertex shader. This

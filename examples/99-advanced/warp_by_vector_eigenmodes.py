@@ -9,7 +9,7 @@ Apply :func:`~pyvista.DataSetFilters.warp_by_vector` to a cube eigenmode.
 The eigenmodes have been computed using the Ritz method, as outlined in
 Visscher, William M., Albert Migliori, Thomas M. Bell, et Robert A.
 Reinert. "On the normal modes of free vibration of inhomogeneous and
-anisotropic elastic objects." The Journal of the Acoustical Society of
+anisotropic elastic objects". The Journal of the Acoustical Society of
 America 90, n.4 (October 1991): 2154-62.
 https://asa.scitation.org/doi/10.1121/1.401643.
 
