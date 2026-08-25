@@ -446,7 +446,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Create a mesh and return the points of the mesh as a numpy
+        Create a mesh and return the points of the mesh as a NumPy
         array.
 
         >>> import pyvista as pv

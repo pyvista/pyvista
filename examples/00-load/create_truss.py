@@ -1,7 +1,7 @@
 """
 .. _create_truss_example:
 
-Plot Truss-Like FEA Solution with Cylinders
+Plot Truss-like FEA Solution with Cylinders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plot connections between points in 3D as cylinders, colored by scalars.

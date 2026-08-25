@@ -1,7 +1,7 @@
 """
 .. _plot_over_circular_arc_example:
 
-Plot Scalars Over a Circular Arc
+Plot Scalars over a Circular Arc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Interpolate the scalars of a dataset over a circular arc.

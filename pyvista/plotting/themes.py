@@ -2718,7 +2718,7 @@ class Theme(_ConfigBase):
 
     @property
     def lighting(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set the default ``lighting``.
+        """Return or set whether lighting is enabled by default.
 
         Examples
         --------

@@ -273,7 +273,7 @@ pl.background_color = 'w'
 pl.show()
 
 # %%
-# Auto-Generate Cell Types From Source
+# Auto-Generate Cell Types from Source
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Similar to above, let's create another  ``(4, 4)`` :class:`pyvista.Plotter` and plot
 # all 16 linear cells in a single plot. This time, however, we use

@@ -101,8 +101,7 @@ _VTK_CELL_STATUS_INFO = {
     ),
     'INVERTED_FACES': _CellStatusTuple(
         value=0x20,
-        doc='Cell face(s) do not point in the direction required by its '
-        ':class:`~pyvista.CellType`.',
+        doc='Cell faces do not point in the direction required by its :class:`~pyvista.CellType`.',
     ),
     'NON_PLANAR_FACES': _CellStatusTuple(
         value=0x40,
@@ -110,7 +109,7 @@ _VTK_CELL_STATUS_INFO = {
     ),
     'DEGENERATE_FACES': _CellStatusTuple(
         value=0x80,
-        doc='Face(s) collapse to a line or a point through repeated collocated vertices.',
+        doc='Faces collapse to a line or a point through repeated collocated vertices.',
     ),
     'COINCIDENT_POINTS': _CellStatusTuple(
         value=0x100,
@@ -2003,7 +2002,7 @@ class DataObjectFilters:
                     converted_ints = True
         if converted_ints:
             warn_external(
-                'Integer points, vector and normal data (if any) of the input mesh '
+                'Integer points, vector, and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
             )
@@ -2122,7 +2121,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise,
-            only the points, normals and active vectors are transformed.
+            only the points, normals, and active vectors are transformed.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2241,7 +2240,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed.
+            the points, normals, and active vectors are transformed.
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -2563,7 +2562,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed.
+            the points, normals, and active vectors are transformed.
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -2687,7 +2686,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
-            the points, normals and active vectors are transformed.
+            the points, normals, and active vectors are transformed.
 
         inplace : bool, default: False
             If True, the dataset is modified in place. If False, a new dataset is returned.

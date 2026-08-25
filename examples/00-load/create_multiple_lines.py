@@ -1,7 +1,7 @@
 """
 .. _create_multiple_lines_example:
 
-Create Connected Lines From Points
+Create Connected Lines from Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Build a polyline from ordered points with :func:`pyvista.MultipleLines`.

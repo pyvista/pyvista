@@ -182,7 +182,7 @@ class BaseVTKReader(ABC):
         self._observers = []
 
     def GetProgress(self):
-        """GetProgress."""
+        """Return the load progress, ``0.0`` before the data loads and ``1.0`` after."""
         return 0.0 if self._data_object is None else 1.0
 
     def UpdateObservers(self, event_type) -> None:
@@ -3894,7 +3894,7 @@ class PExodusIIReader(ExodusIIReader):
 
 
 class _FRDReader(BaseVTKReader):
-    """VTK-style reader for CalculiX FRD files using FRDParser."""
+    """VTK-style reader for CalculiX FRD files using ``_FRDParser``."""
 
     def __init__(self) -> None:
         super().__init__()

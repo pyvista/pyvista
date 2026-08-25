@@ -28,7 +28,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Interpolating From Point Cloud
+# Interpolating from Point Cloud
 # ++++++++++++++++++++++++++++++
 # A point cloud is a collection of points that have no connectivity in
 # the mesh, that is, the mesh contains no cells or the cells are 0D
@@ -113,7 +113,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Sampling From a Mesh with Connectivity
+# Sampling from a Mesh with Connectivity
 # ++++++++++++++++++++++++++++++++++++++
 # This example is in many ways the opposite of the prior one.
 # A mesh with cell connectivity that spans 2 dimensions is

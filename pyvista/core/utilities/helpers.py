@@ -243,7 +243,7 @@ def wrap(  # noqa: PLR0911
 
     Examples
     --------
-    Wrap a numpy array representing a random point cloud.
+    Wrap a NumPy array representing a random point cloud.
 
     >>> import numpy as np
     >>> import pyvista as pv

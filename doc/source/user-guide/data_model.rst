@@ -168,7 +168,7 @@ everything from Python that is transferred over to VTK needs to be in a
 format that VTK can process.
 
 Should you wish to use VTK objects within PyVista, you can still do
-this. In fact, using :func:`pyvista.wrap`, you can even get a numpy-like
+this. In fact, using :func:`pyvista.wrap`, you can even get a NumPy-like
 representation of the data. For example:
 
 .. jupyter-execute::
@@ -182,7 +182,7 @@ a shallow copy of the data. In other words, we pass the pointer from
 the underlying C array to the :class:`numpy.ndarray`, meaning
 that the two arrays are now efficiently linked (in NumPy terminology,
 the returned array is a view into the underlying VTK data). This means
-that we can change the array using numpy array indexing and have it
+that we can change the array using NumPy array indexing and have it
 modified on the "VTK side".
 
 .. jupyter-execute::
@@ -191,7 +191,7 @@ modified on the "VTK side".
    >>> vtk_array.GetValue(0)
 
 Or we can change the value from the VTK array and see it reflected in
-the numpy wrapped array. Let's change the value back:
+the NumPy wrapped array. Let's change the value back:
 
 .. jupyter-execute::
 

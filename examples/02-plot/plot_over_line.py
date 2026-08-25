@@ -1,7 +1,7 @@
 """
 .. _plot_over_line_example:
 
-Plot Over Line
+Plot over Line
 ~~~~~~~~~~~~~~
 
 Plot the values of a dataset over a line through that dataset.

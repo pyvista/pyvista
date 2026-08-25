@@ -50,7 +50,7 @@ def check_subdtype(
     *,
     name: str = 'Input',
 ) -> None:
-    """Check if an input's data-type is a subtype of another data-types.
+    """Check if an input's data-type is a subtype of another data-type or data-types.
 
     Parameters
     ----------

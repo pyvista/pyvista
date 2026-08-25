@@ -109,7 +109,7 @@ colored.plot(cpos=cpos)
 
 
 # %%
-# Extract Regions From Seed Points
+# Extract Regions from Seed Points
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Use connectivity to extract regions of interest using scalar data and

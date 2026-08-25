@@ -551,7 +551,7 @@ class DataObject(
         ----------
         array : ArrayLike[Any]
             Array of data to add to the dataset as a field array. Field data
-            is not tied to the geometry, so numeric, boolean and string data
+            is not tied to the geometry, so numeric, boolean, and string data
             are all accepted.
 
         name : str

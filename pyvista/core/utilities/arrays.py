@@ -597,7 +597,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
 
 
 def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
-    """Return row array of a vtk object.
+    """Return row array of a VTK object.
 
     Parameters
     ----------

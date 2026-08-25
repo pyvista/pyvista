@@ -3974,7 +3974,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
-        Plot the variables of interest in 2D using matplotlib where the
+        Plot the variables of interest in 2D using Matplotlib where the
         X-axis is distance from Point A and the Y-axis is the variable
         of interest. Note that this filter returns ``None``.
 

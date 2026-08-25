@@ -12,16 +12,18 @@ vocab: false
 indicators:
   - ":"
 exceptions:
-  - gRPC
   - glTF
   - a
   - PyVista
   - with
+  - from
   - is
   - are
+  - like
+  - over
+  - that
   - VTK
   - PointSet
-  - HTML
   - to
   - for
   - pytest

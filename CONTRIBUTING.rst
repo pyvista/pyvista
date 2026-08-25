@@ -437,6 +437,9 @@ PyVista follows the `Google Developer Documentation Style
 - Allow first person pronouns. These pronouns (for example, "We") refer to
   "PyVista Developers", which can be anyone who contributes to PyVista.
 - Future tense is permitted.
+- Always place commas and periods outside closing quotation marks, rather
+  than Google's prose-vs-literal-string distinction, which a linter cannot
+  reliably apply.
 
 These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
 and partially enforced for Python source files.
@@ -471,8 +474,8 @@ original source -- look for the same path and line number under
   ``.vale/examples/02-plot/point_picking.rst:31:1`` refers to
   ``examples/02-plot/point_picking.py:31:1``.
 - A docstring error reported as
-  ``.vale/pyvista/core/pointset.rst:105:1`` refers to
-  ``pyvista/core/pointset.py:105:1`` (the ``Flag for using the mesh scalars as
+  ``.vale/pyvista/core/pointset.rst:109:1`` refers to
+  ``pyvista/core/pointset.py:109:1`` (the ``Flag for using the mesh scalars as
   weights.`` line of ``PointSet.center_of_mass``'s docstring).
 
 

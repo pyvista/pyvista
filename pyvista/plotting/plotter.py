@@ -6533,7 +6533,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Add a numpy array of points to a mesh.
+        Add a NumPy array of points to a mesh.
 
         >>> import numpy as np
         >>> import pyvista as pv

@@ -4,7 +4,7 @@ Partitioned Datasets
 The :class:`pyvista.PartitionedDataSet` class is a partitioned dataset that encapsulates
 a dataset consisting of partitions. ``PartitionedDataSet`` behaves mostly like a list.
 
-List-Like Features
+List-like Features
 ------------------
 
 Create an empty partitioned dataset

@@ -46,7 +46,6 @@ Eldar
 Enneper
 Enums
 FFTs
-FRDParser
 Flownet
 Fortran
 Freymann

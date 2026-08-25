@@ -134,7 +134,7 @@ And these points can be operated on as if it was a NumPy array,
 all without losing connection to the underlying VTK data array.
 
 At the same time, a variety of PyVista objects can be generated
-directly from numpy arrays. For example, below we generate a vector
+directly from NumPy arrays. For example, below we generate a vector
 field of arrows using :func:`numpy.meshgrid`:
 
 .. pyvista-plot::

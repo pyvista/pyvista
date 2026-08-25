@@ -139,7 +139,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.n_columns
 
     def _row_array(self, name=None):
-        """Return row scalars of a vtk object.
+        """Return row scalars of a VTK object.
 
         Parameters
         ----------

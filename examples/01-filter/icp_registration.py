@@ -36,7 +36,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Transform a Copy Away From the Reference
+# Transform a Copy Away from the Reference
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The transformed copy stands in for an incoming scan that needs to be
 # registered back onto the reference.

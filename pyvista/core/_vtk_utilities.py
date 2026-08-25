@@ -238,7 +238,7 @@ class DisableVtkSnakeCase:
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
-    """Return True if the attribute is defined by a vtk class.
+    """Return True if the attribute is defined by a VTK class.
 
     Parameters
     ----------

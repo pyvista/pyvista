@@ -19,7 +19,7 @@ effects for the motion picture industry.
 import pyvista as pv
 
 # %%
-# Generate Perlin Noise Over a StructuredGrid
+# Generate Perlin Noise over a StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
 # the "mountains".  For example, lowering the frequency will make the

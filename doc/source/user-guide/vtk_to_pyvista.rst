@@ -1,7 +1,7 @@
 .. _vtk_to_pyvista_docs:
 
 
-Transitioning From VTK to PyVista
+Transitioning from VTK to PyVista
 =================================
 VTK is primarily developed in C++ and uses chained setter and getter
 commands to access data. Instead, PyVista wraps the VTK data types

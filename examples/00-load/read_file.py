@@ -1,7 +1,7 @@
 """
 .. _read_file_example:
 
-Load and Plot From a File
+Load and Plot from a File
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Read a dataset from a known file type.

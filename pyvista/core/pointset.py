@@ -243,7 +243,7 @@ class _PointSet(DataSet):
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed. This is
+            the points, normals, and active vectors are transformed. This is
             only valid when not updating in place.
 
         inplace : bool, default: False
@@ -318,7 +318,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     Examples
     --------
-    Create a simple point cloud of 10 points from a numpy array.
+    Create a simple point cloud of 10 points from a NumPy array.
 
     >>> import numpy as np
     >>> import pyvista as pv

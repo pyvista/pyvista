@@ -1793,7 +1793,7 @@ class Color(_NoNewAttrMixin):
             msg = (
                 '\n'
                 f'\tInvalid opacity input: ({opacity})'
-                '\tMust be an integer, float or string.  For example:\n'
+                '\tMust be an integer, float, or string.  For example:\n'
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
                 "\t\topacity='#FF'"
