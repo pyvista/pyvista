@@ -194,7 +194,7 @@ class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgori
     output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
         Output type.  Accepts a VTK class name string (e.g.
         ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
-        (e.g. :class:`pyvista.PolyData`).
+        (for example, :class:`pyvista.PolyData`).
 
     """
 
@@ -259,7 +259,7 @@ class CallbackFilterAlgorithm(PreserveTypeAlgorithmBase):
     output_type : str | type[pyvista.DataSet] | None, default: ``None``
         Fixed output type. Accepts a VTK class name string (e.g.
         ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
-        (e.g. :class:`pyvista.PolyData`). When ``None``, the output type is
+        (for example, :class:`pyvista.PolyData`). When ``None``, the output type is
         inferred from the input.
 
     nInputPorts : int, default: 1

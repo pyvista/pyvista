@@ -142,7 +142,7 @@ def _stamp_raw_numpy_scalars(  # noqa: PLR0917
 
     Called from :meth:`Plotter.add_mesh` when the user passes a raw
     numpy array rather than a named array. Stamping the array on the
-    mesh lets downstream pipeline stages (e.g. smooth-shading surface
+    mesh lets downstream pipeline stages (for example, smooth-shading surface
     extraction) carry it forward, and lets callers later mutate the
     array via ``mesh[name] = ...`` to drive re-renders.
 

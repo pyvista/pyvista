@@ -70,7 +70,7 @@ def collapsible_section(
     Parameters
     ----------
     header : str
-        Section label (e.g. ``'Point Data:'``).
+        Section label (for example, ``'Point Data:'``).
     inline_details : str
         Content shown when collapsed.
     details : str
@@ -192,12 +192,12 @@ def _data_array_section(
     Parameters
     ----------
     title : str
-        Section title (e.g. ``'Point Data'``).
+        Section title (for example, ``'Point Data'``).
     arrays : list[tuple[str, int, str, str, str]]
         Each tuple is ``(name, n_components, dtype_str, shape_str,
         range_str)``.  When ``shape_str`` is non-empty it is shown
         instead of the default ``'scalar'`` / ``'N comp'`` label.
-        ``range_str`` is displayed as the data range (e.g.
+        ``range_str`` is displayed as the data range (for example
         ``'[-0.5, 0.5]'``).
     active_scalars : str, optional
         Name of the active scalars array.
@@ -308,7 +308,7 @@ def _children_section(
     Parameters
     ----------
     title : str
-        Section title (e.g. ``'Blocks'``).
+        Section title (for example, ``'Blocks'``).
     children : list[tuple[str, str, str]]
         Each tuple is ``(name, type_name, detail_str)``.
 
@@ -353,11 +353,11 @@ def build_repr_html(
     Parameters
     ----------
     obj_type : str
-        Display name (e.g. ``'PolyData'``).
+        Display name (for example, ``'PolyData'``).
     mesh_type : str
-        Key for mesh icon lookup (e.g. ``'PolyData'``).
+        Key for mesh icon lookup (for example, ``'PolyData'``).
     header_badges : Sequence[str]
-        Labels shown as small badges in the header (e.g. memory size).
+        Labels shown as small badges in the header (for example, memory size).
     metadata : Sequence[tuple[str, list[tuple[str, str]], str]]
         Always-visible key-value rows rendered between the header and
         collapsible sections.  Each entry is

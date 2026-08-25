@@ -584,7 +584,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
-    """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
+    """Dataset consisting of surface geometry (for example, vertices, lines, and polygons).
 
     The surface geometry is defined by its :attr:`~pyvista.DataSet.points` and four separate
     cell connectivity arrays:
@@ -597,7 +597,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
       :attr:`~pyvista.CellType.QUAD`, and :attr:`~pyvista.CellType.POLYGON` cells.
     - :attr:`strips` for 2-dimensional :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-    Cell types can be mixed, and any combination of cell connectivity array(s) may be specified.
+    Cell types can be mixed, and any combination of cell connectivity arrays may be specified.
 
     :class:`~pyvista.PolyData` can be initialized in several ways:
 
@@ -940,7 +940,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         to a single point, or a :attr:`~pyvista.CellType.POLY_VERTEX` with connectivity
         to multiple points.
 
-        For example, a single vertex and poly-vertex with five points might be represented as::
+        For example, a single vertex and polyvertex with five points might be represented as::
 
            [1, 0, 5, 3, 2, 4, 1, 5]
 
@@ -1018,7 +1018,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         to two points, or a :attr:`~pyvista.CellType.POLY_LINE` with connectivity
         to any number of points.
 
-        For example, a single line and poly-line with five points might be represented as::
+        For example, a single line and polyline with five points might be represented as::
 
            [2, 0, 1, 5, 3, 2, 4, 6, 5]
 
@@ -1425,7 +1425,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         :attr:`vert_connectivity` at which each vertex cell begins. The point ids of
         vertex cell ``i`` are ``vert_connectivity[vert_offsets[i]:vert_offsets[i + 1]]``.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity. ``len(vert_offsets) - 1`` is therefore
         :attr:`n_verts`, not :attr:`~pyvista.DataSet.n_cells`.
 
@@ -1500,7 +1500,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         another and without any padding. Use :attr:`vert_offsets` to determine where
         each vertex cell begins and ends.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity.
 
         .. versionadded:: 0.49
@@ -1579,7 +1579,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         :attr:`line_connectivity` at which each line begins. The point ids of line ``i``
         are ``line_connectivity[line_offsets[i]:line_offsets[i + 1]]``.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity. ``len(line_offsets) - 1`` is therefore
         :attr:`n_lines`, not :attr:`~pyvista.DataSet.n_cells`.
 
@@ -1654,7 +1654,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         another and without any padding. Use :attr:`line_offsets` to determine where
         each line begins and ends.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity.
 
         .. versionadded:: 0.49
@@ -1731,7 +1731,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         :attr:`face_connectivity` at which each face begins. The point ids of face ``i``
         are ``face_connectivity[face_offsets[i]:face_offsets[i + 1]]``.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity. ``len(face_offsets) - 1`` is therefore
         :attr:`n_faces`, which is only equal to :attr:`~pyvista.DataSet.n_cells` for a
         mesh made up of faces alone.
@@ -1812,7 +1812,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         another and without any padding. Use :attr:`face_offsets` to determine where
         each face begins and ends.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity.
 
         .. versionadded:: 0.49
@@ -1895,7 +1895,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         :attr:`strip_connectivity` at which each strip begins. The point ids of strip
         ``i`` are ``strip_connectivity[strip_offsets[i]:strip_offsets[i + 1]]``.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity. ``len(strip_offsets) - 1`` is therefore
         :attr:`n_strips`, not :attr:`~pyvista.DataSet.n_cells`.
 
@@ -1969,7 +1969,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         another and without any padding. Use :attr:`strip_offsets` to determine where
         each strip begins and ends.
 
-        Vertices, lines, faces and strips are held in four separate cell arrays, each
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
         with its own offsets and connectivity.
 
         .. versionadded:: 0.49
@@ -2278,7 +2278,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             If a string is provided, the texture array will be saved
             to disk as that name.  If an array is provided, the
             texture array will be saved as ``'RGBA'`` if the array
-            contains an alpha channel (i.e. 4 component array), or
+            contains an alpha channel (that is, 4 component array), or
             as ``'RGB'`` if the array is just a 3 component array.
 
             .. note::
@@ -3328,7 +3328,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         type in an ordered fashion.  For a cell type whose cells all have
         the same number of points the value is a single ``[N, D]`` array;
         for a cell type with a data-defined number of points whose cells
-        differ in size (e.g. :attr:`~pyvista.CellType.POLYGON`) the value
+        differ in size (for example, :attr:`~pyvista.CellType.POLYGON`) the value
         is instead a list of ``N`` 1D arrays, one per cell.
 
         .. versionchanged:: 0.46
@@ -4202,7 +4202,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Raises
         ------
         TypeError
-            If the structured grid is not 3D (i.e., any dimension is 1).
+            If the structured grid is not 3D (that is, any dimension is 1).
 
         """
         if any(n == 1 for n in self.dimensions):
@@ -4753,7 +4753,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         Returns
         -------
         tuple[int, int, int]
-            Number of sampling points in the I, J and Z directions respectively.
+            Number of sampling points in the I, J, and Z directions respectively.
 
         Examples
         --------
@@ -4777,7 +4777,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         Returns
         -------
         tuple[float, float, float]
-            The limits of the visible grid in the X, Y and Z
+            The limits of the visible grid in the X, Y, and Z
             directions respectively.
 
         Examples

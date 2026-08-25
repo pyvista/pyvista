@@ -128,7 +128,7 @@ def numpy_to_idarr(
 def _cell_type_n_points(cell_type: CellType) -> int | None:
     """Return the fixed number of points for a cell type, or ``None`` if data-defined.
 
-    Composite, higher-order, polygonal and polyhedral cells do not have a fixed
+    Composite, higher-order, polygonal, and polyhedral cells do not have a fixed
     number of points (:attr:`~pyvista.CellType.n_points` raises for them), so the
     per-cell point count has to come from the connectivity data instead.
     """
@@ -288,7 +288,7 @@ def create_mixed_cells(
     mapping of vtk_type -> np.ndarray (int), where the given ndarray
     for each cell-type has to be an array of dimensions [N, D] or
     [N*D], where N is the number of cells and D is the size of the
-    cells for the given type (e.g. 3 for triangles).  Multiple
+    cells for the given type (for example, 3 for triangles).  Multiple
     vtk_type keys with associated arrays can be present in one
     dictionary.
 
@@ -309,7 +309,7 @@ def create_mixed_cells(
     Parameters
     ----------
     mixed_cell_dict : dict
-        A dictionary that maps VTK-Enum-types (e.g. :attr:`~pyvista.CellType.TRIANGLE`) to
+        A dictionary that maps VTK-Enum-types (for example, :attr:`~pyvista.CellType.TRIANGLE`) to
         np.ndarrays of type int.  The ``np.ndarrays`` describe the cell
         connectivity. For cell types with a data-defined number of points, the value
         may instead be a sequence of 1D integer arrays (one per cell).
@@ -386,9 +386,9 @@ def get_mixed_cells(
     create_mixed_cells), with a mapping vtk_type -> np.ndarray (int).
     For a cell type whose cells all have the same number of points, the
     value is an array of size [N, D], where N is the number of cells and
-    D is the size of the cells for the given type (e.g. 3 for triangles).
+    D is the size of the cells for the given type (for example, 3 for triangles).
     For a cell type with a data-defined number of points whose cells differ
-    in size (e.g. :attr:`~pyvista.CellType.POLYGON`), the value is instead a
+    in size (for example, :attr:`~pyvista.CellType.POLYGON`), the value is instead a
     list of N 1D arrays, one per cell. Both forms round-trip through
     :func:`create_mixed_cells`.
 

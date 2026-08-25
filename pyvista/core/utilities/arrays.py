@@ -336,7 +336,7 @@ def get_array(  # noqa: PLR0917
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
     err: bool = False,  # noqa: FBT001, FBT002
 ) -> pyvista_ndarray | None:
-    """Search point, cell and field data for an array.
+    """Search point, cell, and field data for an array.
 
     Parameters
     ----------
@@ -1048,7 +1048,7 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
         This method does nothing. It only exists to make the pickle library happy.
         Classes that store an instance of this class must pickle this array directly.
-        E.g. DataObjects can support this by storing this array as field data
+        For example, DataObjects can support this by storing this array as field data
         """
 
     def __setstate__(self: _SerializedDictArray, state: Any) -> None:
@@ -1056,7 +1056,7 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
         This method does nothing. It only exists to make the pickle library happy.
         Classes that store an instance of this class must pickle this array directly.
-        E.g. DataObjects can support this by storing this array as field data
+        For example, DataObjects can support this by storing this array as field data
         """
 
     # Override any/all `UserDict` or `MutableMapping` methods which mutate

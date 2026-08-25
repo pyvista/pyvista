@@ -1089,7 +1089,7 @@ class _DataSetMapper(_BaseMapper):
         """Set or return the global flag to avoid z-buffer resolution.
 
         A global flag that controls whether the coincident topology
-        (e.g., a line on top of a polygon) is shifted to avoid
+        (for example, a line on top of a polygon) is shifted to avoid
         z-buffer resolution (and hence rendering problems).
 
         If not off, there are two methods to choose from.

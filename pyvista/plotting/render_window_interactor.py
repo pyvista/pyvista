@@ -1018,7 +1018,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
-        natural view up, e.g., terrain. The camera in such a scene is
+        natural view up, for example, terrain. The camera in such a scene is
         manipulated by specifying azimuth (angle around the view up
         vector) and elevation (the angle from the horizon). Similar to
         the default Trackball Camera style and in contrast to the
@@ -1212,7 +1212,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         elif isinstance(handler, type) and issubclass(handler, _vtk.vtkInteractorStyle):
             style = handler()
         else:
-            # Generic callable — pass the interactor so the factory can
+            # Generic callable—pass the interactor so the factory can
             # configure the style.  The cast is needed because mypy narrows
             # ``Callable[..., Any]`` to a non-callable after two failing
             # ``isinstance(handler, type)`` checks.

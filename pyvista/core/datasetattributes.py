@@ -98,7 +98,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     the active scalars, vectors, normals, and texture coordinates.
     In the arrays list, ``SCALARS`` denotes that these are the active
     scalars, ``VECTORS`` denotes that these arrays are tagged as the
-    active vectors data (i.e. data with magnitude and direction) and
+    active vectors data (that is, data with magnitude and direction) and
     so on.
 
     Examples
@@ -1051,7 +1051,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def to_arrow(self: Self) -> pyarrow.Table:
         """Return this attribute set as a :class:`pyarrow.Table`.
 
-        Each array becomes a column. Multi-component arrays (e.g. a
+        Each array becomes a column. Multi-component arrays (for example, a
         ``(N, 3)`` vector field) are expanded to one column per component,
         named ``{array_name}_{i}``. Only ``point_data`` and ``cell_data``
         can be converted. ``field_data`` raises :class:`ValueError`

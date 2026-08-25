@@ -269,7 +269,7 @@ class Config(_ConfigBase):
         .. warning::
 
             This option requires runtime inspection and does not work with all developer
-            tools, e.g. it has no effect when using PyCharm. This is because it relies on
+            tools, for example, it has no effect when using PyCharm. This is because it relies on
             calling the object's ``__dir__`` method for generating auto-completion
             suggestions. Tools like PyCharm that only use static analysis for
             auto-completion are therefore unaffected.

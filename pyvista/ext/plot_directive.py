@@ -70,7 +70,7 @@ The ``pyvista-plot`` directive supports the following options:
 
     skip : bool, default: True
         Whether to skip execution of this directive. If no argument is provided
-        i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
+        that is, ``:skip:``, then it defaults to ``:skip: true``.  Default
         behaviour is controlled by the ``pyvista_plot_skip`` boolean variable in
         :file:`conf.py`.  Note that, if specified, this option overrides the
         ``pyvista_plot_skip`` configuration.

@@ -901,7 +901,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return None
 
     def _drop_border_actor(self):
-        """Remove this renderer's own border actor(s), if any.
+        """Remove this renderer's own border actors, if any.
 
         Used when subplot seams are being drawn by a shared overlay
         renderer so neighboring renderers don't each rasterize their
@@ -3047,7 +3047,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     ) -> None:
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and z-axis.
+        Scaling in performed independently on the X, Y, and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
@@ -3837,17 +3837,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
             sampling rate explicitly or set to ``True`` to downsample the
-            texture to 1/16th of its original resolution. By default, the
+            texture to 1/16 of its original resolution. By default, the
             theme value for ``resample_environment_texture`` is used, which
             is ``False`` for the standard theme.
 
             Downsampling the texture can substantially improve performance for
-            some environments, e.g. headless setups or if GPU support is limited.
+            some environments, for example, headless setups or if GPU support is limited.
 
             .. note::
 
                 This will resample the texture used for image-based lighting only,
-                e.g. the texture used for rendering reflective surfaces. It
+                for example, the texture used for rendering reflective surfaces. It
                 does `not` resample the background texture.
 
             .. versionadded:: 0.45
@@ -4149,7 +4149,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
               item to add, and ``color`` is the color of the label to add.
             * Three strings ([label, color, face]) where ``label`` is the name
               of the item to add, ``color`` is the color of the label to add,
-              and ``face`` is a string which defines the face (i.e. ``circle``,
+              and ``face`` is a string which defines the face (that is, ``circle``,
               ``triangle``, ``box``, etc.).
               ``face`` could be also ``"none"`` (no face shown for the entry),
               or a :class:`pyvista.PolyData`.
@@ -4160,7 +4160,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            list, or a matplotlib color string (for example, ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
             disabled.
 
@@ -4194,7 +4194,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         face : str | pyvista.PolyData, optional
             Face shape of legend face. Defaults to a triangle for most meshes,
             with the exception of glyphs where the glyph is shown
-            (e.g. arrows).
+            (for example, arrows).
 
             You may set it to one of the following:
 
@@ -4404,7 +4404,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         The ruler is a 2D object that is not occluded by 3D objects.
         To avoid issues with perspective, it is recommended to use
-        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        parallel projection, that is, :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
         The title and labels are placed to the right of ruler moving from
@@ -4439,7 +4439,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. '%E'.
+            A printf style format for labels, for example, '%E'.
 
         title : str, default: "Distance"
             The title to display.
@@ -4638,7 +4638,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. ``'%E'``.
+            A printf style format for labels, for example, ``'%E'``.
             See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0
@@ -4665,7 +4665,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         Please be aware that the axes and scale values are subject to perspective
         effects. The distances are computed in the focal plane of the camera. When
-        there are large view angles (i.e., perspective projection), the computed
+        there are large view angles (that is, perspective projection), the computed
         distances may provide users the wrong sense of scale. These effects are not
         present when parallel projection is enabled.
 

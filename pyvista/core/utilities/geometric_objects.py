@@ -55,7 +55,7 @@ def Capsule(  # noqa: PLR0917
 
     .. warning::
        :func:`pyvista.Capsule` function rotates the capsule :class:`pyvista.PolyData`
-       in its own way. It rotates the output 90 degrees in z-axis, translates and
+       in its own way. It rotates the output 90 degrees in z-axis, translates, and
        orients the mesh to a new ``center`` and ``direction``.
 
     .. note::
@@ -455,7 +455,7 @@ def Sphere(  # noqa: PLR0917
 
             For textures of Earth such as :func:`~pyvista.examples.examples.load_globe_texture`,
             the texture's seam corresponds to 180 degrees longitude. Accordingly, it is necessary
-            to rotate the sphere 180 degrees along the polar axis, (e.g. using
+            to rotate the sphere 180 degrees along the polar axis, (for example, using
             :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
             the Prime Meridian along the positive x-axis.
 
@@ -600,7 +600,7 @@ def SolidSphere(  # noqa: PLR0917
 
     phi_resolution : int, default: 30
         Number of points in ``phi`` direction,
-        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
+        inclusive of polar axis, that is, ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -1582,7 +1582,7 @@ def Text3D(  # noqa: PLR0917
 ) -> PolyData:
     """Create 3D text from a string.
 
-    The text may be configured to have a specified width, height or depth.
+    The text may be configured to have a specified width, height, or depth.
 
     Parameters
     ----------
@@ -1818,7 +1818,7 @@ def CircularArc(  # noqa: PLR0917
         ``pointa`` and ``pointb``.
 
         By setting this to ``True``, the longest angular sector is
-        used instead (i.e. the negative coterminal angle to the
+        used instead (that is, the negative coterminal angle to the
         shortest one).
 
     Returns

@@ -110,7 +110,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         * MIRRORED_REPEAT
         * CLAMP_TO_BORDER
 
-        Members accept either their ``int`` value or ``str`` annotation, e.g.
+        Members accept either their ``int`` value or ``str`` annotation, for example
         ``WrapType.from_any('Repeat')``.
 
         See :attr:`Texture.wrap` for usage.
@@ -542,7 +542,7 @@ class Texture(DataObject, _vtk.vtkTexture):
     def n_components(self) -> int:  # numpydoc ignore=RT01
         """Return the number of components in the image.
 
-        In textures, 3 or 4 components are used for representing RGB and RGBA
+        Textures use 3 or 4 components to represent RGB and RGBA
         images.
 
         Examples

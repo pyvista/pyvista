@@ -1427,7 +1427,7 @@ class PickingComponent(_NoNewAttrMixin):
         through : bool, default: True
             When ``True`` the picker will select all cells
             through the mesh(es). When ``False``, the picker will select
-            only visible cells on the selected surface(s).
+            only visible cells on the selected surfaces.
 
         show : bool, default: True
             Show the selection interactively.

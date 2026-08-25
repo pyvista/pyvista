@@ -88,7 +88,7 @@ def metaclass_property_descriptions(  # numpydoc ignore=RT01
 ) -> list[tuple[str, str]]:
     """Return ``[(name, first docstring line)]`` for ``module.objname``'s metaclass properties.
 
-    ``.. autosummary::`` gets each entry's description the same eagerly-evaluated way it gets
+    ``.. autosummary::`` gets each entry's description the same eagerly evaluated way it gets
     everything else here wrong -- so enum.rst builds its own table from this instead.
     """
     props = _metaclass_properties(_resolve(module, objname))
@@ -103,7 +103,7 @@ def _is_bitmask_like(cls: type[Enum]) -> bool:
     """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two).
 
     Only ``int``-valued enums (``IntEnum``, ``IntFlag``, ...) can look like bit flags --
-    ``int(member.value)`` would raise for e.g. a ``str``-valued ``Enum``.
+    ``int(member.value)`` would raise, for example, for a ``str``-valued ``Enum``.
     """
     if issubclass(cls, Flag):
         return True
@@ -198,7 +198,7 @@ class EnumDocumenter(ClassDocumenter):
     def _document_members(self, sourcename: str) -> None:
         """Write out each enum member's value and (if any) docstring, flat under one rubric.
 
-        Regular properties and metaclass properties (e.g. dimension_map) are *not*
+        Regular properties and metaclass properties (for example, dimension_map) are *not*
         written here -- both get their own page via enum.rst's Attributes table instead,
         the same as any other class's attributes.
         """

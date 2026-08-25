@@ -1714,7 +1714,7 @@ class Theme(_ConfigBase):
 
     """
 
-    # ``_plot_cell`` is an internal-only sub-config — exclude it from
+    # ``_plot_cell`` is an internal-only sub-config—exclude it from
     # ``to_dict`` output so themes serialize/deserialize round-trip cleanly.
     _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'plot_cell'})
 
@@ -1726,7 +1726,7 @@ class Theme(_ConfigBase):
         # Read from __dict__ directly so inherited _default_name does not
         # accidentally re-register a parent theme's name.
         if '_default_name' not in cls.__dict__:
-            # Subclass does not opt into name-based discovery. Silent skip —
+            # Subclass does not opt into name-based discovery. Silent skip—
             # ad-hoc subclasses are a valid pattern.
             return
         name = cls.__dict__['_default_name']
@@ -2538,7 +2538,7 @@ class Theme(_ConfigBase):
         .. versionadded:: 0.49
 
         This is the color of the frame drawn around the outer edge of
-        the plotting area, of the line(s) drawn between subplots, or
+        the plotting area, of the lines drawn between subplots, or
         both -- whichever ``border`` is set to draw. Used whenever no
         explicit ``border_color`` is provided.
 
@@ -3381,11 +3381,11 @@ class Theme(_ConfigBase):
         Resample the environment texture when using
         :meth:`~pyvista.Plotter.set_environment_texture`.
         Set this to a float to set the sampling rate explicitly or set
-        to ``True`` to downsample the texture to 1/16th of its original
+        to ``True`` to downsample the texture to 1/16 of its original
         resolution.
 
         Downsampling the texture can substantially improve performance for
-        some environments, e.g. headless setups or if GPU support is limited.
+        some environments, for example, headless setups or if GPU support is limited.
 
         .. versionadded:: 0.45
 

@@ -1001,7 +1001,7 @@ class AxesAssembly(_XYZAssembly):
 
         value : float | str | ColorLike | Sequence[float | str | ColorLike]
             Value to set the attribute to. If a single value, set all specified axes
-            shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
+            shafts or tips :class:`~pyvista.Property` attributes to this value.
             If a sequence of values, set the specified parts to these values.
 
         axis : str | int, default: 'all'

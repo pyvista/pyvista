@@ -890,7 +890,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
 
-        Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
+        Requires lines in the scene, for example, with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
 
         See Also

@@ -35,7 +35,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
     """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
-    properties and methods relating to an entity's position, orientation
+    properties and methods relating to an entity's position, orientation,
     and scale. It is used as parent class for :class:`pyvista.Actor`,
     :class:`pyvista.AxesActor`, and :class:`pyvista.plotting.volume.Volume`.
 
@@ -418,10 +418,10 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         multiply_mode : 'pre' | 'post', default: 'post'
             Multiplication mode to use.
 
-            - ``'pre'``: pre-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+            - ``'pre'``: pre-multiply ``trans`` with the :attr:`user_matrix`, that is
               ``user_matrix @ trans``. The transformation is applied `before` the
               current user-matrix.
-            - ``'post'``: post-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+            - ``'post'``: post-multiply ``trans`` with the :attr:`user_matrix`, that is
               ``trans @ user_matrix``. The transformation is applied `after` the
               current user-matrix.
 
@@ -573,7 +573,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
     Derived classes need to implement the :meth:`_post_set_update` method to define
-    their behavior, e.g. manually apply a transformation.
+    their behavior, for example, manually apply a transformation.
     """
 
     def __init__(self) -> None:

@@ -2396,7 +2396,7 @@ def color_scheme_to_cycler(scheme):
     ----------
     scheme : str | int | :vtk:`vtkColorSeries`
         Color scheme to be converted. If a string, it should correspond to a
-        valid color scheme name (e.g., 'viridis'). If an integer, it should
+        valid color scheme name (for example, 'viridis'). If an integer, it should
         correspond to a valid color scheme ID. If an instance of
         :vtk:`vtkColorSeries`, it should be a valid color series.
 

@@ -1105,7 +1105,8 @@ class DataObjectFilters:
 
         **Point validation fields**
 
-        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
+        - ``non_finite_points``: Ensure all points have real values (that is, no
+          ``NaN`` or ``Inf``).
         - ``unused_points``: Ensure all points are referenced by at least one cell.
 
         **Cell validation fields**
@@ -1138,7 +1139,7 @@ class DataObjectFilters:
 
         - ``None`` if the field is omitted from the report,
         - an empty list ``[]`` if the field is included but there is no issue to report for it, or
-        - a list of invalid items (e.g. invalid array names or cell/point ids).
+        - a list of invalid items (for example, invalid array names or cell/point ids).
 
         In addition to the validation fields above, the report includes properties for
         convenience:
@@ -1169,14 +1170,14 @@ class DataObjectFilters:
             - Report fields are now sorted in alphabetical order. Point fields are also reported
               before cell fields.
             - The body of the report now shows the error message instead of validation fields,
-              i.e. the default value of ``report_body`` is now ``'message'`` instead of
+              that is, the default value of ``report_body`` is now ``'message'`` instead of
               ``'fields'``.
 
         Parameters
         ----------
         validation_fields : MeshValidationFields | sequence[MeshValidationFields], optional
-            Select which field(s) to include in the validation report. All data, point, and cell
-            fields are included by default. Specify individual fields by name, or use group name(s)
+            Select which fields to include in the validation report. All data, point, and cell
+            fields are included by default. Specify individual fields by name, or use group names
             to include multiple related validation fields:
 
             - ``'data'`` to include all data fields
@@ -1193,7 +1194,7 @@ class DataObjectFilters:
             By default, no action is taken.
 
         exclude_fields : MeshValidationFields | sequence[MeshValidationFields], optional
-            Select which field(s) to exclude from the validation report. This is similar to
+            Select which fields to exclude from the validation report. This is similar to
             using ``validation_fields``, but is subtractive instead of additive. All data, point,
             and cell fields are `included` by default, and no fields are excluded.
 
@@ -1292,7 +1293,8 @@ class DataObjectFilters:
             Wrong number of points   : []
             Zero size                : []
 
-        Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.downloads.download_cow`
+        Load a mesh with invalid cells, for example,
+        :func:`~pyvista.examples.downloads.download_cow`
         and validate it. Use ``'cells'`` to only validate the cells specifically.
 
         >>> mesh = examples.download_cow()
@@ -1336,7 +1338,7 @@ class DataObjectFilters:
         >>> report.is_valid
         False
 
-        Show what the issue(s) are.
+        Show what the issues are.
 
         >>> report.invalid_fields
         ('non_convex',)
@@ -1380,7 +1382,7 @@ class DataObjectFilters:
         Invalid cell ids:
             Intersecting edges       : []
 
-        Even though other fields are invalid (i.e. ``non_convex``), for `these` specific
+        Even though other fields are invalid (that is, ``non_convex``), for `these` specific
         validation fields the mesh is considered valid.
 
         >>> report.is_valid
@@ -1542,7 +1544,7 @@ class DataObjectFilters:
         ----------
         tolerance : float, default: 1.1920929e-07
             Value used for most floating point equality checks throughout the cell checking
-            process, e.g. for checking coincident points or intersecting edges.
+            process, for example, for checking coincident points or intersecting edges.
             The default value is the epsilon (``eps``) of ``float32`` dtype using
             :attr:`numpy.finfo`.
 
@@ -1833,7 +1835,7 @@ class DataObjectFilters:
             When using ``transform_all_input_vectors=True``, there is
             no distinction in VTK between vectors and arrays with
             three components.  This may be an issue if you have scalar
-            data with three components (e.g. RGB data).  This will be
+            data with three components (for example, RGB data).  This will be
             improperly transformed as if it was vector data rather
             than scalar data.  One possible (albeit ugly) workaround
             is to store the three components as separate scalar
@@ -2174,7 +2176,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2301,7 +2303,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2369,7 +2371,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2433,7 +2435,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2502,7 +2504,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2877,7 +2879,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2939,7 +2941,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -3001,7 +3003,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -3067,7 +3069,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -4362,7 +4364,7 @@ class DataObjectFilters:
         ----------
         dimensionality : int | 'auto', default: 3
             The dimensionality of the hull. If ``'auto'``, the dimensionality is set to
-            this mesh's :attr:`~pyvista.DataSet.dimensionality`, i.e. points are not
+            this mesh's :attr:`~pyvista.DataSet.dimensionality`, that is, points are not
             assumed to span all three dimensions. Auto-detection has a computational cost
             and is not enabled by default. Note that a 2D hull is computed from points
             projected onto this mesh's best-fit plane, so requesting ``dimensionality=2``
@@ -5203,20 +5205,20 @@ class DataObjectFilters:
         Parameters
         ----------
         quality_measure : str | sequence[str], default: 'scaled_jacobian'
-            The cell quality measure(s) to use. May be either:
+            The cell quality measures to use. May be either:
 
             - A single measure or a sequence of measures listed in
               :ref:`cell_quality_measures_table`.
             - ``'all'`` to compute all measures.
             - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
-              cell type(s).
+              cell types.
 
             A separate array is created for each measure.
 
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
             that could be addressed by this filter but is not well defined for
-            the particular geometry of cell in question, e.g. a volume query
+            the particular geometry of cell in question, for example, a volume query
             for a triangle. Undefined quality will always be undefined.
             The default value is -1.
 
@@ -5227,7 +5229,7 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset with the computed mesh quality. Return type matches input.
-            Cell data array(s) with the computed quality measure(s) are included.
+            Cell data arrays with the computed quality measures are included.
 
         See Also
         --------

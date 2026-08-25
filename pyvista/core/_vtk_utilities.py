@@ -99,7 +99,7 @@ def vtk_backend() -> str:
     -------
     str
         Name of the active backend: ``'vtk'`` for stock VTK, otherwise the
-        backend's package name (e.g. ``'cvista'``).
+        backend's package name (for example, ``'cvista'``).
 
     Examples
     --------

@@ -58,7 +58,7 @@ def handle_plotter(
                 ' pip install trame-pyvista'
             )
 
-    # Custom backends (registered or from entry points — including trame-pyvista)
+    # Custom backends (registered or from entry points—including trame-pyvista)
     custom_handler = _get_custom_backend_handler(backend)
     if custom_handler is not None:
         return cast(
@@ -66,7 +66,7 @@ def handle_plotter(
             custom_handler(plotter, screenshot=screenshot, **kwargs),
         )
 
-    # Trame backend names with no registered handler — fall back with a hint
+    # Trame backend names with no registered handler—fall back with a hint
     if backend in ('server', 'client', 'trame', 'html'):
         _ensure_entry_points()
         if _custom_backends:

@@ -1958,7 +1958,7 @@ class _Plot(DocSubs):
 class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
-    Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
+    Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
     """
 
     DEFAULT_COLOR_SCHEME = 'qual_accent'
@@ -3391,7 +3391,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             Values to plot on the Y-axis.
 
         fmt : str, default: "-"
-            A format string, e.g. ``'ro'`` for red circles. See the Notes
+            A format string, for example, ``'ro'`` for red circles. See the Notes
             section for a full description of the format strings.
 
         Returns
@@ -3973,7 +3973,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     def hide_axes(self) -> None:
         """Hide the x- and y-axis of this chart.
 
-        This includes all labels, ticks and the grid.
+        This includes all labels, ticks, and the grid.
 
         Examples
         --------
@@ -4009,7 +4009,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         The chart containing this plot.
 
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4114,12 +4114,12 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
     def update(self, data) -> None:
-        """Update the plot's underlying dataset(s).
+        """Update the plot's underlying datasets.
 
         Parameters
         ----------
         data : sequence[array_like]
-            The new dataset(s) used in this box plot.
+            The new datasets used in this box plot.
 
         Examples
         --------
@@ -4152,7 +4152,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     Parameters
     ----------
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4970,8 +4970,8 @@ class Charts(_NoNewAttrMixin):
               or indices.
 
         toggle : bool, default: False
-            Instead of enabling interaction with the provided chart(s), interaction
-            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            Instead of enabling interaction with the provided charts, interaction
+            with the provided charts is toggled. Only applicable when ``interactive``
             is not a boolean.
 
         Returns

@@ -1224,7 +1224,7 @@ def ParametricSuperToroid(  # noqa: PLR0917
     ParametricSuperToroid generates a supertoroid.  Essentially a
     supertoroid is a torus with the sine and cosine terms raised to a power.
     A supertoroid is a versatile primitive that is controlled by four
-    parameters r0, r1, n1 and n2. r0, r1 determine the type of torus whilst
+    parameters r0, r1, n1, and n2. r0, r1 determine the type of torus whilst
     the value of n1 determines the shape of the torus ring and n2 determines
     the shape of the cross section of the ring. It is the different values of
     these powers which give rise to a family of 3D shapes that are all

@@ -161,7 +161,7 @@ def _filter_multiblock_children(paths: list[Path]) -> tuple[list[Path], list[Pat
     """Drop paths that live inside a sibling sidecar directory of a MultiBlock parent.
 
     A ``.vtm`` / ``.vtmb`` file ``parent.vtm`` is paired on disk with a sidecar directory
-    ``parent/`` that holds the child blocks (e.g. ``parent/parent_0.vtp``). When both the
+    ``parent/`` that holds the child blocks (for example, ``parent/parent_0.vtp``). When both the
     parent and its sidecar children appear in the same input list, converting the children
     individually would duplicate work and break the 1:1 input/output mapping the user
     expects from a parent ``.vtm``.

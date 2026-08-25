@@ -1531,7 +1531,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         self.auto_detect_format = True
 
     def add_q_files(self, files) -> None:
-        """Add q file(s).
+        """Add q files.
 
         Parameters
         ----------
@@ -1646,7 +1646,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     Creates a multi-block dataset and reads unstructured grids and structured
     meshes from binary files stored in CGNS file format, with data stored at
-    the nodes, cells or faces.
+    the nodes, cells, or faces.
 
     By default, all point and cell arrays are loaded as well as the boundary
     patch. This varies from VTK's defaults. For more details, see
@@ -1758,7 +1758,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def enable_all_bases(self) -> None:
         """Enable reading all bases.
 
-        By default only the 0th base is read.
+        By default only base 0 is read.
 
         Examples
         --------
@@ -1776,7 +1776,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def disable_all_bases(self) -> None:
         """Disable reading all bases.
 
-        By default only the 0th base is read.
+        By default only base 0 is read.
 
         Examples
         --------
@@ -1832,7 +1832,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def enable_all_families(self) -> None:
         """Enable reading all families.
 
-        By default only the 0th family is read.
+        By default only family 0 is read.
 
         Examples
         --------
@@ -3946,8 +3946,9 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
 
     Supported element types include: HE8, PE6, PE15, TE4, HE20, TE10, TR3, TR6, QU4, QU8, BE2, BE3.
 
-    For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically
-    pre-computes and appends the following derived scalar arrays to the output mesh:
+    For datasets containing 6-component tensors (for example STRESS or STRAIN), this
+    reader automatically pre-computes and appends the following derived scalar arrays
+    to the output mesh:
 
     - ``<NAME>_Mises``: equivalent von Mises magnitude.
     - ``<NAME>_sgMises``: signed von Mises magnitude.
@@ -4481,7 +4482,7 @@ def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
 def _derive_reader_output_types(
     cls: type[BaseReader[Any]],
 ) -> _mesh_types | tuple[_mesh_types, ...]:
-    """Return the output type(s) declared by a reader class.
+    """Return the output types declared by a reader class.
 
     Uses the ``_output_types`` class attribute when a reader's ``BaseReader[X]``
     generic parameter is a widened common supertype (multi-output readers);

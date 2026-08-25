@@ -673,7 +673,7 @@ class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSour
 class Text3DSource(_NoNewAttrMixin):
     """3D text from a string.
 
-    Generate 3D text from a string with a specified width, height or depth.
+    Generate 3D text from a string with a specified width, height, or depth.
 
     .. versionadded:: 0.43
 
@@ -3016,7 +3016,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
     :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
-    The generated axes are "true-to-scale" by default, i.e. a shaft with a
+    The generated axes are "true-to-scale" by default, that is, a shaft with a
     radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
     arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
 
@@ -3357,7 +3357,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
     def shaft_type(self: AxesGeometrySource) -> str:  # numpydoc ignore=RT01
         """Shaft type for all axes.
 
-        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        Must be a string, for example, ``'cylinder'`` or ``'cube'`` or any other supported
         geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
         may also be specified. In this case, the dataset must be oriented such that it
         "points" in the positive z direction.
@@ -3396,7 +3396,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
     def tip_type(self: AxesGeometrySource) -> str:  # numpydoc ignore=RT01
         """Tip type for all axes.
 
-        Must be a string, e.g. ``'cone'`` or ``'sphere'`` or any other supported
+        Must be a string, for example, ``'cone'`` or ``'sphere'`` or any other supported
         geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
         may also be specified. In this case, the dataset must be oriented such that it
         "points" in the positive z direction.

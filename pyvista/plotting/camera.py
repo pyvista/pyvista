@@ -834,7 +834,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         Parameters
         ----------
         padding : float, default: 0.0
-            Additional padding around the actor(s). This is effectively a zoom,
+            Additional padding around the actors. This is effectively a zoom,
             where a value of 0.01 results in a zoom out of 1%.
 
         adjust_render_window : bool, default: True

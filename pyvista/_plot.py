@@ -228,7 +228,7 @@ def plot(  # noqa: ANN202, PLR0917
 
     theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme. Accepts a ``Theme`` instance or a registered
-        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
+        theme name (for example, ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,

@@ -140,7 +140,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            If your boolean operations don't react the way you think they
-           should (i.e. the wrong parts disappear), one of your meshes
+           should (that is, the wrong parts disappear), one of your meshes
            probably has its normals pointing inward. Use
            :func:`PolyDataFilters.plot_normals` to visualize the
            normals.
@@ -213,7 +213,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            If your boolean operations don't react the way you think they
-           should (i.e. the wrong parts disappear), one of your meshes
+           should (that is, the wrong parts disappear), one of your meshes
            probably has its normals pointing inward. Use
            :func:`PolyDataFilters.plot_normals` to visualize the
            normals.
@@ -298,7 +298,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            If your boolean operations don't react the way you think they
-           should (i.e. the wrong parts disappear), one of your meshes
+           should (that is, the wrong parts disappear), one of your meshes
            probably has its normals pointing inward. Use
            :func:`PolyDataFilters.plot_normals` to visualize the
            normals.
@@ -387,7 +387,7 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         *meshes : list[pyvista.PolyData]
-            The PolyData(s) to append with the current one.
+            The ``PolyData`` objects to append with the current one.
 
         inplace : bool, default: False
             Whether to update the mesh in-place.
@@ -398,7 +398,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Appended PolyData(s).
+            The appended ``PolyData`` objects.
 
         Examples
         --------
@@ -1140,7 +1140,7 @@ class PolyDataFilters(DataSetFilters):
             original number of vertices.
 
         feature_angle : float, default: 45.0
-            Angle used to define what an edge is (i.e., if the surface
+            Angle used to define what an edge is (that is, if the surface
             normal between two adjacent triangles is >= ``feature_angle``,
             an edge exists).
 
@@ -1581,7 +1581,7 @@ class PolyDataFilters(DataSetFilters):
         and/or edge length criteria. New points may be inserted only
         on edges; depending on the number of edges to be subdivided a
         different number of triangles are inserted ranging from two
-        (i.e., two triangles replace the original one) to four.
+        (that is, two triangles replace the original one) to four.
 
         Point and cell data is treated as follows: The cell data from
         a parent triangle is assigned to its subdivided
@@ -1611,14 +1611,14 @@ class PolyDataFilters(DataSetFilters):
             of the algorithm and the results may be less than
             satisfactory (for example non-watertight meshes may be
             created). By default, the limit is set to a very large
-            number (i.e., no effective limit).
+            number (that is, no effective limit).
 
         max_n_passes : int, optional
-            The maximum number of passes (i.e., levels of
+            The maximum number of passes (that is, levels of
             subdivision). If the limit is hit, then the subdivision
             process stops and additional passes (needed to meet other
             criteria) are aborted. The default limit is set to a very
-            large number (i.e., no effective limit).
+            large number (that is, no effective limit).
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -1933,7 +1933,7 @@ class PolyDataFilters(DataSetFilters):
         auto_orient_normals : bool, default: False
             Turn on/off the automatic determination of correct normal
             orientation. NOTE: This assumes a completely closed
-            surface (i.e. no boundary edges) and no non-manifold
+            surface (that is, no boundary edges) and no non-manifold
             edges. If these constraints do not hold, all bets are
             off. This option adds some computational complexity, and
             is useful if you do not want to have to inspect the
@@ -2819,7 +2819,7 @@ class PolyDataFilters(DataSetFilters):
 
         use_every : int, default: 1
             Display every nth normal.  By default every normal is
-            displayed.  Display every 10th normal by setting this
+            displayed.  Display every tenth normal by setting this
             parameter to 10.
 
         faces : bool, default: False
@@ -3042,7 +3042,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
 
-            Polygon cells have an implicitly-defined orientation, and reversing
+            Polygon cells have an implicitly defined orientation, and reversing
             the ordering affects how normals are computed by filters like
             :meth:`~pyvista.PolyDataFilters.compute_normals`.
 
@@ -3129,7 +3129,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
 
-            Polygon cells have an implicitly-defined orientation which may differ
+            Polygon cells have an implicitly defined orientation which may differ
             from the orientation of the normal vectors. To ensure that the normals
             are consistent with this implicit definition, consider also using
             :meth:`~pyvista.PolyDataFilters.flip_faces` or re-computing normals with
@@ -3243,7 +3243,7 @@ class PolyDataFilters(DataSetFilters):
             edges and loops. If set, and lines/polygons are defined, a
             constrained triangulation is created. The lines/polygons
             are assumed to reference points in the input point set
-            (i.e. point ids are identical in the input and
+            (that is, point ids are identical in the input and
             source).
 
         progress_bar : bool, default: False
@@ -3661,7 +3661,7 @@ class PolyDataFilters(DataSetFilters):
         in a cylindrical shell, and sweeping a circle creates a torus.
 
         There are a number of control parameters for this filter.  You
-        can control whether the sweep of a 2D object (i.e., polygon or
+        can control whether the sweep of a 2D object (polygon or
         triangle strip) is capped with the generating geometry via the
         ``capping`` parameter. Also, you can control the angle of
         rotation, and whether translation along the axis is
@@ -3811,7 +3811,7 @@ class PolyDataFilters(DataSetFilters):
         """Extrude polygonal data trimmed by a surface.
 
         The input dataset is swept along a specified direction forming a
-        "skirt" from the boundary edges 2D primitives (i.e., edges used
+        "skirt" from the boundary edges 2D primitives (that is, edges used
         by only one polygon); and/or from vertices and lines. The extent
         of the sweeping is defined where the sweep intersects a
         user-specified surface.
@@ -3920,7 +3920,7 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Strip poly data cells.
 
-        Generates triangle strips and/or poly-lines from input
+        Generates triangle strips and/or polylines from input
         polygons, triangle strips, and lines.
 
         Polygons are assembled into triangle strips only if they are
@@ -3948,7 +3948,7 @@ class PolyDataFilters(DataSetFilters):
 
         max_length : int, default: 1000
             Specify the maximum number of triangles in a triangle
-            strip, and/or the maximum number of lines in a poly-line.
+            strip, and/or the maximum number of lines in a polyline.
 
         pass_cell_data : bool, default: False
             Enable/Disable passing of the CellData in the input to the
@@ -4424,7 +4424,7 @@ class PolyDataFilters(DataSetFilters):
         This filter will generate triangles to fill all of the 2D contours
         in its input. The input to the filter is a set of lines (not polylines)
         which when joined form loops. The contours may be concave, and may even
-        contain holes i.e. a contour may contain an internal contour that is
+        contain holes that is, a contour may contain an internal contour that is
         wound in the opposite direction (as compared to the outer polygon
         normal) to indicate that it is a hole.
 
@@ -4538,7 +4538,7 @@ class PolyDataFilters(DataSetFilters):
         somewhat close to one another. A surface is generated
         by connecting the points defining each pair of lines
         with straight lines. This creates a strip for each pair
-        of lines (i.e., a triangulation is created from two
+        of lines (that is, a triangulation is created from two
         generating lines). The filter can handle an arbitrary
         number of lines, with lines i and i+1 assumed
         connected. Note that there are several different

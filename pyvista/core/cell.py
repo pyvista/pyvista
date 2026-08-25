@@ -674,7 +674,7 @@ class CellArray(
     Parameters
     ----------
     cells : np.ndarray or list, optional
-        Import an array of data with the legacy :vtk:`vtkCellArray` layout, e.g.
+        Import an array of data with the legacy :vtk:`vtkCellArray` layout, for example
         ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
         Where n0 is the number of points in cell 0, and pX_Y is the Y'th
         point in cell X.
@@ -1023,7 +1023,7 @@ class CellArray(
     ) -> CellArray:
         """Construct a ``CellArray`` from cells which all have the same size.
 
-        Use this method when every cell has the same number of points, e.g. an
+        Use this method when every cell has the same number of points, for example, an
         array of triangles or an array of quads. The cell offsets are computed
         directly from the cell size, and the input array is used as the
         connectivity array. Use :meth:`from_irregular_cells` instead if the
@@ -1080,7 +1080,7 @@ class CellArray(
     def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
         """Construct a ``CellArray`` from cells which may have different sizes.
 
-        Use this method when the cells have varying numbers of points, e.g. a
+        Use this method when the cells have varying numbers of points, for example, a
         mix of triangles and quads. The cell offsets are computed from the
         length of each cell, and the connectivity array is built by
         concatenating the cells. Use :meth:`from_regular_cells` instead if all

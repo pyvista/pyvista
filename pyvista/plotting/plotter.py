@@ -520,7 +520,7 @@ class BasePlotter(_BoundsSizeMixin):
         Before falling through, check whether ``item`` matches a
         pending ``pyvista.plotter_components`` entry point. A match
         triggers a one-shot plugin import, after which normal attribute
-        resolution finds the newly-attached component descriptor.
+        resolution finds the newly attached component descriptor.
 
         Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
         and dataset extension points present the same lookup contract.
@@ -3054,11 +3054,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         copy_mesh : bool, default: False
             If ``True``, a copy of the mesh will be made before adding it to
-            the plotter.  This is useful if e.g. you would like to add the same
+            the plotter.  This is useful if for example, you would like to add the same
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
-            have these updates rendered, e.g. by changing the active scalars or
+            have these updates rendered, for example, by changing the active scalars or
             through an interactive widget.
 
         show_vertices : bool, optional
@@ -3707,7 +3707,7 @@ class BasePlotter(_BoundsSizeMixin):
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
-            have these updates rendered, e.g. by changing the active scalars or
+            have these updates rendered, for example, by changing the active scalars or
             through an interactive widget. This should only be set to ``True``
             with caution. Defaults to ``False``. This is ignored if the input
             is a :vtk:`vtkAlgorithm` subclass.
@@ -4532,7 +4532,7 @@ class BasePlotter(_BoundsSizeMixin):
             * ``'sigmoid_20'`` - Linear map between -20.0 and 20.0
             * ``'foreground'`` - Transparent background and opaque foreground.
                 Intended for use with segmentation labels. Assumes the smallest
-                scalar value of the array is the background value (e.g. 0).
+                scalar value of the array is the background value (for example, 0).
 
             If RGBA scalars are provided, this parameter is set to ``'linear'``
             to ensure the opacity transfer function has no effect on the input
@@ -4593,7 +4593,7 @@ class BasePlotter(_BoundsSizeMixin):
             'Blues', and 'Grays'.
 
         blending : str, optional
-            Blending mode for visualisation of the input object(s). Can be
+            Blending mode for visualisation of the input objects. Can be
             one of 'additive', 'maximum', 'minimum', 'composite', or
             'average'. Defaults to 'composite'.
 
@@ -6995,7 +6995,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         threaded : bool, default: False
             Run this as a background thread.  Generally used within a
-            GUI (i.e. PyQt).
+            GUI (that is, PyQt).
 
         progress_bar : bool, default: False
             Show the progress bar when proceeding through the path.
@@ -7355,7 +7355,7 @@ class BasePlotter(_BoundsSizeMixin):
         ]
 
     # =======================================================================
-    # Picking — forwarding shims for plotter.picking component.
+    # Picking—forwarding shims for plotter.picking component.
     # =======================================================================
 
     @functools.wraps(PickingComponent.disable_picking)
@@ -7549,7 +7549,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.picking.picked_horizon
 
     # =======================================================================
-    # Widgets — forwarding shims for plotter.widgets component.
+    # Widgets—forwarding shims for plotter.widgets component.
     # =======================================================================
 
     @functools.wraps(WidgetComponent.add_box_widget)
@@ -7743,7 +7743,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.widgets.clear_camera3d_widgets(*args, **kwargs)
 
     # =======================================================================
-    # Widgets — deprecated forwarding properties for state collections.
+    # Widgets—deprecated forwarding properties for state collections.
     # =======================================================================
 
     @property
@@ -8118,7 +8118,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme. Accepts a ``Theme`` instance or a registered
-        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
+        theme name (for example, ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
@@ -8247,7 +8247,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # On macOS, vtkCocoaRenderWindow creates an NSWindow even for
             # off-screen rendering, which shows a dock icon and requires
             # the main thread.  Disconnecting from NSView creates a
-            # standalone CGL context instead — no dock icon, no
+            # standalone CGL context instead—no dock icon, no
             # main-thread requirement, and enables background-thread rendering.
             _prepare_offscreen_macos_render_window(self.render_window)
             # vtkGenericRenderWindowInteractor has no event loop and

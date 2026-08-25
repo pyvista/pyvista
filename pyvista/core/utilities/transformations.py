@@ -379,7 +379,7 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
     such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
     unique and is computed with polar matrix decomposition.
 
-    By default, compact representations of the transformations are returned (e.g. as a
+    By default, compact representations of the transformations are returned (for example, as a
     3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
     .. note::
@@ -396,8 +396,8 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
 
     homogeneous : bool, default: False
         If ``True``, return the components (translation, rotation, etc.) as 4x4
-        homogeneous matrices. By default, reflection is a scalar, translation and
-        scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
+        homogeneous matrices. By default, reflection is a scalar; translation and
+        scaling are length-3 vectors; and rotation and shear are 3x3 matrices.
 
     Returns
     -------

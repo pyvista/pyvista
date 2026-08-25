@@ -288,8 +288,8 @@ class ImageDataFilters(DataSetFilters):
 
                 Like regular Python slicing:
 
-                - Half-open intervals are used, i.e. the ``start`` index is included in the range
-                  but the ``stop`` index is not.
+                - Half-open intervals are used, that is, the ``start`` index is included
+                  in the range but the ``stop`` index is not.
                 - Negative indexing is supported.
                 - An ``IndexError`` is raised when a single integer is specified as the index and
                   the index is out-of-bounds.
@@ -304,7 +304,7 @@ class ImageDataFilters(DataSetFilters):
 
             - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
             - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
-              i.e. ``[offset, offset + dimensions - 1]``.
+              that is, ``[offset, offset + dimensions - 1]``.
 
             The main difference between these modes is the inclusion or exclusion of the
             :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
@@ -322,10 +322,10 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
-            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
-            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
-            reference frame is modified.
+            The rebasing effectively applies a positive translation in world (XYZ)
+            coordinates and a similar (that is, inverse) negative translation in voxel
+            (IJK) coordinates. As a result, the :attr:`~pyvista.DataSet.bounds` of the
+            output are unchanged, but the coordinate reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset specified by
             the indexing.
@@ -430,7 +430,7 @@ class ImageDataFilters(DataSetFilters):
         rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Select piece (e.g., volume of interest).
+        """Select piece (for example, volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max indices
         that specify a rectangular region in the data. (Note that these are
@@ -466,10 +466,10 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
-            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
-            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
-            reference frame is modified.
+            The rebasing effectively applies a positive translation in world (XYZ)
+            coordinates and a similar (that is, inverse) negative translation in voxel
+            (IJK) coordinates. As a result, the :attr:`~pyvista.DataSet.bounds` of the
+            output are unchanged, but the coordinate reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset specified by
             the ``voi`` parameter.
@@ -555,8 +555,8 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
            values to define the cropping region.
 
-        These methods are all independent, e.g. it is not possible to specify both ``factor`` and
-        ``margin``.
+        These methods are all independent, for example, it is not possible to specify
+        both ``factor`` and ``margin``.
 
         By default, the cropped output's :attr:`~pyvista.ImageData.dimensions` are typically less
         than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
@@ -617,7 +617,7 @@ class ImageDataFilters(DataSetFilters):
 
             The length of the scalar array must equal the number of points.
 
-            This mesh will be cropped to the bounds of the foreground values of the array, i.e.
+            This mesh will be cropped to the bounds of the foreground values of the array, that is
             values that are not equal to the specified ``background_value``.
 
         padding : int | VectorLike[int], optional
@@ -648,7 +648,7 @@ class ImageDataFilters(DataSetFilters):
 
         fill_value : float | VectorLike[float], optional
             Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
-            a single float or a multi-component vector (e.g. RGB vector).
+            a single float or a multi-component vector (for example, RGB vector).
 
         rebase_coordinates : bool, default: False
             Rebase the coordinate reference of the cropped output:
@@ -656,10 +656,10 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
-            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
-            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
-            reference frame is modified.
+            The rebasing effectively applies a positive translation in world (XYZ)
+            coordinates and a similar (that is, inverse) negative translation in voxel
+            (IJK) coordinates. As a result, the :attr:`~pyvista.DataSet.bounds` of the
+            output are unchanged, but the coordinate reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset used by the
             crop.
@@ -1265,9 +1265,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are dilated, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are dilated, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1290,7 +1290,7 @@ class ImageDataFilters(DataSetFilters):
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
                   as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the dilation to two values, e.g. for multi-label segmentation masks.
+                  the dilation to two values, for example, for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1419,9 +1419,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are eroded, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are eroded, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1444,7 +1444,7 @@ class ImageDataFilters(DataSetFilters):
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
                   as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the erosion to two values, e.g. for multi-label segmentation masks.
+                  the erosion to two values, for example, for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1570,9 +1570,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are opened, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are opened, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1676,9 +1676,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are closed, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are closed, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1799,7 +1799,7 @@ class ImageDataFilters(DataSetFilters):
         ----------
         threshold : float or sequence[float]
             Single value or (min, max) to be used for the data threshold.  If
-            a sequence, then length must be 2. Threshold(s) for deciding which
+            a sequence, then length must be 2. Thresholds for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
         in_value : float, default: 1.0
@@ -1962,7 +1962,7 @@ class ImageDataFilters(DataSetFilters):
         power of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
-        dimension. This makes images with prime number dimensions (i.e. 17x17)
+        dimension. This makes images with prime number dimensions (that is, 17x17)
         much slower to compute. FFTs of multidimensional meshes (i.e volumes)
         are decomposed so that each axis executes serially.
 
@@ -2044,7 +2044,7 @@ class ImageDataFilters(DataSetFilters):
         of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
-        dimension. This makes images with prime number dimensions (i.e. 17x17)
+        dimension. This makes images with prime number dimensions (that is, 17x17)
         much slower to compute. FFTs of multidimensional meshes (i.e volumes)
         are decomposed so that each axis executes serially.
 
@@ -2336,8 +2336,8 @@ class ImageDataFilters(DataSetFilters):
 
         This filter uses :vtk:`vtkSurfaceNets3D`
         to extract polygonal surface contours from non-continuous label maps, which
-        corresponds to discrete regions in an input 3D image (i.e., volume). It is
-        designed to generate surfaces from image point data, e.g. voxel point
+        corresponds to discrete regions in an input 3D image (that is, volume). It is
+        designed to generate surfaces from image point data, for example, voxel point
         samples from 3D medical images, though images with cell data are also supported.
 
         The generated surface is smoothed using a constrained smoothing filter, which
@@ -2353,16 +2353,16 @@ class ImageDataFilters(DataSetFilters):
             Polygons between a foreground region and the background have the
             form ``[foreground, background]``.
 
-            E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
+            For example, ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
 
         Internal boundary values
 
             Polygons between two connected foreground regions are sorted in ascending order.
 
-            E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
+            For example, ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (that is, internal and
         external) may be returned.
 
         .. versionadded:: 0.45
@@ -2415,7 +2415,7 @@ class ImageDataFilters(DataSetFilters):
 
             Since the smoothing operation occurs across all input regions, using this
             option to filter the output means that the selected output regions will have
-            the same shape (i.e. smoothed in the same manner), regardless of the outputs
+            the same shape (that is, smoothed in the same manner), regardless of the outputs
             that are selected. This is useful for generating a surface for specific
             labels while also preserving sharp boundaries with non-selected outputs.
 
@@ -2490,12 +2490,12 @@ class ImageDataFilters(DataSetFilters):
               of external boundaries always match the foreground values of the input.
 
             - Internal boundaries are simplified by assigning them unique negative
-              values sequentially. E.g. the boundary label ``[1, 2]`` is replaced with
+              values sequentially. For example, the boundary label ``[1, 2]`` is replaced with
               ``-1``, ``[1, 3]`` is replaced with ``-2``, etc. The mapping to negative
               values is not fixed, and can change depending on the input.
 
               This simplification is particularly useful for unsigned integer labels
-              (e.g. scalars with ``'uint8'`` dtype) since external boundaries
+              (for example, scalars with ``'uint8'`` dtype) since external boundaries
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
@@ -2949,17 +2949,18 @@ class ImageDataFilters(DataSetFilters):
 
         To change the image data's representation, the input points are used to
         represent the centers of the output cells. This has the effect of "growing" the
-        input image dimensions by one along each axis (i.e. half the cell width on each
+        input image dimensions by one along each axis (that is, half the cell width on each
         side). For example, an image with 100 points and 99 cells along an axis at the
         input will have 101 points and 100 cells at the output. If the input has 1mm
         spacing, the axis size will also increase from 99mm to 100mm. By default,
         only non-singleton dimensions are increased such that 1D or 2D inputs remain
         1D or 2D at the output.
 
-        Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
-        or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
-        re-meshing enables the same data to be used with either kind of filter while
-        ensuring the input data to those filters has the appropriate representation.
+        Since filters may be inherently cell-based (for example, some
+        :class:`~pyvista.DataSetFilters`) or may operate on point data exclusively
+        (for example, most :class:`~pyvista.ImageDataFilters`), re-meshing enables the
+        same data to be used with either kind of filter while ensuring the input data
+        to those filters has the appropriate representation.
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as voxel cells instead of as points.
 
@@ -2997,20 +2998,20 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'`` (default): convenience alias to not modify singleton
               dimensions.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
-            If ``False``, the input and output will both refer to the same data array(s).
+            If ``False``, the input and output will both refer to the same data arrays.
 
         Returns
         -------
@@ -3150,15 +3151,16 @@ class ImageDataFilters(DataSetFilters):
 
         To change the image data's representation, the input cell centers are used to
         represent the output points. This has the effect of "shrinking" the
-        input image dimensions by one along each axis (i.e. half the cell width on each
+        input image dimensions by one along each axis (that is, half the cell width on each
         side). For example, an image with 101 points and 100 cells along an axis at the
         input will have 100 points and 99 cells at the output. If the input has 1mm
         spacing, the axis size will also decrease from 100mm to 99mm.
 
-        Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
-        or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
-        re-meshing enables the same data to be used with either kind of filter while
-        ensuring the input data to those filters has the appropriate representation.
+        Since filters may be inherently cell-based (for example, some
+        :class:`~pyvista.DataSetFilters`) or may operate on point data exclusively
+        (for example, most :class:`~pyvista.ImageDataFilters`), re-meshing enables the
+        same data to be used with either kind of filter while ensuring the input data
+        to those filters has the appropriate representation.
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as points instead of as voxel cells.
 
@@ -3196,13 +3198,13 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'`` (default): convenience alias to not modify singleton
               dimensions.
@@ -3213,7 +3215,7 @@ class ImageDataFilters(DataSetFilters):
 
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
-            If ``False``, the input and output will both refer to the same data array(s).
+            If ``False``, the input and output will both refer to the same data arrays.
 
         Returns
         -------
@@ -3319,13 +3321,13 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'``: convenience alias to not modify singleton
               dimensions.
@@ -3446,7 +3448,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         pad_value : float | sequence[float] | 'mirror' | 'wrap', default: 0.0
-            Padding value(s) given to new points outside the original image extent.
+            Padding values given to new points outside the original image extent.
             Specify:
 
             - a number: New points are filled with the specified constant value.
@@ -3474,13 +3476,13 @@ class ImageDataFilters(DataSetFilters):
             - Can be specified as a sequence of 3 boolean to apply padding on a per
                 dimension basis.
             - ``1`` or ``'1D'``: apply padding such that the output is a 1D ImageData
-              where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``.
+              where exactly one dimension is greater than one, for example, ``(>1, 1, 1)``.
               Only valid for 0D or 1D inputs.
             - ``2`` or ``'2D'``: apply padding such that the output is a 2D ImageData
-              where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``.
+              where exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``.
               Only valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: apply padding such that the output is a 3D ImageData,
-              where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``.
+              where all three dimensions are greater than one, for example, ``(>1, >1, >1)``.
               Valid for any 0D, 1D, 2D, or 3D inputs.
 
             .. note::
@@ -3799,7 +3801,7 @@ class ImageDataFilters(DataSetFilters):
 
         label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
             Determine how the extracted regions are labelled. If ``'size'``, label regions
-            by decreasing size (i.e., count of cells), starting at ``1``. If ``'constant'``,
+            by decreasing size (that is, count of cells), starting at ``1``. If ``'constant'``,
             label with the provided ``constant_value``. If ``'seeds'``, label according to
             the seed order, starting at ``1``.
 
@@ -3823,7 +3825,7 @@ class ImageDataFilters(DataSetFilters):
             The labels of each extracted regions.
 
         NDArray[int]
-            The size (i.e., number of cells) of each extracted regions.
+            The size (that is, number of cells) of each extracted regions.
 
         See Also
         --------
@@ -4060,13 +4062,13 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'``: convenience alias to not modify singleton
               dimensions.
@@ -4223,16 +4225,16 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
 
-            Singleton input dimensions are not resampled by this filter, e.g. 2D
+            Singleton input dimensions are not resampled by this filter, for example, 2D
             images will remain 2D. An output dimension may be reduced to a singleton,
-            however, e.g. to flatten a 3D volume into a single 2D slice.
+            however, for example, to flatten a 3D volume into a single 2D slice.
 
         .. versionadded:: 0.45
 
         Parameters
         ----------
         sample_rate : float | VectorLike[float], optional
-            Sampling rate(s) to use. Can be a single value or vector of three values
+            Sampling rates to use. Can be a single value or vector of three values
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
@@ -4246,7 +4248,8 @@ class ImageDataFilters(DataSetFilters):
               and may be used to preserve sharp details and/or reduce image artifacts.
             - ``'bspline'`` uses an n-degree basis spline to smoothly interpolate across points.
               The default degree is ``3``, but can range from ``0`` to ``9``. Append the desired
-              degree to the string to set it, e.g. ``'bspline5'`` for a 5th-degree B-spline.
+              degree to the string to set it, for example, ``'bspline5'`` for a
+              fifth-degree B-spline.
 
             .. versionadded:: 0.47
                 Added ``'bspline'`` interpolation.
@@ -4295,7 +4298,7 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
             resampled points will be larger than the input image bounds.
             Enabling this option also has the effect that the re-sampled spacing
-            will directly correlate with the resampled dimensions, e.g. if
+            will directly correlate with the resampled dimensions, for example, if
             the dimensions are doubled the spacing will be halved. See examples.
 
             This option is enabled by default when resampling point data. Has no effect
@@ -4915,7 +4918,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         values : float | ArrayLike[float] | dict, optional
-            Value(s) to select. Can be a number, an iterable of numbers, or a dictionary
+            Values to select. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
@@ -4927,7 +4930,7 @@ class ImageDataFilters(DataSetFilters):
                 ``values`` can be a single vector or an array of row vectors.
 
         ranges : ArrayLike[float] | dict, optional
-            Range(s) of values to select. Can be a single range (i.e. a sequence of
+            Ranges of values to select. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The endpoints of the ranges are included in the
@@ -4964,13 +4967,13 @@ class ImageDataFilters(DataSetFilters):
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
-            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Specify the components to use when ``scalars`` is a multi-component array.
             Has no effect when the scalars have a single component. Must be one of:
 
             - number: specify the component number as a 0-indexed integer. The selected
-              component must have the specified value(s).
-            - ``'any'``: any single component can have the specified value(s).
-            - ``'all'``: all individual components must have the specified values(s).
+              component must have the specified values.
+            - ``'any'``: any single component can have the specified values.
+            - ``'all'``: all individual components must have the specified values.
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
@@ -5233,7 +5236,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         images : ImageData | Sequence[ImageData]
-            The input image(s) to concatenate. The default active scalars are used for all images.
+            The input images to concatenate. The default active scalars are used for all images.
 
         axis : int | str, default: 'x'
             Axis along which the images are concatenated:
@@ -5255,7 +5258,7 @@ class ImageDataFilters(DataSetFilters):
               to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
               except the on-axis dimension is `also` resampled.
             - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
-              preserve their aspect ratio(s).
+              preserve their aspect ratios.
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that

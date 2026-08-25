@@ -1,4 +1,4 @@
-"""Deprecated shim — use :mod:`trame_pyvista.jupyter` instead."""
+"""Deprecated shim—use :mod:`trame_pyvista.jupyter` instead."""
 
 from __future__ import annotations
 

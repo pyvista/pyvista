@@ -1440,7 +1440,7 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
     Domain Dedication <https://creativecommons.org/publicdomain/zero/1.0/>`_:
     *"This media file is in the public domain (free of copyright
     restrictions). You can copy, modify, and distribute this work without
-    contacting the Smithsonian."*
+    contacting the Smithsonian"*.
 
     Source: https://3d.si.edu/
 
@@ -1489,7 +1489,7 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
     Domain Dedication <https://creativecommons.org/publicdomain/zero/1.0/>`_:
     *"This media file is in the public domain (free of copyright
     restrictions). You can copy, modify, and distribute this work without
-    contacting the Smithsonian."*
+    contacting the Smithsonian"*.
 
     Source: https://3d.si.edu/
 
@@ -3860,7 +3860,7 @@ def download_grey_nurse_shark(load: bool = True) -> PolyData | str:  # noqa: FBT
 
         The ShareAlike clause requires derivative works to be distributed
         under the same license. Incorporating this mesh into a proprietary
-        or differently-licensed work may be restricted.
+        or differently licensed work may be restricted.
 
     Required attribution: *Grey Nurse Shark by rogerpeng1
     (thingiverse.com/thing:137954), licensed under CC BY-SA.*
@@ -5095,7 +5095,7 @@ def download_cubemap_space_16k(load: bool = True) -> Texture | str:  # noqa: FBT
 
     Notes
     -----
-    This is a 38MB file and may take a while to download.
+    This is a 38 MB file and may take a while to download.
 
     Examples
     --------
@@ -8419,7 +8419,7 @@ def download_whole_body_ct_male(
 
     -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
         blocks, each containing a binary segmentation label. The blocks are named by
-        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        their anatomic structure (for example, ``'heart'``) and are sorted alphabetically. See the
         examples below for a complete list label names.
 
     -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
@@ -8665,7 +8665,7 @@ def download_whole_body_ct_female(
 
     -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
         blocks, each containing a binary segmentation label. The blocks are named by
-        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        their anatomic structure (for example, ``'heart'``) and are sorted alphabetically. See the
         examples below for a complete list label names.
 
     -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
@@ -9098,7 +9098,7 @@ _dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')
 def download_e07733s002i009(
     load: bool = True,  # noqa: FBT001,FBT002
 ) -> ImageData | str:  # pragma: no cover
-    """Download a e07733s002i009 image.
+    """Download an ``e07733s002i009`` image.
 
     .. versionadded:: 0.44.0
 

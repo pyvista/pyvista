@@ -23,7 +23,7 @@ GLOBAL_AXES = np.eye(3)
 def _validate_axes(axes):
     """Validate and normalize input axes.
 
-    Axes are expected to follow the right-hand rule (e.g. third axis is the
+    Axes are expected to follow the right-hand rule (for example, third axis is the
     cross product of the first two.
 
     Parameters

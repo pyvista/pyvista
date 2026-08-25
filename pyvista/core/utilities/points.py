@@ -242,7 +242,7 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     init_normal : VectorLike[float] | str, optional
         Flip the normal of the plane such that it best aligns with this vector. Can be
-        a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
+        a vector or string specifying the axis by name (for example, ``'x'`` or ``'-x'``, etc.).
 
         .. versionadded:: 0.45.0
 
@@ -405,7 +405,7 @@ def fit_line_to_points(
 
     init_direction : VectorLike[float], optional
         Flip the direction of the line's points such that it best aligns with this
-        vector. Can be a vector or string specifying the axis by name (e.g. ``'x'``
+        vector. Can be a vector or string specifying the axis by name (for example, ``'x'``
         or ``'-x'``, etc.).
 
     return_meta : bool, default: False
@@ -716,7 +716,7 @@ def principal_axes(
     the third axis which explains the smallest percentage of variance.
 
     The axes may be used to build an oriented bounding box or to align the points to
-    another set of axes (e.g. the world XYZ axes).
+    another set of axes (for example, the world XYZ axes).
 
     .. note::
         The computed axes are not unique, and the sign of each axis direction can be

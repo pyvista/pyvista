@@ -130,7 +130,7 @@ class BaseWriter(_FileIOBase):
         -----
         This is the path that will be passed to the underlying VTK writer.
         For most writers, this is the actual path of the written file.
-        For writers that write multiple files (e.g., EnSightWriter),
+        For writers that write multiple files (for example, EnSightWriter),
         this path can be renamed. See :attr:`written_path` for the actual path of the written file.
 
         Returns
@@ -165,7 +165,7 @@ class BaseWriter(_FileIOBase):
         -----
         Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
         For most readers, ``path`` and ``written_path`` are identical. In cases where
-        multiple files are written (e.g. :class:`vtkEnSightWriter`), this path corresponds
+        multiple files are written (for example, :class:`vtkEnSightWriter`), this path corresponds
         to the "main" output file that would be used for reading the mesh again.
 
         Returns
@@ -183,7 +183,7 @@ class BaseWriter(_FileIOBase):
     def _execute_before_write(self) -> None:
         """Execute code before calling ``write()``.
 
-        Subclasses may optionally define this, e.g. to issue warnings.
+        Subclasses may optionally define this, for example, to issue warnings.
         """
 
     def write(self) -> None:
@@ -502,7 +502,7 @@ class EnSightWriter(BaseWriter):
 
     .. note::
         This is a parallel writer that prepends a process number to the ``.case`` extension,
-        e.g. ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
+        for example, ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
         to get the saved file after calling :meth:`~pyvista.BaseWriter.write`.
 
     .. note::

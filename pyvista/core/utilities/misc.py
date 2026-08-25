@@ -461,7 +461,7 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
 class _DataObjectMeta(_AutoFreezeABCMeta):
     """Metaclass for ``DataObject`` that resolves accessor entry-points on class access.
 
-    Without this hook, class-level attribute access (e.g. ``pv.PolyData.manifold``)
+    Without this hook, class-level attribute access (for example, ``pv.PolyData.manifold``)
     bypasses lazy loading of ``pyvista.accessors`` entry-point plugins and raises
     ``AttributeError`` until the plugin happens to be imported some other way.
     Instance access is handled by ``DataObject.__getattr__``.
@@ -606,7 +606,7 @@ def _reciprocal(
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
     value_if_division_by_zero : float
-        Default value given to values less than ``tol``, i.e. the value given if division
+        Default value given to values less than ``tol``, that is, the value given if division
         by zero is detected.
 
     Returns

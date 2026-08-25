@@ -430,7 +430,7 @@ class MultiBlock(
             Values to include in the iterator.
 
             - ``'ids'``: Return an iterator with nested block indices.
-            - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
+            - ``'names'``: Return an iterator with nested block names (that is, :meth:`keys`).
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
             - ``'all'``: Return an iterator with nested ``(index, name, block)`` triplets.
@@ -757,8 +757,8 @@ class MultiBlock(
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
 
         Any nested :class:`MultiBlock` blocks will have its :attr:`~pyvista.DataObject.field_data`
-        contents moved to the root block, (i.e. `this` ``MultiBlock``). By default, this
-        data will be cleared from the nested block(s) but a copy may be made instead.
+        contents moved to the root block, (that is, `this` ``MultiBlock``). By default, this
+        data will be cleared from the nested blocks but a copy may be made instead.
 
         If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
         the root user-dict is also updated to include the nested block's user-dict
@@ -1909,7 +1909,7 @@ class MultiBlock(
     ) -> None:
         """Set a block with a VTK data object.
 
-        To set the name simultaneously, pass a string name as the 2nd index.
+        To set the name simultaneously, pass a string name as the second index.
 
         Examples
         --------
@@ -2569,7 +2569,7 @@ class MultiBlock(
 
     @property
     def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01
-        """Return a set of all block type(s).
+        """Return a set of all block types.
 
         .. versionadded:: 0.45
 
@@ -2602,7 +2602,7 @@ class MultiBlock(
 
     @property
     def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
-        """Return a set of all nested block type(s).
+        """Return a set of all nested block types.
 
         .. versionadded:: 0.45
 
