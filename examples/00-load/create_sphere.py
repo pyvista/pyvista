@@ -133,7 +133,7 @@ phi = phi[1:-1]
 nphi -= 2
 
 # %%
-# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for
+# Use :func:`pyvista.spherical_to_cartesian` to generate Cartesian coordinates for
 # points in the ``(N, 3)`` format required by PyVista.  Note that this method results in
 # the theta variable changing the fastest.
 

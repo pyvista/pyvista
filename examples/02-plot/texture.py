@@ -15,7 +15,7 @@ from pyvista import examples
 
 # %%
 # Texture mapping is easily implemented using PyVista. Many of the geometric
-# objects come preloaded with texture coordinates, so quickly creating a
+# objects come pre-loaded with texture coordinates, so quickly creating a
 # surface and displaying an image is simply:
 
 # load a sample texture
@@ -153,7 +153,8 @@ pl.close()
 # Textures can also specify per-pixel opacity values. The image must
 # contain a fourth channel specifying the opacity value from 0 [transparent] to
 # 255 [fully visible]. To enable this feature just pass the opacity array as the
-# fourth channel of the image as a 3 dimensional matrix with shape [nrows, ncols, 4]
+# fourth channel of the image as a 3 dimensional matrix with shape
+# [``nrows``, ``ncols``, 4]
 # :func:`pyvista.numpy_to_texture`.
 #
 # Here we can download an image that has an alpha channel:

@@ -12,7 +12,7 @@ This example is inspired by `planet3D-MATLAB
 .. note::
    The purpose of this example is to demonstrate plotting celestial bodies and
    may lack astronomical precision. There may be inaccuracies in the
-   representation, so please take care when reusing or repurposing this
+   representation, so please take care when reusing or re-purposing this
    example.
 
    Please take a look at libraries like `astropy <https://www.astropy.org/>`_

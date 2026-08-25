@@ -34,7 +34,7 @@ lin_pts = np.array(
 )
 
 # %%
-# Next, define the "midside" points of a quad cell. See the definition of a
+# Next, define the "mid-side" points of a quad cell. See the definition of a
 # :vtk:`vtkQuadraticHexahedron`.
 
 quad_pts = np.array(

@@ -106,7 +106,7 @@ pl.show()
 # SSAA, or Super-Sample Anti-Aliasing is a brute force method of
 # anti-aliasing. It results in the best image quality but comes at a tremendous
 # resource cost. SSAA works by rendering the scene at a higher resolution. The
-# final image is produced by downsampling the massive source image using an
+# final image is produced by down-sampling the massive source image using an
 # averaging filter. This acts as a low pass filter which removes the high
 # frequency components that would cause jaggedness.
 #

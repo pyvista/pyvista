@@ -77,7 +77,7 @@ pl.show()
 
 
 # %%
-# Compare axis-aligned and oriented boxes
+# Compare Axis-Aligned and Oriented Boxes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The axis-aligned box ignores the tilt; the oriented box snaps to the
 # cloud's principal directions.

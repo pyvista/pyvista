@@ -1,3 +1,7 @@
+# `exceptions` is a snapshot of false positives found when this rule was
+# added, not a maintained list. Add a new type/module name here if CI flags
+# it as repeated; no need to revisit existing entries unless one starts
+# masking a real doubled word.
 extends: repetition
 message: "'%s' is repeated!"
 level: error

@@ -523,7 +523,7 @@ Note the following:
 * The returns section structure depends on the number of return values and types:
     * for a single return value with a single return type, the parameter name
       can be omitted (as shown above),
-    * for a single return value with multiple types (ie. ``str | int``), the parameter
+    * for a single return value with multiple types (that is, ``str | int``), the parameter
       must be specified (not shown),
     * for multiple return values (not shown), descriptive parameter names for each returned value
       must be specified in the same format as the input parameters.
@@ -767,7 +767,7 @@ The top-level ``Makefile`` also wraps the most common invocations—see
                 tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 # run tests for vtk==9.4.2
                 tox run -e py3.11 --override testenv.deps+=vtk==9.4.2 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.4.2 and numpy==2.0
 
-            By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
+            By default, all tests (that is, plotting and core modules) are executed if nothing is specified.
             To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
 
             .. code-block:: bash
@@ -822,7 +822,7 @@ leverage multiple processes. Example usage:
 
             make test ARGS="-n <NUMCORE>"
 
-Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
+Code coverage (that is, the amount of tested code in the codebase) can be measured by modifying the previous commands
 such that:
 
 .. tab-set::
@@ -861,7 +861,7 @@ such that:
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
-which has a 90% target, ie. it ensures that 90% of the code modified in the PR is tested.
+which has a 90% target, that is, it ensures that 90% of the code modified in the PR is tested.
 It should be mentioned that branch coverage is measured on the CI, meaning for examples that both
 values of an ``if`` clause must be tested to ensure full coverage. For more details on branch
 coverage, please refer to the `coverage documentation <https://coverage.readthedocs.io/en/latest/branch.html>`_.
@@ -1885,7 +1885,7 @@ created the following will occur:
 Patch Release Steps
 ^^^^^^^^^^^^^^^^^^^
 
-Patch releases are for critical and important bugfixes that can not or
+Patch releases are for critical and important bug fixes that can not or
 should not wait until a minor release. The steps for a patch release
 
 #. Push the necessary bugfix(es) to the applicable release branch. This

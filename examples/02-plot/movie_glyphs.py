@@ -36,7 +36,7 @@ spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 spheres.plot(show_scalar_bar=False)
 
 # %%
-# Create the movie
+# Create the Movie
 # ~~~~~~~~~~~~~~~~
 
 # Create a plotter object and set the scalars to the Z height

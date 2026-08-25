@@ -74,6 +74,7 @@ Kochanek
 Kratos
 Kubernetes
 Kuen
+LEGOs
 Lambertian
 Lidar
 List-like
@@ -156,8 +157,6 @@ banesullivan
 boolean
 boxplot
 bugfix
-bugfixes
-cartesian
 cgx
 cmake
 cmcrameri
@@ -176,8 +175,6 @@ data's
 dataclass
 dataframes
 dataset's
-denoised
-denoising
 dependabot
 deregister
 deregistration
@@ -191,7 +188,6 @@ docstring
 docstrings
 doctest
 dotfiles
-downsampling
 dunder
 eigen
 eigenmode
@@ -221,8 +217,6 @@ hoc
 hotfixes
 http
 https
-ie
-ij
 imageio
 img
 initializer
@@ -243,8 +237,6 @@ kubernetes
 kwarg
 lamda
 laplacian
-legos
-lightblue
 linenos
 lod
 magpylib
@@ -252,22 +244,15 @@ manylinux
 matplotlib
 meshgrid
 meshio
-midside
 monospaced
 msh
 multiblock
 multiphysic
-na
 namespace
 namespaced
-ncols
 nd
-nrows
 numpy
 numpydoc
-nx
-ny
-nz
 objname
 omf
 omfvista
@@ -288,7 +273,6 @@ polylines
 polyvertex
 postprocessing
 pre
-preloaded
 pyarrow
 pyembree
 pyinstaller
@@ -305,11 +289,9 @@ pyvistaqt
 refleak
 relicense
 renderers
-repurposing
 resample
 reusability
 revered
-rgb
 rioxarray
 rst
 rtree
@@ -322,7 +304,6 @@ shader
 sigmoidal
 sphinx
 stackable
-stl
 stla
 streamtubes
 subclassing
@@ -349,7 +330,6 @@ uncomment
 unittest
 unmerged
 unvalidated
-unwarped
 vendoring
 venv
 viridis
