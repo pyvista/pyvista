@@ -434,15 +434,37 @@ Documentation Style
 PyVista follows the `Google Developer Documentation Style
 <https://developers.google.com/style>`_ with the following exceptions:
 
-- Allow first person pronouns. These pronouns (for example, "We") refer to
-  "PyVista Developers", which can be anyone who contributes to PyVista.
+- Allow `first person pronouns
+  <https://developers.google.com/style/pronouns#personal-pronouns>`_. These
+  pronouns (for example, "We") refer to "PyVista Developers", which can be
+  anyone who contributes to PyVista.
 - Future tense is permitted.
-- Always place commas and periods outside closing quotation marks, rather
-  than Google's prose-vs-literal-string distinction, which a linter cannot
+- Always place commas and periods outside closing `quotation marks
+  <https://developers.google.com/style/quotation-marks>`_, rather than
+  Google's prose-vs-literal-string distinction, which a linter cannot
   reliably apply.
 
 These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
 and partially enforced for Python source files.
+
+Every rule in ``doc/styles/Google/`` links to the specific Google style page it
+enforces (each file's ``link:`` field); most run as warnings, but a few fail CI
+outright (``Google.Headings = error`` and friends in ``doc/.vale.ini``):
+
+- `Capitalization in titles and headings
+  <https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings>`_
+- `Commas <https://developers.google.com/style/commas>`_ (the Oxford comma)
+- `Ellipses <https://developers.google.com/style/ellipses>`_
+- `Personal pronouns
+  <https://developers.google.com/style/pronouns#personal-pronouns>`_ (first
+  person singular, not the plural "we" exception above)
+
+Two more worth knowing even though they are only warnings, since they come up
+often in review: `abbreviations
+<https://developers.google.com/style/abbreviations>`_ (``e.g.``/``i.e.`` ->
+"for example"/"that is") and `plurals in parentheses
+<https://developers.google.com/style/plurals-parentheses>`_ (``word(s)`` ->
+"words").
 
 These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
 GitHub Actions, and you can run Vale locally with:
@@ -477,6 +499,40 @@ original source -- look for the same path and line number under
   ``.vale/pyvista/core/pointset.rst:109:1`` refers to
   ``pyvista/core/pointset.py:109:1`` (the ``Flag for using the mesh scalars as
   weights.`` line of ``PointSet.center_of_mass``'s docstring).
+
+``doc/styles/config/vocabularies/pyvista/accept.txt`` is a spelling-vocabulary
+waiver list, not a style waiver list: a word belongs there only if it is a
+legitimate technical term, proper noun, or acronym that Vale's dictionary
+does not know, and there is no fix that would make the waiver unnecessary.
+Prefer, in order:
+
+1. **Reword.** A Latin abbreviation, an awkward compound, or a non-Oxford
+   list is a text problem, not a vocabulary problem -- fix the sentence.
+2. **Hyphenate or split.** ``down-sample``, ``in-place``, ``de-registration``,
+   ``file path`` are two recognizable words, not one unrecognized one.
+   Check for an existing convention first (``grep`` the word without the
+   hyphen); a prior commit may have already settled it, and re-litigating it
+   by re-accepting the joined form is itself the mistake to avoid.
+3. **Backtick it as code**, ``like this``, if it actually is: a parameter,
+   attribute, class, or module name. If the value is a string literal a
+   parameter accepts (``mode='cell_tree'``), keep the quotes inside the
+   backticks -- ``` ``'cell_tree'`` ``` -- not just the identifier, or the
+   rendered text stops looking like a string.
+4. **Only then accept it**: ``colormap``, ``cubemap``, ``framerate`` are
+   established one-word technical terms with no better spelling. A
+   dual-cased pair (``PyVista``/``pyvista``, ``VTK``/``vtk``, ``NumPy``/
+   ``numpy``) is not a vocabulary problem either -- both spellings are
+   already known words. Use the capitalized form when naming the project or
+   library in prose, and the lowercase form only where it is literally code
+   (an import, a module path, a parameter default); this split is not
+   machine-checked (``Vale.Terms`` is disabled -- see the comment in
+   ``doc/.vale.ini`` for why), so it needs a human read.
+
+A docstring should not describe a parameter or property by repeating its own
+name in backticks, for example
+``"""Return or set the \`\`tube_width\`\`."""``. Describe it in plain English
+(``"""Return or set the tube width."""``); backticks are for naming a
+*different* real identifier, not the thing whose docstring this is.
 
 
 Docstrings
