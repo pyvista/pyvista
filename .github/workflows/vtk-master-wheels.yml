@@ -689,6 +689,14 @@ jobs:
             printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
           }
 
+          # Drop tox/pytest's own wall-clock-duration wrapper lines, and strip a pytest
+          # summary line's trailing "in <N>s (<H:MM:SS>)", before hashing: two runs hitting
+          # the identical failure otherwise never hash the same, since these change every run.
+          normalize_for_hash() {
+            grep -Ev '^\s*(py3\.[0-9]+-[a-z_-]+: (exit|FAIL code)|evaluation failed|congratulations|py3\.[0-9]+-[a-z_-]+: OK)' \
+              | sed -E 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//'
+          }
+
           # Ensure the dedup label exists (idempotent).
           gh label create vtk-master-wheel-failure \
             --color cbb230 \
@@ -699,18 +707,17 @@ jobs:
           failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
             --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv' || true)
 
-          jobs_list=""
+          failed_jobs=()
           while IFS=$'\t' read -r name url; do
             [ -n "$name" ] || continue
-            jobs_list+="- [\`${name}\`](${url})"$'\n'
+            failed_jobs+=("${name}"$'\t'"${url}")
           done <<< "$failed_jobs_raw"
-          [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
 
-          # Build the per-job failure-output dropdowns from whatever failure-summary-*
-          # artifacts test jobs uploaded (only jobs that ran pytest and failed produce one;
-          # e.g. a build-vtk failure won't, and that's fine).
-          failure_sections=""
-          failed_labels=()
+          # Load whatever failure-summary-* artifacts test jobs uploaded (only jobs that ran
+          # pytest and failed produce one; e.g. a build-vtk failure won't, and that job just
+          # gets a bare bullet below, no nested dropdown).
+          summary_names=()
+          summary_texts=()
           if [ -d failure-summaries ]; then
             while IFS= read -r label_file; do
               summary_file="$(dirname "$label_file")/failure_summary.txt"
@@ -718,16 +725,8 @@ jobs:
               name="$(cat "$label_file")"
               summary="$(cat "$summary_file")"
               [ -n "$summary" ] || summary="(no output captured)"
-              hash="$(printf '%s' "$summary" | sha256sum | cut -d' ' -f1)"
-              failed_labels+=("$name")
-
-              # The HTML comment marker records this job's failure signature so a later run
-              # can detect "same failure as before" without any external state.
-              failure_sections+="<!-- failure-hash:${name}:${hash} -->"$'\n'
-              failure_sections+="<details>"$'\n'
-              failure_sections+="<summary>❌ ${name} — failure output</summary>"$'\n\n'
-              failure_sections+='```text'$'\n'"${summary}"$'\n''```'$'\n'
-              failure_sections+="</details>"$'\n\n'
+              summary_names+=("$name")
+              summary_texts+=("$summary")
             done < <(find failure-summaries -name job_label.txt | sort)
           fi
 
@@ -737,26 +736,64 @@ jobs:
             commit_range_body="(could not determine which VTK commits landed since the previous nightly)"
           fi
 
-          # Check for an existing open issue, and compare each failed job's signature
-          # against the most recently posted report (the last comment, or the issue body
-          # if there are no comments yet).
+          # Fetch the most recently posted report (the last comment, or the issue body if
+          # there are no comments yet) so each job's failure can be checked against it below.
           existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty' || true)
-
-          repeat_note=""
-          if [ -n "$existing" ] && [ "${#failed_labels[@]}" -gt 0 ]; then
+          prev_text=""
+          prev_url=""
+          if [ -n "$existing" ]; then
             prev_text="$(gh issue view "$existing" --json body,comments \
               --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)"
             prev_url="$(gh issue view "$existing" --json url,comments \
               --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
-            for name in "${failed_labels[@]}"; do
-              cur_hash="$(extract_hash "$failure_sections" "$name")"
-              prev_hash="$(extract_hash "$prev_text" "$name")"
-              if [ -n "$cur_hash" ] && [ -n "$prev_hash" ] && [ "$cur_hash" = "$prev_hash" ]; then
-                repeat_note+="- \`${name}\`: same failure signature as the [previous report](${prev_url})."$'\n'
+          fi
+
+          # One bullet per failed job, with its failure output (if any) nested directly
+          # underneath as a collapsed dropdown, rather than in a separate section further
+          # down the report.
+          jobs_list=""
+          if [ "${#failed_jobs[@]}" -eq 0 ]; then
+            jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+          else
+            for row in "${failed_jobs[@]}"; do
+              IFS=$'\t' read -r name url <<< "$row"
+
+              summary=""
+              if [ "${#summary_names[@]}" -gt 0 ]; then
+                for i in "${!summary_names[@]}"; do
+                  if [ "${summary_names[$i]}" = "$name" ]; then
+                    summary="${summary_texts[$i]}"
+                    break
+                  fi
+                done
               fi
+
+              jobs_list+="- [\`${name}\`](${url})"$'\n'
+              if [ -z "$summary" ]; then
+                continue
+              fi
+
+              hash="$(printf '%s' "$summary" | normalize_for_hash | sha256sum | cut -d' ' -f1)"
+              prev_hash="$(extract_hash "$prev_text" "$name")"
+              if [ -n "$prev_hash" ] && [ "$prev_hash" = "$hash" ]; then
+                icon="⚠️"
+                jobs_list+="  Same failure signature as the [previous report](${prev_url})."$'\n'
+              else
+                icon="❌"
+              fi
+
+              # The HTML comment marker records this job's failure signature so a later run
+              # can detect "same failure as before" without any external state. Every line is
+              # indented 2 spaces to stay nested inside this list item on GitHub.
+              jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
+              jobs_list+="  <details>"$'\n'
+              jobs_list+="  <summary>${icon} failure output</summary>"$'\n\n'
+              jobs_list+='  ```text'$'\n'
+              jobs_list+="$(printf '%s\n' "$summary" | sed 's/^/  /')"$'\n'
+              jobs_list+='  ```'$'\n\n'
+              jobs_list+="  </details>"$'\n'
             done
           fi
-          [ -z "$repeat_note" ] || repeat_note="**Repeat failures:**"$'\n'"${repeat_note}"
 
           body=$(cat <<EOF
           ### VTK Master Wheel Failure
@@ -765,11 +802,9 @@ jobs:
           **Run:** ${RUN_URL}
 
           **Failing jobs:**
-          ${jobs_list}
-          ${repeat_note}
-          ${commit_range_body}
 
-          ${failure_sections}
+          ${jobs_list}
+          ${commit_range_body}
           EOF
           )
 
