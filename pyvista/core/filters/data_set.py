@@ -2733,7 +2733,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        First, plot the unwarped mesh.
+        First, plot the un-warped mesh.
 
         >>> from pyvista import examples
         >>> mesh = examples.download_st_helens()
