@@ -50,9 +50,7 @@ SKIP_SECTIONS = {'Examples', 'See Also'}
 
 def _is_section_header(header: str, underline: str) -> bool:
     """Match numpydoc's own rule for what counts as a section header."""
-    return len(underline) >= 3 and (
-        underline.startswith('-' * len(header)) or underline.startswith('=' * len(header))
-    )
+    return len(underline) >= 3 and underline.startswith(('-' * len(header), '=' * len(header)))
 
 
 def filter_numpydoc(lines: list[str]) -> list[str]:

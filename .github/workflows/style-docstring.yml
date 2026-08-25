@@ -91,11 +91,11 @@ jobs:
 
       # Convert .py examples to .rst so Vale can parse their headings.
       - name: Extract example RST for Vale
-        run: python3 doc/extract_example_rst.py examples .vale-examples-rst
+        run: python3 doc/extract_rst_from_py_for_vale.py examples .vale-examples-rst
 
       # Same, for docstrings, so Vale can check their prose too.
       - name: Extract docstring RST for Vale
-        run: python3 doc/extract_example_rst.py pyvista .vale-docstrings-rst --mode docstrings
+        run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale-docstrings-rst --mode docstrings
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale-examples-rst .vale-docstrings-rst
