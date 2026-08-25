@@ -4605,7 +4605,7 @@ class BasePlotter(_BoundsSizeMixin):
             only ``ImageData`` types can be used.
 
             .. note::
-                If a :class:`pyvista.UnstructuredGrid` is input, the ``ugrid``
+                If a :class:`pyvista.UnstructuredGrid` is input, the ``'ugrid'``
                 mapper (:vtk:`vtkUnstructuredGridVolumeRayCastMapper`) will be
                 used regardless.
 

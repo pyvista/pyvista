@@ -919,7 +919,7 @@ class DataObject(
 
         .. note::
 
-            These formats are custom PyVista legacy formats. The native 'vtk' format is
+            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
             preferred since it supports more objects (for example, MultiBlock).
 
         """
@@ -1012,11 +1012,11 @@ class DataObject(
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
-        """Support unpickle of PyVista '``xml``' and 'legacy' formats.
+        """Support unpickle of PyVista ``'xml'`` and ``'legacy'`` formats.
 
         .. note::
 
-            These formats are custom PyVista legacy formats. The native 'vtk' format is
+            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
             preferred since it supports more objects (for example, MultiBlock).
 
         """

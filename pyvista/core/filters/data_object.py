@@ -1388,7 +1388,7 @@ class DataObjectFilters:
         >>> report.is_valid
         True
 
-        Do minimal validation to ensure the mesh properties are "``memory_safe``". This helps
+        Do minimal validation to ensure the mesh properties are ``'memory_safe'``. This helps
         to avoid a segmentation fault which may be caused by invalid memory accesses by VTK. In
         this case,
         we use ``action`` to raise an error if the mesh is not valid.
@@ -5071,10 +5071,10 @@ class DataObjectFilters:
             operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
-                * 'cell' - :vtk:`vtkCellLocator`
-                * '``cell_tree``' - :vtk:`vtkCellTreeLocator`
-                * '``obb_tree``' - :vtk:`vtkOBBTree`
-                * '``static_cell``' - :vtk:`vtkStaticCellLocator`
+                * ``'cell'`` - :vtk:`vtkCellLocator`
+                * ``'cell_tree'`` - :vtk:`vtkCellTreeLocator`
+                * ``'obb_tree'`` - :vtk:`vtkOBBTree`
+                * ``'static_cell'`` - :vtk:`vtkStaticCellLocator`
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.

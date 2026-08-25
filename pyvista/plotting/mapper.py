@@ -940,8 +940,8 @@ class _DataSetMapper(_BaseMapper):
         opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.
             A string can also be specified to map the scalars range to a
-            predefined opacity transfer function (options include: 'linear',
-            '``linear_r``', 'geom', '``geom_r``'). Or you can pass a custom made
+            predefined opacity transfer function (options include: ``'linear'``,
+            ``'linear_r'``, ``'geom'``, ``'geom_r'``). Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 
