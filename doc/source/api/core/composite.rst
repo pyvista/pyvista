@@ -80,7 +80,7 @@ allow optional names to be provided for the dictionary like usage.
    blocks[0:2]  # The Sphere and Cube objects in a new ``MultiBlock``
 
 
-Dictionary-Like Features
+Dictionary-like Features
 ------------------------
 
 

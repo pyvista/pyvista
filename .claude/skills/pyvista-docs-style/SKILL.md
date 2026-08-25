@@ -73,6 +73,20 @@ accept). The two failure modes worth naming directly:
 
 ## Common per-alert judgment calls
 
+- **Project name vs. code, for any dual-cased pair** (`PyVista`/`pyvista`, `VTK`/`vtk`,
+  `NumPy`/`numpy`, `Matplotlib`/`matplotlib`, `SciPy`/`scipy`, ...). Use the capitalized
+  form whenever the sentence is naming the project or library ("built directly from
+  NumPy arrays", "wraps most of VTK"). Use the lowercase form only where it is literally
+  code: an import, a module path (`numpy.ndarray`), a parameter default, a snake_case
+  identifier. This is not a `Vale.Spelling` fix (both spellings are real words) and it is
+  not machine-checked -- `Vale.Terms` would be the obvious rule for it, but it is
+  deliberately disabled (see the comment above it in `doc/.vale.ini`): it votes on whichever
+  casing is more frequent in a file or corpus and flags the other one, so it flagged a
+  module's own correct `"""NumPy plotting module."""`-style summary line as wrong the one
+  time it was tried, purely because lowercase `numpy` (real code) was more common
+  elsewhere in that file. Read for this by hand, especially in a docstring's `Examples`
+  section, which is exactly the kind of narrative prose most likely to get it wrong and,
+  until recently, was invisible to Vale entirely.
 - **Oxford comma false positives.** `Google.OxfordComma`'s regex (`(?:[^,]+,){1,}\s\w+\s
 (?:and|or)`) fires on any comma followed later by "word and/or", not only on real
   three-item lists -- an introductory clause plus a two-item verb list ("First, create and
