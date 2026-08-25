@@ -73,7 +73,7 @@ Here, PyVista has done several things for us:
    "tuples" to describe the shape of the data (where it sits in space)
    and "components" to describe the type of data (1 = scalars/scalar
    fields, 2 = vectors/vector fields, n = tensors/tensor
-   fields). Here, shape and values are stored concretely in one
+   fields). Here, both shape and values are stored concretely in one
    variable.
 
 #. :class:`pyvista.ImageData` wraps :vtk:`vtkImageData`, just with a

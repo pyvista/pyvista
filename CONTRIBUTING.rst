@@ -1981,7 +1981,7 @@ Setting up a runner on bare metal
 Visit PyVista's `Create self-hosted runner
 <https://github.com/organizations/pyvista/settings/actions/runners/new>`_.
 
-Follow the directions to download, run and install. If the runner is intended
+Follow the directions to download, run, and install. If the runner is intended
 to run public workflows, add the runner to the ``pyvista-self-hosted`` group.
 
 Follow your OSes instructions to enable a service for the runner (if
