@@ -67,7 +67,7 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# Textures from Files
+# Textures From Files
 # +++++++++++++++++++
 #
 # What about loading your own texture from an image? This is often most easily

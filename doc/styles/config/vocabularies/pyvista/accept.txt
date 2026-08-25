@@ -16,6 +16,7 @@ CMake
 Codespaces
 Codespell
 Colab
+Colorcet
 Colormap
 Colormaps
 Comms
@@ -79,6 +80,7 @@ List-like
 MIP
 Magnetoencephalography
 ManyLinux
+Matplotlib
 Meshgrid
 Meshio
 Migliori
@@ -131,6 +133,7 @@ Taubin
 TetGen
 Trame
 Transifex
+Trimesh
 URI
 URIs
 Urruty

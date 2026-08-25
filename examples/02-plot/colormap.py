@@ -92,7 +92,7 @@ scalars[mesh['values'] < 1] = 0  # black
 mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 # %%
-# matplotlib vs. colorcet
+# Matplotlib vs. Colorcet
 # +++++++++++++++++++++++
 #
 # Let's compare Colorcet's perceptually uniform "fire" colormap to Matplotlib's

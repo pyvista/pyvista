@@ -17,7 +17,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Create an arc from two endpoints
+# Create an Arc From Two Endpoints
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The first arc is defined directly from its endpoints and center.
 

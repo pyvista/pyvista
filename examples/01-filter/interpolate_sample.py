@@ -28,7 +28,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Interpolating from Point Cloud
+# Interpolating From Point Cloud
 # ++++++++++++++++++++++++++++++
 # A point cloud is a collection of points that have no connectivity in
 # the mesh, that is, the mesh contains no cells or the cells are 0D
