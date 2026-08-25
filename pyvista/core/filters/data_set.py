@@ -4586,12 +4586,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Return a subset of the grid.
+        r"""Return a subset of the grid.
 
         Parameters
         ----------
         ind : int | VectorLike[int]
-            Cell indices to extract. Can be a single ``int`` or a vector of ``int``s.
+            Cell indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of cells.
 
         invert : bool, default: False

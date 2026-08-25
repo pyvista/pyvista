@@ -105,6 +105,17 @@ accept). The two failure modes worth naming directly:
   (`mode='cell_tree'`) is rendered ` ``'cell_tree'`` ` -- quotes inside the
   backticks -- not just ` `cell_tree` `, which reads as an identifier rather than a
   string.
+- **A letter suffixed directly onto a backtick-wrapped term breaks RST silently.**
+  Writing the plural of `int` as `int``s` (no separator between the closing backticks
+  and the `s`) passes Vale and even `ruff`, but fails a real Sphinx build with "Inline
+  literal start-string without end-string": RST's inline-markup rules require
+  whitespace or punctuation immediately after a closing pair of backticks, not a bare
+  letter. Fix it with an escaped space between the backticks and the suffix, and make
+  the docstring a raw string (`r"""`) so the backslash survives instead of being
+  Python's own invalid-escape-sequence warning. Vale cannot see this class of bug at
+  all -- it only ever checks the generated `.rst` shadow copy, never runs a real Sphinx
+  build. Confirm a suspicious backtick construct with `docutils.core.publish_doctree`
+  on the actual docstring text, not by trusting Vale's silence.
 - **Heading exceptions are per-word, not per-heading.** Before adding a word to
   `doc/styles/Google/Headings.yml`'s `exceptions:` list, confirm with a live Vale run that
   more than one heading actually needs it. If only one heading in the whole corpus uses

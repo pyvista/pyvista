@@ -509,11 +509,19 @@ Prefer, in order:
    Check for an existing convention first (``grep`` the word without the
    hyphen); a prior commit may have already settled it, and re-litigating it
    by re-accepting the joined form is itself the mistake to avoid.
-3. **Backtick it as code**, ``like this``, if it actually is: a parameter,
-   attribute, class, or module name. If the value is a string literal a
-   parameter accepts (``mode='cell_tree'``), keep the quotes inside the
-   backticks -- ``` ``'cell_tree'`` ``` -- not just the identifier, or the
-   rendered text stops looking like a string.
+3. **Backtick it as code** if it actually is: a parameter, attribute, class,
+   or module name. If the value is a string literal a parameter accepts
+   (``mode='cell_tree'``), keep the quotes inside the backticks when writing
+   it up -- ``'cell_tree'`` (quotes and all), not just ``cell_tree`` -- or
+   the rendered text stops looking like a string. Suffixing a plain letter
+   directly onto a backtick-wrapped term (writing the plural of ``int`` as
+   code, immediately followed by an ``s``) needs an escaped space between
+   the closing backticks and the suffix, and the docstring needs an ``r``
+   prefix for that escape to survive -- otherwise ``docutils`` raises "Inline
+   literal start-string without end-string", since its inline-markup rules
+   require whitespace or punctuation immediately after a closing pair of
+   backticks, and a bare backslash in a non-raw Python string is itself an
+   invalid escape sequence.
 4. **Only then accept it**: ``colormap``, ``cubemap``, ``framerate`` are
    established one-word technical terms with no better spelling. A
    dual-cased pair (``PyVista``/``pyvista``, ``VTK``/``vtk``, ``NumPy``/
