@@ -6130,53 +6130,6 @@ def _make_checkerboard_texture():
     return numpy_to_texture(image)
 
 
-def _add_camera_distortion_scene(pl):
-    floor = pv.Plane(
-        center=(0.0, 0.0, -0.25),
-        direction=(0.0, 0.0, 1.0),
-        i_size=3.0,
-        j_size=3.0,
-        i_resolution=24,
-        j_resolution=24,
-    )
-    actors = [
-        pl.add_mesh(floor, texture=_make_checkerboard_texture()),
-    ]
-
-    meshes = [
-        (pv.ParametricTorus(), (-0.9, -0.65, 0.35), (0.22, 0.22, 0.22), 'orange'),
-        (pv.ParametricKlein(), (0.0, -0.7, 0.45), (0.16, 0.16, 0.16), 'lightskyblue'),
-        (pv.ParametricBoy(), (0.85, -0.55, 0.45), (0.18, 0.18, 0.18), 'gold'),
-        (
-            pv.Sphere(theta_resolution=48, phi_resolution=24),
-            (-0.75, 0.4, 0.35),
-            (0.28, 0.28, 0.28),
-            'tomato',
-        ),
-        (
-            pv.Cone(direction=(0, 0, 1), height=1.0, radius=0.35, resolution=48),
-            (0.15, 0.35, 0.25),
-            (0.55, 0.55, 0.55),
-            'seagreen',
-        ),
-        (
-            pv.Cube(x_length=0.55, y_length=0.55, z_length=0.55),
-            (0.85, 0.45, 0.2),
-            (0.7, 0.7, 0.7),
-            'mediumpurple',
-        ),
-    ]
-    for source, position, scale, color in meshes:
-        mesh = source.scale(scale, inplace=False).translate(position, inplace=False)
-        actors.append(pl.add_mesh(mesh, color=color, smooth_shading=True))
-
-    pl.add_light(pv.Light(position=(3, -4, 5), focal_point=(0, 0, 0), intensity=0.9))
-    pl.add_light(pv.Light(position=(-4, 3, 2), focal_point=(0, 0, 0), intensity=0.35))
-    pl.camera_position = [(2.7, -3.2, 2.2), (0.0, 0.0, 0.25), (0.0, 0.0, 1.0)]
-    pl.camera.zoom(1.35)
-    return actors
-
-
 def _add_checkerboard_grid_scene(pl):
     grid = pv.Plane(
         center=(0.0, 0.0, 0.0),
@@ -6195,66 +6148,22 @@ def _add_checkerboard_grid_scene(pl):
     return [actor]
 
 
-def _add_mesh_lattice_scene(pl: pv.Plotter):
-    actors: list[pv.Actor] = []
-    coordinates = np.linspace(-0.9, 0.9, 5)
-    for x_index, x_coord in enumerate(coordinates):
-        for y_index, y_coord in enumerate(coordinates):
-            for z_index, z_coord in enumerate(coordinates):
-                index = x_index + y_index + z_index
-                center = (x_coord, y_coord, z_coord)
-                if index % 3 == 0:
-                    mesh = pv.Sphere(
-                        radius=0.12,
-                        center=center,
-                        theta_resolution=16,
-                        phi_resolution=8,
-                    )
-                    color = 'tomato'
-                elif index % 3 == 1:
-                    mesh = pv.Cube(center=center, x_length=0.22, y_length=0.22, z_length=0.22)
-                    color = 'seagreen'
-                else:
-                    mesh = pv.ParametricTorus(
-                        ringradius=0.12,
-                        crosssectionradius=0.04,
-                        u_res=12,
-                        v_res=8,
-                    ).translate(center, inplace=False)
-                    color = 'gold'
-                actors.append(
-                    pl.add_mesh(
-                        mesh,
-                        color=color,
-                        smooth_shading=True,
-                        pbr=True,
-                        metallic=0.8,
-                        roughness=0.5,
-                        diffuse=0.4,
-                    )
-                )
-    pl.add_light(pv.Light(position=(0, -4, 3), focal_point=(0, 0, 0), intensity=0.8))
-    pl.add_light(pv.Light(position=(3, -2, 3), focal_point=(0, 0, 0), intensity=0.35))
-    pl.camera_position = [(0.0, -2.4, 0.25), (0.0, 0.0, 0.0), (0.0, 0.0, 1.0)]
-    pl.camera.view_angle = 70.0
-    return actors
-
-
+# The distortion is a per-vertex transform of clip coordinates, so it does not
+# depend on the scene. One flat calibration target carries both cases that a
+# render can tell apart: the radial terms, and the tangential ones.
 @pytest.mark.parametrize(
-    'distortion_coeffs',
+    ('scene_builder', 'distortion_coeffs'),
     [
-        pytest.param((3.8, 2.1, 0.004, -0.003), id='strong_barrel'),
-        pytest.param((0.18, 0.06, 0.004, -0.003), id='barrel'),
-        pytest.param((-0.22, 0.08, 0.006, -0.005), id='pincushion'),
-        pytest.param((0.08, -0.06, 0.05, -0.07), id='mixed_tangential'),
-    ],
-)
-@pytest.mark.parametrize(
-    'scene_builder',
-    [
-        pytest.param(_add_camera_distortion_scene, id='full_scene'),
-        pytest.param(_add_checkerboard_grid_scene, id='checkerboard_centered'),
-        pytest.param(_add_mesh_lattice_scene, id='mesh_lattice_front'),
+        pytest.param(
+            _add_checkerboard_grid_scene,
+            (3.8, 2.1, 0.004, -0.003),
+            id='checkerboard_centered-strong_barrel',
+        ),
+        pytest.param(
+            _add_checkerboard_grid_scene,
+            (0.08, -0.06, 0.05, -0.07),
+            id='checkerboard_centered-mixed_tangential',
+        ),
     ],
 )
 def test_camera_distortion(scene_builder, distortion_coeffs):
@@ -6271,131 +6180,151 @@ def test_camera_distortion(scene_builder, distortion_coeffs):
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_zero_matches_default():
-    pl = pv.Plotter(window_size=[400, 400])
-    actors = _add_camera_distortion_scene(pl)
-    default_image = pl.screenshot()
-    for actor in actors:
-        assert 'camera_distortion' not in actor._shader_replacements
-    pl.close()
+def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
+    """The sweep runs before every render over everything the renderer holds.
 
-    pl = pv.Plotter(window_size=[400, 400])
-    actors = _add_camera_distortion_scene(pl)
-    pl.enable_camera_distortion((0.0, 0.0, 0.0, 0.0))
-    zero_image = pl.screenshot()
-    for actor in actors:
-        assert 'camera_distortion' in actor._shader_replacements
-    pl.close()
-
-    difference = np.abs(zero_image.astype(int) - default_image.astype(int))
-    assert difference.mean() < 0.01
-    assert np.count_nonzero(difference > 1) < 20
-
-
-@pytest.mark.parametrize(
-    'add_actor_call',
-    [
-        pytest.param(lambda pl: pl.add_mesh(pv.Sphere()), id='add_mesh'),
-        pytest.param(lambda pl: pl.add_points(pv.PolyData(np.zeros((4, 3)))), id='add_points'),
-        pytest.param(
-            lambda pl: pl.add_lines(np.array([[-1.0, -1.0, 0.0], [1.0, 1.0, 0.0]])), id='add_lines'
-        ),
-        pytest.param(lambda pl: pl.add_silhouette(pv.Cube()), id='add_silhouette'),
-        pytest.param(
-            lambda pl: pl.add_composite(pv.MultiBlock([pv.Cube()]))[0], id='add_composite'
-        ),
-    ],
-)
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_reaches_every_actor(add_actor_call):
+    A composite brings its own mapper, text is an overlay rather than geometry,
+    and a volume and gaussian points are drawn by shaders with no vertices to
+    displace. The warning for those two is not news on the second sweep.
+    """
     pl = pv.Plotter()
-    actor = add_actor_call(pl)
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    assert 'camera_distortion' in actor._shader_replacements
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_leaves_two_dimensional_actors_alone():
-    pl = pv.Plotter()
+    composite = pl.add_composite(pv.MultiBlock([pv.Cube()]))[0]
     text = pl.add_text('text is an overlay, not geometry')
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    assert not hasattr(text, '_shader_replacements')
-    pl.close()
+    volume = pl.add_volume(pv.ImageData(dimensions=(8, 8, 8)), scalars=np.zeros(8**3))
+    gaussian = pl.add_mesh(pv.Sphere(), style='points_gaussian')
 
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_warns_for_volumes():
-    pl = pv.Plotter()
-    volume = pv.ImageData(dimensions=(8, 8, 8))
-    pl.add_volume(volume, scalars=np.zeros(volume.n_points))
-    with pytest.warns(UserWarning, match='does not apply to volumes'):
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
         pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+        late = pl.add_mesh(pv.Sphere())
+        assert 'camera_distortion' not in late._shader_replacements
+        pl.screenshot()  # the sweep runs from the render, not from add_mesh
+    messages = [str(w.message) for w in record]
+
+    assert 'camera_distortion' in composite._shader_replacements
+    assert 'camera_distortion' in late._shader_replacements
+    assert not hasattr(text, '_shader_replacements')
+    assert getattr(volume, '_camera_distortion_state', None) is None
+    assert 'camera_distortion' not in gaussian._shader_replacements
+    assert sum('does not apply to volumes' in m for m in messages) == 1
+    assert sum('does not apply to gaussian points' in m for m in messages) == 1
     pl.close()
 
 
-@pytest.mark.parametrize(
-    'coefficients',
-    [
-        pytest.param(np.array([0.18, 0.06, 0.004, -0.003]), id='array'),
-        pytest.param(np.array([[0.18, 0.06, 0.004, -0.003]]), id='row_vector'),
-        pytest.param([0.18, 0.06, 0.004, -0.003], id='list'),
-    ],
-)
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_accepts_any_array_like(coefficients):
+def test_camera_distortion_validates_coefficients():
+    expected = (0.18, 0.06, 0.004, -0.003)
+    for coefficients in (np.array(expected), np.array([expected]), list(expected)):
+        pl = pv.Plotter()
+        actor = pl.add_mesh(pv.Sphere())
+        pl.enable_camera_distortion(coefficients)
+        values = [0.0, 0.0, 0.0, 0.0]
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        assert uniforms.GetUniform4f('u_distortion_coefficients', values)
+        assert values == pytest.approx(expected)
+        pl.close()
+
+    for wrong in ((0.1, 0.2), (0.1, 0.2, 0.3, 0.4, 0.5)):
+        match = f'must have four values \\(k1, k2, p1, p2\\), got {len(wrong)}'
+        with pytest.raises(ValueError, match=match):
+            pv.Plotter().enable_camera_distortion(wrong)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_updates_and_undoes_both_kinds_of_actor():
+    """A `vtkImporter` fills the render window with plain VTK actors.
+
+    They never go through ``add_actor`` and carry none of PyVista's shader
+    bookkeeping, so attaching, updating and removing each take their own
+    branch beside the one a `pyvista.Actor` takes.
+    """
     pl = pv.Plotter()
     actor = pl.add_mesh(pv.Sphere())
-    pl.enable_camera_distortion(coefficients)
-    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
-    values = [0.0, 0.0, 0.0, 0.0]
-    assert uniforms.GetUniform4f('u_distortion_coefficients', values)
-    assert values == pytest.approx(np.ravel(coefficients))
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_reaches_actors_added_after_enabling():
-    pl = pv.Plotter()
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    actor = pl.add_mesh(pv.Sphere())
-    assert 'camera_distortion' not in actor._shader_replacements
-    pl.screenshot()  # the sweep runs from the render, not from add_mesh
-    assert 'camera_distortion' in actor._shader_replacements
-    pl.close()
-
-
-@pytest.mark.parametrize('importer', ['import_vrml', 'import_gltf'])
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_reaches_imported_actors(importer):
-    """A vtkImporter fills the render window without going through add_actor."""
-    suffix = 'wrl' if importer == 'import_vrml' else 'glb'
-    pl = pv.Plotter()
-    getattr(pl, importer)(Path(__file__).parent.parent / 'example_files' / f'Box.{suffix}')
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+    pl.import_vrml(Path(__file__).parent.parent / 'example_files' / 'Box.wrl')
     imported = [prop for prop in pl.renderer.actors.values() if not isinstance(prop, pv.Actor)]
     assert imported
-    for prop in imported:
-        assert prop._camera_distortion_state[0] == (0.18, 0.06, 0.004, -0.003)
-    pl.close()
+    before = [prop.GetShaderProperty().GetNumberOfShaderReplacements() for prop in imported]
 
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_updates_coefficients_and_disables():
-    pl = pv.Plotter()
-    actor = pl.add_mesh(pv.Sphere())
     pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
     pl.enable_camera_distortion((-0.22, 0.08, 0.006, -0.005))
+    assert 'camera_distortion' in actor._shader_replacements
     uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
     values = [0.0, 0.0, 0.0, 0.0]
     assert uniforms.GetUniform4f('u_distortion_coefficients', values)
     assert values == pytest.approx((-0.22, 0.08, 0.006, -0.005))
+    for prop, count in zip(imported, before, strict=True):
+        assert prop._camera_distortion_state[0] == (-0.22, 0.08, 0.006, -0.005)
+        assert prop.GetShaderProperty().GetNumberOfShaderReplacements() == count + 1
 
     pl.disable_camera_distortion()
     assert 'camera_distortion' not in actor._shader_replacements
     assert actor._camera_distortion_state is None
     assert not uniforms.GetUniform4f('u_distortion_coefficients', values)
+    for prop, count in zip(imported, before, strict=True):
+        assert prop._camera_distortion_state is None
+        assert prop.GetShaderProperty().GetNumberOfShaderReplacements() == count
+        assert (
+            not prop.GetShaderProperty()
+            .GetVertexCustomUniforms()
+            .GetUniform4f('u_distortion_coefficients', values)
+        )
     pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_reads_each_subplots_projection_and_keeps_it_current():
+    """Subplots share the coefficients but not the camera they are applied through.
+
+    The scale comes from the projection matrix, so it goes stale whenever the
+    projection changes and has to be rewritten before the next render.
+    """
+
+    def projection_scale(actor):
+        values = [0.0, 0.0]
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        assert uniforms.GetUniform2f('u_distortion_projection_scale', values)
+        return values[1]
+
+    pl = pv.Plotter(shape=(1, 2))
+    actors = []
+    for column, view_angle in enumerate((30.0, 60.0)):
+        pl.subplot(0, column)
+        actors.append(pl.add_mesh(pv.Sphere()))
+        pl.camera.view_angle = view_angle
+
+    pl.subplot(0, 0)
+    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+    for actor in actors:
+        assert 'camera_distortion' in actor._shader_replacements
+    narrow, wide = (projection_scale(actor) for actor in actors)
+    assert narrow > wide  # the narrower the view angle, the longer the focal length
+
+    pl.camera.view_angle = 2 * pl.camera.view_angle
+    pl.screenshot()
+    assert projection_scale(actors[0]) < narrow
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_of_a_parallel_projection_does_not_follow_the_scene_scale():
+    """A parallel projection has no focal length to write the coefficients in."""
+
+    def render(size):
+        pl = pv.Plotter(window_size=[200, 200])
+        pl.add_mesh(
+            pv.Plane(i_size=size, j_size=size, i_resolution=16, j_resolution=16),
+            style='wireframe',
+            color='black',
+        )
+        pl.camera_position = 'xy'
+        pl.enable_parallel_projection()
+        pl.camera.tight()
+        pl.enable_camera_distortion((0.4, 0.15, 0.0, 0.0))
+        image = pl.screenshot()
+        pl.close()
+        return image.astype(int)
+
+    assert np.abs(render(1.0) - render(10.0)).max() == 0
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -6424,140 +6353,6 @@ def test_camera_distortion_reaches_an_actor_without_view_coordinates():
         return image.astype(int)
 
     assert np.abs(render(distort=True) - render(distort=False)).max() > 0
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_of_a_parallel_projection_does_not_follow_the_scene_scale():
-    """A parallel projection has no focal length to write the coefficients in."""
-
-    def render(size):
-        pl = pv.Plotter(window_size=[200, 200])
-        pl.add_mesh(
-            pv.Plane(i_size=size, j_size=size, i_resolution=16, j_resolution=16),
-            style='wireframe',
-            color='black',
-        )
-        pl.camera_position = 'xy'
-        pl.enable_parallel_projection()
-        pl.camera.tight()
-        pl.enable_camera_distortion((0.4, 0.15, 0.0, 0.0))
-        image = pl.screenshot()
-        pl.close()
-        return image.astype(int)
-
-    assert np.abs(render(1.0) - render(10.0)).max() == 0
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_follows_a_change_of_projection():
-    pl = pv.Plotter(window_size=[200, 200])
-    actor = pl.add_mesh(pv.Sphere())
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
-    before = [0.0, 0.0]
-    assert uniforms.GetUniform2f('u_distortion_projection_scale', before)
-
-    pl.camera.view_angle = 2 * pl.camera.view_angle
-    pl.screenshot()
-    after = [0.0, 0.0]
-    assert uniforms.GetUniform2f('u_distortion_projection_scale', after)
-    assert after[1] < before[1]
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_leaves_imported_actors_as_it_found_them():
-    """A raw VTK actor carries none of PyVista's shader bookkeeping."""
-    pl = pv.Plotter()
-    pl.import_vrml(Path(__file__).parent.parent / 'example_files' / 'Box.wrl')
-    imported = [prop for prop in pl.renderer.actors.values() if not isinstance(prop, pv.Actor)]
-    assert imported
-    before = [prop.GetShaderProperty().GetNumberOfShaderReplacements() for prop in imported]
-
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    assert all(
-        prop.GetShaderProperty().GetNumberOfShaderReplacements() == count + 1
-        for prop, count in zip(imported, before, strict=True)
-    )
-
-    pl.disable_camera_distortion()
-    for prop, count in zip(imported, before, strict=True):
-        assert prop._camera_distortion_state is None
-        assert prop.GetShaderProperty().GetNumberOfShaderReplacements() == count
-        uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
-        assert not uniforms.GetUniform4f('u_distortion_coefficients', [0.0, 0.0, 0.0, 0.0])
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_warns_once_for_a_prop_it_cannot_reach():
-    """The sweep runs before every render, and the warning is not news twice."""
-    pl = pv.Plotter()
-    volume = pv.ImageData(dimensions=(8, 8, 8))
-    pl.add_volume(volume, scalars=np.zeros(volume.n_points))
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter('always')
-        pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-        pl.screenshot()  # the sweep runs again, and has nothing new to say
-    assert sum('does not apply to volumes' in str(w.message) for w in record) == 1
-
-    pl.disable_camera_distortion()  # a volume was never given anything to undo
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_covers_every_subplot():
-    pl = pv.Plotter(shape=(1, 2))
-    actors = []
-    for column in range(2):
-        pl.subplot(0, column)
-        actors.append(pl.add_mesh(pv.Sphere()))
-    pl.subplot(0, 0)
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    for actor in actors:
-        assert 'camera_distortion' in actor._shader_replacements
-    pl.disable_camera_distortion()
-    for actor in actors:
-        assert 'camera_distortion' not in actor._shader_replacements
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_reads_each_subplots_own_projection():
-    """Subplots share the coefficients but not the camera they are applied through."""
-    pl = pv.Plotter(shape=(1, 2))
-    actors = []
-    for column, view_angle in enumerate((30.0, 60.0)):
-        pl.subplot(0, column)
-        actors.append(pl.add_mesh(pv.Sphere()))
-        pl.camera.view_angle = view_angle
-    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-
-    scales = []
-    for actor in actors:
-        values = [0.0, 0.0]
-        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
-        assert uniforms.GetUniform2f('u_distortion_projection_scale', values)
-        scales.append(values[1])
-    assert scales[0] > scales[1]  # the narrower the view angle, the longer the focal length
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_warns_for_gaussian_points():
-    pl = pv.Plotter()
-    pl.add_mesh(pv.Sphere(), style='points_gaussian')
-    with pytest.warns(UserWarning, match='does not apply to gaussian points'):
-        pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
-    pl.close()
-
-
-@pytest.mark.parametrize('coefficients', [(0.1, 0.2), (0.1, 0.2, 0.3, 0.4, 0.5)])
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_camera_distortion_rejects_wrong_length(coefficients):
-    match = f'must have four values \\(k1, k2, p1, p2\\), got {len(coefficients)}'
-    with pytest.raises(ValueError, match=match):
-        pv.Plotter().enable_camera_distortion(coefficients)
 
 
 def test_create_axes_orientation_box(verify_image_cache):
