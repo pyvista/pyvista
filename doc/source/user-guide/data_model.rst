@@ -183,7 +183,7 @@ the underlying C array to the :class:`numpy.ndarray`, meaning
 that the two arrays are now efficiently linked (in NumPy terminology,
 the returned array is a view into the underlying VTK data). This means
 that we can change the array using numpy array indexing and have it
-modified on the "VTK side".
+modified on the "VTK side."
 
 .. jupyter-execute::
 

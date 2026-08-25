@@ -175,7 +175,7 @@ compute dependencies should be lazy-imported inside the accessor
 methods, not at the module top.
 
 
-Chaining and return types
+Chaining and Return Types
 -------------------------
 
 Accessor methods can return three kinds of things:
@@ -195,7 +195,7 @@ mutating the input in place. The caller then decides whether to
 assign the result back.
 
 
-Collision policy
+Collision Policy
 ----------------
 
 Two collision cases are handled differently:
@@ -315,7 +315,7 @@ cost nothing when unused, and give plugins a clear boundary the
 PyVista core can rely on.
 
 
-Plotter components
+Plotter Components
 ------------------
 
 Datasets get accessors; the plotter gets *components*. The mechanism
