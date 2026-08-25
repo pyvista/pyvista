@@ -174,6 +174,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
         self._point_sprite_observer: int | None = None
+        self._camera_distortion_state: tuple[tuple[float, ...], tuple[float, float]] | None = None
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
