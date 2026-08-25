@@ -543,8 +543,18 @@ jobs:
           COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
         run: |
           # Individual gh/api lookups below are best-effort (wrapped in `|| true`); a single
-          # missing log or issue comment should not abort the whole report.
+          # missing log or issue comment should not abort the whole report. Every
+          # `for row in "${failed_jobs[@]}"` below is guarded by a length check first: on
+          # bash <4.4, `"${arr[@]}"` on a *declared-but-empty* array raises an unbound-variable
+          # error under nounset, and the empty-`failed_jobs` case is a real, expected path here.
           set -uo pipefail
+
+          # Pull this job's failure-hash marker back out of a report's text. No match (e.g.
+          # the previous report predates this marker format) is an expected outcome, not an
+          # error, so it must not raise under the pipefail'd `-e` above.
+          extract_hash() {
+            printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
+          }
 
           # Ensure the dedup label exists (idempotent).
           gh label create vtk-master-wheel-failure \
@@ -554,7 +564,7 @@ jobs:
 
           # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
           failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
-            --jq '.jobs[] | select(.conclusion == "failure") | [.databaseId, .name, .url] | @tsv')
+            --jq '.jobs[] | select(.conclusion == "failure") | [.databaseId, .name, .url] | @tsv' || true)
 
           failed_jobs=()
           while IFS=$'\t' read -r job_id name url; do
@@ -579,7 +589,10 @@ jobs:
               if [ -z "$log" ]; then
                 summary="(could not retrieve the log for this job)"
               else
-                start_line="$(printf '%s\n' "$log" | grep -n -m1 -E '=+ short test summary info =+|^::error::VTK build failed' | head -n1 | cut -d: -f1)"
+                # grep -m1 exits 1 when neither marker is found (a very normal outcome, e.g.
+                # a timeout or infra failure); with pipefail active that would otherwise abort
+                # this whole step under -e, so the miss must be swallowed right here.
+                start_line="$(printf '%s\n' "$log" | grep -n -m1 -E '=+ short test summary info =+|^::error::VTK build failed' | head -n1 | cut -d: -f1 || true)"
                 if [ -n "$start_line" ]; then
                   summary="$(printf '%s\n' "$log" | tail -n "+${start_line}" | tail -c 8000)"
                 else
@@ -609,18 +622,18 @@ jobs:
           # Check for an existing open issue, and compare each failed job's signature
           # against the most recently posted report (the last comment, or the issue body
           # if there are no comments yet).
-          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty' || true)
 
           repeat_note=""
-          if [ -n "$existing" ]; then
+          if [ -n "$existing" ] && [ "${#failed_jobs[@]}" -gt 0 ]; then
             prev_text="$(gh issue view "$existing" --json body,comments \
               --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)"
             prev_url="$(gh issue view "$existing" --json url,comments \
               --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
             for row in "${failed_jobs[@]}"; do
               IFS=$'\t' read -r job_id name url <<< "$row"
-              cur_hash="$(printf '%s' "$failure_sections" | grep -F "failure-hash:${name}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/')"
-              prev_hash="$(printf '%s' "$prev_text" | grep -F "failure-hash:${name}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/')"
+              cur_hash="$(extract_hash "$failure_sections" "$name")"
+              prev_hash="$(extract_hash "$prev_text" "$name")"
               if [ -n "$cur_hash" ] && [ -n "$prev_hash" ] && [ "$cur_hash" = "$prev_hash" ]; then
                 repeat_note+="- \`${name}\`: same failure signature as the [previous report](${prev_url})."$'\n'
               fi
