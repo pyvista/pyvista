@@ -14,7 +14,7 @@ we create a voxelized mesh similar to a Minecraft "cave".
 import pyvista as pv
 
 # %%
-# Generate Perlin Noise over a 3D StructuredGrid
+# Generate Perlin Noise Over a 3D StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
 # the "caves".  For example, lowering the frequency will make the

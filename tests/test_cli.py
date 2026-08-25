@@ -944,13 +944,13 @@ def test_validate_help(capsys: pytest.CaptureFixture):
     assert 'Mesh(es) to validate.' in out, out
 
     assert '│ --fields -f            -' in out, out
-    assert 'Field(s) to validate.' in out, out
+    assert 'Fields to validate.' in out, out
 
     assert '│ --exclude -e           -' in out, out
-    assert 'Field(s) to exclude' in out, out
+    assert 'Fields to exclude' in out, out
 
     assert '│ --tolerance            -' in out, out
-    assert 'Field(s) to exclude' in out, out
+    assert 'Fields to exclude' in out, out
 
     assert '│ --planarity-tolerance  -' in out, out
     assert 'Allowed relative distance' in out, out
