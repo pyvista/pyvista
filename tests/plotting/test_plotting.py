@@ -6208,6 +6208,10 @@ def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
     assert 'camera_distortion' not in gaussian._shader_replacements
     assert sum('does not apply to volumes' in m for m in messages) == 1
     assert sum('does not apply to gaussian points' in m for m in messages) == 1
+
+    # Disabling walks the same props, including the ones it never gave anything to undo.
+    pl.disable_camera_distortion()
+    assert 'camera_distortion' not in composite._shader_replacements
     pl.close()
 
 

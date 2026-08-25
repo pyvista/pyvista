@@ -1929,7 +1929,7 @@ class BasePlotter(_BoundsSizeMixin):
     def _apply_camera_distortion(self, *_args) -> None:
         """Give every actor the distortion shader and keep its uniforms current."""
         coefficients = self._camera_distortion_coefficients
-        if coefficients is None:
+        if coefficients is None:  # pragma: no cover - disable removes the observer first
             return
         for renderer in self.renderers:
             state = (coefficients, _projection_scale(renderer))
