@@ -343,15 +343,24 @@ jobs:
           echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
           : > failure_summary.txt
           # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the
-          # ANSI escapes so the summary reads cleanly inside a markdown code block.
+          # ANSI escapes so the summary reads cleanly inside a markdown code block. Truncate
+          # by bytes from the end (to keep the actually-relevant tail of the log), but if that
+          # truncated, drop its first line too: a byte cut can land mid-line/mid-word.
           for log in core-test.log plotting-test.log; do
             [ -s "$log" ] || continue
             start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
             if [ -n "$start_line" ]; then
-              tail -n "+${start_line}" "$log"
+              segment="$(tail -n "+${start_line}" "$log")"
             else
-              cat "$log"
-            fi | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g' | tail -c 4000 >> failure_summary.txt
+              segment="$(cat "$log")"
+            fi
+            segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+            size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
+            if [ "$size" -gt 4000 ]; then
+              printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
+            else
+              printf '%s' "$segment" >> failure_summary.txt
+            fi
             echo >> failure_summary.txt
           done
 
@@ -447,15 +456,24 @@ jobs:
           echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
           : > failure_summary.txt
           # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the
-          # ANSI escapes so the summary reads cleanly inside a markdown code block.
+          # ANSI escapes so the summary reads cleanly inside a markdown code block. Truncate
+          # by bytes from the end (to keep the actually-relevant tail of the log), but if that
+          # truncated, drop its first line too: a byte cut can land mid-line/mid-word.
           for log in core-test.log plotting-test.log; do
             [ -s "$log" ] || continue
             start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
             if [ -n "$start_line" ]; then
-              tail -n "+${start_line}" "$log"
+              segment="$(tail -n "+${start_line}" "$log")"
             else
-              cat "$log"
-            fi | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g' | tail -c 4000 >> failure_summary.txt
+              segment="$(cat "$log")"
+            fi
+            segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+            size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
+            if [ "$size" -gt 4000 ]; then
+              printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
+            else
+              printf '%s' "$segment" >> failure_summary.txt
+            fi
             echo >> failure_summary.txt
           done
 
@@ -566,15 +584,24 @@ jobs:
           echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
           : > failure_summary.txt
           # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the
-          # ANSI escapes so the summary reads cleanly inside a markdown code block.
+          # ANSI escapes so the summary reads cleanly inside a markdown code block. Truncate
+          # by bytes from the end (to keep the actually-relevant tail of the log), but if that
+          # truncated, drop its first line too: a byte cut can land mid-line/mid-word.
           for log in core-test.log plotting-test.log; do
             [ -s "$log" ] || continue
             start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
             if [ -n "$start_line" ]; then
-              tail -n "+${start_line}" "$log"
+              segment="$(tail -n "+${start_line}" "$log")"
             else
-              cat "$log"
-            fi | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g' | tail -c 4000 >> failure_summary.txt
+              segment="$(cat "$log")"
+            fi
+            segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+            size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
+            if [ "$size" -gt 4000 ]; then
+              printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
+            else
+              printf '%s' "$segment" >> failure_summary.txt
+            fi
             echo >> failure_summary.txt
           done
 
