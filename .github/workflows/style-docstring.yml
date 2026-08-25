@@ -89,10 +89,7 @@ jobs:
       - name: Install Vale Dependencies
         run: pip install 'docutils<0.22' 'sphinx-gallery<0.22.0'
 
-      # Sphinx-Gallery examples embed RST in `# %%` comments, which Vale can't
-      # parse for structure (headings, etc.) as plain Python comments. This
-      # extracts just the RST prose into real .rst files -- no code, no doc
-      # build -- so Vale can lint headings there too.
+      # Convert .py examples to .rst so Vale can parse their headings.
       - name: Extract example RST for Vale
         run: python3 doc/extract_example_rst.py examples .vale-examples-rst
 

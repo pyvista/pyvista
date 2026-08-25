@@ -6,10 +6,7 @@ ignorecase: false
 tokens:
   - '[^\s.!?]+'
 exceptions:
-  # numpydoc `Returns`/`Parameters` type lines are legitimately restated as
-  # the first word of the following description, e.g.:
-  #   pyvista.UnstructuredGrid
-  #       UnstructuredGrid containing a single empty cell.
+  # numpydoc type lines restated as the first word of their description
   - Actor
   - AddIDsAlgorithm
   - Brush
@@ -38,13 +35,11 @@ exceptions:
   - Trimesh
   - UnstructuredGrid
   - Any
-  # dotted module paths like `pyvista.examples.examples.load_globe_texture`
-  # and `pyvista.plotting.plotting` legitimately repeat their last segment.
+  # dotted module paths repeating their last segment, e.g. pyvista.examples.examples
   - examples
   - plotting
-  # code example lines like `reader.reader.SetDataByteOrderToBigEndian()`
-  # and `dataset = dataset.translate(...)` repeat a real identifier.
+  # code repeating a real identifier, e.g. reader.reader.read()
   - reader
   - dataset
-  # two separate, correctly-labeled comments in the same list.
+  # two separate, correctly-labeled comments
   - triangle

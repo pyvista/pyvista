@@ -1,16 +1,4 @@
-"""Extract the RST prose from Sphinx-Gallery example scripts for Vale.
-
-Sphinx-Gallery examples embed RST in a leading docstring and in ``# %%``
-comment cells, which Vale cannot parse for structure (headings, etc.) since
-they are just Python comments on disk. This mirrors ``examples/`` into a
-scratch directory of plain ``.rst`` files -- text blocks only, no code --
-using Sphinx-Gallery's own (non-executing) source parser, so Vale can lint
-them like any other doc.
-
-Blank lines are inserted so each block keeps its original line number,
-making Vale's file:line output point back to roughly the right spot in the
-source ``.py`` file.
-"""
+"""Convert Sphinx-Gallery example scripts to .rst files so Vale can lint them."""
 
 from __future__ import annotations
 
@@ -28,7 +16,7 @@ def convert_file(py_path: Path, rst_path: Path) -> None:
     for label, content, lineno in blocks:
         if label != 'text':
             continue
-        while len(lines) < lineno - 1:
+        while len(lines) < lineno - 1:  # pad so line numbers still match the source
             lines.append('')
         lines.extend(content.splitlines())
 
