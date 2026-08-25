@@ -2,10 +2,12 @@ from __future__ import annotations  # noqa: D100
 
 import logging
 import os
+from pathlib import Path
 import re
 from typing import TYPE_CHECKING
 
 from packaging.requirements import Requirement
+from packaging.utils import parse_wheel_filename
 from packaging.version import Version
 from tox.execute.api import StdinSource
 from tox.plugin import impl
@@ -115,6 +117,33 @@ def _get_freezed_requirements(lines: list[str]) -> Generator[tuple[str, Version]
             yield _normalize_package_name(req.name), Version(m.group(2))
 
 
+def _check_local_vtk_wheel(tox_env: ToxEnv, installed: list[tuple[str, Version]]) -> None:
+    """For a `vtk_local` env, fail if the installed vtk isn't the wheel in VTK_WHEEL_DIR.
+
+    `uv pip install --no-index --find-links ...` can silently keep an already-installed vtk
+    instead of the local wheel (e.g. its own version comparison decides the current install
+    already "satisfies", or the wheel's platform tag doesn't match the runner) rather than
+    erroring, so this needs to be checked explicitly.
+    """
+    if 'vtk_local' not in tox_env.name:
+        return
+
+    wheel_dir = Path(os.environ['VTK_WHEEL_DIR'])
+    wheels = list(wheel_dir.glob('vtk-*.whl'))
+    if not wheels:
+        msg = f'No VTK wheel found in VTK_WHEEL_DIR ({wheel_dir}).'
+        raise Fail(msg)
+
+    _name, expected_version, _build, _tags = parse_wheel_filename(wheels[0].name)
+    installed_version = next((v for n, v in installed if n == 'vtk'), None)
+    if installed_version != expected_version:
+        msg = (
+            f'Expected the local VTK wheel ({expected_version}) to be installed, but found'
+            f' {installed_version} instead.'
+        )
+        raise Fail(msg)
+
+
 @impl
 def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """Check that deps declared in the constraints_file (ie. during the `deps` step above)
@@ -138,6 +167,8 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
     # Relies on the fact the the freeze command outputs lines in the
     # form of `package==version` (eg. `vtk==9.4.2`)
     installed = list(_get_freezed_requirements(out.out.splitlines()))
+
+    _check_local_vtk_wheel(tox_env, installed)
 
     # Check that the installed requirements match the constraints file ones
     for req in requirements:
