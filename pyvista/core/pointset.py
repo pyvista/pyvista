@@ -1473,7 +1473,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         False
 
         Assign a new array instead. Here the three point ids are re-partitioned into a
-        single poly-vertex cell.
+        single polyvertex cell.
 
         >>> mesh.vert_offsets = [0, 3]
         >>> mesh.n_verts
@@ -1627,7 +1627,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh.line_offsets.flags['WRITEABLE']
         False
 
-        Assign a new array instead. Here the single poly-line is split into two.
+        Assign a new array instead. Here the single polyline is split into two.
 
         >>> mesh.line_offsets = [0, 5, 10]
         >>> mesh.n_lines
@@ -3251,7 +3251,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> grid.polyhedron_face_location_offsets
         array([0, 4]...)
 
-        There is one entry per cell, whether or not the cell is a polyhedron.
+        There is one entry per cell regardless of whether the cell is a polyhedron.
 
         >>> len(grid.polyhedron_face_location_offsets) - 1 == grid.n_cells
         True

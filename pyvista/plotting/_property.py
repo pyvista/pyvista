@@ -483,7 +483,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.edge_opacity = 0.75
         >>> prop.plot()
 
-        Visualize wn edge opacity of ``0.25``.
+        Visualize an edge opacity of ``0.25``.
 
         >>> prop.edge_opacity = 0.25
         >>> prop.plot()
@@ -775,7 +775,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.roughness
         0.5
 
-        Visualize default roughness with metallic of ``0.5`` and physically-based
+        Visualize default roughness with metallic of ``0.5`` and physically based
         rendering.
 
         >>> prop.interpolation = 'pbr'
@@ -1199,7 +1199,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
-        Get the default anisotropy and visualize it with physically-based rendering.
+        Get the default anisotropy and visualize it with physically based rendering.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()

@@ -755,7 +755,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image_plotter(cropped).show()
 
         Use ``factor`` to crop 40% of the image. This `keeps` 40% of the pixels along each axis,
-        and `removes` 60% (i.e. 30% from each side).
+        and `removes` 60% (that is, 30% from each side).
 
         >>> cropped = gray_image.crop(factor=0.4)
         >>> cropped.dimensions
@@ -2631,7 +2631,7 @@ class ImageDataFilters(DataSetFilters):
         2
 
         Show the unique values. Since only ``'external'`` boundaries are generated
-        by default, the second component is always ``0`` (i.e. the ``background_value``).
+        by default, the second component is always ``0`` (that is, the ``background_value``).
         Note that all four foreground regions share a boundary with the background.
 
         >>> np.unique(contours['boundary_labels'], axis=0)
@@ -2689,11 +2689,11 @@ class ImageDataFilters(DataSetFilters):
 
         The sharp features are now smoothed and the internal boundaries are now labeled
         as external boundaries. Note that using ``'all'`` here is optional since
-        using ``select_inputs`` converts previously-internal boundaries into external
+        using ``select_inputs`` converts previously internal boundaries into external
         ones.
 
         Do not pad the image with background values before contouring. Since the input image
-        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        has foreground regions visible at the edges of the image (for example, the ``+Z`` bound),
         setting ``pad_background=False`` in this example causes the top and sides of
         the mesh to be "open".
 
@@ -2707,7 +2707,7 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
-        less than one may help preserve sharp features (e.g. corners).
+        less than one may help preserve sharp features (for example, corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
         >>> labels_plotter(surf, zoom=1.5).show()
@@ -3070,13 +3070,13 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have increased by half the spacing
         - The output ``N Cells`` equals the input ``N Points``
 
-        Since the input points are 3D (i.e. there are no singleton dimensions), the
+        Since the input points are 3D (that is, there are no singleton dimensions), the
         output cells are 3D :attr:`~pyvista.CellType.VOXEL` cells.
 
         >>> cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
-        If the input points are 2D (i.e. one dimension is singleton), the
+        If the input points are 2D (that is, one dimension is singleton), the
         output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells when ``dimensions`` is
         set to ``'preserve'``.
 
@@ -3519,7 +3519,7 @@ class ImageDataFilters(DataSetFilters):
         Examples
         --------
         Pad a grayscale image with a 100-pixel wide border. The padding is black
-        (i.e. has a value of ``0``) by default.
+        (that is, has a value of ``0``) by default.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -4422,10 +4422,10 @@ class ImageDataFilters(DataSetFilters):
           Spacing:      5.000e-01, 5.000e-01, 1.000e+00
           N Arrays:     1
 
-        Note that the upsampled :attr:`~pyvista.ImageData.dimensions` are doubled and
+        Note that the up-sampled :attr:`~pyvista.ImageData.dimensions` are doubled and
         the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
         however, that the physical bounds of the input differ from the output.
-        The upsampled :attr:`~pyvista.ImageData.origin` also differs:
+        The up-sampled :attr:`~pyvista.ImageData.origin` also differs:
 
         >>> image.origin
         (0.0, 0.0, 0.0)
@@ -4526,7 +4526,7 @@ class ImageDataFilters(DataSetFilters):
 
         Alternatively, we could have set the dimensions explicitly. Since we want
         ``9 x 4 x 1`` cells along the x-y-z axes (respectively), we set the dimensions
-        to ``(10, 5, 2)``, i.e. one more than the desired number of cells.
+        to ``(10, 5, 2)``, that is, one more than the desired number of cells.
 
         >>> resampled = volume.resample(dimensions=(10, 5, 2))
         >>> resampled.plot(show_edges=True, cmap='grey')
@@ -4573,7 +4573,7 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.dimensions
         (458, 342, 1)
 
-        Down-sample the gourds image to 1/10th its original resolution using ``'lanczos'``
+        Down-sample the gourds image to 1/10 its original resolution using ``'lanczos'``
         interpolation.
 
         >>> downsampled = gourds.resample(1 / 8, 'lanczos')
@@ -4619,7 +4619,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = image_plotter(knee, clim=[vmin, vmax])
         >>> pl.show()
 
-        Upsample it with B-spline interpolation. The interpolation is very smooth.
+        Up-sample it with B-spline interpolation. The interpolation is very smooth.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
         >>> pl = image_plotter(upsampled, clim=[vmin, vmax])

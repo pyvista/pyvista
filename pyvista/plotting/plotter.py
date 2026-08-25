@@ -1982,8 +1982,8 @@ class BasePlotter(_BoundsSizeMixin):
                        focal_point=(0.0243, 0.0336, -0.02225),
                        viewup=(0.0, 1.0, 0.0))
 
-        Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the repr and
-        prepending the pyvista module, i.e. ``pv.``.
+        Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the ``repr`` and
+        prepending the pyvista module, that is, ``pv.``.
 
         >>> new_cpos = pv.CameraPosition(
         ...     position=(0.0243, 0.0336, 0.9446),
@@ -4694,7 +4694,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Show a built-in volume example with the coolwarm colormap.
+        Show a built-in volume example with the ``coolwarm`` colormap.
 
         >>> from pyvista import examples
         >>> import pyvista as pv
@@ -5858,8 +5858,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Open a gif file, setting the framerate to 8 frames per second and
-        reducing the colorspace to 64.
+        Open a GIF file, setting the frame rate to 8 frames per second and
+        reducing the color space to 64.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()

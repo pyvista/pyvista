@@ -275,7 +275,7 @@ def validate_array(
     Examples
     --------
     Validate a one-dimensional array has at least length two, is
-    monotonically increasing (i.e. has strict ascending order), and
+    monotonically increasing (that is, has strict ascending order), and
     is within some range.
 
     >>> from pyvista import _validation

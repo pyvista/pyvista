@@ -624,7 +624,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Plot three planes lit by three spotlights with exponents of 1,
-        2 and 5.  The one with the lowest exponent has the broadest
+        2, and 5.  The one with the lowest exponent has the broadest
         beam.
 
         >>> import pyvista as pv
@@ -965,7 +965,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Create a light that shines on the origin from a 30-degree
-        elevation in the xz plane.
+        elevation in the ``xz`` plane.
 
         >>> import pyvista as pv
         >>> light = pv.Light()

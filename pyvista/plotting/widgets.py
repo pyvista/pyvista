@@ -1252,7 +1252,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Examples
         --------
-        Shows an interactive plane sliced along each cartesian axis of the mesh.
+        Shows an interactive plane sliced along each Cartesian axis of the mesh.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()

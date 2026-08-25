@@ -3877,7 +3877,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         Add a skybox cubemap as an environment texture and show that the
         lighting from the texture is mapped on to a sphere dataset. Note how
-        even when disabling the default lightkit, the scene lighting will still
+        even when disabling the default ``'light kit'``, the scene lighting will still
         be mapped onto the actor.
 
         >>> from pyvista import examples

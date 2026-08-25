@@ -195,6 +195,7 @@ backface
 backfaces
 banesullivan
 billboarding
+binarize
 binarized
 boolean
 boxplot
@@ -219,11 +220,13 @@ condaact
 config
 coterminal
 cpos
+crossflow
 ctrl
 cubemap
 cubemaps
 cvista
 cybersecurity
+cycler's
 cyclers
 cyclopts
 data's
@@ -281,6 +284,7 @@ gyroid
 hdf
 hdr
 headsq
+heatmap
 hexahedra
 hexahedral
 hexbeam
@@ -363,6 +367,7 @@ polylines
 polyvertex
 pre
 prepended
+prepending
 prepends
 prostar
 py
@@ -462,6 +467,7 @@ unpickle
 unpickling
 unticked
 untrusted
+unwarped
 upscaling
 url
 validators
@@ -479,6 +485,7 @@ voxelized
 voxels
 vrml
 vtk
+vtkbool
 vtu
 watertightness
 websockets

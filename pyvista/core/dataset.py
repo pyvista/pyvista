@@ -2493,7 +2493,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.intersect_with_line(pointa, pointb)
         (array([[0. , 0.5, 0.5]]), array([0]))
 
-        Reversing the point order returns a `different` intersection point on the opposide side
+        Reversing the point order returns a `different` intersection point on the opposite side
         of the cell.
 
         >>> mesh.intersect_with_line(pointb, pointa)
@@ -3348,8 +3348,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.dimensionality
         1
 
-        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
-        a dimensionality of ``2``.
+        Two-dimensional :class:`~pyvista.ImageData` (that is, where one of its dimensions is
+        one) has a dimensionality of ``2``.
 
         >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
         >>> mesh.dimensionality
@@ -3462,7 +3462,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.dimensionality
         3
 
-        The dimensionality can vary if there are mixed cell types. E.g. load
+        The dimensionality can vary if there are mixed cell types. For example, load
         :func:`~pyvista.examples.downloads.download_prostar`.
 
         >>> mesh = examples.download_prostar()

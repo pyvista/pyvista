@@ -269,7 +269,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     Examples
     --------
-    Get the current access state for VTK's snake_case api.
+    Get the current access state for VTK's ``snake_case`` API.
 
     >>> import pyvista as pv
     >>> pv.vtk_snake_case()
@@ -280,7 +280,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     >>> # pv.PolyData().information
 
-    Allow use of VTK's snake_case attributes. No warning or error is raised.
+    Allow use of VTK's ``snake_case`` attributes. No warning or error is raised.
 
     >>> _ = pv.vtk_snake_case('allow')
     >>> pv.PolyData().information

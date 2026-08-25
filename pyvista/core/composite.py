@@ -1131,7 +1131,7 @@ class MultiBlock(
         (<class 'pyvista.core.composite.MultiBlock'>, <class 'NoneType'>)
 
         Flatten the ``MultiBlock``. The nested ``MultiBlock`` containers are removed
-        and only their contents are returned (i.e. the three end nodes).
+        and only their contents are returned (that is, the three end nodes).
 
         >>> flat = nested.flatten()
         >>> flat.n_blocks

@@ -1624,8 +1624,8 @@ class DataObjectFilters:
         >>> np.unique(validity_state)
         pyvista_ndarray([ 0, 16])
 
-        The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
-        nonconvex state. We confirm this by printing the ``'non_convex'`` array, which shows there
+        The ``0`` cells are valid, and the cells with value ``16`` (that is, hex ``0x10``) have a
+        non-convex state. We confirm this by printing the ``'non_convex'`` array, which shows there
         are three invalid cells.
 
         >>> validated.field_data['non_convex']
@@ -1653,7 +1653,7 @@ class DataObjectFilters:
         ... ) == pv.CellStatus.NON_CONVEX
         np.True_
 
-        We can also show all invalid cells. This matches the nonconvex ids, which confirms
+        We can also show all invalid cells. This matches the non-convex ids, which confirms
         these are the only invalid cells.
 
         >>> validated.field_data['invalid']
@@ -5113,7 +5113,7 @@ class DataObjectFilters:
 
         If sampling from a set of points represented by a ``(n, 3)``
         shaped ``numpy.ndarray``, they need to be converted to a
-        PyVista DataSet, e.g. :class:`pyvista.PolyData`, first.
+        PyVista DataSet, for example, :class:`pyvista.PolyData`, first.
 
         >>> import numpy as np
         >>> points = np.array([[1.5, 5.0, 6.2], [6.7, 4.2, 8.0]])

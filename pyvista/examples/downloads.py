@@ -401,7 +401,7 @@ def download_masonry_texture(load: bool = True) -> Texture | str:  # noqa: FBT00
 
     Examples
     --------
-    Create plot the masonry testure on a surface.
+    Create plot the masonry texture on a surface.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -6273,7 +6273,7 @@ def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa:
       Z Bounds:   -2.500e-02, 2.500e-02
       N Arrays:   10
 
-    Plot the displacement of the 4th mode shape as scalars.
+    Plot the displacement of the fourth mode shape as scalars.
 
     >>> cpos = pv.CameraPosition(
     ...     position=(0.744, -0.502, -0.83),

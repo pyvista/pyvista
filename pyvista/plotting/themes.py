@@ -906,8 +906,8 @@ class _Font(_ConfigBase):
 
     Examples
     --------
-    Set the default font family to 'arial'.  Must be either
-    'arial', 'courier', or 'times'.
+    Set the default font family to ``'arial'``.  Must be either
+    ``'arial'``, ``'courier'``, or ``'times'``.
 
     >>> import pyvista as pv
     >>> pv.global_theme.font.family = 'arial'
@@ -1594,7 +1594,7 @@ class _CameraConfig(_ConfigBase):
 
         Examples
         --------
-        Set camera viewup.
+        Set the camera ``viewup``.
 
         >>> import pyvista as pv
         >>> pv.global_theme.camera.viewup = [0.0, 0.0, 1.0]
@@ -2231,7 +2231,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set both the position and viewup of the camera.
+        Set both the position and ``viewup`` of the camera.
 
         >>> import pyvista as pv
         >>> pv.global_theme.camera.position = [1.0, 1.0, 1.0]
@@ -2318,8 +2318,8 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set the default font family to 'arial'.  Must be either
-        'arial', 'courier', or 'times'.
+        Set the default font family to ``'arial'``.  Must be either
+        ``'arial'``, ``'courier'``, or ``'times'``.
 
         >>> import pyvista as pv
         >>> pv.global_theme.font.family = 'arial'
@@ -2835,7 +2835,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set transparent_background globally to ``True``.
+        Set ``transparent_background`` globally to ``True``.
 
         >>> import pyvista as pv
         >>> pv.global_theme.transparent_background = True
@@ -2934,7 +2934,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set multi_rendering_splitting_position globally to 0.5 (the
+        Set ``multi_rendering_splitting_position`` globally to 0.5 (the
         middle of the window).
 
         >>> import pyvista as pv
@@ -2964,7 +2964,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set default volume mapper globally to 'gpu'.
+        Set default volume mapper globally to ``'gpu'``.
 
         >>> import pyvista as pv
         >>> pv.global_theme.volume_mapper = 'gpu'
@@ -2990,7 +2990,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set the global smooth_shading parameter default to ``True``.
+        Set the global ``smooth_shading`` parameter default to ``True``.
 
         >>> import pyvista as pv
         >>> pv.global_theme.smooth_shading = True
@@ -3008,7 +3008,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set the global depth_peeling parameter default to be enabled
+        Set the global ``depth_peeling`` parameter default to be enabled
         with 8 peels.
 
         >>> import pyvista as pv

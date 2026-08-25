@@ -133,7 +133,7 @@ class Transform(
 
     Compose the two transformations using ``*``. This will compose with
     post-multiplication such that the transformations are applied in order from left to
-    right, i.e. translate first, then scale.
+    right, that is, translate first, then scale.
 
     >>> transform_post = translation_T * scaling_T
     >>> transform_post.matrix

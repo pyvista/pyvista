@@ -1561,7 +1561,7 @@ class _Chart(DocSubs):
 
         Examples
         --------
-        Create a {chart_name} with title 'My Chart'.
+        Create a {chart_name} with title 'Example Chart'.
 
         .. pyvista-plot::
            :force_static:
@@ -4823,7 +4823,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
 
         Examples
         --------
-        Create a matplotlib chart with title 'My Chart'.
+        Create a Matplotlib chart with title 'Example Chart'.
 
 
         .. pyvista-plot::

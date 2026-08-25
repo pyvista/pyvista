@@ -577,7 +577,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        Remove the part of the mesh with "sample_point_scalars" above 100.
+        Remove the part of the mesh with ``sample_point_scalars`` above 100.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -594,7 +594,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     scalars='sample_point_scalars', value=100, both=True
         ... )
 
-        Remove the part of the mesh with "sample_point_scalars" below 100.
+        Remove the part of the mesh with ``sample_point_scalars`` below 100.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -604,7 +604,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> clipped.plot()
 
-        Clip the part of the mesh with "sample_point_scalars" between 200 and 250.
+        Clip the part of the mesh with ``sample_point_scalars`` between 200 and 250.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -5173,7 +5173,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Any combination of values and ranges may be specified.
 
-        E.g. extract a single value and two ranges, and split the result into separate
+        For example, extract a single value and two ranges, and split the result into separate
         blocks of a MultiBlock.
 
         >>> extracted = mesh.extract_values(
@@ -5201,14 +5201,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Extract values from a single component.
 
-        E.g. extract points with a strong red component (i.e. > 0.8).
+        For example, extract points with a strong red component (that is, > 0.8).
 
         >>> extracted = point_cloud.extract_values(ranges=[0.8, 1.0], component_mode=0)
         >>> extracted.plot(**plot_kwargs)
 
         Extract values from all components.
 
-        E.g. extract points where all RGB components are dark (i.e. < 0.5).
+        For example, extract points where all RGB components are dark (that is, < 0.5).
 
         >>> extracted = point_cloud.extract_values(
         ...     ranges=[0.0, 0.5], component_mode='all'
@@ -5217,7 +5217,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Extract specific multi-component values.
 
-        E.g. round the scalars to create binary RGB components, and extract only green
+        For example, round the scalars to create binary RGB components, and extract only green
         and blue components.
 
         >>> point_cloud['colors'] = np.round(point_cloud['colors'])

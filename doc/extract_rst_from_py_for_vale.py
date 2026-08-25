@@ -44,8 +44,10 @@ STRUCTURED_SECTIONS = {
     'Warns',
     'Receives',
 }
-# Sections that are code or bare references, not prose.
-SKIP_SECTIONS = {'Examples', 'See Also'}
+# ``See Also`` is numpydoc's own cross-reference DSL (bare, unbacktick-wrapped
+# names that numpydoc auto-links at doc-build time) -- not prose, and
+# backtick-wrapping it would fight that convention rather than fix anything.
+SKIP_SECTIONS = {'See Also'}
 
 
 def _is_section_header(header: str, underline: str) -> bool:
@@ -54,7 +56,7 @@ def _is_section_header(header: str, underline: str) -> bool:
 
 
 def filter_numpydoc(lines: list[str]) -> list[str]:
-    """Blank out numpydoc signature lines and skip-section bodies, keep the rest."""
+    """Blank out numpydoc signature lines and the ``See Also`` body, keep the rest."""
     out = list(lines)
     mode = 'prose'
     i = 0

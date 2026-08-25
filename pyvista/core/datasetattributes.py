@@ -1167,7 +1167,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Examples
         --------
         Add an array to ``point_data`` to a DataSet and then clear the
-        point_data.
+        ``point_data``.
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()

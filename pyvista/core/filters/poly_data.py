@@ -3328,13 +3328,13 @@ class PolyDataFilters(DataSetFilters):
         >>> f'Length is {length:.3f}'
         'Length is 0.812'
 
-        This is identical to the geodesic_distance.
+        This is identical to the ``geodesic_distance``.
 
         >>> length = sphere.geodesic_distance(0, 100)
         >>> f'Length is {length:.3f}'
         'Length is 0.812'
 
-        You can also plot the arc_length.
+        You can also plot the ``arc_length``.
 
         >>> arc = path.compute_arc_length()
         >>> arc.plot(scalars='arc_length')
