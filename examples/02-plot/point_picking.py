@@ -28,7 +28,7 @@ pl.enable_point_picking()
 pl.show()
 
 # %%
-# Ignore the 3D window
+# Ignore the 3D Window
 # ++++++++++++++++++++
 #
 # In the above example, both points on the mesh and points in the 3d window can be

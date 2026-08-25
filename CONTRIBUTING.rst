@@ -1909,7 +1909,7 @@ should not wait until a minor release. The steps for a patch release
 Dependency Version Policy
 -------------------------
 
-Python and VTK dependencies
+Python and VTK Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We support all supported `Python versions`_ and `VTK versions`_ that
@@ -1975,7 +1975,7 @@ With this approach, a job can be configured to use GitHub's hosted runners simpl
 by changing ``"macos-15-self-hosted"`` to ``"macos-15"``.
 
 
-Setting up a runner on bare metal
+Setting Up a Runner on Bare Metal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Visit PyVista's `Create self-hosted runner

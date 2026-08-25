@@ -47,7 +47,7 @@ df.head()
 df.shape
 
 # %%
-# Ad-hoc analytics
+# Ad-Hoc Analytics
 # ~~~~~~~~~~~~~~~~
 # Since we have a DataFrame, the full pandas API is available: filter,
 # derive new columns, summarize.

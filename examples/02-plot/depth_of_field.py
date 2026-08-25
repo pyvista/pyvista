@@ -18,7 +18,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Generate a bunch of bunnies
+# Generate a Bunch of Bunnies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create many bunnies using the :func:`glyph <pyvista.DataSetFilters.glyph>`
 # filter.

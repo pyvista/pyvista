@@ -46,7 +46,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
 
 
 # %%
-# Define function to draw pixels
+# Define Function to Draw Pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Define a helper function to add pixel boxes to plotter.
 

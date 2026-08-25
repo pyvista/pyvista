@@ -52,7 +52,7 @@ pl.add_legend()
 pl.show()
 
 # %%
-# Using custom legends
+# Using Custom Legends
 # ++++++++++++++++++++
 #
 # You can use specific labels with :func:`~pyvista.Plotter.add_legend`
@@ -80,7 +80,7 @@ pl.show()
 
 
 # %%
-# Using custom legend and glyphs
+# Using Custom Legend and Glyphs
 # ++++++++++++++++++++++++++++++
 #
 # You can use specific labels or glyphs even if they have been specified before.

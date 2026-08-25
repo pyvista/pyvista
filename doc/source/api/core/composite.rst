@@ -7,7 +7,7 @@ The :class:`pyvista.MultiBlock` class is a composite class to hold many
 data sets which can be iterated over. ``MultiBlock`` behaves mostly like
 a list, but has some Dictionary-like features.
 
-List-like Features
+List-Like Features
 ------------------
 
 Create empty composite dataset
@@ -80,7 +80,7 @@ allow optional names to be provided for the dictionary like usage.
    blocks[0:2]  # The Sphere and Cube objects in a new ``MultiBlock``
 
 
-Dictionary-like Features
+Dictionary-Like Features
 ------------------------
 
 
