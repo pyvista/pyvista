@@ -133,7 +133,7 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
     Parameters
     ----------
     pagename : str
-        The Sphinx pagename for the page being rendered.
+        The Sphinx ``pagename`` for the page being rendered.
 
     link : str
         The default GitHub edit URL, used as a fallback.

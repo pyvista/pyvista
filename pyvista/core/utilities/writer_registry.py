@@ -25,7 +25,7 @@ class WriterHandler(Protocol):
     """Callable that writes *dataset* to *path*."""
 
     def __call__(self, dataset: DataObject, path: str, /, **kwargs: Any) -> None:
-        """Write *dataset* to *path*, consuming format-specific *kwargs*."""
+        """Write *dataset* to *path*, consuming format-specific *``kwargs``*."""
 
 
 class WriterRegistration(NamedTuple):

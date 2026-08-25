@@ -50,7 +50,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
     ``np.longlong`` resolves to ``VTK_ID_TYPE``. ``longlong`` maps to ``VTK_LONG_LONG``
     on all supported VTK versions and platforms, so it is correct either way.
 
-    The two compare equal as dtypes and have identical width, so this is invisible to
+    The two compare equal as ``dtypes`` and have identical width, so this is invisible to
     value comparisons; it only affects which VTK array class conversions produce.
     """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
@@ -95,7 +95,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
     Examples
     --------
-    Get the 0-th cell from a :class:`pyvista.PolyData`.
+    Get cell 0 from a :class:`pyvista.PolyData`.
 
     >>> import pyvista as pv
     >>> mesh = pv.Sphere()
@@ -112,7 +112,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
       Y Bounds:   0.000e+00, 1.124e-02
       Z Bounds:   -5.000e-01, -4.971e-01
 
-    Get the 0-th cell from a :class:`pyvista.UnstructuredGrid`.
+    Get cell 0 from a :class:`pyvista.UnstructuredGrid`.
 
     >>> from pyvista import examples
     >>> mesh = examples.load_hexbeam()
@@ -433,7 +433,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     def get_edge(self: Self, index: int) -> Cell:
-        """Get the i-th edge composing the cell.
+        """Get the edge at ``index`` composing the cell.
 
         Parameters
         ----------
@@ -509,7 +509,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return [self.get_face(i) for i in range(self.n_faces)]
 
     def get_face(self: Self, index: int) -> Cell:
-        """Get the i-th face composing the cell.
+        """Get the face at ``index`` composing the cell.
 
         Parameters
         ----------
@@ -676,8 +676,8 @@ class CellArray(
     cells : np.ndarray or list, optional
         Import an array of data with the legacy :vtk:`vtkCellArray` layout, for example
         ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
-        Where n0 is the number of points in cell 0, and pX_Y is the Y'th
-        point in cell X.
+        Where n0 is the number of points in cell 0, and pX_Y is point Y
+        in cell X.
 
     Examples
     --------
@@ -998,12 +998,12 @@ class CellArray(
 
     @property
     def regular_cells(self: Self) -> NumpyArray[int]:
-        """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces.
+        """Return a (``n_cells``, cell_size)-shaped array of point indices for equal-sized faces.
 
         Returns
         -------
         numpy.ndarray
-            Array of face indices of shape (n_cells, cell_size).
+            Array of face indices of shape (``n_cells``, ``cell_size``).
 
         Notes
         -----
@@ -1032,7 +1032,8 @@ class CellArray(
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same ``cell_size``.
+            Cell array of shape (``n_cells``, ``cell_size``) where all cells have the same
+            ``cell_size``.
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
@@ -1093,7 +1094,7 @@ class CellArray(
         Parameters
         ----------
         cells : Sequence[Sequence[int]]
-            Sequence of length n_cells where each item is a sequence of the
+            Sequence of length ``n_cells`` where each item is a sequence of the
             point indices for that cell. The cells may have different lengths.
 
         Returns
@@ -1227,7 +1228,7 @@ def _make_cell_array(offsets: VectorLike[int], connectivity: VectorLike[int]) ->
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
-    """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces."""
+    """Return a (``n_cells``, cell_size)-shaped array of point indices for equal-sized faces."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells
@@ -1251,7 +1252,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:
-    """Return a tuple of length n_cells of each cell's point indices."""
+    """Return a tuple of length ``n_cells`` of each cell's point indices."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return ()

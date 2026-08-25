@@ -512,7 +512,7 @@ def is_inside_bounds(point, bounds):
     Parameters
     ----------
     point : sequence[float]
-        Three item cartesian point (that is, ``[x, y, z]``).
+        Three item Cartesian point (that is, ``[x, y, z]``).
 
     bounds : sequence[float]
         Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.

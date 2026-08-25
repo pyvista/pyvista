@@ -246,11 +246,11 @@ _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 
 
 class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
-    """Context manager to control access to VTK's pythonic snake_case API.
+    """Context manager to control access to VTK's pythonic ``snake_case`` API.
 
-    VTK 9.4 introduced pythonic snake_case attributes, for example, ``output_port`` instead
+    VTK 9.4 introduced pythonic ``snake_case`` attributes, for example, ``output_port`` instead
     of ``GetOutputPort``. These can easily be confused for PyVista attributes
-    which also use a snake_case convention. This class controls access to vtk's
+    which also use a ``snake_case`` convention. This class controls access to vtk's
     new interface.
 
     .. versionadded:: 0.45
@@ -258,14 +258,14 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     Parameters
     ----------
     state : 'allow' | 'warning' | 'error'
-        Allow or disallow the use of VTK's pythonic snake_case API with
+        Allow or disallow the use of VTK's pythonic ``snake_case`` API with
         PyVista-wrapped VTK classes.
 
-        - 'allow': Allow accessing VTK-defined snake_case attributes.
-        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+        - 'allow': Allow accessing VTK-defined ``snake_case`` attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined ``snake_case``
           attributes.
         - 'error': Raise a ``PyVistaAttributeError`` when accessing
-          VTK-defined snake_case attributes.
+          VTK-defined ``snake_case`` attributes.
 
     Examples
     --------

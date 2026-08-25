@@ -199,7 +199,7 @@ class BaseWriter(_FileIOBase):
 
 
 class BMPWriter(BaseWriter):
-    """BMPWriter for ``.bmp`` files.
+    """``BMPWriter`` for ``.bmp`` files.
 
     Wraps :vtk:`vtkBMPWriter`.
 
@@ -238,7 +238,7 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
 
 
 class HDFWriter(BaseWriter):
-    """HDFWriter for ``.hdf`` and ``.vtkhdf`` files.
+    """``HDFWriter`` for ``.hdf`` and ``.vtkhdf`` files.
 
     Wraps :vtk:`vtkHDFWriter`.
 
@@ -302,7 +302,7 @@ class HoudiniPolyDataWriter(BaseWriter):
 
 
 class IVWriter(BaseWriter):
-    """IVWriter for OpenInventor ``.iv`` files.
+    """``IVWriter`` for OpenInventor ``.iv`` files.
 
     Wraps :vtk:`vtkIVWriter`.
 
@@ -314,7 +314,7 @@ class IVWriter(BaseWriter):
 
 
 class JPEGWriter(BaseWriter):
-    """JPEGWriter for ``.jpeg`` and ``.jpg`` files.
+    """``JPEGWriter`` for ``.jpeg`` and ``.jpg`` files.
 
     Wraps :vtk:`vtkJPEGWriter`.
 
@@ -338,7 +338,7 @@ class NIFTIImageWriter(BaseWriter):
 
 
 class OBJWriter(BaseWriter):
-    """OBJWriter for Wavefront ``.obj`` files.
+    """``OBJWriter`` for Wavefront ``.obj`` files.
 
     Wraps :vtk:`vtkOBJWriter`.
 
@@ -350,7 +350,7 @@ class OBJWriter(BaseWriter):
 
 
 class PLYWriter(BaseWriter, _DataFormatMixin):
-    """PLYWriter for PLY polygonal ``.ply`` files.
+    """``PLYWriter`` for PLY polygonal ``.ply`` files.
 
     Wraps :vtk:`vtkPLYWriter`.
 
@@ -388,7 +388,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
 
 
 class PNGWriter(BaseWriter):
-    """PNGWriter for ``.png`` files.
+    """``PNGWriter`` for ``.png`` files.
 
     Wraps :vtk:`vtkPNGWriter`.
 
@@ -400,7 +400,7 @@ class PNGWriter(BaseWriter):
 
 
 class PNMWriter(BaseWriter):
-    """PNMWriter for ``.pnm`` files.
+    """``PNMWriter`` for ``.pnm`` files.
 
     Wraps :vtk:`vtkPNMWriter`.
 
@@ -436,7 +436,7 @@ class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class STLWriter(BaseWriter, _DataFormatMixin):
-    """STLWriter for stereolithography  ``.stl`` files.
+    """``STLWriter`` for stereolithography  ``.stl`` files.
 
     Wraps :vtk:`vtkSTLWriter`.
 
@@ -472,7 +472,7 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class TIFFWriter(BaseWriter):
-    """TIFFWriter for ``.tif`` and ``.tiff`` files.
+    """``TIFFWriter`` for ``.tif`` and ``.tiff`` files.
 
     Wraps :vtk:`vtkTIFFWriter`.
 

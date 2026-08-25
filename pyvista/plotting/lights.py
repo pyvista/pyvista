@@ -215,7 +215,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         self.actor.SetVisibility(show_actor)
 
     def __repr__(self) -> str:
-        """Print a repr specifying the id of the light and its light type."""
+        """Print a ``repr`` specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
     def __eq__(self, other) -> bool:

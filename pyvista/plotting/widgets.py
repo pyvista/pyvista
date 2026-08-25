@@ -347,7 +347,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is strictly
-            orthogonal to the cartesian axes.
+            orthogonal to the Cartesian axes.
 
         widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
@@ -557,7 +557,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -806,7 +806,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -980,7 +980,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -1121,7 +1121,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -1210,7 +1210,7 @@ class WidgetComponent(_NoNewAttrMixin):
         """Slice a mesh with three interactive planes.
 
         Adds three interactive plane slicing widgets for orthogonal slicing
-        along each cartesian axis.
+        along each Cartesian axis.
 
         Parameters
         ----------
@@ -2351,7 +2351,7 @@ class WidgetComponent(_NoNewAttrMixin):
         callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
-            point and end point as cartesian coordinate tuples
+            point and end point as Cartesian coordinate tuples
             and the calculated distance between the two points.
 
         color : ColorLike, optional
@@ -2446,7 +2446,7 @@ class WidgetComponent(_NoNewAttrMixin):
             callback must also accept an index of that widget.
 
         center : sequence[float], optional
-            The cartesian coordinate of the sphere's center when placing it in
+            The Cartesian coordinate of the sphere's center when placing it in
             the scene. If more than one location is passed, then that many
             widgets will be added and the callback will also be passed the
             integer index of that widget.
@@ -2682,7 +2682,7 @@ class WidgetComponent(_NoNewAttrMixin):
         ----------
         callback : callable
             The method called every time the button is clicked. This should take
-            a single parameter: the bool value of the button.
+            a single parameter: the ``bool`` value of the button.
 
         value : bool, default: False
             The default state of the button.

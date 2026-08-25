@@ -265,7 +265,7 @@ def _remap_scalars_through_topology_change(  # noqa: PLR0917
 
     original_scalar_name : str | None
         If set, the array is resolved by name on ``mesh``.  When
-        ``None`` (raw numpy + upstream vtkAlgorithm input), the
+        ``None`` (raw numpy + upstream ``vtkAlgorithm`` input), the
         ``vtkOriginalPointIds`` tracker is used to remap point-length
         scalars.
 
@@ -417,7 +417,7 @@ def _common_arg_parser(
     remove_existing_actor=None,
     **kwargs,
 ):
-    """Parse arguments in common between add_volume, composite, and mesh."""
+    """Parse arguments in common between ``add_volume``, composite, and mesh."""
     # supported aliases
     clim = kwargs.pop('rng', clim)
     cmap = kwargs.pop('colormap', cmap)

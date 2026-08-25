@@ -1388,8 +1388,9 @@ class DataObjectFilters:
         >>> report.is_valid
         True
 
-        Do minimal validation to ensure the mesh properties are "memory_safe". This helps to avoid
-        a segmentation fault which may be caused by invalid memory accesses by VTK. In this case,
+        Do minimal validation to ensure the mesh properties are "``memory_safe``". This helps
+        to avoid a segmentation fault which may be caused by invalid memory accesses by VTK. In
+        this case,
         we use ``action`` to raise an error if the mesh is not valid.
 
         >>> _ = mesh.validate_mesh('memory_safe', action='error')
@@ -1497,7 +1498,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         validate: Literal[True] | _NestedMeshValidationFields,
     ):
-        """Validate mesh using a bool or named fields and raise error."""
+        """Validate mesh using a ``bool`` or named fields and raise error."""
         validation_fields = None if validate is True else validate
         self.validate_mesh(validation_fields, action='error')
 
@@ -1545,7 +1546,7 @@ class DataObjectFilters:
         tolerance : float, default: 1.1920929e-07
             Value used for most floating point equality checks throughout the cell checking
             process, for example, for checking coincident points or intersecting edges.
-            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
             :attr:`numpy.finfo`.
 
             .. note::
@@ -1571,7 +1572,7 @@ class DataObjectFilters:
             :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
-            The default value is the epsilon (``eps``) of the mesh's points dtype using
+            The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
             :attr:`numpy.finfo`.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
@@ -3741,7 +3742,7 @@ class DataObjectFilters:
         contour: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Create three orthogonal slices through the dataset on the three cartesian planes.
+        """Create three orthogonal slices through the dataset on the three Cartesian planes.
 
         Yields a MutliBlock dataset of the three slices.
 
@@ -4858,7 +4859,7 @@ class DataObjectFilters:
 
         categorical : bool, default: False
             Control whether the source point data is to be treated as
-            categorical. If ``True``,  histograming is used to assign the
+            categorical. If ``True``,  histogramming is used to assign the
             cell data. Specifically, a histogram is populated for each cell
             from the scalar values at each point, and the bin with the most
             elements is selected. In case of a tie, the smaller value is selected.
@@ -5071,9 +5072,9 @@ class DataObjectFilters:
             Valid strings with mapping to vtk cell locators are
 
                 * 'cell' - :vtk:`vtkCellLocator`
-                * 'cell_tree' - :vtk:`vtkCellTreeLocator`
-                * 'obb_tree' - :vtk:`vtkOBBTree`
-                * 'static_cell' - :vtk:`vtkStaticCellLocator`
+                * '``cell_tree``' - :vtk:`vtkCellTreeLocator`
+                * '``obb_tree``' - :vtk:`vtkOBBTree`
+                * '``static_cell``' - :vtk:`vtkStaticCellLocator`
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.

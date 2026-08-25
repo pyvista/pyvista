@@ -586,7 +586,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         Parameters
         ----------
         **kwargs : dict, optional
-            Optional keyworld arguments. See :func:`pyvista.plot`.
+            Optional keyword arguments. See :func:`pyvista.plot`.
 
         Returns
         -------

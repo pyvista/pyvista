@@ -56,12 +56,12 @@ def check_subdtype(
     ----------
     input_obj : float | ArrayLike[float] | numpy.typing.DTypeLike
         ``dtype`` object (or object coercible to one) or an array-like object.
-        If array-like, the dtype of the array is used.
+        If array-like, the ``dtype`` of the array is used.
 
     base_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike]
         ``dtype``-like object or a sequence of ``dtype``-like objects. The ``input_obj``
         must be a subtype of this value. If a sequence, ``input_obj`` must be a
-        subtype of at least one of the specified dtypes.
+        subtype of at least one of the specified ``dtypes``.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -340,7 +340,7 @@ def check_integer(
         If any element's value differs from its floor.
 
     TypeError
-        If ``strict=True`` and the array's dtype is not integral.
+        If ``strict=True`` and the array's ``dtype`` is not integral.
 
     See Also
     --------
@@ -726,7 +726,7 @@ def check_number(num: float, /, *, name: str = 'Object') -> None:
 
     Notes
     -----
-    A NumPy ndarray is not an instance of ``Number``.
+    A NumPy ``ndarray`` is not an instance of ``Number``.
 
     Parameters
     ----------

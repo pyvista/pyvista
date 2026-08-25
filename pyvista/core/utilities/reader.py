@@ -406,7 +406,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
 
 class PointCellDataSelection(_NoNewAttrMixin):
-    """Mixin for readers that support data array selections.
+    """``Mixin`` for readers that support data array selections.
 
     Examples
     --------
@@ -2422,7 +2422,7 @@ class NIFTIReader(BaseReader['ImageData']):
 
 
 class NRRDReader(BaseReader['ImageData']):
-    """NRRDReader for .nrrd and .nhdr files.
+    """``NRRDReader`` for .nrrd and .nhdr files.
 
     Wraps :vtk:`vtkNrrdReader`.
 
@@ -2444,7 +2444,7 @@ class NRRDReader(BaseReader['ImageData']):
 
 
 class PNGReader(BaseReader['ImageData']):
-    """PNGReader for .png files.
+    """``PNGReader`` for .png files.
 
     Wraps :vtk:`vtkPNGReader`.
 
@@ -2466,7 +2466,7 @@ class PNGReader(BaseReader['ImageData']):
 
 
 class PNMReader(BaseReader['ImageData']):
-    """PNMReader for .pnm files.
+    """``PNMReader`` for .pnm files.
 
     Wraps :vtk:`vtkPNMReader`.
 
@@ -2488,7 +2488,7 @@ class PNMReader(BaseReader['ImageData']):
 
 
 class SLCReader(BaseReader['ImageData']):
-    """SLCReader for .slc files.
+    """``SLCReader`` for .slc files.
 
     Wraps :vtk:`vtkSLCReader`.
 
@@ -2510,7 +2510,7 @@ class SLCReader(BaseReader['ImageData']):
 
 
 class TIFFReader(BaseReader['ImageData']):
-    """TIFFReader for .tif and .tiff files.
+    """``TIFFReader`` for .tif and .tiff files.
 
     Wraps :vtk:`vtkTIFFReader`.
 
@@ -2541,7 +2541,7 @@ class TIFFReader(BaseReader['ImageData']):
 
 
 class HDRReader(BaseReader['ImageData']):
-    """HDRReader for .hdr files.
+    """``HDRReader`` for .hdr files.
 
     Wraps :vtk:`vtkHDRReader`.
 
@@ -2572,7 +2572,7 @@ class HDRReader(BaseReader['ImageData']):
 
 
 class PTSReader(BaseReader['PolyData']):
-    """PTSReader for .pts files.
+    """``PTSReader`` for .pts files.
 
     Wraps :vtk:`vtkPTSReader`.
 
@@ -2604,7 +2604,7 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
 
 
 class HDFReader(BaseReader['DataObject']):
-    """HDFReader for .hdf files.
+    """``HDFReader`` for .hdf files.
 
     Wraps :vtk:`vtkHDFReader`.
 
@@ -2633,7 +2633,7 @@ class HDFReader(BaseReader['DataObject']):
 
 
 class GLTFReader(BaseReader['MultiBlock']):
-    """GLTFeader for .gltf and .glb files.
+    """``GLTFReader`` for .gltf and .glb files.
 
     Wraps :vtk:`vtkGLTFReader`.
 
@@ -2662,7 +2662,7 @@ class FluentReader(BaseReader['UnstructuredGrid']):
 
 
 class MFIXReader(BaseReader['UnstructuredGrid']):
-    """MFIXReader for .res files.
+    """``MFIXReader`` for .res files.
 
     Wraps :vtk:`vtkMFIXReader`.
 
@@ -2719,7 +2719,7 @@ class _GRDECLReader(BaseVTKReader):
 
 
 class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
-    """GRDECLReader for .grdecl files.
+    """``GRDECLReader`` for .grdecl files.
 
     Uses :func:`~pyvista.read_grdecl` internally.
 
@@ -2809,7 +2809,7 @@ class _GIFReader(BaseVTKReader):
 
 
 class GIFReader(BaseReader['ImageData']):
-    """GIFReader for .gif files.
+    """``GIFReader`` for .gif files.
 
     Parameters
     ----------
@@ -2854,7 +2854,7 @@ class _VRMLReader(BaseVTKReader):
 
 
 class VRMLReader(BaseReader['MultiBlock']):
-    """VRMLReader for .wrl and .vrml files.
+    """``VRMLReader`` for .wrl and .vrml files.
 
     .. note::
         This reads the file's mesh geometry only. Any plot-specific
@@ -3029,7 +3029,7 @@ class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
 
 
 class FLUENTCFFReader(BaseReader['MultiBlock']):
-    """FLUENTCFFReader for .h5 files.
+    """``FLUENTCFFReader`` for .h5 files.
 
     Wraps :vtk:`vtkFLUENTCFFReader`.
 
@@ -3202,7 +3202,7 @@ class MINCImageReader(BaseReader['ImageData']):
 
 
 class PDBReader(BaseReader['PolyData']):
-    """PDBReader for .pdb files.
+    """``PDBReader`` for .pdb files.
 
     Wraps :vtk:`vtkPDBReader`.
 
@@ -4287,7 +4287,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
 
 
 class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachReader]):
-    """Class for reading .series file supported by Paraview.
+    """Class for reading .series file supported by ParaView.
 
     .. versionadded:: 0.47.0
 

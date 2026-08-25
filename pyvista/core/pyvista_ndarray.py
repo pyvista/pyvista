@@ -1,4 +1,4 @@
-"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+"""Contains ``pyvista_ndarray`` a numpy ``ndarray`` type used in pyvista."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
-    """A ndarray which references the owning dataset and the underlying vtk array.
+    """A ``ndarray`` which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 

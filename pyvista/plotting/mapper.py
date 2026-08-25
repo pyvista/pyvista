@@ -934,14 +934,14 @@ class _DataSetMapper(_BaseMapper):
             will be ignored.
 
         flip_scalars : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.
             A string can also be specified to map the scalars range to a
             predefined opacity transfer function (options include: 'linear',
-            'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
+            '``linear_r``', 'geom', '``geom_r``'). Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 
@@ -1098,7 +1098,7 @@ class _DataSetMapper(_BaseMapper):
         ``shift_zbuffer`` is a legacy method that is used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
-        You should only use the polygon_offset method (or none) at this point.
+        You should only use the ``polygon_offset`` method (or none) at this point.
 
         Returns
         -------
@@ -1297,7 +1297,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     def scale_array(self) -> str:  # numpydoc ignore=RT01
         """Set or return the name of the array used to scale the splats.
 
-        Scalars used to scale the gaussian points. Accepts a string
+        Scalars used to scale the Gaussian points. Accepts a string
         name of an array that is present on the mesh.
 
         Notes

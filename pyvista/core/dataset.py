@@ -120,10 +120,10 @@ class DataSet(DataSetFilters, DataObject):
     Parameters
     ----------
     *args :
-        Any extra args are passed as option to spatially referenced objects.
+        Any extra ``args`` are passed as option to spatially referenced objects.
 
     **kwargs :
-        Any extra keyword args are passed as option to spatially referenced objects.
+        Any extra keyword ``args`` are passed as option to spatially referenced objects.
 
     """
 
@@ -1056,7 +1056,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return this dataset's point or cell arrays as a :class:`pandas.DataFrame`.
 
         Thin wrapper around :meth:`DataSetAttributes.to_pandas`. See that
-        method for column-expansion rules and dtype handling.
+        method for column-expansion rules and ``dtype`` handling.
 
         Requires :mod:`pandas`.
 
@@ -1546,7 +1546,7 @@ class DataSet(DataSetFilters, DataObject):
         name: str,
         scalars: _ArrayLikeOrScalar[NumberType],
     ) -> None:  # numpydoc ignore=PR01,RT01
-        """Add/set an array in the point_data, or cell_data accordingly.
+        """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
         It depends on the array's length, or specified mode.
 
@@ -2296,7 +2296,7 @@ class DataSet(DataSetFilters, DataObject):
 
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
-            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
             :attr:`numpy.finfo`.
 
         Returns
@@ -2374,7 +2374,7 @@ class DataSet(DataSetFilters, DataObject):
 
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
-            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
             :attr:`numpy.finfo`.
 
         Returns
@@ -2431,7 +2431,7 @@ class DataSet(DataSetFilters, DataObject):
 
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
-            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
             :attr:`numpy.finfo`.
 
         deduplicate_points : bool, default: False
@@ -3194,7 +3194,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         output : bool | numpy.ndarray
-            Whether points is/are inside cell. A single bool is only returned if
+            Whether points is/are inside cell. A single ``bool`` is only returned if
             the input point has shape ``(3,)``.
 
         Examples

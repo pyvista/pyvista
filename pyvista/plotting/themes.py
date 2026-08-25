@@ -89,7 +89,7 @@ def load_theme(filename):
     Parameters
     ----------
     filename : str
-        Theme file. Must be json.
+        Theme file. Must be ``json``.
 
     Returns
     -------
@@ -1181,7 +1181,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @property
     def tube_width(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the tube_width.
+        """Return or set the ``tube_width``.
 
         Examples
         --------
@@ -1229,7 +1229,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @property
     def slider_length(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the slider_length.
+        """Return or set the ``slider_length``.
 
         Examples
         --------
@@ -1500,7 +1500,7 @@ class _TrameConfig(_ConfigBase):
 
     @property
     def jupyter_extension_available(self) -> bool:  # numpydoc ignore=RT01
-        """Return whether the trame_jupyter_extension is detected."""
+        """Return whether the ``trame_jupyter_extension`` is detected."""
         return self._jupyter_extension_available
 
     @jupyter_extension_available.setter
@@ -1511,7 +1511,7 @@ class _TrameConfig(_ConfigBase):
 
     @property
     def jupyter_extension_enabled(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set whether to use the trame_jupyter_extension to communicate with clients."""
+        """Return or set whether to communicate with clients via ``trame_jupyter_extension``."""
         return self._jupyter_extension_enabled
 
     @jupyter_extension_enabled.setter
@@ -1590,7 +1590,7 @@ class _CameraConfig(_ConfigBase):
 
     @property
     def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
-        """Return or set the camera viewup.
+        """Return or set the camera ``viewup``.
 
         Examples
         --------
@@ -2909,7 +2909,7 @@ class Theme(_ConfigBase):
     def multi_samples(self) -> int:  # numpydoc ignore=RT01
         """Return or set the default ``multi_samples`` parameter.
 
-        Set the number of multisamples to used with hardware anti_aliasing. This
+        Set the number of multisamples to used with hardware ``anti_aliasing``. This
         is only used when :attr:`anti_aliasing <Theme.anti_aliasing>` is
         set to ``"msaa"``.
 
@@ -3095,7 +3095,7 @@ class Theme(_ConfigBase):
     def before_close_callback(
         self,
     ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
-        """Return the default before_close_callback function for Plotter."""
+        """Return the default ``before_close_callback`` function for Plotter."""
         return self._before_close_callback  # type: ignore[return-value]
 
     @before_close_callback.setter
@@ -3285,7 +3285,7 @@ class Theme(_ConfigBase):
             setattr(self, attr_name, getattr(theme, attr_name))
 
     def save(self, filename: str) -> None:
-        """Serialize this theme to a json file.
+        """Serialize this theme to a ``json`` file.
 
         ``before_close_callback`` is non-serializable and is omitted.
 
@@ -3581,7 +3581,7 @@ class DocumentProTheme(DocumentTheme):
 
     * Default color cycling
     * Rendering points as spheres
-    * MSAA anti aliassing
+    * MSAA anti aliasing
     * Depth peeling
 
     """

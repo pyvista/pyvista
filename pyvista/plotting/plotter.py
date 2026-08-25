@@ -924,7 +924,7 @@ class BasePlotter(_BoundsSizeMixin):
             Path to export the gltf file to.
 
         inline_data : bool, default: True
-            Sets if the binary data be included in the json file as a
+            Sets if the binary data be included in the ``json`` file as a
             base64 string.  When ``True``, only one file is exported.
 
         rotate_scene : bool, default: True
@@ -1404,7 +1404,7 @@ class BasePlotter(_BoundsSizeMixin):
         multi_samples : int, optional
             The number of multi-samples when ``aa_type`` is ``"msaa"``. Note
             that using this setting automatically enables this for all
-            renderers. Defaults to the theme multi_samples.
+            renderers. Defaults to the theme ``multi_samples``.
 
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
@@ -2855,7 +2855,7 @@ class BasePlotter(_BoundsSizeMixin):
             applied everywhere - should be between 0 and 1.
 
         flip_scalars : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         lighting : bool, default: True
@@ -3462,7 +3462,7 @@ class BasePlotter(_BoundsSizeMixin):
             ``n_colors`` in length or shorter.
 
         flip_scalars : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         lighting : bool, optional
@@ -4561,7 +4561,7 @@ class BasePlotter(_BoundsSizeMixin):
             will be ignored.
 
         flip_scalars : bool, optional
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         reset_camera : bool, optional
@@ -4605,7 +4605,7 @@ class BasePlotter(_BoundsSizeMixin):
             only ``ImageData`` types can be used.
 
             .. note::
-                If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
+                If a :class:`pyvista.UnstructuredGrid` is input, the ``ugrid``
                 mapper (:vtk:`vtkUnstructuredGridVolumeRayCastMapper`) will be
                 used regardless.
 
@@ -5536,7 +5536,7 @@ class BasePlotter(_BoundsSizeMixin):
             coordinate system (default). In this case,
             it returns a more general :vtk:`vtkOpenGLTextActor`.
             If string name is used, it returns a :vtk:`vtkCornerAnnotation`
-            object normally used for fixed labels (like title or xlabel).
+            object normally used for fixed labels (like title or ``xlabel``).
             Default is to find the top left corner of the rendering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
@@ -5781,7 +5781,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         **kwargs : dict, optional
             See the documentation for :func:`imageio.get_writer()
-            <imageio.v2.get_writer>` for additional kwargs.
+            <imageio.v2.get_writer>` for additional ``kwargs``.
 
         Notes
         -----
@@ -5847,7 +5847,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         **kwargs : dict, optional
             See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`
-            for additional kwargs.
+            for additional ``kwargs``.
 
         Notes
         -----
@@ -8402,7 +8402,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             * ``'none'`` : Do not display in the notebook.
             * ``'static'`` : Display a static figure.
             * ``'trame'`` : Display a dynamic figure with Trame.
-            * ``'html'`` : Use an ebeddable HTML scene.
+            * ``'html'`` : Use an embeddable HTML scene.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.

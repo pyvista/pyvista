@@ -12,7 +12,7 @@ separate data and header files):
     (file1, file1) -> read -> dataset
 
 Or, a dataset may be combination of two separate datasets:
-    file1 -> read -> dataset1 ┬─> combined_dataset
+    file1 -> read -> dataset1 ┬─> ``combined_dataset``
     file2 -> read -> dataset2 ┘
 
 In some cases, the input may be a folder instead of a file (for example, DICOM):

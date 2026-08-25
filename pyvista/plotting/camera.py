@@ -88,7 +88,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __repr__(self):
-        """Print a repr specifying the id of the camera and its camera type."""
+        """Print a ``repr`` specifying the id of the camera and its camera type."""
         repr_str = f'{self.__class__.__name__} ({hex(id(self))})'
         repr_str += f'\n  Position:            {self.position}'
         repr_str += f'\n  Focal Point:         {self.focal_point}'
@@ -120,7 +120,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
     @classmethod
     def from_paraview_pvcc(cls, filename: str | Path) -> Camera:
-        """Load a Paraview camera file (.pvcc extension).
+        """Load a ParaView camera file (.pvcc extension).
 
         Returns a pyvista.Camera object for which attributes has been read
         from the filename argument.
@@ -128,7 +128,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         Parameters
         ----------
         filename : str or pathlib.Path
-            Path to Paraview camera file (.pvcc).
+            Path to ParaView camera file (.pvcc).
 
         Returns
         -------
@@ -181,12 +181,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return camera
 
     def to_paraview_pvcc(self, filename: str | Path):
-        """Write the camera parameters to a Paraview camera file (.pvcc extension).
+        """Write the camera parameters to a ParaView camera file (.pvcc extension).
 
         Parameters
         ----------
         filename : str or pathlib.Path
-            Path to Paraview camera file (.pvcc).
+            Path to ParaView camera file (.pvcc).
 
         Examples
         --------

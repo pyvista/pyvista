@@ -558,7 +558,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         value : float | VectorLike[float], default: 0.0
             Set the clipping value. Can also be set as a range of values.
-            The range produces an output similar to an isovolume filter of Paraview.
+            The range produces an output similar to an isovolume filter of ParaView.
 
         inplace : bool, default: False
             Update mesh in-place.
@@ -1333,7 +1333,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        Create an image data volume from a point cloud using gaussian splatter.
+        Create an image data volume from a point cloud using Gaussian splatter.
 
         >>> import pyvista as pv
 
@@ -3388,7 +3388,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         pointa, pointb : sequence[float], optional
             The coordinates of a start and end point for a line source. This
-            will override the sphere and start_position point source.
+            will override the sphere and ``start_position`` point source.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4592,7 +4592,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ----------
         ind : int | VectorLike[int]
             Cell indices to extract. Can be a single int or a vector of ints.
-            A bool vector is also supported; the vector size should match the number of cells.
+            A ``bool`` vector is also supported; the vector size should match the number of cells.
 
         invert : bool, default: False
             Invert the selection.
@@ -5503,7 +5503,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         """Extract values using validated input.
 
-        Internal method for extract_values filter to avoid repeated calls to input
+        Internal method for ``extract_values`` filter to avoid repeated calls to input
         validation methods.
         """
 
@@ -5693,7 +5693,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             1) Boundary (used by one polygon) or a line cell.
             2) Non-manifold (used by three or more polygons).
             3) Feature edges (edges used by two triangles and whose
-               dihedral angle > feature_angle).
+               dihedral angle > ``feature_angle``).
             4) Manifold edges (edges used by exactly two polygons).
 
         Parameters
@@ -5867,7 +5867,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             :class:`pyvista.UnstructuredGrid`.
 
         main_has_priority : bool, default: True
-            When this parameter is true and merge_points is true,
+            When this parameter is true and ``merge_points`` is true,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
@@ -7765,7 +7765,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
-            has dtype :class:`numpy.uint8` if the foreground and background values are
+            has ``dtype`` :class:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
 
         See Also
@@ -8463,7 +8463,7 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *
 
 
 def _set_threshold_limit(alg, *, value, method, invert):
-    """Set vtkThreshold limits and function.
+    """Set ``vtkThreshold`` limits and function.
 
     Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
 

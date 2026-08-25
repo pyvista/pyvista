@@ -115,7 +115,7 @@ def validate_array(
     arr : array_like
         Array to be validated, in any form that can be converted to
         a :class:`np.ndarray`. This includes lists, lists of tuples, tuples,
-        tuples of tuples, tuples of lists and ndarrays.
+        tuples of tuples, tuples of lists and ``ndarrays``.
 
     must_have_shape : int | tuple[int, ...] | list[int, tuple[int, ...]], optional
         :func:`Check <pyvista.core._validation.check.check_shape>`
@@ -135,10 +135,10 @@ def validate_array(
 
     must_have_dtype : DTypeLike | list[DTypeLike, ...], optional
         :func:`Check <pyvista.core._validation.check.check_subdtype>`
-        if the array's data-type has the given dtype. Specify a
+        if the array's data-type has the given ``dtype``. Specify a
         :class:`np.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a ``list``, the array's data
-        must be a subtype of at least one of the specified dtypes.
+        must be a subtype of at least one of the specified ``dtypes``.
 
     must_have_length : int | VectorLike[int], optional
         :func:`Check <pyvista.core._validation.check.check_length>`
@@ -234,7 +234,7 @@ def validate_array(
 
     dtype_out : DTypeLike, optional
         Set the data-type of the returned array. By default, the
-        dtype is inferred from the input data.
+        ``dtype`` is inferred from the input data.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
@@ -586,7 +586,7 @@ def validate_rotation(
 def validate_transform4x4(
     transform: TransformLike, /, *, must_be_finite: bool = True, name: str = 'Transform'
 ) -> NumpyArray[float]:
-    """Validate transform-like input as a 4x4 ndarray.
+    """Validate transform-like input as a 4x4 ``ndarray``.
 
     Parameters
     ----------
@@ -656,7 +656,7 @@ def validate_transform4x4(
 def validate_transform3x3(
     transform: TransformLike, /, *, must_be_finite: bool = True, name: str = 'Transform'
 ):
-    """Validate transform-like input as a 3x3 ndarray.
+    """Validate transform-like input as a 3x3 ``ndarray``.
 
     Parameters
     ----------

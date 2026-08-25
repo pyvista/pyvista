@@ -336,7 +336,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     ) -> None:
         """Create VTK rectilinear grid directly from numpy arrays.
 
-        Each array gives the uniques coordinates of the mesh along each axial
+        Each array gives the unique coordinates of the mesh along each axial
         direction. To help ensure you are using this correctly, we take the unique
         values of each argument.
 
@@ -1286,7 +1286,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def index_to_physical_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to transform index space (ijk) to physical space (xyz).
+        """Return or set 4x4 matrix to transform index space (``ijk``) to physical space (``xyz``).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
@@ -1322,7 +1322,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to transform from physical space (xyz) to index space (ijk).
+        """Return or set the 4x4 matrix from physical (``xyz``) to index (``ijk``) space.
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,

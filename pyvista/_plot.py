@@ -232,7 +232,7 @@ def plot(  # noqa: ANN202, PLR0917
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
-        disables anti_aliasing. If a string, should be one of the following:
+        disables ``anti_aliasing``. If a string, should be one of the following:
 
         * ``"ssaa"`` - Super-Sample Anti-Aliasing
         * ``"msaa"`` - Multi-Sample Anti-Aliasing

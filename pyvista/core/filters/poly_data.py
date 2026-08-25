@@ -1761,7 +1761,7 @@ class PolyDataFilters(DataSetFilters):
             Display a progress bar to indicate progress.
 
         boundary_constraints: bool, default: False
-            Use the legacy weighting by boundary_edge_length instead of by
+            Use the legacy weighting by ``boundary_edge_length`` instead of by
             boundary_edge_length^2 for backwards compatibility.
 
             .. versionadded:: 0.45.0
@@ -2497,7 +2497,7 @@ class PolyDataFilters(DataSetFilters):
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
-        and end_point.
+        and ``end_point``.
 
         .. warning::
 
@@ -2898,7 +2898,7 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         remove : sequence[bool | int]
-            If remove is a bool array, points that are ``True`` will
+            If remove is a ``bool`` array, points that are ``True`` will
             be removed.  Otherwise, it is treated as a list of
             indices.
 

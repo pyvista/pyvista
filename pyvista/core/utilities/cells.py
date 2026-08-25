@@ -84,14 +84,14 @@ def numpy_to_idarr(
         the input data.
     return_ind : bool, default: False
         If ``True``, also return the input array after it has been cast to the
-        proper dtype.
+        proper ``dtype``.
 
     Returns
     -------
     :vtk:`vtkIdTypeArray`
         Converted array as a :vtk:`vtkIdTypeArray`.
     numpy.ndarray
-        The input array after it has been cast to the proper dtype. Only
+        The input array after it has been cast to the proper ``dtype``. Only
         returned if ``return_ind`` is set to ``True``.
 
     Raises
@@ -285,11 +285,11 @@ def create_mixed_cells(
 
     This function generates all required cell arrays according to a given cell
     dictionary. The given cell-dictionary should contain a proper
-    mapping of vtk_type -> np.ndarray (int), where the given ndarray
+    mapping of ``vtk_type`` -> ``np.ndarray`` (int), where the given ``ndarray``
     for each cell-type has to be an array of dimensions [N, D] or
     [N*D], where N is the number of cells and D is the size of the
     cells for the given type (for example, 3 for triangles).  Multiple
-    vtk_type keys with associated arrays can be present in one
+    ``vtk_type`` keys with associated arrays can be present in one
     dictionary.
 
     Cell types whose number of points is not fixed (e.g.
@@ -383,7 +383,7 @@ def get_mixed_cells(
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
     This functions creates a cells dictionary (see
-    create_mixed_cells), with a mapping vtk_type -> np.ndarray (int).
+    ``create_mixed_cells``), with a mapping ``vtk_type`` -> ``np.ndarray`` (int).
     For a cell type whose cells all have the same number of points, the
     value is an array of size [N, D], where N is the number of cells and
     D is the size of the cells for the given type (for example, 3 for triangles).
@@ -414,7 +414,7 @@ def get_mixed_cells(
     Raises
     ------
     ValueError
-        If vtkobj is not a pyvista.UnstructuredGrid, any of the present
+        If ``vtkobj`` is not a pyvista.UnstructuredGrid, any of the present
         cells are unsupported, or any cell is a
         :attr:`~pyvista.CellType.POLYHEDRON` (which is defined by its faces
         and cannot be represented as a flat point list).

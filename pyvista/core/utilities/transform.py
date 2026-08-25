@@ -530,7 +530,7 @@ class Transform(
         *factor : float | VectorLike[float]
             Scale factors to use. Use a single number for uniform scaling or
             three numbers for non-uniform scaling. The three factors may be
-            passed as a single vector (one arg) or an unpacked vector (three args).
+            passed as a single vector (one ``arg``) or an unpacked vector (three ``args``).
 
         point : VectorLike[float], optional
             Point to scale from. By default, the object's :attr:`point` is used,
@@ -631,8 +631,8 @@ class Transform(
         Parameters
         ----------
         *normal : float | VectorLike[float]
-            Normal direction for reflection. May be a single vector (one arg) or
-            unpacked vector (three args).
+            Normal direction for reflection. May be a single vector (one ``arg``) or
+            unpacked vector (three ``args``).
 
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
@@ -904,8 +904,8 @@ class Transform(
         Parameters
         ----------
         *vector : float | VectorLike[float]
-            Vector to use for translation. May be a single vector (one arg) or
-            unpacked vector (three args).
+            Vector to use for translation. May be a single vector (one ``arg``) or
+            unpacked vector (three ``args``).
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when composing the matrix. By default, the

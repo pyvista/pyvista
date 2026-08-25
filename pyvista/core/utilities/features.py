@@ -468,7 +468,7 @@ def grid_from_sph_coords(theta, phi, r):
 
 @_deprecate_positional_args
 def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # noqa: PLR0917  # numpydoc ignore=RT02
-    """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
+    """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
 

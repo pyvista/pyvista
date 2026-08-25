@@ -68,9 +68,9 @@ def _cast_to_numpy(
     copy: bool = False,
     must_be_real: bool = False,
 ) -> NumpyArray[NumberType]:
-    """Cast array to a NumPy ndarray.
+    """Cast array to a NumPy ``ndarray``.
 
-    Object arrays are not allowed but the dtype is otherwise unchecked by default.
+    Object arrays are not allowed but the ``dtype`` is otherwise unchecked by default.
     String arrays and complex numbers are therefore allowed.
 
     .. warning::
@@ -105,7 +105,7 @@ def _cast_to_numpy(
     Raises
     ------
     ValueError
-        If input cannot be cast as a NumPy ndarray.
+        If input cannot be cast as a NumPy ``ndarray``.
     TypeError
         If an object array is created or if the data is not real numbers
         and ``must_be_real`` is ``True``.
@@ -113,7 +113,7 @@ def _cast_to_numpy(
     Returns
     -------
     np.ndarray
-        NumPy ndarray.
+        NumPy ``ndarray``.
 
     """
     try:

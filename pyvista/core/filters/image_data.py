@@ -183,7 +183,7 @@ class ImageDataFilters(DataSetFilters):
         The Median filter that replaces each pixel with the median value from a
         rectangular neighborhood around that pixel. Neighborhoods can be no
         more than 3 dimensional. Setting one axis of the neighborhood
-        kernelSize to 1 changes the filter into a 2D median.
+        ``kernelSize`` to 1 changes the filter into a 2D median.
 
         See :vtk:`vtkImageMedian3D` for more details.
 
@@ -432,7 +432,7 @@ class ImageDataFilters(DataSetFilters):
     ):
         """Select piece (for example, volume of interest).
 
-        To use this filter set the VOI ivar which are i-j-k min/max indices
+        To use this filter set the VOI ``ivar`` which are i-j-k min/max indices
         that specify a rectangular region in the data. (Note that these are
         0-offset.) You can also specify a sampling rate to subsample the
         data.
@@ -2263,7 +2263,7 @@ class ImageDataFilters(DataSetFilters):
         return output
 
     def _change_fft_output_scalars(self, dataset, orig_name, out_name) -> None:
-        """Modify the name and dtype of the output scalars for an FFT filter."""
+        """Modify the name and ``dtype`` of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
         if pdata.active_scalars_name != name:
@@ -2275,7 +2275,7 @@ class ImageDataFilters(DataSetFilters):
     def _check_fft_scalars(self):
         """Check for complex active scalars.
 
-        This is necessary for rfft, low_pass, and high_pass filters.
+        This is necessary for rfft, ``low_pass``, and ``high_pass`` filters.
 
         """
         # check for complex active point scalars, otherwise the risk of segfault
@@ -2495,7 +2495,7 @@ class ImageDataFilters(DataSetFilters):
               values is not fixed, and can change depending on the input.
 
               This simplification is particularly useful for unsigned integer labels
-              (for example, scalars with ``'uint8'`` dtype) since external boundaries
+              (for example, scalars with ``'uint8'`` ``dtype``) since external boundaries
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
@@ -5221,11 +5221,12 @@ class ImageDataFilters(DataSetFilters):
         concatenated along the specified ``axis``, and all images must have:
 
         #. identical dimensions except along the specified ``axis``,
-        #. the same scalar dtype, and
+        #. the same scalar ``dtype``, and
         #. the same number of scalar components.
 
         Use ``mode`` for cases with mismatched dimensions, ``dtype_policy`` for cases with
-        mismatched dtypes, and/or ``component_policy`` for cases with mismatched scalar components.
+        mismatched ``dtypes``, and/or ``component_policy`` for cases with mismatched scalar
+        components.
 
         The output has the same :attr:`~pyvista.ImageData.origin` and
         :attr:`~pyvista.ImageData.spacing` as the first input. The origin and spacing of all other
@@ -5274,13 +5275,13 @@ class ImageDataFilters(DataSetFilters):
                 mismatched dimensions.
 
         dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
-            - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
-              have the same dtype, else a ``TypeError`` is raised.
-            - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
-              image scalars. This option safely casts all input arrays to a common dtype before
+            - ``'strict'``: Do not cast any scalar array ``dtypes``. All images being
+              concatenated must have the same ``dtype``, else a ``TypeError`` is raised.
+            - ``'promote'``: Use :func:`numpy.result_type` to compute the ``dtype`` of the output
+              image scalars. This option safely casts all input arrays to a common ``dtype`` before
               concatenating.
-            - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
-              unsafe as it may downcast values and lose precision.
+            - ``'match'``: Cast all array ``dtypes`` to match the input's ``dtype``. This
+              casting is unsafe as it may downcast values and lose precision.
 
         component_policy : 'strict' | 'promote_rgba', default: 'strict'
             - ``'strict'``: Do not modify the number of components of any scalars. All images being
@@ -5289,8 +5290,8 @@ class ImageDataFilters(DataSetFilters):
             - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
               with one component may be promoted to RGB scalars by duplicating values,
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
-              For integer dtypes, the opacity is set to the max int representable by the dtype;
-              for floats it is set to ``1.0``.
+              For integer ``dtypes``, the opacity is set to the max int representable by the
+              ``dtype``; for floats it is set to ``1.0``.
 
         background_value : float | VectorLike[float], default: 0
             Value or multi-component vector to use as background. The output may be padded with

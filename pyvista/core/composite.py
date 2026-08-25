@@ -216,7 +216,7 @@ class MultiBlock(
     _OrderLiteral = Literal['nested_first', 'nested_last']
 
     class _RecursiveIteratorBasicKwargs(TypedDict, total=False):
-        """Define kwargs which have no impact on return type."""
+        """Define ``kwargs`` which have no impact on return type."""
 
         skip_empty: bool
         prepend_names: bool
@@ -1874,7 +1874,7 @@ class MultiBlock(
         return
 
     def _navigate_to_parent(self, indices: Sequence[int]) -> tuple[MultiBlock, int]:
-        """Navigate to the parent MultiBlock and return (parent, final_index)."""
+        """Navigate to the parent MultiBlock and return (parent, ``final_index``)."""
         _validation.check_length(indices, min_length=1, name='index')
         # Navigate through the indices except the last one
         target: _TypeMultiBlockLeaf = self

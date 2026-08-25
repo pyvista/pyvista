@@ -215,8 +215,8 @@ class DisableVtkSnakeCase:
         - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, ...) are
           hidden unless :attr:`pyvista.global_config.show_vtk_api` is
           ``True``.
-        - snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
-          hidden unless VTK snake_case is allowed via
+        - ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+          hidden unless VTK ``snake_case`` is allowed via
           :func:`pyvista.vtk_snake_case`, since they would otherwise raise
           ``PyVistaAttributeError`` on access.
         """
@@ -270,11 +270,11 @@ def _is_vtk_attribute_cached(target_type, attr):
 class VTKObjectWrapperCheckSnakeCase(_vtk.VTKObjectWrapper):
     """Superclass for classes that wrap VTK objects with Python objects.
 
-    This class overrides __getattr__ to disable the VTK snake case API.
+    This class overrides ``__getattr__`` to disable the VTK snake case API.
     """
 
     def __getattr__(self, name: str):
-        """Forward unknown attribute requests to VTKArray's __getattr__."""
+        """Forward unknown attribute requests to ``VTKArray``'s ``__getattr__``."""
         if self.VTKObject is not None:
             # Check if forwarding snake_case attributes
             DisableVtkSnakeCase.check_attribute(self.VTKObject, name)

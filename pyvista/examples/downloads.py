@@ -305,7 +305,7 @@ def _download_archive(filename: str, target_file: str | None = None):
 def _download_archive_file_or_folder(filename: str, target_file: str | None = None):
     """Download an archive.
 
-    This function is similar to _download_archive, but also allows
+    This function is similar to ``_download_archive``, but also allows
     setting ``target_file`` as a folder. The target folder path must be
     fully specified relative to the root path of the archive.
 
@@ -556,7 +556,7 @@ def download_usa(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
 def download_usa(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_usa(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
-    """Download usa dataset.
+    """Download USA dataset.
 
     Parameters
     ----------
@@ -3394,7 +3394,7 @@ def download_honolulu(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT0
 def download_honolulu(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_honolulu(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
-    """Download honolulu dataset.
+    """Download Honolulu dataset.
 
     Parameters
     ----------
@@ -3473,7 +3473,7 @@ def download_tri_quadratic_hexahedron(load: Literal[True] = True) -> Unstructure
 def download_tri_quadratic_hexahedron(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_tri_quadratic_hexahedron(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
-    """Download tri quadratic hexahedron dataset.
+    """Download triquadratic hexahedron dataset.
 
     Parameters
     ----------
@@ -4544,7 +4544,7 @@ def download_damavand_volcano(load: Literal[True] = True) -> ImageData: ...  # n
 def download_damavand_volcano(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
-    """Download damavand volcano model.
+    """Download Damavand volcano model.
 
     Parameters
     ----------
@@ -4690,7 +4690,7 @@ def download_antarctica_velocity(load: Literal[True] = True) -> PolyData: ...  #
 def download_antarctica_velocity(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
-    """Download the antarctica velocity simulation results.
+    """Download the Antarctica velocity simulation results.
 
     Parameters
     ----------
@@ -6519,7 +6519,7 @@ def download_cgns_structured(load: bool = True) -> MultiBlock | str:  # noqa: FB
     -------
     output : pyvista.MultiBlock | str
         Structured, 12 block, 3-D constricting channel, with example use of
-        Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
+        ``Family_t`` for BCs (ADF type). If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
 
     Examples

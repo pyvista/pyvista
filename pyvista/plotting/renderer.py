@@ -246,7 +246,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = viewup
 
     def to_list(self):
-        """Convert to a list of the position, focal point, and viewup.
+        """Convert to a list of the position, focal point, and ``viewup``.
 
         Returns
         -------
@@ -340,7 +340,7 @@ class CameraPosition(_NoNewAttrMixin):
 
     @property
     def viewup(self):  # numpydoc ignore=RT01
-        """Viewup vector of the camera."""
+        """The ``viewup`` vector of the camera."""
         return self._viewup
 
     @viewup.setter
@@ -1270,7 +1270,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Opacity of the marker.
 
         viewport : sequence[float], optional
-            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
 
         Returns
         -------
@@ -1375,7 +1375,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Enable or disable the text labels for the axes.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
-            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
 
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
@@ -1496,7 +1496,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Enable or disable lighting on north arrow.
 
         viewport : sequence[float], default: (0, 0, 0.1, 0.1)
-            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
 
         top_color : ColorLike, optional
             Color applied to the top face of the arrow. When set (together
@@ -1667,7 +1667,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Enable or disable drawing the vector text edges.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
-            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
 
         Returns
         -------
@@ -2831,12 +2831,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @_deprecate_positional_args(allowed=['vector'])
     def set_viewup(self, vector, reset=True, render=True) -> None:  # noqa: FBT002
-        """Set camera viewup vector.
+        """Set camera ``viewup`` vector.
 
         Parameters
         ----------
         vector : sequence[float]
-            New camera viewup vector.
+            New camera ``viewup`` vector.
 
         reset : bool, default: True
             Whether to reset the camera after setting the camera
@@ -2844,7 +2844,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         render : bool, default: True
             If the render window is being shown, trigger a render
-            after setting the viewup.
+            after setting the ``viewup``.
 
         Examples
         --------
@@ -3110,7 +3110,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @_deprecate_positional_args
     def get_default_cam_pos(self, negative=False):  # noqa: FBT002
-        """Return the default focal points and viewup.
+        """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
 
@@ -4061,9 +4061,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def viewport(self):  # numpydoc ignore=RT01
-        """Viewport of the renderer.
+        """The ``viewport`` of the renderer.
 
-        Viewport describes the ``(xstart, ystart, xend, yend)`` square
+        ``viewport`` describes the ``(xstart, ystart, xend, yend)`` square
         of the renderer relative to the main renderer window.
 
         For example, a renderer taking up the entire window will have
@@ -4074,7 +4074,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Returns
         -------
         tuple
-            Viewport in the form ``(xstart, ystart, xend, yend)``.
+            ``viewport`` in the form ``(xstart, ystart, xend, yend)``.
 
         Examples
         --------
@@ -4439,7 +4439,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, for example, '%E'.
+            A ``printf`` style format for labels, for example, '%E'.
 
         title : str, default: "Distance"
             The title to display.
@@ -4638,7 +4638,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, for example, ``'%E'``.
+            A ``printf`` style format for labels, for example, ``'%E'``.
             See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0

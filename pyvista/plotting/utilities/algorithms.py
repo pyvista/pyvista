@@ -831,7 +831,7 @@ def callback_algorithm(
     Returns
     -------
     CallbackFilterAlgorithm
-        The callback filter wired to *inp*.
+        The callback filter wired to ``inp``.
 
     """
     alg = CallbackFilterAlgorithm(callback=callback, output_type=output_type)

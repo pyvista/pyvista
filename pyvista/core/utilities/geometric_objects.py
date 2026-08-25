@@ -941,7 +941,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     def _index(ir: int, iphi: int, itheta: int) -> int:
         """Index for points not on axis.
 
-        Values of ir and phi here are relative to the first nonaxis values.
+        Values of ``ir`` and ``iphi`` here are relative to the first non-axis values.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1

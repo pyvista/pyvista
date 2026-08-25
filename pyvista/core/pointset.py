@@ -239,7 +239,7 @@ class _PointSet(DataSet):
         Parameters
         ----------
         xyz : VectorLike[float]
-            A vector of three floats of cartesian values to translate the mesh with.
+            A vector of three floats of Cartesian values to translate the mesh with.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
@@ -604,7 +604,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     - Create an empty mesh
     - Initialize from a :vtk:`vtkPolyData`
     - Using points only
-    - Using points with verts, faces, lines, and/or strips
+    - Using points with ``verts``, faces, lines, and/or strips
     - From a file
 
     If a points array is provided with no cell connectivity, the :attr:`verts` connectivity is
@@ -933,8 +933,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in vertex 0, and ``pX_Y`` is the
-        Y'th point in vertex X.
+        where ``n0`` is the number of points in vertex 0, and ``pX_Y`` is
+        point Y in vertex X.
 
         Vertices can be a single :attr:`~pyvista.CellType.VERTEX` cell with connectivity
         to a single point, or a :attr:`~pyvista.CellType.POLY_VERTEX` with connectivity
@@ -1011,8 +1011,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in line 0, and ``pX_Y`` is the
-        Y'th point in line X.
+        where ``n0`` is the number of points in line 0, and ``pX_Y`` is
+        point Y in line X.
 
         Lines can be a single :attr:`~pyvista.CellType.LINE` cell with connectivity
         to two points, or a :attr:`~pyvista.CellType.POLY_LINE` with connectivity
@@ -1062,8 +1062,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
-        Y'th point in face X.
+        where ``n0`` is the number of points in face 0, and ``pX_Y`` is
+        point Y in face X.
 
         Faces can be :attr:`~pyvista.CellType.TRIANGLE`, :attr:`~pyvista.CellType.QUAD`,
         or :attr:`~pyvista.CellType.POLYGON` cells.
@@ -1144,7 +1144,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Returns
         -------
         numpy.ndarray
-            Array of face indices with shape (n_faces, face_size).
+            Array of face indices with shape (``n_faces``, ``face_size``).
 
         See Also
         --------
@@ -1182,7 +1182,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]) -> None:  # numpydoc ignore=PR01
-        """Set the face cells from an (n_faces, face_size) array."""
+        """Set the face cells from an (``n_faces``, ``face_size``) array."""
         self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
@@ -1198,10 +1198,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Parameters
         ----------
         points : MatrixLike[float]
-            A (n_points, 3) array of points.
+            A (``n_points``, 3) array of points.
 
         faces : MatrixLike[int]
-            A (n_faces, face_size) array of face indices. For a triangle mesh, ``face_size = 3``.
+            A (``n_faces``, ``face_size``) array of face indices. For a triangle mesh,
+            ``face_size = 3``.
 
         deep : bool, default: False
             Whether to deep copy the faces array into :vtk:`vtkCellArray` connectivity data.
@@ -1235,7 +1236,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Returns
         -------
         tuple[numpy.ndarray]
-            Tuple of length n_faces where each element is an array of point
+            Tuple of length ``n_faces`` where each element is an array of point
             indices for points in that face.
 
         See Also
@@ -1271,7 +1272,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Parameters
         ----------
         points : MatrixLike[float]
-            A (n_points, 3) array of points.
+            A (``n_points``, 3) array of points.
 
         faces : Sequence[VectorLike[int]]
             A sequence of face vectors containing point indices.
@@ -1318,8 +1319,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in strip 0, and ``pX_Y`` is the
-        Y'th point in strip X.
+        where ``n0`` is the number of points in strip 0, and ``pX_Y`` is
+        point Y in strip X.
 
         Only the connectivity of :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells is stored in this
         array.
@@ -2261,7 +2262,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         filename : str, Path
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
-            ftype.  Can be one of many of the supported  the following
+            ``ftype``.  Can be one of many of the supported  the following
             types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
             ``'.obj'``, ``'.iv'``).
 
@@ -2486,9 +2487,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
-        """Return the obbTree of the polydata.
+        """Return the ``obbTree`` of the polydata.
 
-        An obbTree is an object to generate oriented bounding box (OBB)
+        An ``obbTree`` is an object to generate oriented bounding box (OBB)
         trees. An oriented bounding box is a bounding box that does not
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
@@ -2854,9 +2855,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self.SetCells(cell_type, vtkcells)
 
     def _check_for_consistency(self):
-        """Check if size of offsets and celltypes match the number of cells.
+        """Check if size of offsets and ``celltypes`` match the number of cells.
 
-        Checks if the number of offsets and celltypes correspond to
+        Checks if the number of offsets and ``celltypes`` correspond to
         the number of cells.  Called after initialization of the self
         from arrays.
         """
@@ -2882,8 +2883,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is the
-        Y'th point in cell X.
+        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is
+        point Y in cell X.
 
         For example, a triangle and a line might be represented as::
 
@@ -3345,7 +3346,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         -------
         dict
             A dictionary mapping containing all cells of this unstructured grid.
-            Structure: vtk_enum_type (int) -> cells (:class:`numpy.ndarray`).
+            Structure: ``vtk_enum_type`` (int) -> cells (:class:`numpy.ndarray`).
 
         See Also
         --------
@@ -4104,7 +4105,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
-        Hides cells by setting the ghost_cells array to ``HIDDENCELL``.
+        Hides cells by setting the ``ghost_cells`` array to ``HIDDENCELL``.
 
         Parameters
         ----------
@@ -4158,7 +4159,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
         """Hide points without deleting them.
 
-        Hides points by setting the ghost_points array to ``HIDDENPOINT``.
+        Hides points by setting the ``ghost_points`` array to ``HIDDENPOINT``.
 
         Parameters
         ----------

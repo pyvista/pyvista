@@ -62,7 +62,7 @@ def _launch_pick_event(interactor, _event):
 
 
 def _poked_context_callback(plotter, *args, **kwargs):
-    """Use _poked_context_callback in a poked renderer context."""
+    """Use ``_poked_context_callback`` in a poked renderer context."""
     with plotter.iren.poked_subplot():
         try_callback(*args, **kwargs)
 

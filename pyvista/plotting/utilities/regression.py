@@ -50,7 +50,7 @@ def wrap_image_array(arr):
     Parameters
     ----------
     arr : np.ndarray
-        A numpy array of shape (X, Y, (3 or 4)) and dtype ``np.uint8``. For
+        A numpy array of shape (X, Y, (3 or 4)) and ``dtype`` ``np.uint8``. For
         example, an array of shape ``(768, 1024, 3)``.
 
     Raises

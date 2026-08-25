@@ -198,7 +198,7 @@ class EnumDocumenter(ClassDocumenter):
     def _document_members(self, sourcename: str) -> None:
         """Write out each enum member's value and (if any) docstring, flat under one rubric.
 
-        Regular properties and metaclass properties (for example, dimension_map) are *not*
+        Regular properties and metaclass properties (for example, ``dimension_map``) are *not*
         written here -- both get their own page via enum.rst's Attributes table instead,
         the same as any other class's attributes.
         """

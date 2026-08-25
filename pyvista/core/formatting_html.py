@@ -348,7 +348,7 @@ def build_repr_html(
     sections: Sequence[str] = (),
     text_repr: str = '',
 ) -> str:
-    """Assemble a complete HTML repr with header, metadata, sections, and fallback.
+    """Assemble a complete HTML ``repr`` with header, metadata, sections, and fallback.
 
     Parameters
     ----------

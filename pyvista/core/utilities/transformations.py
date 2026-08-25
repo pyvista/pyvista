@@ -41,9 +41,9 @@ def axis_angle_rotation(  # noqa: PLR0917
     the ``K`` cross product matrix for the unit vector ``n`` defining
     the axis of the rotation:
 
-             /   0  -nz   ny \
-        K =  |  nz    0  -nx |
-             \ -ny   nx    0 /
+             /   0  -nz   ``ny`` \
+        K =  |  ``nz``    0  -nx |
+             \ -ny   ``nx``    0 /
 
     For a rotation angle ``phi`` around the vector ``n`` the rotation
     matrix is given by

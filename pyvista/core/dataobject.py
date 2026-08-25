@@ -87,10 +87,10 @@ class DataObject(
     Parameters
     ----------
     *args :
-        Any extra args are passed as option to all wrapped data objects.
+        Any extra ``args`` are passed as option to all wrapped data objects.
 
     **kwargs :
-        Any extra keyword args are passed as option to all wrapped data objects.
+        Any extra keyword ``args`` are passed as option to all wrapped data objects.
 
     """
 
@@ -770,7 +770,7 @@ class DataObject(
             raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:
-        """Init serialized dict array and ensure it is added to field_data."""
+        """Init serialized dict array and ensure it is added to ``field_data``."""
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
@@ -1012,7 +1012,7 @@ class DataObject(
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
-        """Support unpickle of PyVista 'xml' and 'legacy' formats.
+        """Support unpickle of PyVista '``xml``' and 'legacy' formats.
 
         .. note::
 

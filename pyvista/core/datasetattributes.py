@@ -87,10 +87,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         :vtk:`vtkFieldData`.
 
     dataset : :vtk:`vtkDataSet`
-        The :vtk:`vtkDataSet` containing the vtkobject.
+        The :vtk:`vtkDataSet` containing the ``vtkobject``.
 
     association : FieldAssociation
-        The array association type of the vtkobject.
+        The array association type of the ``vtkobject``.
 
     Notes
     -----
@@ -352,7 +352,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     @property
     def active_vectors(self: Self) -> NumpyArray[float] | None:
-        """Return the active vectors as a pyvista_ndarray.
+        """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
             Can no longer be used to set the active vectors.  Either use
@@ -363,7 +363,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Returns
         -------
         Optional[np.ndarray]
-            Active vectors as a pyvista_ndarray.
+            Active vectors as a ``pyvista_ndarray``.
 
         Examples
         --------
@@ -1593,7 +1593,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             raise AttributeError(msg)
 
     def _raise_no_texture_coordinates(self: Self) -> None:
-        """Raise AttributeError when attempting access texture_coordinates for field data."""
+        """Raise AttributeError when attempting access ``texture_coordinates`` for field data."""
         if self.association == FieldAssociation.NONE:
             msg = 'FieldData does not have active texture coordinates.'
             raise AttributeError(msg)

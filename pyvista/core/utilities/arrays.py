@@ -114,7 +114,7 @@ def _coerce_pointslike_arg(
     *,
     copy: bool = False,
 ) -> tuple[NumpyArray[float], bool]:
-    """Check and coerce arg to (n, 3) np.ndarray.
+    """Check and coerce ``arg`` to (n, 3) np.ndarray.
 
     Parameters
     ----------
@@ -773,7 +773,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
     ----------
     matrix : :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         The vtk matrix to be converted to a ``numpy.ndarray``.
-        Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
+        Returned ``ndarray`` has shape (3, 3) or (4, 4) as appropriate.
 
     Returns
     -------
