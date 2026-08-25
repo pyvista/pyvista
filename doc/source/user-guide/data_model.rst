@@ -672,8 +672,8 @@ cannot be made so because field data is not expected to match the
 number of cells or points. As such, it also cannot be plotted.
 
 
-Vectors, Texture Coords, and Normals Attributes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vectors, Texture Coordinates, and Normals Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.DataSet.active_scalars>`:
 
 * :attr:`active_normals <pyvista.DataSet.active_normals>`

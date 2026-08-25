@@ -156,7 +156,7 @@ polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 
 # %%
 # Cells array
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~
 # Now we build the input cells array for the
 # :class:`pyvista.UnstructuredGrid`. Here, we join all cells in a flat
 # list. Internally, the ``NItems`` previously described is used to determine

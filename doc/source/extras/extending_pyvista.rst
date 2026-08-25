@@ -267,7 +267,7 @@ type checkers about the attribute.
 
 
 De-registration
-----------------
+---------------
 
 For tests and interactive sessions, an accessor can be removed with
 :func:`~pyvista.unregister_dataset_accessor`. Any built-in attribute

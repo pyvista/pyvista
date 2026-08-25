@@ -2,7 +2,7 @@
 .. _customize_trame_toolbar_example:
 
 Customize Trame toolbar
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Bring more of the power of trame to the jupyter view.
 

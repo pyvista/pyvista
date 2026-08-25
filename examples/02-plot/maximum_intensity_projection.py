@@ -2,7 +2,7 @@
 .. _maximum_intensity_projection_example:
 
 Maximum Intensity Projection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Maximum Intensity Projection (MIP) reorders point-cloud depth by scalar value.
 
@@ -34,7 +34,7 @@ from pyvista import examples
 
 # %%
 # Normal vs. MIP Rendering
-# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~
 # Using a sample of the knee dataset, we compare normal rendering
 # (left) where closer points occlude farther ones, with MIP rendering
 # (right) where the highest scalar values punch through to the front.
@@ -68,7 +68,7 @@ pl.show()
 
 # %%
 # MIP with Circle Point Sprites
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MIP modifies the vertex shader while point sprites modify the
 # fragment shader, so both features compose cleanly on the same actor.
 # Using circle sprites with MIP produces a cleaner visualization than

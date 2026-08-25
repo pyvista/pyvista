@@ -167,7 +167,7 @@ Miscellaneous
    vtk_snake_case
 
 Errors and Warnings
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: _autosummary

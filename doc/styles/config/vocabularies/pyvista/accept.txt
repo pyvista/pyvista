@@ -29,13 +29,11 @@ Colormaps
 Comms
 Composable
 Cookiecutter
-Coords
 Cowan
 Cubemap
 Cython
 DEMs
 Damavand
-Dictionary-like
 Dini
 Disambiguator
 Discretization
