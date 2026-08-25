@@ -98,8 +98,8 @@ jobs:
           files: '["doc", "pyvista", "examples"]'
           config: doc/.vale.ini
           reporter: github-pr-check
-          level: error
+          level: warning
           filter_mode: nofilter
-          fail_on_error: true
+          fail_level: warning
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
