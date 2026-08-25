@@ -44,7 +44,7 @@ Plotting the ``MultiBlock`` plots all the meshes contained by it.
 
    blocks.plot(smooth_shading=True)
 
-``MultiBlock`` is List-like, so individual blocks can be accessed via
+``MultiBlock`` is list-like, so individual blocks can be accessed via
 indices.
 
 .. jupyter-execute::

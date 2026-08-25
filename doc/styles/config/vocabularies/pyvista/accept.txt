@@ -87,7 +87,6 @@ LShape
 Lambertian
 Levoy
 Lidar
-List-like
 MIP
 MRPs
 Maffitt
@@ -124,7 +123,6 @@ Pluggable
 PolyData
 Polyhedra
 Polyline
-Precompute
 Pringle
 Proteomic
 Pseudosphere
