@@ -323,18 +323,16 @@ def _warn_xserver() -> None:  # pragma: no cover
 
 
 def _validate_distortion_coefficients(
-    coefficients: VectorLike[float] | None,
-) -> tuple[float, float, float, float] | None:
+    coefficients: VectorLike[float],
+) -> tuple[float, float, float, float]:
     """Return the Brown-Conrady coefficients as a tuple of four floats.
 
     Returns
     -------
-    tuple[float, float, float, float] | None
-        ``(k1, k2, p1, p2)``, or ``None`` when no distortion was requested.
+    tuple[float, float, float, float]
+        ``(k1, k2, p1, p2)``.
 
     """
-    if coefficients is None:
-        return None
     values = np.asarray(coefficients, dtype=float).ravel()
     if values.size != _N_DISTORTION_COEFFICIENTS:
         msg = (
@@ -1836,23 +1834,34 @@ class BasePlotter(_BoundsSizeMixin):
         frame is where the distortion is easiest to see -- and the kind of
         lens that distorts most in the first place.
 
-        >>> import pyvista as pv
-        >>> grid = pv.Plane(i_size=3.0, j_size=3.0, i_resolution=16, j_resolution=16)
-        >>> wide_angle = [(0.0, 0.0, 3.2), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(grid, show_edges=True, color='white')
-        >>> pl.camera_position = wide_angle
-        >>> pl.camera.view_angle = 70.0
-        >>> pl.show()
+        The shader is not carried into an interactive scene, so these plots
+        are rendered statically.
+
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> grid = pv.Plane(i_size=3.0, j_size=3.0, i_resolution=16, j_resolution=16)
+            >>> wide_angle = [(0.0, 0.0, 3.2), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(grid, show_edges=True, color='white')
+            >>> pl.camera_position = wide_angle
+            >>> pl.camera.view_angle = 70.0
+            >>> pl.show()
 
         Now with barrel distortion, which bows the straight edges outward.
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(grid, show_edges=True, color='white')
-        >>> pl.camera_position = wide_angle
-        >>> pl.camera.view_angle = 70.0
-        >>> pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
-        >>> pl.show()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> grid = pv.Plane(i_size=3.0, j_size=3.0, i_resolution=16, j_resolution=16)
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(grid, show_edges=True, color='white')
+            >>> pl.camera_position = [(0.0, 0.0, 3.2), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+            >>> pl.camera.view_angle = 70.0
+            >>> pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
+            >>> pl.show()
 
         See :ref:`camera_distortion_example` for the whole model in one page.
 

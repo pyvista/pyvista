@@ -20,6 +20,12 @@ made to match the camera a photograph came from.
 import numpy as np
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# The distortion is a vertex shader replacement, which the interactive scene
+# export does not carry: those figures would show the geometry undistorted.
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # sphinx_gallery_thumbnail_number = 2
 
 # %%

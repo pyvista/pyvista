@@ -6466,6 +6466,46 @@ def test_camera_distortion_follows_a_change_of_projection():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_leaves_imported_actors_as_it_found_them():
+    """A raw VTK actor carries none of PyVista's shader bookkeeping."""
+    pl = pv.Plotter()
+    pl.import_vrml(Path(__file__).parent.parent / 'example_files' / 'Box.wrl')
+    imported = [prop for prop in pl.renderer.actors.values() if not isinstance(prop, pv.Actor)]
+    assert imported
+    before = [prop.GetShaderProperty().GetNumberOfShaderReplacements() for prop in imported]
+
+    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+    assert all(
+        prop.GetShaderProperty().GetNumberOfShaderReplacements() == count + 1
+        for prop, count in zip(imported, before, strict=True)
+    )
+
+    pl.disable_camera_distortion()
+    for prop, count in zip(imported, before, strict=True):
+        assert prop._camera_distortion_state is None
+        assert prop.GetShaderProperty().GetNumberOfShaderReplacements() == count
+        uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
+        assert not uniforms.GetUniform4f('u_distortion_coefficients', [0.0, 0.0, 0.0, 0.0])
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_warns_once_for_a_prop_it_cannot_reach():
+    """The sweep runs before every render, and the warning is not news twice."""
+    pl = pv.Plotter()
+    volume = pv.ImageData(dimensions=(8, 8, 8))
+    pl.add_volume(volume, scalars=np.zeros(volume.n_points))
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+        pl.screenshot()  # the sweep runs again, and has nothing new to say
+    assert sum('does not apply to volumes' in str(w.message) for w in record) == 1
+
+    pl.disable_camera_distortion()  # a volume was never given anything to undo
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_camera_distortion_covers_every_subplot():
     pl = pv.Plotter(shape=(1, 2))
     actors = []
