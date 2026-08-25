@@ -3951,12 +3951,12 @@ class PolyDataFilters(DataSetFilters):
             strip, and/or the maximum number of lines in a polyline.
 
         pass_cell_data : bool, default: False
-            Enable/Disable passing of the CellData in the input to the
+            Enable/Disable passing of the cell data in the input to the
             output as FieldData. Note the field data is transformed.
 
         pass_cell_ids : bool, default: False
             If ``True``, the output polygonal dataset will have a
-            celldata array that holds the cell index of the original
+            cell data array that holds the cell index of the original
             3D cell that produced each output cell. This is useful for
             picking. The default is ``False`` to conserve memory.
 

@@ -201,7 +201,6 @@ boolean
 boxplot
 boxplots
 bugfix
-celldata
 circumsphere
 cmcrameri
 cmocean
