@@ -2487,10 +2487,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scene (minimum z).
 
         i_resolution : int, default: 10
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         j_resolution : int, default: 10
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         color : ColorLike, optional
             Color of all labels and axis titles.  Default gray.
@@ -3836,12 +3836,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
-            sampling rate explicitly or set to ``True`` to downsample the
+            sampling rate explicitly or set to ``True`` to down-sample the
             texture to 1/16 of its original resolution. By default, the
             theme value for ``resample_environment_texture`` is used, which
             is ``False`` for the standard theme.
 
-            Downsampling the texture can substantially improve performance for
+            Down-sampling the texture can substantially improve performance for
             some environments, for example, headless setups or if GPU support is limited.
 
             .. note::

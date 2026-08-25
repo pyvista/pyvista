@@ -91,18 +91,18 @@ jobs:
 
       # Convert .py examples to .rst so Vale can parse their headings.
       - name: Extract example RST for Vale
-        run: python3 doc/extract_rst_from_py_for_vale.py examples .vale-examples-rst
+        run: python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
 
       # Same, for docstrings, so Vale can check their prose too.
       - name: Extract docstring RST for Vale
-        run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale-docstrings-rst --mode docstrings
+        run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
 
       # this is equivalent to
-      # vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale-examples-rst .vale-docstrings-rst
+      # vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale/examples .vale/pyvista
       - name: "Run Vale"
         uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
-          files: '["doc", "pyvista", "examples", "CONTRIBUTING.rst", ".vale-examples-rst", ".vale-docstrings-rst"]'
+          files: '["doc", "pyvista", "examples", "CONTRIBUTING.rst", ".vale/examples", ".vale/pyvista"]'
           config: doc/.vale.ini
           reporter: github-pr-check
           level: error

@@ -135,7 +135,7 @@ def plot(  # noqa: ANN202, PLR0917
     before_close_callback: Callable[[Plotter], None] | None = None,
     **kwargs,
 ):
-    """Plot a PyVista, numpy, or vtk object.
+    """Plot a PyVista, NumPy, or VTK object.
 
     .. note::
         This function is also available via command-line interface. See
@@ -194,7 +194,7 @@ def plot(  # noqa: ANN202, PLR0917
         Adds text at the bottom of the plot.
 
     return_img : bool, default: False
-        Returns numpy array of the last image rendered.
+        Returns a NumPy array of the last image rendered.
 
     eye_dome_lighting : bool, optional
         Enables eye dome lighting.
@@ -289,7 +289,7 @@ def plot(  # noqa: ANN202, PLR0917
         jupyter notebook and ``return_viewer=True``.
 
     image : np.ndarray
-        Numpy array of the last image when either ``return_img=True``
+        NumPy array of the last image when either ``return_img=True``
         or ``screenshot=True`` is set. Not returned when in a
         jupyter notebook with ``return_viewer=True``. Optionally
         contains alpha values. Sized:

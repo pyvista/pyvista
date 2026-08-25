@@ -314,7 +314,7 @@ def read(  # noqa: PLR0917
         refused. Pickle is a Python serialization protocol, not a mesh
         file format, and loading an untrusted pickle is arbitrary code
         execution (CWE-502). Use a real mesh format (``.vtu``, ``.vtp``,
-        ``.vtm``, ``.vtk``, ``.ply``, ``.stl``, ...) or install
+        ``.vtm``, ``.vtk``, ``.ply``, ``.stl``, and so on) or install
         ``pyvista-zstd`` for the ``.pv`` single-blob format.
 
     See Also

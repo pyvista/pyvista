@@ -1,4 +1,4 @@
-"""`pyvista plot file.vtp --color=red ...` CLI."""
+"""`pyvista plot file.vtp --color=red` CLI (see below for more flags)."""
 
 from __future__ import annotations
 

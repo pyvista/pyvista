@@ -36,9 +36,9 @@ coverage-docs:
 
 docstyle:
 	@echo "Running vale"
-	@python3 doc/extract_rst_from_py_for_vale.py examples .vale-examples-rst
-	@python3 doc/extract_rst_from_py_for_vale.py pyvista .vale-docstrings-rst --mode docstrings
-	@vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale-examples-rst .vale-docstrings-rst
+	@python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
+	@python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
+	@vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale/examples .vale/pyvista
 
 sync-deps:
 	@echo "Installing dev dependencies"

@@ -72,7 +72,7 @@ def numpy_to_idarr(
     deep: bool = False,  # noqa: FBT001, FBT002
     return_ind: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
-    """Safely convert a numpy array to a :vtk:`vtkIdTypeArray`.
+    """Safely convert a NumPy array to a :vtk:`vtkIdTypeArray`.
 
     Parameters
     ----------

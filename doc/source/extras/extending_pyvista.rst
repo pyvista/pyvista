@@ -266,8 +266,8 @@ the xarray side, where the plugin ships stubs that teach editors and
 type checkers about the attribute.
 
 
-Deregistration
---------------
+De-registration
+----------------
 
 For tests and interactive sessions, an accessor can be removed with
 :func:`~pyvista.unregister_dataset_accessor`. Any built-in attribute

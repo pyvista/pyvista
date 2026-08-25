@@ -4565,7 +4565,7 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
     >>> import pyvista as pv
     >>> dataset = examples.download_damavand_volcano()
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample it before plotting.
+    Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
 
     >>> dataset = dataset.resample(0.5)
     >>> dataset.dimensions
@@ -6760,7 +6760,7 @@ def download_parched_canal_4k(load: bool = True) -> Texture | str:  # noqa: FBT0
         >>> texture.dimensions
         (4096, 2048)
 
-        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample the texture's
         underlying image before plotting.
 
         >>> _ = texture.to_image().resample(0.25, inplace=True)
@@ -7906,7 +7906,7 @@ def download_dikhololo_night(load: Literal[True] = True) -> Texture: ...  # noqa
 def download_dikhololo_night(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
-    """Download and read the dikholo night hdr texture example.
+    """Download and read the dikhololo night HDR texture example.
 
     Files hosted at https://polyhaven.com/
 
@@ -7931,7 +7931,7 @@ def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT00
         >>> texture.dimensions
         (4096, 2048)
 
-        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample the texture's
         underlying image before plotting.
 
         >>> _ = texture.to_image().resample(0.25, inplace=True)
@@ -8407,7 +8407,7 @@ def download_whole_body_ct_male(
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
-    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    available from `Zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
     Jakob Wasserthal et al., TotalSegmentator: Robust Segmentation of 104 Anatomic
@@ -8446,7 +8446,7 @@ def download_whole_body_ct_male(
 
     .. versionchanged:: 0.45
 
-        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        A down-sampled version of this dataset with dimensions ``(160, 160, 273)``
         is now returned. Previously, a high-resolution version with dimensions
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
@@ -8653,7 +8653,7 @@ def download_whole_body_ct_female(
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
-    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    available from `Zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
     Jakob Wasserthal et al., TotalSegmentator: Robust Segmentation of 104 Anatomic
@@ -8692,7 +8692,7 @@ def download_whole_body_ct_female(
 
     .. versionchanged:: 0.45
 
-        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        A down-sampled version of this dataset with dimensions ``(160, 160, 273)``
         is now returned. Previously, a high-resolution version with dimensions
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.

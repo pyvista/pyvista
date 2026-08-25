@@ -334,7 +334,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         z: NumpyArray[float],
         check_duplicates: bool = False,
     ) -> None:
-        """Create VTK rectilinear grid directly from numpy arrays.
+        """Create VTK rectilinear grid directly from NumPy arrays.
 
         Each array gives the unique coordinates of the mesh along each axial
         direction. To help ensure you are using this correctly, we take the unique
@@ -383,7 +383,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def meshgrid(
         self: Self,
     ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
-        """Return a meshgrid of numpy arrays for this mesh.
+        """Return a meshgrid of NumPy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
         coordinates for this mesh in ``ij`` indexing. These are a copy
@@ -392,7 +392,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         Returns
         -------
         tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
-            Tuple of numpy arrays representing the points of this mesh.
+            Tuple of NumPy arrays representing the points of this mesh.
 
         """
         # Converting to tuple needed to be consistent type across numpy version
@@ -406,7 +406,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
-        """Return a copy of the points as an ``(n, 3)`` numpy array.
+        """Return a copy of the points as an ``(n, 3)`` NumPy array.
 
         Returns
         -------
@@ -875,7 +875,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
-        """Build a copy of the implicitly defined points as a numpy array.
+        """Build a copy of the implicitly defined points as a NumPy array.
 
         Returns
         -------

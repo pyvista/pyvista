@@ -1,10 +1,10 @@
 """Generic array-like type definitions.
 
-Definitions here are loosely based on code in numpy._typing._array_like.
+Definitions here are loosely based on code in ``numpy._typing._array_like``.
 Some key differences include:
 
 - Some npt._array_like definitions explicitly support dual-types for
-  handling python and numpy scalar data types separately.
+  handling Python and NumPy scalar data types separately.
   Here, only a single generic type is used for simplicity.
 
 - The npt._array_like definitions use a recursive _NestedSequence protocol.

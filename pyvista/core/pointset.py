@@ -295,7 +295,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
-        List, numpy array, or sequence containing point locations. Must be an
+        List, NumPy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
     deep : bool, default: False
@@ -2769,7 +2769,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         deep: bool = True,
         force_float: bool = True,
     ) -> None:
-        """Create VTK unstructured grid from numpy arrays.
+        """Create VTK unstructured grid from NumPy arrays.
 
         Parameters
         ----------
@@ -2783,7 +2783,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             example below.
 
         points : sequence[float]
-            Numpy array containing point locations.
+            NumPy array containing point locations.
 
         deep : bool, default: True
             When ``True``, makes a copy of the points array.  Default
@@ -2877,7 +2877,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     @property
     def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the cell data as a numpy object.
+        """Return the cell data as a NumPy object.
 
         This is the old style VTK data layout::
 
@@ -3957,7 +3957,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return DataSet.__str__(self)
 
     def _from_arrays(self, x, y, z, *, force_float: bool = True):
-        """Create VTK structured grid directly from numpy arrays.
+        """Create VTK structured grid directly from NumPy arrays.
 
         Parameters
         ----------
@@ -4035,7 +4035,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Returns
         -------
         numpy.ndarray
-            Numpy array of all X coordinates.
+            NumPy array of all X coordinates.
 
         Examples
         --------
@@ -4418,7 +4418,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell and the node numbers of the cell.
 
         points : MatrixLike[float]
-            Numpy array containing point locations.
+            NumPy array containing point locations.
 
         """
         if len(dims) != 3:
@@ -4754,7 +4754,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         Returns
         -------
         tuple[int, int, int]
-            Number of sampling points in the I, J, and Z directions respectively.
+            Number of sampling points in the ``i``, ``j``, and ``k`` directions respectively.
 
         Examples
         --------

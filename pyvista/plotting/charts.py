@@ -1683,7 +1683,7 @@ class _Chart(DocSubs):
         Returns
         -------
         np.ndarray
-            Numpy array of the last image when ``screenshot=True``
+            NumPy array of the last image when ``screenshot=True``
             is set. Optionally contains alpha values. Sized:
 
             * [Window height x Window width x 3] if the theme sets

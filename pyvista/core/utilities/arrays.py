@@ -278,11 +278,11 @@ def convert_array(  # noqa: PLR0917
     Parameters
     ----------
     arr : np.ndarray | :vtk:`vtkDataArray`
-        A numpy array or :vtk:`vtkDataArray` to convert.
+        A NumPy array or :vtk:`vtkDataArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
-        If input is numpy array then deep copy values.
+        If input is a NumPy array then deep copy values.
     array_type : int, optional
         VTK array type ID as specified in ``vtkType.h``.
 
@@ -621,14 +621,14 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
 
 
 def get_vtk_type(typ: npt.DTypeLike) -> int:
-    """Look up the VTK type for a given numpy data type.
+    """Look up the VTK type for a given NumPy data type.
 
     Corrects for string type mapping issues.
 
     Parameters
     ----------
     typ : numpy.dtype
-        Numpy data type.
+        NumPy data type.
 
     Returns
     -------
@@ -703,14 +703,14 @@ def convert_string_array(
 def convert_string_array(
     arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
-    """Convert a numpy array of strings to a :vtk:`vtkStringArray` or vice versa.
+    """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
     If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
 
     Parameters
     ----------
     arr : numpy.ndarray | str
-        Numpy string array to convert.
+        NumPy string array to convert.
 
     name : str, optional
         Name to set the :vtk:`vtkStringArray` to.
@@ -778,7 +778,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
     Returns
     -------
     numpy.ndarray
-        Numpy array containing the data from ``matrix``.
+        NumPy array containing the data from ``matrix``.
 
     """
     if isinstance(matrix, _vtk.vtkMatrix3x3):

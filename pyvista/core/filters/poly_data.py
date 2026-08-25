@@ -500,7 +500,7 @@ class PolyDataFilters(DataSetFilters):
             ``merge_points=True``.
 
         inplace : bool, default: False
-            Updates grid inplace when ``True`` if the input type is a
+            Updates grid in-place when ``True`` if the input type is a
             :class:`pyvista.PolyData`. For other input meshes the
             result is a :class:`pyvista.UnstructuredGrid` which makes
             in-place operation impossible.
@@ -693,7 +693,7 @@ class PolyDataFilters(DataSetFilters):
 
     @_deprecate_positional_args(allowed=['curv_type'])
     def curvature(self, curv_type='mean', progress_bar: bool = False):  # noqa: FBT001, FBT002
-        """Return the pointwise curvature of a mesh.
+        """Return the point-wise curvature of a mesh.
 
         Parameters
         ----------
@@ -3252,7 +3252,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Mesh from the 2D delaunay filter.
+            Mesh from the 2D Delaunay filter.
 
         Examples
         --------
@@ -3270,7 +3270,7 @@ class PolyDataFilters(DataSetFilters):
         >>> filled_circle = circle.delaunay_2d()
         >>> filled_circle.plot(show_edges=True, line_width=5)
 
-        Use the ``edge_source`` parameter to create a constrained delaunay
+        Use the ``edge_source`` parameter to create a constrained Delaunay
         triangulation and plot it.
 
         >>> squar = pv.Polygon(n_sides=4, radius=8, fill=False)
@@ -3691,7 +3691,7 @@ class PolyDataFilters(DataSetFilters):
             Number of pieces to divide line into.
 
         inplace : bool, default: False
-            Overwrites the original mesh inplace.
+            Overwrites the original mesh in-place.
 
         translation : float, optional
             Total amount of translation along the axis.
@@ -3962,7 +3962,7 @@ class PolyDataFilters(DataSetFilters):
 
         pass_point_ids : bool, default: False
             If ``True``, the output polygonal dataset will have a
-            pointdata array that holds the point index of the original
+            point data array that holds the point index of the original
             vertex that produced each output vertex. This is useful
             for picking. The default is ``False`` to conserve memory.
 
@@ -4540,7 +4540,7 @@ class PolyDataFilters(DataSetFilters):
         with straight lines. This creates a strip for each pair
         of lines (that is, a triangulation is created from two
         generating lines). The filter can handle an arbitrary
-        number of lines, with lines i and i+1 assumed
+        number of lines, with lines ``i`` and ``i + 1`` assumed
         connected. Note that there are several different
         approaches for creating the ruled surface, the method
         for creating the surface can either use the input points

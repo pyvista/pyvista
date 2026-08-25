@@ -48,7 +48,7 @@ def axis_angle_rotation(  # noqa: PLR0917
     For a rotation angle ``phi`` around the vector ``n`` the rotation
     matrix is given by
 
-        R = I + sin(phi) K  + (1 - cos(phi)) K^2
+        ``R`` = ``I`` + sin(phi) ``K``  + (1 - cos(phi)) ``K``^2
 
     where ``I`` is the 3-by-3 unit matrix and ``K^2`` denotes the matrix
     square of ``K``.

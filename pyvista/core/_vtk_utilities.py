@@ -208,14 +208,14 @@ class DisableVtkSnakeCase:
 
         VTK-inherited names are hidden by default so PyVista objects present
         a curated public surface in data-science IDEs (Positron Variables
-        pane, VS Code Jupyter extension, ...) and in IPython / Jupyter
+        pane, VS Code Jupyter extension, and so on) and in IPython / Jupyter
         tab-completion. VTK methods remain fully callable; only their
         enumeration is suppressed.
 
-        - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, ...) are
+        - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, and so on) are
           hidden unless :attr:`pyvista.global_config.show_vtk_api` is
           ``True``.
-        - ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+        - ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, and so on) are
           hidden unless VTK ``snake_case`` is allowed via
           :func:`pyvista.vtk_snake_case`, since they would otherwise raise
           ``PyVistaAttributeError`` on access.

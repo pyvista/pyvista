@@ -370,7 +370,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         Returns
         -------
         numpy.ndarray
-            Texture as a numpy array.
+            Texture as a NumPy array.
 
         Examples
         --------
@@ -775,7 +775,7 @@ def numpy_to_texture(image):
     Parameters
     ----------
     image : numpy.ndarray
-        Numpy image array. Texture datatype expected to be ``np.uint8``.
+        NumPy image array. Texture datatype expected to be ``np.uint8``.
 
     Returns
     -------

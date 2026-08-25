@@ -265,7 +265,7 @@ class _DatasetLoader:
         item. Any nested MultiBlocks are not included, only their datasets.
 
         For example, for a composite dataset:
-            MultiBlock -> (MultiBlock, Block0, Block1, ...)
+            MultiBlock -> (MultiBlock, Block0, Block1, and so on)
         """
         dataset = self.dataset
 
@@ -451,7 +451,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
 class _DownloadableFile(_SingleFile, _Downloadable[str]):
     """Wrap a single file which must be downloaded.
 
-    If downloading a file from an archive, set the filepath of the zip as
+    If downloading a file from an archive, set the file path of the zip as
     ``path`` and set ``target_file`` as the file to extract. If the path is
     a zip file and no target file is specified, the entire archive is downloaded
     and extracted and the root directory of the path is returned.

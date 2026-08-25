@@ -60,7 +60,7 @@ _AUTO_LABELS: Any = _Sentinel('auto')
 
 
 def _generate_labels(n_labels: int) -> list[str]:
-    """Generate labels ``'A'``, ``'B'``, ..., ``'Z'``, ``'AA'``, ``'AB'``, ... ."""
+    """Generate labels ``'A'`` through ``'Z'``, then ``'AA'``, ``'AB'``, and so on."""
     labels = []
     for index in range(n_labels):
         label = ''
@@ -514,7 +514,7 @@ def plot_compare(  # noqa: ANN201
         The labels to display for each data object. Must have the same length as
         ``datasets``. By default, the keys of ``datasets`` are used when it is a
         mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
-        ``'B'``, ``'C'``, ... are generated otherwise. Set to ``None`` to disable
+        ``'B'``, ``'C'``, and so on are generated otherwise. Set to ``None`` to disable
         labels.
 
         If the input has keys `and` ``labels`` are provided, the provided
@@ -706,7 +706,7 @@ def plot_compare(  # noqa: ANN201
         Allows user to pan and move figure.
 
     return_img : bool, default: False
-        Returns numpy array of the last image rendered.
+        Returns a NumPy array of the last image rendered.
 
     return_cpos : bool, default: False
         Return the last camera position from the render window

@@ -1088,16 +1088,16 @@ def Plane(  # noqa: PLR0917
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
-        Size of the plane in the i direction.
+        Size of the plane in the ``i`` direction.
 
     j_size : float, default: 1.0
-        Size of the plane in the j direction.
+        Size of the plane in the ``j`` direction.
 
     i_resolution : int, default: 10
-        Number of points on the plane in the i direction.
+        Number of points on the plane in the ``i`` direction.
 
     j_resolution : int, default: 10
-        Number of points on the plane in the j direction.
+        Number of points on the plane in the ``j`` direction.
 
     Returns
     -------

@@ -9,7 +9,7 @@ workflows, and build custom applications on top of PyVista's 3D capabilities.
    :class: tip
 
    For a curated, continuously updated list of domain-specific tooling that
-   interoperates with or is built on PyVista, see
+   inter-operates with or is built on PyVista, see
    `awesome-pyvista <https://github.com/pyvista/awesome-pyvista>`_. The list
    below is a snapshot of selected projects; ``awesome-pyvista`` is the
    canonical source.
@@ -40,7 +40,7 @@ Geosciences
 * subsurface_: Core data exchange library for subsurface science and engineering.
 * Flownet_: Data-Driven Reservoir Predictions.
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
+* omfvista_: 3D visualization for the Open Mining Format (OMF). PyVista provides the foundation for this library's visualization.
 
 
 Many More

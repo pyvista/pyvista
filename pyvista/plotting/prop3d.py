@@ -426,7 +426,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
               current user-matrix.
 
         inplace : bool, default: False
-            When ``True``, modifies the prop inplace. Otherwise, a copy is returned.
+            When ``True``, modifies the prop in-place. Otherwise, a copy is returned.
 
         Returns
         -------

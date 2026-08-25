@@ -823,7 +823,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         component_mode : {'component', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multicomponent scalars.  'component' (default)
+            multi-component scalars.  'component' (default)
             uses only the ``component``.  'all' requires all
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
@@ -1135,7 +1135,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             or ``'cell'``.
 
         component_mode : {'component', 'all', 'any'}, default: 'all'
-            The method to satisfy the criteria for multicomponent scalars.
+            The method to satisfy the criteria for multi-component scalars.
             ``'component'`` uses only the single component specified by
             ``component``. ``'all'`` drops a cell if any component is NaN.
             ``'any'`` keeps a cell as long as at least one component is
@@ -1672,7 +1672,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         name : str, default: "Texture Coordinates"
             The string name to give the new texture coordinates if applying
-            the filter inplace.
+            the filter in-place.
 
         use_bounds : bool, default: False
             Use the bounds to set the mapping plane by default (bottom plane
@@ -1754,12 +1754,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         inplace : bool, default: False
             If ``True``, the new texture coordinates will be added to
-            the dataset inplace. If ``False`` (default), a new dataset
+            the dataset in-place. If ``False`` (default), a new dataset
             is returned with the texture coordinates.
 
         name : str, default: "Texture Coordinates"
             The string name to give the new texture coordinates if applying
-            the filter inplace.
+            the filter in-place.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5863,7 +5863,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ``merge_points=True``.
 
         inplace : bool, default: False
-            Updates grid inplace when True if the input type is an
+            Updates grid in-place when ``True`` if the input type is an
             :class:`pyvista.UnstructuredGrid`.
 
         main_has_priority : bool, default: True

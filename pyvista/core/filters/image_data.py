@@ -281,8 +281,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         i, j, k : int | VectorLike[int] | slice, optional
-            Indices to slice along the I, J, and K coordinate axes, respectively. Specify an
-            integer for a single index, or two integers ``[start, stop)`` for a range of indices.
+            Indices to slice along the ``i``, ``j``, and ``k`` coordinate axes, respectively.
+            Specify an integer for a single index, or two integers ``[start, stop)`` for a range
+            of indices.
 
             .. note::
 
@@ -3809,7 +3810,7 @@ class ImageDataFilters(DataSetFilters):
             The constant label value to use. Has no effect if ``label_mode`` is not ``'seeds'``.
 
         inplace : bool, default: False
-            If ``True``, perform an inplace labelling of the ImageData. Else, returns a
+            If ``True``, perform an in-place labelling of the ImageData. Else, returns a
             new ImageData.
 
         progress_bar : bool, default: False
@@ -4241,7 +4242,7 @@ class ImageDataFilters(DataSetFilters):
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
             Interpolation mode to use.
 
-            - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
+            - ``'nearest'`` (default) duplicates (if up-sampling) or removes (if down-sampling)
               values but does not modify them.
             - ``'linear'`` and ``'cubic'`` use linear and cubic interpolation, respectively.
             - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
@@ -4259,7 +4260,7 @@ class ImageDataFilters(DataSetFilters):
                 - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
                 - use ``'linear'`` for speed-critical tasks
                 - use ``'cubic'`` for upscaling or general-purpose resampling
-                - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
+                - use ``'lanczos'`` for high-detail down-sampling (at the cost of some ringing)
                 - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
                 - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
@@ -4312,7 +4313,7 @@ class ImageDataFilters(DataSetFilters):
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         inplace : bool, default: False
-            If ``True``, resample the image inplace. By default, a new
+            If ``True``, resample the image in-place. By default, a new
             :class:`~pyvista.ImageData` instance is returned.
 
         progress_bar : bool, default: False
@@ -4572,14 +4573,14 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.dimensions
         (458, 342, 1)
 
-        Downsample the gourds image to 1/10th its original resolution using ``'lanczos'``
+        Down-sample the gourds image to 1/10th its original resolution using ``'lanczos'``
         interpolation.
 
         >>> downsampled = gourds.resample(1 / 8, 'lanczos')
         >>> downsampled.dimensions
         (80, 60, 1)
 
-        Compare the downsampled image to the original and zoom in to show detail.
+        Compare the ``downsampled`` image to the original and zoom in to show detail.
 
         >>> def compare_images_plotter(image1, image2):
         ...     pl = pv.Plotter(shape=(1, 2))
@@ -4594,7 +4595,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = compare_images_plotter(gourds, downsampled)
         >>> pl.show()
 
-        Note that downsampling can create image artifacts caused by aliasing. Enable
+        Note that down-sampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
         >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
@@ -4604,7 +4605,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = compare_images_plotter(downsampled, downsampled2)
         >>> pl.show()
 
-        Load an MRI of a knee and downsample it.
+        Load an MRI of a knee and down-sample it.
 
         >>> knee = pv.examples.download_knee().resample(
         ...     0.1, 'linear', anti_aliasing=True

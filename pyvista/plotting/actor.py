@@ -981,7 +981,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         ``'Points'``—for any other representation the ``gl_PointCoord``
         built-in is undefined and would otherwise corrupt fragment output.
         Tracks the currently applied shape (rather than a boolean) so
-        that unrelated property modifications (color, opacity, ...) do
+        that unrelated property modifications (color, opacity, and so on) do
         not repeatedly rebuild the shader, while still honoring real
         shape changes and representation transitions.
         """

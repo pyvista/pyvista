@@ -444,7 +444,7 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
     The output carries a ``vtkOriginalPointIds`` point-data array that maps
     each output point back to its index in the original input mesh. Callers
     that need to remap input-length arrays onto the (potentially longer)
-    output topology (for example raw numpy scalars passed to ``add_mesh``)
+    output topology (for example raw NumPy scalars passed to ``add_mesh``)
     can do so via this tracker.
 
     Parameters

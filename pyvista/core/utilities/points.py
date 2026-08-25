@@ -29,7 +29,7 @@ def vtk_points(  # noqa: PLR0917
     force_float: bool = False,  # noqa: FBT001, FBT002
     allow_empty: bool = True,  # noqa: FBT001, FBT002
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
+    """Convert a NumPy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------

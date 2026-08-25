@@ -7,7 +7,7 @@ Project points to a plane and Tessellate
 Generate a 3D point cloud, project it to a plane, and tessellate it.
 
 This demonstrates how to use
-:class:`pyvista.UnstructuredGridFilters.delaunay_2d` and a simple numpy
+:class:`pyvista.UnstructuredGridFilters.delaunay_2d` and a simple NumPy
 function that projects points to a plane.
 
 """

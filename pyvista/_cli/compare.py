@@ -1,4 +1,4 @@
-"""`pyvista compare file1.vtp file2.vtp --link=False ...` CLI."""
+"""`pyvista compare file1.vtp file2.vtp --link=False` CLI (see below for more flags)."""
 
 from __future__ import annotations
 

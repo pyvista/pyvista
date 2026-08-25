@@ -78,7 +78,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
             self.table.Get().values = self
 
     def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 

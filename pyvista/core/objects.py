@@ -149,7 +149,7 @@ class Table(DataObject, _vtk.vtkTable):
         Returns
         -------
         numpy.ndarray
-            Numpy array of the row.
+            NumPy array of the row.
 
         """
         return self.row_arrays.get_array(name)

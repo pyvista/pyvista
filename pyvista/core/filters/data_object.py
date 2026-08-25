@@ -1892,7 +1892,7 @@ class DataObjectFilters:
             transformed.  See the warning for more details.
 
         inplace : bool
-            When ``True``, modifies the dataset inplace and returned dataset is
+            When ``True``, modifies the dataset in-place and returned dataset is
             the same dataset. When ``False`` a new transformed dataset is
             returned with the original unchanged. The value of this parameter
             must be explicitly set.
@@ -2118,7 +2118,7 @@ class DataObjectFilters:
             plane. If not specified, this is the origin.
 
         inplace : bool, default: False
-            When ``True``, modifies the dataset inplace.
+            When ``True``, modifies the dataset in-place.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise,
@@ -3315,7 +3315,7 @@ class DataObjectFilters:
             Length 3 sequence of floats: distances from the min coordinate
             of the input mesh. Single float value: uniform distance from the
             min coordinate. Length 12 sequence of length 3 sequence of floats:
-            a plane collection (normal, center, ...).
+            a plane collection (normal, center, and so on).
             :class:`pyvista.PolyData`: if a poly mesh is passed that represents
             a box with 6 faces that all form a standard box, then planes will
             be extracted from the box to define the clipping region.

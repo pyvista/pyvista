@@ -1085,7 +1085,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Returns
         -------
         float
-            YLength along the cone in its specified direction.
+            ``YLength`` along the cone in its specified direction.
 
         """
         return self.GetYLength()
@@ -1097,7 +1097,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Parameters
         ----------
         y_length : float
-            YLength of the cone.
+            ``YLength`` of the cone.
 
         """
         self.SetYLength(y_length)
@@ -1109,7 +1109,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Returns
         -------
         float
-            ZLength along the cone in its specified direction.
+            ``ZLength`` along the cone in its specified direction.
 
         """
         return self.GetZLength()
@@ -1121,7 +1121,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Parameters
         ----------
         z_length : float
-            ZLength of the cone.
+            ``ZLength`` of the cone.
 
         """
         self.SetZLength(z_length)
@@ -2183,10 +2183,10 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
     Parameters
     ----------
     i_resolution : int, default: 10
-        Number of points on the plane in the i direction.
+        Number of points on the plane in the ``i`` direction.
 
     j_resolution : int, default: 10
-        Number of points on the plane in the j direction.
+        Number of points on the plane in the ``j`` direction.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
@@ -2223,48 +2223,48 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
 
     @property
     def i_resolution(self: PlaneSource) -> int:
-        """Number of points on the plane in the i direction.
+        """Number of points on the plane in the ``i`` direction.
 
         Returns
         -------
         int
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         """
         return self.GetXResolution()
 
     @i_resolution.setter
     def i_resolution(self: PlaneSource, i_resolution: int) -> None:
-        """Set number of points on the plane in the i direction.
+        """Set number of points on the plane in the ``i`` direction.
 
         Parameters
         ----------
         i_resolution : int
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         """
         self.SetXResolution(i_resolution)
 
     @property
     def j_resolution(self: PlaneSource) -> int:
-        """Number of points on the plane in the j direction.
+        """Number of points on the plane in the ``j`` direction.
 
         Returns
         -------
         int
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         """
         return self.GetYResolution()
 
     @j_resolution.setter
     def j_resolution(self: PlaneSource, j_resolution: int) -> None:
-        """Set number of points on the plane in the j direction.
+        """Set number of points on the plane in the ``j`` direction.
 
         Parameters
         ----------
         j_resolution : int
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         """
         self.SetYResolution(j_resolution)

@@ -194,10 +194,10 @@ def _attach_raw_scalars_via_callback(  # noqa: PLR0917
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[_vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput, DataSet]:
-    """Splice a callback stage that attaches raw numpy scalars to the pipeline.
+    """Splice a callback stage that attaches raw NumPy scalars to the pipeline.
 
     Used by :meth:`Plotter.add_mesh` when smooth shading is enabled on an
-    upstream :vtk:`vtkAlgorithm` input and the user passed a raw numpy
+    upstream :vtk:`vtkAlgorithm` input and the user passed a raw NumPy
     array. The scalars cannot be resolved by name on the pipeline output,
     so we wrap ``algo`` in a :class:`CallbackFilterAlgorithm` that
     shallow-copies each output and stamps the array on it.
@@ -1415,7 +1415,7 @@ class BasePlotter(_BoundsSizeMixin):
         SSAA, or Super-Sample Anti-Aliasing is a brute force method of
         anti-aliasing. It results in the best image quality but comes at a
         tremendous resource cost. SSAA works by rendering the scene at a higher
-        resolution. The final image is produced by downsampling the
+        resolution. The final image is produced by down-sampling the
         massive source image using an averaging filter. This acts as a low pass
         filter which removes the high frequency components that would cause
         jaggedness.
@@ -3414,14 +3414,14 @@ class BasePlotter(_BoundsSizeMixin):
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
-            When a raw numpy array is passed, it is attached to
+            When a raw NumPy array is passed, it is attached to
             ``mesh`` under a generated name (typically
             ``pyvista.DEFAULT_SCALARS_NAME`` or
             ``Data-<n>`` if that name is taken). This makes the
             array visible to downstream pipeline stages (for example
             smooth-shading surface extraction) and lets callers
             later mutate it via ``mesh[name] = ...`` to update the
-            render. Mutation is scoped to raw-numpy inputs only.
+            render. Mutation is scoped to raw-NumPy inputs only.
             Passing ``scalars=<str>`` never modifies the mesh.
 
         clim : sequence[float], optional
@@ -4469,7 +4469,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         volume : 3D numpy.ndarray | DataSet
-            The input volume to visualize. 3D numpy arrays are accepted.
+            The input volume to visualize. 3D NumPy arrays are accepted.
 
             .. warning::
                 If the input is not :class:`numpy.ndarray`,
@@ -6438,7 +6438,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         points : sequence[float] | np.ndarray | DataSet
-            An ``n x 3`` numpy.ndarray or pyvista dataset with points.
+            An ``n x 3`` ``numpy.ndarray`` or PyVista dataset with points.
 
         labels : list | str
             List of scalars of labels.  Must be the same length as points. If a
@@ -8040,7 +8040,7 @@ _register_plotter_component('widgets', target_cls=BasePlotter)(WidgetComponent)
 
 
 class Plotter(_NoNewAttrMixin, BasePlotter):
-    """Plotting object to display vtk meshes or numpy arrays.
+    """Plotting object to display VTK meshes or NumPy arrays.
 
     Parameters
     ----------
@@ -8388,7 +8388,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             alternative.
 
         return_img : bool, default: False
-            Returns a numpy array representing the last image along
+            Returns a NumPy array representing the last image along
             with the camera position.
 
         cpos : sequence[sequence[float]], optional
@@ -8445,7 +8445,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             default global or plot theme.
 
         image : np.ndarray
-            Numpy array of the last image when either ``return_img=True``
+            NumPy array of the last image when either ``return_img=True``
             or ``screenshot=True`` is set. Optionally contains alpha
             values. Sized:
 

@@ -276,7 +276,7 @@ class Config(_ConfigBase):
 
         Notes
         -----
-        The ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+        The ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, and so on) are
         controlled separately by :func:`pyvista.vtk_snake_case`. When
         ``snake_case`` is not ``'allow'`` (the default), those names are hidden
         from :func:`dir` regardless of this setting, because accessing them

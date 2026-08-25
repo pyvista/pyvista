@@ -842,7 +842,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -996,7 +996,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -1540,7 +1540,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box

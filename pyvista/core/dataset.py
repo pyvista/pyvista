@@ -437,12 +437,12 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def points(self: Self) -> pyvista_ndarray:
-        """Return a reference to the points as a numpy object.
+        """Return a reference to the points as a NumPy object.
 
         Returns
         -------
         pyvista_ndarray
-            Reference to the points as a numpy object.
+            Reference to the points as a NumPy object.
 
         Examples
         --------
@@ -502,7 +502,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @points.setter
     def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
-        """Set a reference to the points as a numpy object.
+        """Set a reference to the points as a NumPy object.
 
         Parameters
         ----------
@@ -1791,7 +1791,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @_deprecate_positional_args(allowed=['mesh'])
     def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
-        """Overwrite this dataset inplace with the new dataset's geometries and data.
+        """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
         ----------

@@ -40,12 +40,12 @@ if TYPE_CHECKING:
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
-    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`.
+    """Return the NumPy datatype responding to :vtk:`vtkIdTypeArray`.
 
     The 64-bit case returns :class:`numpy.longlong` (C ``long long``) rather than
     :class:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
-    LP64 (Linux/macOS) numpy binds the name ``int64`` to C ``long`` instead, which is
-    a *distinct* scalar type. Since VTK 9.7 the numpy-to-VTK mapping follows the
+    LP64 (Linux/macOS) NumPy binds the name ``int64`` to C ``long`` instead, which is
+    a *distinct* scalar type. Since VTK 9.7 the NumPy-to-VTK mapping follows the
     underlying C type, so ``np.int64`` there resolves to ``VTK_LONG`` and only
     ``np.longlong`` resolves to ``VTK_ID_TYPE``. ``longlong`` maps to ``VTK_LONG_LONG``
     on all supported VTK versions and platforms, so it is correct either way.
@@ -669,15 +669,15 @@ class CellArray(
     """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
-    a numpy array or list.
+    a NumPy array or list.
 
     Parameters
     ----------
     cells : np.ndarray or list, optional
-        Import an array of data with the legacy :vtk:`vtkCellArray` layout, for example
-        ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
-        Where n0 is the number of points in cell 0, and pX_Y is point Y
-        in cell X.
+        Import an array of data with the legacy :vtk:`vtkCellArray` layout: each
+        cell is stored as its point count followed by that many point indices,
+        with cells concatenated back-to-back (for example ``[3, 0, 1, 2, 4, 0, 1, 2, 3]``
+        for a triangle followed by a quad).
 
     Examples
     --------
@@ -708,12 +708,12 @@ class CellArray(
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
-        """Return a numpy array of the cells.
+        """Return a NumPy array of the cells.
 
         Returns
         -------
         np.ndarray
-            A numpy array of the cells.
+            A NumPy array of the cells.
 
         """
         cells = _vtk.vtkIdTypeArray()

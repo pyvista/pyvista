@@ -3381,10 +3381,10 @@ class Theme(_ConfigBase):
         Resample the environment texture when using
         :meth:`~pyvista.Plotter.set_environment_texture`.
         Set this to a float to set the sampling rate explicitly or set
-        to ``True`` to downsample the texture to 1/16 of its original
+        to ``True`` to down-sample the texture to 1/16 of its original
         resolution.
 
-        Downsampling the texture can substantially improve performance for
+        Down-sampling the texture can substantially improve performance for
         some environments, for example, headless setups or if GPU support is limited.
 
         .. versionadded:: 0.45

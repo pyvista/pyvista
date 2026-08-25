@@ -102,7 +102,7 @@ def metaclass_property_descriptions(  # numpydoc ignore=RT01
 def _is_bitmask_like(cls: type[Enum]) -> bool:
     """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two).
 
-    Only ``int``-valued enums (``IntEnum``, ``IntFlag``, ...) can look like bit flags --
+    Only ``int``-valued enums (``IntEnum``, ``IntFlag``, and so on) can look like bit flags --
     ``int(member.value)`` would raise, for example, for a ``str``-valued ``Enum``.
     """
     if issubclass(cls, Flag):
