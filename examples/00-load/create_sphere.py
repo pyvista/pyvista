@@ -21,7 +21,7 @@ mesh = pv.Sphere()
 mesh.plot(show_edges=True)
 
 # %%
-# This gives an :class:`pyvista.PolyData` mesh, i.e. a 2D surface.
+# This gives an :class:`pyvista.PolyData` mesh, that is, a 2D surface.
 
 mesh
 
@@ -66,7 +66,7 @@ mesh = pv.StructuredGrid(x, y, z)
 
 # %%
 # The mesh has :attr:`~pyvista.CellType.QUAD` cells. The cells that look triangular
-# at the poles are actually degenerate quadrilaterals, i.e. two
+# at the poles are actually degenerate quadrilaterals, that is, two
 # points are coincident at the pole, as will be shown later.
 
 mesh.plot(show_edges=True)
@@ -154,7 +154,7 @@ points = np.append(points, [[0.0, 0.0, -radius]], axis=0)
 # position.  Otherwise, we will form quadrilaterals between two adjacent points
 # on consecutive ``phi`` positions.
 #
-# The first triangle in the mesh is point id ``0``, i.e. the pole, and
+# The first triangle in the mesh is point id ``0``, that is, the pole, and
 # the first two points at the first ``phi`` position, id's ``1`` and ``2``.
 # the next triangle contains the pole again and the next set of points,
 # id's ``2`` and ``3`` and so on.  The last point in the ring, id ``8`` connects
@@ -185,8 +185,8 @@ pl.show()
 # by connecting points across two levels of ``phi``.  For point ``1``
 # and point ``2``, these are connected to point ``9`` and point ``10``. Note
 # for quadrilaterals it must be defined in a consistent direction.
-# Again, the last point(s) in the theta direction connect back to the
-# first point(s).
+# Again, the last points in the theta direction connect back to the
+# first points.
 
 for i in range(1, ntheta):
     faces.extend([4, i, i + 1, i + ntheta + 1, i + ntheta])

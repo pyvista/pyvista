@@ -47,7 +47,7 @@ dataset
 # array represents an eigen solution or a single mode shape for a given mode of
 # vibration.
 #
-# Plot the 4th mode of the dataset. This is the first torsional mode for the
+# Plot the fourth mode of the dataset. This is the first torsional mode for the
 # bracket.
 
 cpos = pv.CameraPosition(

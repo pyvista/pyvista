@@ -16,7 +16,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Create sphere glyphs
+# Create Sphere Glyphs
 # ~~~~~~~~~~~~~~~~~~~~
 
 x = np.arange(-10, 10, 1, dtype=float)

@@ -14,7 +14,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Punch holes in a closed surface
+# Punch Holes in a Closed Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Start from a watertight :func:`~pyvista.Sphere`, then drop a handful of
 # faces to create three open holes of different sizes.
@@ -39,7 +39,7 @@ keep_mask[list(drop_cells)] = False
 open_mesh = sphere.extract_cells(keep_mask).extract_surface(algorithm=None)
 
 # %%
-# Highlight the open boundary loops
+# Highlight the Open Boundary Loops
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Extracting boundary edges traces the perimeter of every hole.
 
@@ -57,7 +57,7 @@ pl.show()
 
 
 # %%
-# Fill the holes
+# Fill the Holes
 # ~~~~~~~~~~~~~~
 # The ``hole_size`` argument bounds the largest opening that ``fill_holes``
 # will close. Set it large enough to cover every loop you want to repair.

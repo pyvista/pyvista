@@ -36,7 +36,7 @@ curves
 
 
 # %%
-# Tube and color the lines
+# Tube and Color the Lines
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Coloring by ``line_id`` gives each line a single uniform color.
 

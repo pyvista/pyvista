@@ -1,7 +1,7 @@
 """
 .. _point_picking_example:
 
-Picking points on a mesh
+Picking Points on a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pick points on a mesh using :func:`~pyvista.Plotter.enable_point_picking`.
@@ -17,7 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Pick points on a sphere
+# Pick Points on a Sphere
 # +++++++++++++++++++++++
 #
 sphere = pv.Sphere()
@@ -58,7 +58,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Pick using the left-mouse button
+# Pick Using the Left-Mouse Button
 # ++++++++++++++++++++++++++++++++
 #
 sphere = pv.Sphere()

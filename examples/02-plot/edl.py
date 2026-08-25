@@ -23,7 +23,7 @@ example:
 """
 
 # %%
-# Dense branching geometry
+# Dense Branching Geometry
 # ++++++++++++++++++++++++
 #
 # The VTK pine root scan is a classic EDL demonstration dataset: a dense
@@ -64,7 +64,7 @@ pl.show()
 
 
 # %%
-# Point cloud
+# Point Cloud
 # +++++++++++
 #
 # EDL was originally motivated by the problem of shading point clouds, which

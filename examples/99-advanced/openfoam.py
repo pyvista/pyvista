@@ -103,7 +103,7 @@ slice_boundaries = pv.MultiBlock(
 )
 
 # %%
-# Streamlines are generated using the point data "U".
+# Streamlines are generated using the point data "U."
 
 streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
     vectors='U',

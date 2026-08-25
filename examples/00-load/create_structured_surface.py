@@ -15,7 +15,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# From NumPy Meshgrid
+# from numpy Meshgrid
 # +++++++++++++++++++
 #
 # Create a simple meshgrid using NumPy. Note the usage of ij indexing.
@@ -47,7 +47,7 @@ grid.points
 
 
 # %%
-# From XYZ Points
+# from XYZ Points
 # +++++++++++++++
 #
 # Quite often, you might be given a set of coordinates (XYZ points) in a simple

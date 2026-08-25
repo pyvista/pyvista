@@ -68,7 +68,7 @@ pl.show()
 
 
 # %%
-# You can increase the smoothing by increasing multi_samples
+# You can increase the smoothing by increasing ``multi_samples``
 # using :func:`~pyvista.Plotter.enable_anti_aliasing`.
 
 pl = pv.Plotter()
@@ -120,7 +120,7 @@ pl.show()
 
 
 # %%
-# Compare render time
+# Compare Render Time
 # ~~~~~~~~~~~~~~~~~~~
 # You can compare the time to render for each one of the anti-aliasing
 # approaches with:

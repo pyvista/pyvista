@@ -12,7 +12,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Create a winding polyline
+# Create a Winding Polyline
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # The points are connected in the order they are given.
 
@@ -31,7 +31,7 @@ line
 
 
 # %%
-# Plot the line as a tube
+# Plot the Line as a Tube
 # ~~~~~~~~~~~~~~~~~~~~~~~
 # Tubing the polyline gives it visible thickness in 3D.
 

@@ -35,7 +35,7 @@ pl.show()
 # %%
 # Maybe the default parameters are not enough to really notice the silhouette.
 # But by using a ``dict``, it is possible to modify the properties of the
-# outline. For example, color and width could be specified like so:
+# outline. For example, both color and width could be specified like so:
 pl = pv.Plotter()
 silhouette = dict(
     color='red',

@@ -68,7 +68,7 @@ my_colormap = ListedColormap(newcolors)
 mesh.plot(scalars='values', cmap=my_colormap)
 
 # %%
-# Or you could make a simple colormap... any Matplotlib colormap can be passed
+# Or you could make a simple colormap: any Matplotlib colormap can be passed
 # to PyVista.
 boring_cmap = plt.get_cmap('viridis', 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
@@ -92,7 +92,7 @@ scalars[mesh['values'] < 1] = 0  # black
 mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 # %%
-# Matplotlib vs. Colorcet
+# matplotlib vs. colorcet
 # +++++++++++++++++++++++
 #
 # Let's compare Colorcet's perceptually uniform "fire" colormap to Matplotlib's
@@ -103,7 +103,7 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # The "hot" version washes out detail at the high end, as if the image is
 # overexposed, while "fire" makes detail visible throughout the data range.
 #
-# Please note that in order to use Colorcet's colormaps including "fire", you
+# Please note that in order to use Colorcet's colormaps including "fire," you
 # must have Colorcet installed in your Python environment:
 # ``pip install colorcet``
 

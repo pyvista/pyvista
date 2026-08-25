@@ -1,7 +1,7 @@
 """
 .. _compare_threshold_filters_example:
 
-Compare threshold filters
+Compare Threshold Filters
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Multiple filters exist to exclude or highlight scalar values.
@@ -27,8 +27,8 @@ from pyvista import examples
 # :func:`pyvista.ImageDataFilters.select_values`
 # Note how `pyvista.DataSetFilters.threshold` keeps the dynamic
 # of the image for the voxels above the value
-# while image_threshold produces an all-or-nothing result.
-# Note the little specks for the `select_values`.
+# while ``image_threshold`` produces an all-or-nothing result.
+# Note the little specks for the ``select_values``.
 # It is because it only selects the value (or values) that is (are) specified.
 method_map = {'default': 0, 'threshold': 1, 'image_threshold': 2, 'select_values': 3}
 step = -80
@@ -88,7 +88,7 @@ pl.show()
 # :func:`pyvista.DataSetFilters.extract_values`
 # :func:`pyvista.DataSetFilters.clip_scalar`
 # Note the shape of the produced meshes.
-# `clip_scalar` produces `pyvista.CellType.WEDGE`
+# ``clip_scalar`` produces ``pyvista.CellType.WEDGE``
 # and `pyvista.CellType.TETRA`
 # while `extract_values` and `threshold`
 # produces `pyvista.CellType.VOXEL`.
@@ -136,7 +136,7 @@ pl.show()
 # :func:`pyvista.DataSetFilters.threshold`
 # :func:`pyvista.DataSetFilters.clip_scalar`
 # Notice how threshold keeps the cells which correspond
-# to the specified value range while `clip_scalar` generates
+# to the specified value range while ``clip_scalar`` generates
 # a "clean" cut, which modifies the cells at the boundaries of
 # the clip.
 values = (1, 2)

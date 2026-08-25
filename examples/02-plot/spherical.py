@@ -140,7 +140,7 @@ pl.show()
 
 
 # %%
-# Isurfaces of 3D data in spherical coordinates
+# Isosurfaces of 3D data in spherical coordinates
 
 # Number of vertical levels
 nlev = 10

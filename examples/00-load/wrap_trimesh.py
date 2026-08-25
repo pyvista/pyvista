@@ -47,7 +47,7 @@ pv.plot(
 )
 
 # %%
-# Wrap Trimesh Objects
+# Wrap trimesh Objects
 # --------------------
 # Create a simple :class:`trimesh.Trimesh` and wrap it.
 

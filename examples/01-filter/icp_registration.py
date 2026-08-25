@@ -17,7 +17,7 @@ from pyvista import examples
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Load a reference surface
+# Load a Reference Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # The :func:`~pyvista.examples.downloads.download_action_figure` scan is an
 # asymmetric reference mesh.
@@ -36,7 +36,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Transform a copy away from the reference
+# Transform a Copy Away from the Reference
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The transformed copy stands in for an incoming scan that needs to be
 # registered back onto the reference.
@@ -53,7 +53,7 @@ pl.show()
 
 
 # %%
-# Recover the rigid transform
+# Recover the Rigid Transform
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # :func:`pyvista.DataSetFilters.align` runs ICP and returns both the aligned
 # mesh and the recovered transform matrix.
@@ -77,7 +77,7 @@ pl.show()
 
 
 # %%
-# Inspect the recovered transform
+# Inspect the Recovered Transform
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The returned matrix maps the transformed copy back onto the reference.
 

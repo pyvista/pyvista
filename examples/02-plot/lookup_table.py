@@ -27,9 +27,9 @@ bracket
 # %%
 # Default Color Map - Lookup Table
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# First, let's plot using the default color map, "viridis". Internally, PyVista
+# First, let's plot using the default color map, "viridis." Internally, PyVista
 # will automatically create a lookup table to map the scalars (stored here
-# within `point_data`) to RGBA colors. This is shown here as a nested attribute
+# within ``point_data``) to RGBA colors. This is shown here as a nested attribute
 # to the :class:`pyvista.DataSetMapper` and it has a helpful ``repr`` method:
 
 pl = pv.Plotter()
@@ -110,7 +110,7 @@ pl.show()
 
 
 # %%
-# Custom colormap with widgets
+# Custom colormap with Widgets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot the scalars and dynamically change the lookup table through
 # widgets. We create several overlapping single slider widgets to simulate a

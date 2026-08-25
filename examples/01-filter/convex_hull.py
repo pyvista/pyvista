@@ -13,7 +13,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a point cloud
+# Load a Point Cloud
 # ~~~~~~~~~~~~~~~~~~
 # The :func:`~pyvista.examples.downloads.download_horse_points` dataset is a
 # dense scan of a horse statue. Subsample it to keep the hull geometry light.
@@ -26,7 +26,7 @@ cloud
 
 
 # %%
-# Extract the outer hull
+# Extract the Outer Hull
 # ~~~~~~~~~~~~~~~~~~~~~~
 # Use the ``convex_hull`` filter on the points.
 

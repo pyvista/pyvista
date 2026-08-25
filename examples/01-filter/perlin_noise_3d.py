@@ -7,7 +7,7 @@ Sample Function: Perlin Noise in 3D
 Sample 3D Perlin noise using :func:`~pyvista.core.utilities.features.sample_function`.
 
 Video games like Minecraft use Perlin noise to create terrain.  Here,
-we create a voxelized mesh similar to a Minecraft "cave".
+we create a voxelized mesh similar to a Minecraft "cave."
 
 """
 
@@ -17,7 +17,7 @@ import pyvista as pv
 # Generate Perlin Noise over a 3D StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
-# the "caves".  For example, lowering the frequency will make the
+# the "caves."  For example, lowering the frequency will make the
 # caves larger and more expansive, while a higher frequency in any
 # direction will make the caves appear more "vein-like" and less open.
 #

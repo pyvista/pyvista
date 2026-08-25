@@ -22,7 +22,7 @@ import numpy as np
 from pyvista import examples
 
 # %%
-# Load a mesh and attach some data
+# Load a Mesh and Attach Some Data
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Use the hexbeam fixture mesh and attach a pressure scalar plus a
 # velocity vector.
@@ -62,7 +62,7 @@ df[['pressure', 'speed']].describe()
 df.nlargest(5, 'pressure')[['pressure', 'speed']]
 
 # %%
-# Cell-level export
+# Cell-Level Export
 # ~~~~~~~~~~~~~~~~~
 # Pass ``association='cell'`` to export :attr:`~pyvista.DataSet.cell_data`
 # instead. The result has ``n_cells`` rows.
@@ -82,7 +82,7 @@ cell_df.head()
 # df.to_csv('point_data.csv', index=False)
 
 # %%
-# Zero-copy Arrow interchange
+# Zero-Copy Arrow Interchange
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ``mesh``, ``mesh.point_data``, ``mesh.cell_data``, and :class:`pyvista.Table`
 # all implement the `Arrow PyCapsule interface

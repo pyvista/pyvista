@@ -1,7 +1,7 @@
 """
 .. _legend_example:
 
-Legends and glyphs
+Legends and Glyphs
 ~~~~~~~~~~~~~~~~~~
 
 Using custom legends and glyphs within PyVista.
@@ -19,7 +19,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_thumbnail_number = 3
 
 # %%
-# Default legend for glyphs
+# Default Legend for Glyphs
 # +++++++++++++++++++++++++
 #
 # The method :func:`~pyvista.Plotter.add_legend` is able to retrieve and use

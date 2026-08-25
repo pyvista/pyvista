@@ -17,7 +17,8 @@ from pyvista import examples
 #
 # 1. boundary (used by one polygon) or a line cell
 # 2. non-manifold (used by three or more polygons)
-# 3. feature edges (edges used by two triangles and whose dihedral angle > feature_angle)
+# 3. feature edges (edges used by two triangles and whose dihedral angle
+#    exceeds ``feature_angle``)
 # 4. manifold edges (edges used by exactly two polygons).
 #
 # The :func:`extract_feature_edges() <pyvista.DataSetFilters.extract_feature_edges>`

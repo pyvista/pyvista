@@ -11,7 +11,7 @@ Pick meshes using :func:`~pyvista.Plotter.enable_mesh_picking`.
 import pyvista as pv
 
 # %%
-# Pick either a cube or a sphere using "p"
+# Pick Either a Cube or a Sphere Using "P"
 # ++++++++++++++++++++++++++++++++++++++++
 #
 
@@ -26,7 +26,7 @@ pl.show()
 
 
 # %%
-# Deform the mesh after picking
+# Deform the Mesh After Picking
 # +++++++++++++++++++++++++++++
 # Pick to trigger a callback that "shrinks" the mesh each time it's selected.
 

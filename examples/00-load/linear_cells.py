@@ -31,7 +31,7 @@ rng = np.random.default_rng(2)
 
 
 # %%
-# Plot an example cell
+# Plot an Example Cell
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista contains a simple utility to plot a single cell, which is the
 # fundamental unit of each :class:`pyvista.UnstructuredGrid`. For example,
@@ -58,7 +58,7 @@ grid.cells
 
 
 # %%
-# Combine two UnstructuredGrids
+# Combine Two UnstructuredGrids
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can combine two unstructured grids to create a single unstructured grid
 # using the ``+`` operator.
@@ -102,7 +102,7 @@ combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 
 
 # %%
-# Create an UnstructuredGrid with a single linear cell
+# Create an UnstructuredGrid with a Single Linear Cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now that you know the three main inputs of an
 # :class:`pyvista.UnstructuredGrid`, it's quite straightforward to create an
@@ -273,7 +273,7 @@ pl.background_color = 'w'
 pl.show()
 
 # %%
-# Auto-generate cell types from source
+# Auto-Generate Cell Types from Source
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Similar to above, let's create another  ``(4, 4)`` :class:`pyvista.Plotter` and plot
 # all 16 linear cells in a single plot. This time, however, we use

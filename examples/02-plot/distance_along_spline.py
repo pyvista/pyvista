@@ -14,7 +14,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Create a spline
+# Create a Spline
 # ~~~~~~~~~~~~~~~
 # Create a spline using :func:`pyvista.Spline`.
 

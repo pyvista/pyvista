@@ -15,7 +15,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Create two related point clouds
+# Create Two Related Point Clouds
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Start from a scanned horse point cloud, subsample it, then displace a
 # perturbed copy so each source point has a nearby counterpart in the target.
@@ -31,7 +31,7 @@ target = pv.PolyData(source.points + offset + warp)
 
 
 # %%
-# Compute nearest-neighbor distances
+# Compute Nearest-Neighbor Distances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Query the target cloud for each source point and color the source by the
 # resulting distances.

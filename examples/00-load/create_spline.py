@@ -153,7 +153,7 @@ pl.show()
 # ++++++++++++++++++++
 #
 # Create a spline and see the effect of boundary constraint.
-# Boundary type can be 'finite_difference', 'clamped', 'second', 'scaled_second'
+# Boundary type can be ``finite_difference``, ``clamped``, ``second``, ``scaled_second``
 # with the definition of the boundary types in :func:`pyvista.Spline`.
 #
 # To visualize the different splines, we label each one using integer ID scalars

@@ -36,7 +36,7 @@ bunnies
 
 
 # %%
-# Show the plot without enabling depth of field
+# Show the Plot Without Enabling Depth of Field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # convert points into rgba colors
@@ -66,7 +66,7 @@ pl.show()
 
 
 # %%
-# Show the plot while enabling depth of field
+# Show the Plot While Enabling Depth of Field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pl = pv.Plotter()

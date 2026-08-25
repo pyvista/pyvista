@@ -122,8 +122,8 @@ mesh['Curvature'] = mesh.curvature()
 
 # %%
 # Visualize the peaks and valleys.
-# Peaks have large positive curvature (i.e. are convex).
-# Valleys have large negative curvature (i.e. are concave).
+# Peaks have large positive curvature (that is, they are convex).
+# Valleys have large negative curvature (that is, they are concave).
 # Flat regions have curvature close to zero.
 mesh.plot(
     clim=[-0.5, 0.5],

@@ -24,7 +24,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a point cloud
+# Load a Point Cloud
 # ~~~~~~~~~~~~~~~~~~
 # :func:`~pyvista.examples.downloads.download_horse_points` returns a scanned
 # horse with uneven point density.
@@ -34,7 +34,7 @@ cloud
 
 
 # %%
-# Implement farthest point sampling
+# Implement Farthest Point Sampling
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each iteration tracks the distance from every input point to its closest
 # already-sampled neighbor and picks the point with the largest such
