@@ -69,8 +69,8 @@ print('}')
 
 
 # %%
-# filter_labels
-# =============
+# ``filter_labels``
+# =================
 # To visualize a particular group of anatomic regions, we first define a function
 # to filter the labels by name. Given a list of terms, the function returns
 # any label which contains any of the search terms.
@@ -82,8 +82,8 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
 
 
 # %%
-# plot_anatomy
-# ============
+# ``plot_anatomy``
+# ================
 # Define a function which, given a list of terms, will look up labels associated
 # with those terms, generate contours for the labels, and plot the result. The function
 # uses :meth:`~pyvista.ImageDataFilters.contour_labels` for generating contours and

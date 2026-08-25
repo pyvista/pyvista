@@ -89,9 +89,9 @@ pl.show()
 # :func:`pyvista.DataSetFilters.clip_scalar`
 # Note the shape of the produced meshes.
 # ``clip_scalar`` produces ``pyvista.CellType.WEDGE``
-# and `pyvista.CellType.TETRA`
-# while `extract_values` and `threshold`
-# produces `pyvista.CellType.VOXEL`.
+# and ``pyvista.CellType.TETRA``
+# while ``extract_values`` and ``threshold``
+# produces ``pyvista.CellType.VOXEL``.
 
 method_map = {'threshold': 0, 'extract_values': 1, 'clip_scalar': 2}
 volume = pv.examples.download_carotid()

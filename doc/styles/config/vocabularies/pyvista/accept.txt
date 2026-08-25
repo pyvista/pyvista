@@ -159,7 +159,6 @@ bugfix
 bugfixes
 cartesian
 cgx
-clip_scalar
 cmake
 cmcrameri
 cmocean
@@ -176,7 +175,6 @@ cybersecurity
 data's
 dataclass
 dataframes
-datapoints
 dataset's
 denoised
 denoising
@@ -200,9 +198,6 @@ eigenmode
 eigenmodes
 ele
 enum
-extract_values
-fill_holes
-filter_labels
 flem
 framebuffer
 frontfaces
@@ -242,7 +237,6 @@ isovalue
 isovalues
 itkwidgets
 jupyter
-jupyter_extension_enabled
 jupyterlab
 kriging
 kubernetes
@@ -285,7 +279,6 @@ performant
 pickable
 pint-xarray
 pixi
-plot_anatomy
 pointset
 polars
 polydata
@@ -323,7 +316,6 @@ rtree
 runtime-checkable
 scipy
 scooby
-server_proxy_enabled
 setuptools
 sextic
 shader
