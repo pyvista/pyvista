@@ -106,10 +106,7 @@ jobs:
           config: doc/.vale.ini
           reporter: github-pr-check
           filter_mode: nofilter
-          # Fail on anything Vale reports (MinAlertLevel in doc/.vale.ini already
-          # hides suggestion-level noise), not just alerts marked `error` --
-          # `fail_on_error` only ever looked at error-level alerts, which is how a
-          # rule could sit at `warning` indefinitely without failing CI.
+          # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
           fail_level: warning
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
