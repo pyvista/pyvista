@@ -95,7 +95,6 @@ jobs:
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale-examples-rst
-      # errata-ai/vale-action was renamed to vale-cli/vale-action; pinned to the v3.0.0 tag
       - name: "Run Vale"
         uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
