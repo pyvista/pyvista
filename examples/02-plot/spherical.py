@@ -1,7 +1,7 @@
 """
 .. _spherical_example:
 
-Plot data in spherical coordinates
+Plot Data in Spherical Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Generate and visualize meshes from longitude-latitude coordinate data.

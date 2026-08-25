@@ -29,7 +29,7 @@ Compare two approaches for loading and plotting a surface mesh from a
 file:
 
 
-Plotting a Mesh using Python's VTK
+Plotting a Mesh Using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This `example
 <https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ shows that

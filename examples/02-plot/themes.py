@@ -118,7 +118,7 @@ cpos = pv.Sphere().plot()
 
 
 # %%
-# Creating a Custom Theme and Applying it Globally
+# Creating a Custom Theme and Applying It Globally
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can create a custom theme by modifying one of the existing
 # themes and then loading it into the global plotting defaults.
@@ -139,7 +139,7 @@ cpos = pv.Sphere().plot()
 
 
 # %%
-# Creating a Custom Theme and Applying it to a Single Plotter
+# Creating a Custom Theme and Applying It to a Single Plotter
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we create a custom theme from the base "default"
 # theme and then apply it to a single plotter.  Note that this does

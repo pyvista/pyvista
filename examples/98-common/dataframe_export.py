@@ -72,7 +72,7 @@ cell_df = mesh.to_pandas('cell')
 cell_df.head()
 
 # %%
-# Export to disk
+# Export to Disk
 # ~~~~~~~~~~~~~~
 # A DataFrame gives you one-liner access to every pandas I/O backend:
 # Parquet, CSV, Feather, Excel, SQL, HDF5, and more. Commented out here to

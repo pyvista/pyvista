@@ -303,7 +303,7 @@ There are two important copyright guidelines:
 Please also take a look at our `Code of
 Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`_.
 
-Contributing to PyVista through GitHub
+Contributing to PyVista Through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To submit new code to pyvista, first fork the `pyvista GitHub
@@ -398,7 +398,7 @@ but is namespace-imported, because one type does not make a type module;
 ``dataclasses``, ``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
 ``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
 
-How this is enforced
+How This is Enforced
 """"""""""""""""""""
 
 Two lists, because ``ruff`` can only express one direction:
@@ -586,7 +586,7 @@ See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
 
 
-Deprecating Features or other Backwards-Breaking Changes
+Deprecating Features or Other Backwards-Breaking Changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When implementing backwards-breaking changes within PyVista, care must be taken
 to give users the chance to adjust to any new changes. Any non-backwards
@@ -928,7 +928,7 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage (note t
     def test():
         """Test is skipped with a custom message"""
 
-Testing Against VTK master
+Testing Against VTK Master
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 Most unit testing is run against stable VTK releases. However, when developing features that depend on upstream VTK
 changes or when investigating regressions, it can be useful to test against the latest VTK development code.
@@ -956,8 +956,8 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
     The PR either needs a new commit, for example updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
 
-Testing Against the cvista Backend
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Testing Against the ``cvista`` Backend
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the
 default and is tested on every PR; cvista is tested at **integration cadence**—nightly, and on PRs carrying the
 ``integration-testing`` label:

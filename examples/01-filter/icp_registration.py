@@ -36,7 +36,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Transform a Copy Away from the Reference
+# Transform a Copy Away From the Reference
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The transformed copy stands in for an incoming scan that needs to be
 # registered back onto the reference.
@@ -85,7 +85,7 @@ np.round(matrix, 3)
 
 
 # %%
-# Measure the residual distances
+# Measure the Residual Distances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # A successful registration leaves a small point-to-surface residual.
 

@@ -42,7 +42,7 @@ image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 
 
 # %%
-# Apply FFT to the image
+# Apply FFT to the Image
 # ~~~~~~~~~~~~~~~~~~~~~~
 # FFT will be applied to the active scalars, ``'PNGImage'``, the default
 # scalars name when loading a PNG image.
@@ -55,7 +55,7 @@ fft_image.point_data
 
 
 # %%
-# Plot the FFT of the image
+# Plot the FFT of the Image
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the absolute value of the FFT of the image. This is a visualization of
 # the **frequency spectrum**, not a spatial image—each pixel represents the

@@ -1,7 +1,7 @@
 """
 .. _distance_along_spline_example:
 
-Label based on Distance on Line
+Label Based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a spline and generate labels along the spline based on distance along a spline.
@@ -33,7 +33,7 @@ spline.point_data
 
 
 # %%
-# Determine the coordinates matching distance along a spline
+# Determine the Coordinates Matching Distance Along a Spline
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we write a simple function that gets the closest point matching a distance along a
 # spline and then generate labels for those points.

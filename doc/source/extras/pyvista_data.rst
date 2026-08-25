@@ -1,6 +1,6 @@
 
-Using Local pyvista/data
-========================
+Using Local ``pyvista/data``
+============================
 
 Normally, the PyVista examples will be downloaded from the
 `pyvista/data repository <https://github.com/pyvista/data>`_.

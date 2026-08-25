@@ -85,7 +85,7 @@ pl.show()
 
 
 # %%
-# Confirm the repair
+# Confirm the Repair
 # ~~~~~~~~~~~~~~~~~~
 # The filled surface has zero open edges, while the original had one
 # loop per hole.

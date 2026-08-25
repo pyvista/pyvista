@@ -2183,7 +2183,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             .. versionadded:: 0.47
 
-            .. admonition:: ParaView compatibility
+            .. admonition:: ParaView Compatibility
                 :class: note dropdown
 
                 The default value ``"descending"`` differs from ParaView's, which

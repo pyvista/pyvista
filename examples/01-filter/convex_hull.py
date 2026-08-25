@@ -49,7 +49,7 @@ pl.show()
 
 
 # %%
-# Inspect the wrapped surface
+# Inspect the Wrapped Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The result is a closed surface enclosing every input point.
 

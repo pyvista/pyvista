@@ -1,7 +1,7 @@
 """
 .. _project_points_tessellate_example:
 
-Project points to a plane and Tessellate
+Project Points to a Plane and Tessellate
 ----------------------------------------
 
 Generate a 3D point cloud, project it to a plane, and tessellate it.

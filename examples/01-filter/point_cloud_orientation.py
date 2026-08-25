@@ -41,7 +41,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Fit a line and a plane
+# Fit a Line and a Plane
 # ~~~~~~~~~~~~~~~~~~~~~~
 # The fitted line follows the cloud's dominant axis; the fitted plane spans
 # the two strongest principal directions.

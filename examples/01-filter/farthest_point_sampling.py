@@ -64,7 +64,7 @@ random_cloud = pv.PolyData(cloud.points[random_ids])
 
 
 # %%
-# Compare with a uniform random draw
+# Compare with a Uniform Random Draw
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The random subsample (left, red) leaves visible gaps and clumps. The
 # farthest-point subsample (right, blue) lays the points down in a more
@@ -113,7 +113,7 @@ pl.show()
 
 
 # %%
-# Quantify the coverage gap
+# Quantify the Coverage Gap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # For each input point, find the distance to its closest sample and report
 # the worst case. Lower is better.

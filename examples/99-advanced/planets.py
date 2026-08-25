@@ -104,7 +104,7 @@ pl.show()
 
 
 # %%
-# Plot the Planets and their Textures
+# Plot the Planets and Their Textures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each planet here is in a different subplot. The planet's textures are from
 # `Solar Textures <https://www.solarsystemscope.com/textures/>`_.

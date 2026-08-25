@@ -19,7 +19,7 @@ effects for the motion picture industry.
 import pyvista as pv
 
 # %%
-# Generate Perlin Noise over a StructuredGrid
+# Generate Perlin Noise Over a StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
 # the "mountains".  For example, lowering the frequency will make the
@@ -30,7 +30,7 @@ sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500
 
 
 # %%
-# Warp by scalar
+# Warp by Scalar
 # ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
 # value of the Perlin noise.  This is necessary to the terrain its shape.

@@ -97,7 +97,7 @@ dataset
 
 
 # %%
-# Plots and images
+# Plots and Images
 # ~~~~~~~~~~~~~~~~
 # If you use anything that outputs an image (for example,
 # :func:`pyvista.Plotter.show`) the resulting image will be rendered within the
@@ -114,7 +114,7 @@ dataset.plot(text='Example Figure')
 
 
 # %%
-# Caveat - Plotter Must Be within One Cell
+# Caveat - Plotter Must Be Within One Cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # It's not possible for a single :class:`pyvista.Plotter` object across
 # multiple cells because these are closed out automatically at the end of a

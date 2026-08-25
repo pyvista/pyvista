@@ -45,7 +45,7 @@ pl.show()
 
 
 # %%
-# Create an arc from a normal and angle
+# Create an Arc From a Normal and Angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Use this form when you already know the plane the arc lies in.
 

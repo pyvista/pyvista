@@ -78,7 +78,7 @@ pl.show()
 
 
 # %%
-# Confirm that the capped result is watertight
+# Confirm That the Capped Result is Watertight
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The open clip carries hundreds of boundary edges; the capped result has none.
 

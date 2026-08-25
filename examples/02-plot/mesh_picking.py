@@ -45,7 +45,7 @@ pl.show()
 
 
 # %%
-# Pick based on Actors
+# Pick Based on Actors
 # ++++++++++++++++++++
 # Return the picked actor to the callback
 

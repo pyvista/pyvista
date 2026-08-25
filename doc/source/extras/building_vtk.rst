@@ -257,7 +257,7 @@ You should end up with a ``build/wheelhouse/vtk-*.whl``.
    dependencies.
 
 
-Building Python VTK Wheel on Raspberry Pi (64-bit)
+Building Python VTK Wheel on Raspberry Pi (64-Bit)
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 While it's possible to build on 32-bit Raspberry Pi (ARMv7), there are
 several issues that crop up when building wheels for the 32-bit

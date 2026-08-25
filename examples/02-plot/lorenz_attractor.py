@@ -40,7 +40,7 @@ trajectory['z'] = points[:, 2]
 
 
 # %%
-# Render the attractor
+# Render the Attractor
 # ~~~~~~~~~~~~~~~~~~~~
 # Tube the polyline so the trajectory has visible thickness in 3D.
 

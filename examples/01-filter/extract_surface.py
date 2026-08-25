@@ -13,7 +13,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Surface extraction of nonlinear cells
+# Surface Extraction of Nonlinear Cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a single :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` cell and then
 # extract its surface to demonstrate how to extract the surface of an

@@ -41,7 +41,7 @@ boundaries
 mesh.get_cell(0).type
 
 # %%
-# Structured quadrilateral mesh of Sphere
+# Structured Quadrilateral Mesh of Sphere
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The structure of the mesh can be important. Instead of a
 # triangulated mesh, it can be useful to have a structured
@@ -106,7 +106,7 @@ pl.add_mesh(boundaries, line_width=10, color='red')
 pl.show()
 
 # %%
-# Generate quadrilateral mesh of Sphere
+# Generate Quadrilateral Mesh of Sphere
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This example shows how a more complicated mesh can be defined.
 #

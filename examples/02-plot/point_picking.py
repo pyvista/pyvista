@@ -41,7 +41,7 @@ pl.enable_point_picking(pickable_window=False)  # Make the 3D window unpickable
 pl.show()
 
 # %%
-# Modify which actors are pickable
+# Modify Which Actors are Pickable
 # ++++++++++++++++++++++++++++++++
 #
 # After enabling point picking, we can modify which actors are pickable.

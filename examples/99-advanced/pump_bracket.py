@@ -27,7 +27,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load the dataset
+# Load the Dataset
 # ~~~~~~~~~~~~~~~~
 # Start by loading the dataset using :func:`download_pump_bracket()
 # <pyvista.examples.downloads.download_pump_bracket>`.

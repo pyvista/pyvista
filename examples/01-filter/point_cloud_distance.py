@@ -71,7 +71,7 @@ pl.show()
 
 
 # %%
-# Inspect the distance range
+# Inspect the Distance Range
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The clouds are close but not identical.
 

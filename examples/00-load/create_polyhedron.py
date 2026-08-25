@@ -155,7 +155,7 @@ polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 
 
 # %%
-# Cells array
+# Cells Array
 # ~~~~~~~~~~~
 # Now we build the input cells array for the
 # :class:`pyvista.UnstructuredGrid`. Here, we join all cells in a flat

@@ -19,7 +19,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
 # sphinx_gallery_end_ignore
 
 # %%
-# Convert pixel art to an array
+# Convert Pixel Art to an Array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

@@ -113,7 +113,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Sampling from a Mesh with Connectivity
+# Sampling From a Mesh with Connectivity
 # ++++++++++++++++++++++++++++++++++++++
 # This example is in many ways the opposite of the prior one.
 # A mesh with cell connectivity that spans 2 dimensions is

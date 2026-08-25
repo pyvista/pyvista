@@ -59,7 +59,7 @@ pl.show()
 
 
 # %%
-# Create a Custom Lookup Table using a Matplotlib Color Map
+# Create a Custom Lookup Table Using a Matplotlib Color Map
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a lookup table with a narrow table range (same as ``clim``)
 # and color values above and below the range.
@@ -72,7 +72,7 @@ lut.plot()
 
 
 # %%
-# Plot the bracket with the custom colormap
+# Plot the Bracket with the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can set assign the lookup table when using ``add_mesh`` with ``cmap=``.
 
@@ -83,7 +83,7 @@ pl.show()
 
 
 # %%
-# Create a Custom Lookup Table using VTK's Methods
+# Create a Custom Lookup Table Using VTK's Methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If you want to create a completely unique color map, you can use attributes
 # like :attr:`pyvista.LookupTable.hue_range` and
@@ -99,7 +99,7 @@ lut.plot()
 
 
 # %%
-# Plot the bracket with the custom colormap
+# Plot the Bracket with the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Assign this custom color map to the plotter and disable lighting to improve
 # the plot.
@@ -110,7 +110,7 @@ pl.show()
 
 
 # %%
-# Custom colormap with Widgets
+# Custom Colormap with Widgets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot the scalars and dynamically change the lookup table through
 # widgets. We create several overlapping single slider widgets to simulate a

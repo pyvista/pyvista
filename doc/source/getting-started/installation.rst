@@ -83,7 +83,7 @@ This will add PyVista to your ``pixi.toml`` file and install it in your project 
 Pixi automatically handles all dependencies and ensures compatibility across different platforms.
 
 
-Installing the Current Development Branch from GitHub
+Installing the Current Development Branch From GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release. To install ``pyvista`` from the latest
