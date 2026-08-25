@@ -972,7 +972,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         .. warning::
             Support for polyhedral decomposition has been deprecated
-            deprecated in VTK 9.3 and has been removed prior to VTK 9.4
+            in VTK 9.3 and has been removed prior to VTK 9.4
 
         Returns
         -------

@@ -15,7 +15,7 @@ from pyvista import examples
 # %%
 # Point clouds are generally constructed in the :class:`pyvista.PolyData` class
 # and can easily have scalar/vector data arrays associated with the point
-# cloud. In this example, we'll work a bit backwards using a point cloud that
+# cloud. In this example, we'll work a bit backwards using a point cloud
 # that is available from our ``examples`` module. This however is no different
 # than creating a PyVista mesh with your own NumPy arrays of vertice locations.
 

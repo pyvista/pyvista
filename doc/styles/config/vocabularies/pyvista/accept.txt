@@ -58,6 +58,7 @@ Meshio
 Miniconda
 Mobius
 Namespace
+Namespaced
 NumPy
 Numpydoc
 OSMesa
@@ -75,6 +76,7 @@ PyPI
 PyVista
 Pydocstyle
 Python
+Pythonic
 Pytorch
 Resampling
 SSH
@@ -105,6 +107,7 @@ colorcet
 colormap
 colormaps
 conda
+condaact
 config
 cvista
 data's
@@ -145,6 +148,8 @@ interoperate
 interoperates
 itkwidgets
 jupyter
+jupyter_extension_enabled
+jupyterlab
 kubernetes
 lamda
 linenos
@@ -156,6 +161,7 @@ monospaced
 msh
 multiphysic
 namespace
+namespaced
 nd
 numpy
 numpydoc
@@ -181,6 +187,7 @@ pyprocar
 pytest
 python
 pyvista
+pyvistaqt
 relicense
 renderers
 reusability
@@ -191,16 +198,19 @@ rtree
 runtime-checkable
 scipy
 scooby
+server_proxy_enabled
 setuptools
 sphinx
 stackable
 stl
 subclassing
+subcommand
 subpackages
 sympy
 tensorflow
 tetgen
 tetrahedra
+tetrahedralization
 textwrap
 threejs
 thresholding
@@ -213,6 +223,7 @@ uncomment
 unittest
 unmerged
 unvalidated
+vendoring
 venv
 vnc
 voxel

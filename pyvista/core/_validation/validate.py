@@ -168,7 +168,7 @@ def validate_array(
     must_be_finite : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
-        and not Not a Number (``NaN``).
+        and not a Number (``NaN``).
 
     must_be_real : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_real>`
@@ -598,7 +598,7 @@ def validate_transform4x4(
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
-        and not Not a Number (``NaN``).
+        and not a Number (``NaN``).
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
@@ -673,7 +673,7 @@ def validate_transform3x3(
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
-        and not Not a Number (``NaN``).
+        and not a Number (``NaN``).
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the

@@ -3309,7 +3309,7 @@ class DataObjectFilters:
         ----------
         bounds : sequence[float], optional
             Length 6 sequence of floats: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-            Length 3 sequence of floats: distances from the min coordinate of
+            Length 3 sequence of floats: distances from the min coordinate
             of the input mesh. Single float value: uniform distance from the
             min coordinate. Length 12 sequence of length 3 sequence of floats:
             a plane collection (normal, center, ...).

@@ -2795,7 +2795,7 @@ class WidgetComponent(_NoNewAttrMixin):
     ):
         """Add a radio button widget to the scene.
 
-        Radio buttons work in groups. Only one button in a group can be on at
+        Radio buttons work in groups. Only one button in a group can be on
         at the same time. Typically you should add two or more buttons belonging
         to a same radio button group. Each button should be passed a callback
         function. This function will be called when a radio button in a group

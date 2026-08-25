@@ -1,4 +1,6 @@
 *
 !config
 !config/**
+!PyVista
+!PyVista/**
 !.gitignore
