@@ -147,7 +147,7 @@ If an AI tool wrote any part of a pull request -- code, tests, documentation, or
 description itself -- say so in the description. Write that sentence yourself: it states
 that you reviewed the change and can explain it, which no tool can attest to on your
 behalf. One clause naming the tool and what it did is enough, in the form merged
-descriptions already use, e.g. ``Changes drafted by Claude Opus 5 but fully understood by me``.
+descriptions already use, for example ``Changes drafted by Claude Opus 5 but fully understood by me``.
 
 That responsibility covers what the contribution costs us to review and to test.
 If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
@@ -206,7 +206,7 @@ variable, for example:
     make test-core ARGS="-n auto -x"     # core tests, auto parallelism, stop on first failure
 
 These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
-and ``pytest``. If you need more control (e.g., running against a
+and ``pytest``. If you need more control (for example, running against a
 specific ``vtk`` or ``numpy`` version, or building documentation), see
 the `Unit Testing`_, `Style Checking`_, and `Building the
 Documentation`_ sections below, which document the underlying tools
@@ -435,7 +435,7 @@ PyVista follows the `Google Developer Documentation Style
 <https://developers.google.com/style>`_ with the following exceptions:
 
 - Allow first person pronouns. These pronouns (for example, "We") refer to
-  "PyVista Developers", which can be anyone who contributes to PyVista.
+  "PyVista Developers," which can be anyone who contributes to PyVista.
 - Future tense is permitted.
 
 These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
@@ -530,7 +530,7 @@ Note the following:
 * The examples section references the "full example" in the gallery if it
   exists.
 
-In addition, docstring examples which make use of randomly-generated data
+In addition, docstring examples which make use of randomly generated data
 should be reproducible. See `Generating Random Data`_ for details.
 
 These standards will be enforced using ``pre-commit`` using
@@ -711,7 +711,7 @@ Unit Testing
 ~~~~~~~~~~~~
 Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
 or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
-The top-level ``Makefile`` also wraps the most common invocations — see
+The top-level ``Makefile`` also wraps the most common invocations—see
 `Quick Development Commands`_.
 
 .. tab-set::
@@ -933,13 +933,13 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 
 .. note::
 
-    The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
+    The PR either needs a new commit, for example updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
 
 Testing Against the cvista Backend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the
-default and is tested on every PR; cvista is tested at **integration cadence** — nightly, and on PRs carrying the
+default and is tested on every PR; cvista is tested at **integration cadence**—nightly, and on PRs carrying the
 ``integration-testing`` label:
 
 .. code-block:: shell
@@ -953,7 +953,7 @@ failure there is rarely a reason to block an unrelated PR.
 stock VTK but fails on cvista, the fix belongs upstream in cvista, not in a marker or an ignore list here. Open an issue
 on `pyvista/cvista <https://github.com/pyvista/cvista/issues>`_ and keep going.
 
-The ``skip_vtk_backend`` marker is only for **permanent, by-design** divergence — a module the fork does not build, or
+The ``skip_vtk_backend`` marker is only for **permanent, by-design** divergence—a module the fork does not build, or
 behaviour that differs deliberately. Attach it to the test with a reason naming the specific cause:
 
 .. code-block:: python
@@ -984,7 +984,7 @@ iteration where the report is in the way:
 
     tox run -e test-plotting-no_check_gc
 
-The cause of a leak is usually a reference cycle, and fixing it (e.g. with
+The cause of a leak is usually a reference cycle, and fixing it (for example, with
 :mod:`weakref`) is preferred over silencing the check with either of these markers:
 
 .. code-block:: python
@@ -994,7 +994,7 @@ The cause of a leak is usually a reference cycle, and fixing it (e.g. with
         """Do not check this test for leaks.
 
         Use sparingly, with a comment saying why the leak is not fixable here,
-        e.g. an upstream VTK issue or a module-level cache pinning the object.
+        for example an upstream VTK issue or a module-level cache pinning the object.
         """
 
 
@@ -1283,7 +1283,7 @@ For this test case, the revealed type by ``Mypy`` is:
 
     "builtins.list[builtins.float]"
 
-Notice that the revealed type is fully qualified, i.e. includes ``builtins``. For
+Notice that the revealed type is fully qualified, that is, it includes ``builtins``. For
 brevity, the custom test suite omits this and requires that only ``list`` be
 included in the expected type. Therefore, for this test case, the ``EXPECTED_TYPE``
 type is ``"list[float]"``, not ``"builtins.list[builtins.float]"``. (Similarly, the
@@ -1326,7 +1326,7 @@ test cases. The actual revealed types by ``Mypy`` are compared against the
 ``EXPECTED_TYPE`` is defined by each test case.
 
 In addition, the ``pyanalyze`` package tests the actual returned
-type at runtime to match the statically-revealed type. The
+type at runtime to match the statically revealed type. The
 `pyanalyze.runtime.get_compatibility_error <https://pyanalyze.readthedocs.io/en/latest/reference/runtime.html#pyanalyze.runtime.get_compatibility_error>`_
 method is used for this. If new typing test cases are added for a new
 validation function, the new function must be added to the list of
@@ -1335,7 +1335,7 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Documentation can be build either directly (i.e. using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
+Documentation can be build either directly (that is, using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
 
 .. tab-set::
     :sync-group: category
@@ -1499,7 +1499,7 @@ and the images in ``from_test`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
-If a test is flaky, e.g. the build sometimes generates different images
+If a test is flaky, for example the build sometimes generates different images
 for the same plot, the multiple versions of the image may be saved to the
 flaky test directory ``./tests/doc/flaky_tests``. A folder with the same
 name as the test image should be created, and all versions of the image
@@ -1572,10 +1572,10 @@ To test that interactive plots do not exceed this limit, run:
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
 with the limit being specified by ``max_vtksz_file_size`` in the ``pyproject.toml`` file.
 
-If any of these tests fail, the example(s) which generated the plot should be
+If any of these tests fail, the examples which generated the plot should be
 modified, e.g.:
 
-#. Simplify any dataset(s) used, e.g. crop, clip, down-sample, decimate, or
+#. Simplify any datasets used, for example crop, clip, down-sample, decimate, or
    otherwise reduce the complexity of the plot.
 
 #. Force the plot to be static only.
@@ -1767,7 +1767,7 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 For PRs of branches coming from the main pyvista repository, the documentation
-is automatically deployed using `Netifly GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
+is automatically deployed using `Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
 However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
 that contains a non-interactive subset of the documentation build. It typically weights
 500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
@@ -1906,7 +1906,7 @@ should not wait until a minor release. The steps for a patch release
    from conda and follow the directions in step 10 in the minor release
    section.
 
-Dependency version policy
+Dependency Version Policy
 -------------------------
 
 Python and VTK dependencies
@@ -1923,7 +1923,7 @@ support those Python versions. As much as we would prefer to follow
 .. _SPEC 0: https://scientific-python.org/specs/spec-0000/
 
 
-Self-hosted runners
+Self-Hosted Runners
 -------------------
 GitHub hosted runners are the preferred way of running PyVista's CI. However
 given the volume of development, the number of workflows, and the need to test
@@ -1938,7 +1938,7 @@ Any PyVista self-hosted runner must:
   labels.  For example, ``macos-15-self-hosted``. Additional labels may be
   specified (e.g. ``GPU``), but there must always be an OS label. Do not use a
   label that overlaps with GitHub's labels.
-- Be secure against intrusion and follow best cybersecurity practices (e.g. no
+- Be secure against intrusion and follow best cybersecurity practices (for example, no
   ``sudo`` permissions, dedicated and isolated VLAN)
 - Require a compatible CI/CD workflow.
 - Provide runner documentation here.
@@ -1949,7 +1949,7 @@ GitHub Runner Workflow Configuration
 
 When setting up the GitHub workflow and using a ``matrix``, ensure that the
 name of each job in the matrix is fixed rather than dependent on labels. This
-way the the `Branch Protection Rules
+way the `Branch Protection Rules
 <https://github.com/pyvista/pyvista/settings/branches>`_ can use the same
 status check label regardless of if it is self hosted.
 
@@ -2006,7 +2006,7 @@ With the following runners
 - macos-arm-runner-4
 
 **Notes**
-Testing showed peak memory usage of ~2GB per runner for the
+Testing showed peak memory usage of ~2 GB per runner for the
 ``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
 the OS, there's room to spare. Should we encounter memory issues we can disable
 runners.
