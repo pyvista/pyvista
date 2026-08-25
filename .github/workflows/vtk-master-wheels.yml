@@ -336,12 +336,41 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # Output is also teed to a file (deviating from the unit testing workflow, which
+      # doesn't need this) so a failure can be summarized and uploaded as an artifact below:
+      # the GitHub Actions job-logs API needs repo *admin* rights, which the default
+      # GITHUB_TOKEN this workflow's alert-on-failure job uses can never have.
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        run: |
+          echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
+          : > failure_summary.txt
+          for log in core-test.log plotting-test.log; do
+            [ -s "$log" ] || continue
+            start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
+            if [ -n "$start_line" ]; then
+              tail -n "+${start_line}" "$log" | tail -c 4000 >> failure_summary.txt
+            else
+              tail -c 4000 "$log" >> failure_summary.txt
+            fi
+            echo >> failure_summary.txt
+          done
+
+      - name: Upload failure summary artifact
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failure-summary-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: |
+            failure_summary.txt
+            job_label.txt
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -418,12 +447,41 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # Output is also teed to a file (deviating from the unit testing workflow, which
+      # doesn't need this) so a failure can be summarized and uploaded as an artifact below:
+      # the GitHub Actions job-logs API needs repo *admin* rights, which the default
+      # GITHUB_TOKEN this workflow's alert-on-failure job uses can never have.
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+        run: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        run: |
+          echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
+          : > failure_summary.txt
+          for log in core-test.log plotting-test.log; do
+            [ -s "$log" ] || continue
+            start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
+            if [ -n "$start_line" ]; then
+              tail -n "+${start_line}" "$log" | tail -c 4000 >> failure_summary.txt
+            else
+              tail -c 4000 "$log" >> failure_summary.txt
+            fi
+            echo >> failure_summary.txt
+          done
+
+      - name: Upload failure summary artifact
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failure-summary-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: |
+            failure_summary.txt
+            job_label.txt
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -494,13 +552,17 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # `shell: bash` (rather than the action's Windows default, PowerShell) so the `tee`
+      # below behaves the same as on Linux/macOS, including this repo's SHELLOPTS-driven
+      # pipefail; see the comment on the equivalent Linux/macOS steps for why it's teed.
       - name: Core Testing (no GL)
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
           timeout_minutes: 12
           max_attempts: 3
           retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-core-vtk_local
+          shell: bash
+          command: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
@@ -509,7 +571,34 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+          shell: bash
+          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        shell: bash
+        run: |
+          echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
+          : > failure_summary.txt
+          for log in core-test.log plotting-test.log; do
+            [ -s "$log" ] || continue
+            start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
+            if [ -n "$start_line" ]; then
+              tail -n "+${start_line}" "$log" | tail -c 4000 >> failure_summary.txt
+            else
+              tail -c 4000 "$log" >> failure_summary.txt
+            fi
+            echo >> failure_summary.txt
+          done
+
+      - name: Upload failure summary artifact
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failure-summary-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: |
+            failure_summary.txt
+            job_label.txt
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -556,17 +645,28 @@ jobs:
           name: vtk-commit-range-Linux
           path: vtk-commit-range
 
+      # Each test job uploads a failure-summary-* artifact (job_label.txt + failure_summary.txt)
+      # only when it fails. This job can't fetch job logs directly via `gh api .../logs`: that
+      # endpoint needs repo *admin* rights, which the default GITHUB_TOKEN can never have.
+      - name: Download failure summaries
+        id: download-failure-summaries
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: failure-summary-*
+          path: failure-summaries
+
       - name: Report VTK master wheel failure
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_ID: ${{ github.run_id }}
           COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
         run: |
-          # Individual gh/api lookups below are best-effort (wrapped in `|| true`); a single
-          # missing log or issue comment should not abort the whole report. Every
-          # `for row in "${failed_jobs[@]}"` below is guarded by a length check first: on
-          # bash <4.4, `"${arr[@]}"` on a *declared-but-empty* array raises an unbound-variable
-          # error under nounset, and the empty-`failed_jobs` case is a real, expected path here.
+          # Individual gh lookups below are best-effort (wrapped in `|| true`); a single
+          # missing issue comment should not abort the whole report. Every
+          # `for x in "${arr[@]}"` below is guarded by a length check first: on bash <4.4,
+          # `"${arr[@]}"` on a *declared-but-empty* array raises an unbound-variable error
+          # under nounset, and an empty array is a real, expected path here.
           set -uo pipefail
 
           # Pull this job's failure-hash marker back out of a report's text. No match (e.g.
@@ -584,43 +684,29 @@ jobs:
 
           # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
           failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
-            --jq '.jobs[] | select(.conclusion == "failure") | [.databaseId, .name, .url] | @tsv' || true)
-
-          failed_jobs=()
-          while IFS=$'\t' read -r job_id name url; do
-            [ -n "$job_id" ] || continue
-            failed_jobs+=("${job_id}"$'\t'"${name}"$'\t'"${url}")
-          done <<< "$failed_jobs_raw"
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv' || true)
 
           jobs_list=""
+          while IFS=$'\t' read -r name url; do
+            [ -n "$name" ] || continue
+            jobs_list+="- [\`${name}\`](${url})"$'\n'
+          done <<< "$failed_jobs_raw"
+          [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+
+          # Build the per-job failure-output dropdowns from whatever failure-summary-*
+          # artifacts test jobs uploaded (only jobs that ran pytest and failed produce one;
+          # e.g. a build-vtk failure won't, and that's fine).
           failure_sections=""
-
-          if [ "${#failed_jobs[@]}" -eq 0 ]; then
-            jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
-          else
-            for row in "${failed_jobs[@]}"; do
-              IFS=$'\t' read -r job_id name url <<< "$row"
-              jobs_list+="- [\`${name}\`](${url})"$'\n'
-
-              # Pull the job log and try to isolate a useful failure summary: a pytest
-              # short-summary section, or the marker the Build step prints on a VTK build
-              # failure, falling back to the tail of the log if neither is found.
-              log="$(gh api "repos/${GH_REPO}/actions/jobs/${job_id}/logs" 2>/dev/null || true)"
-              if [ -z "$log" ]; then
-                summary="(could not retrieve the log for this job)"
-              else
-                # grep -m1 exits 1 when neither marker is found (a very normal outcome, e.g.
-                # a timeout or infra failure); with pipefail active that would otherwise abort
-                # this whole step under -e, so the miss must be swallowed right here.
-                start_line="$(printf '%s\n' "$log" | grep -n -m1 -E '=+ short test summary info =+|^::error::VTK build failed' | head -n1 | cut -d: -f1 || true)"
-                if [ -n "$start_line" ]; then
-                  summary="$(printf '%s\n' "$log" | tail -n "+${start_line}" | tail -c 8000)"
-                else
-                  summary="$(printf '%s\n' "$log" | tail -c 8000)"
-                fi
-              fi
-
+          failed_labels=()
+          if [ -d failure-summaries ]; then
+            while IFS= read -r label_file; do
+              summary_file="$(dirname "$label_file")/failure_summary.txt"
+              [ -f "$summary_file" ] || continue
+              name="$(cat "$label_file")"
+              summary="$(cat "$summary_file")"
+              [ -n "$summary" ] || summary="(no output captured)"
               hash="$(printf '%s' "$summary" | sha256sum | cut -d' ' -f1)"
+              failed_labels+=("$name")
 
               # The HTML comment marker records this job's failure signature so a later run
               # can detect "same failure as before" without any external state.
@@ -629,9 +715,8 @@ jobs:
               failure_sections+="<summary>❌ ${name} — failure output</summary>"$'\n\n'
               failure_sections+='```text'$'\n'"${summary}"$'\n''```'$'\n'
               failure_sections+="</details>"$'\n\n'
-            done
+            done < <(find failure-summaries -name job_label.txt | sort)
           fi
-          [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
 
           if [ "$COMMIT_RANGE_OUTCOME" = "success" ] && [ -f vtk-commit-range/vtk-commit-range.md ]; then
             commit_range_body="$(cat vtk-commit-range/vtk-commit-range.md)"
@@ -645,13 +730,12 @@ jobs:
           existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty' || true)
 
           repeat_note=""
-          if [ -n "$existing" ] && [ "${#failed_jobs[@]}" -gt 0 ]; then
+          if [ -n "$existing" ] && [ "${#failed_labels[@]}" -gt 0 ]; then
             prev_text="$(gh issue view "$existing" --json body,comments \
               --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)"
             prev_url="$(gh issue view "$existing" --json url,comments \
               --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
-            for row in "${failed_jobs[@]}"; do
-              IFS=$'\t' read -r job_id name url <<< "$row"
+            for name in "${failed_labels[@]}"; do
               cur_hash="$(extract_hash "$failure_sections" "$name")"
               prev_hash="$(extract_hash "$prev_text" "$name")"
               if [ -n "$cur_hash" ] && [ -n "$prev_hash" ] && [ "$cur_hash" = "$prev_hash" ]; then
