@@ -448,23 +448,19 @@ These rules are enforced for all text files (for example, ``*.md``, ``*.rst``)
 and partially enforced for Python source files.
 
 Every rule in ``doc/styles/Google/`` links to the specific Google style page it
-enforces (each file's ``link:`` field); most run as warnings, but a few fail CI
-outright (``Google.Headings = error`` and friends in ``doc/.vale.ini``):
+enforces (each file's ``link:`` field). There is no warning-only tier: CI fails
+on anything Vale reports, at any level, so a rule that only warns is still a
+required fix, not a suggestion to skip. Four that come up often in review, with
+their Google pages:
 
 - `Capitalization in titles and headings
   <https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings>`_
 - `Commas <https://developers.google.com/style/commas>`_ (the Oxford comma)
-- `Ellipses <https://developers.google.com/style/ellipses>`_
-- `Personal pronouns
-  <https://developers.google.com/style/pronouns#personal-pronouns>`_ (first
-  person singular, not the plural "we" exception above)
-
-Two more worth knowing even though they are only warnings, since they come up
-often in review: `abbreviations
-<https://developers.google.com/style/abbreviations>`_ (``e.g.``/``i.e.`` ->
-"for example"/"that is") and `plurals in parentheses
-<https://developers.google.com/style/plurals-parentheses>`_ (``word(s)`` ->
-"words").
+- `Abbreviations <https://developers.google.com/style/abbreviations>`_
+  (``e.g.``/``i.e.`` -> "for example"/"that is")
+- `Plurals in parentheses
+  <https://developers.google.com/style/plurals-parentheses>`_ (``word(s)`` ->
+  "words")
 
 These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
 GitHub Actions, and you can run Vale locally with:

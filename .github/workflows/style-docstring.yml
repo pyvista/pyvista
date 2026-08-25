@@ -105,8 +105,11 @@ jobs:
           files: '["doc", "pyvista", "examples", "CONTRIBUTING.rst", ".vale/examples", ".vale/pyvista"]'
           config: doc/.vale.ini
           reporter: github-pr-check
-          level: error
           filter_mode: nofilter
-          fail_on_error: true
+          # Fail on anything Vale reports (MinAlertLevel in doc/.vale.ini already
+          # hides suggestion-level noise), not just alerts marked `error` --
+          # `fail_on_error` only ever looked at error-level alerts, which is how a
+          # rule could sit at `warning` indefinitely without failing CI.
+          fail_level: warning
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
