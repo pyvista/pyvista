@@ -1158,7 +1158,7 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 
 @abstract_class
 class _Chart(DocSubs):
-    """Common interface for ``vtkChart``, vtkChartBox, vtkChartPie, and ChartMPL instances."""
+    """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
     # and 'chart_set_labels'.

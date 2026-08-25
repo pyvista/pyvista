@@ -4,6 +4,7 @@ Accessor
 Accessors
 Alborz
 Ansys
+Astropy
 Attene
 Autosummary
 BCs
@@ -121,8 +122,8 @@ Pixi
 Plucker
 Pluggable
 PolyData
+PolyLine
 Polyhedra
-Polyline
 Pringle
 Proteomic
 Pseudosphere
@@ -182,11 +183,9 @@ Xvfb
 Zenodo
 accessor
 accessors
-antialiasing
 arXiv
 arrays
 ascii
-astropy
 autodoc
 autoenum
 autofix
@@ -196,7 +195,6 @@ backend
 backface
 backfaces
 banesullivan
-basename
 billboarding
 binarized
 boolean
@@ -204,9 +202,7 @@ boxplot
 boxplots
 bugfix
 celldata
-cgx
 circumsphere
-cmake
 cmcrameri
 cmocean
 codacy
@@ -265,14 +261,12 @@ equirectangular
 extremal
 extremum
 ffmpeg
-filetypes
 flem
 formatters
 framebuffer
 freetype
 frontface
 frontfaces
-fullname
 gemgis
 geomodeling
 geostatistical

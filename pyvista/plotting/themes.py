@@ -1181,7 +1181,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @property
     def tube_width(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the ``tube_width``.
+        """Return or set the tube width.
 
         Examples
         --------
@@ -1229,7 +1229,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @property
     def slider_length(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the ``slider_length``.
+        """Return or set the slider length.
 
         Examples
         --------
@@ -1590,7 +1590,7 @@ class _CameraConfig(_ConfigBase):
 
     @property
     def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
-        """Return or set the camera ``viewup``.
+        """Return or set the camera's view-up vector.
 
         Examples
         --------
@@ -2736,7 +2736,7 @@ class Theme(_ConfigBase):
 
     @property
     def interactive(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set the default ``interactive`` parameter.
+        """Return or set the default interactive parameter.
 
         Examples
         --------
@@ -2754,7 +2754,7 @@ class Theme(_ConfigBase):
 
     @property
     def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set the default ``render_points_as_spheres`` parameter.
+        """Return or set whether points are rendered as spheres by default.
 
         Examples
         --------
@@ -2813,7 +2813,7 @@ class Theme(_ConfigBase):
 
     @property
     def render_lines_as_tubes(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set the default ``render_lines_as_tubes`` parameter.
+        """Return or set whether lines are rendered as tubes by default.
 
         Examples
         --------
@@ -2831,7 +2831,7 @@ class Theme(_ConfigBase):
 
     @property
     def transparent_background(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set the default ``transparent_background`` parameter.
+        """Return or set whether the background is transparent by default.
 
         Examples
         --------
@@ -2849,7 +2849,7 @@ class Theme(_ConfigBase):
 
     @property
     def title(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the default ``title`` parameter.
+        """Return or set the default plot title.
 
         This is the VTK render window title.
 
@@ -2907,7 +2907,7 @@ class Theme(_ConfigBase):
 
     @property
     def multi_samples(self) -> int:  # numpydoc ignore=RT01
-        """Return or set the default ``multi_samples`` parameter.
+        """Return or set the default number of multisamples.
 
         Set the number of multisamples to used with hardware ``anti_aliasing``. This
         is only used when :attr:`anti_aliasing <Theme.anti_aliasing>` is
@@ -2930,7 +2930,7 @@ class Theme(_ConfigBase):
 
     @property
     def multi_rendering_splitting_position(self) -> float:  # numpydoc ignore=RT01
-        """Return or set the default ``multi_rendering_splitting_position`` parameter.
+        """Return or set the default splitting position for multi-rendering.
 
         Examples
         --------
@@ -2952,7 +2952,7 @@ class Theme(_ConfigBase):
 
     @property
     def volume_mapper(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the default ``volume_mapper`` parameter.
+        """Return or set the default volume mapper.
 
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
@@ -2986,7 +2986,7 @@ class Theme(_ConfigBase):
 
     @property
     def smooth_shading(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set the default ``smooth_shading`` parameter.
+        """Return or set whether smooth shading is used by default.
 
         Examples
         --------
@@ -3028,7 +3028,7 @@ class Theme(_ConfigBase):
 
     @property
     def silhouette(self) -> _SilhouetteConfig:  # numpydoc ignore=RT01
-        """Return or set the default ``silhouette`` configuration.
+        """Return or set the default silhouette configuration.
 
         Examples
         --------
@@ -3063,7 +3063,7 @@ class Theme(_ConfigBase):
 
     @property
     def axes(self) -> _AxesConfig:  # numpydoc ignore=RT01
-        """Return or set the default ``axes`` configuration.
+        """Return or set the default axes configuration.
 
         Examples
         --------
@@ -3095,7 +3095,7 @@ class Theme(_ConfigBase):
     def before_close_callback(
         self,
     ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
-        """Return the default ``before_close_callback`` function for Plotter."""
+        """Return the default callback function to run before the plotter closes."""
         return self._before_close_callback  # type: ignore[return-value]
 
     @before_close_callback.setter

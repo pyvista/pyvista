@@ -12,7 +12,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Create a Winding Polyline
+# Create a Winding PolyLine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # The points are connected in the order they are given.
 

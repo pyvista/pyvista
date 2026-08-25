@@ -445,12 +445,12 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Length 6 iterable of ``int``s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
         rate : sequence[int], default: (1, 1, 1)
-            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Length 3 iterable of ``int``s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
@@ -4291,7 +4291,7 @@ class ImageDataFilters(DataSetFilters):
                 along each axis). See examples.
 
         anti_aliasing : bool, default: False
-            Enable antialiasing. This will blur the image as part of the resampling
+            Enable anti-aliasing. This will blur the image as part of the resampling
             to reduce image artifacts when down-sampling. Has no effect when up-sampling.
 
         extend_border : bool, optional
@@ -5357,7 +5357,7 @@ class ImageDataFilters(DataSetFilters):
             (100, 100, 1)
 
             Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
-            concatenated image. Linear interpolation with antialiasing is used to avoid sampling
+            concatenated image. Linear interpolation with anti-aliasing is used to avoid sampling
             artifacts.
 
             >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}

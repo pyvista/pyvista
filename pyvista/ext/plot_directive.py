@@ -513,7 +513,7 @@ class ImageFile:
 
     @property
     def stem(self):
-        """Return the basename without the suffix."""
+        """Return the ``basename`` without the suffix."""
         return Path(self.basename).stem
 
     def __repr__(self) -> str:  # pragma no cover

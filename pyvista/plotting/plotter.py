@@ -5769,7 +5769,7 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         filename : str | Path
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See :func:`imageio.get_writer()
+            but other file types may be supported.  See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
 
         framerate : int, default: 24
@@ -6936,7 +6936,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Move the current camera's focal point to a position point.
 
         The movement is animated over the number of frames specified in
-        NumberOfFlyFrames. The LOD desired frame rate is used.
+        ``NumberOfFlyFrames``. The LOD desired frame rate is used.
 
         Parameters
         ----------

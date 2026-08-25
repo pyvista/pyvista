@@ -2487,9 +2487,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
-        """Return the ``obbTree`` of the polydata.
+        """Return the OBB tree of the polydata.
 
-        An ``obbTree`` is an object to generate oriented bounding box (OBB)
+        An OBB tree is an object to generate oriented bounding box (OBB)
         trees. An oriented bounding box is a bounding box that does not
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB

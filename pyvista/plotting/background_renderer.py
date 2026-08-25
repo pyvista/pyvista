@@ -23,7 +23,7 @@ class BackgroundRenderer(Renderer):
     scale : float, default: 1
         Scaling factor for the background image.
     view_port : tuple[float], optional
-        ``viewport`` for the background renderer.
+        Viewport for the background renderer.
 
     """
 

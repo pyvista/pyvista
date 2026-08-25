@@ -1674,7 +1674,7 @@ class Color(_NoNewAttrMixin):
     color : ColorLike, optional
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
-        or as ints between 0 and 255. Hex color strings can contain optional
+        or as ``int``s between 0 and 255. Hex color strings can contain optional
         ``'#'`` or ``'0x'`` prefixes. If no opacity is provided, the
         ``default_opacity`` will be used. If ``color`` is ``None``, the
         ``default_color`` is used instead.
@@ -1689,7 +1689,7 @@ class Color(_NoNewAttrMixin):
     opacity : int | float | str, optional
         Opacity of the represented color. Overrides any opacity associated
         with the provided ``color``. Allowed opacities are floats between 0
-        and 1, ints between 0 and 255 or hexadecimal strings of length 2
+        and 1, ``int``s between 0 and 255 or hexadecimal strings of length 2
         (plus the length of the optional prefix).
         The following examples all denote a fully opaque color:
 

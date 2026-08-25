@@ -4591,7 +4591,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Parameters
         ----------
         ind : int | VectorLike[int]
-            Cell indices to extract. Can be a single int or a vector of ints.
+            Cell indices to extract. Can be a single ``int`` or a vector of ``int``s.
             A ``bool`` vector is also supported; the vector size should match the number of cells.
 
         invert : bool, default: False

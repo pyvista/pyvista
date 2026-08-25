@@ -33,12 +33,12 @@ class StructuredGridFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Length 6 iterable of ``int``s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
         rate : sequence[int], default: (1, 1, 1)
-            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Length 3 iterable of ``int``s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid

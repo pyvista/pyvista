@@ -340,7 +340,7 @@ class CameraPosition(_NoNewAttrMixin):
 
     @property
     def viewup(self):  # numpydoc ignore=RT01
-        """The ``viewup`` vector of the camera."""
+        """The view-up vector of the camera."""
         return self._viewup
 
     @viewup.setter
@@ -1270,7 +1270,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Opacity of the marker.
 
         viewport : sequence[float], optional
-            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         Returns
         -------
@@ -1375,7 +1375,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Enable or disable the text labels for the axes.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
-            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
@@ -1496,7 +1496,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Enable or disable lighting on north arrow.
 
         viewport : sequence[float], default: (0, 0, 0.1, 0.1)
-            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         top_color : ColorLike, optional
             Color applied to the top face of the arrow. When set (together
@@ -1667,7 +1667,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Enable or disable drawing the vector text edges.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
-            ``viewport`` (``(xstart, ystart, xend, yend)``) of the widget.
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
         Returns
         -------
@@ -4061,9 +4061,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def viewport(self):  # numpydoc ignore=RT01
-        """The ``viewport`` of the renderer.
+        """The viewport of the renderer.
 
-        ``viewport`` describes the ``(xstart, ystart, xend, yend)`` square
+        The viewport describes the ``(xstart, ystart, xend, yend)`` square
         of the renderer relative to the main renderer window.
 
         For example, a renderer taking up the entire window will have

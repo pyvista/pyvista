@@ -18,7 +18,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         Only useful when 'py'.
 
     info : dict
-        With keys "module" and "fullname".
+        With keys ``'module'`` and ``'fullname'``.
 
     edit : bool, default=False
         Link to the GitHub edit page instead of the blob view. The blob view

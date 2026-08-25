@@ -15,7 +15,7 @@ This example is inspired by `planet3D-MATLAB
    representation, so please take care when reusing or re-purposing this
    example.
 
-   Please take a look at libraries like `astropy <https://www.astropy.org/>`_
+   Please take a look at libraries like `Astropy <https://www.astropy.org/>`_
    if you wish to use Python for astronomical calculations.
 
 """

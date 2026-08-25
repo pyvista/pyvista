@@ -62,7 +62,7 @@ def _launch_pick_event(interactor, _event):
 
 
 def _poked_context_callback(plotter, *args, **kwargs):
-    """Use ``_poked_context_callback`` in a poked renderer context."""
+    """Invoke a picking callback from within a poked renderer subplot context."""
     with plotter.iren.poked_subplot():
         try_callback(*args, **kwargs)
 
@@ -294,7 +294,7 @@ class PickingComponent(_NoNewAttrMixin):
     Attributes
     ----------
     picked_path : pyvista.PolyData | None
-        Polyline accumulated by :meth:`enable_path_picking`.
+        PolyLine accumulated by :meth:`enable_path_picking`.
     picked_geodesic : pyvista.PolyData | None
         Geodesic polyline accumulated by :meth:`enable_geodesic_picking`.
     picked_horizon : pyvista.PolyData | None
