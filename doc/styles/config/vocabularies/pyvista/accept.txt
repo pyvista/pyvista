@@ -179,8 +179,6 @@ Wasserthal
 Witold
 XWayland
 Xvfb
-YLength
-ZLength
 Zenodo
 accessor
 accessors
