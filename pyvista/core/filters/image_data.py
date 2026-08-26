@@ -2559,9 +2559,6 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.color_labels`
             Color labeled data, e.g. labeled volumes or contours.
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this filter.
-
         References
         ----------
         S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
