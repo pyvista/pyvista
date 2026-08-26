@@ -47,7 +47,7 @@ from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
 from .tools import create_north_arrow
 from .tools import parse_font_family
-from .utilities.gl_checks import _check_depth_peeling
+from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
@@ -751,11 +751,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             number_of_peels = self._theme.depth_peeling.number_of_peels
         if occlusion_ratio is None:
             occlusion_ratio = self._theme.depth_peeling.occlusion_ratio
-        # Only an off-screen Plotter wants its Dock icon suppressed on macOS.
-        suppress_dock_icon = getattr(self.parent, 'off_screen', True)
-        depth_peeling_supported = _check_depth_peeling(
-            number_of_peels, occlusion_ratio, suppress_dock_icon=suppress_dock_icon
-        )
+        depth_peeling_supported = check_depth_peeling(number_of_peels, occlusion_ratio)
         if depth_peeling_supported:
             self.SetUseDepthPeeling(True)
             self.SetMaximumNumberOfPeels(number_of_peels)

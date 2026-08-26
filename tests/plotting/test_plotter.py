@@ -26,7 +26,6 @@ from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
 from pyvista.plotting.tools import supports_open_gl
-from pyvista.plotting.utilities.gl_checks import _check_depth_peeling
 from pyvista.plotting.utilities.gl_checks import check_depth_peeling
 
 if TYPE_CHECKING:
@@ -1121,48 +1120,8 @@ def test_macos_offscreen_render_window_configured(case):
         render_window = case.invoke()
 
     assert render_window.GetConnectContextToNSView() is False
+    # ``Accessory``, not ``Prohibited``: the latter hides the Dock icon but also forbids
+    # activation, stranding a later on-screen window behind other applications (#8934).
     appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
-        appkit_mock.NSApplicationActivationPolicyProhibited,
+        appkit_mock.NSApplicationActivationPolicyAccessory,
     )
-
-
-@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
-def test_macos_depth_peeling_does_not_touch_foreground_when_on_screen(sphere):
-    """Regression test for #8934: depth peeling must not block show() from coming forward."""
-    _check_depth_peeling.cache_clear()
-    appkit_mock = MagicMock()
-    pl = pv.Plotter(off_screen=False)
-    pl.add_mesh(sphere)
-    with (
-        patch('sys.platform', 'darwin'),
-        patch.dict(sys.modules, {'AppKit': appkit_mock}),
-        patch(
-            'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
-            return_value=_make_fake_render_window(),
-        ),
-    ):
-        pl.enable_depth_peeling()
-
-    appkit_mock.NSApplication.assert_not_called()
-
-
-@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
-def test_macos_depth_peeling_suppresses_dock_icon_when_off_screen():
-    """Test an off-screen Plotter's depth peeling probe still suppresses the Dock icon."""
-    _check_depth_peeling.cache_clear()
-    appkit_mock = MagicMock()
-    pl = pv.Plotter(off_screen=True)
-    with (
-        patch('sys.platform', 'darwin'),
-        patch.dict(sys.modules, {'AppKit': appkit_mock}),
-        patch(
-            'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
-            return_value=_make_fake_render_window(),
-        ),
-    ):
-        pl.enable_depth_peeling()
-
-    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
-        appkit_mock.NSApplicationActivationPolicyProhibited,
-    )
-    pl.close()

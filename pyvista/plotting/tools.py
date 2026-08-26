@@ -33,8 +33,6 @@ SUPPORTS_PLOTTING = None
 
 def _prepare_offscreen_macos_render_window(  # pragma: no cover
     render_window: _vtk.vtkRenderWindow | None,
-    *,
-    suppress_dock_icon: bool = True,
 ):
     """Configure ``render_window`` for quiet, off-screen use on macOS.
 
@@ -46,8 +44,9 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
        in ``CreateAWindow()`` unconditionally, even for off-screen use,
        is enough for an unbundled Python process to get a Dock icon. VTK
        never reverses this, so we demote the activation policy via PyObjC.
-       Pass ``suppress_dock_icon=False`` to skip only this step, for a
-       probe window whose caller is not actually staying off-screen.
+       ``Accessory`` hides the Dock icon while still allowing the process
+       to be activated later; ``Prohibited`` also forbids activation, which
+       leaves any later on-screen window stuck behind other applications.
     2. ``SetConnectContextToNSView(False)`` stops this particular render
        window from creating a real NSWindow.
 
@@ -57,14 +56,14 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
     """
 
     def _suppress_dock_icon():
-        if sys.platform != 'darwin' or not suppress_dock_icon:
+        if sys.platform != 'darwin':
             return
         try:  # type:ignore[unreachable]
             from AppKit import NSApplication  # noqa: PLC0415
-            from AppKit import NSApplicationActivationPolicyProhibited  # noqa: PLC0415
+            from AppKit import NSApplicationActivationPolicyAccessory  # noqa: PLC0415
 
             NSApplication.sharedApplication().setActivationPolicy_(
-                NSApplicationActivationPolicyProhibited,
+                NSApplicationActivationPolicyAccessory,
             )
         except ImportError:
             pass
