@@ -78,10 +78,13 @@ OPENGRAPH_PAGES = (
     OpenGraphPage(
         id='autoenum-gallery',
         # Images are plain ``.. image::`` directives rather than the plot directive,
-        # to confirm selection counts image nodes generically
+        # to confirm selection counts image nodes generically. The index (matching
+        # `.. autoopengraph_thumbnail::` in celltype.py) is past the page's own "Used
+        # In" gallery-card thumbnails -- autocodelink_gallery_cards renders those as
+        # real <img> tags now, ahead of the cell-type grid these count through.
         path='api/utilities/_autosummary/pyvista.CellType.html',
         description='Define types of cells.',
-        image_number=13,
+        image_number=18,
     ),
     OpenGraphPage(
         id='root',

@@ -882,7 +882,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
     Examples
     --------
-    .. autoopengraph_thumbnail:: 13
+    .. autoopengraph_thumbnail:: 18
 
     Create a single cube. Notice how the cell type is defined using the
     ``CellType``.
