@@ -68,10 +68,7 @@ EXAMPLES_SRC_DIR = PYVISTA_ROOT_DIR / 'examples'
 _CROSSREF_RE = re.compile(r':(meth|func|class|mod|attr|exc|data|ref|obj):`[^`]+`')
 _ANCHOR_RE = re.compile(r'^\s*\.\.\s+_(.+?):\s*$', re.MULTILINE)
 _BACKREF_LIST_RE = re.compile(r'<ul class="sphinx-autocodelink-index">(.*?)</ul>', re.DOTALL)
-# autocodelink_gallery_cards renders a "Sphinx Gallery" backreference as a thumbnail card
-# (see sphinx_autocodelink._gallery_cards) instead of a <ul> entry -- each one is its own
-# self-contained, non-nested <div>, so a non-greedy match up to its first (inner) </div>
-# still captures the whole thing, same trick _BACKREF_LIST_RE relies on for a nested <ul>.
+# matches a gallery-card thumbnail backreference (autocodelink_gallery_cards)
 _BACKREF_THUMBNAIL_RE = re.compile(
     r'<div class="sphx-glr-thumbcontainer"[^>]*>(.*?)</div>', re.DOTALL
 )

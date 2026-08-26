@@ -628,12 +628,10 @@ autocodelink_category_labels = {
     'Documentation': 'Guides',
 }
 
-# Rank "Used In" entries by how often each referencing page actually uses the target,
-# instead of alphabetically -- the most relevant examples surface first.
+# rank "Used In" entries by usage frequency
 autocodelink_sort = 'frequency'
 
-# Render "Gallery Examples" backreferences as Sphinx-Gallery-style thumbnail cards in a
-# carousel, instead of a plain link list.
+# render gallery backreferences as thumbnail cards
 autocodelink_gallery_cards = True
 
 

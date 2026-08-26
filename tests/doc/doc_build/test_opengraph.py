@@ -17,11 +17,7 @@ _META_TAG = re.compile(r'<meta\b[^>]*>')
 _META_KEY = re.compile(r'\b(?:property|name)="([^"]+)"')
 _META_CONTENT = re.compile(r'\bcontent="([^"]*)"')
 _PAGE_IMAGE = re.compile(r'<img\b[^>]*\bsrc="[^"]*/_images/([^"]+)"')
-# autocodelink_gallery_cards renders "Used In" gallery backreferences as thumbnail cards
-# with real <img> tags of their own -- sphinx-autoopengraph's own image selection is
-# computed from the doctree, while writing each page, entirely before sphinx-autocodelink
-# ever injects these as post-build HTML, so it never counts them either. Stripped here for
-# the same reason, so this counts the same images it does.
+# matches a gallery-card thumbnail, excluded below so it isn't double-counted as a page image
 _GALLERY_THUMBNAIL = re.compile(r'<div class="sphx-glr-thumbcontainer"[^>]*>.*?</div>', re.DOTALL)
 
 
