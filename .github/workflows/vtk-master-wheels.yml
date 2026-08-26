@@ -57,10 +57,7 @@ jobs:
           git checkout "$NIGHTLY_SHA"
           echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
 
-          # Record every commit since the *previous* nightly date-stamp, grouped by merge
-          # topic (VTK merges each topic branch as a single first-parent merge commit, so
-          # the second parent of each merge is that topic's own commit history), so a
-          # failure report can point at exactly what landed on VTK master in between.
+          # Commits since the previous nightly date-stamp, grouped by merge topic.
           PREV_NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' --skip=1 -n 1 --format=%H)"
           BASE_URL="https://gitlab.kitware.com/vtk/vtk/-/commit"
           {
@@ -326,10 +323,7 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      # Output is also teed to a file (deviating from the unit testing workflow, which
-      # doesn't need this) so a failure can be summarized and uploaded as an artifact below:
-      # the GitHub Actions job-logs API needs repo *admin* rights, which the default
-      # GITHUB_TOKEN this workflow's alert-on-failure job uses can never have.
+      # Teed to a file for the failure-summary upload below.
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
@@ -407,10 +401,7 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      # Output is also teed to a file (deviating from the unit testing workflow, which
-      # doesn't need this) so a failure can be summarized and uploaded as an artifact below:
-      # the GitHub Actions job-logs API needs repo *admin* rights, which the default
-      # GITHUB_TOKEN this workflow's alert-on-failure job uses can never have.
+      # Teed to a file for the failure-summary upload below.
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
@@ -491,9 +482,7 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      # `shell: bash` (rather than the action's Windows default, PowerShell) so the `tee`
-      # below behaves the same as on Linux/macOS, including this repo's SHELLOPTS-driven
-      # pipefail; see the comment on the equivalent Linux/macOS steps for why it's teed.
+      # `shell: bash`: this action's Windows default is PowerShell, which `tee` needs to avoid.
       - name: Core Testing (no GL)
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
@@ -561,9 +550,7 @@ jobs:
           name: vtk-commit-range-Linux
           path: vtk-commit-range
 
-      # Each test job uploads a failure-summary-* artifact (job_label.txt + failure_summary.txt)
-      # only when it fails. This job can't fetch job logs directly via `gh api .../logs`: that
-      # endpoint needs repo *admin* rights, which the default GITHUB_TOKEN can never have.
+      # Populated by each test job's "Upload failure summary" step, if it failed.
       - name: Download failure summaries
         id: download-failure-summaries
         uses: actions/download-artifact@v8
@@ -578,23 +565,17 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
         run: |
-          # Individual gh lookups below are best-effort (wrapped in `|| true`); a single
-          # missing issue comment should not abort the whole report. Every
-          # `for x in "${arr[@]}"` below is guarded by a length check first: on bash <4.4,
-          # `"${arr[@]}"` on a *declared-but-empty* array raises an unbound-variable error
-          # under nounset, and an empty array is a real, expected path here.
+          # `for x in "${arr[@]}"` below is guarded by a length check first: bash <4.4 raises
+          # an unbound-variable error under nounset for an empty array otherwise.
           set -uo pipefail
 
-          # Pull this job's failure-hash marker back out of a report's text. No match (e.g.
-          # the previous report predates this marker format) is an expected outcome, not an
-          # error, so it must not raise under the pipefail'd `-e` above.
+          # No failure-hash match (e.g. an older report predates this marker) is expected, not
+          # an error, so it must not raise under `set -e` above.
           extract_hash() {
             printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
           }
 
-          # Drop tox/pytest's own wall-clock-duration wrapper lines, and strip a pytest
-          # summary line's trailing "in <N>s (<H:MM:SS>)", before hashing: two runs hitting
-          # the identical failure otherwise never hash the same, since these change every run.
+          # Strips wall-clock timing so two runs hitting the identical failure hash the same.
           normalize_for_hash() {
             grep -Ev '^\s*(py3\.[0-9]+-[a-z_-]+: (exit|FAIL code)|evaluation failed|congratulations|py3\.[0-9]+-[a-z_-]+: OK)' \
               | sed -E 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//'
@@ -616,9 +597,7 @@ jobs:
             failed_jobs+=("${name}"$'\t'"${url}")
           done <<< "$failed_jobs_raw"
 
-          # Load whatever failure-summary-* artifacts test jobs uploaded (only jobs that ran
-          # pytest and failed produce one; e.g. a build-vtk failure won't, and that job just
-          # gets a bare bullet below, no nested dropdown).
+          # Only jobs that ran pytest and failed have a failure-summary-* artifact.
           summary_names=()
           summary_texts=()
           if [ -d failure-summaries ]; then
@@ -639,8 +618,7 @@ jobs:
             commit_range_body="(could not determine which VTK commits landed since the previous nightly)"
           fi
 
-          # Fetch the most recently posted report (the last comment, or the issue body if
-          # there are no comments yet) so each job's failure can be checked against it below.
+          # Most recently posted report: the last comment, or the issue body if none yet.
           existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty' || true)
           prev_text=""
           prev_url=""
@@ -651,9 +629,6 @@ jobs:
               --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
           fi
 
-          # One bullet per failed job, with its failure output (if any) nested directly
-          # underneath as a collapsed dropdown, rather than in a separate section further
-          # down the report.
           jobs_list=""
           if [ "${#failed_jobs[@]}" -eq 0 ]; then
             jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
@@ -685,9 +660,7 @@ jobs:
                 icon="❌"
               fi
 
-              # The HTML comment marker records this job's failure signature so a later run
-              # can detect "same failure as before" without any external state. Every line is
-              # indented 2 spaces to stay nested inside this list item on GitHub.
+              # Indented 2 spaces to stay nested inside this list item on GitHub.
               jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
               jobs_list+="  <details>"$'\n'
               jobs_list+="  <summary>${icon} failure output</summary>"$'\n\n'

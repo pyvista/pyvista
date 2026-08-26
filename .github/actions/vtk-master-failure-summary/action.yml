@@ -1,9 +1,8 @@
 name: Upload VTK master failure summary
 description: >-
   Extract a short failure summary from core-test.log/plotting-test.log and upload it as a
-  failure-summary-* artifact, for the VTK master workflow's failure report (used since that
-  report can't fetch job logs directly: the GitHub Actions job-logs API needs repo *admin*
-  rights, which the default GITHUB_TOKEN can never have).
+  failure-summary-* artifact for the VTK master workflow's failure report. Used because the
+  job-logs API needs repo admin rights, which GITHUB_TOKEN never has.
 runs:
   using: composite
   steps:
@@ -12,14 +11,6 @@ runs:
       run: |
         echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
         : > failure_summary.txt
-        # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the ANSI
-        # escapes first (before the SKIPPED/XFAIL filter below, since a colored line doesn't
-        # literally start with "XFAIL"/"SKIPPED" -- it starts with the escape sequence) so the
-        # summary reads cleanly inside a markdown code block. Drop SKIPPED/XFAIL lines from the
-        # short summary (pyproject.toml's `-ra` addopt puts them there too, alongside
-        # FAILED/ERROR) -- expected, not diagnostic of the failure. Truncate by bytes from the
-        # end (to keep the actually-relevant tail of the log), but if that truncated, drop its
-        # first line too: a byte cut can land mid-line/mid-word.
         for log in core-test.log plotting-test.log; do
           [ -s "$log" ] || continue
           start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
@@ -28,13 +19,14 @@ runs:
           else
             segment="$(cat "$log")"
           fi
+          # Strip ANSI color codes (TOX_COLORED=yes forces them even under tee).
           segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
           if [ -n "$start_line" ]; then
-            # grep -v exits 1 if every line matched (nothing left, e.g. a summary with no
-            # FAILED/ERROR entries); that's a legitimate empty result here, not an error.
+            # Drop SKIPPED/XFAIL entries (pytest's -ra addopt includes them here too).
             segment="$(printf '%s' "$segment" | grep -Ev '^(SKIPPED|XFAIL) ' || true)"
           fi
           size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
+          # Truncate from the end, dropping a possibly-partial first line.
           if [ "$size" -gt 4000 ]; then
             printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
           else

@@ -1,14 +1,7 @@
 """Fail unless the installed vtk matches the wheel in VTK_WHEEL_DIR.
 
-Run as a `vtk_local` `commands_pre` step in tox.ini, right after `vtk_local_install`.
-`uv pip install --no-index --find-links ...` can silently keep an already-installed vtk
-instead of the local wheel (e.g. its own version comparison decides the current install
-already "satisfies", or the wheel's platform tag doesn't match the runner) rather than
-erroring, so this checks explicitly.
-
-Deliberately not part of toxfile.py: that module is a tox plugin, imported by tox itself,
-and its top-level imports pull in `tox`/`tox_uv` -- packages installed only in the outer
-tox-runner environment, not inside each per-testenv venv this script actually runs in.
+Standalone rather than part of toxfile.py (a tox plugin -- tox/tox_uv aren't installed
+inside a testenv) so this can run as a `vtk_local` commands_pre step.
 """
 
 from __future__ import annotations
