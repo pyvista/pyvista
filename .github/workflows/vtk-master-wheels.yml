@@ -654,16 +654,13 @@ jobs:
               hash="$(printf '%s' "$summary" | normalize_for_hash | sha256sum | cut -d' ' -f1)"
               prev_hash="$(extract_hash "$prev_text" "$name")"
               if [ -n "$prev_hash" ] && [ "$prev_hash" = "$hash" ]; then
-                icon="⚠️"
-                jobs_list+="  Same failure signature as the [previous report](${prev_url})."$'\n'
-              else
-                icon="❌"
+                jobs_list+="  ⚠️ Same failure signature as the [previous report](${prev_url})."$'\n'
               fi
 
               # Indented 2 spaces to stay nested inside this list item on GitHub.
               jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
               jobs_list+="  <details>"$'\n'
-              jobs_list+="  <summary>${icon} failure output</summary>"$'\n\n'
+              jobs_list+="  <summary>❌ failure output</summary>"$'\n\n'
               jobs_list+='  ```text'$'\n'
               jobs_list+="$(printf '%s\n' "$summary" | sed 's/^/  /')"$'\n'
               jobs_list+='  ```'$'\n\n'

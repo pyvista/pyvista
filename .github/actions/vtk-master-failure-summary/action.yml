@@ -22,9 +22,11 @@ runs:
           # Strip ANSI color codes (TOX_COLORED=yes forces them even under tee).
           segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
           if [ -n "$start_line" ]; then
-            # Drop SKIPPED/XFAIL entries (pytest's -ra addopt includes them here too).
-            segment="$(printf '%s' "$segment" | grep -Ev '^(SKIPPED|XFAIL) ' || true)"
+            # Keep only FAILED/ERROR lines: counts and SKIPPED/XFAIL vary run to run even for
+            # the identical set of failing tests, which broke repeat-detection.
+            segment="$(printf '%s' "$segment" | grep -E '^(FAILED|ERROR) ' || true)"
           fi
+          [ -n "$segment" ] || continue
           size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
           # Truncate from the end, dropping a possibly-partial first line.
           if [ "$size" -gt 4000 ]; then
