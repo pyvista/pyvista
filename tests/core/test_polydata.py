@@ -235,6 +235,21 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
         _ = pv.PolyData(points, **{arr: value})
 
 
+@pytest.mark.parametrize('arr', ['faces', 'strips', 'lines', 'verts'])
+@pytest.mark.parametrize('value', [[-1, 2, 0], [0, -1, 3], [-2, 2, 0]])
+def test_invalid_connectivity_arrays_negative_size(arr: str, value: list[int]):
+    generator = np.random.default_rng(seed=None)
+    points = generator.random((10, 3))
+    mesh = pv.PolyData(points)
+
+    match = re.escape('Cell array size is invalid. A cell has a negative number of points.')
+    with pytest.raises(CellSizeError, match=match):
+        setattr(mesh, arr, value)
+
+    with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
+        _ = pv.PolyData(points, **{arr: value})
+
+
 @pytest.mark.parametrize('lines_is_cell_array', [False, True])
 def test_lines_on_init(lines_is_cell_array):
     points = np.random.default_rng().random((5, 3))

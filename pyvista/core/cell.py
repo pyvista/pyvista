@@ -660,13 +660,18 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-def _expected_legacy_cell_array_size(cells: NumpyArray[int]) -> int:
-    """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies."""
+def _expected_legacy_cell_array_size(cells: NumpyArray[int]) -> int | None:
+    """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
+
+    Returns ``None`` if a negative point count makes the layout uninterpretable.
+    """
     cells = np.ravel(cells)
     size = 0
     pos = 0
     while pos < cells.size:
         npts = int(cells[pos])
+        if npts < 0:
+            return None
         size += 1 + npts
         pos += 1 + npts
     return size
@@ -747,10 +752,15 @@ class CellArray(
         )
         # https://github.com/pyvista/pyvista/pull/5404
         if not size_is_valid:
+            expected_size = _expected_legacy_cell_array_size(cells)
+            problem = (
+                f'Size ({cells.size}) does not match expected size ({expected_size}).'
+                if expected_size is not None
+                else 'A cell has a negative number of points.'
+            )
             msg = (
-                f'Cell array size is invalid. Size ({cells.size}) does not'
-                f' match expected size ({_expected_legacy_cell_array_size(cells)}). This'
-                ' is likely due to invalid connectivity array.'
+                f'Cell array size is invalid. {problem} This is likely'
+                ' due to invalid connectivity array.'
             )
             raise CellSizeError(msg)
         self.__offsets = self.__connectivity = None

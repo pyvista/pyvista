@@ -21,6 +21,7 @@ from pyvista.core.cell import _set_cell_array_data
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.core.celltype import _RENAMED_CELL_TYPES
+from pyvista.core.errors import CellSizeError
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -479,6 +480,13 @@ def test_init_cell_array(cells):
     cell_array = pv.core.cell.CellArray(cells)
     assert np.allclose(np.array(cells).ravel(), cell_array.cells)
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == NCELLS
+
+
+@pytest.mark.parametrize('cells', [[-1, 2, 0], [0, -1, 3], [-2, 2, 0]])
+def test_init_cell_array_negative_size(cells):
+    match = re.escape('Cell array size is invalid. A cell has a negative number of points.')
+    with pytest.raises(CellSizeError, match=match):
+        _ = pv.core.cell.CellArray(cells)
 
 
 CONNECTIVITY_LIST = [0, 1, 2, 3, 4, 5]
