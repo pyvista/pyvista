@@ -68,6 +68,13 @@ EXAMPLES_SRC_DIR = PYVISTA_ROOT_DIR / 'examples'
 _CROSSREF_RE = re.compile(r':(meth|func|class|mod|attr|exc|data|ref|obj):`[^`]+`')
 _ANCHOR_RE = re.compile(r'^\s*\.\.\s+_(.+?):\s*$', re.MULTILINE)
 _BACKREF_LIST_RE = re.compile(r'<ul class="sphinx-autocodelink-index">(.*?)</ul>', re.DOTALL)
+# autocodelink_gallery_cards renders a "Sphinx Gallery" backreference as a thumbnail card
+# (see sphinx_autocodelink._gallery_cards) instead of a <ul> entry -- each one is its own
+# self-contained, non-nested <div>, so a non-greedy match up to its first (inner) </div>
+# still captures the whole thing, same trick _BACKREF_LIST_RE relies on for a nested <ul>.
+_BACKREF_THUMBNAIL_RE = re.compile(
+    r'<div class="sphx-glr-thumbcontainer"[^>]*>(.*?)</div>', re.DOTALL
+)
 _BACKREF_HREF_RE = re.compile(r'href="([^"]*)"')
 
 
@@ -126,6 +133,8 @@ def load_backref_target_names() -> set[str]:
         content = page.read_text(encoding='utf-8')
         for list_block in _BACKREF_LIST_RE.findall(content):
             names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(list_block))
+        for thumb_block in _BACKREF_THUMBNAIL_RE.findall(content):
+            names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(thumb_block))
     return names
 
 
