@@ -4,9 +4,9 @@
 Control Global and Local Plotting Themes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyVista allows you to set global and local plotting themes to easily
-set default plotting parameters. This example shows how to use the
-:ref:`theme_api` and :func:`~pyvista.set_plot_theme` function.
+Set global and local plotting themes to easily set default plot parameters.
+
+Shows how to use the :ref:`theme_api` and :func:`~pyvista.set_plot_theme` function.
 
 """
 

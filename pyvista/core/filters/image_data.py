@@ -2566,11 +2566,11 @@ class ImageDataFilters(DataSetFilters):
         ----------
         S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
         Sharp Boundaries, J. Computer Graphics Techniques, 2022. Available online:
-        http://jcgt.org/published/0011/01/03/
+        https://jcgt.org/published/0011/01/03/
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
         Discrete Isocontouring Algorithm. arXiv:2401.14906. 2024. Available online:
-        `http://arxiv.org/abs/2401.14906 <http://arxiv.org/abs/2401.14906>`__
+        `https://arxiv.org/abs/2401.14906 <https://arxiv.org/abs/2401.14906>`__
 
         Examples
         --------
@@ -3748,7 +3748,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
-        Only points whose `scalar` value is within the `scalar_range` are considered for
+        Only points whose ``scalar`` value is within the ``scalar_range`` are considered for
         connectivity. A 4-connectivity is used for 2D images or a 6-connectivity for 3D
         images. This filter operates on point-based data. If cell-based data are provided,
         they are re-meshed to a point-based representation using

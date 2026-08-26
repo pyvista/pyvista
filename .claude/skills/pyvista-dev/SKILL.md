@@ -57,6 +57,26 @@ Two assumptions cause most of the rework here, and both are one `grep` from cert
 Where a design question has two defensible answers that lead to different code, ask
 rather than picking one silently and building on it.
 
+## Comments and docstrings
+
+Less is more. A comment earns its place by explaining why, not what; if the code already
+says what, delete the comment. Keep docstrings to what the numpydoc sections require, not
+a narrative.
+
+Every function and class gets a docstring, including small private helpers -- a one-line
+summary is enough when there is nothing more to say. Only the full numpydoc sections
+(`Parameters`, `Returns`, examples, ...) are reserved for the public API.
+
+`numpydoc ignore=RT01` (no `Returns` section) is fine for a simple property getter or
+setter, where the summary line already says what comes back. A function whose return
+type or meaning is not obvious from the name and summary needs a real `Returns` section
+instead of the ignore, however small the function is.
+
+Never describe how the change came to be -- no "fix", "bug", "temporary workaround", "now
+we", "previously", or reference to a prior version of the code. Write both as if the
+current diff were the first and only version of the file: they describe the code that
+exists on this branch relative to `main`, not the debugging path taken to get there.
+
 ## Size
 
 Merged pull requests here are small: the median adds tens of lines, not hundreds. One
@@ -121,6 +141,21 @@ a variable before being raised (`EM`), and boolean arguments are keyword-only
 `_deprecate_positional_args`, never a hard break. The counterpart of
 `namespace-stdlib-imports` is ruff's `banned-from` list (`ICN003`) in `pyproject.toml`,
 which forbids the opposite direction; `Import Conventions` explains why both exist.
+
+## Editing TOML
+
+`taplo-format` runs `reorder_keys=true` and `reorder_arrays=true`, so keys and array
+entries in `pyproject.toml` and other TOML files get sorted. A comment on its own line
+above an entry is attached to that entry and breaks the sort -- `taplo` will not reorder
+past it. Put a comment inline, on the same line as the value it documents, so sorting
+still works. Keep it short for the same reason as everywhere else: less is more.
+
+A comment line is legitimate only when it deliberately splits the array or table into
+independently-sorted sections -- `filterwarnings` in `pyproject.toml` keeps `'error'`
+first with a blank line rather than a comment because pytest applies filters in order, and
+the `pytest-pyvista options` comment splits the `pytest-pyvista` keys from pytest's own so
+each group sorts on its own. Reach for that only when order or grouping is load-bearing,
+not to leave a note.
 
 ## Tests
 

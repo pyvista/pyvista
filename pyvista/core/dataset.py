@@ -105,7 +105,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     """Active array info tuple for arrays that exist.
 
     This named tuple is similar to ActiveArrayInfoTuple except the
-    `name` attribute cannot be `None`.
+    ``name`` attribute cannot be ``None``.
     """
 
     association: FieldAssociation
@@ -3548,11 +3548,21 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetMinSpatialDimension()
 
     @property
+    def _has_hidden_cells(self) -> bool:
+        """Return True if any cells are hidden via the ghost cell array."""
+        name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        if name not in self.cell_data:
+            return False
+        return bool(np.any(self.cell_data[name] == _vtk.vtkDataSetAttributes.HIDDENCELL))
+
+    @property
     def _distinct_cell_dimensions(self) -> set[_Dimensionality]:
         """Compute distinct dimensions of cells. Only needed for legacy vtk < 9.5."""
         if self.n_cells == 0:
             return {0}
         elif hasattr(self, 'dimensions'):
+            if self._has_hidden_cells:
+                return {cell_type.dimension for cell_type in self.distinct_cell_types}
             dims = np.array(self.dimensions)
             return {int(3 - (dims == 1).sum())}  # type: ignore[arg-type]
         elif isinstance(self, pv.PolyData):
@@ -3620,8 +3630,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         if self.n_cells == 0:
             return set()
-        if hasattr(self, 'dimensions'):
-            # Fast path for dimensioned grids
+        has_hidden_cells = self._has_hidden_cells
+        if hasattr(self, 'dimensions') and not has_hidden_cells:
+            # Fast path for dimensioned grids without hidden/ghost cells
             cell_dimension = next(iter(self._distinct_cell_dimensions))
             if isinstance(self, pv.Grid):
                 mapping = {
@@ -3650,7 +3661,13 @@ class DataSet(DataSetFilters, DataObject):
                 self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
             )
             types_array = np.unique(grid.celltypes)
-        return {pv.CellType(cell_num) for cell_num in types_array}
+        distinct_types = {pv.CellType(cell_num) for cell_num in types_array}
+        if has_hidden_cells:
+            # Casting to an unstructured grid (or VTK's own type-collection methods, depending
+            # on version) doesn't reliably preserve hidden cells as `EMPTY_CELL`, so add it
+            # explicitly whenever the ghost-cell array marks any cells as hidden.
+            distinct_types.add(pv.CellType.EMPTY_CELL)
+        return distinct_types
 
     @property
     def has_nonlinear_cells(self) -> bool:  # numpydoc ignore=RT01

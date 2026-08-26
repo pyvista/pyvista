@@ -175,6 +175,53 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 
 
+.. _vtk_backend:
+
+VTK Backend
+~~~~~~~~~~~
+
+PyVista runs against stock `VTK <https://vtk.org/>`__ by default, and nothing
+below is required to use it.
+
+`cvista <https://github.com/pyvista/cvista>`_ is a community fork of VTK,
+developed in the open by the PyVista maintainers. It is smaller than the stock
+wheel and ships as three stackable packages, so an offline data-processing
+install need not carry the rendering stack. It is entirely opt-in::
+
+    pip install 'pyvista[cvista]'
+
+That installs the fork alongside stock ``vtk``; because it imports under its own
+``cvista`` name, it does not clobber an existing install. When it is present
+PyVista selects it automatically.
+
+Set ``PYVISTA_VTK_BACKEND`` to choose explicitly. It must be set **before**
+PyVista is imported, since the backend is resolved at import time::
+
+    PYVISTA_VTK_BACKEND=vtkmodules   # force stock VTK, even if cvista is installed
+    PYVISTA_VTK_BACKEND=cvista       # force the fork
+
+.. note::
+
+   A process must use **one** VTK build throughout. Libraries that import VTK
+   themselves default to stock VTK, so mixing them with a PyVista running on
+   cvista produces wrapped-type errors rather than a clean failure. ``trame``
+   is the common case; point it at the same build with its own setting::
+
+       VTK_MODULE_NAME=cvista
+
+Use :func:`pyvista.vtk_backend` to check which build is active at runtime --
+useful for raising a clear error when a build does not ship a module a feature
+needs, since the two do not carry identical module sets:
+
+.. code-block:: python
+
+    import pyvista as pv
+
+    if pv.vtk_backend() != 'vtk':
+        msg = f'This feature is not supported on the {pv.vtk_backend()} backend.'
+        raise RuntimeError(msg)
+
+
 Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 

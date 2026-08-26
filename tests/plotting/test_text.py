@@ -287,7 +287,7 @@ def test_add_text_actor_named_position(position):
 
 
 def test_add_text_actor_font_size_matches_add_text():
-    """Test that a font size means the same to this as it does to `add_text`."""
+    """Test that a font size means the same to this as it does to ``add_text``."""
     pl = pv.Plotter()
     drawn = pl.add_text('text', position=(10, 10), font_size=24)
     named = pl._add_text_actor('text', position='upper_left', font_size=24)

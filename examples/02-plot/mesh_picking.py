@@ -3,8 +3,8 @@
 
 Picking Meshes
 ~~~~~~~~~~~~~~
-This example demonstrates how to pick meshes using
-:func:`enable_mesh_picking() <pyvista.Plotter.enable_mesh_picking>`.
+
+Pick meshes using :func:`~pyvista.Plotter.enable_mesh_picking`.
 
 """
 

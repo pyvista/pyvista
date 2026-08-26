@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 
     from pyvista import MultiBlock
 
+    from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
     from .utilities.writer import BaseWriter
 
@@ -539,7 +540,7 @@ class DataObject(
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
-    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def add_field_data(self: Self, array: ArrayLike[Any], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -548,8 +549,10 @@ class DataObject(
 
         Parameters
         ----------
-        array : sequence
-            Array of data to add to the dataset as a field array.
+        array : ArrayLike[Any]
+            Array of data to add to the dataset as a field array. Field data
+            is not tied to the geometry, so numeric, boolean and string data
+            are all accepted.
 
         name : str
             Name to assign the field array.
@@ -909,7 +912,7 @@ class DataObject(
     def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
         """Support pickle by serializing the VTK object data.
 
-        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT`
+        The format of the serialized VTK object data depends on ``pyvista.PICKLE_FORMAT``
         (case-insensitive).
         - If ``'xml'``, the data is serialized as an XML-formatted string.
         - If ``'legacy'``, the data is serialized to bytes in VTK's binary format.

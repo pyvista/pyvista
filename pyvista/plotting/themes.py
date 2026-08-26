@@ -1968,9 +1968,9 @@ class Theme(_ConfigBase):
         ... )
         >>> pl.link_views()
         >>> pl.camera_position = pv.CameraPosition(
-        ...     position=(-1.67, -5.10, 2.06),
+        ...     position=(-1.67, -5.1, 2.06),
         ...     focal_point=(0.0, 0.0, 0.0),
-        ...     viewup=(0.00, 0.37, 0.93),
+        ...     viewup=(0.0, 0.37, 0.93),
         ... )
         >>> pl.show()  # doctest: +SKIP
 
@@ -2003,9 +2003,9 @@ class Theme(_ConfigBase):
         """Return or set the edges opacity.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
         Examples
         --------

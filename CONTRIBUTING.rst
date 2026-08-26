@@ -186,7 +186,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make doctest        # run all docstring tests via tox (matches CI)
     make docs           # build the full documentation via tox (matches CI)
     make docs-test      # test the built documentation via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
@@ -324,7 +324,7 @@ section <#creating-a-new-pull-request>`_.
 Coding Style
 ^^^^^^^^^^^^
 
-We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
+We adhere to `PEP 8 <https://peps.python.org/pep-0008/>`_
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
 the exception rather than the norm. A uniform code style is enforced
@@ -341,7 +341,7 @@ As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
 Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
-Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
+Python <https://peps.python.org/pep-0020/>`_. When in doubt:
 
 .. code-block:: python
 
@@ -394,8 +394,8 @@ Some member imports also shadow their own module (``from time import time``,
 The unit is the module, not the name. ``argparse`` exports ``ArgumentParser``
 but is namespace-imported, because one type does not make a type module;
 ``argparse.ArgumentParser`` reads fine. The member list is closed and short:
-``__future__``, ``abc``, ``collections``, ``collections.abc``, ``dataclasses``,
-``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
+``__future__``, ``abc``, ``collections``, ``collections.abc``, ``concurrent.futures``,
+``dataclasses``, ``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
 ``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
 
 How this is enforced
@@ -935,6 +935,37 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 
     The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
+
+Testing Against the cvista Backend
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the
+default and is tested on every PR; cvista is tested at **integration cadence** — nightly, and on PRs carrying the
+``integration-testing`` label:
+
+.. code-block:: shell
+
+    make integration PROJECT=cvista
+
+It is not on the per-PR fast path because it is a full extra run of the suite against a second VTK build, and because a
+failure there is rarely a reason to block an unrelated PR.
+
+**When the suites disagree, fix cvista.** PyVista is not held back by the fork: if a change here is correct against
+stock VTK but fails on cvista, the fix belongs upstream in cvista, not in a marker or an ignore list here. Open an issue
+on `pyvista/cvista <https://github.com/pyvista/cvista/issues>`_ and keep going.
+
+The ``skip_vtk_backend`` marker is only for **permanent, by-design** divergence — a module the fork does not build, or
+behaviour that differs deliberately. Attach it to the test with a reason naming the specific cause:
+
+.. code-block:: python
+
+    @pytest.mark.skip_vtk_backend(
+        'cvista',
+        reason='cvista does not ship vtkIOParallel (vtkPOpenFOAMReader)',
+    )
+    def test_openfoam_patch_arrays(): ...
+
+It is not a way to park a real regression. In library code, use :func:`pyvista.vtk_backend` to raise a clear error for a
+build that cannot support a feature.
 
 Garbage Collection Checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1843,7 +1874,7 @@ created the following will occur:
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 #.  Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
+    `@regro-cf-autotick-bot <https://github.com/conda-forge/conda-forge-bot>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.

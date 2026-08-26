@@ -130,8 +130,6 @@ class CubeAxesActor(
     --------
     :meth:`~pyvista.Plotter.show_bounds`
     :meth:`~pyvista.Plotter.show_grid`
-    :ref:`axes_objects_example`
-        Example showing different axes objects.
 
     Examples
     --------

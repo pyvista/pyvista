@@ -4,8 +4,8 @@
 Wrap a Point Cloud in a Convex Hull
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a convex hull from a point cloud using tetrahedralization and surface
-extraction.
+Create a :meth:`~pyvista.DataObjectFilters.convex_hull` from a point cloud.
+
 """
 
 import numpy as np
@@ -28,10 +28,9 @@ cloud
 # %%
 # Extract the outer hull
 # ~~~~~~~~~~~~~~~~~~~~~~
-# A Delaunay tetrahedralization followed by surface extraction returns the
-# outer surface of the cloud.
+# Use the ``convex_hull`` filter on the points.
 
-hull = cloud.delaunay_3d(alpha=cloud.length).extract_surface(algorithm=None)
+hull = cloud.convex_hull()
 
 pl = pv.Plotter()
 pl.add_points(
@@ -42,7 +41,7 @@ pl.add_points(
 )
 pl.add_mesh(hull, color='royalblue', opacity=0.4, show_edges=True)
 pl.camera_position = pv.CameraPosition(
-    position=(0.4, -0.5, 0.25),
+    position=(-0.32, 0.0032, -0.024),
     focal_point=cloud.center,
     viewup=(0, 0, 1),
 )

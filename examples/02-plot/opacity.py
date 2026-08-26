@@ -4,8 +4,10 @@
 Plot with Opacity
 ~~~~~~~~~~~~~~~~~
 
-Plot a mesh's scalar array with an :class:`~pyvista.opacity_transfer_function`
-or opacity mapping based on a scalar array.
+Plot a mesh's scalar array with an opacity transfer function or mapping.
+
+Uses :class:`~pyvista.opacity_transfer_function`.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

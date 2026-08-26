@@ -106,6 +106,7 @@ colormap
 colormaps
 conda
 config
+cvista
 data's
 dataclass
 dataframes
@@ -192,6 +193,7 @@ scipy
 scooby
 setuptools
 sphinx
+stackable
 stl
 subclassing
 subpackages

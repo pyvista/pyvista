@@ -4,9 +4,64 @@ from __future__ import annotations
 
 import functools
 import os
+import sys
 
 from pyvista import _vtk
 from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
+
+# Qt GUI modules that would expose a live QGuiApplication, newest binding first
+_QT_GUI_MODULES = ('PySide6.QtGui', 'PyQt6.QtGui', 'PySide2.QtGui', 'PyQt5.QtGui')
+
+
+def _qt_platform_name() -> str | None:
+    """Return the platform name of a live Qt application, if there is one.
+
+    Only bindings that are *already imported* are consulted: this must never
+    import Qt, and must never construct an application.
+
+    Returns
+    -------
+    str | None
+        The platform Qt actually connected to, or ``None`` when no Qt
+        application is running in this process.
+
+    """
+    for module_name in _QT_GUI_MODULES:
+        # getattr rather than an import, and tolerant of a module that is in
+        # sys.modules but still initializing
+        qgui = getattr(sys.modules.get(module_name), 'QGuiApplication', None)
+        if qgui is None:
+            continue
+        app = qgui.instance()
+        if app is not None:
+            return str(app.platformName())
+    return None
+
+
+def _process_uses_egl() -> bool:
+    """Return whether this process draws through EGL rather than GLX.
+
+    ``WAYLAND_DISPLAY`` only says a Wayland compositor is running, not that
+    *this* process talks to it: ``QT_QPA_PLATFORM=xcb`` runs a Qt application
+    through XWayland inside a Wayland session, and then its OpenGL is GLX. An
+    EGL render window cannot make its context current in such a process, so
+    every render through it logs ``Unable to eglMakeCurrent`` with
+    ``EGL_BAD_ACCESS`` (pyvista/pyvistaqt#445 follow-up).
+
+    A running Qt application is authoritative, since it is the thing that did
+    or did not connect to the compositor. Without one, the session variable is
+    all there is to go on.
+
+    Returns
+    -------
+    bool
+        ``True`` when this process's OpenGL goes through EGL.
+
+    """
+    platform_name = _qt_platform_name()
+    if platform_name is not None:
+        return platform_name.startswith('wayland')
+    return bool(os.environ.get('WAYLAND_DISPLAY'))
 
 
 def _offscreen_probe_render_window():
@@ -28,7 +83,7 @@ def _offscreen_probe_render_window():
     """
     if (
         not os.environ.get('VTK_DEFAULT_OPENGL_WINDOW')
-        and os.environ.get('WAYLAND_DISPLAY')
+        and _process_uses_egl()
         and _vtk.has_attr('vtkEGLRenderWindow')
     ):
         return _vtk.vtkEGLRenderWindow()
@@ -92,7 +147,7 @@ def uses_egl() -> bool:
         otherwise ``False``.
 
     """
-    if os.environ.get('WAYLAND_DISPLAY'):
+    if _process_uses_egl():
         # Instantiating the factory-default render window is not safe here:
         # constructing (and destroying) the default GLX-based window aborts a
         # process that already uses EGL, e.g. a Qt application running on the

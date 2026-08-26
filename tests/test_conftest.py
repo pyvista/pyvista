@@ -60,7 +60,7 @@ def results_parser(monkeypatch: pytest.MonkeyPatch):
     It enables to get the test name (last part of the test path)
     as well as the status.
 
-    Results can be passed to the `RunResultsReport` class to better interact
+    Results can be passed to the ``RunResultsReport`` class to better interact
     with them.
     """
     monkeypatch.setenv('PYTEST_ADDOPTS', '-v')

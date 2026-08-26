@@ -5,6 +5,7 @@ Applying Textures
 ~~~~~~~~~~~~~~~~~
 
 Plot a mesh with an image projected onto it as a texture.
+
 """
 
 from matplotlib.pyplot import get_cmap

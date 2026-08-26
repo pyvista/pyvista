@@ -4,7 +4,7 @@
 Decimation
 ~~~~~~~~~~
 
-Decimate a mesh
+Decimate a mesh.
 
 """
 

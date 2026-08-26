@@ -44,7 +44,7 @@ class Timer(_NoNewAttrMixin):
         Maximum number of steps to allow for the timer before destroying it.
 
     callback : callable
-        A callable that takes one argument. It will be passed `step`,
+        A callable that takes one argument. It will be passed ``step``,
         which is the number of times the timer event has occurred.
 
     """
@@ -188,11 +188,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         callback : callable
             A callable that takes one argument. It will be passed
-            `step`, which is the number of times the timer event has occurred.
-
-        See Also
-        --------
-        :ref:`animation_example`
+            ``step``, which is the number of times the timer event has occurred.
 
         Examples
         --------

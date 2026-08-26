@@ -385,20 +385,20 @@ toc_object_entries_show_parents = 'hide'
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
     'python': (
-        'https://docs.python.org/3.11',
+        'https://docs.python.org/3.11/',
         ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', ('../intersphinx/numpy-objects.inv',)),
+    'numpy': ('https://numpy.org/doc/stable/', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
-        'https://matplotlib.org/stable',
+        'https://matplotlib.org/stable/',
         ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
-        'https://imageio.readthedocs.io/en/stable',
+        'https://imageio.readthedocs.io/en/stable/',
         ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
@@ -406,11 +406,11 @@ intersphinx_mapping = {
         ('../intersphinx/pandas-objects.inv',),
     ),
     'pyarrow': (
-        'https://arrow.apache.org/docs',
+        'https://arrow.apache.org/docs/',
         ('../intersphinx/pyarrow-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', ('../intersphinx/pytest-objects.inv',)),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
     'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
 intersphinx_timeout = 5
@@ -746,6 +746,16 @@ def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa:
     this page" navbar -- the same problem fixed above for numpydoc's own "See
     Also" section by not wrapping it in one. Converting it to a section here lets
     hoist_docstring_sections below lift it to page level the same way.
+
+    A literal ``.. seealso::`` is written wherever the docstring author put it --
+    usually right before References/Examples -- unlike numpydoc's own "See Also",
+    which _DOCSTRING_TEMPLATE above always renders last. Reposition the promoted
+    section to match: directly before "Used In" if present, otherwise at the end.
+
+    "Used In" isn't necessarily a sibling: nothing closes off the docstring's last
+    heading before its directive runs, so it lands nested inside that heading's
+    section instead, and only reads as a sibling once hoist_docstring_sections
+    below extracts every section it finds. Search at any depth to still find it.
     """
     for admonition in list(doctree.findall(addnodes.seealso)):
         if not _is_nested_desc(admonition):
@@ -754,7 +764,26 @@ def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa:
         section += nodes.title(text='See Also')
         section.extend(admonition.children)
         doctree.note_implicit_target(section, section)
+
+        container = admonition.parent
+        while container is not None and not isinstance(container, addnodes.desc_content):
+            container = container.parent
+
         admonition.replace_self(section)
+        section.parent.remove(section)
+
+        used_in = (
+            next(
+                (s for s in container.findall(nodes.section) if s[0].astext() == 'Used In'),
+                None,
+            )
+            if container is not None
+            else None
+        )
+        if used_in is not None:
+            used_in.parent.insert(used_in.parent.index(used_in), section)
+        else:
+            (container if container is not None else admonition.parent).append(section)
 
 
 def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
@@ -957,7 +986,7 @@ texinfo_documents = [
 notfound_context = {
     'body': (
         '<h1>Page not found.</h1>\n\n'
-        'Perhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.'
+        'Perhaps try the <a href="https://docs.pyvista.org/examples/index.html">examples page</a>.'
     ),
 }
 notfound_urls_prefix = None

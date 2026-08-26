@@ -882,6 +882,26 @@ class BasePlotter(_BoundsSizeMixin):
                 'Install trame-pyvista: pip install trame-pyvista'
             )
             raise ImportError(msg)
+
+        # A process must use ONE VTK build. trame resolves its via VTK_MODULE_NAME;
+        # a mismatch with PyVista's backend fails deep inside trame on a wrapped-type
+        # mismatch. Prefer the module trame already resolved, else the variable it will.
+        resolved = sys.modules.get('vtk_module')
+        trame_root = (
+            resolved.__name__
+            if resolved is not None
+            else os.environ.get('VTK_MODULE_NAME', 'vtkmodules')
+        )
+        if trame_root != _vtk._VTK_ROOT:
+            msg = (
+                f'trame is using the {trame_root!r} VTK build but PyVista is using '
+                f'{_vtk._VTK_ROOT!r}. Objects cannot be shared between two VTK builds.\n'
+                f'Set VTK_MODULE_NAME={_vtk._VTK_ROOT} in the environment before importing '
+                f'trame to point it at the same build.'
+            )
+            # RuntimeError, not ImportError: `show()` suppresses ImportError (missing
+            # trame degrades quietly), which would swallow this misconfiguration.
+            raise RuntimeError(msg)
         return component
 
     @_deprecate_positional_args(allowed=['filename'])
@@ -1958,16 +1978,16 @@ class BasePlotter(_BoundsSizeMixin):
         Show the camera position. This implicitly calls ``repr(cpos)``.
 
         >>> cpos
-        CameraPosition(position=(0.02430, 0.0336, 0.9446),
-                       focal_point=(0.02430, 0.0336, -0.02225),
+        CameraPosition(position=(0.0243, 0.0336, 0.9446),
+                       focal_point=(0.0243, 0.0336, -0.02225),
                        viewup=(0.0, 1.0, 0.0))
 
         Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the repr and
         prepending the pyvista module, i.e. ``pv.``.
 
         >>> new_cpos = pv.CameraPosition(
-        ...     position=(0.02430, 0.0336, 0.9446),
-        ...     focal_point=(0.02430, 0.0336, -0.02225),
+        ...     position=(0.0243, 0.0336, 0.9446),
+        ...     focal_point=(0.0243, 0.0336, -0.02225),
         ...     viewup=(0.0, 1.0, 0.0),
         ... )
 
@@ -1985,7 +2005,7 @@ class BasePlotter(_BoundsSizeMixin):
         Reposition it via a list of tuples.
 
         >>> pl.camera_position = [
-        ...     (0.3914, 0.4542, 0.7670),
+        ...     (0.3914, 0.4542, 0.767),
         ...     (0.0243, 0.0336, -0.0222),
         ...     (-0.2148, 0.8998, -0.3796),
         ... ]
@@ -3056,9 +3076,9 @@ class BasePlotter(_BoundsSizeMixin):
             between 0 and 1.
 
             .. note::
-                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-                available, `edge_opacity` is set to 1.
+                available, ``edge_opacity`` is set to 1.
 
         force_opaque : bool, default: False
             Whether to force the returned actor to be opaque. Can be useful for web visualization
@@ -3720,9 +3740,9 @@ class BasePlotter(_BoundsSizeMixin):
             between 0 and 1.
 
             .. note::
-                `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+                ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-                available, `edge_opacity` is set to 1.
+                available, ``edge_opacity`` is set to 1.
 
         remove_existing_actor : bool, optional
             Remove any existing actor in the renderer with the same name before adding
@@ -3829,7 +3849,7 @@ class BasePlotter(_BoundsSizeMixin):
         ...     show_scalar_bar=False,
         ... )
 
-        Plot spheres using `points_gaussian` style and scale them by radius.
+        Plot spheres using ``'points_gaussian'`` style and scale them by radius.
 
         >>> N_SPHERES = 1_000_000
         >>> rng = np.random.default_rng(seed=0)
@@ -5539,7 +5559,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         font : str, default: 'arial'
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
-            This is ignored if the `font_file` is set.
+            This is ignored if the ``font_file`` is set.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
@@ -6156,7 +6176,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
-            or ``'arial``. This is ignored if the `font_file` is set.
+            or ``'arial'``. This is ignored if the ``font_file`` is set.
 
         font_file : str, default: None
             The absolute file path to a local file containing a freetype
@@ -8467,7 +8487,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.show(return_cpos=True)  # doctest:+SKIP
-        CameraPosition(position=(1.9264, 1.9264, 1.9264),
+        CameraPosition(position=(1.926, 1.926, 1.926),
                        focal_point=(0.0, 0.0, 0.0),
                        viewup=(0.0, 0.0, 1.0))
 

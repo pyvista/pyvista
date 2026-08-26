@@ -20,9 +20,9 @@ from pyvista import examples
 mesh = examples.download_teapot()
 
 cpos = pv.CameraPosition(
-    position=(6.192871661244108, 5.687542355343226, -4.95345468836544),
-    focal_point=(0.48853358141600634, 1.2019347531215714, 0.1656178278582367),
-    viewup=(-0.40642070472687936, 0.8621356761976646, 0.30256286387543047),
+    position=(6.193, 5.688, -4.953),
+    focal_point=(0.4885, 1.202, 0.1656),
+    viewup=(-0.4064, 0.8621, 0.3026),
 )
 
 centers = mesh.cell_centers()
@@ -39,9 +39,9 @@ pl.show(cpos=cpos)
 grid = examples.download_letter_a()
 
 cpos = pv.CameraPosition(
-    position=(2.704583323659036, 0.7822568412034183, 1.7251126717482546),
-    focal_point=(3.543391913452799, 0.31117673768140197, 0.16407006760146028),
-    viewup=(0.1481171795711516, 0.96599698246102, -0.2119224645762945),
+    position=(2.705, 0.7823, 1.725),
+    focal_point=(3.543, 0.3112, 0.1641),
+    viewup=(0.1481, 0.966, -0.2119),
 )
 
 

@@ -4,12 +4,15 @@
 Beam Shape
 ~~~~~~~~~~
 
-The default directional lights are infinitely distant point sources, for which
-the only geometric customization option is the choice of beam direction defined
-by the light's position and focal point. Positional lights, however, have more
-options for beam customization.
+Compare beam customization options for directional and positional lights.
+
+The default directional lights are infinitely distant point sources, for
+which the only geometric customization option is the choice of beam
+direction defined by the light's position and focal point. Positional
+lights, however, have more options for beam customization.
 
 Consider two hemispheres:
+
 """
 
 # sphinx_gallery_thumbnail_number = 5

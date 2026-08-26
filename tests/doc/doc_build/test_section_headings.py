@@ -4,14 +4,14 @@ Three independent mechanisms feed into this, none of which fail loudly if they
 regress -- the section just silently reverts to an unlinkable rubric or
 admonition, or disappears from the "on this page" navbar:
 
-- `_str_header` patches numpydoc to emit real headings (not `.. rubric::`) for
-  sections like Examples, and `hoist_docstring_sections` lifts those out of the
-  `desc` node they're generated inside, to page level.
-- `promote_seealso_admonitions` additionally turns a literal `.. seealso::`
+- ``_str_header`` patches numpydoc to emit real headings (not ``.. rubric::``) for
+  sections like Examples, and ``hoist_docstring_sections`` lifts those out of the
+  ``desc`` node they're generated inside, to page level.
+- ``promote_seealso_admonitions`` additionally turns a literal ``.. seealso::``
   admonition -- written directly in a docstring instead of using numpydoc's own
-  "See Also" syntax, as `pyvista.examples.downloads` does -- into a real section
+  "See Also" syntax, as ``pyvista.examples.downloads`` does -- into a real section
   before the hoist above runs.
-- `doc/source/_templates/autosummary/class.rst` renders "Methods" and
+- ``doc/source/_templates/autosummary/class.rst`` renders "Methods" and
   "Attributes" as real page-level headings directly in the class page template,
   outside the docstring entirely.
 """
@@ -30,6 +30,11 @@ CLASS_PAGE = 'pyvista.Plotter.html'
 # A page whose docstring instead writes `.. seealso::` directly, in Examples.
 RAW_SEEALSO_PAGE = 'pyvista.examples.downloads.download_bunny.html'
 
+# A page whose raw `.. seealso::` is written well *before* References/Examples --
+# unlike RAW_SEEALSO_PAGE's, which is already last. Catches promote_seealso_admonitions
+# not repositioning the promoted section to match the others' order.
+CELLTYPE_PAGE = 'pyvista.CellType.html'
+
 
 def find_api_page(filename: str) -> Path:
     """Return a generated single-object API page.
@@ -46,13 +51,13 @@ def find_api_page(filename: str) -> Path:
 
 
 def assert_is_real_heading(html: str, name: str) -> None:
-    """Assert `name` renders as a real ``<h2>`` heading, not a rubric."""
+    """Assert ``name`` renders as a real ``<h2>`` heading, not a rubric."""
     assert f'<p class="rubric">{name}</p>' not in html
     assert f'<h2>{name}' in html
 
 
 def heading_index(html: str, name: str) -> int:
-    """Return the position of `name`'s real heading in the page."""
+    """Return the position of ``name``'s real heading in the page."""
     return html.index(f'<h2>{name}')
 
 
@@ -83,6 +88,14 @@ def test_raw_seealso_admonition_is_hoisted_section():
     """Confirm a literal ``.. seealso::`` written in a docstring is promoted too."""
     html = find_api_page(RAW_SEEALSO_PAGE).read_text(encoding='utf-8')
     _assert_see_also_is_hoisted_section(html)
+
+
+def test_raw_seealso_written_before_examples_is_still_reordered_after():
+    """Confirm a ``.. seealso::`` written before References/Examples still ends up after."""
+    html = find_api_page(CELLTYPE_PAGE).read_text(encoding='utf-8')
+    _assert_see_also_is_hoisted_section(html)
+    assert heading_index(html, 'Examples') < heading_index(html, 'See Also')
+    assert heading_index(html, 'See Also') < heading_index(html, 'Used In')
 
 
 def test_methods_is_real_section():

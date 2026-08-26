@@ -114,7 +114,7 @@ def _is_bitmask_like(cls: type[Enum]) -> bool:
 
 
 def _format_value(value: Any, *, as_hex: bool) -> str:
-    """Format an enum member's value the way it should appear after ``:``."""
+    """Format an enum member's value the way it should appear after ``:value:``."""
     if as_hex:
         return hex(value)
     return repr(value) if isinstance(value, str) else str(value)
@@ -215,13 +215,8 @@ class EnumDocumenter(ClassDocumenter):
 
         for member in cls:
             self.add_line(f'.. py:attribute:: {cls.__name__}.{member.name}', sourcename)
-            # :annotation:, not :value: (renders "= 1") or :type: (renders "1" as a real
-            # annotation, parsed and re-rendered -- silently dropping hex formatting) --
-            # this renders raw, unparsed text, matching the enum's own repr as closely as
-            # Sphinx allows: "VERTEX : 1", not quite "VERTEX: 1" like ``<CellType.VERTEX: 1>``,
-            # since py:attribute always inserts a space before an :annotation:.
             self.add_line(
-                f'   :annotation: : {_format_value(member.value, as_hex=as_hex)}',
+                f'   :value: {_format_value(member.value, as_hex=as_hex)}',
                 sourcename,
             )
             self.add_line('', sourcename)

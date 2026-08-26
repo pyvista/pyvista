@@ -1027,7 +1027,7 @@ def test_off_screen_background_thread_rendering():
     """Off-screen plotters must work on background threads.
 
     On macOS, vtkCocoaRenderWindow creates an NSWindow by default which
-    requires the main thread. `SetConnectContextToNSView(False)` creates
+    requires the main thread. ``SetConnectContextToNSView(False)`` creates
     a standalone CGL context instead. On Linux (EGL), background thread
     rendering works out of the box.
     """

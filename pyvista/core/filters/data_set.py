@@ -3687,7 +3687,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """Generate evenly spaced streamlines on a 2D dataset.
 
         This filter only supports datasets that lie on the xy plane, i.e. ``z=0``.
-        Particular care must be used to choose a `separating_distance`
+        Particular care must be used to choose a ``separating_distance``
         that do not result in too much memory being utilized.  The
         default unit is cell length.
 
@@ -7091,10 +7091,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Notes
         -----
-        This filter uses :vtk:`vtkPackLabels` as the underlying method which
-        requires VTK version 9.3 or higher. If :vtk:`vtkPackLabels` is not
-        available, packing is done with ``NumPy`` instead which may be
-        slower. For best performance, consider upgrading VTK.
+        This filter uses :vtk:`vtkPackLabels` as the underlying method.
 
         .. versionadded:: 0.43
 
@@ -7117,8 +7114,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             saved to ``'packed_labels'``.
 
         progress_bar : bool, default: False
-            If ``True``, display a progress bar. Has no effect if VTK
-            version is lower than 9.3.
+            If ``True``, display a progress bar.
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -7174,61 +7170,30 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             raise TypeError(msg)
 
         # Do packing
-        if _vtk.has_attr('vtkPackLabels'):  # pragma: no cover
-            alg = _vtk.vtkPackLabels()
-            alg.SetInputDataObject(self)
-            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            if sort:
-                alg.SortByLabelCount()
-            alg.PassFieldDataOn()
-            alg.PassCellDataOn()
-            alg.PassPointDataOn()
-            _update_alg(alg, progress_bar=progress_bar, message='Packing labels')
-            result = _get_output(alg)
+        alg = _vtk.vtkPackLabels()
+        alg.SetInputDataObject(self)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+        if sort:
+            alg.SortByLabelCount()
+        alg.PassFieldDataOn()
+        alg.PassCellDataOn()
+        alg.PassPointDataOn()
+        _update_alg(alg, progress_bar=progress_bar, message='Packing labels')
+        result = _get_output(alg)
 
-            if output_scalars is not scalars:
-                # vtkPackLabels does not pass un-packed labels through to the
-                # output, so add it back here
-                if field == FieldAssociation.POINT:
-                    result.point_data[scalars] = self.point_data[scalars]
-                else:
-                    result.cell_data[scalars] = self.cell_data[scalars]
-            result.rename_array('PackedLabels', output_scalars)
-
-            if inplace:
-                self.copy_from(result, deep=False)
-                return self
-            return result
-
-        else:  # Use numpy
-            # Get mapping from input ID to output ID
-            arr = cast(
-                'pv.pyvista_ndarray',
-                get_array(self, scalars, preference=preference, err=True),
-            )
-            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
-            if sort:
-                label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
-            label_range_in = np.arange(0, np.max(label_numbers_in))
-            label_numbers_out = label_range_in[: len(label_numbers_in)]
-
-            # Pack/sort array
-            packed_array = np.zeros_like(arr)
-            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=False):
-                packed_array[arr == num_in] = num_out
-
-            result = self if inplace else self.copy(deep=True)
-
-            # Add output to mesh
+        if output_scalars is not scalars:
+            # vtkPackLabels does not pass un-packed labels through to the
+            # output, so add it back here
             if field == FieldAssociation.POINT:
-                result.point_data[output_scalars] = packed_array
+                result.point_data[scalars] = self.point_data[scalars]
             else:
-                result.cell_data[output_scalars] = packed_array
+                result.cell_data[scalars] = self.cell_data[scalars]
+        result.rename_array('PackedLabels', output_scalars)
 
-            # vtkPackLabels sets active scalars by default, so do the same here
-            result.set_active_scalars(output_scalars, preference=field)  # type: ignore[arg-type]
-
-            return result
+        if inplace:
+            self.copy_from(result, deep=False)
+            return self
+        return result
 
     def color_labels(  # type: ignore[misc]
         self: DataSet,
@@ -7737,7 +7702,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         .. note::
             This filter does not discard internal surfaces, due, for instance, to
             intersecting meshes. Instead, the intersection will be considered as
-            background which may produce unexpected results. See `Examples`.
+            background which may produce unexpected results. See Examples.
 
         Parameters
         ----------
@@ -8552,7 +8517,7 @@ def _swap_axes(vectors, values):
     axis is +Y, second is +X, and third is +Z. This function will swap the first two
     axes so that the order is XYZ instead of YXZ.
 
-    This function is intended to be used by `align_xyz` and is only exposed as a
+    This function is intended to be used by ``align_xyz`` and is only exposed as a
     module-level function for testing purposes.
     """
 

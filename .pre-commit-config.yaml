@@ -85,7 +85,7 @@ repos:
       - id: warn_external
         name: Convert warnings to warn_external
         language: python
-        entry: python -m libcst.tool codemod -x hooks.warnings.ConvertWarningsToExternal --no-format
+        entry: python -m hooks.warnings
         additional_dependencies: [libcst]
         files: ^pyvista/
         types: [file, python]
@@ -107,8 +107,14 @@ repos:
       - id: namespace-stdlib-imports
         name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
         language: pygrep
-        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|concurrent\.futures|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
+      - id: gallery-docstring-structure
+        name: "Gallery examples need a '.. _label:', a title/underline, and a summary sentence"
+        language: python
+        entry: python hooks/gallery_docstrings.py
+        files: ^examples/.*\.py$
+        types: [python]
       - id: no-lint-suppression-comments
         name: "No lint suppression comments (fix it, or use pyproject.toml per-file-ignores)"
         language: pygrep

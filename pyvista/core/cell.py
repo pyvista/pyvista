@@ -978,7 +978,7 @@ class CellArray(
         Parameters
         ----------
         offsets : MatrixLike[int]
-            Offsets array of length `n_cells + 1`.
+            Offsets array of length ``n_cells + 1``.
 
         connectivity : MatrixLike[int]
             Connectivity array.
@@ -1009,7 +1009,7 @@ class CellArray(
         -----
         This property does not validate that the cells are all
         actually the same size. If they're not, this property may either
-        raise a `ValueError` or silently return an incorrect array.
+        raise a ``ValueError`` or silently return an incorrect array.
 
         """
         return _get_regular_cells(self)
@@ -1032,7 +1032,7 @@ class CellArray(
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
+            Cell array of shape (n_cells, cell_size) where all cells have the same ``cell_size``.
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.

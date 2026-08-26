@@ -1093,9 +1093,9 @@ class _DataSetMapper(_BaseMapper):
         z-buffer resolution (and hence rendering problems).
 
         If not off, there are two methods to choose from.
-        `polygon_offset` uses graphics systems calls to shift polygons,
+        ``polygon_offset`` uses graphics systems calls to shift polygons,
         lines, and points from each other.
-        `shift_zbuffer` is a legacy method that is used to remap the z-buffer
+        ``shift_zbuffer`` is a legacy method that is used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
         You should only use the polygon_offset method (or none) at this point.
@@ -1104,7 +1104,7 @@ class _DataSetMapper(_BaseMapper):
         -------
         str
             Global flag to avoid z-buffer resolution.
-            Must be either `off`, `polygon_offset` or `shift_zbuffer`.
+            Must be either ``off``, ``polygon_offset`` or ``shift_zbuffer``.
 
         Examples
         --------

@@ -73,11 +73,11 @@ class DataSetAccessor(Protocol):
     --------
     Declare an accessor that satisfies the protocol.
 
-    >>> from pyvista import DataSetAccessor
+    >>> import pyvista as pv
     >>> class MyAccessor:
     ...     def __init__(self, dataset):
     ...         self._dataset = dataset
-    >>> isinstance(MyAccessor(None), DataSetAccessor)
+    >>> isinstance(MyAccessor(None), pv.DataSetAccessor)
     True
 
     """

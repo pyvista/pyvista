@@ -191,14 +191,15 @@ def test_example_anchor(case):
 
 
 # -- no "See Also" entry duplicates an example already in "Used In" -----------
-# numpydoc's own "See Also" section and the raw `.. seealso::` directive both render as
-# the same `.. admonition:: seealso` markup. A hand-written link to a gallery example
+# Both numpydoc's own "See Also" section and a raw `.. seealso::` directive get hoisted
+# to a real ``<section>``/``<h2>See Also`` heading (conf.py's promote_seealso_admonitions),
+# not left as an `.. admonition:: seealso` div. A hand-written link to a gallery example
 # there is only a problem once sphinx-autocodelink's own "Used In" section already shows
 # the same example -- at that point it's pure duplication, and unlike "Used In", it never
 # gets rechecked against what the example actually does. A "See Also" example that "Used
 # In" doesn't (yet) cover is left alone -- that's real information, not redundancy.
 
-_SEE_ALSO_RE = re.compile(r'<div class="admonition seealso">(.*?)</div>', re.DOTALL)
+_SEE_ALSO_RE = re.compile(r'<section[^>]*>\s*<h2>See Also.*?</section>', re.DOTALL)
 _BACKREFS_SECTION_RE = re.compile(
     r'<section class="sphinx-autocodelink-backrefs"[^>]*>.*?</section>', re.DOTALL
 )
@@ -206,8 +207,9 @@ _EXAMPLE_HREF_RE = re.compile(r'href="([^"]*/examples/[^"]*)"')
 
 
 def _example_hrefs(blocks: list[str]) -> set[str]:
-    """Return the basename of every example page linked from `blocks`."""
-    return {Path(href).name for block in blocks for href in _EXAMPLE_HREF_RE.findall(block)}
+    """Return the basename (fragment stripped) of every example page linked from ``blocks``."""
+    hrefs = (href for block in blocks for href in _EXAMPLE_HREF_RE.findall(block))
+    return {Path(href.split('#')[0]).name for href in hrefs}
 
 
 def test_see_also_does_not_duplicate_used_in_examples():

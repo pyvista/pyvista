@@ -1057,9 +1057,9 @@ class PolyDataFilters(DataSetFilters):
         ... }
         >>>
         >>> cpos = pv.CameraPosition(
-        ...     position=(-0.7780, -12.74, -2.019),
+        ...     position=(-0.778, -12.74, -2.019),
         ...     focal_point=(1.257, -1.716, -0.2136),
-        ...     viewup=(-0.2696, -0.1070, 0.9570),
+        ...     viewup=(-0.2696, -0.107, 0.957),
         ... )
         >>>
         >>> pv.plot_compare(
@@ -3134,7 +3134,7 @@ class PolyDataFilters(DataSetFilters):
             are consistent with this implicit definition, consider also using
             :meth:`~pyvista.PolyDataFilters.flip_faces` or re-computing normals with
             :meth:`~pyvista.PolyDataFilters.compute_normals` and enabling the
-            `flip_normals` option.
+            ``flip_normals`` option.
 
         .. versionadded:: 0.45
 

@@ -55,7 +55,10 @@ jobs:
             timeout: 16 # usually takes ~5
           - project: playwright
             timeout: 6 # usually takes ~2
-    runs-on: ubuntu-latest
+          - project: cvista
+            timeout: 80
+            runner: ubuntu-22.04
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
@@ -132,6 +135,7 @@ jobs:
             [pyvistaqt]="@larsoner"
             [geovista]="@bjlittle"
             [playwright]="@user27182"
+            [cvista]="@akaszynski"
           )
 
           # The matrix job names are just the project names (see `name:` above)

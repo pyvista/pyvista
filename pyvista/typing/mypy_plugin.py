@@ -24,7 +24,7 @@ def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
     """Duck-type type-promotion decorator used by the mypy plugin.
 
     Apply this decorator to a class to promote its type statically.
-    This tells `mypy` to treat the decorated class as though it's
+    This tells ``mypy`` to treat the decorated class as though it's
     equivalent to another class.
 
     .. note::
@@ -51,7 +51,7 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
     from mypy.plugin import Plugin
 
     def _promote_type_callback(ctx: ClassDefContext) -> None:
-        """Apply the `promote_type` decorator.
+        """Apply the ``promote_type`` decorator.
 
         The decorated class is captured and promoted to the type(s) provided
         by the decorator's argument(s).

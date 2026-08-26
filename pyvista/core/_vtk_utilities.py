@@ -12,6 +12,9 @@ from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
 from pyvista.core.errors import VTKVersionError
 
+# A wrapped VTK class' ``__module__`` is rooted at the active backend; accept both.
+_VTK_MODULE_PREFIXES = tuple({'vtkmodules.', f'{_vtk._VTK_ROOT}.'})
+
 
 class VersionInfo(NamedTuple):
     """Version information as a named tuple."""
@@ -82,6 +85,42 @@ vtk_version_info = VTKVersionInfo(*_get_vtk_version())
 _MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
 
 
+def vtk_backend() -> str:
+    """Return the name of the VTK build PyVista is running against.
+
+    ``'vtk'`` is stock VTK (the default); ``'cvista'`` is the community fork,
+    selected by installing ``pyvista[cvista]`` or setting ``PYVISTA_VTK_BACKEND``
+    before importing PyVista. Use it to branch on features a given build ships.
+    The returned name round-trips through ``PYVISTA_VTK_BACKEND``.
+
+    .. versionadded:: 0.49
+
+    Returns
+    -------
+    str
+        Name of the active backend: ``'vtk'`` for stock VTK, otherwise the
+        backend's package name (e.g. ``'cvista'``).
+
+    Examples
+    --------
+    The value depends on which build is installed, so this example is not run.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_backend()  # doctest: +SKIP
+    'vtk'
+
+    Raise a clear error for a build that cannot support a feature:
+
+    >>> if pv.vtk_backend() != 'vtk':  # doctest: +SKIP
+    ...     msg = (
+    ...         f'This feature is not supported on the {pv.vtk_backend()} backend.'
+    ...     )
+    ...     raise RuntimeError(msg)
+
+    """
+    return 'vtk' if _vtk._VTK_ROOT == 'vtkmodules' else _vtk._VTK_ROOT
+
+
 class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 
@@ -91,7 +130,7 @@ class vtkPyVistaOverride:  # noqa: N801
             for base in cls.__bases__:
                 if (
                     hasattr(base, '__module__')
-                    and base.__module__.startswith('vtkmodules.')
+                    and base.__module__.startswith(_VTK_MODULE_PREFIXES)
                     and hasattr(base, 'override')
                 ):
                     # For now, just remove any overrides for these classes
@@ -130,7 +169,7 @@ _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
 
 
 class DisableVtkSnakeCase:
-    """Base class to raise error if using VTK's `snake_case` API."""
+    """Base class to raise error if using VTK's ``snake_case`` API."""
 
     @staticmethod
     def check_attribute(target, attr):
@@ -219,7 +258,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
         return None
 
     cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
-    return cls is not None and cls.__module__.startswith('vtkmodules')
+    return cls is not None and cls.__module__.startswith(_VTK_MODULE_PREFIXES)
 
 
 # Wrap the check in an LRU cache

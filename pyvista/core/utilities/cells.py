@@ -92,7 +92,7 @@ def numpy_to_idarr(
         Converted array as a :vtk:`vtkIdTypeArray`.
     numpy.ndarray
         The input array after it has been cast to the proper dtype. Only
-        returned if `return_ind` is set to ``True``.
+        returned if ``return_ind`` is set to ``True``.
 
     Raises
     ------

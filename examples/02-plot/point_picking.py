@@ -3,8 +3,8 @@
 
 Picking points on a mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~
-This example demonstrates how to pick points on meshes using
-:func:`enable_point_picking() <pyvista.Plotter.enable_point_picking>`.
+
+Pick points on a mesh using :func:`~pyvista.Plotter.enable_point_picking`.
 
 """
 

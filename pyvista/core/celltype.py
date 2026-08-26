@@ -709,7 +709,7 @@ class _CellTypeMeta(EnumMeta):
         Returns
         -------
         dict
-            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            Dictionary with cell dimensions ``0``, ``1``, ``2``, ``3`` as keys, and frozen sets as
             values with the respective :class:`CellType` members.
 
         See Also
@@ -863,12 +863,6 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 
-        :ref:`linear_cells_example`
-            Detailed example using linear cells.
-
-        :ref:`create_polyhedron_example`
-            Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
-
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
@@ -894,10 +888,9 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     ``CellType``.
 
     >>> import numpy as np
-    >>> from pyvista import CellType
     >>> import pyvista as pv
     >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
-    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
+    >>> cell_type = np.array([pv.CellType.HEXAHEDRON], np.int8)
     >>> points = np.array(
     ...     [
     ...         [0, 0, 0],
@@ -968,19 +961,19 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             the cell.
 
         _variable_points: bool, optional
-            Override the value shown for this cell type's `Points` badge. May be
+            Override the value shown for this cell type's ``Points`` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_edges: bool, optional
-            Override the value shown for this cell type's `Edges` badge. May be
+            Override the value shown for this cell type's ``Edges`` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_faces: bool, optional
-            Override the value shown for this cell type's `Faces` badge. May be
+            Override the value shown for this cell type's ``Faces`` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.

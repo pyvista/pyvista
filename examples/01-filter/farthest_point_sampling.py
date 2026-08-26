@@ -4,8 +4,7 @@
 Farthest Point Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Subsample a point cloud so the kept points stay spaced apart instead of
-clumping in dense regions.
+Subsample a point cloud so the kept points stay spaced apart.
 
 Farthest point sampling (FPS) starts from a random seed and repeatedly picks
 the point that is farthest from the current sample set. Compared to a

@@ -4,8 +4,10 @@
 Analyze the Orientation of a Point Cloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Fit a line, plane, and oriented bounding box to a tilted point cloud with
-PyVista's principal-axis utilities.
+Fit a line, plane, and oriented bounding box to a tilted point cloud.
+
+Uses PyVista's principal-axis utilities.
+
 """
 
 import numpy as np
