@@ -290,19 +290,19 @@ class ScalarBars(_NoNewAttrMixin):
             Lookup table used for the scalar bar. Raises ValueError if more
             than one of ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
-            .. versionadded:: 0.48.0
+            .. versionadded:: 0.49
 
         cmap : str | list, optional
             Colormap used for the scalar bar. Raises ValueError if more than
             one of ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
-            .. versionadded:: 0.48.0
+            .. versionadded:: 0.49
 
         clim : sequence[float], optional
             Two item range for the scalar bar. Only used if ``cmap`` is
             specified.
 
-            .. versionadded:: 0.48.0
+            .. versionadded:: 0.49
 
         n_labels : int, default: 5
             Number of labels to use for the scalar bar.
@@ -508,16 +508,16 @@ class ScalarBars(_NoNewAttrMixin):
             )
             raise ValueError(msg)
 
+        if cmap is None and clim is not None:
+            msg = '`cmap` must be specified when `clim` is provided.'
+            raise ValueError(msg)
+
         if cmap is not None:
             lookup_table = pv.LookupTable(cmap=cmap, scalar_range=clim)
 
         if lookup_table is not None:
             mapper = pv.DataSetMapper(theme=theme)
             mapper.lookup_table = lookup_table
-
-        if cmap is None and clim is not None:
-            msg = “`cmap` must be specified when `clim` is provided.”
-            raise ValueError(msg)
 
         if interactive is None:
             interactive = theme.interactive

@@ -1058,7 +1058,7 @@ def test_plot_add_scalar_bar_cmap(verify_image_cache):
     ltable = pv.LookupTable()
     with pytest.raises(ValueError, match='Exactly one of'):
         pl.add_scalar_bar(cmap='jet', lookup_table=ltable)
-    match = “`cmap` must be specified when `clim` is provided.”
+    match = '`cmap` must be specified when `clim` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pl.add_scalar_bar(clim=(0, 1), lookup_table=ltable)
 
@@ -1082,7 +1082,7 @@ def test_plot_add_scalar_bar_lookup_table(verify_image_cache):
 
     # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
     if pv.vtk_version_info >= (9, 4, 0):
-        pl.add_scalar_bar(lookup_table=ltable)
+        assert pl.scalar_bar.lookup_table.cmap.name == ltable.cmap.name
 
     pl.show()
 
