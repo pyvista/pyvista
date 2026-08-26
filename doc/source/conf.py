@@ -628,8 +628,14 @@ autocodelink_category_labels = {
     'Documentation': 'Guides',
 }
 
+# show gallery examples last, not alphabetically by heading
+autocodelink_category_order = ['Docstring Examples', 'Documentation', 'Sphinx Gallery']
+
 # rank "Used In" entries by usage frequency
 autocodelink_sort = 'frequency'
+
+# show each entry's usage count alongside it
+autocodelink_show_usage_count = True
 
 # render gallery backreferences as thumbnail cards
 autocodelink_gallery_cards = True
