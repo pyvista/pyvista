@@ -99,7 +99,7 @@ def vtk_backend() -> str:
     -------
     str
         Name of the active backend: ``'vtk'`` for stock VTK, otherwise the
-        backend's package name (e.g. ``'cvista'``).
+        backend's package name (for example, ``'cvista'``).
 
     Examples
     --------
@@ -208,15 +208,15 @@ class DisableVtkSnakeCase:
 
         VTK-inherited names are hidden by default so PyVista objects present
         a curated public surface in data-science IDEs (Positron Variables
-        pane, VS Code Jupyter extension, ...) and in IPython / Jupyter
+        pane, VS Code Jupyter extension, and so on) and in IPython / Jupyter
         tab-completion. VTK methods remain fully callable; only their
         enumeration is suppressed.
 
-        - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, ...) are
+        - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, and so on) are
           hidden unless :attr:`pyvista.global_config.show_vtk_api` is
           ``True``.
-        - snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
-          hidden unless VTK snake_case is allowed via
+        - ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, and so on) are
+          hidden unless VTK ``snake_case`` is allowed via
           :func:`pyvista.vtk_snake_case`, since they would otherwise raise
           ``PyVistaAttributeError`` on access.
         """
@@ -238,7 +238,7 @@ class DisableVtkSnakeCase:
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
-    """Return True if the attribute is defined by a vtk class.
+    """Return True if the attribute is defined by a VTK class.
 
     Parameters
     ----------
@@ -270,11 +270,11 @@ def _is_vtk_attribute_cached(target_type, attr):
 class VTKObjectWrapperCheckSnakeCase(_vtk.VTKObjectWrapper):
     """Superclass for classes that wrap VTK objects with Python objects.
 
-    This class overrides __getattr__ to disable the VTK snake case API.
+    This class overrides ``__getattr__`` to disable the VTK snake case API.
     """
 
     def __getattr__(self, name: str):
-        """Forward unknown attribute requests to VTKArray's __getattr__."""
+        """Forward unknown attribute requests to ``VTKArray``'s ``__getattr__``."""
         if self.VTKObject is not None:
             # Check if forwarding snake_case attributes
             DisableVtkSnakeCase.check_attribute(self.VTKObject, name)

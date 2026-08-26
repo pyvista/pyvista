@@ -31,7 +31,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # %%
 # Wrap Point Arrays
 # -----------------
-# Wrap a point cloud composed of random points from numpy.
+# Wrap a point cloud composed of random points from NumPy.
 
 
 rng = np.random.default_rng(seed=0)

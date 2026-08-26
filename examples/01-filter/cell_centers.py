@@ -61,7 +61,7 @@ pl.show(cpos=cpos)
 
 
 # %%
-# Edge centers
+# Edge Centers
 # ~~~~~~~~~~~~
 # You can use :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>` in
 # combination with :func:`extract_all_edges
@@ -85,7 +85,7 @@ pl.show()
 
 
 # %%
-# Add labels to cells
+# Add Labels to Cells
 # ~~~~~~~~~~~~~~~~~~~
 # There is not a method to add labels to cells.
 # If you want to label it, you need to extract the position to label it.

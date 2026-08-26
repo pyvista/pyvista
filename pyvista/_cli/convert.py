@@ -83,7 +83,7 @@ def _convert(
     adjacent to each input; ``dir/.xyz`` writes into the given ``dir``.
 
     MultiBlock files (``.vtm``/``.vtmb``) are paired on disk with a sibling sidecar
-    directory (e.g. ``parent.vtm`` -> ``parent/parent_0.vtp``). Pass the parent
+    directory (for example, ``parent.vtm`` -> ``parent/parent_0.vtp``). Pass the parent
     ``.vtm`` directly to convert a MultiBlock as a single output; a recursive glob
     like ``**/*`` may also pick up the sidecar children. When both a parent and its
     sidecar children appear in the input list the children are dropped automatically
@@ -245,7 +245,7 @@ def _convert_many(
     skip_unreadable: bool,
     resolve_collisions: bool,
 ) -> None:
-    """Convert each input under a progress bar and report the destination directory(s)."""
+    """Convert each input under a progress bar and report the destination directories."""
     output_map, renames = _build_output_map(paths, path_out, resolve_collisions=resolve_collisions)
 
     columns = (

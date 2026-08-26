@@ -8,7 +8,7 @@ Apply a Fast Fourier Transform (FFT) to a :class:`~pyvista.ImageData`.
 
 Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
-Here, we demonstrate FFT usage by denoising an image, effectively removing any
+Here, we demonstrate FFT usage by de-noising an image, effectively removing any
 "high frequency" content by performing a `low pass filter
 <https://en.wikipedia.org/wiki/Low-pass_filter>`_.
 
@@ -42,7 +42,7 @@ image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 
 
 # %%
-# Apply FFT to the image
+# Apply FFT to the Image
 # ~~~~~~~~~~~~~~~~~~~~~~
 # FFT will be applied to the active scalars, ``'PNGImage'``, the default
 # scalars name when loading a PNG image.
@@ -55,10 +55,10 @@ fft_image.point_data
 
 
 # %%
-# Plot the FFT of the image
+# Plot the FFT of the Image
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the absolute value of the FFT of the image. This is a visualization of
-# the **frequency spectrum**, not a spatial image — each pixel represents the
+# the **frequency spectrum**, not a spatial image—each pixel represents the
 # amplitude of a frequency component, not a location in the moon landing photo.
 #
 # Note that we are effectively viewing the "frequency" of the data in this
@@ -79,7 +79,7 @@ fft_image.plot(
 # Remove the noise from the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
-# This is still done in the frequency domain — we are modifying the spectrum,
+# This is still done in the frequency domain—we are modifying the spectrum,
 # not the spatial image. First, let's reshape by the size of the image.
 #
 # Next, perform a low pass filter by removing the middle 80% of the content of
@@ -115,10 +115,10 @@ fft_image.plot(
 
 
 # %%
-# Convert to the spatial domain using reverse FFT
+# Convert to the Spatial Domain Using Reverse FFT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, convert the filtered spectrum back to the spatial domain using the
-# inverse FFT. This is the actual denoised image.
+# inverse FFT. This is the actual de-noised image.
 
 
 rfft = fft_image.rfft()

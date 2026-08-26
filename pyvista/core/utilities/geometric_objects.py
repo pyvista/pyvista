@@ -55,7 +55,7 @@ def Capsule(  # noqa: PLR0917
 
     .. warning::
        :func:`pyvista.Capsule` function rotates the capsule :class:`pyvista.PolyData`
-       in its own way. It rotates the output 90 degrees in z-axis, translates and
+       in its own way. It rotates the output 90 degrees in z-axis, translates, and
        orients the mesh to a new ``center`` and ``direction``.
 
     .. note::
@@ -455,7 +455,7 @@ def Sphere(  # noqa: PLR0917
 
             For textures of Earth such as :func:`~pyvista.examples.examples.load_globe_texture`,
             the texture's seam corresponds to 180 degrees longitude. Accordingly, it is necessary
-            to rotate the sphere 180 degrees along the polar axis, (e.g. using
+            to rotate the sphere 180 degrees along the polar axis, (for example, using
             :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
             the Prime Meridian along the positive x-axis.
 
@@ -600,7 +600,7 @@ def SolidSphere(  # noqa: PLR0917
 
     phi_resolution : int, default: 30
         Number of points in ``phi`` direction,
-        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
+        inclusive of polar axis, that is, ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -941,7 +941,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     def _index(ir: int, iphi: int, itheta: int) -> int:
         """Index for points not on axis.
 
-        Values of ir and phi here are relative to the first nonaxis values.
+        Values of ``ir`` and ``iphi`` here are relative to the first non-axis values.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1
@@ -1088,16 +1088,16 @@ def Plane(  # noqa: PLR0917
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
-        Size of the plane in the i direction.
+        Size of the plane in the ``i`` direction.
 
     j_size : float, default: 1.0
-        Size of the plane in the j direction.
+        Size of the plane in the ``j`` direction.
 
     i_resolution : int, default: 10
-        Number of points on the plane in the i direction.
+        Number of points on the plane in the ``i`` direction.
 
     j_resolution : int, default: 10
-        Number of points on the plane in the j direction.
+        Number of points on the plane in the ``j`` direction.
 
     Returns
     -------
@@ -1364,7 +1364,7 @@ def Box(
             The algorithm is not optimized when a 3 length vector is given.
 
         .. versionadded:: 0.47
-            Enable specifying different values for x, y and z directions.
+            Enable specifying different values for x, y, and z directions.
 
     quads : bool, default: True
         Flag to tell the source to generate either a quad or two
@@ -1582,7 +1582,7 @@ def Text3D(  # noqa: PLR0917
 ) -> PolyData:
     """Create 3D text from a string.
 
-    The text may be configured to have a specified width, height or depth.
+    The text may be configured to have a specified width, height, or depth.
 
     Parameters
     ----------
@@ -1818,7 +1818,7 @@ def CircularArc(  # noqa: PLR0917
         ``pointa`` and ``pointb``.
 
         By setting this to ``True``, the longest angular sector is
-        used instead (i.e. the negative coterminal angle to the
+        used instead (that is, the negative coterminal angle to the
         shortest one).
 
     Returns

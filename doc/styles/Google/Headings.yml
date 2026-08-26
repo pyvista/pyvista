@@ -4,23 +4,25 @@ link: "https://developers.google.com/style/capitalization#capitalization-in-titl
 level: warning
 scope: heading
 match: $title
+# Don't auto-exempt every vocab word (PyVista's Vocab is spelling-only content
+# like widget/spline/arrays), which forces a single casing everywhere and
+# breaks normal title-case on headings that use one of those words -- keep
+# the curated list below instead.
+vocab: false
 indicators:
   - ":"
 exceptions:
-  - gRPC
-  - from
+  - glTF
   - a
   - PyVista
   - with
-  - within
-  - your
-  - own
+  - from
   - is
   - are
+  - like
+  - that
   - VTK
   - PointSet
-  - HTML
   - to
   - for
-  - through
   - pytest

@@ -7,24 +7,24 @@ example dataset.
 Many datasets have a straightforward input to output mapping:
     file -> read -> dataset
 
-However, some file formats require multiple input files for reading (e.g.
+However, some file formats require multiple input files for reading (for example
 separate data and header files):
     (file1, file1) -> read -> dataset
 
 Or, a dataset may be combination of two separate datasets:
-    file1 -> read -> dataset1 ┬─> combined_dataset
+    file1 -> read -> dataset1 ┬─> ``combined_dataset``
     file2 -> read -> dataset2 ┘
 
-In some cases, the input may be a folder instead of a file (e.g. DICOM):
+In some cases, the input may be a folder instead of a file (for example, DICOM):
     folder -> read -> dataset
 
 In addition, there may be a need to customize the reading function to read
-files with specific options enabled (e.g. set a time value), or perform
-post-read processing to modify the dataset (e.g. set active scalars).
+files with specific options enabled (for example, set a time value), or perform
+post-read processing to modify the dataset (for example, set active scalars).
 
 This module aims to serve these use cases and provide a flexible way of
 downloading, reading, and processing files with a generic mapping:
-    file or files or folder -> fully processed dataset(s) in any form
+    file or files or folder -> fully processed datasets in any form
 
 """
 
@@ -92,7 +92,7 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
     @property
     @abstractmethod
     def path(self) -> _FilePropStrType_co:
-        """Return the path(s) of all files."""
+        """Return the paths of all files."""
 
     @property
     def num_files(self) -> int:
@@ -105,18 +105,18 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
 
     @property
     def unique_extension(self) -> str | tuple[str, ...]:
-        """Return the unique file extension(s) from all files."""
+        """Return the unique file extensions from all files."""
         return _get_unique_extension(self.path)
 
     @property
     @abstractmethod
     def _filesize_bytes(self) -> _FilePropIntType_co:
-        """Return the file size(s) of all files in bytes."""
+        """Return the file sizes of all files in bytes."""
 
     @property
     @abstractmethod
     def _filesize_format(self) -> _FilePropStrType_co:
-        """Return the formatted size of all file(s)."""
+        """Return the formatted size of all files."""
 
     @property
     @abstractmethod
@@ -133,13 +133,13 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
     def _reader(
         self,
     ) -> pv.BaseReader[Any] | tuple[pv.BaseReader[Any] | None, ...] | None:
-        """Return the base file reader(s) used to read the files."""
+        """Return the base file readers used to read the files."""
 
     @property
     def unique_reader_type(
         self,
     ) -> type[pv.BaseReader[Any]] | tuple[type[pv.BaseReader[Any]], ...] | None:
-        """Return unique reader type(s) from all file readers."""
+        """Return unique reader types from all file readers."""
         return _get_unique_reader_type(self._reader)
 
 
@@ -155,7 +155,7 @@ class _MultiFilePropsProtocol(
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType_co]):
-    """Class which downloads file(s) from a source."""
+    """Class which downloads files from a source."""
 
     @property
     @abstractmethod
@@ -220,7 +220,7 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
     @abstractmethod
     def download(self) -> _FilePropStrType_co:
-        """Download and return the file path(s)."""
+        """Download and return the file paths."""
 
 
 class _DatasetLoader:
@@ -233,7 +233,7 @@ class _DatasetLoader:
     @property
     @final
     def dataset(self) -> DatasetObject | None:
-        """Return the loaded dataset object(s)."""
+        """Return the loaded dataset objects."""
         return self._dataset
 
     def load(self, *args: Any, **kwargs: Any) -> DatasetObject:
@@ -259,18 +259,18 @@ class _DatasetLoader:
     @property
     @final
     def dataset_iterable(self) -> tuple[DatasetObject, ...]:
-        """Return a tuple of all dataset object(s), including any nested objects.
+        """Return a tuple of all dataset objects, including any nested objects.
 
         If the dataset is a MultiBlock, the MultiBlock itself is also returned as the first
         item. Any nested MultiBlocks are not included, only their datasets.
 
-        E.g. for a composite dataset:
-            MultiBlock -> (MultiBlock, Block0, Block1, ...)
+        For example, for a composite dataset:
+            MultiBlock -> (MultiBlock, Block0, Block1, and so on)
         """
         dataset = self.dataset
 
         def _flat(obj: Any) -> list[Any]:
-            """Recursively flatten a possibly-nested sequence into a flat list."""
+            """Recursively flatten a possibly nested sequence into a flat list."""
             if isinstance(obj, Sequence):
                 output_list: list[Any] = []
                 for item in obj:
@@ -295,7 +295,7 @@ class _DatasetLoader:
     def unique_dataset_type(
         self,
     ) -> DatasetType | tuple[DatasetType, ...] | None:
-        """Return unique dataset type(s) from all datasets."""
+        """Return unique dataset types from all datasets."""
         return _get_unique_dataset_type(self.dataset_iterable)
 
     @property
@@ -370,7 +370,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
     read_func
         Specify the function used to read the file. Defaults to :func:`pyvista.read`.
         This can be used for customizing the reader's properties, or using another
-        read function (e.g. :func:`pyvista.read_texture` for textures). The function
+        read function (for example, :func:`pyvista.read_texture` for textures). The function
         must have the file path as the first argument and should return a dataset.
         If default arguments are required by your desired read function, consider
         using :class:`functools.partial` to pre-set the arguments before passing it
@@ -451,7 +451,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
 class _DownloadableFile(_SingleFile, _Downloadable[str]):
     """Wrap a single file which must be downloaded.
 
-    If downloading a file from an archive, set the filepath of the zip as
+    If downloading a file from an archive, set the file path of the zip as
     ``path`` and set ``target_file`` as the file to extract. If the path is
     a zip file and no target file is specified, the entire archive is downloaded
     and extracted and the root directory of the path is returned.
@@ -642,14 +642,14 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def _filesize_bytes(self) -> tuple[int, ...]:
-        """Return the file size(s) of all files in bytes."""
+        """Return the file sizes of all files in bytes."""
         return tuple(
             _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects]),
         )
 
     @property
     def _filesize_format(self) -> tuple[str, ...]:
-        """Return the formatted size of all file(s)."""
+        """Return the formatted size of all files."""
         return tuple(_format_file_size(size) for size in self._filesize_bytes)
 
     @property
@@ -666,7 +666,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     def _reader(
         self,
     ) -> pv.BaseReader[Any] | tuple[pv.BaseReader[Any] | None, ...] | None:
-        """Return the base file reader(s) used to read the files."""
+        """Return the base file readers used to read the files."""
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         # Flatten one level: a file object may itself be a multi-file loader
@@ -744,11 +744,11 @@ def _download_dataset(
     Parameters
     ----------
     dataset_loader
-        SingleFile or MultiFile object(s) of the dataset(s) to download or load.
+        SingleFile or MultiFile objects of the datasets to download or load.
 
     load
         Read and load the file after downloading. When ``False``,
-        return the path or paths to the example's file(s).
+        return the path or paths to the example's files.
 
     metafiles
         When ``load`` is ``False``, set this value to ``True`` to
@@ -762,7 +762,7 @@ def _download_dataset(
     Returns
     -------
     Any
-        Loaded dataset or path(s) to the example's files depending on the ``load``
+        Loaded dataset or paths to the example's files depending on the ``load``
         parameter. Dataset may be a texture, mesh, multiblock, array, tuple of meshes,
         or any other output loaded by the example.
 
@@ -876,7 +876,7 @@ def _get_file_or_folder_size(filepath: str) -> int:
 
 
 def _format_file_size(size: int) -> str:
-    """Format a size in bytes as a human-readable string (e.g. ``'1.2 MB'``)."""
+    """Format a size in bytes as a human-readable string (for example, ``'1.2 MB'``)."""
     size_flt = float(size)
     for unit in ('B', 'KB', 'MB'):
         if round(size_flt * 10) / 10 < 1000.0:

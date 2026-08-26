@@ -1,4 +1,4 @@
-"""Deprecated shim — use :mod:`trame_pyvista` instead.
+"""Deprecated shim—use :mod:`trame_pyvista` instead.
 
 The Trame integration moved to the standalone ``trame-pyvista`` package
 in PyVista 0.49. Importing from ``pyvista.trame`` is deprecated and

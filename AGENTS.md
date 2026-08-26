@@ -9,14 +9,15 @@ guides below cover _changing_ it.
 
 Open the one that matches the task.
 
-| Task                                             | Guide                                     |
-| ------------------------------------------------ | ----------------------------------------- |
-| Writing or changing code here                    | `.claude/skills/pyvista-dev/SKILL.md`     |
-| Wrapping a VTK class, adding or editing a filter | `.claude/skills/pyvista-vtk/SKILL.md`     |
-| Any plotting test, baseline image, or image flag | `.claude/skills/pyvista-testing/SKILL.md` |
-| Reviewing a branch, diff, or pull request        | `.claude/skills/pyvista-review/SKILL.md`  |
-| Writing the pull request title and body          | `.claude/skills/pyvista-pr/SKILL.md`      |
-| Deprecating or renaming anything public          | `.claude/skills/pyvista-vtk/SKILL.md`     |
+| Task                                                                      | Guide                                        |
+| ------------------------------------------------------------------------- | -------------------------------------------- |
+| Writing or changing code here                                             | `.claude/skills/pyvista-dev/SKILL.md`        |
+| Wrapping a VTK class, adding or editing a filter                          | `.claude/skills/pyvista-vtk/SKILL.md`        |
+| Any plotting test, baseline image, or image flag                          | `.claude/skills/pyvista-testing/SKILL.md`    |
+| Reviewing a branch, diff, or pull request                                 | `.claude/skills/pyvista-review/SKILL.md`     |
+| Writing the pull request title and body                                   | `.claude/skills/pyvista-pr/SKILL.md`         |
+| Deprecating or renaming anything public                                   | `.claude/skills/pyvista-vtk/SKILL.md`        |
+| Editing the Vale setup, or a prose pass across docstrings/examples/`.rst` | `.claude/skills/pyvista-docs-style/SKILL.md` |
 
 They live under `.claude/skills/` so Claude Code loads them on demand by name. Nothing in
 them is Claude-specific.

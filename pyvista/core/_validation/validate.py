@@ -6,7 +6,7 @@ A ``validate`` function typically:
 
 * Uses :py:mod:`~pyvista.core._validation.check` functions to
   check the type and/or value of input arguments.
-* Applies (optional) constraints, e.g. input or output must have a
+* Applies (optional) constraints -- for example input or output must have a
   specific length, shape, type, data-type, etc.
 * Accepts many different input types or values and standardizes the
   output as a single representation with known properties.
@@ -115,7 +115,7 @@ def validate_array(
     arr : array_like
         Array to be validated, in any form that can be converted to
         a :class:`np.ndarray`. This includes lists, lists of tuples, tuples,
-        tuples of tuples, tuples of lists and ndarrays.
+        tuples of tuples, tuples of lists and ``ndarrays``.
 
     must_have_shape : int | tuple[int, ...] | list[int, tuple[int, ...]], optional
         :func:`Check <pyvista.core._validation.check.check_shape>`
@@ -123,22 +123,22 @@ def validate_array(
         or a ``list`` of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of ``-1`` for any
         dimension where its size is allowed to vary. Use ``()`` to allow
-        scalar values (i.e. 0-dimensional). Set to ``None`` if the array
+        scalar values (that is, 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
 
     must_have_ndim : int | VectorLike[int], optional
         :func:`Check <pyvista.core._validation.check.check_ndim>` if
-        the array has the specified number of dimension(s). Specify a
+        the array has the specified number of dimensions. Specify a
         single dimension or a sequence of allowable dimensions. If a
         sequence, the array must have at least one of the specified
         number of dimensions.
 
     must_have_dtype : DTypeLike | list[DTypeLike, ...], optional
         :func:`Check <pyvista.core._validation.check.check_subdtype>`
-        if the array's data-type has the given dtype. Specify a
+        if the array's data-type has the given ``dtype``. Specify a
         :class:`np.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a ``list``, the array's data
-        must be a subtype of at least one of the specified dtypes.
+        must be a subtype of at least one of the specified ``dtypes``.
 
     must_have_length : int | VectorLike[int], optional
         :func:`Check <pyvista.core._validation.check.check_length>`
@@ -167,17 +167,17 @@ def validate_array(
 
     must_be_finite : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_finite>`
-        if all elements of the array are finite, i.e. not ``infinity``
+        if all elements of the array are finite, that is, not ``infinity``
         and not Not a Number (``NaN``).
 
     must_be_real : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_real>`
-        if the array has real numbers, i.e. its data type is integer or
+        if the array has real numbers, that is, its data type is integer or
         floating.
 
     must_be_integer : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_integer>`
-        if the array's values are integer-like (i.e. that
+        if the array's values are integer-like (that is, that
         ``np.all(arr, np.floor(arr))``).
 
     must_be_sorted : bool | dict, default: False
@@ -198,7 +198,7 @@ def validate_array(
         if the array's values are all within a specific range. Range
         must be array-like with two elements specifying the minimum and
         maximum data values allowed, respectively. By default, the range
-        endpoints are inclusive, i.e. values must be >= minimum and <=
+        endpoints are inclusive, that is, values must be >= minimum and <=
         maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
         to further restrict the allowable range.
 
@@ -213,12 +213,12 @@ def validate_array(
 
     strict_lower_bound : bool, default: False
         Enforce a strict lower bound for the range specified by
-        ``must_be_in_range``, i.e. array values must be strictly greater
+        ``must_be_in_range``, that is, array values must be strictly greater
         than the specified minimum.
 
     strict_upper_bound : bool, default: False
         Enforce a strict upper bound for the range specified by
-        ``must_be_in_range``, i.e. array values must be strictly less
+        ``must_be_in_range``, that is, array values must be strictly less
         than the specified maximum.
 
     reshape_to : int | tuple[int, ...], optional
@@ -234,7 +234,7 @@ def validate_array(
 
     dtype_out : DTypeLike, optional
         Set the data-type of the returned array. By default, the
-        dtype is inferred from the input data.
+        ``dtype`` is inferred from the input data.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
@@ -251,12 +251,12 @@ def validate_array(
 
     to_list : bool, default: False
         Return the validated array as a ``list`` or nested ``list``. Scalar
-        values are always returned as a ``Number``  (i.e. ``int`` or ``float``).
+        values are always returned as a ``Number``  (that is, ``int`` or ``float``).
         Has no effect if ``to_tuple=True``.
 
     to_tuple : bool, default: False
         Return the validated array as a ``tuple`` or nested ``tuple``. Scalar
-        values are always returned as a ``Number``  (i.e. ``int`` or ``float``).
+        values are always returned as a ``Number``  (that is, ``int`` or ``float``).
 
     name : str, default: "Array"
         Variable name to use in the error messages if any of the
@@ -270,12 +270,12 @@ def validate_array(
         * an instance of ``np.ndarray`` (default), or
         * a nested ``list`` (if ``to_list=True``), or
         * a nested ``tuple`` (if ``to_tuple=True``), or
-        * a ``Number`` (i.e. ``int`` or ``float``) if the input is a scalar.
+        * a ``Number`` (that is, ``int`` or ``float``) if the input is a scalar.
 
     Examples
     --------
     Validate a one-dimensional array has at least length two, is
-    monotonically increasing (i.e. has strict ascending order), and
+    monotonically increasing (that is, has strict ascending order), and
     is within some range.
 
     >>> from pyvista import _validation
@@ -586,7 +586,7 @@ def validate_rotation(
 def validate_transform4x4(
     transform: TransformLike, /, *, must_be_finite: bool = True, name: str = 'Transform'
 ) -> NumpyArray[float]:
-    """Validate transform-like input as a 4x4 ndarray.
+    """Validate transform-like input as a 4x4 ``ndarray``.
 
     Parameters
     ----------
@@ -597,7 +597,7 @@ def validate_transform4x4(
 
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
-        if all elements of the array are finite, i.e. not ``infinity``
+        if all elements of the array are finite, that is, not ``infinity``
         and not Not a Number (``NaN``).
 
     name : str, default: "Transform"
@@ -656,7 +656,7 @@ def validate_transform4x4(
 def validate_transform3x3(
     transform: TransformLike, /, *, must_be_finite: bool = True, name: str = 'Transform'
 ):
-    """Validate transform-like input as a 3x3 ndarray.
+    """Validate transform-like input as a 3x3 ``ndarray``.
 
     Parameters
     ----------
@@ -672,7 +672,7 @@ def validate_transform3x3(
 
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
-        if all elements of the array are finite, i.e. not ``infinity``
+        if all elements of the array are finite, that is, not ``infinity``
         and not Not a Number (``NaN``).
 
     name : str, default: "Transform"

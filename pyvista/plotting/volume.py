@@ -20,7 +20,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
     """Wrapper class for VTK volume.
 
     This class represents a volume in a rendered scene. It inherits
-    functions related to the volume's position, orientation and origin
+    functions related to the volume's position, orientation, and origin
     from Prop3D.
 
     """

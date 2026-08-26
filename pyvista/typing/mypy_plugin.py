@@ -33,7 +33,7 @@ def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
     Parameters
     ----------
     types : type
-        Type(s) to promote the class to. The types are only used statically by mypy.
+        Types to promote the class to. The types are only used statically by mypy.
 
     Returns
     -------
@@ -53,8 +53,8 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
     def _promote_type_callback(ctx: ClassDefContext) -> None:
         """Apply the ``promote_type`` decorator.
 
-        The decorated class is captured and promoted to the type(s) provided
-        by the decorator's argument(s).
+        The decorated class is captured and promoted to the types provided
+        by the decorator's arguments.
         """
         for decorator in ctx.cls.decorators:
             if isinstance(decorator, CallExpr):

@@ -1,4 +1,4 @@
-"""`pyvista compare file1.vtp file2.vtp --link=False ...` CLI."""
+"""`pyvista compare file1.vtp file2.vtp --link=False` CLI (see below for more flags)."""
 
 from __future__ import annotations
 
@@ -237,7 +237,7 @@ def _compare(
         Parameter(
             consume_multiple=True,
             help=(
-                'Path(s) to compare. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
+                'Paths to compare. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
                 'Each match must be readable with ``pyvista.read``. At least two paths are '
                 'needed, and each is rendered in its own subplot.'
             ),

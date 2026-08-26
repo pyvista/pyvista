@@ -112,7 +112,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
-    """Decorate a class, overriding __new__.
+    """Decorate a class, overriding ``__new__``.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
     but does not require an abstract method.
@@ -461,7 +461,7 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
 class _DataObjectMeta(_AutoFreezeABCMeta):
     """Metaclass for ``DataObject`` that resolves accessor entry-points on class access.
 
-    Without this hook, class-level attribute access (e.g. ``pv.PolyData.manifold``)
+    Without this hook, class-level attribute access (for example, ``pv.PolyData.manifold``)
     bypasses lazy loading of ``pyvista.accessors`` entry-point plugins and raises
     ``AttributeError`` until the plugin happens to be imported some other way.
     Instance access is handled by ``DataObject.__getattr__``.
@@ -479,7 +479,7 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
 
 
 def _hasattr_static(obj: Any, attr: str) -> bool:
-    """Replicate behavior of hasattr using static lookup."""
+    """Replicate behavior of ``hasattr`` using static lookup."""
     try:
         inspect.getattr_static(obj, attr)
     except AttributeError:
@@ -488,7 +488,7 @@ def _hasattr_static(obj: Any, attr: str) -> bool:
 
 
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
-    """Mixin to prevent adding new attributes.
+    """``Mixin`` to prevent adding new attributes.
 
     This class is mainly used to prevent users from setting the wrong attributes on an
     object. It freezes the attributes when called and prevents setting new ones via
@@ -606,7 +606,7 @@ def _reciprocal(
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
     value_if_division_by_zero : float
-        Default value given to values less than ``tol``, i.e. the value given if division
+        Default value given to values less than ``tol``, that is, the value given if division
         by zero is detected.
 
     Returns
@@ -626,7 +626,7 @@ def _reciprocal(
 class _classproperty(property):  # noqa: N801
     """Read-only class property decorator.
 
-    Use this decaorator as an alternative to chaining `@classmethod`
+    Use this decorator as an alternative to chaining `@classmethod`
     and `@property` which is deprecated.
 
     See:

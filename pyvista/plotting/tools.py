@@ -767,7 +767,7 @@ def parse_font_family(font_family: str) -> int:
     Raises
     ------
     ValueError
-        If the font_family is not one of the defined font names in the ``FONTS``
+        If the ``font_family`` is not one of the defined font names in the ``FONTS``
         enum class.
 
     """

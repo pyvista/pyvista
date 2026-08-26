@@ -209,7 +209,7 @@ def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], Nu
         ``[x, y, z]`` vector that points in the viewing direction.
 
     viewup : numpy.ndarray
-        ``[x, y, z]`` vector that points to the viewup direction.
+        ``[x, y, z]`` vector that points to the ``viewup`` direction.
 
     """
     if view == 'xy':

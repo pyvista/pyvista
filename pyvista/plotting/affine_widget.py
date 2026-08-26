@@ -23,7 +23,7 @@ GLOBAL_AXES = np.eye(3)
 def _validate_axes(axes):
     """Validate and normalize input axes.
 
-    Axes are expected to follow the right-hand rule (e.g. third axis is the
+    Axes are expected to follow the right-hand rule (for example, third axis is the
     cross product of the first two.
 
     Parameters
@@ -138,7 +138,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         modifying either the theme with ``pyvista.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
     axes : numpy.ndarray, optional
-        ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default this
+        ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default this
         matches the default coordinate system.
     release_callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the

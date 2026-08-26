@@ -62,7 +62,7 @@ pl.show()
 
 # %%
 # Now, actually generate the streamlines. Since the original inlet contains
-# 1000 points, let's reduce this to around 200 points by using every 5th point.
+# 1000 points, let's reduce this to around 200 points by using every fifth point.
 #
 # .. note::
 #    If we wanted a uniform subsampling of the inlet, we could use
