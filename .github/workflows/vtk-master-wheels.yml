@@ -606,7 +606,6 @@ jobs:
               [ -f "$summary_file" ] || continue
               name="$(cat "$label_file")"
               summary="$(cat "$summary_file")"
-              [ -n "$summary" ] || summary="(no output captured)"
               summary_names+=("$name")
               summary_texts+=("$summary")
             done < <(find failure-summaries -name job_label.txt | sort)
@@ -657,10 +656,17 @@ jobs:
                 jobs_list+="  ⚠️ Same failure signature as the [previous report](${prev_url})."$'\n'
               fi
 
+              # Counted here rather than trusting pytest's own "N failed" line, which isn't in
+              # $summary any more (and wasn't reliable for repeat-detection either -- see the
+              # FAILED/ERROR-only filtering above).
+              n_failures="$(printf '%s\n' "$summary" | grep -c .)"
+              failure_word="failures"
+              [ "$n_failures" -eq 1 ] && failure_word="failure"
+
               # Indented 2 spaces to stay nested inside this list item on GitHub.
               jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
               jobs_list+="  <details>"$'\n'
-              jobs_list+="  <summary>❌ failure output</summary>"$'\n\n'
+              jobs_list+="  <summary>❌ ${n_failures} ${failure_word}</summary>"$'\n\n'
               jobs_list+='  ```text'$'\n'
               jobs_list+="$(printf '%s\n' "$summary" | sed 's/^/  /')"$'\n'
               jobs_list+='  ```'$'\n\n'
