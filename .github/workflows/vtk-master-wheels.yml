@@ -342,10 +342,14 @@ jobs:
         run: |
           echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
           : > failure_summary.txt
-          # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the
-          # ANSI escapes so the summary reads cleanly inside a markdown code block. Truncate
-          # by bytes from the end (to keep the actually-relevant tail of the log), but if that
-          # truncated, drop its first line too: a byte cut can land mid-line/mid-word.
+          # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the ANSI
+          # escapes first (before the SKIPPED/XFAIL filter below, since a colored line doesn't
+          # literally start with "XFAIL"/"SKIPPED" -- it starts with the escape sequence) so the
+          # summary reads cleanly inside a markdown code block. Drop SKIPPED/XFAIL lines from the
+          # short summary (pyproject.toml's `-ra` addopt puts them there too, alongside
+          # FAILED/ERROR) -- expected, not diagnostic of the failure. Truncate by bytes from the
+          # end (to keep the actually-relevant tail of the log), but if that truncated, drop its
+          # first line too: a byte cut can land mid-line/mid-word.
           for log in core-test.log plotting-test.log; do
             [ -s "$log" ] || continue
             start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
@@ -355,6 +359,11 @@ jobs:
               segment="$(cat "$log")"
             fi
             segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+            if [ -n "$start_line" ]; then
+              # grep -v exits 1 if every line matched (nothing left, e.g. a summary with no
+              # FAILED/ERROR entries); that's a legitimate empty result here, not an error.
+              segment="$(printf '%s' "$segment" | grep -Ev '^(SKIPPED|XFAIL) ' || true)"
+            fi
             size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
             if [ "$size" -gt 4000 ]; then
               printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
@@ -455,10 +464,14 @@ jobs:
         run: |
           echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
           : > failure_summary.txt
-          # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the
-          # ANSI escapes so the summary reads cleanly inside a markdown code block. Truncate
-          # by bytes from the end (to keep the actually-relevant tail of the log), but if that
-          # truncated, drop its first line too: a byte cut can land mid-line/mid-word.
+          # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the ANSI
+          # escapes first (before the SKIPPED/XFAIL filter below, since a colored line doesn't
+          # literally start with "XFAIL"/"SKIPPED" -- it starts with the escape sequence) so the
+          # summary reads cleanly inside a markdown code block. Drop SKIPPED/XFAIL lines from the
+          # short summary (pyproject.toml's `-ra` addopt puts them there too, alongside
+          # FAILED/ERROR) -- expected, not diagnostic of the failure. Truncate by bytes from the
+          # end (to keep the actually-relevant tail of the log), but if that truncated, drop its
+          # first line too: a byte cut can land mid-line/mid-word.
           for log in core-test.log plotting-test.log; do
             [ -s "$log" ] || continue
             start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
@@ -468,6 +481,11 @@ jobs:
               segment="$(cat "$log")"
             fi
             segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+            if [ -n "$start_line" ]; then
+              # grep -v exits 1 if every line matched (nothing left, e.g. a summary with no
+              # FAILED/ERROR entries); that's a legitimate empty result here, not an error.
+              segment="$(printf '%s' "$segment" | grep -Ev '^(SKIPPED|XFAIL) ' || true)"
+            fi
             size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
             if [ "$size" -gt 4000 ]; then
               printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
@@ -583,10 +601,14 @@ jobs:
         run: |
           echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
           : > failure_summary.txt
-          # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the
-          # ANSI escapes so the summary reads cleanly inside a markdown code block. Truncate
-          # by bytes from the end (to keep the actually-relevant tail of the log), but if that
-          # truncated, drop its first line too: a byte cut can land mid-line/mid-word.
+          # tox/pytest force-colorize (TOX_COLORED=yes) even when piped to `tee`; strip the ANSI
+          # escapes first (before the SKIPPED/XFAIL filter below, since a colored line doesn't
+          # literally start with "XFAIL"/"SKIPPED" -- it starts with the escape sequence) so the
+          # summary reads cleanly inside a markdown code block. Drop SKIPPED/XFAIL lines from the
+          # short summary (pyproject.toml's `-ra` addopt puts them there too, alongside
+          # FAILED/ERROR) -- expected, not diagnostic of the failure. Truncate by bytes from the
+          # end (to keep the actually-relevant tail of the log), but if that truncated, drop its
+          # first line too: a byte cut can land mid-line/mid-word.
           for log in core-test.log plotting-test.log; do
             [ -s "$log" ] || continue
             start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
@@ -596,6 +618,11 @@ jobs:
               segment="$(cat "$log")"
             fi
             segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+            if [ -n "$start_line" ]; then
+              # grep -v exits 1 if every line matched (nothing left, e.g. a summary with no
+              # FAILED/ERROR entries); that's a legitimate empty result here, not an error.
+              segment="$(printf '%s' "$segment" | grep -Ev '^(SKIPPED|XFAIL) ' || true)"
+            fi
             size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
             if [ "$size" -gt 4000 ]; then
               printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
