@@ -582,8 +582,7 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods. Only
-    # resolves an example's own top-level (module) scope; see sphinx-autocodelink's README.
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
     'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
