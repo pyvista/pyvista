@@ -11,18 +11,25 @@ match: $title
 vocab: false
 indicators:
   - ":"
+# Vale matches an exception as an unanchored pattern, so a bare `a` exempts
+# every word containing the letter -- `calibration`, `camera` -- and silently
+# turns this rule off for most headings. Anchor every entry to the start of a
+# word so each one exempts only itself; the trailing `\b` still allows a
+# possessive or an attached comma (`pytest's`, `glTF.`).
 exceptions:
-  - glTF
-  - a
-  - PyVista
-  - with
-  - from
-  - is
-  - are
-  - like
-  - that
-  - VTK
-  - PointSet
-  - to
-  - for
-  - pytest
+  - ^glTF\b
+  - ^a\b
+  - ^PyVista\b
+  - ^with\b
+  - ^from\b
+  - ^is\b
+  - ^are\b
+  - ^like\b
+  - ^that\b
+  - ^VTK\b
+  - ^PointSet\b
+  - ^to\b
+  - ^for\b
+  - ^pytest\b
+  # Headings in `doc/source/api/core/typing.rst` are the aliases themselves.
+  - ^pyvista\.\w+\b
