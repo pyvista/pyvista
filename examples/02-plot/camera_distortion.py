@@ -9,7 +9,7 @@ Render a scene through a lens that does not project straight lines to straight l
 Uses :func:`enable_camera_distortion <pyvista.Plotter.enable_camera_distortion>`.
 
 A real camera is not a pinhole. Its lens bends rays away from the ideal
-projection, and photogrammetry, calibration and augmented-reality work all
+projection, and photogrammetry, calibration, and augmented-reality work all
 describe that departure with the Brown-Conrady model: two radial coefficients
 ``k1`` and ``k2``, and two tangential ones ``p1`` and ``p2``. Those are the
 same four numbers ``cv2.calibrateCamera`` returns, so a rendered view can be
