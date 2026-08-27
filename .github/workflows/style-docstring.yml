@@ -97,12 +97,16 @@ jobs:
       - name: Extract docstring RST for Vale
         run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
 
-      # this is equivalent to
-      # vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale/examples .vale/pyvista tests/doc/vale/headings.rst
+      # `doc/run_vale.py` owns the path list; Vale runs here through the action
+      # instead, so that alerts appear inline on the pull request.
+      - name: Collect the paths Vale checks
+        id: vale-paths
+        run: echo "files=$(python3 doc/run_vale.py --print-files)" >> "$GITHUB_OUTPUT"
+
       - name: "Run Vale"
         uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
-          files: '["doc", "pyvista", "examples", "CONTRIBUTING.rst", ".vale/examples", ".vale/pyvista", "tests/doc/vale/headings.rst"]'
+          files: ${{ steps.vale-paths.outputs.files }}
           config: doc/.vale.ini
           reporter: github-pr-check
           filter_mode: nofilter

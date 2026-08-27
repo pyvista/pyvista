@@ -468,15 +468,14 @@ GitHub Actions, and you can run Vale locally with:
 .. code-block:: bash
 
    pip install vale 'docutils<0.22' 'sphinx-gallery<0.22.0'
-   python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
-   python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
-   vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale/examples .vale/pyvista
+   python3 doc/run_vale.py
 
-If you are on Linux or macOS, you can run:
+If you are on Linux or macOS, ``make docstyle`` runs the same script.
 
-.. code-block:: bash
-
-   make docstyle
+``doc/run_vale.py`` extracts the ``.rst`` files described below, runs Vale over
+every path CI checks, and then confirms that the rule still rejects the
+headings in ``tests/doc/vale/headings_invalid.rst``. The path list lives in
+that script alone; the workflow reads it with ``--print-files``.
 
 Vale cannot parse prose written inside a Python file directly (for example,
 the ``# %%`` cell headings in a gallery example, or a docstring's
