@@ -1863,8 +1863,6 @@ class BasePlotter(_BoundsSizeMixin):
             >>> pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
             >>> pl.show()
 
-        See :ref:`camera_distortion_example` for the whole model in one page.
-
         """
         self._camera_distortion_coefficients = _validate_distortion_coefficients(coefficients)
         if not self._camera_distortion_observers:
