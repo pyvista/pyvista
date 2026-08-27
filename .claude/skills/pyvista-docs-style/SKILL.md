@@ -13,10 +13,13 @@ skill is the operational and agent-facing half, not a second copy of the rules.
 Run Vale locally the same way CI does, from the repository root:
 
 ```bash
-python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
-python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
-vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale/examples .vale/pyvista
+python3 doc/run_vale.py
 ```
+
+That script holds the list of paths Vale checks, extracts the `.rst` files it needs, and
+finishes by confirming the heading rule still rejects the fixture in
+`tests/doc/vale/headings_invalid.rst`. Do not spell the `vale` invocation out by hand --
+four copies of it had already drifted apart once.
 
 Vale never sees a `.py` file directly. It sees the `.rst` files the extraction script
 generates, with the same line numbers as the source (`doc/extract_rst_from_py_for_vale.py:31:1`)

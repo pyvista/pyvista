@@ -76,7 +76,7 @@ fft_image.plot(
 
 
 # %%
-# Remove the noise from the ``fft_image``
+# Remove the Noise From the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
 # This is still done in the frequency domain—we are modifying the spectrum,

@@ -1,7 +1,7 @@
 """
 .. _plotting_algorithms_example:
 
-Plotting with VTK Algorithms
+Plotting With VTK Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a :vtk:`vtkAlgorithm` to the ``Plotter`` for dynamic visualizations.

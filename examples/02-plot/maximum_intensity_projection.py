@@ -67,7 +67,7 @@ pl.show()
 
 
 # %%
-# MIP with Circle Point Sprites
+# MIP With Circle Point Sprites
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MIP modifies the vertex shader while point sprites modify the
 # fragment shader, so both features compose cleanly on the same actor.

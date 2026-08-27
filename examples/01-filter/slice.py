@@ -178,7 +178,7 @@ pl.add_mesh(model.outline())
 pl.show()
 
 # %%
-# Slice ImageData with Indexing
+# Slice ImageData With Indexing
 # +++++++++++++++++++++++++++++
 # Most slicing filters return :class:`~pyvista.PolyData` or
 # :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs, however,

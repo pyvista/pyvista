@@ -52,7 +52,7 @@ print(report.is_valid)
 plot_cell(triangles, 'xy')
 
 # %%
-# Cells with Inverted Faces
+# Cells With Inverted Faces
 # -------------------------
 # Cells with inverted faces can result in incorrect geometric computations such as
 # cell volume or centroid. To demonstrate this, we first create a valid
@@ -160,7 +160,7 @@ print(report.is_valid)
 plot_cell(hexahedron)
 
 # %%
-# Meshes with Unused Points
+# Meshes With Unused Points
 # -------------------------
 # Unused points are points not associated with any cells. These points are not processed
 # consistently by filters and are often ignored or removed. To demonstrate this, create an
