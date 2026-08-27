@@ -5,6 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
+import sys
 from unittest.mock import patch
 
 import numpy as np
@@ -12,6 +13,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.writer import BaseWriter
 from tests.vtk_backend_divergence import INT32_COMPRESSION
@@ -548,3 +550,21 @@ def test_raise_error_when_writing_is_failed(tmp_path):
     ):
         with pytest.raises(OSError, match='VTK writer failed to write file'):
             cylinder.save(tmp_path / 'cylinder.vtk')
+
+
+def test_del_while_interpreter_is_finalizing(monkeypatch, sphere):
+    """Deleting a dataset is a no-op once module globals have been cleared.
+
+    ``isinstance`` against a cleared ``vtkObjectBase`` raises ``TypeError``,
+    and an ``AttributeError`` raised from ``__getattribute__`` is silently
+    rerouted into ``__getattr__``, which reaches ``importlib.metadata``.
+    """
+    sphere._glyph_geom = (pv.Sphere(),)
+    # The interpreter calls the slot directly, so no attribute lookup is involved.
+    finalizer = type(sphere).__del__
+
+    monkeypatch.setattr(pv._vtk, 'vtkObjectBase', None)
+    monkeypatch.setattr(_vtk_utilities, 'DisableVtkSnakeCase', None)
+    monkeypatch.setattr(sys, 'is_finalizing', lambda: True)
+
+    finalizer(sphere)
