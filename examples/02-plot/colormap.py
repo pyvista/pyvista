@@ -68,7 +68,7 @@ my_colormap = ListedColormap(newcolors)
 mesh.plot(scalars='values', cmap=my_colormap)
 
 # %%
-# Or you could make a simple colormap... any Matplotlib colormap can be passed
+# Or you could make a simple colormap: any Matplotlib colormap can be passed
 # to PyVista.
 boring_cmap = plt.get_cmap('viridis', 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
@@ -161,7 +161,7 @@ pl.show()
 # This specific colormap uses exact RGB nodes at specific scalar fractions
 # (0.0, 0.1, 0.3, 0.5, 0.8, 0.9, 1.0) to create its distinct color bands.
 
-# Define the exact RGB nodes from the cgx source code
+# Define the exact RGB nodes from the ``cgx`` source code
 cgx_nodes = [
     (0.0, (0.50, 0.0, 1.0)),  # Purple
     (0.1, (0.00, 0.0, 0.8)),  # Dark Blue
@@ -180,7 +180,7 @@ cgx_cmap = LinearSegmentedColormap.from_list('cgx', cgx_nodes)
 mesh = examples.download_notch_stress()
 
 # %%
-# Plot the mesh using the custom cgx colormap
+# Plot the mesh using the custom ``cgx`` colormap
 cpos = pv.CameraPosition(
     position=(0.1249, -0.1242, 0.1698),
     focal_point=(0.1965, 0.0467, -0.0036),

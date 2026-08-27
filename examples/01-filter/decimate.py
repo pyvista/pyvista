@@ -65,7 +65,7 @@ pv.plot_compare(
 )
 
 # %%
-# Decimate Polyline Mesh
+# Decimate PolyLine Mesh
 # ----------------------
 #
 # Generate a fairly slow spiral polyline mesh.

@@ -45,12 +45,12 @@ def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
 
 
 def wrap_image_array(arr):
-    """Wrap a numpy array as a pyvista.ImageData.
+    """Wrap a NumPy array as a ``pyvista.ImageData``.
 
     Parameters
     ----------
     arr : np.ndarray
-        A numpy array of shape (X, Y, (3 or 4)) and dtype ``np.uint8``. For
+        A NumPy array of shape (X, Y, (3 or 4)) and ``dtype`` ``np.uint8``. For
         example, an array of shape ``(768, 1024, 3)``.
 
     Raises
@@ -195,11 +195,11 @@ def compare_images(  # noqa: PLR0917
     Parameters
     ----------
     im1 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
-        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        Path, :class:`pyvista.Plotter`, NumPy array representing the output of
         a render window, or :vtk:`vtkImageData`.
 
     im2 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
-        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        Path, :class:`pyvista.Plotter`, NumPy array representing the output of
         a render window, or :vtk:`vtkImageData`.
 
     threshold : int, default: 1
@@ -209,7 +209,7 @@ def compare_images(  # noqa: PLR0917
 
     use_vtk : bool, default: True
         When disabled, computes the mean pixel error over the entire
-        image using numpy.  The difference between pixel is calculated
+        image using NumPy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
         of pixels.  This is faster than using
         :vtk:`vtkImageDifference` but potentially less accurate.

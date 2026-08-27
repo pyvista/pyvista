@@ -34,12 +34,11 @@ coverage-docs:
 	@make -C doc html SPHINXOPTS="-Q" -b coverage
 	@cat doc/_build/coverage/python.txt
 
-# Vale is pinned to match CI (.github/workflows/style-docstring.yml).
-# Install with: `uv tool install vale@2.29.5`
-# Newer vale versions currently fail on the pyvista vocab config.
 docstyle:
 	@echo "Running vale"
-	@vale --config doc/.vale.ini doc pyvista examples
+	@python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
+	@python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
+	@vale --config doc/.vale.ini doc pyvista examples CONTRIBUTING.rst .vale/examples .vale/pyvista
 
 sync-deps:
 	@echo "Installing dev dependencies"
@@ -103,8 +102,8 @@ docs-test-images:
 
 # Run an integration test env (matches CI `tox -e integration-<project>`).
 # Specify project via PROJECT, e.g. `make integration PROJECT=trame`.
-# Supported projects: trame, geovista, mne, pyvistaqt, playwright
+# Supported projects: trame, geovista, mne, pyvistaqt, playwright, cvista
 integration:
-	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright)"; exit 1; }
+	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright|cvista)"; exit 1; }
 	@echo "Running integration-$(PROJECT) tests (matches CI)"
 	@uv run tox -e integration-$(PROJECT) $(TOX_ARGS)

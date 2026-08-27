@@ -122,9 +122,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
     Examples
     --------
@@ -463,9 +463,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
         Examples
         --------
@@ -483,7 +483,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.edge_opacity = 0.75
         >>> prop.plot()
 
-        Visualize wn edge opacity of ``0.25``.
+        Visualize an edge opacity of ``0.25``.
 
         >>> prop.edge_opacity = 0.25
         >>> prop.plot()
@@ -775,7 +775,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.roughness
         0.5
 
-        Visualize default roughness with metallic of ``0.5`` and physically-based
+        Visualize default roughness with metallic of ``0.5`` and physically based
         rendering.
 
         >>> prop.interpolation = 'pbr'
@@ -890,7 +890,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
 
-        Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
+        Requires lines in the scene, for example, with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
 
         See Also
@@ -1199,7 +1199,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
-        Get the default anisotropy and visualize it with physically-based rendering.
+        Get the default anisotropy and visualize it with physically based rendering.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()

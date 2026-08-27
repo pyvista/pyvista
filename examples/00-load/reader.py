@@ -1,7 +1,7 @@
 """
 .. _reader_example:
 
-Load data using a Reader
+Load Data Using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use a class based reader to have more control over reading data files.
@@ -48,7 +48,7 @@ print(f'All arrays: {mesh.array_names}')
 
 # %%
 # Using :func:`pyvista.get_reader` enables more fine-grained control of reading data
-# files. Reading in a ``.vtp``` file uses the :class:`pyvista.XMLPolyDataReader`.
+# files. Reading in a ``.vtp`` file uses the :class:`pyvista.XMLPolyDataReader`.
 
 reader = pv.get_reader(temp_file.name)
 reader

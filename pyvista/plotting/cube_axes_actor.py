@@ -344,7 +344,7 @@ class CubeAxesActor(
 
     @property
     def x_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set visibility of the x-axis minior tick."""
+        """Return or set visibility of the x-axis minor tick."""
         return bool(self.GetXAxisMinorTickVisibility())
 
     @x_axis_minor_tick_visibility.setter
@@ -353,7 +353,7 @@ class CubeAxesActor(
 
     @property
     def y_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set visibility of the y-axis minior tick."""
+        """Return or set visibility of the y-axis minor tick."""
         return bool(self.GetYAxisMinorTickVisibility())
 
     @y_axis_minor_tick_visibility.setter
@@ -362,7 +362,7 @@ class CubeAxesActor(
 
     @property
     def z_axis_minor_tick_visibility(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set visibility of the z-axis minior tick."""
+        """Return or set visibility of the z-axis minor tick."""
         return bool(self.GetZAxisMinorTickVisibility())
 
     @z_axis_minor_tick_visibility.setter

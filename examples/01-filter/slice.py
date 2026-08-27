@@ -146,7 +146,7 @@ pl.show()
 
 
 # %%
-# Slice At Different Bearings
+# Slice at Different Bearings
 # +++++++++++++++++++++++++++
 #
 # From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_
@@ -178,7 +178,7 @@ pl.add_mesh(model.outline())
 pl.show()
 
 # %%
-# Slice ImageData With Indexing
+# Slice ImageData with Indexing
 # +++++++++++++++++++++++++++++
 # Most slicing filters return :class:`~pyvista.PolyData` or
 # :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs, however,

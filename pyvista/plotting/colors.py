@@ -1653,7 +1653,7 @@ _MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
 class Color(_NoNewAttrMixin):
-    """Helper class to convert between different color representations used in the pyvista library.
+    r"""Helper class to convert between different color representations used in PyVista.
 
     Many pyvista methods accept :data:`ColorLike` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
@@ -1674,7 +1674,7 @@ class Color(_NoNewAttrMixin):
     color : ColorLike, optional
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
-        or as ints between 0 and 255. Hex color strings can contain optional
+        or as ``int``\ s between 0 and 255. Hex color strings can contain optional
         ``'#'`` or ``'0x'`` prefixes. If no opacity is provided, the
         ``default_opacity`` will be used. If ``color`` is ``None``, the
         ``default_color`` is used instead.
@@ -1689,7 +1689,7 @@ class Color(_NoNewAttrMixin):
     opacity : int | float | str, optional
         Opacity of the represented color. Overrides any opacity associated
         with the provided ``color``. Allowed opacities are floats between 0
-        and 1, ints between 0 and 255 or hexadecimal strings of length 2
+        and 1, ``int``\ s between 0 and 255 or hexadecimal strings of length 2
         (plus the length of the optional prefix).
         The following examples all denote a fully opaque color:
 
@@ -1793,7 +1793,7 @@ class Color(_NoNewAttrMixin):
             msg = (
                 '\n'
                 f'\tInvalid opacity input: ({opacity})'
-                '\tMust be an integer, float or string.  For example:\n'
+                '\tMust be an integer, float, or string.  For example:\n'
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
                 "\t\topacity='#FF'"
@@ -2396,7 +2396,7 @@ def color_scheme_to_cycler(scheme):
     ----------
     scheme : str | int | :vtk:`vtkColorSeries`
         Color scheme to be converted. If a string, it should correspond to a
-        valid color scheme name (e.g., 'viridis'). If an integer, it should
+        valid color scheme name (for example, 'viridis'). If an integer, it should
         correspond to a valid color scheme ID. If an instance of
         :vtk:`vtkColorSeries`, it should be a valid color series.
 
@@ -2408,7 +2408,7 @@ def color_scheme_to_cycler(scheme):
     Raises
     ------
     ValueError
-        If the provided `scheme` is not a valid color scheme.
+        If the provided ``scheme`` is not a valid color scheme.
 
     """
     if not isinstance(scheme, _vtk.vtkColorSeries):

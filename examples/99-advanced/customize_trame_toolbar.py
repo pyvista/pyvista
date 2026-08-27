@@ -1,13 +1,13 @@
 """
 .. _customize_trame_toolbar_example:
 
-Customize Trame toolbar
-~~~~~~~~~~~~~~~~~~~~~~~~
+Customize Trame Toolbar
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Bring more of the power of trame to the jupyter view.
 
 This example shows how to add custom tools using the
-`jupyter_kwargs` option with :meth:`~pyvista.Plotter.show`.
+``jupyter_kwargs`` option with :meth:`~pyvista.Plotter.show`.
 
 """
 
@@ -73,7 +73,7 @@ def custom_tools():
 # %%
 # The button callback function ``button_play`` needs to be created before starting
 # the server. This function will toggle the boolean state variable ``play``
-# and flush the server, i.e. "force" the server to see the change.
+# and flush the server, that is, "force" the server to see the change.
 # We will see more on the state variables in a bit, but we need to create the
 # function here otherwise the server will complain ``button_play`` does not exist.
 

@@ -15,7 +15,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Sample the implicit field
+# Sample the Implicit Field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # The gyroid is the zero level set of
 # ``sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x)``.
@@ -36,7 +36,7 @@ grid
 
 
 # %%
-# Extract the zero isosurface
+# Extract the Zero Isosurface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The contour weaves through the periodic sample volume.
 

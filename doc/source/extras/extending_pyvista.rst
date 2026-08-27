@@ -14,7 +14,7 @@ conversion, remote IO) into the fluent filter API.
    :depth: 2
 
 
-Why accessors
+Why Accessors
 -------------
 
 PyVista inherits the problem every extensible scientific library in
@@ -46,7 +46,7 @@ The advantages over subclassing and monkey-patching:
   state without leaking across instances.
 
 
-Writing an accessor
+Writing an Accessor
 -------------------
 
 An accessor class accepts the dataset instance as its single
@@ -103,7 +103,7 @@ cover :class:`~pyvista.MultiBlock` as well, register against
 :class:`~pyvista.DataObject`.
 
 
-Registration paths
+Registration Paths
 ------------------
 
 PyVista supports two ways to register an accessor. Both use the same
@@ -175,7 +175,7 @@ compute dependencies should be lazy-imported inside the accessor
 methods, not at the module top.
 
 
-Chaining and return types
+Chaining and Return Types
 -------------------------
 
 Accessor methods can return three kinds of things:
@@ -195,7 +195,7 @@ mutating the input in place. The caller then decides whether to
 assign the result back.
 
 
-Collision policy
+Collision Policy
 ----------------
 
 Two collision cases are handled differently:
@@ -221,7 +221,7 @@ Two collision cases are handled differently:
     #   (inherited by PolyData). Pass override=True to force.
 
 
-Typing and autocomplete
+Typing and Autocomplete
 -----------------------
 
 Because accessors are attached at import time via a decorator, static
@@ -266,8 +266,8 @@ the xarray side, where the plugin ships stubs that teach editors and
 type checkers about the attribute.
 
 
-Deregistration
---------------
+De-Registration
+---------------
 
 For tests and interactive sessions, an accessor can be removed with
 :func:`~pyvista.unregister_dataset_accessor`. Any built-in attribute
@@ -283,7 +283,7 @@ To inspect the current registry, call
 registration.
 
 
-Cache semantics
+Cache Semantics
 ---------------
 
 The first access of ``dataset.<name>`` constructs the accessor and
@@ -300,7 +300,7 @@ behavior — functional methods that return a new dataset are easier to
 reason about.
 
 
-subclassing (advanced)
+Subclassing (Advanced)
 ----------------------
 
 For use cases that genuinely require a custom class (for example,
@@ -315,7 +315,7 @@ cost nothing when unused, and give plugins a clear boundary the
 PyVista core can rely on.
 
 
-Plotter components
+Plotter Components
 ------------------
 
 Datasets get accessors; the plotter gets *components*. The mechanism

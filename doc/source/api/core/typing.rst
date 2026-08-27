@@ -4,7 +4,7 @@ Typing
 Type aliases and type variable used by PyVista.
 
 
-Numeric Array-Like Types
+Numeric Array-like Types
 ------------------------
 
 pyvista.NumberType

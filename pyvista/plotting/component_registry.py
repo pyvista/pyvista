@@ -72,12 +72,12 @@ class PlotterComponent(Protocol):
     are detected by ``getattr`` at lifecycle time, not by the protocol
     (since they are optional):
 
-    - ``__plotter_close__(self) -> None`` — called when the plotter
+    - ``__plotter_close__(self) -> None``—called when the plotter
       closes. Only fires on components that were actually constructed
       (i.e. accessed at least once). Use this to release VTK observers,
       close websockets, stop background threads, or otherwise undo any
       side effects the component is responsible for.
-    - ``__plotter_deep_clean__(self) -> None`` — called from
+    - ``__plotter_deep_clean__(self) -> None``—called from
       ``BasePlotter.deep_clean``. Optional; if absent, deep
       clean falls through to the normal close path on the next plotter
       shutdown.
@@ -110,7 +110,7 @@ class ComponentRegistration(NamedTuple):
     Attributes
     ----------
     name : str
-        The namespace the component is attached under (e.g.
+        The namespace the component is attached under (for example
         ``'scalar_bars'``).
     target : type
         The PyVista plotter class (or base class) the component is
@@ -120,7 +120,7 @@ class ComponentRegistration(NamedTuple):
     source : str
         Human-readable origin in the form ``'module.qualname'`` for
         explicit registrations, or the entry-point ``value`` for plugin-
-        discovered ones — useful for debugging which plugin registered
+        discovered ones—useful for debugging which plugin registered
         a given component.
 
     """
@@ -162,7 +162,7 @@ class _CachedComponent:
     ``__setattr__`` freeze without weakening the freeze for any other
     attribute. When the target class uses ``__slots__`` and no
     ``__dict__`` is available, the component is constructed fresh on
-    each access — slower but still correct *as long as* the component
+    each access—slower but still correct *as long as* the component
     has no lifecycle hooks. A component that declares
     ``__plotter_close__`` or ``__plotter_deep_clean__`` cannot be
     attached to a slots target because there is no stable instance to
@@ -193,7 +193,7 @@ class _CachedComponent:
         except AttributeError:
             # ``__slots__`` target: no ``__dict__`` to cache into and no
             # stable identity across accesses. Safe to fall through
-            # *only* if the component has no lifecycle hooks — otherwise
+            # *only* if the component has no lifecycle hooks—otherwise
             # the hooks would never fire and any cleanup the component
             # is responsible for would silently leak.
             declared = [

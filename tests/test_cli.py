@@ -238,7 +238,7 @@ def test_report_called(
 
 
 class CasesConvert:
-    """CLI argument parsing cases for `convert`."""
+    """CLI argument parsing cases for ``convert``."""
 
     def case_new_ext(self):
         return 'ant.ply new.vtp', 'new.vtp'
@@ -574,7 +574,11 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     ('download', 'in_ext', 'out_ext'),
     [
         (examples.download_brain_atlas_with_sides, '.nii.gz', '.vti'),
-        (examples.download_parallel_exodus, '.e.4.0', '.vtm'),
+        pytest.param(
+            examples.download_parallel_exodus,
+            '.e.4.0',
+            '.vtm',
+        ),
     ],
 )
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='Flaky issue with dataset loader')
@@ -940,13 +944,13 @@ def test_validate_help(capsys: pytest.CaptureFixture):
     assert 'Mesh(es) to validate.' in out, out
 
     assert '│ --fields -f            -' in out, out
-    assert 'Field(s) to validate.' in out, out
+    assert 'Fields to validate.' in out, out
 
     assert '│ --exclude -e           -' in out, out
-    assert 'Field(s) to exclude' in out, out
+    assert 'Fields to exclude' in out, out
 
     assert '│ --tolerance            -' in out, out
-    assert 'Field(s) to exclude' in out, out
+    assert 'Fields to exclude' in out, out
 
     assert '│ --planarity-tolerance  -' in out, out
     assert 'Allowed relative distance' in out, out
@@ -1049,8 +1053,9 @@ _CLI_ONLY_PARAMS = {'skip_unreadable', 'paths', 'static'}
 
 @fixture
 def missing_plot_arguments():
-    """Argument names in the `pv.plot` signature which are intentionally removed from the
-    `pv.cli.plot._plot` function."""
+    """Argument names in the ``pyvista.plot`` signature which are intentionally
+    removed from the ``pv.cli.plot._plot`` function.
+    """
     return {
         'jupyter_backend',
         'return_viewer',
@@ -1064,7 +1069,7 @@ def missing_plot_arguments():
 
 @fixture
 def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
-    """Default arguments of `pv.plot`."""
+    """Default arguments of ``pyvista.plot``."""
     params = inspect.signature(pv.plot).parameters
     return {
         p: v.default
@@ -1077,9 +1082,9 @@ def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
 
 def test_plot_cli_synced(missing_plot_arguments: set[str]):
     """
-    Since the `pyvista plot` CLI exposes a subset of the original `pv.plot` arguments,
-    any changes made in the signature of `pv.plot` must be synced (or not) in the
-    `pyvista plot` CLI.
+    Since the ``pyvista plot`` CLI exposes a subset of the original ``pyvista.plot`` arguments,
+    any changes made in the signature of ``pyvista.plot`` must be synced (or not) in the
+    ``pyvista plot`` CLI.
 
     This test will fail if any:
     - argument names
@@ -1159,8 +1164,8 @@ _CLI_ONLY_COMPARE_PARAMS = {'skip_unreadable', 'paths', 'static', 'outline'}
 
 @fixture
 def missing_compare_arguments():
-    """Argument names in the `pv.plot_compare` signature which are intentionally removed
-    from the `pv.cli.compare._compare` function."""
+    """Argument names in the ``pyvista.plot_compare`` signature which are intentionally removed
+    from the ``pv.cli.compare._compare`` function."""
     return {
         'jupyter_backend',
         'jupyter_kwargs',
@@ -1177,9 +1182,9 @@ def missing_compare_arguments():
 
 def test_compare_cli_synced(missing_compare_arguments: set[str]):
     """
-    Since the `pyvista compare` CLI exposes a subset of the original `pv.plot_compare`
-    arguments, any changes made in the signature of `pv.plot_compare` must be synced (or
-    not) in the `pyvista compare` CLI.
+    Since the ``pyvista compare`` CLI exposes a subset of the original ``pyvista.plot_compare``
+    arguments, any changes made in the signature of ``pyvista.plot_compare`` must be synced (or
+    not) in the ``pyvista compare`` CLI.
 
     This test will fail if any:
     - argument names
@@ -2098,7 +2103,9 @@ def test_compare_forwards_arguments(
     argument: str,
     expected: Any,
 ):
-    """Test that each argument of the command reaches `plot_compare` as it is spelled there."""
+    """Test that each argument of the command reaches ``pyvista.plot_compare`` as
+    it is spelled there.
+    """
     names = ' '.join(path.name for path in tmp_compare_files)
     main(shlex.split(f'compare {names} {tokens}'))
 
@@ -2237,7 +2244,7 @@ def test_compare_too_small_warning_advises_the_command(
 ):
     """Test that the advice for a barely visible mesh names the options of this command.
 
-    `plot_compare` suggests its own arguments, which are not the ones a command line
+    ``pyvista.plot_compare`` suggests its own arguments, which are not the ones a command line
     user has to hand: the outline is drawn by this command rather than given to it.
     """
     for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:
@@ -2263,10 +2270,10 @@ def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
 ):
     """Test that the advice is printed before the window opens, not after it closes.
 
-    `plot_compare` raises every one of its warnings well before it shows the window,
+    ``pyvista.plot_compare`` raises every one of its warnings well before it shows the window,
     but the interactive window blocks until it is closed, and warnings only caught
-    with `warnings.catch_warnings(record=True)` are not printed until whoever caught
-    them chooses to. Printing them only after `show` returns would leave a command
+    with ``warnings.catch_warnings(record=True)`` are not printed until whoever caught
+    them chooses to. Printing them only after ``show`` returns would leave a command
     line user staring at a plot with no idea anything was wrong until they closed it.
     """
     for name, mesh in [('tiny', pv.Sphere(radius=0.02)), ('huge', pv.Cone(height=5.0))]:

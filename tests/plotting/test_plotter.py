@@ -1027,7 +1027,7 @@ def test_off_screen_background_thread_rendering():
     """Off-screen plotters must work on background threads.
 
     On macOS, vtkCocoaRenderWindow creates an NSWindow by default which
-    requires the main thread. `SetConnectContextToNSView(False)` creates
+    requires the main thread. ``SetConnectContextToNSView(False)`` creates
     a standalone CGL context instead. On Linux (EGL), background thread
     rendering works out of the box.
     """
@@ -1120,6 +1120,8 @@ def test_macos_offscreen_render_window_configured(case):
         render_window = case.invoke()
 
     assert render_window.GetConnectContextToNSView() is False
+    # ``Accessory``, not ``Prohibited``: the latter hides the Dock icon but also forbids
+    # activation, stranding a later on-screen window behind other applications (#8934).
     appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
-        appkit_mock.NSApplicationActivationPolicyProhibited,
+        appkit_mock.NSApplicationActivationPolicyAccessory,
     )

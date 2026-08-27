@@ -934,14 +934,14 @@ class _DataSetMapper(_BaseMapper):
             will be ignored.
 
         flip_scalars : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.
             A string can also be specified to map the scalars range to a
-            predefined opacity transfer function (options include: 'linear',
-            'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
+            predefined opacity transfer function (options include: ``'linear'``,
+            ``'linear_r'``, ``'geom'``, ``'geom_r'``). Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 
@@ -1089,22 +1089,22 @@ class _DataSetMapper(_BaseMapper):
         """Set or return the global flag to avoid z-buffer resolution.
 
         A global flag that controls whether the coincident topology
-        (e.g., a line on top of a polygon) is shifted to avoid
+        (for example, a line on top of a polygon) is shifted to avoid
         z-buffer resolution (and hence rendering problems).
 
         If not off, there are two methods to choose from.
-        `polygon_offset` uses graphics systems calls to shift polygons,
+        ``polygon_offset`` uses graphics systems calls to shift polygons,
         lines, and points from each other.
-        `shift_zbuffer` is a legacy method that is used to remap the z-buffer
+        ``shift_zbuffer`` is a legacy method that is used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
-        You should only use the polygon_offset method (or none) at this point.
+        You should only use the ``polygon_offset`` method (or none) at this point.
 
         Returns
         -------
         str
             Global flag to avoid z-buffer resolution.
-            Must be either `off`, `polygon_offset` or `shift_zbuffer`.
+            Must be either ``off``, ``polygon_offset`` or ``shift_zbuffer``.
 
         Examples
         --------
@@ -1297,7 +1297,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     def scale_array(self) -> str:  # numpydoc ignore=RT01
         """Set or return the name of the array used to scale the splats.
 
-        Scalars used to scale the gaussian points. Accepts a string
+        Scalars used to scale the Gaussian points. Accepts a string
         name of an array that is present on the mesh.
 
         Notes
@@ -1563,8 +1563,8 @@ class UnstructuredGridVolumeRayCastMapper(
 def _mapper_has_data_set_input(mapper):
     """Check if mapper has a data set input using the appropriate method.
 
-    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
-    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    Some mappers use ``GetDataSetInput``, others use ``GetInputAsDataSet``. This has
+    been standardized to ``GetDataSetInput`` in VTK >= 9.5.
     """
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
 
@@ -1572,8 +1572,8 @@ def _mapper_has_data_set_input(mapper):
 def _mapper_get_data_set_input(mapper) -> _vtk.vtkDataSet:
     """Get data set input from mapper using the appropriate method.
 
-    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
-    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    Some mappers use ``GetDataSetInput``, others use ``GetInputAsDataSet``. This has
+    been standardized to ``GetDataSetInput`` in VTK >= 9.5.
     """
     return (
         mapper.GetDataSetInput()

@@ -81,7 +81,7 @@ contract pandas exposes for tabular accessors and xarray exposes for labeled
 arrays. See :ref:`extending-pyvista` for the full contract.
 
 For a curated, continuously updated list of domain-specific tooling that
-interoperates with or is built on PyVista, see
+inter-operates with or is built on PyVista, see
 `awesome-pyvista <https://github.com/pyvista/awesome-pyvista>`_.
 
 Reach for the underlying `VTK`_ toolkit directly only when there is genuinely

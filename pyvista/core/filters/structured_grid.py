@@ -18,9 +18,9 @@ class StructuredGridFilters(DataSetFilters):
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001, FBT002
-        """Select piece (e.g., volume of interest).
+        r"""Select piece (for example, volume of interest).
 
-        To use this filter set the VOI ivar which are i-j-k min/max
+        To use this filter set the VOI ``ivar`` which are i-j-k min/max
         indices that specify a rectangular region in the data. (Note
         that these are 0-offset.) You can also specify a sampling rate
         to subsample the data.
@@ -33,12 +33,12 @@ class StructuredGridFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
         rate : sequence[int], default: (1, 1, 1)
-            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid

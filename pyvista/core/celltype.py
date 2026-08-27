@@ -709,7 +709,7 @@ class _CellTypeMeta(EnumMeta):
         Returns
         -------
         dict
-            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            Dictionary with cell dimensions ``0``, ``1``, ``2``, ``3`` as keys, and frozen sets as
             values with the respective :class:`CellType` members.
 
         See Also
@@ -839,9 +839,10 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     Although point coordinates are defined in three dimensions, the cell topology can
     be 0, 1, 2, or 3-dimensional. Use :attr:`dimension` to check the topological dimension.
 
-    Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
-    cells consist of one or more primary cells, while primary cells cannot be
-    decomposed. Use :attr:`is_composite` to check if a cell type is primary or composite.
+    Cells can be primary (for example, triangle) or composite (for example, triangle
+    strip). Composite cells consist of one or more primary cells, while primary cells
+    cannot be decomposed. Use :attr:`is_composite` to check if a cell type is primary
+    or composite.
 
     Cells can also be characterized as linear or non-linear. Linear cells use
     linear or constant interpolation, while non-linear cells may use quadratic,
@@ -852,7 +853,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     the extremities are interpolatory.
 
     This enumeration defines all cell types used in VTK and supported by PyVista. The
-    type(s) of cell(s) to use is typically chosen based on application need, such as
+    types of cells to use is typically chosen based on application need, such as
     graphics rendering or numerical simulation.
 
     .. seealso::
@@ -942,7 +943,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         .. note::
 
             When specifying multi-line ``doc`` strings, the lines *must* be all aligned.
-            I.e. do not put the first line immediately after the triple quotes; instead
+            That is, do not put the first line immediately after the triple quotes; instead
             put the first line of text on a new line.
 
         Parameters
@@ -961,20 +962,20 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             the cell.
 
         _variable_points: bool, optional
-            Override the value shown for this cell type's `Points` badge. May be
-            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            Override the value shown for this cell type's ``Points`` badge. May be
+            useful for composite cells (for example, POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_edges: bool, optional
-            Override the value shown for this cell type's `Edges` badge. May be
-            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            Override the value shown for this cell type's ``Edges`` badge. May be
+            useful for composite cells (for example, POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_faces: bool, optional
-            Override the value shown for this cell type's `Faces` badge. May be
-            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            Override the value shown for this cell type's ``Faces`` badge. May be
+            useful for composite cells (for example, POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 

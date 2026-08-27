@@ -1,4 +1,4 @@
-"""`pyvista plot file.vtp --color=red ...` CLI."""
+"""`pyvista plot file.vtp --color=red` CLI (see below for more flags)."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def _plot(
         Parameter(
             consume_multiple=True,
             help=(
-                'Paths(s) to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
+                'Paths to plot. Glob patterns (``*``, ``?``, ``[...]``) are expanded. '
                 'Each match must be readable with ``pyvista.read``.'
             ),
             group=Groups.IN,

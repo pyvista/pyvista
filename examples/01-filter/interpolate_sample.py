@@ -1,7 +1,7 @@
 """
 .. _interpolate_sample_example:
 
-Compare interpolation/sampling methods
+Compare Interpolation/Sampling Methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Compare two methods for interpolating or sampling data from a target mesh.
@@ -11,7 +11,7 @@ point data from nearby points of the target mesh onto the desired points.
 :func:`pyvista.DataObjectFilters.sample` interpolates data using the interpolation scheme
 of the enclosing cell from the target mesh.
 
-If the target mesh is a point cloud, i.e. there is no connectivity in the cell
+If the target mesh is a point cloud, that is, there is no connectivity in the cell
 structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
 preferred.  If interpolation is desired within the cells of the target mesh, then
 :func:`pyvista.DataObjectFilters.sample` is typically desired.
@@ -28,10 +28,10 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Interpolating from point cloud
+# Interpolating from Point Cloud
 # ++++++++++++++++++++++++++++++
 # A point cloud is a collection of points that have no connectivity in
-# the mesh, i.e. the mesh contains no cells or the cells are 0D
+# the mesh, that is, the mesh contains no cells or the cells are 0D
 # (vertex or polyvertex). The filter :func:`pyvista.DataSetFilters.interpolate`
 # uses a distance-based weighting methodology to interpolate between the
 # unconnected points.
@@ -113,13 +113,13 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Sampling from a mesh with connectivity
+# Sampling from a Mesh with Connectivity
 # ++++++++++++++++++++++++++++++++++++++
 # This example is in many ways the opposite of the prior one.
 # A mesh with cell connectivity that spans 2 dimensions is
 # sampled at discrete points using :func:`pyvista.DataObjectFilters.sample`.
 # Importantly, the cell connectivity enables direct interpolation
-# inside the domain without needing distance or weighting parametization.
+# inside the domain without needing distance or weighting parametrization.
 #
 # First, show that sample does not work with point clouds with data.
 # Either :func:`pyvista.DataSetFilters.interpolate` or the

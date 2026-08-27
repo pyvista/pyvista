@@ -584,7 +584,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             or ``'geometry'``.
 
         original : str
-            The VTK shader tag to replace (e.g., ``'//VTK::Color::Impl'``).
+            The VTK shader tag to replace (for example, ``'//VTK::Color::Impl'``).
 
         replacement : str
             The GLSL replacement code.
@@ -978,10 +978,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         """Install, update, or remove the point sprite shader replacement.
 
         The replacement is only active while the representation is
-        ``'Points'`` — for any other representation the ``gl_PointCoord``
+        ``'Points'``—for any other representation the ``gl_PointCoord``
         built-in is undefined and would otherwise corrupt fragment output.
-        Tracks the currently-applied shape (rather than a boolean) so
-        that unrelated property modifications (color, opacity, ...) do
+        Tracks the currently applied shape (rather than a boolean) so
+        that unrelated property modifications (color, opacity, and so on) do
         not repeatedly rebuild the shader, while still honoring real
         shape changes and representation transitions.
         """

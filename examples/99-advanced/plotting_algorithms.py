@@ -36,7 +36,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Use :vtk:`vtkConeSource` as a source algorithm. This source will dynamically
-# create a cone object depending on the instances's parameters. In this
+# create a cone object depending on the instance's parameters. In this
 # example, we will connect a callback to set the cone source algorithm's
 # resolution via :vtk:`vtkConeSource.SetResolution`.
 algo = pv.ConeSource()

@@ -31,7 +31,7 @@ class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
 
     Subclasses must:
 
-    - Specify a `Literal` as the subclass' type argument. The literal's
+    - Specify a ``Literal`` as the subclass' type argument. The literal's
       arguments must specify all allowable options for the state variable.
     - Define a getter and setter for the state. Input validation is not
       required - the input is automatically validated when setting the state.
@@ -246,11 +246,11 @@ _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 
 
 class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
-    """Context manager to control access to VTK's pythonic snake_case API.
+    """Context manager to control access to VTK's pythonic ``snake_case`` API.
 
-    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
-    of `GetOutputPort`. These can easily be confused for PyVista attributes
-    which also use a snake_case convention. This class controls access to vtk's
+    VTK 9.4 introduced pythonic ``snake_case`` attributes, for example, ``output_port`` instead
+    of ``GetOutputPort``. These can easily be confused for PyVista attributes
+    which also use a ``snake_case`` convention. This class controls access to vtk's
     new interface.
 
     .. versionadded:: 0.45
@@ -258,29 +258,29 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     Parameters
     ----------
     state : 'allow' | 'warning' | 'error'
-        Allow or disallow the use of VTK's pythonic snake_case API with
+        Allow or disallow the use of VTK's pythonic ``snake_case`` API with
         PyVista-wrapped VTK classes.
 
-        - 'allow': Allow accessing VTK-defined snake_case attributes.
-        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+        - 'allow': Allow accessing VTK-defined ``snake_case`` attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined ``snake_case``
           attributes.
         - 'error': Raise a ``PyVistaAttributeError`` when accessing
-          VTK-defined snake_case attributes.
+          VTK-defined ``snake_case`` attributes.
 
     Examples
     --------
-    Get the current access state for VTK's snake_case api.
+    Get the current access state for VTK's ``snake_case`` API.
 
     >>> import pyvista as pv
     >>> pv.vtk_snake_case()
     'error'
 
-    The following will raise an error because the `information` property is defined
+    The following will raise an error because the ``information`` property is defined
     by :vtk:`vtkDataObject` and is not part of PyVista's API.
 
     >>> # pv.PolyData().information
 
-    Allow use of VTK's snake_case attributes. No warning or error is raised.
+    Allow use of VTK's ``snake_case`` attributes. No warning or error is raised.
 
     >>> _ = pv.vtk_snake_case('allow')
     >>> pv.PolyData().information
@@ -323,11 +323,11 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
     Python allows arbitrarily setting new attributes on objects at any time,
     but PyVista's classes do not always allow this. By default, setting a
     new attribute is only allowed when the attribute's name has a leading
-    underscore "``_``", i.e. it is a private attribute; attempting to
+    underscore "``_``", that is, it is a private attribute; attempting to
     set a new public attribute raises an ``AttributeError``.
 
     This context manager may be used to allow or disallow setting `any` new
-    attribute, public or private, either globally or within a context.
+    attribute (public or private), either globally or within a context.
 
     .. versionadded:: 0.47
 
@@ -357,8 +357,9 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
     -----
     Allowing new attributes by default outside ``__init__`` and/or without formally defining
     class properties was found to be a source of bugs for both developers and users of PyVista.
-    It's very easy to set the wrong attribute name (e.g. ``interpolate`` vs. ``interpolation``)
-    without any errors being generated, and users transitioning from older versions of PyVista
+    It's very easy to set the wrong attribute name (for example, ``interpolate`` vs.
+    ``interpolation``) without any errors being generated, and users transitioning
+    from older versions of PyVista
     would have code that sets attributes which were once valid, but have since been deprecated and
     removed. Attempting to set an attribute which is not already defined now raises an
     ``AttributeError`` to clearly signal that there is a potential problem with this line of code.

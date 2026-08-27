@@ -347,7 +347,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is strictly
-            orthogonal to the cartesian axes.
+            orthogonal to the Cartesian axes.
 
         widget_color : ColorLike, optional
             Color of the widget.  Either a string, RGB sequence, or
@@ -557,7 +557,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -806,7 +806,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -980,7 +980,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -1121,7 +1121,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
-            an implicit plane. Either a bool or float.
+            an implicit plane. Either a ``bool`` or float.
 
             .. versionadded:: 0.44.0
 
@@ -1210,7 +1210,7 @@ class WidgetComponent(_NoNewAttrMixin):
         """Slice a mesh with three interactive planes.
 
         Adds three interactive plane slicing widgets for orthogonal slicing
-        along each cartesian axis.
+        along each Cartesian axis.
 
         Parameters
         ----------
@@ -1252,7 +1252,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Examples
         --------
-        Shows an interactive plane sliced along each cartesian axis of the mesh.
+        Shows an interactive plane sliced along each Cartesian axis of the mesh.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
@@ -1344,7 +1344,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Examples
         --------
         Shows an interactive line widget to move the sliced object
-        like in `add_mesh_slice` function.
+        like in ``add_mesh_slice`` function.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -2351,7 +2351,7 @@ class WidgetComponent(_NoNewAttrMixin):
         callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
-            point and end point as cartesian coordinate tuples
+            point and end point as Cartesian coordinate tuples
             and the calculated distance between the two points.
 
         color : ColorLike, optional
@@ -2446,7 +2446,7 @@ class WidgetComponent(_NoNewAttrMixin):
             callback must also accept an index of that widget.
 
         center : sequence[float], optional
-            The cartesian coordinate of the sphere's center when placing it in
+            The Cartesian coordinate of the sphere's center when placing it in
             the scene. If more than one location is passed, then that many
             widgets will be added and the callback will also be passed the
             integer index of that widget.
@@ -2605,7 +2605,7 @@ class WidgetComponent(_NoNewAttrMixin):
             modifying either the theme with ``pyvista.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
         axes : numpy.ndarray, optional
-            ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default
+            ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default
             this matches the default coordinate system.
         release_callback : callable, optional
             Call this method when releasing the left mouse button. It is passed
@@ -2682,7 +2682,7 @@ class WidgetComponent(_NoNewAttrMixin):
         ----------
         callback : callable
             The method called every time the button is clicked. This should take
-            a single parameter: the bool value of the button.
+            a single parameter: the ``bool`` value of the button.
 
         value : bool, default: False
             The default state of the button.
@@ -2795,7 +2795,7 @@ class WidgetComponent(_NoNewAttrMixin):
     ):
         """Add a radio button widget to the scene.
 
-        Radio buttons work in groups. Only one button in a group can be on at
+        Radio buttons work in groups. Only one button in a group can be on
         at the same time. Typically you should add two or more buttons belonging
         to a same radio button group. Each button should be passed a callback
         function. This function will be called when a radio button in a group

@@ -17,7 +17,7 @@ from pyvista import examples
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Load and tilt a point cloud
+# Load and Tilt a Point Cloud
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Subsample the :func:`~pyvista.examples.downloads.download_horse_points`
 # scan and rotate the copy off the world axes so the recovered orientation
@@ -41,7 +41,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Fit a line and a plane
+# Fit a Line and a Plane
 # ~~~~~~~~~~~~~~~~~~~~~~
 # The fitted line follows the cloud's dominant axis; the fitted plane spans
 # the two strongest principal directions.
@@ -77,7 +77,7 @@ pl.show()
 
 
 # %%
-# Compare axis-aligned and oriented boxes
+# Compare Axis-Aligned and Oriented Boxes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The axis-aligned box ignores the tilt; the oriented box snaps to the
 # cloud's principal directions.
@@ -115,7 +115,7 @@ pl.show()
 
 
 # %%
-# Quantify the dominant directions
+# Quantify the Dominant Directions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Normalized principal-axis standard deviations report the relative spread
 # along each fitted axis.

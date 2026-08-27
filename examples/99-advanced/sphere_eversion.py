@@ -1,7 +1,7 @@
 """
 .. _sphere_eversion_example:
 
-Turning the sphere inside out
+Turning the Sphere Inside Out
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plot the eversion of a sphere: turning it inside out without tearing it.
