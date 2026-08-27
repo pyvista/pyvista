@@ -154,7 +154,7 @@ setting the following flag to ``True`` or ``False``:
   <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
 
 
-Setting Remote Jupyter Host with an Environment Variable
+Setting Remote Jupyter Host With an Environment Variable
 ########################################################
 You can set the Remote Jupyter Host manually with the flags discussed above,
 but these need to be set every time the Jupyter kernel restarts. In some environments,

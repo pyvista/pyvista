@@ -72,7 +72,7 @@ grid = pv.UnstructuredGrid({pv.CellType.HEXAHEDRON: cells_hex}, points)
 _ = grid.plot(show_edges=True)
 
 # %%
-# UnstructuredGrid with Shared Points
+# UnstructuredGrid With Shared Points
 # -----------------------------------
 #
 # The next example again creates an unstructured grid containing

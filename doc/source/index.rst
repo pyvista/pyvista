@@ -168,7 +168,7 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
    mesh.plot(scalars='Nodal Stress', component=0, cmap='turbo', cpos='xy')
 
 
-Simple Point Cloud with NumPy
+Simple Point Cloud With NumPy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Easily integrate with NumPy and create a variety of geometries and plot
 them. You could use any geometry to create your glyphs, or even plot

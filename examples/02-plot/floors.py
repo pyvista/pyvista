@@ -1,7 +1,7 @@
 """
 .. _floors_example:
 
-Plot with Floors
+Plot With Floors
 ~~~~~~~~~~~~~~~~
 
 Add a floor/wall at the scene boundary using :func:`~pyvista.Plotter.add_floor`.

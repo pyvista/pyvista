@@ -1,7 +1,7 @@
 """
 .. _create_polyhedron_example:
 
-Unstructured Grid with Polyhedra
+Unstructured Grid With Polyhedra
 --------------------------------
 
 Build a simple :class:`~pyvista.UnstructuredGrid` using polyhedra.

@@ -1,7 +1,7 @@
 """
 .. _image_fft_perlin_noise_example:
 
-Fast Fourier Transform with Perlin Noise
+Fast Fourier Transform With Perlin Noise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Apply an FFT to a :class:`~pyvista.ImageData` sampled from Perlin noise.

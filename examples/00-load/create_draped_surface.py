@@ -1,7 +1,7 @@
 """
 .. _create_draped_surface_example:
 
-Drape 2D Surface from Line
+Drape 2D Surface From Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Drape a surface (2D array) from a line in 3D space.

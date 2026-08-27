@@ -1,7 +1,7 @@
 """
 .. _opacity_example:
 
-Plot with Opacity
+Plot With Opacity
 ~~~~~~~~~~~~~~~~~
 
 Plot a mesh's scalar array with an opacity transfer function or mapping.

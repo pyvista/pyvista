@@ -72,7 +72,7 @@ lut.plot()
 
 
 # %%
-# Plot the Bracket with the Custom Colormap
+# Plot the Bracket With the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can set assign the lookup table when using ``add_mesh`` with ``cmap=``.
 
@@ -99,7 +99,7 @@ lut.plot()
 
 
 # %%
-# Plot the Bracket with the Custom Colormap
+# Plot the Bracket With the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Assign this custom color map to the plotter and disable lighting to improve
 # the plot.
@@ -110,7 +110,7 @@ pl.show()
 
 
 # %%
-# Custom Colormap with Widgets
+# Custom Colormap With Widgets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot the scalars and dynamically change the lookup table through
 # widgets. We create several overlapping single slider widgets to simulate a

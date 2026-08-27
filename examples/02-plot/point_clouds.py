@@ -37,7 +37,7 @@ pv.plot(points)
 
 
 # %%
-# Plot with Scalars
+# Plot With Scalars
 # ~~~~~~~~~~~~~~~~~
 # That's quite boring, so let's spice things up by adding color. We can either
 # use a single scalar to plot the points. For example, the z coordinates.
@@ -53,7 +53,7 @@ pv.plot(
 
 
 # %%
-# Plot with RGBA
+# Plot With RGBA
 # ~~~~~~~~~~~~~~
 # Alternatively, we can color the point cloud using an RGBA array. This has
 # been normalized from (0, 1), but we could have also used a ``numpy.uint8``

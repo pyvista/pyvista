@@ -31,7 +31,7 @@ from pyvista import examples
 grid = pv.ImageData(dimensions=(5, 5, 5)).explode(0.2)
 
 # %%
-# Plot with Defaults
+# Plot With Defaults
 # ~~~~~~~~~~~~~~~~~~
 # Let's plot this without SSAO. Note how the lighting is identical for each
 # cube.
@@ -42,7 +42,7 @@ pl.show()
 
 
 # %%
-# Plot with SSAO
+# Plot With SSAO
 # ~~~~~~~~~~~~~~
 # Now plot this with SSAO using :func:`~pyvista.Plotter.enable_ssao`. Note how adjacent
 # cubes affect the lighting of each other to make it look less artificial.
@@ -86,7 +86,7 @@ pl.show()
 
 
 # %%
-# Plot with SSAO
+# Plot With SSAO
 # ~~~~~~~~~~~~~~
 # Here's the same CAD model with SSAO. Note how we had to increase both
 # ``radius`` and ``bias`` due to the relative scene size.

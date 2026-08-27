@@ -151,7 +151,7 @@ class, but there's a better, and more pythonic alternative by using
 :class:`numpy.ndarray`.
 
 
-Using NumPy with PyVista
+Using NumPy With PyVista
 ~~~~~~~~~~~~~~~~~~~~~~~~
 You can create a `NumPy <https://numpy.org/>`_ points array with:
 

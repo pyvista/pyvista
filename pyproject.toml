@@ -555,6 +555,8 @@ pyvista = "pv"
 '*/conf.py' = ['E402']
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+# A command-line script: it reports what it runs, like `make` does.
+'doc/run_vale.py' = ['T20']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',

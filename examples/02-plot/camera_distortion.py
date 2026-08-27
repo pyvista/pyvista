@@ -129,7 +129,7 @@ pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
 pl.show()
 
 # %%
-# Coefficients from a Calibration
+# Coefficients From a Calibration
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Any array-like will do, including the shape ``cv2.calibrateCamera`` hands
 # back. Only the four Brown-Conrady terms are supported; a fifth coefficient,

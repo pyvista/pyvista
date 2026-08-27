@@ -67,7 +67,7 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# Textures from Files
+# Textures From Files
 # +++++++++++++++++++
 #
 # What about loading your own texture from an image? This is often most easily
@@ -108,7 +108,7 @@ tex = pv.numpy_to_texture(image)
 curvsurf.plot(texture=tex)
 
 # %%
-# Create a GIF Movie with Updating Textures
+# Create a GIF Movie With Updating Textures
 # +++++++++++++++++++++++++++++++++++++++++
 # Generate a moving gif from an active plotter with updating textures.
 
@@ -147,7 +147,7 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 pl.close()
 
 # %%
-# Textures with Transparency
+# Textures With Transparency
 # ++++++++++++++++++++++++++
 #
 # Textures can also specify per-pixel opacity values. The image must
