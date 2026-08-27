@@ -415,6 +415,7 @@ scooby
 setuptools
 sextic
 shader
+shaders
 sigmoidal
 simplices
 sinc
