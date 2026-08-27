@@ -628,7 +628,7 @@ autocodelink_category_labels = {
 }
 
 # show gallery examples last, not alphabetically by heading
-autocodelink_category_order = ['Docstring Examples', 'Documentation', 'Sphinx Gallery']
+autocodelink_category_order = ['Documentation', 'Docstring Examples', 'Sphinx Gallery']
 
 # rank "Used In" entries by usage frequency
 autocodelink_sort = 'frequency'
