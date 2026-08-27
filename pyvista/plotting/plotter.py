@@ -1804,7 +1804,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Two kinds of prop are drawn by shaders with no vertices to displace,
         and are rendered undistorted alongside the rest of the scene, with a
-        warning: volumes, which are ray cast, and gaussian points, which are
+        warning: volumes, which are ray cast, and Gaussian points, which are
         drawn as sprites.
 
         .. versionadded:: 0.49
@@ -1943,7 +1943,7 @@ class BasePlotter(_BoundsSizeMixin):
                 if isinstance(prop.GetMapper(), _vtk.vtkPointGaussianMapper):
                     # These points are drawn as sprites by a shader of their own,
                     # which has no place to put the displacement.
-                    self._warn_undistorted('gaussian points, which are drawn as sprites')
+                    self._warn_undistorted('Gaussian points, which are drawn as sprites')
                     continue
                 # Writing a uniform marks the shader for a rebuild, so leave the
                 # actors whose state is already current alone.

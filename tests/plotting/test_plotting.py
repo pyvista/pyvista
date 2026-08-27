@@ -6184,7 +6184,7 @@ def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
     """The sweep runs before every render over everything the renderer holds.
 
     A composite brings its own mapper, text is an overlay rather than geometry,
-    and a volume and gaussian points are drawn by shaders with no vertices to
+    and a volume and Gaussian points are drawn by shaders with no vertices to
     displace. The warning for those two is not news on the second sweep.
     """
     pl = pv.Plotter()
@@ -6207,7 +6207,7 @@ def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
     assert getattr(volume, '_camera_distortion_state', None) is None
     assert 'camera_distortion' not in gaussian._shader_replacements
     assert sum('does not apply to volumes' in m for m in messages) == 1
-    assert sum('does not apply to gaussian points' in m for m in messages) == 1
+    assert sum('does not apply to Gaussian points' in m for m in messages) == 1
 
     # Disabling walks the same props, including the ones it never gave anything to undo.
     pl.disable_camera_distortion()
