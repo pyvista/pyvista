@@ -1,7 +1,7 @@
 """
 .. _icp_registration_example:
 
-Register a Surface with ICP
+Register a Surface With ICP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Recover the rigid transform between two surfaces with iterative closest point.
@@ -36,7 +36,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Transform a Copy Away from the Reference
+# Transform a Copy Away From the Reference
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The transformed copy stands in for an incoming scan that needs to be
 # registered back onto the reference.

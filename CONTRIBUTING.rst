@@ -48,7 +48,7 @@ running:
    Use ``python -m pip install -e . --group dev`` to also install all of the
    packages required for development.
 
-Quick Start Development with Codespaces
+Quick Start Development With Codespaces
 ---------------------------------------
 
 .. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
@@ -398,7 +398,7 @@ but is namespace-imported, because one type does not make a type module;
 ``dataclasses``, ``enum``, ``http.server``, ``importlib.metadata``, ``io``, ``pathlib``,
 ``types``, ``typing``, ``typing_extensions``, ``unittest.mock``.
 
-How This is Enforced
+How This Is Enforced
 """"""""""""""""""""
 
 Two lists, because ``ruff`` can only express one direction:

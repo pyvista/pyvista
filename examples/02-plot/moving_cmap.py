@@ -1,7 +1,7 @@
 """
 .. _moving_cmap_example:
 
-Create a GIF Movie of a Static Object with a Moving Colormap
+Create a GIF Movie of a Static Object With a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Generate a gif movie of a Hopf torus with a moving colormap, by updating the scalars.

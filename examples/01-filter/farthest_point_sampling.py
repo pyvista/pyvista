@@ -64,7 +64,7 @@ random_cloud = pv.PolyData(cloud.points[random_ids])
 
 
 # %%
-# Compare with a Uniform Random Draw
+# Compare With a Uniform Random Draw
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The random subsample (left, red) leaves visible gaps and clumps. The
 # farthest-point subsample (right, blue) lays the points down in a more

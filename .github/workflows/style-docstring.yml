@@ -110,3 +110,16 @@ jobs:
           fail_level: warning
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # A heading in a scanned file has to pass, so nothing above would notice
+      # `Google.Headings` going slack. This runs Vale over a fixture of
+      # headings that must be flagged, and fails if any of them stops being.
+      - name: Install Vale
+        run: |
+          curl -sSfL https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz \
+            | sudo tar -xz -C /usr/local/bin vale
+        env:
+          VALE_VERSION: 3.18.0
+
+      - name: "Check Vale still catches known-bad headings"
+        run: python3 doc/vale/check_expected_failures.py

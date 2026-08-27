@@ -59,7 +59,7 @@ for dist in dists:
 labels
 
 # %%
-# Plot with Labels
+# Plot With Labels
 # ~~~~~~~~~~~~~~~~
 # Plot the spline with labeled points
 
