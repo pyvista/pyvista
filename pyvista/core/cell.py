@@ -660,6 +660,23 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
+def _expected_legacy_cell_array_size(cells: NumpyArray[int]) -> int | None:
+    """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
+
+    Returns ``None`` if a negative point count makes the layout uninterpretable.
+    """
+    cells = np.ravel(cells)
+    size = 0
+    pos = 0
+    while pos < cells.size:
+        npts = int(cells[pos])
+        if npts < 0:
+            return None
+        size += 1 + npts
+        pos += 1 + npts
+    return size
+
+
 class CellArray(
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
@@ -724,15 +741,25 @@ class CellArray(
     def cells(self: Self, cells: CellsLike) -> None:
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
-        self.ImportLegacyFormat(vtk_idarr)
+        output = self.ImportLegacyFormat(vtk_idarr)
 
-        imported_size = self.GetNumberOfCells() + self.GetNumberOfConnectivityIds()
-
+        # VTK's ImportLegacyFormat started returning a bool (success/corrupt) instead of None
+        # https://gitlab.kitware.com/vtk/vtk/-/commit/82af9fa1e5a0ea5c0a827e91672cd42fe09575de
+        size_is_valid = (
+            self.GetNumberOfCells() + self.GetNumberOfConnectivityIds() == cells.size
+            if output is None  # type: ignore[redundant-expr]
+            else output
+        )
         # https://github.com/pyvista/pyvista/pull/5404
-        if imported_size != cells.size:
+        if not size_is_valid:
+            expected_size = _expected_legacy_cell_array_size(cells)
+            problem = (
+                f'Size ({cells.size}) does not match expected size ({expected_size}).'
+                if expected_size is not None
+                else 'A cell has a negative number of points.'
+            )
             msg = (
-                f'Cell array size is invalid. Size ({cells.size}) does not'
-                f' match expected size ({imported_size}). This is likely'
+                f'Cell array size is invalid. {problem} This is likely'
                 ' due to invalid connectivity array.'
             )
             raise CellSizeError(msg)
