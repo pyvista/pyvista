@@ -438,7 +438,6 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     image.origin = bounds[::2]
     return image
 
-
 def grid_from_sph_coords(theta, phi, r):
     """Create a structured grid from arrays of spherical coordinates.
 
@@ -462,8 +461,17 @@ def grid_from_sph_coords(theta, phi, r):
     x_cart = z * np.sin(y) * np.cos(x)
     y_cart = z * np.sin(y) * np.sin(x)
     z_cart = z * np.cos(y)
+    
     # Make a grid object
-    return pv.StructuredGrid(x_cart, y_cart, z_cart)
+    grid = pv.StructuredGrid(x_cart, y_cart, z_cart)
+    
+    # Compute correct outward radial unit vectors as point normals/vectors
+    points = grid.points
+    norms = np.linalg.norm(points, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0  # Prevent division by zero at the origin
+    grid.point_data['Normals'] = points / norms
+    
+    return grid
 
 
 @_deprecate_positional_args
