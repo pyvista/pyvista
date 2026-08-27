@@ -843,7 +843,7 @@ The top-level ``Makefile`` also wraps the most common invocations—see
             .. code-block:: bash
 
                 tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
-                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+                tox run -e py3.11-vtk_9.4.2-numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
 
             If you need to tests dependencies that are not predefined in the configuration, you can always override them such
             that:
@@ -1170,7 +1170,7 @@ flags are required to run it.
 .. seealso::
 
     `Notes Regarding Input Validation Testing`_ describes a related but separate
-    ``pytest``-based suite that checks the type hints of ``pyvista.core.validation``
+    ``pytest``-based suite that checks the type hints of ``pyvista.core._validation``
     using ``mypy`` and ``pyanalyze`` at both static-analysis and runtime.
 
 
@@ -1380,7 +1380,7 @@ See `pytest-pyvista`_ for more details.
 
 Notes Regarding Input Validation Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``pyvista.core.validation`` package has two distinct test suites which
+The ``pyvista.core._validation`` package has two distinct test suites which
 are executed with ``pytest``:
 
 #. Regular unit tests in ``tests/core/test_validation.py``
@@ -1539,7 +1539,7 @@ To test this locally you need to run a http server in the html directory with:
 
 .. code-block:: bash
 
-   make serve-html
+   make -C doc serve-html
 
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2115,7 +2115,7 @@ status check label regardless of if it is self hosted.
           # GitHub-hosted runner configuration
           - job-name: MacOS Unit Testing (Python 3.10)
             python-version: "3.10"
-            runner-labels: "macos-13"
+            runner-labels: "macos-15"
           # Self-hosted runner configurations
           - job-name: MacOS Unit Testing (Python 3.11)
             python-version: "3.11"
