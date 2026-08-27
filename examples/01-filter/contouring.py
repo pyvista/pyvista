@@ -78,7 +78,7 @@ pl.add_mesh(arrows, **dargs)
 pl.show()
 
 # %%
-# Contours from a label map
+# Contours from a Label Map
 # +++++++++++++++++++++++++
 #
 # Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)

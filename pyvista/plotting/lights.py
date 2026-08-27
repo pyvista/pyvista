@@ -52,7 +52,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         :py:attr:`focal_point` property.
 
     color : ColorLike, optional
-        The color of the light. The ambient, diffuse and specular
+        The color of the light. The ambient, diffuse, and specular
         colors will all be set to this color on creation.
 
     light_type : str | int, default: 'scene light'
@@ -77,7 +77,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     positional : bool, optional
         Set if the light is positional.
 
-        The default is a directional light, i.e. an infinitely distant
+        The default is a directional light, that is, an infinitely distant
         point source. A positional light with a cone angle of at least
         90 degrees acts like a spherical point source. A positional
         light with a cone angle that is less than 90 degrees is known
@@ -215,7 +215,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         self.actor.SetVisibility(show_actor)
 
     def __repr__(self) -> str:
-        """Print a repr specifying the id of the light and its light type."""
+        """Print a ``repr`` specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
     def __eq__(self, other) -> bool:
@@ -545,7 +545,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     def positional(self):  # numpydoc ignore=RT01
         """Return or set whether the light is positional.
 
-        The default is a directional light, i.e. an infinitely distant
+        The default is a directional light, that is, an infinitely distant
         point source. A positional light with a cone angle of at least
         90 degrees acts like a spherical point source. A positional
         light with a cone angle that is less than 90 degrees is known
@@ -624,7 +624,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Plot three planes lit by three spotlights with exponents of 1,
-        2 and 5.  The one with the lowest exponent has the broadest
+        2, and 5.  The one with the lowest exponent has the broadest
         beam.
 
         >>> import pyvista as pv
@@ -656,7 +656,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         The angle is in degrees and is measured between the axis of
         the cone and an extremal ray of the cone. A value smaller than
         90 has spot lighting effects, anything equal to and above 90
-        is just a positional light, i.e. a spherical point source.
+        is just a positional light, that is, a spherical point source.
 
         Regarding the angular distribution of the light, the cone
         angle merely truncates the beam, the shape of which is defined
@@ -699,7 +699,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """Return or set the quadratic attenuation constants.
 
         The values are 3-length sequences which specify the constant,
-        linear and quadratic constants in this order. These parameters
+        linear, and quadratic constants in this order. These parameters
         only have an effect for positional lights.
 
         Attenuation refers to the dampening of a beam of light as it
@@ -758,7 +758,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         linear transformation and a translation (an affine
         transform). The 3-by-3 principal submatrix (the top left
         corner of the matrix) encodes a three-dimensional linear
-        transformation (e.g. some rotation around the origin). The top
+        transformation (for example, some rotation around the origin). The top
         three elements in the last column of the matrix encode a
         three-dimensional translation. The last row of the matrix is
         redundant.
@@ -808,7 +808,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         defined in a coordinate space where the camera is located at
         (0, 0, 1), looking towards (0, 0, 0) at a distance of 1, with
         up being (0, 1, 0). Camera lights use the transform matrix to
-        establish this space, i.e. they have a fixed :py:attr:`position`
+        establish this space, that is, they have a fixed :py:attr:`position`
         with respect to the camera, and moving the camera only
         affects the :py:attr:`world_position` via changes in the
         :py:attr:`transform_matrix` (and the same goes for the focal
@@ -965,7 +965,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Create a light that shines on the origin from a 30-degree
-        elevation in the xz plane.
+        elevation in the ``xz`` plane.
 
         >>> import pyvista as pv
         >>> light = pv.Light()

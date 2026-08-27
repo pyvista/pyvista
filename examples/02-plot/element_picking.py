@@ -1,7 +1,7 @@
 """
 .. _element_picking_example:
 
-Picking elements of a mesh
+Picking Elements of a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pick different elements on meshes using :func:`~pyvista.Plotter.enable_element_picking`.

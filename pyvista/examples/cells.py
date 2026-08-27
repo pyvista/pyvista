@@ -2741,7 +2741,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     Parameters
     ----------
     cell_types : int | sequence[int]
-        Cell type(s) to generate. By default, only :class:`~pyvista.CellType` values are supported.
+        Cell types to generate. By default, only :class:`~pyvista.CellType` values are supported.
         Invalid cell type values may also be specified; these can be ignored by using the
         ``unsupported_action`` keyword.
 
@@ -2749,7 +2749,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
         Method for generating cell type blocks.
 
         - ``'examples'``: generate blocks using examples from :mod:`pyvista.examples.cells`. This
-          is a mixed collected of manually-defined linear cells, quadratic and cubic cells
+          is a mixed collected of manually defined linear cells, quadratic and cubic cells
           generated with ``'paramatric'``, and higher order cells generated with ``'source'``.
         - ``'parametric'``: generate blocks using :vtk:`vtkCell.GetParametricCoords`.
         - ``'source'``: generate blocks using :vtk:`vtkCellTypeSource`.
@@ -2760,7 +2760,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
              the other generators only support a subset.
            - Both ``'examples'`` and ``'parametric'`` only generate a `single` cell per block,
              whereas ``'source'`` may generate multiple cells of the same type in order to fill a
-             unit block (e.g. two triangles to fill a square, two wedges to fill a cube).
+             unit block (for example, two triangles to fill a square, two wedges to fill a cube).
 
     block_dimensions : VectorLike[int], optional
         Output dimensions of blocks to generate. By default, all blocks are stacked sequentially

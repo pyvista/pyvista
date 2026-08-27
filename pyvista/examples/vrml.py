@@ -72,7 +72,7 @@ def download_sextant():
 
 
 def download_grasshopper():
-    """Download the grasshoper example.
+    """Download the grasshopper example.
 
     .. versionadded:: 0.45
 

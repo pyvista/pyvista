@@ -17,7 +17,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter
+# Glyphing can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
 mesh = examples.download_carotid().threshold(145, scalars='scalars')
 mask = mesh['scalars'] < 210

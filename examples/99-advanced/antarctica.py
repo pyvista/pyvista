@@ -110,7 +110,7 @@ pl.show()
 
 
 # %%
-# flow_a that agrees with the mean flow path of flow_b
+# ``flow_a`` that agrees with the mean flow path of ``flow_b``
 agree = flow_a.dot(flow_b.mean(0))
 
 pl = pv.Plotter()

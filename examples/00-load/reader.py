@@ -1,7 +1,7 @@
 """
 .. _reader_example:
 
-Load data using a Reader
+Load Data Using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use a class based reader to have more control over reading data files.

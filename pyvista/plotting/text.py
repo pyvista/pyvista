@@ -420,7 +420,7 @@ class Label(_Prop3DMixin, Text):
 
     @property
     def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the label in xyz space.
+        """Position of the label in ``xyz`` space.
 
         This is the "true" position of the label. Internally this is loosely
         equal to :attr:`~pyvista.Prop3D.position` + :attr:`relative_position`.

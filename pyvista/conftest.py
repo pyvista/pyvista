@@ -36,7 +36,7 @@ def autoclose_plotters():
 
 @pytest.fixture(autouse=True)
 def reset_global_theme():
-    """Reset global_theme."""
+    """Reset ``global_theme``."""
     # this stops any doctest-module tests from overriding the global theme and
     # creating test side effects
     pv.set_plot_theme('document_build')

@@ -73,7 +73,7 @@ pl.show()
 # Taubin Smoothing
 # ~~~~~~~~~~~~~~~~
 # You can reduce the amount of surface shrinkage by using Taubin smoothing
-# rather than the default laplacian smoothing implemented in :func:`smooth()
+# rather than the default Laplacian smoothing implemented in :func:`smooth()
 # <pyvista.PolyDataFilters.smooth>`. In this example, you can see how Taubin
 # smoothing maintains the volume relative to the original mesh.
 #

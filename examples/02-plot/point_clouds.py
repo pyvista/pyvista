@@ -18,7 +18,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Compare the Plotting methods
+# Compare the Plotting Methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's create a sample point cloud using :func:`numpy.random.random`.
 
@@ -57,7 +57,7 @@ pv.plot(
 # ~~~~~~~~~~~~~~
 # Alternatively, we can color the point cloud using an RGBA array. This has
 # been normalized from (0, 1), but we could have also used a ``numpy.uint8``
-# array from 0-255.
+# array from 0 to 255.
 rgba = points - points.min(axis=0)
 rgba /= rgba.max(axis=0)
 pv.plot(

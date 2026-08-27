@@ -229,10 +229,10 @@ def _attach_raw_scalars_via_callback(  # noqa: PLR0917
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[_vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput, DataSet]:
-    """Splice a callback stage that attaches raw numpy scalars to the pipeline.
+    """Splice a callback stage that attaches raw NumPy scalars to the pipeline.
 
     Used by :meth:`Plotter.add_mesh` when smooth shading is enabled on an
-    upstream :vtk:`vtkAlgorithm` input and the user passed a raw numpy
+    upstream :vtk:`vtkAlgorithm` input and the user passed a raw NumPy
     array. The scalars cannot be resolved by name on the pipeline output,
     so we wrap ``algo`` in a :class:`CallbackFilterAlgorithm` that
     shallow-copies each output and stamps the array on it.
@@ -607,7 +607,7 @@ class BasePlotter(_BoundsSizeMixin):
         Before falling through, check whether ``item`` matches a
         pending ``pyvista.plotter_components`` entry point. A match
         triggers a one-shot plugin import, after which normal attribute
-        resolution finds the newly-attached component descriptor.
+        resolution finds the newly attached component descriptor.
 
         Mirrors :meth:`pyvista.DataObject.__getattr__` so the plotter
         and dataset extension points present the same lookup contract.
@@ -1011,7 +1011,7 @@ class BasePlotter(_BoundsSizeMixin):
             Path to export the gltf file to.
 
         inline_data : bool, default: True
-            Sets if the binary data be included in the json file as a
+            Sets if the binary data be included in the ``json`` file as a
             base64 string.  When ``True``, only one file is exported.
 
         rotate_scene : bool, default: True
@@ -1491,7 +1491,7 @@ class BasePlotter(_BoundsSizeMixin):
         multi_samples : int, optional
             The number of multi-samples when ``aa_type`` is ``"msaa"``. Note
             that using this setting automatically enables this for all
-            renderers. Defaults to the theme multi_samples.
+            renderers. Defaults to the theme ``multi_samples``.
 
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
@@ -1502,7 +1502,7 @@ class BasePlotter(_BoundsSizeMixin):
         SSAA, or Super-Sample Anti-Aliasing is a brute force method of
         anti-aliasing. It results in the best image quality but comes at a
         tremendous resource cost. SSAA works by rendering the scene at a higher
-        resolution. The final image is produced by downsampling the
+        resolution. The final image is produced by down-sampling the
         massive source image using an averaging filter. This acts as a low pass
         filter which removes the high frequency components that would cause
         jaggedness.
@@ -2254,8 +2254,8 @@ class BasePlotter(_BoundsSizeMixin):
                        focal_point=(0.0243, 0.0336, -0.02225),
                        viewup=(0.0, 1.0, 0.0))
 
-        Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the repr and
-        prepending the pyvista module, i.e. ``pv.``.
+        Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the ``repr`` and
+        prepending the pyvista module, that is, ``pv.``.
 
         >>> new_cpos = pv.CameraPosition(
         ...     position=(0.0243, 0.0336, 0.9446),
@@ -3127,7 +3127,7 @@ class BasePlotter(_BoundsSizeMixin):
             applied everywhere - should be between 0 and 1.
 
         flip_scalars : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         lighting : bool, default: True
@@ -3326,11 +3326,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         copy_mesh : bool, default: False
             If ``True``, a copy of the mesh will be made before adding it to
-            the plotter.  This is useful if e.g. you would like to add the same
+            the plotter.  This is useful if for example, you would like to add the same
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
-            have these updates rendered, e.g. by changing the active scalars or
+            have these updates rendered, for example, by changing the active scalars or
             through an interactive widget.
 
         show_vertices : bool, optional
@@ -3686,14 +3686,14 @@ class BasePlotter(_BoundsSizeMixin):
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
-            When a raw numpy array is passed, it is attached to
+            When a raw NumPy array is passed, it is attached to
             ``mesh`` under a generated name (typically
             ``pyvista.DEFAULT_SCALARS_NAME`` or
             ``Data-<n>`` if that name is taken). This makes the
             array visible to downstream pipeline stages (for example
             smooth-shading surface extraction) and lets callers
             later mutate it via ``mesh[name] = ...`` to update the
-            render. Mutation is scoped to raw-numpy inputs only.
+            render. Mutation is scoped to raw-NumPy inputs only.
             Passing ``scalars=<str>`` never modifies the mesh.
 
         clim : sequence[float], optional
@@ -3734,7 +3734,7 @@ class BasePlotter(_BoundsSizeMixin):
             ``n_colors`` in length or shorter.
 
         flip_scalars : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         lighting : bool, optional
@@ -3979,7 +3979,7 @@ class BasePlotter(_BoundsSizeMixin):
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
-            have these updates rendered, e.g. by changing the active scalars or
+            have these updates rendered, for example, by changing the active scalars or
             through an interactive widget. This should only be set to ``True``
             with caution. Defaults to ``False``. This is ignored if the input
             is a :vtk:`vtkAlgorithm` subclass.
@@ -4741,7 +4741,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         volume : 3D numpy.ndarray | DataSet
-            The input volume to visualize. 3D numpy arrays are accepted.
+            The input volume to visualize. 3D NumPy arrays are accepted.
 
             .. warning::
                 If the input is not :class:`numpy.ndarray`,
@@ -4804,7 +4804,7 @@ class BasePlotter(_BoundsSizeMixin):
             * ``'sigmoid_20'`` - Linear map between -20.0 and 20.0
             * ``'foreground'`` - Transparent background and opaque foreground.
                 Intended for use with segmentation labels. Assumes the smallest
-                scalar value of the array is the background value (e.g. 0).
+                scalar value of the array is the background value (for example, 0).
 
             If RGBA scalars are provided, this parameter is set to ``'linear'``
             to ensure the opacity transfer function has no effect on the input
@@ -4833,7 +4833,7 @@ class BasePlotter(_BoundsSizeMixin):
             will be ignored.
 
         flip_scalars : bool, optional
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         reset_camera : bool, optional
@@ -4865,7 +4865,7 @@ class BasePlotter(_BoundsSizeMixin):
             'Blues', and 'Grays'.
 
         blending : str, optional
-            Blending mode for visualisation of the input object(s). Can be
+            Blending mode for visualisation of the input objects. Can be
             one of 'additive', 'maximum', 'minimum', 'composite', or
             'average'. Defaults to 'composite'.
 
@@ -4877,7 +4877,7 @@ class BasePlotter(_BoundsSizeMixin):
             only ``ImageData`` types can be used.
 
             .. note::
-                If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
+                If a :class:`pyvista.UnstructuredGrid` is input, the ``'ugrid'``
                 mapper (:vtk:`vtkUnstructuredGridVolumeRayCastMapper`) will be
                 used regardless.
 
@@ -4966,7 +4966,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Show a built-in volume example with the coolwarm colormap.
+        Show a built-in volume example with the ``coolwarm`` colormap.
 
         >>> from pyvista import examples
         >>> import pyvista as pv
@@ -5808,7 +5808,7 @@ class BasePlotter(_BoundsSizeMixin):
             coordinate system (default). In this case,
             it returns a more general :vtk:`vtkOpenGLTextActor`.
             If string name is used, it returns a :vtk:`vtkCornerAnnotation`
-            object normally used for fixed labels (like title or xlabel).
+            object normally used for fixed labels (like title or ``xlabel``).
             Default is to find the top left corner of the rendering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
@@ -6041,7 +6041,7 @@ class BasePlotter(_BoundsSizeMixin):
         ----------
         filename : str | Path
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See :func:`imageio.get_writer()
+            but other file types may be supported.  See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
 
         framerate : int, default: 24
@@ -6053,7 +6053,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         **kwargs : dict, optional
             See the documentation for :func:`imageio.get_writer()
-            <imageio.v2.get_writer>` for additional kwargs.
+            <imageio.v2.get_writer>` for additional ``kwargs``.
 
         Notes
         -----
@@ -6119,7 +6119,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         **kwargs : dict, optional
             See the documentation for :func:`imageio.get_writer() <imageio.v2.get_writer>`
-            for additional kwargs.
+            for additional ``kwargs``.
 
         Notes
         -----
@@ -6130,8 +6130,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Open a gif file, setting the framerate to 8 frames per second and
-        reducing the colorspace to 64.
+        Open a GIF file, setting the frame rate to 8 frames per second and
+        reducing the color space to 64.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
@@ -6710,7 +6710,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         points : sequence[float] | np.ndarray | DataSet
-            An ``n x 3`` numpy.ndarray or pyvista dataset with points.
+            An ``n x 3`` ``numpy.ndarray`` or PyVista dataset with points.
 
         labels : list | str
             List of scalars of labels.  Must be the same length as points. If a
@@ -6805,7 +6805,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Add a numpy array of points to a mesh.
+        Add a NumPy array of points to a mesh.
 
         >>> import numpy as np
         >>> import pyvista as pv
@@ -7208,7 +7208,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Move the current camera's focal point to a position point.
 
         The movement is animated over the number of frames specified in
-        NumberOfFlyFrames. The LOD desired frame rate is used.
+        ``NumberOfFlyFrames``. The LOD desired frame rate is used.
 
         Parameters
         ----------
@@ -7267,7 +7267,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         threaded : bool, default: False
             Run this as a background thread.  Generally used within a
-            GUI (i.e. PyQt).
+            GUI (that is, PyQt).
 
         progress_bar : bool, default: False
             Show the progress bar when proceeding through the path.
@@ -7627,7 +7627,7 @@ class BasePlotter(_BoundsSizeMixin):
         ]
 
     # =======================================================================
-    # Picking — forwarding shims for plotter.picking component.
+    # Picking—forwarding shims for plotter.picking component.
     # =======================================================================
 
     @functools.wraps(PickingComponent.disable_picking)
@@ -7821,7 +7821,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.picking.picked_horizon
 
     # =======================================================================
-    # Widgets — forwarding shims for plotter.widgets component.
+    # Widgets—forwarding shims for plotter.widgets component.
     # =======================================================================
 
     @functools.wraps(WidgetComponent.add_box_widget)
@@ -8015,7 +8015,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.widgets.clear_camera3d_widgets(*args, **kwargs)
 
     # =======================================================================
-    # Widgets — deprecated forwarding properties for state collections.
+    # Widgets—deprecated forwarding properties for state collections.
     # =======================================================================
 
     @property
@@ -8312,7 +8312,7 @@ _register_plotter_component('widgets', target_cls=BasePlotter)(WidgetComponent)
 
 
 class Plotter(_NoNewAttrMixin, BasePlotter):
-    """Plotting object to display vtk meshes or numpy arrays.
+    """Plotting object to display VTK meshes or NumPy arrays.
 
     Parameters
     ----------
@@ -8390,7 +8390,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme. Accepts a ``Theme`` instance or a registered
-        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
+        theme name (for example, ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
@@ -8519,7 +8519,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # On macOS, vtkCocoaRenderWindow creates an NSWindow even for
             # off-screen rendering, which shows a dock icon and requires
             # the main thread.  Disconnecting from NSView creates a
-            # standalone CGL context instead — no dock icon, no
+            # standalone CGL context instead—no dock icon, no
             # main-thread requirement, and enables background-thread rendering.
             _prepare_offscreen_macos_render_window(self.render_window)
             # vtkGenericRenderWindowInteractor has no event loop and
@@ -8660,7 +8660,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             alternative.
 
         return_img : bool, default: False
-            Returns a numpy array representing the last image along
+            Returns a NumPy array representing the last image along
             with the camera position.
 
         cpos : sequence[sequence[float]], optional
@@ -8674,7 +8674,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             * ``'none'`` : Do not display in the notebook.
             * ``'static'`` : Display a static figure.
             * ``'trame'`` : Display a dynamic figure with Trame.
-            * ``'html'`` : Use an ebeddable HTML scene.
+            * ``'html'`` : Use an embeddable HTML scene.
 
             This can also be set globally with
             :func:`pyvista.set_jupyter_backend`.
@@ -8717,7 +8717,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             default global or plot theme.
 
         image : np.ndarray
-            Numpy array of the last image when either ``return_img=True``
+            NumPy array of the last image when either ``return_img=True``
             or ``screenshot=True`` is set. Optionally contains alpha
             values. Sized:
 
@@ -8920,7 +8920,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if store_image_depth:
                 self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
-        #       as if a user pressed the close button, then it destroys the
+        #       as if a user pressed the close button, then it destroys
         #       the render view and a stream of errors will kill the Python
         #       kernel if code here tries to access that renderer.
         #       See issues #135 and #186 for insight before editing the

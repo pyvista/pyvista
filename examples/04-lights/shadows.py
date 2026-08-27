@@ -109,7 +109,7 @@ pl.show()
 
 
 # %%
-# Here, we use a lower shadow_attenuation value to demonstrate how the
+# Here, we use a lower ``shadow_attenuation`` value to demonstrate how the
 # light can travel through more planes.
 
 pl = pv.Plotter(lighting=None, window_size=(800, 800))

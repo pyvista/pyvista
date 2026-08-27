@@ -184,7 +184,7 @@ def test_color():
 @pytest.mark.parametrize('opacity', [275, -50, 2.4, -1.2, '#zz'])
 def test_color_invalid_opacity(opacity):
     match = (
-        'Must be an integer, float or string.  For example:'
+        'Must be an integer, float, or string.  For example:'
         "\n\t\topacity='1.0'"
         "\n\t\topacity='255'"
         "\n\t\topacity='#FF'"

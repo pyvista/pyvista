@@ -820,12 +820,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to 2D.
 
         For a 3-button mouse, the left button pans, the
-        right button dollys, the middle button spins, and the wheel
-        dollys.
-        ctrl + left button spins, shift + left button dollys,
-        ctrl + middle button pans, shift + middle button dollys,
+        right button dollies, the middle button spins, and the wheel
+        dollies.
+        ctrl + left button spins, shift + left button dollies,
+        ctrl + middle button pans, shift + middle button dollies,
         ctrl + right button rotates in 3D, and shift + right button
-        dollys.
+        dollies.
 
         Recommended to use with
         :func:`pyvista.Plotter.enable_parallel_projection`.
@@ -1018,7 +1018,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
-        natural view up, e.g., terrain. The camera in such a scene is
+        natural view up, for example, terrain. The camera in such a scene is
         manipulated by specifying azimuth (angle around the view up
         vector) and elevation (the angle from the horizon). Similar to
         the default Trackball Camera style and in contrast to the
@@ -1212,7 +1212,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         elif isinstance(handler, type) and issubclass(handler, _vtk.vtkInteractorStyle):
             style = handler()
         else:
-            # Generic callable — pass the interactor so the factory can
+            # Generic callable—pass the interactor so the factory can
             # configure the style.  The cast is needed because mypy narrows
             # ``Callable[..., Any]`` to a non-callable after two failing
             # ``isinstance(handler, type)`` checks.
@@ -1661,7 +1661,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
 @abstract_class
 class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
-    """A mixin for subclasses of vtkInteractorStyle with capturing ability.
+    """A ``mixin`` for subclasses of vtkInteractorStyle with capturing ability.
 
     Use a custom capturing events because the default ones
     swallow the release events. See

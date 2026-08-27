@@ -95,7 +95,7 @@ BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
 # 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
-# remain valid at runtime as a plain ``str`` — see ``pyvista.registered_themes``.
+# remain valid at runtime as a plain ``str``—see ``pyvista.registered_themes``.
 ThemeOptions = Literal[
     'dark',
     'document',

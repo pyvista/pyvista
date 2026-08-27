@@ -60,7 +60,7 @@ class Axes(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAxes):
 
     @property
     def origin(self):  # numpydoc ignore=RT01
-        """Return or set th origin of the axes in world coordinates.
+        """Return or set the origin of the axes in world coordinates.
 
         Examples
         --------

@@ -1,4 +1,4 @@
-"""Deprecated shim — use :mod:`trame_pyvista.ui.vuetify2` instead."""
+"""Deprecated shim—use :mod:`trame_pyvista.ui.vuetify2` instead."""
 
 from __future__ import annotations
 

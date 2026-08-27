@@ -56,13 +56,13 @@ def _collect_seam_segments(
     """Return line segments describing the requested viewport edges.
 
     Every edge of every viewport is either *interior* (it lies
-    strictly inside the render window ``(0, 1) x (0, 1)``, i.e. it's
+    strictly inside the render window ``(0, 1) x (0, 1)``, that is, it's
     shared with a neighboring viewport) or *exterior* (it lies on the
     outer perimeter of the render window, at ``0`` or ``1``). Edges
     are contributed to a vertical or horizontal group keyed by their
     axial coordinate, and each group's intervals are then merged, so
     adjacent cells sharing an edge produce a single continuous line
-    rather than one segment per contributor — this applies just as
+    rather than one segment per contributor—this applies just as
     much to the outer perimeter (each side is typically touched by
     several renderers) as it does to interior seams. The resulting
     segments are meant to be drawn once from a single overlay actor
@@ -620,8 +620,8 @@ class Renderers(_NoNewAttrMixin):
               or indices.
 
         toggle : bool, default: False
-            Instead of enabling interaction with the provided chart(s), interaction
-            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            Instead of enabling interaction with the provided charts, interaction
+            with the provided charts is toggled. Only applicable when ``interactive``
             is not a boolean.
 
         Returns
