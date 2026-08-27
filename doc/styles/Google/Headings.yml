@@ -2,15 +2,12 @@ extends: capitalization
 message: "'%s' should use title-style capitalization."
 link: "https://docs.vale.sh/checks/capitalization"
 level: warning
-# Headings use AP title case: capitalize every word except
+# Although this lives in `styles/Google`, the headings use AP title case,
+# not Google's sentence case. Capitalize every word except:
 #     a an the and but or nor for of in on at to by as if per via en vs
-# and capitalize even those when they are the first or last word of
-# the heading. This is what Vale's `$title` applies by default; no `style` is set.
-#
-# The Google style this rule is vendored from prescribes sentence case, and the
-# upstream copy of this file sets `match: $sentence`. PyVista flipped it to
-# title case in #4150 and the headings here are title case throughout, so the
-# rule keeps its name but not its upstream behavior.
+# and capitalize even those when they are the first or last word of the
+# heading. This is what Vale's `$title` applies by default; no `style`
+# is set.
 #
 #   Clip With Plane                   not  Clip with Plane
 #   Textures From Files               not  Textures from Files
@@ -18,7 +15,7 @@ level: warning
 #   Distance Between Two Surfaces     not  Distance between Two Surfaces
 #   List-Like Features                not  List-like Features
 #   Modify Which Actors Are Pickable  not  Modify Which Actors are Pickable
-#   A Guide to the Data Model              first and last word always capitalized
+#   A Guide to the Data Model              first and last always capitalized
 #
 # `to` is the one word left to the author: `Built to Extend` and `Built To
 # Extend` both pass. See the exception below for why.
