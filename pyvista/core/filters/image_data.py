@@ -3274,8 +3274,6 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have decreased by half the spacing
         - The output ``N Points`` equals the input ``N Cells``
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='cell')
