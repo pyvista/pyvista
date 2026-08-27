@@ -1186,3 +1186,33 @@ def test_no_entry_points_is_silent(monkeypatch):
         if 'pyvista.accessors' in str(w.message) or 'Failed to load' in str(w.message)
     ]
     assert accessor_warnings == []
+
+
+def test_private_name_skips_entry_point_scan(monkeypatch):
+    """A private or dunder lookup never scans entry-point metadata.
+
+    Registered names cannot start with an underscore, so the scan would
+    always come up empty. Skipping it keeps ``__del__``, ``copy`` and
+    ``pickle`` probes off ``importlib.metadata``, which is unusable once
+    the interpreter starts tearing modules down.
+    """
+    scan_count = 0
+
+    def _counting_entry_points(**_):
+        nonlocal scan_count
+        scan_count += 1
+        return []
+
+    monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
+    _reg_mod._pending_accessors.clear()
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.entry_points',
+        _counting_entry_points,
+    )
+
+    assert not _reg_mod._resolve_pending_accessor('__dict__')
+    assert not _reg_mod._resolve_pending_accessor('_private')
+    assert scan_count == 0
+
+    assert not _reg_mod._resolve_pending_accessor('public')
+    assert scan_count == 1
