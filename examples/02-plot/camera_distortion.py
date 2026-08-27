@@ -29,7 +29,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# A grid to read the distortion off
+# A Grid to Read the Distortion Off
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Distortion is easiest to see on straight lines, so start with a plane viewed
 # face on. The edges of the cells are straight and evenly spaced.
@@ -49,7 +49,7 @@ pl.camera.view_angle = 70.0
 pl.show()
 
 # %%
-# Barrel and pincushion
+# Barrel and Pincushion
 # ~~~~~~~~~~~~~~~~~~~~~
 # A positive ``k1`` pushes points away from the optical axis in proportion to
 # the square of their distance from it, bowing the edges outward: barrel
@@ -72,7 +72,7 @@ for coefficients, title in [
     pl.show()
 
 # %%
-# The tangential terms
+# The Tangential Terms
 # ~~~~~~~~~~~~~~~~~~~~
 # ``p1`` and ``p2`` describe a lens that is not quite parallel to the sensor,
 # so the distortion is no longer symmetric about the centre of the frame. A
@@ -87,7 +87,7 @@ pl.enable_camera_distortion((0.0, 0.0, 0.05, -0.07))
 pl.show()
 
 # %%
-# It belongs to the camera, not to an actor
+# It Belongs to the Camera, Not to an Actor
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Everything the plotter draws is distorted, and actors added after the call
 # are picked up as well, so the order of these two lines does not matter.
@@ -104,7 +104,7 @@ pl.camera.view_angle = 70.0
 pl.show()
 
 # %%
-# Geometry has to be fine enough to bend
+# Geometry Has to Be Fine Enough to Bend
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The distortion is applied by a vertex shader, so it displaces vertices
 # rather than resampling the finished image. An edge with nothing along it
@@ -129,7 +129,7 @@ pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
 pl.show()
 
 # %%
-# Coefficients from a calibration
+# Coefficients from a Calibration
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Any array-like will do, including the shape ``cv2.calibrateCamera`` hands
 # back. Only the four Brown-Conrady terms are supported; a fifth coefficient,
@@ -146,7 +146,7 @@ pl.enable_camera_distortion(distortion_coefficients)
 pl.show()
 
 # %%
-# Turning it off
+# Turning It Off
 # ~~~~~~~~~~~~~~
 # :func:`disable_camera_distortion
 # <pyvista.Plotter.disable_camera_distortion>` puts every actor back on the
