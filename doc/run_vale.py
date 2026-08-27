@@ -52,6 +52,7 @@ def run(command: list[str]) -> int:
 
 
 def main() -> int:
+    """Extract, lint, and check the fixtures; return an exit status."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         '--print-files',

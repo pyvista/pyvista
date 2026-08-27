@@ -13,6 +13,7 @@ Run with ``make docstyle``, or directly::
 
 from __future__ import annotations
 
+import itertools
 import json
 from pathlib import Path
 import re
@@ -31,7 +32,7 @@ def headings_in(path: Path) -> list[str]:
     lines = path.read_text().splitlines()
     return [
         title.strip()
-        for title, under in zip(lines, lines[1:])
+        for title, under in itertools.pairwise(lines)
         if title.strip()
         and re.fullmatch(r'[=\-~^"\'`#*+]{2,}', under.strip() or 'x')
         and len(under.strip()) >= len(title.strip())
@@ -55,6 +56,7 @@ def flagged_by_vale(path: Path) -> set[str]:
 
 
 def main() -> int:
+    """Report any expected failure the rule no longer catches."""
     if shutil.which('vale') is None:
         print('vale is not installed; skipping')
         return 0
