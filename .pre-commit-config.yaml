@@ -55,7 +55,7 @@ repos:
       - id: mixed-line-ending
       - id: file-contents-sorter
         verbose: true
-        files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
+        files: ^(\.dockerignore|doc/styles/config/vocabularies/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
     rev: 2026.06.18
@@ -85,7 +85,7 @@ repos:
       - id: warn_external
         name: Convert warnings to warn_external
         language: python
-        entry: python -m libcst.tool codemod -x hooks.warnings.ConvertWarningsToExternal --no-format
+        entry: python -m hooks.warnings
         additional_dependencies: [libcst]
         files: ^pyvista/
         types: [file, python]
@@ -107,7 +107,7 @@ repos:
       - id: namespace-stdlib-imports
         name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
         language: pygrep
-        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|concurrent\.futures|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
       - id: gallery-docstring-structure
         name: "Gallery examples need a '.. _label:', a title/underline, and a summary sentence"

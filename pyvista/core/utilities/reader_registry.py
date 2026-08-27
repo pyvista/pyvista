@@ -65,7 +65,7 @@ class ReaderRegistration(NamedTuple):
     ----------
     extension : str
         File extension the reader is registered against, including the
-        leading dot (e.g. ``'.myformat'``).
+        leading dot (for example, ``'.myformat'``).
     handler : callable or type[pyvista.BaseReader]
         The reader callable, or the :class:`~pyvista.BaseReader`
         subclass when the extension was registered with a reader class.
@@ -186,7 +186,7 @@ def _restore_registry_state(state: _RegistryState) -> None:
 
 
 def has_scheme(value: str) -> bool:
-    """Return ``True`` if *value* starts with a URI scheme (e.g. ``https://``).
+    """Return ``True`` if *value* starts with a URI scheme (for example, ``https://``).
 
     Parameters
     ----------
@@ -219,7 +219,7 @@ def _download_uri(uri: str, ext: str) -> str:
     uri : str
         The remote URI to download.
     ext : str
-        File extension to use for the temp file (e.g. ``'.vtu'``).
+        File extension to use for the temp file (for example, ``'.vtu'``).
 
     Returns
     -------
@@ -236,7 +236,7 @@ def _download_uri(uri: str, ext: str) -> str:
     """
     suffix = ext or ''
     try:
-        import fsspec  # noqa: PLC0415  — optional dependency
+        import fsspec  # noqa: PLC0415 -- optional dependency
     except ImportError:
         if not uri.lower().startswith(('http://', 'https://')):
             scheme = uri.split('://', maxsplit=1)[0]
@@ -317,7 +317,7 @@ def register_reader(
     Parameters
     ----------
     key : str
-        A file extension (e.g. ``'.myformat'``).
+        A file extension (for example, ``'.myformat'``).
 
     handler : callable or type[pyvista.BaseReader], optional
         A :class:`~pyvista.BaseReader` subclass, or a callable with
@@ -451,7 +451,7 @@ def _get_ext_handler(ext: str) -> ReaderHandler | None:
     :func:`pyvista.get_reader` instead, so that :func:`pyvista.read`
     falls through to the same code path built-in readers use.
 
-    Built-in extensions never trigger entry-point plugin imports — only
+    Built-in extensions never trigger entry-point plugin imports—only
     extensions that an installed plugin has actually claimed do.
     """
     _resolve_ext(ext)
@@ -580,7 +580,7 @@ def _resolve_pending_reader(ext: str) -> bool:
         raise ValueError(_undeclared_override_message(ext, winner))
     del _pending_ext_readers[ext]
     try:
-        # ep.load() runs third-party import machinery — it can raise
+        # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
         # cannot take down every pyvista.read call.
         handler = winner.load()

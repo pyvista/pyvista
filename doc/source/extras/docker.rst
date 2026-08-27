@@ -1,4 +1,4 @@
-PyVista within a Docker Container
+PyVista Within a Docker Container
 =================================
 You can use ``pyvista`` from within a docker container with
 jupyterlab. To launch a local docker container, install ``docker``, then
@@ -33,7 +33,7 @@ start playing around with pyvista in jupyterlab. For example:
     `Working with the Docker registry <https://docs.github.com/en/enterprise-server@3.0/packages/working-with-a-github-packages-registry/working-with-the-docker-registry>`_)
 
 
-Create your own Docker Container with PyVista
+Create Your Own Docker Container with PyVista
 ---------------------------------------------
 Both the ``latest`` and ``latest-slim`` images are produced from a single
 multi-stage Dockerfile at ``docker/Dockerfile``. The PyVista wheel is built

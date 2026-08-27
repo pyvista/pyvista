@@ -37,9 +37,9 @@ if TYPE_CHECKING:
 def _add_axes_widget(
     renderers: Iterable[Renderer], *, show_axes: bool | None, theme: Theme
 ) -> None:
-    """Add the axes orientation widget to each of the renderers, as `pyvista.plot` does.
+    """Add the axes orientation widget to each of the renderers, as :func:`pyvista.plot` does.
 
-    `show_axes` defaults to the theme, which also decides whether the widget drawn is
+    ``show_axes`` defaults to the theme, which also decides whether the widget drawn is
     box axes or the plain orientation widget.
     """
     if show_axes is None:
@@ -50,12 +50,12 @@ def _add_axes_widget(
 
 
 def _set_background(pl: Plotter, background: ColorLike | None) -> None:
-    """Set the background `pyvista.plot` and `pyvista.plot_compare` take.
+    """Set the background :func:`pyvista.plot` and :func:`pyvista.plot_compare` take.
 
-    A color is set as the background of every renderer at once, since `set_background`
+    A color is set as the background of every renderer at once, since ``set_background``
     is a property of the whole collection of them rather than of any one. A path to an
     image file is shown as a background image instead, behind every subplot alike for
-    the same reason, since `set_background` only takes a color and raises otherwise.
+    the same reason, since ``set_background`` only takes a color and raises otherwise.
     """
     try:
         pl.set_background(background)  # type: ignore[arg-type]
@@ -78,12 +78,12 @@ def _apply_render_options(
     parallel_projection: bool,
     ssao: bool,
 ) -> None:
-    """Apply the rendering options `pyvista.plot` takes, in the terms it takes them.
+    """Apply the rendering options :func:`pyvista.plot` takes, in the terms it takes them.
 
-    `anti_aliasing` is a property of the render window, so it is applied once to the
-    plotter. `eye_dome_lighting`, `parallel_projection` and `ssao` are each a
-    renderer's own, so they are applied to every one of `renderers`; a plot with a
-    single renderer gives `[pl.renderer]`.
+    ``anti_aliasing`` is a property of the render window, so it is applied once to the
+    plotter. ``eye_dome_lighting``, ``parallel_projection`` and ``ssao`` are each a
+    renderer's own, so they are applied to every one of ``renderers``; a plot with a
+    single renderer gives ``[pl.renderer]``.
     """
     if anti_aliasing is None:
         pass
@@ -135,7 +135,7 @@ def plot(  # noqa: ANN202, PLR0917
     before_close_callback: Callable[[Plotter], None] | None = None,
     **kwargs,
 ):
-    """Plot a PyVista, numpy, or vtk object.
+    """Plot a PyVista, NumPy, or VTK object.
 
     .. note::
         This function is also available via command-line interface. See
@@ -194,7 +194,7 @@ def plot(  # noqa: ANN202, PLR0917
         Adds text at the bottom of the plot.
 
     return_img : bool, default: False
-        Returns numpy array of the last image rendered.
+        Returns a NumPy array of the last image rendered.
 
     eye_dome_lighting : bool, optional
         Enables eye dome lighting.
@@ -228,11 +228,11 @@ def plot(  # noqa: ANN202, PLR0917
 
     theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme. Accepts a ``Theme`` instance or a registered
-        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
+        theme name (for example, ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
-        disables anti_aliasing. If a string, should be one of the following:
+        disables ``anti_aliasing``. If a string, should be one of the following:
 
         * ``"ssaa"`` - Super-Sample Anti-Aliasing
         * ``"msaa"`` - Multi-Sample Anti-Aliasing
@@ -289,7 +289,7 @@ def plot(  # noqa: ANN202, PLR0917
         jupyter notebook and ``return_viewer=True``.
 
     image : np.ndarray
-        Numpy array of the last image when either ``return_img=True``
+        NumPy array of the last image when either ``return_img=True``
         or ``screenshot=True`` is set. Not returned when in a
         jupyter notebook with ``return_viewer=True``. Optionally
         contains alpha values. Sized:

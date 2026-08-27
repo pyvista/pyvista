@@ -6,6 +6,7 @@ import inspect
 import os
 import os.path as op
 import sys
+from typing import Any
 
 
 def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001, FBT002
@@ -17,7 +18,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         Only useful when 'py'.
 
     info : dict
-        With keys "module" and "fullname".
+        With keys ``'module'`` and ``'fullname'``.
 
     edit : bool, default=False
         Link to the GitHub edit page instead of the blob view. The blob view
@@ -32,7 +33,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     Notes
     -----
-    This function is used by the `sphinx.ext.linkcode` extension to create the "[Source]"
+    This function is used by the ``sphinx.ext.linkcode`` extension to create the "[Source]"
     button whose link is edited in this function.
 
     This has been adapted to deal with our "verbose" decorator.
@@ -56,8 +57,14 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     if submod is None:
         return None
 
-    obj = submod
+    obj: Any = submod
     for part in fullname.split('.'):
+        # A metaclass property (e.g. CellType.dimension_map) is invoked by a plain
+        # getattr, losing the property itself -- grab it off the metaclass instead.
+        metaclass_prop = getattr(type(obj), part, None) if inspect.isclass(obj) else None
+        if isinstance(metaclass_prop, property):
+            obj = metaclass_prop
+            continue
         try:
             obj = getattr(obj, part)
         except Exception:  # noqa: BLE001
@@ -126,7 +133,7 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
     Parameters
     ----------
     pagename : str
-        The Sphinx pagename for the page being rendered.
+        The Sphinx ``pagename`` for the page being rendered.
 
     link : str
         The default GitHub edit URL, used as a fallback.

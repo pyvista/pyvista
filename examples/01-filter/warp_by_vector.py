@@ -11,7 +11,7 @@ The sphere has 3D displacement vectors defined at each node.
 """
 
 # %%
-# We first compare the unwarped sphere to the warped sphere. Use
+# We first compare the un-warped sphere to the warped sphere. Use
 # :func:`~pyvista.plot_compare` to show the meshes side-by-side. The keys of the
 # dict are used as labels.
 import pyvista as pv

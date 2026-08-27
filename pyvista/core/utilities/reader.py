@@ -203,7 +203,7 @@ class BaseVTKReader(ABC):
         self._observers = []
 
     def GetProgress(self):
-        """GetProgress."""
+        """Return the load progress, ``0.0`` before the data loads and ``1.0`` after."""
         return 0.0 if self._data_object is None else 1.0
 
     def UpdateObservers(self, event_type) -> None:
@@ -432,7 +432,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
 
 class PointCellDataSelection(_NoNewAttrMixin):
-    """Mixin for readers that support data array selections.
+    """``Mixin`` for readers that support data array selections.
 
     Examples
     --------
@@ -998,7 +998,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         .. warning::
             Support for polyhedral decomposition has been deprecated
-            deprecated in VTK 9.3 and has been removed prior to VTK 9.4
+            in VTK 9.3 and has been removed prior to VTK 9.4
 
         Returns
         -------
@@ -1557,7 +1557,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         self.auto_detect_format = True
 
     def add_q_files(self, files) -> None:
-        """Add q file(s).
+        """Add q files.
 
         Parameters
         ----------
@@ -1636,8 +1636,9 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
         For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still
-        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the
-        output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
+        needs to compute ``Velocity``. If ``preserve_intermediate_functions`` is
+        ``False``, then the output will not have ``Velocity`` array, only the requested
+        ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
         """
@@ -1671,7 +1672,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     Creates a multi-block dataset and reads unstructured grids and structured
     meshes from binary files stored in CGNS file format, with data stored at
-    the nodes, cells or faces.
+    the nodes, cells, or faces.
 
     By default, all point and cell arrays are loaded as well as the boundary
     patch. This varies from VTK's defaults. For more details, see
@@ -1783,7 +1784,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def enable_all_bases(self) -> None:
         """Enable reading all bases.
 
-        By default only the 0th base is read.
+        By default only base 0 is read.
 
         Examples
         --------
@@ -1801,7 +1802,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def disable_all_bases(self) -> None:
         """Disable reading all bases.
 
-        By default only the 0th base is read.
+        By default only base 0 is read.
 
         Examples
         --------
@@ -1857,7 +1858,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def enable_all_families(self) -> None:
         """Enable reading all families.
 
-        By default only the 0th family is read.
+        By default only family 0 is read.
 
         Examples
         --------
@@ -2447,7 +2448,7 @@ class NIFTIReader(BaseReader['ImageData']):
 
 
 class NRRDReader(BaseReader['ImageData']):
-    """NRRDReader for .nrrd and .nhdr files.
+    """``NRRDReader`` for .nrrd and .nhdr files.
 
     Wraps :vtk:`vtkNrrdReader`.
 
@@ -2469,7 +2470,7 @@ class NRRDReader(BaseReader['ImageData']):
 
 
 class PNGReader(BaseReader['ImageData']):
-    """PNGReader for .png files.
+    """``PNGReader`` for .png files.
 
     Wraps :vtk:`vtkPNGReader`.
 
@@ -2491,7 +2492,7 @@ class PNGReader(BaseReader['ImageData']):
 
 
 class PNMReader(BaseReader['ImageData']):
-    """PNMReader for .pnm files.
+    """``PNMReader`` for .pnm files.
 
     Wraps :vtk:`vtkPNMReader`.
 
@@ -2513,7 +2514,7 @@ class PNMReader(BaseReader['ImageData']):
 
 
 class SLCReader(BaseReader['ImageData']):
-    """SLCReader for .slc files.
+    """``SLCReader`` for .slc files.
 
     Wraps :vtk:`vtkSLCReader`.
 
@@ -2535,7 +2536,7 @@ class SLCReader(BaseReader['ImageData']):
 
 
 class TIFFReader(BaseReader['ImageData']):
-    """TIFFReader for .tif and .tiff files.
+    """``TIFFReader`` for .tif and .tiff files.
 
     Wraps :vtk:`vtkTIFFReader`.
 
@@ -2566,7 +2567,7 @@ class TIFFReader(BaseReader['ImageData']):
 
 
 class HDRReader(BaseReader['ImageData']):
-    """HDRReader for .hdr files.
+    """``HDRReader`` for .hdr files.
 
     Wraps :vtk:`vtkHDRReader`.
 
@@ -2597,7 +2598,7 @@ class HDRReader(BaseReader['ImageData']):
 
 
 class PTSReader(BaseReader['PolyData']):
-    """PTSReader for .pts files.
+    """``PTSReader`` for .pts files.
 
     Wraps :vtk:`vtkPTSReader`.
 
@@ -2629,7 +2630,7 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
 
 
 class HDFReader(BaseReader['DataObject']):
-    """HDFReader for .hdf files.
+    """``HDFReader`` for .hdf files.
 
     Wraps :vtk:`vtkHDFReader`.
 
@@ -2658,7 +2659,7 @@ class HDFReader(BaseReader['DataObject']):
 
 
 class GLTFReader(BaseReader['MultiBlock']):
-    """GLTFeader for .gltf and .glb files.
+    """``GLTFReader`` for .gltf and .glb files.
 
     Wraps :vtk:`vtkGLTFReader`.
 
@@ -2687,7 +2688,7 @@ class FluentReader(BaseReader['UnstructuredGrid']):
 
 
 class MFIXReader(BaseReader['UnstructuredGrid']):
-    """MFIXReader for .res files.
+    """``MFIXReader`` for .res files.
 
     Wraps :vtk:`vtkMFIXReader`.
 
@@ -2714,7 +2715,7 @@ class _GRDECLReader(BaseVTKReader):
         """Update information from file."""
 
     def Update(self) -> None:
-        """Read the GRDECL file and store internally to `_data_object`."""
+        """Read the GRDECL file and store internally to ``_data_object``."""
         self._data_object = _read_grdecl(
             self._filename,
             elevation=self._elevation,
@@ -2744,7 +2745,7 @@ class _GRDECLReader(BaseVTKReader):
 
 
 class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
-    """GRDECLReader for .grdecl files.
+    """``GRDECLReader`` for .grdecl files.
 
     Uses :func:`~pyvista.read_grdecl` internally.
 
@@ -2800,7 +2801,7 @@ class _GIFReader(BaseVTKReader):
         return self._current_frame / self._n_frames
 
     def Update(self) -> None:
-        """Read the GIF and store internally to `_data_object`."""
+        """Read the GIF and store internally to ``_data_object``."""
         from PIL import Image  # noqa: PLC0415
         from PIL import ImageSequence  # noqa: PLC0415
         from PIL import __version__ as pillow_version  # noqa: PLC0415
@@ -2834,7 +2835,7 @@ class _GIFReader(BaseVTKReader):
 
 
 class GIFReader(BaseReader['ImageData']):
-    """GIFReader for .gif files.
+    """``GIFReader`` for .gif files.
 
     Parameters
     ----------
@@ -2871,7 +2872,7 @@ class _VRMLReader(BaseVTKReader):
     """Simulate a VTK reader for VRML files."""
 
     def Update(self) -> None:
-        """Read the VRML and store internally to `_data_object`."""
+        """Read the VRML and store internally to ``_data_object``."""
         self._data_object = _read_from_plotter(self._filename, 'vrml')
 
     def UpdateInformation(self):
@@ -2879,7 +2880,7 @@ class _VRMLReader(BaseVTKReader):
 
 
 class VRMLReader(BaseReader['MultiBlock']):
-    """VRMLReader for .wrl and .vrml files.
+    """``VRMLReader`` for .wrl and .vrml files.
 
     .. note::
         This reads the file's mesh geometry only. Any plot-specific
@@ -2918,7 +2919,7 @@ class _ThreeDSReader(BaseVTKReader):
     """Simulate a VTK reader for 3DS files."""
 
     def Update(self) -> None:
-        """Read the 3DS and store internally to `_data_object`."""
+        """Read the 3DS and store internally to ``_data_object``."""
         self._data_object = _read_from_plotter(self._filename, '3ds')
 
     def UpdateInformation(self):
@@ -3054,7 +3055,7 @@ class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
 
 
 class FLUENTCFFReader(BaseReader['MultiBlock']):
-    """FLUENTCFFReader for .h5 files.
+    """``FLUENTCFFReader`` for .h5 files.
 
     Wraps :vtk:`vtkFLUENTCFFReader`.
 
@@ -3227,7 +3228,7 @@ class MINCImageReader(BaseReader['ImageData']):
 
 
 class PDBReader(BaseReader['PolyData']):
-    """PDBReader for .pdb files.
+    """``PDBReader`` for .pdb files.
 
     Wraps :vtk:`vtkPDBReader`.
 
@@ -3919,7 +3920,7 @@ class PExodusIIReader(ExodusIIReader):
 
 
 class _FRDReader(BaseVTKReader):
-    """VTK-style reader for CalculiX FRD files using FRDParser."""
+    """VTK-style reader for CalculiX FRD files using ``_FRDParser``."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -3971,8 +3972,9 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
 
     Supported element types include: HE8, PE6, PE15, TE4, HE20, TE10, TR3, TR6, QU4, QU8, BE2, BE3.
 
-    For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically
-    pre-computes and appends the following derived scalar arrays to the output mesh:
+    For datasets containing 6-component tensors (for example STRESS or STRAIN), this
+    reader automatically pre-computes and appends the following derived scalar arrays
+    to the output mesh:
 
     - ``<NAME>_Mises``: equivalent von Mises magnitude.
     - ``<NAME>_sgMises``: signed von Mises magnitude.
@@ -4311,7 +4313,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
 
 
 class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachReader]):
-    """Class for reading .series file supported by Paraview.
+    """Class for reading .series file supported by ParaView.
 
     .. versionadded:: 0.47.0
 
@@ -4506,7 +4508,7 @@ def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
 def _derive_reader_output_types(
     cls: type[BaseReader[Any]],
 ) -> _mesh_types | tuple[_mesh_types, ...]:
-    """Return the output type(s) declared by a reader class.
+    """Return the output types declared by a reader class.
 
     Uses the ``_output_types`` class attribute when a reader's ``BaseReader[X]``
     generic parameter is a widened common supertype (multi-output readers);

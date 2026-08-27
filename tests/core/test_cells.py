@@ -30,6 +30,7 @@ from pyvista.examples import load_rectilinear
 from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
+from tests.vtk_backend_divergence import FIXED_SIZE_CELL_STORAGE
 
 grids = [
     load_hexbeam(),
@@ -659,6 +660,7 @@ def offsets_meshes(hexbeam):
     return meshes
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=FIXED_SIZE_CELL_STORAGE)
 @pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
 def test_offsets_meshes_storage(offsets_meshes, name):
     # Pin which fixture entries use fixed-size storage so the coverage of the
@@ -993,7 +995,7 @@ requires_polyhedron_face_cell_arrays = pytest.mark.skipif(
 def polyhedron_grid():
     """Return a grid holding one polyhedron and one cell that is not a polyhedron.
 
-    Built from literal arrays rather than by merging two example cells. `merge` appends
+    Built from literal arrays rather than by merging two example cells. ``merge`` appends
     the main mesh last before VTK 9.5 and first from 9.5 on, so a merged grid orders its
     cells and numbers its points differently depending on the VTK in use.
     """

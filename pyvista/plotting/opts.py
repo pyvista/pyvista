@@ -49,7 +49,7 @@ class PointSpriteShape(str, Enum):
 class InterpolationType(AnnotatedIntEnum):
     """Lighting interpolation types.
 
-    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    Members accept either their ``int`` value or ``str`` annotation, for example
     ``InterpolationType.from_any('Flat')``.
     """
 
@@ -87,7 +87,7 @@ class InterpolationType(AnnotatedIntEnum):
 class RepresentationType(AnnotatedIntEnum):
     """Types of representations the models can have.
 
-    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    Members accept either their ``int`` value or ``str`` annotation, for example
     ``RepresentationType.from_any('Points')``.
     """
 
@@ -99,7 +99,7 @@ class RepresentationType(AnnotatedIntEnum):
 class ElementType(AnnotatedIntEnum):
     """Types of elemental geometries.
 
-    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    Members accept either their ``int`` value or ``str`` annotation, for example
     ``ElementType.from_any('Cell')``.
     """
 
@@ -113,7 +113,7 @@ class ElementType(AnnotatedIntEnum):
 class PickerType(AnnotatedIntEnum):
     """Types of pickers.
 
-    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    Members accept either their ``int`` value or ``str`` annotation, for example
     ``PickerType.from_any('Volume')``.
     """
 
@@ -132,7 +132,7 @@ class PickerType(AnnotatedIntEnum):
 class StereoType(AnnotatedIntEnum):
     """Types of stereo rendering.
 
-    Members accept either their ``int`` value or ``str`` annotation, e.g.
+    Members accept either their ``int`` value or ``str`` annotation, for example
     ``StereoType.from_any('Anaglyph')``.
     """
 

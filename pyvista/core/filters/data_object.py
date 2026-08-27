@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from pyvista import TransformLike
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -100,8 +101,7 @@ _VTK_CELL_STATUS_INFO = {
     ),
     'INVERTED_FACES': _CellStatusTuple(
         value=0x20,
-        doc='Cell face(s) do not point in the direction required by its '
-        ':class:`~pyvista.CellType`.',
+        doc='Cell faces do not point in the direction required by its :class:`~pyvista.CellType`.',
     ),
     'NON_PLANAR_FACES': _CellStatusTuple(
         value=0x40,
@@ -109,7 +109,7 @@ _VTK_CELL_STATUS_INFO = {
     ),
     'DEGENERATE_FACES': _CellStatusTuple(
         value=0x80,
-        doc='Face(s) collapse to a line or a point through repeated collocated vertices.',
+        doc='Faces collapse to a line or a point through repeated collocated vertices.',
     ),
     'COINCIDENT_POINTS': _CellStatusTuple(
         value=0x100,
@@ -1104,7 +1104,8 @@ class DataObjectFilters:
 
         **Point validation fields**
 
-        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
+        - ``non_finite_points``: Ensure all points have real values (that is, no
+          ``NaN`` or ``Inf``).
         - ``unused_points``: Ensure all points are referenced by at least one cell.
 
         **Cell validation fields**
@@ -1137,7 +1138,7 @@ class DataObjectFilters:
 
         - ``None`` if the field is omitted from the report,
         - an empty list ``[]`` if the field is included but there is no issue to report for it, or
-        - a list of invalid items (e.g. invalid array names or cell/point ids).
+        - a list of invalid items (for example, invalid array names or cell/point ids).
 
         In addition to the validation fields above, the report includes properties for
         convenience:
@@ -1168,14 +1169,14 @@ class DataObjectFilters:
             - Report fields are now sorted in alphabetical order. Point fields are also reported
               before cell fields.
             - The body of the report now shows the error message instead of validation fields,
-              i.e. the default value of ``report_body`` is now ``'message'`` instead of
+              that is, the default value of ``report_body`` is now ``'message'`` instead of
               ``'fields'``.
 
         Parameters
         ----------
         validation_fields : MeshValidationFields | sequence[MeshValidationFields], optional
-            Select which field(s) to include in the validation report. All data, point, and cell
-            fields are included by default. Specify individual fields by name, or use group name(s)
+            Select which fields to include in the validation report. All data, point, and cell
+            fields are included by default. Specify individual fields by name, or use group names
             to include multiple related validation fields:
 
             - ``'data'`` to include all data fields
@@ -1192,7 +1193,7 @@ class DataObjectFilters:
             By default, no action is taken.
 
         exclude_fields : MeshValidationFields | sequence[MeshValidationFields], optional
-            Select which field(s) to exclude from the validation report. This is similar to
+            Select which fields to exclude from the validation report. This is similar to
             using ``validation_fields``, but is subtractive instead of additive. All data, point,
             and cell fields are `included` by default, and no fields are excluded.
 
@@ -1291,7 +1292,8 @@ class DataObjectFilters:
             Wrong number of points   : []
             Zero size                : []
 
-        Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.downloads.download_cow`
+        Load a mesh with invalid cells, for example,
+        :func:`~pyvista.examples.downloads.download_cow`
         and validate it. Use ``'cells'`` to only validate the cells specifically.
 
         >>> mesh = examples.download_cow()
@@ -1335,7 +1337,7 @@ class DataObjectFilters:
         >>> report.is_valid
         False
 
-        Show what the issue(s) are.
+        Show what the issues are.
 
         >>> report.invalid_fields
         ('non_convex',)
@@ -1379,14 +1381,15 @@ class DataObjectFilters:
         Invalid cell ids:
             Intersecting edges       : []
 
-        Even though other fields are invalid (i.e. ``non_convex``), for `these` specific
+        Even though other fields are invalid (that is, ``non_convex``), for `these` specific
         validation fields the mesh is considered valid.
 
         >>> report.is_valid
         True
 
-        Do minimal validation to ensure the mesh properties are "memory_safe". This helps to avoid
-        a segmentation fault which may be caused by invalid memory accesses by VTK. In this case,
+        Do minimal validation to ensure the mesh properties are ``'memory_safe'``. This helps
+        to avoid a segmentation fault which may be caused by invalid memory accesses by VTK. In
+        this case,
         we use ``action`` to raise an error if the mesh is not valid.
 
         >>> _ = mesh.validate_mesh('memory_safe', action='error')
@@ -1494,7 +1497,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         validate: Literal[True] | _NestedMeshValidationFields,
     ):
-        """Validate mesh using a bool or named fields and raise error."""
+        """Validate mesh using a ``bool`` or named fields and raise error."""
         validation_fields = None if validate is True else validate
         self.validate_mesh(validation_fields, action='error')
 
@@ -1541,8 +1544,8 @@ class DataObjectFilters:
         ----------
         tolerance : float, default: 1.1920929e-07
             Value used for most floating point equality checks throughout the cell checking
-            process, e.g. for checking coincident points or intersecting edges.
-            The default value is the epsilon (``eps``) of ``float32`` dtype using
+            process, for example, for checking coincident points or intersecting edges.
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
             :attr:`numpy.finfo`.
 
             .. note::
@@ -1568,7 +1571,7 @@ class DataObjectFilters:
             :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
-            The default value is the epsilon (``eps``) of the mesh's points dtype using
+            The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
             :attr:`numpy.finfo`.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
@@ -1621,8 +1624,8 @@ class DataObjectFilters:
         >>> np.unique(validity_state)
         pyvista_ndarray([ 0, 16])
 
-        The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
-        nonconvex state. We confirm this by printing the ``'non_convex'`` array, which shows there
+        The ``0`` cells are valid, and the cells with value ``16`` (that is, hex ``0x10``) have a
+        non-convex state. We confirm this by printing the ``'non_convex'`` array, which shows there
         are three invalid cells.
 
         >>> validated.field_data['non_convex']
@@ -1650,7 +1653,7 @@ class DataObjectFilters:
         ... ) == pv.CellStatus.NON_CONVEX
         np.True_
 
-        We can also show all invalid cells. This matches the nonconvex ids, which confirms
+        We can also show all invalid cells. This matches the non-convex ids, which confirms
         these are the only invalid cells.
 
         >>> validated.field_data['invalid']
@@ -1832,7 +1835,7 @@ class DataObjectFilters:
             When using ``transform_all_input_vectors=True``, there is
             no distinction in VTK between vectors and arrays with
             three components.  This may be an issue if you have scalar
-            data with three components (e.g. RGB data).  This will be
+            data with three components (for example, RGB data).  This will be
             improperly transformed as if it was vector data rather
             than scalar data.  One possible (albeit ugly) workaround
             is to store the three components as separate scalar
@@ -1888,7 +1891,7 @@ class DataObjectFilters:
             transformed.  See the warning for more details.
 
         inplace : bool
-            When ``True``, modifies the dataset inplace and returned dataset is
+            When ``True``, modifies the dataset in-place and returned dataset is
             the same dataset. When ``False`` a new transformed dataset is
             returned with the original unchanged. The value of this parameter
             must be explicitly set.
@@ -1999,7 +2002,7 @@ class DataObjectFilters:
                     converted_ints = True
         if converted_ints:
             warn_external(
-                'Integer points, vector and normal data (if any) of the input mesh '
+                'Integer points, vector, and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
             )
@@ -2114,11 +2117,11 @@ class DataObjectFilters:
             plane. If not specified, this is the origin.
 
         inplace : bool, default: False
-            When ``True``, modifies the dataset inplace.
+            When ``True``, modifies the dataset in-place.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise,
-            only the points, normals and active vectors are transformed.
+            only the points, normals, and active vectors are transformed.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2173,7 +2176,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2237,7 +2240,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed.
+            the points, normals, and active vectors are transformed.
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -2300,7 +2303,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2368,7 +2371,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2432,7 +2435,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2501,7 +2504,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2559,7 +2562,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed.
+            the points, normals, and active vectors are transformed.
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -2683,7 +2686,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
-            the points, normals and active vectors are transformed.
+            the points, normals, and active vectors are transformed.
 
         inplace : bool, default: False
             If True, the dataset is modified in place. If False, a new dataset is returned.
@@ -2876,7 +2879,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -2938,7 +2941,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -3000,7 +3003,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -3066,7 +3069,7 @@ class DataObjectFilters:
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
+            transformed. Otherwise, only the points, normals, and
             active vectors are transformed.
 
         inplace : bool, default: False
@@ -3308,10 +3311,10 @@ class DataObjectFilters:
         ----------
         bounds : sequence[float], optional
             Length 6 sequence of floats: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-            Length 3 sequence of floats: distances from the min coordinate of
+            Length 3 sequence of floats: distances from the min coordinate
             of the input mesh. Single float value: uniform distance from the
             min coordinate. Length 12 sequence of length 3 sequence of floats:
-            a plane collection (normal, center, ...).
+            a plane collection (normal, center, and so on).
             :class:`pyvista.PolyData`: if a poly mesh is passed that represents
             a box with 6 faces that all form a standard box, then planes will
             be extracted from the box to define the clipping region.
@@ -3738,7 +3741,7 @@ class DataObjectFilters:
         contour: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Create three orthogonal slices through the dataset on the three cartesian planes.
+        """Create three orthogonal slices through the dataset on the three Cartesian planes.
 
         Yields a MutliBlock dataset of the three slices.
 
@@ -4343,6 +4346,107 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
+    def convex_hull(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
+        *,
+        dimensionality: Literal[1, 2, 3, 'auto'] = 3,
+        progress_bar=False,
+    ) -> PolyData:
+        """Compute the convex hull from this mesh's points.
+
+        With ``vtk>=9.7``, this uses :vtk:`vtkConvexHull`. With older VTK, ``scipy``
+        (Qhull) is used instead for ``dimensionality=2`` or ``3``; ``dimensionality=1``
+        requires ``vtk>=9.7``.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        dimensionality : int | 'auto', default: 3
+            The dimensionality of the hull. If ``'auto'``, the dimensionality is set to
+            this mesh's :attr:`~pyvista.DataSet.dimensionality`, that is, points are not
+            assumed to span all three dimensions. Auto-detection has a computational cost
+            and is not enabled by default. Note that a 2D hull is computed from points
+            projected onto this mesh's best-fit plane, so requesting ``dimensionality=2``
+            (or an auto-detected ``2``) for points that are not coplanar will discard
+            information.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Examples
+        --------
+        Compute the convex hull of a 3D mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cow_head()
+        >>> hull = mesh.convex_hull()
+
+        Plot the hull with the original input.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(hull, opacity=0.5, show_edges=True)
+        >>> cpos = pv.CameraPosition(
+        ...     position=(9.159, 1.892, -4.015),
+        ...     focal_point=(4.500, 1.731, -0.1015),
+        ...     viewup=(0.08577, 0.9861, 0.1426),
+        ... )
+        >>> pl.camera_position = cpos
+        >>> pl.show()
+
+        Compute the convex hull of two circle meshes comprising a :class:`~pyvista.MultiBlock`.
+
+        >>> circle1 = pv.Circle(radius=0.5)
+        >>> circle2 = pv.Circle(radius=0.25).translate((1.0, 0.0, 0.0))
+        >>> mesh = pv.MultiBlock([circle1, circle2])
+        >>> hull = mesh.convex_hull(dimensionality=2)
+
+        Plot the hull with the original input.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(hull, opacity=0.5, show_edges=True)
+        >>> pl.view_xy()
+        >>> pl.show()
+
+        """
+        if isinstance(self, pv.MultiBlock):
+            points = np.vstack(
+                [
+                    block.points
+                    for block in self.recursive_iterator(skip_empty=True, skip_none=True)
+                ]
+            )
+            alg_input = pv.PointSet(points)
+        else:
+            points = self.points
+            alg_input = self
+
+        dimensionality_: Literal[1, 2, 3] = (
+            cast('Literal[1, 2, 3]', alg_input.dimensionality)
+            if dimensionality == 'auto'
+            else dimensionality
+        )
+
+        if pv.vtk_version_info >= (9, 7, 0):
+            alg = _vtk.vtkConvexHull()
+            alg.SetInputDataObject(alg_input)
+            alg.SetDimension(int(dimensionality_))
+            _update_alg(alg, progress_bar=progress_bar)
+            output = pv.wrap(alg.GetOutput())
+        else:
+            output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+        output.point_data.clear()
+        output.cell_data.clear()
+        return output
+
     @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -4501,7 +4605,7 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock
-            Dataset with `cell_data` containing the ``"VertexCount"``,
+            Dataset with ``cell_data`` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.  Return type matches input.
 
@@ -4754,7 +4858,7 @@ class DataObjectFilters:
 
         categorical : bool, default: False
             Control whether the source point data is to be treated as
-            categorical. If ``True``,  histograming is used to assign the
+            categorical. If ``True``,  histogramming is used to assign the
             cell data. Specifically, a histogram is populated for each cell
             from the scalar values at each point, and the bin with the most
             elements is selected. In case of a tie, the smaller value is selected.
@@ -4923,11 +5027,11 @@ class DataObjectFilters:
     ):
         """Resample array data from a passed mesh onto this mesh.
 
-        For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
-        the points of `mesh1`.  This function interpolates within an
+        For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
+        the points of ``mesh1``.  This function interpolates within an
         enclosing cell.  This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
-        weighting for nearby points.  If there is cell topology, `sample` is
+        weighting for nearby points.  If there is cell topology, ``sample`` is
         usually preferred.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled
@@ -4966,10 +5070,10 @@ class DataObjectFilters:
             operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
-                * 'cell' - :vtk:`vtkCellLocator`
-                * 'cell_tree' - :vtk:`vtkCellTreeLocator`
-                * 'obb_tree' - :vtk:`vtkOBBTree`
-                * 'static_cell' - :vtk:`vtkStaticCellLocator`
+                * ``'cell'`` - :vtk:`vtkCellLocator`
+                * ``'cell_tree'`` - :vtk:`vtkCellTreeLocator`
+                * ``'obb_tree'`` - :vtk:`vtkOBBTree`
+                * ``'static_cell'`` - :vtk:`vtkStaticCellLocator`
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
@@ -5009,7 +5113,7 @@ class DataObjectFilters:
 
         If sampling from a set of points represented by a ``(n, 3)``
         shaped ``numpy.ndarray``, they need to be converted to a
-        PyVista DataSet, e.g. :class:`pyvista.PolyData`, first.
+        PyVista DataSet, for example, :class:`pyvista.PolyData`, first.
 
         >>> import numpy as np
         >>> points = np.array([[1.5, 5.0, 6.2], [6.7, 4.2, 8.0]])
@@ -5101,20 +5205,20 @@ class DataObjectFilters:
         Parameters
         ----------
         quality_measure : str | sequence[str], default: 'scaled_jacobian'
-            The cell quality measure(s) to use. May be either:
+            The cell quality measures to use. May be either:
 
             - A single measure or a sequence of measures listed in
               :ref:`cell_quality_measures_table`.
             - ``'all'`` to compute all measures.
             - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
-              cell type(s).
+              cell types.
 
             A separate array is created for each measure.
 
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
             that could be addressed by this filter but is not well defined for
-            the particular geometry of cell in question, e.g. a volume query
+            the particular geometry of cell in question, for example, a volume query
             for a triangle. Undefined quality will always be undefined.
             The default value is -1.
 
@@ -5125,7 +5229,7 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset with the computed mesh quality. Return type matches input.
-            Cell data array(s) with the computed quality measure(s) are included.
+            Cell data arrays with the computed quality measures are included.
 
         See Also
         --------
@@ -5259,6 +5363,55 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
         return output
+
+
+def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
+    """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
+
+    Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
+    """
+    try:
+        from scipy.spatial import ConvexHull  # noqa: PLC0415
+        from scipy.spatial import QhullError  # noqa: PLC0415
+    except ImportError:
+        msg = (
+            "The 'scipy' package must be installed to compute the convex hull with "
+            f'vtk<9.7 (found vtk {".".join(map(str, pv.vtk_version_info))}).'
+        )
+        raise ImportError(msg)
+
+    if dimensionality == 1:
+        msg = (
+            'Only dimensionality=2 or dimensionality=3 convex hulls are supported with '
+            f'vtk<9.7 (found vtk {".".join(map(str, pv.vtk_version_info))}). '
+            'Upgrade to vtk>=9.7 to use `dimensionality=1`.'
+        )
+        raise VTKVersionError(msg)
+
+    # Project onto the best-fit plane for a 2D hull; use the points as-is for a 3D hull.
+    proj = pv.PointSet(points).align_xyz().points[:, :2] if dimensionality == 2 else points
+    try:
+        hull = ConvexHull(proj)
+    except QhullError as e:
+        msg = (
+            f'Failed to compute a {dimensionality}D convex hull from the input points. The '
+            f'points may be degenerate (e.g. collinear or coplanar) for dimensionality='
+            f'{dimensionality}.'
+        )
+        raise ValueError(msg) from e
+
+    # `vertices` are the hull's boundary points; output only those points (matching
+    # vtkConvexHull's compact output), remapped to the range [0, n_hull_points).
+    vertex_ids = hull.vertices
+    hull_points = points[vertex_ids]
+    if dimensionality == 2:
+        # `vertices` is already an ordered boundary loop for a 2D hull: one polygon face.
+        faces = np.arange(len(vertex_ids)).reshape(1, -1)
+    else:
+        remap = np.full(points.shape[0], -1, dtype=int)
+        remap[vertex_ids] = np.arange(len(vertex_ids))
+        faces = remap[hull.simplices]
+    return pv.PolyData.from_regular_faces(hull_points, faces)
 
 
 def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:

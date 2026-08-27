@@ -29,11 +29,11 @@ Compare two approaches for loading and plotting a surface mesh from a
 file:
 
 
-Plotting a Mesh using Python's VTK
+Plotting a Mesh Using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Using this `example
-<https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ as
-a baseline, loading and plotting an STL file requires a lot of code
+This `example
+<https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ shows that
+loading and plotting an STL file requires a lot of code
 when using only the `vtk`_ library. PyVista on the other hand only
 requires a few lines of code.
 
@@ -134,7 +134,7 @@ And these points can be operated on as if it was a NumPy array,
 all without losing connection to the underlying VTK data array.
 
 At the same time, a variety of PyVista objects can be generated
-directly from numpy arrays. For example, below we generate a vector
+directly from NumPy arrays. For example, below we generate a vector
 field of arrows using :func:`numpy.meshgrid`:
 
 .. pyvista-plot::

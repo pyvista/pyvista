@@ -19,7 +19,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
 # sphinx_gallery_end_ignore
 
 # %%
-# Convert pixel art to an array
+# Convert Pixel Art to an Array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -46,7 +46,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
 
 
 # %%
-# Define function to draw pixels
+# Define Function to Draw Pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Define a helper function to add pixel boxes to plotter.
 

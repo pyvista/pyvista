@@ -1,7 +1,7 @@
 """
 .. _openfoam_example:
 
-Plot OpenFOAM data
+Plot OpenFOAM Data
 ~~~~~~~~~~~~~~~~~~
 
 Read and plot data from a lid-driven cavity flow simulation.

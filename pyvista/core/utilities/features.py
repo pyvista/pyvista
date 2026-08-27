@@ -69,7 +69,7 @@ def voxelize(  # noqa: PLR0917
     density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
-        Defaults to 1/100th of the mesh length.
+        Defaults to 1/100 of the mesh length.
 
     check_surface : bool, default: True
         Specify whether to check the surface for closure. If on, then the
@@ -84,7 +84,7 @@ def voxelize(  # noqa: PLR0917
     fit_bounds : bool, default: False
         If enabled, the end bound of the input mesh is used as the end bound of the
         voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if `enclosed` is enabled.
+        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
 
     Returns
     -------
@@ -171,7 +171,7 @@ def _voxelize_legacy(
 ):
     """Voxelize mesh to UnstructuredGrid.
 
-    The public `voxelize` function is deprecated but we need to keep it for
+    The public :func:`~pyvista.voxelize` function is deprecated but we need to keep it for
     generating the PyVista logo.
 
     """
@@ -279,7 +279,7 @@ def voxelize_volume(  # noqa: PLR0917
     density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         Nonuniform voxel size if a list of values are passed along x,y,z directions.
-        Defaults to 1/100th of the mesh length.
+        Defaults to 1/100 of the mesh length.
 
     check_surface : bool, default: True
         Specify whether to check the surface for closure. If on, then the
@@ -294,7 +294,7 @@ def voxelize_volume(  # noqa: PLR0917
     fit_bounds : bool, default: False
         If enabled, the end bound of the input mesh is used as the end bound of the
         voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if `enclosed` is enabled.
+        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
 
     Returns
     -------
@@ -468,7 +468,7 @@ def grid_from_sph_coords(theta, phi, r):
 
 @_deprecate_positional_args
 def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # noqa: PLR0917  # numpydoc ignore=RT02
-    """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
+    """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
 

@@ -1,4 +1,4 @@
-"""`pyvista report` CLI."""
+"""``pyvista validate`` CLI."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from cyclopts import Token
 
 fields_help = """
-Field(s) to validate. Specify individual field(s) or group(s) of fields:
+Fields to validate. Specify individual fields or groups of fields:
 
 **Data fields**
 
@@ -78,7 +78,7 @@ Field(s) to validate. Specify individual field(s) or group(s) of fields:
   ``point_data_wrong_length``, and ``invalid_point_references``.
 """
 exclude_help = """
-Field(s) to exclude from the validation. This is similar to using FIELDS, but is subtractive
+Fields to exclude from the validation. This is similar to using FIELDS, but is subtractive
 instead of additive.
 """
 tolerance_help = """

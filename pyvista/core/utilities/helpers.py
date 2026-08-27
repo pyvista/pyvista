@@ -243,7 +243,7 @@ def wrap(  # noqa: PLR0911
 
     Examples
     --------
-    Wrap a numpy array representing a random point cloud.
+    Wrap a NumPy array representing a random point cloud.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -512,7 +512,7 @@ def is_inside_bounds(point, bounds):
     Parameters
     ----------
     point : sequence[float]
-        Three item cartesian point (i.e. ``[x, y, z]``).
+        Three item Cartesian point (that is, ``[x, y, z]``).
 
     bounds : sequence[float]
         Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.

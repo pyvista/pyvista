@@ -1,7 +1,7 @@
 """Test that docstring sections are hoisted into the "on this page" navbar.
 
-`conf.py` patches numpydoc to emit real headings instead of rubrics, then hoists
-those sections out of the autodoc `desc` node so Sphinx's TocTreeCollector can see
+``conf.py`` patches numpydoc to emit real headings instead of rubrics, then hoists
+those sections out of the autodoc ``desc`` node so Sphinx's TocTreeCollector can see
 them. Both halves are needed, and neither fails loudly if it breaks -- the navbar
 entries just silently disappear.
 """
@@ -65,7 +65,7 @@ def test_hoisted_sections_are_not_rubrics():
 
 
 def test_multi_object_page_does_not_hoist_sections():
-    """Confirm pages documenting several objects via `:members:` skip hoisting."""
+    """Confirm pages documenting several objects via ``:members:`` skip hoisting."""
     # `helpers.rst` documents several objects on one page via `:members:`, so
     # hoisting is skipped there to avoid colliding sections at page level.
     page = Path(BUILD_HTML_DIR) / 'api' / 'core' / 'helpers.html'

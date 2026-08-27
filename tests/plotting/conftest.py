@@ -4,6 +4,7 @@ memory leaks for all plotting tests
 
 from __future__ import annotations
 
+import importlib.util
 import platform
 
 import pytest
@@ -48,6 +49,29 @@ def _clean_trame_env(monkeypatch):
         'PYVISTA_TRAME_JUPYTER_MODE',
     ):
         monkeypatch.delenv(var, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _trame_array_cache():
+    """Clear trame's serializer cache before ``check_gc``'s teardown check.
+
+    trame's session-lifetime ``SynchronizationContext`` caches exported arrays on a
+    20-second window, so they outlive the exporting test and are reported as its leak.
+    Any scene-exporting test hits this (not just jupyter), hence the suite-wide scope.
+    """
+    yield
+    if importlib.util.find_spec('trame_vtk') is None:
+        return
+    from trame_vtk.modules.vtk import HELPERS_PER_SERVER
+
+    for helper in HELPERS_PER_SERVER.values():
+        protocol = helper._root_protocol
+        if protocol is None:
+            continue
+        for link_protocol in protocol.getLinkProtocols():
+            context = getattr(link_protocol, 'context', None)
+            if context is not None:
+                context.data_array_cache.clear()
 
 
 if APPLE_SILICON:

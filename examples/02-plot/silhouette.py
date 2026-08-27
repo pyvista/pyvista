@@ -6,7 +6,7 @@ Silhouette Highlight
 
 Extract an outline (silhouette) of a polygonal mesh's edges.
 
-The silhouette may be created using the `silhouette` keyword with
+The silhouette may be created using the ``silhouette`` keyword with
 :meth:`~pyvista.Plotter.add_mesh`, or by using `~pyvista.Plotter.add_silhouette` directly.
 
 """
@@ -35,7 +35,7 @@ pl.show()
 # %%
 # Maybe the default parameters are not enough to really notice the silhouette.
 # But by using a ``dict``, it is possible to modify the properties of the
-# outline. For example, color and width could be specified like so:
+# outline. For example, both color and width could be specified like so:
 pl = pv.Plotter()
 silhouette = dict(
     color='red',
