@@ -6,7 +6,7 @@ Camera Distortion
 
 Render a scene through a lens that does not project straight lines to straight lines.
 
-Uses :func:`enable_camera_distortion <pyvista.Plotter.enable_camera_distortion>`.
+Uses :func:`~pyvista.Plotter.enable_camera_distortion`.
 
 A real camera is not a pinhole. Its lens bends rays away from the ideal
 projection, and photogrammetry, calibration, and augmented-reality work all
@@ -148,9 +148,8 @@ pl.show()
 # %%
 # Turning It Off
 # ~~~~~~~~~~~~~~
-# :func:`disable_camera_distortion
-# <pyvista.Plotter.disable_camera_distortion>` puts every actor back on the
-# ordinary projection, and the straight lines return.
+# :func:`~pyvista.Plotter.disable_camera_distortion` puts every actor back on
+# the ordinary projection, and the straight lines return.
 
 pl = pv.Plotter()
 pl.add_mesh(grid, color='white', show_edges=True)
