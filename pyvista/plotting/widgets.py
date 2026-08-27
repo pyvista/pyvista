@@ -398,8 +398,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh_clip_box(mesh, color='white')
         >>> pl.show()
 
-        For a full example see :ref:`box_widget_example`.
-
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -832,8 +830,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show(cpos=[-2.1, 0.6, 1.5])
         >>> pl.widgets.plane_clipped_meshes  # doctest:+SKIP
 
-        For a full example see :ref:`plane_widget_example`.
-
         """
         from pyvista.core.filters import _get_output  # avoids circular import
 
@@ -1146,8 +1142,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(mesh.outline())
         >>> _ = pl.add_mesh_slice(mesh, normal=[1, 0, 0.3])
         >>> pl.show()
-
-        For a full example see :ref:`plane_widget_example`.
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
@@ -2722,8 +2716,6 @@ class WidgetComponent(_NoNewAttrMixin):
         ...     actor.SetVisibility(flag)
         >>> _ = pl.add_checkbox_button_widget(toggle_vis, value=True)
         >>> pl.show()
-
-        Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
         msg = 'Cannot add a widget to a closed plotter.'

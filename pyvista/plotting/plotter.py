@@ -655,8 +655,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_gltf_example` for a full example using this method.
-
         """
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
@@ -693,8 +691,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
-
-        See :ref:`load_vrml_example` for a full example using this method.
 
         """
         filename = Path(filename).expanduser().resolve()
@@ -1447,9 +1443,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> pl.show()
 
-        See :ref:`anti_aliasing_example` for a full example demonstrating
-        VTK's anti-aliasing approaches.
-
         """
         # apply MSAA to entire render window
         if aa_type == 'msaa':
@@ -1490,9 +1483,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.disable_anti_aliasing()
         >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> pl.show()
-
-        See :ref:`anti_aliasing_example` for a full example demonstrating
-        VTK's anti-aliasing approaches.
 
         """
         self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
@@ -5865,8 +5855,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl = pv.Plotter()
         >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
-        See :ref:`gif_example` for a full example using this method.
-
         """
         try:
             from imageio import __version__  # noqa: PLC0415
@@ -5904,8 +5892,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.open_movie(filename)  # doctest:+SKIP
         >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
         >>> pl.write_frame()  # doctest:+SKIP
-
-        See :ref:`movie_example` for a full example using this method.
 
         """
         # if off screen, show has not been called and we must render
@@ -6919,8 +6905,6 @@ class BasePlotter(_BoundsSizeMixin):
         ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
         ... )
 
-        See :ref:`orbit_example` for a full example using this method.
-
         """
         if viewup is None:
             viewup = self._theme.camera.viewup
@@ -7021,8 +7005,6 @@ class BasePlotter(_BoundsSizeMixin):
         ...     factor=2.0, n_points=24, shift=0.0, viewup=viewup
         ... )
         >>> pl.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
-
-        See :ref:`orbit_example` for a full example using this method.
 
         """
         if focus is None:
