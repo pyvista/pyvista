@@ -31,5 +31,4 @@ exceptions:
   - ^to\b
   - ^for\b
   - ^pytest\b
-  # Headings in `doc/source/api/core/typing.rst` are the aliases themselves.
-  - ^pyvista\.\w+\b
+  - ^pyvista\.\w+\b # Allow the `pyvista.` namespace in headings
