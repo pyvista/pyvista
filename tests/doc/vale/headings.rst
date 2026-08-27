@@ -2,9 +2,9 @@ Heading Style Test Cases
 ========================
 
 Every heading in this file must pass ``Google.Headings``. The file is not part
-of the documentation -- Sphinx builds from ``doc/source`` -- but Vale scans it
-along with the rest of ``doc``, so a change to the rule that breaks one of
-these cases fails CI here rather than somewhere in the real documentation.
+of the documentation. It is passed to Vale explicitly -- see ``docstyle`` in
+``Makefile`` -- so a change to the rule that breaks one of these cases fails CI
+here rather than somewhere in the real documentation.
 
 The style is AP title case with one deviation, ``to``. See
 ``doc/styles/Google/Headings.yml`` for the rule and the reasoning.

@@ -1,14 +1,16 @@
 extends: capitalization
 message: "'%s' should use title-style capitalization."
-link: "https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings"
+link: "https://docs.vale.sh/checks/capitalization"
 level: warning
-# Headings use AP title case: capitalize every word except `a an the and but
-# or nor for of in on at to by as if per via en vs`, and capitalize even those
-# when they are the first or last word of the heading. This is what Vale's
-# `$title` applies by default; no `style` is set.
+# Headings use AP title case: capitalize every word except
+#     a an the and but or nor for of in on at to by as if per via en vs
+# and capitalize even those when they are the first or last word of
+# the heading. This is what Vale's `$title` applies by default; no `style` is set.
 #
-# Google's own guidance, linked above, is sentence case. PyVista has differed
-# deliberately since #4150 and the headings here are title case throughout.
+# The Google style this rule is vendored from prescribes sentence case, and the
+# upstream copy of this file sets `match: $sentence`. PyVista flipped it to
+# title case in #4150 and the headings here are title case throughout, so the
+# rule keeps its name but not its upstream behavior.
 #
 #   Clip With Plane                   not  Clip with Plane
 #   Textures From Files               not  Textures from Files

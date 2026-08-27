@@ -1,6 +1,6 @@
 """Assert that Vale still flags the headings it is supposed to flag.
 
-``doc/vale/headings.rst`` covers the other direction: it sits inside the paths
+``tests/doc/vale/headings.rst`` covers the other direction: it sits inside the paths
 Vale scans, so every heading in it has to pass. Nothing there would notice the
 rule going *slack*, which is the failure this repository actually had -- a bare
 ``a`` in the exceptions list matched inside every word containing the letter
@@ -8,7 +8,7 @@ and silently switched heading checks off for most of the documentation.
 
 Run with ``make docstyle``, or directly::
 
-    python3 doc/vale/check_expected_failures.py
+    python3 tests/doc/vale/check_expected_failures.py
 """
 
 from __future__ import annotations
@@ -20,8 +20,8 @@ import shutil
 import subprocess
 import sys
 
-ROOT = Path(__file__).resolve().parents[2]
-FIXTURE = ROOT / 'tests' / 'vale' / 'headings_invalid.rst'
+ROOT = Path(__file__).resolve().parents[3]
+FIXTURE = Path(__file__).resolve().parent / 'headings_invalid.rst'
 CONFIG = ROOT / 'doc' / '.vale.ini'
 CHECK = 'Google.Headings'
 

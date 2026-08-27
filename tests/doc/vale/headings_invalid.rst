@@ -2,10 +2,10 @@ Every Heading Here Must Fail
 ============================
 
 This file is the negative half of the ``Google.Headings`` fixture; the positive
-half is ``doc/vale/headings.rst``. It lives outside the paths Vale scans -- see
+half is ``tests/doc/vale/headings.rst``. It lives outside the paths Vale scans -- see
 the file list in ``Makefile`` under ``docstyle`` -- because a heading in a
 scanned file has to pass, which makes it impossible to assert that the rule
-catches anything. ``doc/vale/check_expected_failures.py`` runs Vale over this
+catches anything. ``check_expected_failures.py``, beside it, runs Vale over this
 file and fails if any heading below is *not* flagged.
 
 Clip with Plane
