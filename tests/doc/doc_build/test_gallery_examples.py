@@ -68,6 +68,10 @@ EXAMPLES_SRC_DIR = PYVISTA_ROOT_DIR / 'examples'
 _CROSSREF_RE = re.compile(r':(meth|func|class|mod|attr|exc|data|ref|obj):`[^`]+`')
 _ANCHOR_RE = re.compile(r'^\s*\.\.\s+_(.+?):\s*$', re.MULTILINE)
 _BACKREF_LIST_RE = re.compile(r'<ul class="sphinx-autocodelink-index">(.*?)</ul>', re.DOTALL)
+# matches a gallery-card thumbnail backreference (autocodelink_gallery_cards)
+_BACKREF_THUMBNAIL_RE = re.compile(
+    r'<div class="sphx-glr-thumbcontainer"[^>]*>(.*?)</div>', re.DOTALL
+)
 _BACKREF_HREF_RE = re.compile(r'href="([^"]*)"')
 
 
@@ -126,6 +130,8 @@ def load_backref_target_names() -> set[str]:
         content = page.read_text(encoding='utf-8')
         for list_block in _BACKREF_LIST_RE.findall(content):
             names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(list_block))
+        for thumb_block in _BACKREF_THUMBNAIL_RE.findall(content):
+            names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(thumb_block))
     return names
 
 
@@ -166,6 +172,28 @@ def test_example_has_cross_reference_from_api(case):
             'sphinx-autocodelink records the reference automatically.'
         )
         pytest.fail(msg)
+
+
+def test_color_labels_used_in_includes_anatomical_groups_example():
+    """Sanity check: `color_labels` is only called inside a local helper function in
+    `anatomical_groups.py`, so this only passes if a ref inside a local function
+    resolves and cross-links automatically, not just top-level module scope."""
+    page = next(Path(BUILD_HTML_DIR).rglob('pyvista.DataSetFilters.color_labels.html'), None)
+    assert page is not None, (
+        f'pyvista.DataSetFilters.color_labels.html not found under {BUILD_HTML_DIR}. '
+        'Build the documentation first.'
+    )
+    content = page.read_text(encoding='utf-8')
+    used_in_hrefs = {
+        Path(href).name
+        for list_block in _BACKREF_LIST_RE.findall(content)
+        for href in _BACKREF_HREF_RE.findall(list_block)
+    } | {
+        Path(href).name
+        for thumb_block in _BACKREF_THUMBNAIL_RE.findall(content)
+        for href in _BACKREF_HREF_RE.findall(thumb_block)
+    }
+    assert 'anatomical_groups.html' in used_in_hrefs
 
 
 @pytest.mark.parametrize('case', EXAMPLE_CASES, ids=EXAMPLE_CASE_IDS)
