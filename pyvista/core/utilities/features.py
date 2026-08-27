@@ -825,9 +825,6 @@ def sample_function(  # noqa: PLR0917
     >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
-    See :ref:`perlin_noise_2d_example` and :ref:`perlin_noise_3d_example`
-    for a full example using this function.
-
     """
     # internal import to avoid circular dependency
     from pyvista.core.filters import _update_alg  # noqa: PLC0415

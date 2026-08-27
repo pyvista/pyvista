@@ -800,8 +800,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> _ = pl.add_mesh(larger_sphere, color='blue', opacity=0.3, show_edges=True)
     >>> pl.show()
 
-    See :ref:`create_poly_example` for more examples.
-
     """
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
@@ -2662,9 +2660,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     ... ]
     >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
-
-    See the :ref:`create_unstructured_surface_example` example for more details
-    on creating unstructured grids within PyVista.
 
     """
 

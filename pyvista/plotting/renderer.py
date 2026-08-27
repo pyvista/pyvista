@@ -3496,8 +3496,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blurring_example` for a full example using this method.
-
         """
         self._render_passes.add_blur_pass()
 
@@ -3555,8 +3553,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
-
-        See :ref:`depth_of_field_example` for a full example using this method.
 
         """
         self._render_passes.enable_depth_of_field_pass(

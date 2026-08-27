@@ -585,8 +585,6 @@ class PickingComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(pv.Cube(), pickable=False)
         >>> pl.enable_point_picking(show_message='Pick a point')
 
-        See :ref:`point_picking_example` for a full example using this method.
-
 
         """
         self._validate_picker_not_in_use()
@@ -883,8 +881,6 @@ class PickingComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_surface_point_picking()
 
-        See :ref:`surface_point_picking_example` for a full example using this method.
-
 
         """
         picker = PickerType.from_any(picker)
@@ -1040,8 +1036,6 @@ class PickingComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_mesh_picking()
-
-        See :ref:`mesh_picking_example` for a full example using this method.
 
 
         """
