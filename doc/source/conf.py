@@ -582,8 +582,7 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods. Only
-    # resolves an example's own top-level (module) scope; see sphinx-autocodelink's README.
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
     'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
@@ -627,6 +626,18 @@ autocodelink_category_labels = {
     'Docstring Examples': 'Docstring Examples',
     'Documentation': 'Guides',
 }
+
+# show gallery examples last, not alphabetically by heading
+autocodelink_category_order = ['Documentation', 'Docstring Examples', 'Sphinx Gallery']
+
+# rank "Used In" entries by usage frequency
+autocodelink_sort = 'frequency'
+
+# show each entry's usage count alongside it
+autocodelink_show_usage_count = True
+
+# render gallery backreferences as thumbnail cards
+autocodelink_gallery_cards = True
 
 
 def _str_examples(self):
