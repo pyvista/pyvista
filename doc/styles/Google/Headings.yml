@@ -17,18 +17,20 @@ indicators:
 # word so each one exempts only itself; the trailing `\b` still allows a
 # possessive or an attached comma (`pytest's`, `glTF.`).
 exceptions:
-  - ^glTF\b
+  # These words should stay lower-case
   - ^a\b
-  - ^PyVista\b
-  - ^with\b
+  - ^are\b
+  - ^for\b
   - ^from\b
   - ^is\b
-  - ^are\b
   - ^like\b
   - ^that\b
-  - ^VTK\b
-  - ^PointSet\b
   - ^to\b
-  - ^for\b
+  - ^with\b
+
+  # Developer terms that should stay as-is
+  - ^glTF\b
+  - ^PyVista\b
   - ^pytest\b
   - ^pyvista\.\w+\b # Allow the `pyvista.` namespace in headings
+  - ^VTK\b
