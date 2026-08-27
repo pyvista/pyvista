@@ -114,7 +114,7 @@ def _coerce_pointslike_arg(
     *,
     copy: bool = False,
 ) -> tuple[NumpyArray[float], bool]:
-    """Check and coerce arg to (n, 3) np.ndarray.
+    """Check and coerce ``arg`` to (n, 3) np.ndarray.
 
     Parameters
     ----------
@@ -278,11 +278,11 @@ def convert_array(  # noqa: PLR0917
     Parameters
     ----------
     arr : np.ndarray | :vtk:`vtkDataArray`
-        A numpy array or :vtk:`vtkDataArray` to convert.
+        A NumPy array or :vtk:`vtkDataArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
-        If input is numpy array then deep copy values.
+        If input is a NumPy array then deep copy values.
     array_type : int, optional
         VTK array type ID as specified in ``vtkType.h``.
 
@@ -336,7 +336,7 @@ def get_array(  # noqa: PLR0917
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
     err: bool = False,  # noqa: FBT001, FBT002
 ) -> pyvista_ndarray | None:
-    """Search point, cell and field data for an array.
+    """Search point, cell, and field data for an array.
 
     Parameters
     ----------
@@ -597,7 +597,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
 
 
 def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
-    """Return row array of a vtk object.
+    """Return row array of a VTK object.
 
     Parameters
     ----------
@@ -621,14 +621,14 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
 
 
 def get_vtk_type(typ: npt.DTypeLike) -> int:
-    """Look up the VTK type for a given numpy data type.
+    """Look up the VTK type for a given NumPy data type.
 
     Corrects for string type mapping issues.
 
     Parameters
     ----------
     typ : numpy.dtype
-        Numpy data type.
+        NumPy data type.
 
     Returns
     -------
@@ -703,14 +703,14 @@ def convert_string_array(
 def convert_string_array(
     arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
-    """Convert a numpy array of strings to a :vtk:`vtkStringArray` or vice versa.
+    """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
     If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
 
     Parameters
     ----------
     arr : numpy.ndarray | str
-        Numpy string array to convert.
+        NumPy string array to convert.
 
     name : str, optional
         Name to set the :vtk:`vtkStringArray` to.
@@ -773,12 +773,12 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
     ----------
     matrix : :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         The vtk matrix to be converted to a ``numpy.ndarray``.
-        Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
+        Returned ``ndarray`` has shape (3, 3) or (4, 4) as appropriate.
 
     Returns
     -------
     numpy.ndarray
-        Numpy array containing the data from ``matrix``.
+        NumPy array containing the data from ``matrix``.
 
     """
     if isinstance(matrix, _vtk.vtkMatrix3x3):
@@ -1048,7 +1048,7 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
         This method does nothing. It only exists to make the pickle library happy.
         Classes that store an instance of this class must pickle this array directly.
-        E.g. DataObjects can support this by storing this array as field data
+        For example, DataObjects can support this by storing this array as field data
         """
 
     def __setstate__(self: _SerializedDictArray, state: Any) -> None:
@@ -1056,7 +1056,7 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
         This method does nothing. It only exists to make the pickle library happy.
         Classes that store an instance of this class must pickle this array directly.
-        E.g. DataObjects can support this by storing this array as field data
+        For example, DataObjects can support this by storing this array as field data
         """
 
     # Override any/all `UserDict` or `MutableMapping` methods which mutate

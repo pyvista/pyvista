@@ -1,0 +1,46 @@
+name: Upload VTK master failure summary
+description: >-
+  Extract a short failure summary from core-test.log/plotting-test.log and upload it as a
+  failure-summary-* artifact for the VTK master workflow's failure report. Used because the
+  job-logs API needs repo admin rights, which GITHUB_TOKEN never has.
+runs:
+  using: composite
+  steps:
+    - name: Build failure summary
+      shell: bash
+      run: |
+        echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
+        : > failure_summary.txt
+        for log in core-test.log plotting-test.log; do
+          [ -s "$log" ] || continue
+          start_line="$(grep -n -m1 -E '=+ short test summary info =+' "$log" | head -n1 | cut -d: -f1 || true)"
+          if [ -n "$start_line" ]; then
+            segment="$(tail -n "+${start_line}" "$log")"
+          else
+            segment="$(cat "$log")"
+          fi
+          # Strip ANSI color codes (TOX_COLORED=yes forces them even under tee).
+          segment="$(printf '%s' "$segment" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g')"
+          if [ -n "$start_line" ]; then
+            # Keep only FAILED/ERROR lines: counts and SKIPPED/XFAIL vary run to run even for
+            # the identical set of failing tests, which broke repeat-detection.
+            segment="$(printf '%s' "$segment" | grep -E '^(FAILED|ERROR) ' || true)"
+          fi
+          [ -n "$segment" ] || continue
+          size="$(printf '%s' "$segment" | wc -c | tr -d ' ')"
+          # Truncate from the end, dropping a possibly-partial first line.
+          if [ "$size" -gt 4000 ]; then
+            printf '%s' "$segment" | tail -c 4000 | tail -n +2 >> failure_summary.txt
+          else
+            printf '%s' "$segment" >> failure_summary.txt
+          fi
+          echo >> failure_summary.txt
+        done
+
+    - name: Upload failure summary artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: failure-summary-${{ github.job }}-${{ join(matrix.* , '-') }}
+        path: |
+          failure_summary.txt
+          job_label.txt

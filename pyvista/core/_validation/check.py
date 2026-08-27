@@ -50,18 +50,18 @@ def check_subdtype(
     *,
     name: str = 'Input',
 ) -> None:
-    """Check if an input's data-type is a subtype of another data-type(s).
+    """Check if an input's data-type is a subtype of another data-type or data-types.
 
     Parameters
     ----------
     input_obj : float | ArrayLike[float] | numpy.typing.DTypeLike
         ``dtype`` object (or object coercible to one) or an array-like object.
-        If array-like, the dtype of the array is used.
+        If array-like, the ``dtype`` of the array is used.
 
     base_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike]
         ``dtype``-like object or a sequence of ``dtype``-like objects. The ``input_obj``
         must be a subtype of this value. If a sequence, ``input_obj`` must be a
-        subtype of at least one of the specified dtypes.
+        subtype of at least one of the specified ``dtypes``.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -84,11 +84,11 @@ def check_subdtype(
     >>> from pyvista import _validation
     >>> _validation.check_subdtype(float, np.floating)
 
-    Check from multiple allowable dtypes.
+    Check from multiple allowable ``dtypes``.
 
     >>> _validation.check_subdtype(int, [np.integer, np.floating])
 
-    Check an array's dtype.
+    Check an array's ``dtype``.
 
     >>> array = np.array([1, 2, 3], dtype='uint8')
     >>> _validation.check_subdtype(array, np.integer)
@@ -114,7 +114,7 @@ def check_subdtype(
 
 
 def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
-    """Check if an array has real numbers, i.e. float or integer type.
+    """Check if an array has real numbers (float or integer type).
 
     Notes
     -----
@@ -279,7 +279,7 @@ def check_sorted(
 
 
 def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
-    """Check if an array has finite values, i.e. no NaN or Inf values.
+    """Check if an array has finite values, that is, no NaN or Inf values.
 
     Parameters
     ----------
@@ -340,7 +340,7 @@ def check_integer(
         If any element's value differs from its floor.
 
     TypeError
-        If ``strict=True`` and the array's dtype is not integral.
+        If ``strict=True`` and the array's ``dtype`` is not integral.
 
     See Also
     --------
@@ -532,17 +532,17 @@ def check_range(
     rng : VectorLike[float], optional
         Vector with two elements ``[min, max]`` specifying the minimum
         and maximum data values allowed, respectively. By default, the
-        range endpoints are inclusive, i.e. values must be >= min
+        range endpoints are inclusive, that is, values must be >= min
         and <= max. Use ``strict_lower`` and/or ``strict_upper``
         to further restrict the allowable range. Use ``np.inf`` or
         ``-np.inf`` to specify open intervals, e.g. ``[0, np.inf]``.
 
     strict_lower : bool, default: False
-        Enforce a strict lower bound for the range, i.e. array values
+        Enforce a strict lower bound for the range, that is, array values
         must be strictly greater than the minimum.
 
     strict_upper : bool, default: False
-        Enforce a strict upper bound for the range, i.e. array values
+        Enforce a strict upper bound for the range, that is, array values
         must be strictly less than the maximum.
 
     name : str, default: "Array"
@@ -594,7 +594,7 @@ def check_shape(
         ``i``, the shape is interpreted as ``(i,)``. Use a value of
         -1 for any dimension where its size is allowed to vary, e.g.
         ``(-1,3)`` if any Nx3 array is allowed. Use ``()`` for the
-        shape of scalar values (i.e. 0-dimensional). If a list, the
+        shape of scalar values (that is, 0-dimensional). If a list, the
         array must have at least one of the specified shapes.
 
     name : str, default: "Array"
@@ -603,7 +603,7 @@ def check_shape(
     Raises
     ------
     ValueError
-        If the array does not have any of the specified shape(s).
+        If the array does not have any of the specified shapes.
 
     See Also
     --------
@@ -669,7 +669,7 @@ def check_ndim(
 
     ndim : int | Sequence[int], optional
         A single dimension or a sequence of allowable dimensions. If an
-        integer, the array must have this number of dimension(s). If a
+        integer, the array must have this number of dimensions. If a
         sequence, the array must have at least one of the specified number
         of dimensions.
 
@@ -721,12 +721,12 @@ def check_ndim(
 def check_number(num: float, /, *, name: str = 'Object') -> None:
     """Check if an object is an instance of ``Number``.
 
-    A number is any instance of ``numbers.Number``, e.g.  ``int``,
+    A number is any instance of ``numbers.Number``, for example,  ``int``,
     ``float``, and ``complex``.
 
     Notes
     -----
-    A NumPy ndarray is not an instance of ``Number``.
+    A NumPy ``ndarray`` is not an instance of ``Number``.
 
     Parameters
     ----------
@@ -1007,7 +1007,7 @@ def check_iterable_items(
         Iterable to check.
 
     item_type : type | tuple[type, ...]
-        Class type(s) to check for. Each element of the sequence must
+        Class types to check for. Each element of the sequence must
         have the type or one of the types specified.
 
     allow_subclass : bool, default: True
@@ -1132,7 +1132,7 @@ def check_length(
 
     must_be_1d : bool, default: False
         If ``True``, check if the shape of the array is one-dimensional,
-        i.e. that the array's shape is ``(1,)``.
+        that is, that the array's shape is ``(1,)``.
 
     allow_scalar : bool, default: False
         If ``True``, a scalar input will be reshaped to have a length

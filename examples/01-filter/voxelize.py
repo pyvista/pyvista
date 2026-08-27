@@ -4,7 +4,7 @@
 Voxelize a Surface Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a voxel model (like legos) of a closed surface or volumetric mesh.
+Create a voxel model (like LEGOs) of a closed surface or volumetric mesh.
 
 This example also demonstrates how to compute an implicit distance from a
 bounding :class:`pyvista.PolyData` surface.

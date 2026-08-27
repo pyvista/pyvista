@@ -88,10 +88,10 @@ class DataObject(
     Parameters
     ----------
     *args :
-        Any extra args are passed as option to all wrapped data objects.
+        Any extra ``args`` are passed as option to all wrapped data objects.
 
     **kwargs :
-        Any extra keyword args are passed as option to all wrapped data objects.
+        Any extra keyword ``args`` are passed as option to all wrapped data objects.
 
     """
 
@@ -117,7 +117,7 @@ class DataObject(
         Before falling through to the VTK base class, check whether
         ``item`` matches a pending ``pyvista.accessors`` entry point.
         A match triggers a one-shot plugin import, after which normal
-        attribute resolution finds the newly-attached accessor
+        attribute resolution finds the newly attached accessor
         descriptor.
         """
         if _resolve_pending_accessor(item):
@@ -239,7 +239,7 @@ class DataObject(
             these to expose format-specific options such as compression
             level or thread count.  When the target extension dispatches
             to a built-in VTK writer, passing any extra keyword arguments
-            raises :class:`TypeError` — PyVista never silently drops
+            raises :class:`TypeError`—PyVista never silently drops
             writer options.
 
             .. versionadded:: 0.48
@@ -552,7 +552,7 @@ class DataObject(
         ----------
         array : ArrayLike[Any]
             Array of data to add to the dataset as a field array. Field data
-            is not tied to the geometry, so numeric, boolean and string data
+            is not tied to the geometry, so numeric, boolean, and string data
             are all accepted.
 
         name : str
@@ -659,15 +659,15 @@ class DataObject(
         as an array, the user dict provides a mapping for scalar values.
 
         Since the user dict is stored as field data, it is automatically saved
-        with the mesh when it is saved in a compatible file format (e.g. ``'.vtk'``).
+        with the mesh when it is saved in a compatible file format (for example, ``'.vtk'``).
         Any saved metadata is automatically de-serialized by PyVista whenever
         the user dict is accessed again. Since the data is stored as JSON, it
         may also be easily retrieved or read by other programs.
 
-        Any JSON-serializable values are permitted by the user dict, i.e. values
+        Any JSON-serializable values are permitted by the user dict, that is, values
         can have type ``dict``, ``list``, ``tuple``, ``str``, ``int``, ``float``,
         ``bool``, or ``None``. Storing NumPy arrays is not directly supported, but
-        these may be cast beforehand to a supported type, e.g. by calling ``tolist()``
+        these may be cast beforehand to a supported type, for example, by calling ``tolist()``
         on the array.
 
         To completely remove the user dict string from the dataset's field data,
@@ -771,7 +771,7 @@ class DataObject(
             raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:
-        """Init serialized dict array and ensure it is added to field_data."""
+        """Init serialized dict array and ensure it is added to ``field_data``."""
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
@@ -920,8 +920,8 @@ class DataObject(
 
         .. note::
 
-            These formats are custom PyVista legacy formats. The native 'vtk' format is
-            preferred since it supports more objects (e.g. MultiBlock).
+            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
+            preferred since it supports more objects (for example, MultiBlock).
 
         """
         if isinstance(self, pv.MultiBlock):
@@ -1013,12 +1013,12 @@ class DataObject(
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
-        """Support unpickle of PyVista 'xml' and 'legacy' formats.
+        """Support unpickle of PyVista ``'xml'`` and ``'legacy'`` formats.
 
         .. note::
 
-            These formats are custom PyVista legacy formats. The native 'vtk' format is
-            preferred since it supports more objects (e.g. MultiBlock).
+            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
+            preferred since it supports more objects (for example, MultiBlock).
 
         """
         vtk_serialized = state.pop('vtk_serialized')

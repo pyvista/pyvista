@@ -13,7 +13,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Surface extraction of nonlinear cells
+# Surface Extraction of Nonlinear Cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a single :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` cell and then
 # extract its surface to demonstrate how to extract the surface of an
@@ -34,7 +34,7 @@ lin_pts = np.array(
 )
 
 # %%
-# Next, define the "midside" points of a quad cell. See the definition of a
+# Next, define the "mid-side" points of a quad cell. See the definition of a
 # :vtk:`vtkQuadraticHexahedron`.
 
 quad_pts = np.array(
@@ -69,8 +69,8 @@ grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # %%
 # Finally, extract the surface and plot it.
-# Note that the `'dataset_surface'` algorithm is necessary to use when generating surfaces
-# from non-linear cells. Setting ``algorithm=None`` also works.
+# Note that the ``'dataset_surface'`` algorithm is necessary to use when generating
+# surfaces from non-linear cells. Setting ``algorithm=None`` also works.
 surf = grid.extract_surface(algorithm='dataset_surface')
 surf.plot(show_scalar_bar=False)
 
@@ -196,7 +196,7 @@ assert cleaned.n_points == 8
 assert cleaned.n_open_edges == 0
 
 # %%
-# Note that a closed surface is important for some calculations. E.g. the filter
+# Note that a closed surface is important for some calculations. For example, the filter
 # :meth:`~pyvista.DataSetFilters.select_interior_points` requires a closed surface by
 # default, and properties like :attr:`~pyvista.PolyData.volume` assume the input is a
 # closed surface.

@@ -594,16 +594,16 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
     Parameters
     ----------
     center : sequence[float]
-        The center of the gaussian.
+        The center of the Gaussian.
 
     whole_extent : sequence[int]
         The extent of the whole output image.
 
     maximum : float
-        The maximum value of the gaussian.
+        The maximum value of the Gaussian.
 
     std : sequence[float]
-        The standard deviation of the gaussian.
+        The standard deviation of the Gaussian.
 
     Examples
     --------
@@ -636,24 +636,24 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
 
     @property
     def center(self) -> tuple[float, float, float]:
-        """Get the center of the gaussian.
+        """Get the center of the Gaussian.
 
         Returns
         -------
         tuple[float, float, float]
-          The center of the gaussian.
+          The center of the Gaussian.
 
         """
         return self.GetCenter()
 
     @center.setter
     def center(self, center: Sequence[float]) -> None:
-        """Set the center of the gaussian.
+        """Set the center of the Gaussian.
 
         Parameters
         ----------
         center : sequence[float]
-          The center of the gaussian.
+          The center of the Gaussian.
 
         """
         self.SetCenter(center)
@@ -692,48 +692,48 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
 
     @property
     def maximum(self) -> float:
-        """Get the maximum value of the gaussian.
+        """Get the maximum value of the Gaussian.
 
         Returns
         -------
         float
-          The maximum value of the gaussian.
+          The maximum value of the Gaussian.
 
         """
         return self.GetMaximum()
 
     @maximum.setter
     def maximum(self, maximum: float) -> None:
-        """Set the maximum value of the gaussian.
+        """Set the maximum value of the Gaussian.
 
         Parameters
         ----------
         maximum : float
-          The maximum value of the gaussian.
+          The maximum value of the Gaussian.
 
         """
         self.SetMaximum(maximum)
 
     @property
     def std(self) -> float:
-        """Get the standard deviation of the gaussian.
+        """Get the standard deviation of the Gaussian.
 
         Returns
         -------
         float
-          The standard deviation of the gaussian.
+          The standard deviation of the Gaussian.
 
         """
         return self.GetStandardDeviation()
 
     @std.setter
     def std(self, std: float) -> None:
-        """Set the standard deviation of the gaussian.
+        """Set the standard deviation of the Gaussian.
 
         Parameters
         ----------
         std : float
-          The standard deviation of the gaussian.
+          The standard deviation of the Gaussian.
 
         """
         self.SetStandardDeviation(std)

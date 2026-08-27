@@ -49,7 +49,7 @@ class UnstructuredGridFilters(DataSetFilters):
         >>> grid = examples.load_tetbeam()
         >>> grid.plot(show_edges=True, line_width=2)
 
-        Now, subdivide and plot.
+        Subdivide and plot the result.
 
         >>> subdivided = grid.subdivide_tetra()
         >>> subdivided.plot(show_edges=True, line_width=2)

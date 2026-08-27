@@ -2,7 +2,7 @@
 .. _sharing_scalar_bars_example:
 
 Sharing Scalar Bars
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 Share scalar bars among plotted arrays, or use a unique bar for each.
 

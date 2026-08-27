@@ -17,7 +17,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Create an arc from two endpoints
+# Create an Arc from Two Endpoints
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The first arc is defined directly from its endpoints and center.
 
@@ -45,7 +45,7 @@ pl.show()
 
 
 # %%
-# Create an arc from a normal and angle
+# Create an Arc from a Normal and Angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Use this form when you already know the plane the arc lies in.
 

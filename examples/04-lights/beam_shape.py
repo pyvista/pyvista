@@ -82,7 +82,7 @@ pl.show()
 # light's nominal position. It could still display attenuation, see the
 # :ref:`attenuation_example` example.
 #
-# Switching to a spotlight (i.e. a positional light with a cone angle less
+# Switching to a spotlight (that is, a positional light with a cone angle less
 # than 90 degrees) will enable beam shaping using the :py:attr:`pyvista.Light.exponent`
 # property. Let's put our hemispheres side by side for this, and put a light in
 # the center of each: one spotlight, one merely positional.

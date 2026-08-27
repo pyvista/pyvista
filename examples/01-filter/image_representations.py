@@ -39,7 +39,7 @@ points_volume.point_data['Data'] = data_array
 points_volume.plot(show_edges=True)
 
 # %%#
-# However, in many applications (e.g. 3D medical imaging), the scalar data arrays
+# However, in many applications (for example, 3D medical imaging), the scalar data arrays
 # represent discretized samples at the centers of voxels. As such, it may
 # be more appropriate to represent the data as eight voxel cells instead of
 # eight points. We can use :meth:`~pyvista.ImageDataFilters.points_to_cells` to
@@ -77,7 +77,7 @@ pl.camera.elevation = 25
 pl.show()
 
 # %%#
-# As long as only one kind of scalar data is used (i.e. either point or cell
+# As long as only one kind of scalar data is used (that is, either point or cell
 # data, but not both), it is possible to move between representations without
 # loss of data.
 

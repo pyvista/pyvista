@@ -1,7 +1,7 @@
 """Lazy-loaded imports from VTK.
 
 These are the modules within VTK that must be loaded across pyvista's
-core and plotting API. The modules are lazily-loaded, and are only
+core and plotting API. The modules are lazily loaded, and are only
 imported on first access. We import from ``vtkmodules`` instead of
 ``vtk`` to selectively import modules and not the entire library.
 
@@ -41,7 +41,7 @@ _VTK_ROOT = _resolve_vtk_root()
 def _resolve_root_is_flat(root: str) -> bool:
     """Return whether *root* exposes VTK classes directly off its package root.
 
-    A flat backend (e.g. cvista >=9.6.2.4) resolves public names lazily off the
+    A flat backend (for example, cvista >=9.6.2.4) resolves public names lazily off the
     root, so PyVista looks classes up by NAME and stays agnostic to module layout.
     Probed rather than inferred, since a custom build may be laid out like stock VTK.
     """

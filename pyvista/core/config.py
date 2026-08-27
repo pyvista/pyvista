@@ -269,19 +269,19 @@ class Config(_ConfigBase):
         .. warning::
 
             This option requires runtime inspection and does not work with all developer
-            tools, e.g. it has no effect when using PyCharm. This is because it relies on
+            tools, for example, it has no effect when using PyCharm. This is because it relies on
             calling the object's ``__dir__`` method for generating auto-completion
             suggestions. Tools like PyCharm that only use static analysis for
             auto-completion are therefore unaffected.
 
         Notes
         -----
-        The snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+        The ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, and so on) are
         controlled separately by :func:`pyvista.vtk_snake_case`. When
-        snake_case is not ``'allow'`` (the default), those names are hidden
+        ``snake_case`` is not ``'allow'`` (the default), those names are hidden
         from :func:`dir` regardless of this setting, because accessing them
         would already raise ``PyVistaAttributeError``.
-        Enabling snake_case surfaces the snake_case names in :func:`dir`;
+        Enabling ``snake_case`` surfaces the ``snake_case`` names in :func:`dir`;
         ``show_vtk_api`` only controls the CamelCase VTK API.
 
         .. versionadded:: 0.48

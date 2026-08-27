@@ -24,7 +24,7 @@ poly = line.extrude_rotate(resolution=resolution, capping=False)
 poly
 
 # %%
-# Plot the extruded line
+# Plot the Extruded Line
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -55,7 +55,7 @@ pl.add_mesh(
 pl.show(cpos='xy')
 
 # %%
-# Create a spring
+# Create a Spring
 # ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).

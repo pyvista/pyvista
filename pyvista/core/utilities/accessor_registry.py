@@ -95,14 +95,14 @@ class AccessorRegistration(NamedTuple):
     Attributes
     ----------
     name : str
-        The namespace the accessor is attached under (e.g. ``'meshfix'``).
+        The namespace the accessor is attached under (for example, ``'meshfix'``).
     target : type
         The PyVista dataset class (or base class) the accessor is
         registered against.
     accessor : type
         The accessor class itself.
     source : str
-        Human-readable origin in the form ``'module.qualname'`` — useful
+        Human-readable origin in the form ``'module.qualname'``—useful
         for debugging which plugin registered a given accessor.
 
     """
@@ -370,7 +370,7 @@ def _validate_name(name: object) -> str:
     """Normalize and validate an accessor name.
 
     Accepts ``object`` so the ``isinstance`` check is reachable for
-    callers that bypass static typing (e.g. dynamic plugin loaders or
+    callers that bypass static typing (for example, dynamic plugin loaders or
     tests that intentionally pass the wrong type).
     """
     if not isinstance(name, str):
@@ -538,7 +538,7 @@ def _attach_accessor(
             # warning here would be fatal for downstream packages running
             # under ``filterwarnings=error``.
             return
-        # Accessor-vs-accessor collision — warn and replace (pandas style).
+        # Accessor-vs-accessor collision—warn and replace (pandas style).
         if accessor_owner is target_cls:
             location = target_cls.__qualname__
         else:
@@ -629,7 +629,7 @@ def unregister_dataset_accessor(name: str, target_cls: type) -> None:
 
     attr = target.__dict__.get(normalized)
     if not isinstance(attr, _CachedAccessor):
-        # ValueError (not TypeError) — the shape of the target is valid,
+        # ValueError (not TypeError)—the shape of the target is valid,
         # the caller just did not have an accessor to remove.
         msg = f'No registered accessor {name!r} attached directly to {target.__qualname__}.'
         raise ValueError(msg)  # noqa: TRY004
@@ -719,7 +719,7 @@ def _pending_accessor_names() -> tuple[str, ...]:
     Used by :meth:`pyvista.DataObject.__dir__` so that IPython /
     Jupyter / REPL tab completion surfaces accessors contributed by
     installed plugins even before those plugins have been imported. The
-    plugin module itself is **not** loaded — only the entry-point
+    plugin module itself is **not** loaded—only the entry-point
     metadata is consulted.
     """
     _ensure_entry_points()

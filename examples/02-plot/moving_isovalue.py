@@ -28,7 +28,7 @@ values = np.linspace(5, 150, num=15)
 surface = vol.contour(values[:1])
 
 # %%
-# Precompute the surfaces
+# Pre-compute the surfaces
 surfaces = [vol.contour([v]) for v in values]
 
 # %%

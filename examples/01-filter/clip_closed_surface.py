@@ -16,7 +16,7 @@ from pyvista import examples
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Load a closed surface
+# Load a Closed Surface
 # ~~~~~~~~~~~~~~~~~~~~~
 # The :func:`~pyvista.examples.downloads.download_lucy` scan is a watertight,
 # manifold PolyData surface with no open edges.
@@ -26,7 +26,7 @@ surface
 
 
 # %%
-# Define an oblique cutting plane
+# Define an Oblique Cutting Plane
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The same plane is reused for both the open and the closed-surface clip.
 
@@ -46,7 +46,7 @@ pl.show()
 
 
 # %%
-# Compare an open cut to a capped cut
+# Compare an Open Cut to a Capped Cut
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # A standard clip leaves a boundary loop along the cut. The closed-surface
 # clip caps that loop with new triangles and stays watertight.
@@ -78,7 +78,7 @@ pl.show()
 
 
 # %%
-# Confirm that the capped result is watertight
+# Confirm that the Capped Result is Watertight
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The open clip carries hundreds of boundary edges; the capped result has none.
 

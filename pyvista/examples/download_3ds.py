@@ -21,7 +21,7 @@ warn_external(
 
 
 def download_iflamigm():
-    """Download a iflamigm image.
+    """Download a flamingo image.
 
     .. versionadded:: 0.44.0
 
