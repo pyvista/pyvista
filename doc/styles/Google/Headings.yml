@@ -11,26 +11,25 @@ match: $title
 vocab: false
 indicators:
   - ":"
-# Vale matches an exception as an unanchored pattern, so a bare `a` exempts
+# Vale matches an exception as an unanchored pattern, so a bare `a` exempted
 # every word containing the letter -- `calibration`, `camera` -- and silently
-# turns this rule off for most headings. Anchor every entry to the start of a
+# turned this rule off for most headings. Anchor every entry to the start of a
 # word so each one exempts only itself; the trailing `\b` still allows a
 # possessive or an attached comma (`pytest's`, `glTF.`).
+#
+# Every entry below is load-bearing: removing it makes a heading in this
+# repository fail. AP title case already lowercases `a` and `for`, and already
+# leaves `PyVista` and `VTK` alone, so those need no entry.
 exceptions:
   # These words should stay lower-case
-  - ^a\b
   - ^are\b
-  - ^for\b
   - ^from\b
   - ^is\b
   - ^like\b
-  - ^that\b
   - ^to\b
   - ^with\b
 
   # Developer terms that should stay as-is
   - ^glTF\b
-  - ^PyVista\b
   - ^pytest\b
   - ^pyvista\.\w+\b # Allow the `pyvista.` namespace in headings
-  - ^VTK\b
