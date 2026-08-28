@@ -215,7 +215,7 @@ def test_structured_sphere_center_direction():
 def test_structured_sphere_seam():
     sphere = pv.StructuredSphere()
     seam = sphere.extract_feature_edges(
-        non_manifold_edges=True, feature_edges=False, manifold_edges=False
+        boundary_edges=True, non_manifold_edges=False, feature_edges=False, manifold_edges=False
     )
     # Seam is on the +x axis
     expected = pv.BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.0, z_min=-0.5, z_max=0.5)
