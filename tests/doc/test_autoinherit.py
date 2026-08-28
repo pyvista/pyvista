@@ -7,6 +7,9 @@ the same thing one level up, for the classes themselves.
 
 from __future__ import annotations
 
+from collections import defaultdict
+from enum import Enum
+
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
 from sphinx.util.inspect import safe_getattr
@@ -102,11 +105,37 @@ def test_home_is_the_most_basal_documented_class():
     assert autoinherit._home(pv.ImageData, 'contour') is DataSetFilters
 
 
-def test_home_falls_through_to_the_class_when_every_provider_is_undocumented(documented):
-    assert _PointSet not in documented
-    assert Grid not in documented
-    assert autoinherit._home(pv.PolyData, 'remove_cells') is pv.PolyData
-    assert autoinherit._home(pv.ImageData, 'dimensions') is pv.ImageData
+def test_home_falls_through_to_the_class_when_every_provider_is_undocumented(monkeypatch):
+    class Undocumented:
+        shared = 1
+
+    class Left(Undocumented):
+        pass
+
+    class Right(Undocumented):
+        pass
+
+    Undocumented.__module__ = 'pyvista.fake'  # or _home reads it as VTK's and declines
+
+    monkeypatch.setattr(autoinherit, '_documented', {Left: 'pkg.Left', Right: 'pkg.Right'})
+    # Nothing basal is documented, so each subclass has to hold its own page -- which
+    # is the duplication that documenting the base collapses.
+    assert autoinherit._home(Left, 'shared') is Left
+    assert autoinherit._home(Right, 'shared') is Right
+
+    monkeypatch.setattr(
+        autoinherit,
+        '_documented',
+        {Undocumented: 'pkg.Undocumented', Left: 'pkg.Left', Right: 'pkg.Right'},
+    )
+    assert autoinherit._home(Left, 'shared') is Undocumented
+    assert autoinherit._home(Right, 'shared') is Undocumented
+
+
+def test_the_bases_that_collapse_duplicates_are_documented(documented):
+    """Guard the doc entries that ``test_no_implementation_is_documented_twice`` needs."""
+    assert _PointSet in documented
+    assert Grid in documented
 
 
 def test_home_is_none_for_a_member_vtk_implements():
@@ -117,10 +146,11 @@ def test_home_is_none_for_a_member_vtk_implements():
 
 def test_own_members_excludes_what_a_documented_base_already_documents():
     own = autoinherit.own_members('pyvista', 'ImageData', _members(pv.ImageData))
-    assert 'dimensions' in own  # Grid is undocumented, so ImageData is the home
+    assert 'offset' in own  # ImageData defines it
+    assert 'dimensions' not in own  # documented as Grid.dimensions
     assert 'dimensionality' not in own  # documented as DataSet.dimensionality
-    assert 'contour' not in own
-    assert 'min_spatial_dimension' not in own
+    assert 'contour' not in own  # documented as DataSetFilters.contour
+    assert 'min_spatial_dimension' not in own  # implemented by VTK
 
 
 def test_inherited_member_groups_are_ordered_by_the_mro():
@@ -175,6 +205,34 @@ def test_every_reachable_member_has_exactly_one_page(documented):
     assert not missing, (
         f'{len(missing)} member(s) reachable on a documented class have no page:\n  '
         + '\n  '.join(sorted(missing))
+    )
+
+
+def test_no_implementation_is_documented_twice(documented):
+    """One implementation, one page: the reason undocumented bases are documented.
+
+    A member whose every provider is undocumented falls back to the class itself, so
+    two public classes sharing an undocumented base each get a page for it. Listing
+    that base in ``doc/source/api/`` is what collapses them back to one.
+    """
+    homes: dict[tuple[type, str], set[str]] = defaultdict(set)
+    for cls, docname in documented.items():
+        if issubclass(cls, Enum):
+            continue  # rendered by enum.rst, which does not route members
+        module, _, objname = docname.rpartition('.')
+        for item in autoinherit.own_members(module, objname, _members(cls)):
+            homes[(autoinherit._provider(cls, item), item)].add(docname)
+
+    duplicated = {
+        f'{provider.__qualname__}.{item}': sorted(pages)
+        for (provider, item), pages in homes.items()
+        if len(pages) > 1
+    }
+    assert not duplicated, (
+        f'{len(duplicated)} implementation(s) have more than one page. Document the '
+        f'class that defines each one under doc/source/api/ so every class that '
+        f'inherits it links there instead:\n  '
+        + '\n  '.join(f'{name}: {pages}' for name, pages in sorted(duplicated.items()))
     )
 
 
