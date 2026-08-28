@@ -20,7 +20,7 @@ classifiers = [
 dependencies = [
   'cyclopts>=4.0.0',
   # Pinned to the main branch until the first release is published to PyPI.
-  'input-validation @ git+ssh://git@github.com/pyvista/input-validation.git@main',
+  'input-validation @ git+https://github.com/pyvista/input-validation.git@main',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',
   'pillow',
