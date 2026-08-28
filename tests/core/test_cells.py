@@ -283,7 +283,7 @@ def test_abstract_celltype_dimension_is_correct(celltype, expected_dim):
     assert celltype.dimension == expected_dim
 
 
-@pytest.mark.parametrize('celltype', _DEPRECATED_CELL_TYPES)
+@pytest.mark.parametrize('celltype', sorted(_DEPRECATED_CELL_TYPES))
 def test_celltype_deprecated(celltype):
     val = _CELL_TYPE_INFO[celltype].value
     match = f'<CellType.{celltype}: {val}> is deprecated and will be removed in a future version.'
