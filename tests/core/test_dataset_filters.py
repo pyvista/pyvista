@@ -1132,6 +1132,8 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale='z_axis')
     glyph3 = grid.glyph(geom=geom, orient='z_axis', scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
+    # The glyphs inherit the double-precision points of the ImageData input, so the
+    # rotated bounds land within rounding of the expected values rather than exactly on
     assert np.isclose(glyph1.bounds.z_min, geom.bounds.x_min * scale)
     assert np.isclose(glyph1.bounds.z_max, geom.bounds.x_max * scale)
     assert np.isclose(glyph2.bounds.x_min, geom.bounds.x_min * scale)
@@ -1210,8 +1212,6 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
     return connected_datasets
 
 
-# Connectivity generally supports double precision, but we use extract_cells internally for
-# some branches which does not support double, so we must use single precision
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
     'extraction_mode',
@@ -3045,9 +3045,9 @@ def test_decimate_boundary():
     assert boundary.n_points
 
 
-def test_merge_general(uniform, sphere):
+def test_merge_general(uniform):
     thresh = uniform.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
-    con = sphere
+    con = uniform.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pv.UnstructuredGrid)
     merged = con + thresh
@@ -3114,7 +3114,7 @@ def test_iadd_general(uniform, hexbeam, sphere):
 
 
 def test_compute_boundary_mesh_quality():
-    mesh = examples.download_can_crushed_vtu().points_to_double()
+    mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
     assert 'DistanceFromCellCenterToFaceCenter' in qual.array_names
     assert 'DistanceFromCellCenterToFacePlane' in qual.array_names
@@ -3630,10 +3630,8 @@ def test_tessellate():
     tessellated = ugrid.tessellate(progress_bar=True)
     assert tessellated.n_cells > ugrid.n_cells
     assert tessellated.n_points > ugrid.n_points
-    tessellated2 = ugrid.tessellate(max_n_subdivide=6)
-    assert tessellated2.n_cells > tessellated.n_cells
-    tessellated2 = ugrid.tessellate(merge_points=False)
-    assert tessellated2.n_points > tessellated.n_points
+    assert ugrid.tessellate(max_n_subdivide=6).n_cells > tessellated.n_cells
+    assert ugrid.tessellate(merge_points=False).n_points > tessellated.n_points
     pdata = pv.PolyData()
     with pytest.raises(TypeError):
         tessellated = pdata.tessellate(progress_bar=True)
@@ -3881,7 +3879,7 @@ def test_integrate_data():
 
 def test_align():
     # Create a simple mesh
-    source = pv.Cylinder(resolution=30).triangulate()
+    source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
     transformed = source.rotate_y(20).rotate_z(25).translate([-0.75, -0.5, 0.5])
 
     # Perform ICP registration
@@ -4016,7 +4014,7 @@ def test_bounding_box_return_meta(oriented, as_composite):
         # Test identity always returned for non-oriented box
         assert np.array_equal(axes, np.eye(3))
         bnds = box_mesh.bounds
-        assert np.allclose(point, (bnds.x_min, bnds.y_min, bnds.z_min))
+        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
 
     # Test the returned point is one of the box's points
     if as_composite:
@@ -4170,7 +4168,6 @@ def test_swap_axes(x, y, z, order, test_case, values):
 
 
 def test_subdivide_tetra(tetbeam):
-    # Filter does not support double precision
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
 
@@ -4185,7 +4182,7 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
         [
             pv.CellType.HEXAHEDRON,
             pv.CellType.BEZIER_PYRAMID,
-        ],
+        ]
     )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 
@@ -4518,8 +4515,7 @@ def frog_tissues_image():
 
 @pytest.fixture
 def frog_tissues_contour(frog_tissues_image):
-    contour = frog_tissues_image.contour_labels(smoothing=False)
-    return contour.points_to_double()
+    return frog_tissues_image.contour_labels(smoothing=False)
 
 
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):

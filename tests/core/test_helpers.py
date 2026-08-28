@@ -228,6 +228,79 @@ def test_global_config_show_vtk_api_rejects_non_bool(value, monkeypatch):
         pv.global_config.show_vtk_api = value
 
 
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    [
+        (None, 'preserve'),
+        ('preserve', 'preserve'),
+        ('float32', 'float32'),
+        ('float64', 'float64'),
+        ('single', 'float32'),
+        ('double', 'float64'),
+        (np.float32, 'float32'),
+        (np.float64, 'float64'),
+        (float, 'float64'),
+        (np.dtype('f4'), 'float32'),
+    ],
+)
+def test_global_config_points_dtype_normalizes(value, expected, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    pv.global_config.points_dtype = value
+    assert pv.global_config.points_dtype == expected
+
+
+@pytest.mark.parametrize('value', ['float16', 'nope', 3, int, np.int32])
+def test_global_config_points_dtype_rejects_other_dtypes(value, monkeypatch):
+    # ``np.dtype(None)`` is float64, so a non-dtype must not slip through as one
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    with pytest.raises(ValueError, match="must be 'preserve', 'float32', or 'float64'"):
+        pv.global_config.points_dtype = value
+
+
+@pytest.mark.parametrize('input_dtype', [np.float32, np.float64])
+def test_points_dtype_preserve_keeps_filter_input_dtype(input_dtype, monkeypatch):
+    # https://github.com/pyvista/pyvista/issues/8166
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(input_dtype)
+
+    assert mesh.shrink().points.dtype == input_dtype  # no SetOutputPointsPrecision
+    assert mesh.decimate(0.5).points.dtype == input_dtype
+    assert mesh.triangulate().points.dtype == input_dtype
+    assert mesh.clip().points.dtype == input_dtype
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_points_dtype_applies_to_filters_and_sources(dtype, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
+    expected = np.dtype(dtype)
+
+    assert pv.Sphere().points.dtype == expected  # source with output precision support
+    assert pv.Arrow().points.dtype == expected  # source without it
+    assert pv.ImageData(dimensions=(2, 2, 2)).points.dtype == expected  # generated points
+    assert pv.Sphere().shrink().points.dtype == expected
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_points_dtype_leaves_user_arrays_alone(dtype, monkeypatch):
+    # The setting governs what PyVista generates, not what the caller hands it
+    monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
+    other = np.float64 if dtype == 'float32' else np.float32
+
+    mesh = pv.PolyData(np.zeros((3, 3), dtype=other))
+    assert mesh.points.dtype == other
+
+    mesh = pv.Sphere()
+    mesh.points = np.zeros((mesh.n_points, 3), dtype=other)
+    assert mesh.points.dtype == other
+
+
+def test_points_dtype_applies_to_multiblock(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    multi = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    assert all(block.points.dtype == np.float64 for block in multi.clip())
+
+
 def test_reader_forwards_validate_kwarg(mocker: MockerFixture):
     # BaseReader.read(validate=...) must forward the kwarg through to wrap().
     spy = mocker.spy(reader_module, 'wrap')

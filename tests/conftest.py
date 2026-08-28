@@ -319,18 +319,13 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def structured():
-    return examples.load_structured()
-
-
-@pytest.fixture
-def datasets_no_pointset(uniform, rectilinear, hexbeam, airplane, structured):
+def datasets_no_pointset():
     return [
-        uniform,  # ImageData
-        rectilinear,  # RectilinearGrid
-        hexbeam,  # UnstructuredGrid
-        airplane,  # PolyData
-        structured,  # StructuredGrid
+        examples.load_uniform(),  # ImageData
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.load_hexbeam(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
     ]
 
 

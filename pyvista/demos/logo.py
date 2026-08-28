@@ -22,8 +22,11 @@ from pathlib import Path
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.features import _voxelize_legacy
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
@@ -78,7 +81,19 @@ def text_3d(string, depth=0.5):
         The 3D text in the form of a PyVista DataSet.
 
     """
-    return pv.Text3D(string, depth=depth)
+    vec_text = _vtk.vtkVectorText()
+    vec_text.SetText(string)
+
+    extrude = _vtk.vtkLinearExtrusionFilter()
+    extrude.SetInputConnection(vec_text.GetOutputPort())
+    extrude.SetExtrusionTypeToNormalExtrusion()
+    extrude.SetVector(0, 0, 1)
+    extrude.SetScaleFactor(depth)
+
+    tri_filter = _vtk.vtkTriangleFilter()
+    tri_filter.SetInputConnection(extrude.GetOutputPort())
+    _update_alg(tri_filter)
+    return _get_output(tri_filter)
 
 
 @_deprecate_positional_args

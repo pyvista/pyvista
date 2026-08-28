@@ -226,19 +226,20 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
         assert clp2 is not None
 
 
-def test_clip_box(airplane, uniform):
+def test_clip_box():
+    dataset = examples.load_airplane()
     # test length 3 bounds
-    result = uniform.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
-    assert result.n_cells
-    result = uniform.clip_box(bounds=0.5, progress_bar=True)
+    result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
+    dataset = examples.load_uniform()
+    result = dataset.clip_box(bounds=0.5, progress_bar=True)
     assert result.n_cells
     with pytest.raises(ValueError):  # noqa: PT011
-        uniform.clip_box(bounds=(5, 6), progress_bar=True)
+        dataset.clip_box(bounds=(5, 6), progress_bar=True)
     # allow Sequence but not Iterable bounds
     with pytest.raises(TypeError):
-        uniform.clip_box(bounds={5, 6, 7}, progress_bar=True)
+        dataset.clip_box(bounds={5, 6, 7}, progress_bar=True)
     # Test with a poly data box
-    mesh = airplane
+    mesh = examples.load_airplane()
     box = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
     box.rotate_z(33, inplace=True)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
@@ -247,7 +248,7 @@ def test_clip_box(airplane, uniform):
     assert result.n_cells
 
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh.clip_box(bounds=pv.Sphere(), progress_bar=True)
+        dataset.clip_box(bounds=pv.Sphere(), progress_bar=True)
 
     # crinkle clip
     surf = pv.Sphere(radius=3)
@@ -747,8 +748,9 @@ def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
         multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 
-def test_triangulate(uniform):
-    tri = uniform.triangulate(progress_bar=True)
+def test_triangulate():
+    data = examples.load_uniform()
+    tri = data.triangulate(progress_bar=True)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
 
@@ -835,8 +837,8 @@ def test_sample_composite():
     assert 'vtkGhostType' in result[0].point_data
 
 
-def test_slice_along_line(uniform):
-    model = uniform
+def test_slice_along_line():
+    model = examples.load_uniform()
     n = 5
     x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
@@ -894,7 +896,7 @@ def test_slice_generate_triangles_false_default_preserves_polygons():
 
 
 def test_compute_cell_quality_removed():
-    mesh = pv.ParametricEllipsoid().triangulate()
+    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
     with pytest.raises(AttributeError):
         _ = mesh.compute_cell_quality(progress_bar=True)
 
@@ -905,16 +907,17 @@ AREA = 'area'
 VOLUME = 'volume'
 
 
-def test_cell_quality(sphere):
-    qual = sphere.cell_quality(SHAPE, progress_bar=True)
+def test_cell_quality():
+    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
+    qual = mesh.cell_quality(SHAPE, progress_bar=True)
     assert SHAPE in qual.array_names
 
     expected_names = [SHAPE, AREA]
-    qual = sphere.cell_quality(expected_names, progress_bar=True)
+    qual = mesh.cell_quality(expected_names, progress_bar=True)
     assert qual.array_names == expected_names
 
     with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
-        sphere.cell_quality(quality_measure='foo', progress_bar=True)
+        mesh.cell_quality(quality_measure='foo', progress_bar=True)
 
 
 def test_cell_quality_measures(ant):

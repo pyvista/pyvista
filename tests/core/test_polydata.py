@@ -1030,9 +1030,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    atol = 1e-8
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= atol)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
     sphere.clip(
         origin=[0, 0, 0],
@@ -1041,7 +1039,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    assert np.all(clipped_sphere.points[:, 2] <= atol)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
 
 def test_extract_largest(sphere):
@@ -1271,7 +1269,7 @@ def test_strips():
 
 
 def test_ribbon_filter():
-    line = examples.load_spline().compute_arc_length(progress_bar=True).points_to_double()
+    line = examples.load_spline().compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     assert ribbon.n_points
 
