@@ -211,6 +211,20 @@ def test_structured_sphere_matches_solid_sphere(start_phi, end_phi, start_theta,
     assert structured.volume == pytest.approx(solid.volume)
 
 
+def test_structured_sphere_matches_spherical_to_cartesian():
+    # The gallery example builds this grid by hand and states the two are the same
+    radius, ntheta, nphi = 0.5, 9, 12
+    theta = np.linspace(0, 2 * np.pi, ntheta)
+    phi = np.linspace(0, np.pi, nphi)
+    r_, phi_, theta_ = np.meshgrid([radius], phi, theta, indexing='ij')
+    x, y, z = pv.spherical_to_cartesian(r_, phi_, theta_)
+    manual = pv.StructuredGrid(x, y, z)
+
+    sphere = pv.StructuredSphere(radius=radius, theta_resolution=ntheta - 1, phi_resolution=nphi)
+    assert sphere.dimensions == manual.dimensions
+    assert np.array_equal(sphere.points, manual.points)
+
+
 def test_structured_sphere_angles():
     sphere = pv.StructuredSphere(start_theta=90, end_theta=270, start_phi=30, end_phi=150)
     assert sphere.dimensions == (1, 30, 31)
