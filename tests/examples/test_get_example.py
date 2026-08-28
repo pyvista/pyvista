@@ -83,6 +83,7 @@ def test_get_example_metadata():
 
     assert isinstance(metadata, examples.ExampleMetadata)
     assert metadata.name == 'uniform'
+    assert metadata.is_builtin
     assert metadata.function is examples.load_uniform
     assert metadata.num_files == 1
     assert metadata.extensions == ('.vtk',)
@@ -132,6 +133,20 @@ def test_get_example_metadata_multiple_files():
     assert metadata.extensions == ('.mhd', '.zraw')
     assert metadata.loadable_paths == (metadata.paths[0],)
     assert metadata.reader_types == (pv.MetaImageReader,)
+
+
+@pytest.mark.needs_download
+def test_get_example_is_builtin_only_for_packaged_files():
+    """Only examples shipped inside the package report ``is_builtin``."""
+    # `uniform` is a `_Downloadable` loader whose file ships with PyVista
+    assert examples.get_example('uniform', output='metadata').is_builtin
+    assert not examples.get_example('bunny', output='metadata').is_builtin
+    assert not examples.get_example('frog', output='metadata').is_builtin
+
+
+def test_get_example_in_memory_is_not_builtin():
+    """An example generated in memory has no files, so it is not built-in."""
+    assert not examples.get_example('structured', output='metadata').is_builtin
 
 
 def test_get_example_download_false_uses_local_files():
