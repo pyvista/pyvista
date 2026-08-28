@@ -283,7 +283,8 @@ class Config(_ConfigBase):
             and filters that would otherwise generate double precision.
 
         ``'float64'``
-            Points are always double precision.
+            Points are always double precision. Algorithms that cannot generate
+            double-precision points warn, see the notes below.
 
         The setter also accepts anything :class:`numpy.dtype` resolves to
         :class:`numpy.float32` or :class:`numpy.float64` (for example ``np.float64``,
@@ -294,9 +295,19 @@ class Config(_ConfigBase):
         PyVista asks the algorithm for the requested precision first, via
         ``SetOutputPointsPrecision``, so the computation itself is done in that
         precision wherever VTK supports it. Only the algorithms that ignore the
-        request need their output cast afterwards, and casting single-precision
-        output up to ``'float64'`` fixes the dtype without recovering the digits
-        that algorithm already discarded.
+        request need their output cast afterwards.
+
+        Not every VTK algorithm can generate double-precision points. Casting one
+        that cannot up to ``'float64'`` fixes the dtype but cannot recover the
+        digits it already discarded, so ``'float64'`` emits a
+        :class:`~pyvista.PyVistaPrecisionWarning` naming the algorithm rather than
+        reporting a precision it did not deliver. Silence it with a warnings
+        filter if the loss is acceptable::
+
+            warnings.filterwarnings('ignore', category=pv.PyVistaPrecisionWarning)
+
+        ``'preserve'`` never warns: it promises a stable dtype rather than any
+        particular precision, and the cast keeps that promise in full.
 
         .. versionadded:: 0.49
 

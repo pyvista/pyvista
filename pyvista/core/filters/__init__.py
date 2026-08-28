@@ -32,6 +32,8 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaPrecisionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
@@ -104,29 +106,49 @@ def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
         set_precision(alg.SINGLE_PRECISION)
 
 
-def _enforce_points_dtype(mesh_out: Any, dtype: np.dtype[Any] | None) -> None:
+def _enforce_points_dtype(
+    mesh_out: Any, dtype: np.dtype[Any] | None, *, algorithm: _vtk.vtkAlgorithm | None = None
+) -> None:
     """Cast ``mesh_out``'s points to ``dtype`` in place if the algorithm ignored the request.
 
     Only meshes that own their points are cast. :class:`~pyvista.ImageData` and
     :class:`~pyvista.RectilinearGrid` generate their points on demand and apply the
     setting in their own ``points`` property instead.
+
+    Casting single-precision output up to a requested ``'float64'`` fixes the dtype but
+    cannot recover the digits the algorithm already discarded, so that case warns.
+    Under ``'preserve'`` it does not: that setting promises a stable dtype rather than
+    any particular precision, and the cast keeps that promise in full.
     """
     if dtype is None:
         return
     if isinstance(mesh_out, pv.MultiBlock):
         for block in mesh_out.recursive_iterator(skip_none=True):
-            _enforce_points_dtype(block, dtype)
+            _enforce_points_dtype(block, dtype, algorithm=algorithm)
         return
     if not isinstance(mesh_out, _vtk.vtkPointSet):
         return
     points = mesh_out.points
-    if points.dtype != dtype:
-        mesh_out.points = points.astype(dtype)
+    if points.dtype == dtype:
+        return
+    if (
+        points.dtype.itemsize < dtype.itemsize
+        and points.size
+        and pv.global_config.points_dtype == 'float64'
+    ):
+        name = 'This algorithm' if algorithm is None else type(algorithm).__name__
+        msg = (
+            f'{name} generated {points.dtype.name} points, and does not support the '
+            f"double precision `pyvista.global_config.points_dtype = 'float64'` asks for.\n"
+            f'The output points are cast to float64, but hold single-precision values.'
+        )
+        warn_external(msg, PyVistaPrecisionWarning)
+    mesh_out.points = points.astype(dtype)
 
 
-def _apply_points_dtype(mesh: Any) -> Any:
+def _apply_points_dtype(mesh: Any, algorithm: _vtk.vtkAlgorithm | None = None) -> Any:
     """Apply the configured dtype to a mesh PyVista generated without a VTK algorithm."""
-    _enforce_points_dtype(mesh, _points_dtype())
+    _enforce_points_dtype(mesh, _points_dtype(), algorithm=algorithm)
     return mesh
 
 
@@ -143,7 +165,7 @@ def _get_output(
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
-    _enforce_points_dtype(data, _points_dtype(ido))
+    _enforce_points_dtype(data, _points_dtype(ido), algorithm=algorithm)
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:

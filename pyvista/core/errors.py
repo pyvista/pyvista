@@ -265,3 +265,20 @@ class InvalidMeshWarning(Warning):
     .. versionadded:: 0.47
 
     """
+
+
+class PyVistaPrecisionWarning(Warning):
+    """Warning that points could not be generated at the requested precision.
+
+    Raised when :attr:`pyvista.core.config.Config.points_dtype` asks for
+    ``'float64'`` but the VTK algorithm that ran only generates single-precision
+    points. The output points are cast to ``float64`` so that the dtype is still
+    what was asked for, but the values they hold are single precision.
+
+    Silence it for a whole session with a standard warnings filter::
+
+        warnings.filterwarnings('ignore', category=pv.PyVistaPrecisionWarning)
+
+    .. versionadded:: 0.49
+
+    """

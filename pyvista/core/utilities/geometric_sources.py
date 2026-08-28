@@ -61,7 +61,7 @@ class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
     def _update_and_wrap_output(self) -> Any:
         """Update and return the output with the configured points dtype applied."""
         self.Update()
-        return _apply_points_dtype(wrap(self.GetOutput()))
+        return _apply_points_dtype(wrap(self.GetOutput()), self)
 
 
 def translate(

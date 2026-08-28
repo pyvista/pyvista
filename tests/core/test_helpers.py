@@ -276,9 +276,50 @@ def test_points_dtype_applies_to_filters_and_sources(dtype, monkeypatch):
     expected = np.dtype(dtype)
 
     assert pv.Sphere().points.dtype == expected  # source with output precision support
-    assert pv.Arrow().points.dtype == expected  # source without it
     assert pv.ImageData(dimensions=(2, 2, 2)).points.dtype == expected  # generated points
-    assert pv.Sphere().shrink().points.dtype == expected
+
+    # Sources and filters without output precision support are cast to match
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        assert pv.Arrow().points.dtype == expected
+        assert pv.Sphere().shrink().points.dtype == expected
+
+
+def test_points_dtype_float64_warns_when_vtk_cannot_deliver(monkeypatch):
+    # Casting up fixes the dtype but not the values, so say so rather than
+    # reporting a precision that was not delivered
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    mesh = cells.Hexahedron()
+
+    match = 'vtkShrinkFilter generated float32 points'
+    with pytest.warns(pv.PyVistaPrecisionWarning, match=match):
+        shrunk = mesh.shrink()
+    assert shrunk.points.dtype == np.float64
+
+    match = 'ArrowSource generated float32 points'
+    with pytest.warns(pv.PyVistaPrecisionWarning, match=match):
+        pv.Arrow()
+
+
+def test_points_dtype_float64_silent_when_vtk_delivers(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        assert pv.Sphere().points.dtype == np.float64
+        assert cells.Hexahedron().triangulate().points.dtype == np.float64
+
+
+@pytest.mark.parametrize('setting', ['preserve', 'float32'])
+def test_points_dtype_only_float64_warns(setting, monkeypatch):
+    # 'preserve' promises a stable dtype, not a precision, and the cast keeps that
+    # promise in full; 'float32' asked for the downcast it got
+    monkeypatch.setattr(pv.global_config, 'points_dtype', setting)
+    mesh = cells.Hexahedron()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        mesh.shrink()
+        pv.Arrow()
+        pv.ImageData(dimensions=(4, 4, 4)).contour(isosurfaces=1, scalars=np.arange(64.0))
 
 
 @pytest.mark.parametrize('dtype', ['float32', 'float64'])

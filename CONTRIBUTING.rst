@@ -797,6 +797,9 @@ add a keyword of its own for precision.
   same two steps in its ``Update`` and ``GetOutput``.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
+- Neither helper needs to know whether the algorithm supports double precision. The
+  ones that do not are cast, and warn with ``PyVistaPrecisionWarning`` when the user
+  asked for ``'float64'`` -- so no filter needs a keyword to opt out of the setting.
 
 Testing
 ^^^^^^^

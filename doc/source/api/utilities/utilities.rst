@@ -186,6 +186,7 @@ Errors and Warnings
    core.errors.PyVistaEfficiencyWarning
    core.errors.PyVistaFutureWarning
    core.errors.PyVistaPipelineError
+   core.errors.PyVistaPrecisionWarning
    core.errors.VTKExecutionError
    core.errors.VTKExecutionWarning
    core.errors.VTKVersionError

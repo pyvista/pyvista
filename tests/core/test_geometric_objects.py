@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import re
 from typing import TYPE_CHECKING
+import warnings
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -52,7 +53,11 @@ def test_geometric_objects_points_dtype(geometric_obj_test_case, dtype):
         kwargs['string'] = 'Text3D'
 
     pv.global_config.points_dtype = dtype
-    obj = func(**kwargs)
+    with warnings.catch_warnings():
+        # A few of these are built from VTK algorithms that only generate single
+        # precision; they warn under 'float64' but still come back float64
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        obj = func(**kwargs)
     assert obj.points.dtype == np.dtype(dtype)
 
 
