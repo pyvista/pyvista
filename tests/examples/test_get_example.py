@@ -54,7 +54,7 @@ def test_get_example(name, dataset_type, num_paths):
     paths = examples.get_example(name, output='paths')
     assert isinstance(paths, tuple)
     assert len(paths) == num_paths
-    assert all(isinstance(path, Path) and path.exists() for path in paths)
+    assert all(isinstance(path, str) and Path(path).exists() for path in paths)
 
 
 def test_get_example_from_function():
@@ -75,6 +75,8 @@ def test_get_example_readers():
     (reader,) = examples.get_example('uniform', output='readers')
     assert isinstance(reader, pv.VTKDataSetReader)
     assert Path(reader.path).name == 'uniform.vtk'
+    # the reader takes the same `str` path the example reports
+    assert reader.path == examples.get_example('uniform', output='paths')[0]
 
 
 @pytest.mark.needs_download
@@ -143,7 +145,7 @@ def test_get_example_metadata_folder():
     metadata = examples.get_example('cubemap_park', output='metadata')
 
     assert len(metadata.paths) == 1
-    assert metadata.paths[0].is_dir()
+    assert Path(metadata.paths[0]).is_dir()
     assert metadata.num_files == 6
 
 
@@ -176,7 +178,7 @@ def test_get_example_in_memory_is_not_builtin():
 def test_get_example_download_false_uses_local_files():
     """Built-in examples are available with ``download=False``."""
     paths = examples.get_example('uniform', output='paths', download=False)
-    assert paths[0].is_file()
+    assert Path(paths[0]).is_file()
 
 
 def test_get_example_download_false_raises(monkeypatch):
@@ -230,7 +232,7 @@ def test_get_example_all(name):
         pytest.skip('VTK version not supported.')
 
     assert len(metadata.paths) == len(metadata.file_sizes)
-    assert all(path.is_file() or path.is_dir() for path in metadata.paths)
+    assert all(Path(path).is_file() or Path(path).is_dir() for path in metadata.paths)
 
     if name in _NON_DETERMINISTIC_DATASETS:
         return

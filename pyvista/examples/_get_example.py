@@ -64,10 +64,10 @@ class ExampleMetadata:
     function: Callable[..., Any]
     """Public function which returns this example, such as ``examples.download_frog``."""
 
-    paths: tuple[Path, ...] = ()
+    paths: tuple[str, ...] = ()
     """Local path of every file or folder belonging to the example, in declaration order."""
 
-    loadable_paths: tuple[Path, ...] = ()
+    loadable_paths: tuple[str, ...] = ()
     """Local path of the file or files which are read to produce the dataset."""
 
     num_files: int = 0
@@ -150,7 +150,7 @@ def _get_dataset_loader(
 
 def _resolve_paths(
     loader: _DatasetLoader, name: str, *, download: bool
-) -> tuple[tuple[Path, ...], tuple[Path, ...]]:
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Return the example's file paths and its loadable file paths."""
     if not hasattr(loader, 'path'):
         return (), ()
@@ -158,15 +158,15 @@ def _resolve_paths(
         loader.download()
 
     # Re-read `path` after downloading: archive members only resolve once extracted
-    paths = tuple(Path(p) for p in loader.path)
-    if missing := [str(p) for p in paths if not p.exists()]:
+    paths = tuple(loader.path)
+    if missing := [p for p in paths if not Path(p).exists()]:
         missing_str = '\n\t'.join(missing)
         msg = (
             f'Example {name!r} is not available locally and download=False.\n'
             f'Missing:\n\t{missing_str}'
         )
         raise FileNotFoundError(msg)
-    loadable = tuple(Path(p) for p in getattr(loader, 'path_loadable', ()))
+    loadable = tuple(getattr(loader, 'path_loadable', ()))
     return paths, loadable
 
 
@@ -212,7 +212,7 @@ def get_example(
     *,
     output: Literal['paths'],
     download: bool = ...,
-) -> tuple[Path, ...]: ...
+) -> tuple[str, ...]: ...
 @overload
 def get_example(
     name: str | Callable[..., Any],
@@ -232,7 +232,7 @@ def get_example(
     *,
     output: Literal['dataset', 'paths', 'readers', 'metadata'] = 'dataset',
     download: bool = True,
-) -> DatasetObject | tuple[Path, ...] | tuple[pv.BaseReader[Any], ...] | ExampleMetadata:
+) -> DatasetObject | tuple[str, ...] | tuple[pv.BaseReader[Any], ...] | ExampleMetadata:
     """Get any example dataset, its files, its reader, or its metadata.
 
     This is a single entry point for every example in
@@ -268,7 +268,7 @@ def get_example(
 
     Returns
     -------
-    DataSet | tuple[Path, ...] | tuple[pyvista.BaseReader, ...] | ExampleMetadata
+    DataSet | tuple[str, ...] | tuple[pyvista.BaseReader, ...] | ExampleMetadata
         The dataset, its file paths, its readers, or its metadata, depending on
         ``output``. Examples which load as a :class:`~pyvista.MultiBlock`,
         :class:`~pyvista.Texture` or :class:`numpy.ndarray` return that in place of a
@@ -291,7 +291,7 @@ def get_example(
     Get the files instead. Every example returns a tuple, however many files it has.
 
     >>> examples.get_example('uniform', output='paths')  # doctest:+SKIP
-    (PosixPath('.../pyvista/examples/uniform.vtk'),)
+    ('.../pyvista/examples/uniform.vtk',)
 
     Get a reader for each file that has one, to inspect or configure before reading.
 
