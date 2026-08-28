@@ -25,7 +25,6 @@ Examples
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
@@ -97,9 +96,7 @@ def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
     set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
     if set_precision is None:
         return
-    mesh_in = (
-        wrap(alg.GetInputDataObject(0, 0)) if alg.GetNumberOfInputPorts() > 0 else None  # type: ignore[func-returns-value]
-    )
+    mesh_in = wrap(alg.GetInputDataObject(0, 0)) if alg.GetNumberOfInputPorts() > 0 else None
     dtype = _points_dtype(mesh_in)
     if dtype == np.float64:
         set_precision(alg.DOUBLE_PRECISION)

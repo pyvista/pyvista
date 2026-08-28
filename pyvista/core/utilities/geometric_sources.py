@@ -53,14 +53,15 @@ class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
     A source has no input, so ``'preserve'`` leaves the dtype VTK generates alone.
     """
 
-    def Update(self) -> None:  # noqa: N802
+    def Update(self, *args: Any) -> Any:  # noqa: N802
         """Update the source, requesting the configured points dtype."""
         _set_output_points_precision(self)
-        super().Update()
+        return super().Update(*args)
 
-    def GetOutput(self) -> pv.DataObject:  # noqa: N802
-        """Return the wrapped output with the configured points dtype applied."""
-        return _apply_points_dtype(wrap(super().GetOutput()))
+    def _update_and_wrap_output(self) -> Any:
+        """Update and return the output with the configured points dtype applied."""
+        self.Update()
+        return _apply_points_dtype(wrap(self.GetOutput()))
 
 
 def translate(
@@ -362,8 +363,7 @@ class ConeSource(_Source, _vtk.vtkConeSource):
             Cone surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class CylinderSource(_Source, _vtk.vtkCylinderSource):
@@ -625,8 +625,7 @@ class CylinderSource(_Source, _vtk.vtkCylinderSource):
             Cylinder surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class MultipleLinesSource(_Source, _vtk.vtkLineSource):
@@ -684,8 +683,7 @@ class MultipleLinesSource(_Source, _vtk.vtkLineSource):
             Line mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class Text3DSource(_NoNewAttrMixin):
@@ -1158,8 +1156,7 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
             Cube surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
     @property
     def point_dtype(self: CubeSource) -> str:
@@ -1384,8 +1381,7 @@ class DiscSource(_Source, _vtk.vtkDiskSource):
             Line mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class LineSource(_Source, _vtk.vtkLineSource):
@@ -1503,8 +1499,7 @@ class LineSource(_Source, _vtk.vtkLineSource):
             Line mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class SphereSource(_Source, _vtk.vtkSphereSource):
@@ -1848,8 +1843,7 @@ class SphereSource(_Source, _vtk.vtkSphereSource):
             v = 1.0 - phi / np.pi
             return np.c_[u, v]
 
-        self.Update()
-        out = wrap(self.GetOutput())
+        out = self._update_and_wrap_output()
 
         if self.texture_coordinates:
             partial_phi = not np.isclose(self.end_phi - self.start_phi, 180)
@@ -2086,8 +2080,7 @@ class PolygonSource(_Source, _vtk.vtkRegularPolygonSource):
             Polygon surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class PlatonicSolidSource(_Source, _vtk.vtkPlatonicSolidSource):
@@ -2187,8 +2180,7 @@ class PlatonicSolidSource(_Source, _vtk.vtkPlatonicSolidSource):
             PlatonicSolid surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class PlaneSource(_Source, _vtk.vtkPlaneSource):
@@ -2399,8 +2391,7 @@ class PlaneSource(_Source, _vtk.vtkPlaneSource):
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
     @property
     def normal(
@@ -2601,8 +2592,7 @@ class ArrowSource(_Source, _vtk.vtkArrowSource):
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
@@ -2713,8 +2703,7 @@ class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class SuperquadricSource(_Source, _vtk.vtkSuperquadricSource):
@@ -3012,8 +3001,7 @@ class SuperquadricSource(_Source, _vtk.vtkSuperquadricSource):
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class _AxisEnum(IntEnum):

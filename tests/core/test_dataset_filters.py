@@ -4201,9 +4201,7 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     assert pv.CellType.TETRA in tet_hex_cells.celltypes
     assert pv.CellType.HEXAHEDRON in tet_hex_cells.celltypes
 
-    should_be_empty = combined.extract_cells_by_type(
-        pv.CellType.BEZIER_CURVE
-    )
+    should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
 
     combined.extract_cells_by_type(1.0)

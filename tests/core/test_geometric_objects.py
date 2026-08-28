@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import re
-from types import FunctionType
 from typing import TYPE_CHECKING
 
 from hypothesis import given

@@ -1397,8 +1397,8 @@ def Box(
     if np.all(level_vector == level_vector[0]):
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
-    mesh = pv.ImageData(dimensions=level_vector + 2)
-    mesh = mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
+    image = pv.ImageData(dimensions=level_vector + 2)
+    mesh = image.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
         bounds=bounds
     )
     if not quads:
@@ -1870,12 +1870,12 @@ def CircularArc(  # noqa: PLR0917
 
     alg.Update()
     angle = np.deg2rad(alg.GetAngle())
-    arc = wrap(alg.GetOutput())  # type: ignore[assignment]
+    arc = wrap(alg.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
-    angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
-    arc['Distance'] = radius * angles  # type: ignore[index]
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
+    arc['Distance'] = radius * angles
     return arc
 
 
@@ -1957,9 +1957,9 @@ def CircularArcFromNormal(  # noqa: PLR0917
     arc = wrap(alg.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center)
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
     angles = np.linspace(0.0, angle_, resolution + 1)
-    arc['Distance'] = radius * angles  # type: ignore[index]
+    arc['Distance'] = radius * angles
     return arc
 
 

@@ -97,7 +97,7 @@ class Grid(DataSet):
     def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
         """Apply :attr:`pyvista.Config.points_dtype` to points generated on demand."""
         dtype = _points_dtype() or self._generated_points_dtype()
-        return points if points.dtype == dtype else points.astype(dtype)
+        return points if points.dtype == dtype else cast('pyvista_ndarray', points.astype(dtype))
 
     def _generated_points_dtype(self) -> np.dtype[Any]:
         """Return the dtype generated points have under the ``'preserve'`` setting."""
@@ -415,6 +415,16 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
+    def _generated_points_dtype(self) -> np.dtype[Any]:
+        """Return the dtype generated points have under the ``'preserve'`` setting."""
+        # VTK synthesizes double-precision points regardless of how the coordinate
+        # arrays are stored, so report the precision the grid actually holds.
+        return np.dtype(
+            np.float64
+            if any(coords.dtype == np.float64 for coords in (self.x, self.y, self.z))
+            else np.float32
+        )
+
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Return a copy of the points as an ``(n, 3)`` NumPy array.
@@ -455,16 +465,6 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             xx, yy, zz = self.meshgrid
             points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
         return self._convert_points_precision(points)
-
-    def _generated_points_dtype(self) -> np.dtype[Any]:
-        """Return the dtype generated points have under the ``'preserve'`` setting."""
-        # VTK synthesizes double-precision points regardless of how the coordinate
-        # arrays are stored, so report the precision the grid actually holds.
-        return np.dtype(
-            np.float64
-            if any(coords.dtype == np.float64 for coords in (self.x, self.y, self.z))
-            else np.float32
-        )
 
     @points.setter
     def points(

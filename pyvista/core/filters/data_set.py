@@ -1911,9 +1911,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Make glyphing geometry if necessary
         if geom is None:
-            alg = _vtk.vtkArrowSource()
-            _update_alg(alg, progress_bar=progress_bar, message='Making Arrow')
-            arrow = _apply_points_dtype(pv.wrap(alg.GetOutput()))
+            arrow_source = _vtk.vtkArrowSource()
+            _update_alg(arrow_source, progress_bar=progress_bar, message='Making Arrow')
+            arrow = _apply_points_dtype(pv.wrap(arrow_source.GetOutput()))
             geoms: Sequence[_vtk.vtkDataSet] = [arrow]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
@@ -8419,11 +8419,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> vox.bounds
         BoundsTuple(x_min = -0.13155962526798248,
-                    x_max =  0.18016336858272552,
+                    x_max =  0.18016336858272555,
                     y_min = -0.12048563361167908,
                     y_max =  0.18769524991512299,
                     z_min = -0.14300920069217682,
-                    z_max =  0.09650979936122894)
+                    z_max =  0.09650979591302634)
 
         Create a voxelized mesh with ``3 x 4 x 5`` cells. Since ``dimensions`` is the
         number of points, not cells, we need to add ``1`` to get the number of desired cells.

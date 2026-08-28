@@ -4649,6 +4649,7 @@ class DataObjectFilters:
         pyvista_ndarray([0., 0., 0., 1.])
 
         """
+
         def ensure_arrays_if_empty(dataset: DataSet):
             if vertex_count:
                 dataset.cell_data['VertexCount'] = np.zeros(shape=(0,))
