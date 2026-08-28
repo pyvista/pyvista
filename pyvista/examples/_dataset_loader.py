@@ -644,7 +644,9 @@ class _MultiFileDownloadableDatasetLoader(
     @property
     def is_builtin(self) -> bool:
         """Return whether every file ships with PyVista and never needs downloading."""
-        downloadables = [file for file in self._file_objects if isinstance(file, _Downloadable)]
+        downloadables = [
+            file for file in self._file_objects if isinstance(file, _DOWNLOADABLE_TYPES)
+        ]
         return bool(downloadables) and all(file.is_builtin for file in downloadables)
 
     @property
@@ -652,7 +654,9 @@ class _MultiFileDownloadableDatasetLoader(
         """Return the name of each download relative to its base url."""
         return tuple(
             itertools.chain.from_iterable(
-                file.source_name for file in self._file_objects if isinstance(file, _Downloadable)
+                file.source_name
+                for file in self._file_objects
+                if isinstance(file, _DOWNLOADABLE_TYPES)
             ),
         )
 
@@ -661,7 +665,9 @@ class _MultiFileDownloadableDatasetLoader(
         """Return the base url of each download."""
         return tuple(
             itertools.chain.from_iterable(
-                file.base_url for file in self._file_objects if isinstance(file, _Downloadable)
+                file.base_url
+                for file in self._file_objects
+                if isinstance(file, _DOWNLOADABLE_TYPES)
             ),
         )
 
@@ -669,7 +675,9 @@ class _MultiFileDownloadableDatasetLoader(
         """Download all files and return their paths."""
         paths = tuple(
             itertools.chain.from_iterable(
-                file.download() for file in self._file_objects if isinstance(file, _Downloadable)
+                file.download()
+                for file in self._file_objects
+                if isinstance(file, _DOWNLOADABLE_TYPES)
             ),
         )
         if not all(Path(p).is_file() or Path(p).is_dir() for p in paths):
@@ -727,6 +735,11 @@ def _download_dataset(
 
 
 _MultiBlockFile = _SingleFileDatasetLoader | _MultiFileDatasetLoader | _DownloadableFile
+
+# `isinstance` against a `runtime_checkable` Protocol calls every member it checks on
+# Python < 3.12, which evaluates properties such as `web_url` and can raise. Test against
+# the concrete classes instead.
+_DOWNLOADABLE_TYPES = (_DownloadableFile, _MultiFileDownloadableDatasetLoader)
 
 
 def _default_multiblock_name(file: _MultiBlockFile) -> str:

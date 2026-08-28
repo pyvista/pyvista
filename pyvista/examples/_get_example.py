@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import pyvista as pv
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
-from pyvista.examples._dataset_loader import _Downloadable
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -175,7 +175,7 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
     """Return the example's file paths, downloading them first if allowed."""
     if not hasattr(loader, 'path'):
         return ()
-    if download and isinstance(loader, _Downloadable):
+    if download and isinstance(loader, _DOWNLOADABLE_TYPES):
         loader.download()
 
     # Re-read `path` after downloading: archive members only resolve once extracted
