@@ -987,9 +987,9 @@ _dataset_head_2 = _SingleFileDownloadableDatasetLoader('head.vti')
 @overload
 def download_bolt_nut(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
 @overload
-def download_bolt_nut(load: Literal[False]) -> str: ...
+def download_bolt_nut(load: Literal[False]) -> tuple[str, ...]: ...
 @_deprecate_positional_args
-def download_bolt_nut(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_bolt_nut(load: bool = True) -> MultiBlock | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download bolt nut dataset.
 
     Parameters
@@ -4186,9 +4186,9 @@ __kitchen_split = _SingleFileDownloadableDatasetLoader(
 @overload
 def download_tetra_dc_mesh(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
 @overload
-def download_tetra_dc_mesh(load: Literal[False]) -> str: ...
+def download_tetra_dc_mesh(load: Literal[False]) -> tuple[str, ...]: ...
 @_deprecate_positional_args
-def download_tetra_dc_mesh(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_tetra_dc_mesh(load: bool = True) -> MultiBlock | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download two meshes defining an electrical inverse problem.
 
     This contains a high resolution forward modeled mesh and a coarse
@@ -4906,16 +4906,10 @@ _dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=re
 @overload
 def download_sky_box_cube_map(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
 @overload
-def download_sky_box_cube_map(load: Literal[False]) -> str: ...
+def download_sky_box_cube_map(load: Literal[False]) -> tuple[str, ...]: ...
 @_deprecate_positional_args
-def download_sky_box_cube_map(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_sky_box_cube_map(load: bool = True) -> Texture | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download a skybox cube map texture.
-
-    .. note::
-        ``load=False`` returns an empty tuple, because this example has no single
-        file which is read directly. This is a legacy quirk of the
-        ``load`` argument. For every file belonging to this example, use
-        :func:`examples.get_example('sky_box_cube_map').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -6354,9 +6348,9 @@ _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
 @overload
 def download_electronics_cooling(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
 @overload
-def download_electronics_cooling(load: Literal[False]) -> str: ...
+def download_electronics_cooling(load: Literal[False]) -> tuple[str, ...]: ...
 @_deprecate_positional_args
-def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_electronics_cooling(load: bool = True) -> MultiBlock | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download the electronics cooling example datasets.
 
     Data generated from public SimScale examples at `SimScale Project Library -

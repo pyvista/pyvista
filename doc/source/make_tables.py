@@ -3105,7 +3105,9 @@ def _validate_function_annotation(card: DatasetCard) -> str | None:
     if 'texture' in params:
         expected_annotation = f'Texture | {expected_annotation}'
     if 'load' in params:
-        expected_annotation += ' | str'
+        # `_download_dataset` collapses to a bare path only when there is one to return
+        loadable = getattr(card.loader, 'path_loadable', ())
+        expected_annotation += ' | str' if len(loadable) == 1 else ' | tuple[str, ...]'
 
     ann = inspect.signature(function).return_annotation
     ann_name = ann if isinstance(ann, str) else ann.__name__

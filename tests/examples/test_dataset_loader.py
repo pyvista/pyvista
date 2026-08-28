@@ -488,6 +488,36 @@ def dataset_loader_cubemap():
     return loader
 
 
+@pytest.mark.needs_download
+def test_multi_file_loader_all_paths_loadable_when_none_are_individually():
+    """A load function which reads every file reports every file as loadable."""
+    loader = downloads._dataset_sky_box_cube_map
+    loader.download()
+
+    # none of the six faces is wrapped as a dataset loader of its own
+    assert not any(isinstance(f, _SingleFileDatasetLoader) for f in loader._file_objects)
+    assert loader.path_loadable == loader.path
+    assert len(loader.path_loadable) == 6
+
+
+@pytest.mark.needs_download
+def test_download_sky_box_cube_map_load_false_returns_every_face():
+    """``load=False`` returns the six faces, in the order a cubemap needs them."""
+    paths = downloads.download_sky_box_cube_map(load=False)
+
+    assert len(paths) == 6
+    assert [Path(p).stem.rsplit('-', 1)[-1] for p in paths] == [
+        'posx',
+        'negx',
+        'posy',
+        'negy',
+        'posz',
+        'negz',
+    ]
+    # the paths feed straight back into the function which builds the texture
+    assert pv.cubemap_from_filenames(paths).cube_map
+
+
 def test_dataset_loader_cubemap(dataset_loader_cubemap):
     loader = dataset_loader_cubemap
     assert os.path.isdir(loader.path[0])

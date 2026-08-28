@@ -598,14 +598,20 @@ class _MultiFileDatasetLoader(_DatasetLoader, _FileProps):
 
     @property
     def path_loadable(self) -> tuple[str, ...]:
-        """Return the paths of all loadable files."""
-        return tuple(
+        """Return the paths of all loadable files.
+
+        A file is loadable on its own when it is wrapped as a dataset loader. When none
+        of them are, the load function reads them together -- a cubemap's six faces,
+        say -- so every path is returned rather than none of them.
+        """
+        loadable = tuple(
             itertools.chain.from_iterable(
                 file.path
                 for file in self._file_objects
                 if isinstance(file, _SingleFileDatasetLoader)
             ),
         )
+        return loadable or self.path
 
     @property
     def _filesize_bytes(self) -> tuple[int, ...]:
