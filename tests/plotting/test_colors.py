@@ -18,7 +18,6 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting import colors as _colors_module
-from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
@@ -26,6 +25,7 @@ from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import _formatted_hex_colors
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 from pyvista.plotting.colors import hex_colors
