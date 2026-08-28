@@ -600,8 +600,9 @@ def StructuredSphere(
         from ``start_theta`` to ``end_theta``).
 
         .. note::
-            The ``k`` dimension of the structured grid is one more than this
-            value since the first and last points are duplicated at the seam.
+            The ``k`` dimension of the structured grid is always one more than
+            this value. For a full 360-degree sweep the extra point is the
+            duplicate closing the seam.
 
     phi_resolution : int, default: 30
         Set the number of points in the polar direction (ranging from
@@ -643,14 +644,13 @@ def StructuredSphere(
     >>> sphere.plot(show_edges=True)
 
     The dimensions follow the ``i-j-k`` ordering: one entry per radius, then
-    ``phi_resolution``, then ``theta_resolution`` plus one, the extra point being
-    the far side of the seam.
+    ``phi_resolution``, then ``theta_resolution`` plus one.
 
     >>> pv.StructuredSphere(theta_resolution=20, phi_resolution=10).dimensions
     (1, 10, 21)
 
-    Swapping the two resolutions swaps the last two dimensions, and only the
-    theta one carries the extra point.
+    Swapping the two resolutions swaps the last two dimensions, and the extra
+    point stays with theta.
 
     >>> pv.StructuredSphere(theta_resolution=10, phi_resolution=20).dimensions
     (1, 20, 11)
