@@ -17,6 +17,7 @@ numbers.
 from __future__ import annotations
 
 import ast
+from collections import Counter
 from pathlib import Path
 import re
 import subprocess
@@ -33,17 +34,56 @@ CASES_PACKAGE = str(CASES_DIR.relative_to(PROJECT_ROOT)).replace('/', '.').repla
 _DIAGNOSTIC = re.compile(r'^(?P<path>.+?):(?P<line>\d+):(?:\d+:)? (?P<severity>\w+): (?P<msg>.*)$')
 
 
+ASSERTIONS = ('assert_type', 'assert_runtime_type')
+
+
+class _Assertion(NamedTuple):
+    """One `assert_type` or `assert_runtime_type` call made by a case."""
+
+    line: int
+    kind: str
+    target: str
+    target_is_name: bool
+    expected: str
+
+
 class _Case(NamedTuple):
     """One case function, or the module scope of one case file."""
 
     path: Path
     name: str
     lines: frozenset[int]
+    assertions: tuple[_Assertion, ...] = ()
 
     @property
     def id(self) -> str:
         """Return the test id for this case."""
         return f'{self.path.name}::{self.name}'
+
+
+def _collect_assertions(node: ast.FunctionDef) -> tuple[_Assertion, ...]:
+    """Return the type assertions made by one case function."""
+    assertions = []
+    for child in ast.walk(node):
+        if (
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Name)
+            and child.func.id in ASSERTIONS
+            and len(child.args) == 2
+        ):
+            target, expected = child.args
+            assertions.append(
+                _Assertion(
+                    line=child.lineno,
+                    kind=child.func.id,
+                    target=ast.unparse(target),
+                    target_is_name=isinstance(target, ast.Name),
+                    # `unparse` normalises formatting, so two spellings of the same
+                    # type expression compare equal and the text stays readable.
+                    expected=ast.unparse(expected),
+                )
+            )
+    return tuple(assertions)
 
 
 def _collect_cases() -> list[_Case]:
@@ -63,7 +103,7 @@ def _collect_cases() -> list[_Case]:
         ]
         for node in functions:
             lines = frozenset(range(node.lineno, (node.end_lineno or node.lineno) + 1))
-            cases.append(_Case(path, node.name, lines))
+            cases.append(_Case(path, node.name, lines, _collect_assertions(node)))
         # Whatever is left -- imports, fixtures, module constants -- is its own case,
         # so a broken import reads as such instead of failing every case in the file.
         covered = frozenset().union(*(case.lines for case in cases if case.path == path))
@@ -138,3 +178,42 @@ def test_static_type(case: _Case, mypy_diagnostics) -> None:
             f'{case.path.name}:{line}: {msg}\n\t{source[line - 1].strip()}' for line, msg in errors
         )
         pytest.fail(f'Mypy reported {len(errors)} error(s) in {case.name}:\n{report}')
+
+
+def test_asserts_both_types(case: _Case) -> None:
+    """Assert this case pins its type statically and at runtime, to the same type.
+
+    Checked from the source rather than from Mypy, so a case that only pins one
+    of the two -- and therefore proves nothing about the two agreeing -- is
+    reported even when Mypy cannot run.
+    """
+    if case.name == '<module>':
+        pytest.skip('Module scope holds no type assertions.')
+
+    static = [assertion for assertion in case.assertions if assertion.kind == ASSERTIONS[0]]
+    runtime = [assertion for assertion in case.assertions if assertion.kind == ASSERTIONS[1]]
+    if not static:
+        pytest.fail(f'{case.name} makes no `{ASSERTIONS[0]}` call.')
+
+    positional = [assertion for assertion in case.assertions if not assertion.target_is_name]
+    if positional:
+        reported = '\n'.join(
+            f'{case.path.name}:{assertion.line}: {assertion.kind}({assertion.target}, ...)'
+            for assertion in positional
+        )
+        pytest.fail(
+            f'Assert the type of a local name, so that both assertions describe the '
+            f'same object rather than two separately evaluated expressions:\n{reported}'
+        )
+
+    unpaired = Counter((assertion.target, assertion.expected) for assertion in static) - Counter(
+        (assertion.target, assertion.expected) for assertion in runtime
+    )
+    if unpaired:
+        reported = '\n'.join(
+            f'{ASSERTIONS[1]}({target}, {expected})' for target, expected in unpaired
+        )
+        pytest.fail(
+            f'Every `{ASSERTIONS[0]}` needs a matching `{ASSERTIONS[1]}`, so that the '
+            f'static and runtime halves pin the same type. Missing from {case.name}:\n{reported}'
+        )
