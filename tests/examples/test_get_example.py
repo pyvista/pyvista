@@ -114,7 +114,7 @@ def test_get_example_metadata():
     assert metadata.num_files == 1
     assert metadata.extensions == ('.vtk',)
     assert metadata.reader_types == (pv.VTKDataSetReader,)
-    assert metadata.total_size.endswith('KB')
+    assert metadata.total_size == sum(metadata.file_sizes) > 0
     assert metadata.source_urls == (
         'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
     )
@@ -128,6 +128,7 @@ def test_get_example_metadata_in_memory():
     metadata = examples.get_example('structured', output='metadata')
 
     assert metadata.num_files == 0
+    assert metadata.total_size == 0
     for empty in (
         metadata.paths,
         metadata.loadable_paths,

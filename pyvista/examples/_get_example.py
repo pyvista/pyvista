@@ -51,6 +51,11 @@ class ExampleMetadata:
     >>> metadata.extensions
     ('.mhd', '.zraw')
 
+    Sizes are in bytes, so they compare directly.
+
+    >>> metadata.total_size == sum(metadata.file_sizes)
+    True
+
     Only one of its two files is read to produce the dataset.
 
     >>> len(metadata.loadable_paths)
@@ -79,8 +84,8 @@ class ExampleMetadata:
     file_sizes: tuple[int, ...] = ()
     """Size in bytes of each entry in ``paths``, folders counted in full."""
 
-    total_size: str = '0.0 B'
-    """Total size of all files, formatted for display."""
+    total_size: int = 0
+    """Total size of all files in bytes."""
 
     reader_types: tuple[type[pv.BaseReader[Any]], ...] = ()
     """Unique reader types used to read the example's files."""
@@ -187,7 +192,7 @@ def _collect_metadata(
         num_files=getattr(loader, 'num_files', 0),
         extensions=getattr(loader, 'unique_extension', ()),
         file_sizes=getattr(loader, '_filesize_bytes', ()),
-        total_size=getattr(loader, 'total_size', '0.0 B'),
+        total_size=getattr(loader, '_total_size_bytes', 0),
         reader_types=getattr(loader, 'unique_reader_type', ()),
         source_urls=getattr(loader, 'source_url', ()),
         is_builtin=isinstance(loader, _Downloadable) and loader.is_builtin,
