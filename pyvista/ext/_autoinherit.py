@@ -24,6 +24,12 @@ import re
 from typing import TYPE_CHECKING
 from typing import Any
 
+from docutils.frontend import get_default_settings
+from docutils.parsers.rst import Parser
+from docutils.utils import new_document
+from sphinx.ext.autosummary import extract_summary
+from sphinx.util.docstrings import prepare_docstring
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Sequence
@@ -171,27 +177,45 @@ def own_members(  # numpydoc ignore=RT01
     return [name for name in _candidates(names) if _home(cls, name) is cls]
 
 
-def inherited_member_groups(  # numpydoc ignore=RT01
-    module: str, objname: str, names: Sequence[str]
-) -> list[tuple[str, str, list[str]]]:
-    """Return ``[(module, class, [members])]`` for the pages ``module.objname`` links to.
+@functools.cache
+def _summary_document() -> Any:  # numpydoc ignore=RT01
+    """Return a throwaway document; ``extract_summary`` reads only its settings."""
+    return new_document('', get_default_settings(Parser))
 
-    The module is split out so the template can set ``currentmodule`` to it: each summary
-    line is the first line of a docstring written for the home class's page, and any
-    reference it makes relative to that module only resolves under it.
+
+def _summary(cls: type, member: str) -> str:
+    """Return the summary ``autosummary`` would show for ``cls.member``."""
+    provider = _provider(cls, member)
+    # Read the descriptor out of the class body rather than with getattr, which would
+    # evaluate a property and lose the docstring that produced it.
+    obj = provider.__dict__.get(member) if provider is not None else None
+    doc = inspect.getdoc(obj) if obj is not None else None
+    if not doc:
+        return ''
+    return ' '.join(extract_summary(prepare_docstring(doc), _summary_document()).split())
+
+
+def inherited_member_rows(  # numpydoc ignore=RT01
+    module: str, objname: str, names: Sequence[str]
+) -> list[tuple[str, str, str]]:
+    """Return ``[(label, target, summary)]`` for members documented on another class.
+
+    Sorted by member name, which is what a reader looks one up by. ``autosummary`` can
+    only display an entry exactly as written, so keeping the defining class in the label
+    without spelling out its module means building the table by hand.
     """
     cls = _class_from(module, objname)
     documented = _documented_classes()
-    groups: dict[type, list[str]] = {}
+    rows: list[tuple[str, str, str, str]] = []
     for name in _candidates(names):
         home = _home(cls, name)
-        if home is not None and home is not cls:
-            groups.setdefault(home, []).append(name)
-    order = {base: index for index, base in enumerate(cls.__mro__)}
-    return [
-        (*documented[home].rsplit('.', 1), sorted(groups[home]))
-        for home in sorted(groups, key=lambda base: order[base])
-    ]
+        if home is None or home is cls:
+            continue
+        full = documented[home]
+        rows.append(
+            (name, f'{full.rsplit(".", 1)[1]}.{name}', f'{full}.{name}', _summary(home, name))
+        )
+    return [(label, target, summary) for _, label, target, summary in sorted(rows)]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01

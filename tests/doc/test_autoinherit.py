@@ -182,12 +182,29 @@ def test_own_members_excludes_what_a_documented_base_already_documents():
     assert 'min_spatial_dimension' not in own  # implemented by VTK
 
 
-def test_inherited_member_groups_are_ordered_by_the_mro():
-    groups = autoinherit.inherited_member_groups('pyvista', 'PolyData', _members(pv.PolyData))
-    names = [f'{module}.{name}' for module, name, _ in groups]
-    assert names.index('pyvista.DataSet') < names.index('pyvista.DataObject')
-    contour = next(items for _, name, items in groups if name == 'DataSetFilters')
-    assert 'contour' in contour
+def test_inherited_member_rows_are_sorted_by_member_name():
+    rows = autoinherit.inherited_member_rows('pyvista', 'PolyData', _members(pv.PolyData))
+    members = [label.rsplit('.', 1)[1] for label, _, _ in rows]
+    assert members == sorted(members)
+    assert 'DataSetFilters.contour' in {label for label, _, _ in rows}
+
+
+def test_inherited_member_rows_label_the_class_without_its_module():
+    rows = autoinherit.inherited_member_rows('pyvista', 'Volume', _members(pv.Volume))
+    by_label = {label: (target, summary) for label, target, summary in rows}
+    # The label keeps the class but drops its module; the link target is complete.
+    assert (
+        by_label['_BoundsSizeMixin.bounds_size'][0]
+        == 'pyvista.core.utilities.misc._BoundsSizeMixin.bounds_size'
+    )
+    target, summary = by_label['Prop3D.rotate_x']
+    assert target == 'pyvista.Prop3D.rotate_x'
+    assert summary == 'Rotate the entity about the x-axis.'
+
+
+def test_summary_reads_the_descriptor_rather_than_evaluating_it():
+    # extensions is a _classproperty, so getattr would evaluate it and lose the docstring.
+    assert autoinherit._summary(pv.BaseReader, 'extensions').startswith('Return the file')
 
 
 def test_a_member_is_either_owned_or_inherited_never_both():
@@ -195,9 +212,8 @@ def test_a_member_is_either_owned_or_inherited_never_both():
         members = _members(cls)
         own = set(autoinherit.own_members('pyvista', name, members))
         inherited = {
-            item
-            for _, _, items in autoinherit.inherited_member_groups('pyvista', name, members)
-            for item in items
+            label.rsplit('.', 1)[1]
+            for label, _, _ in autoinherit.inherited_member_rows('pyvista', name, members)
         }
         assert not own & inherited
 
@@ -215,13 +231,10 @@ def test_every_reachable_member_has_exactly_one_page(documented):
         module, _, objname = docname.rpartition('.')
         members = _members(cls)
         homed = set(autoinherit.own_members(module, objname, members))
-        for base_module, base_name, items in autoinherit.inherited_member_groups(
-            module, objname, members
-        ):
-            for item in items:
-                if f'{base_module}.{base_name}.{item}' not in pages:
-                    missing.add(f'{docname}.{item}')
-                homed.add(item)
+        for _, target, _ in autoinherit.inherited_member_rows(module, objname, members):
+            if target not in pages:
+                missing.add(f'{docname}.{target.rsplit(".", 1)[1]}')
+            homed.add(target.rsplit('.', 1)[1])
         for item in autoinherit._candidates(members):
             # Asks _provider, not _home: a member is exempt only because VTK or the
             # standard library implements it, never because _home declined to place it.
@@ -282,7 +295,7 @@ def test_class_template_calls_only_helpers_that_exist():
     template = (
         PYVISTA_ROOT_DIR / 'doc' / 'source' / '_templates' / 'autosummary' / 'class.rst'
     ).read_text(encoding='utf-8')
-    for helper in ('own_members', 'inherited_member_groups'):
+    for helper in ('own_members', 'inherited_member_rows'):
         assert f'{helper}(module, objname,' in template
         assert callable(getattr(autoinherit, helper))
     # ``ns['inherited_members']`` is a set of names by the time the template renders.
