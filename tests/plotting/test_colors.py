@@ -18,6 +18,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting import colors as _colors_module
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
@@ -448,3 +449,21 @@ def test_hexcolors_deprecated():
         _ = pv.hexcolors
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         _ = pv.plotting.hexcolors
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (
+            None,
+            'Input must be a single ColorLike color or a sequence of ColorLike colors.',
+        ),
+        (
+            42,
+            'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.',
+        ),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)
