@@ -12,7 +12,6 @@ from typing import Literal
 from typing import overload
 
 import pyvista as pv
-from pyvista.examples._dataset_loader import _as_str_list
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
 
@@ -89,6 +88,9 @@ class ExampleMetadata:
     source_urls: tuple[str, ...] = ()
     """URL each entry in :attr:`paths` is downloaded from, empty if it has none."""
 
+    is_builtin: bool = False
+    """Whether the example ships with PyVista, so it is available with no download."""
+
 
 def _supported_modules() -> tuple[ModuleType, ...]:
     """Return the modules which define example dataset loaders."""
@@ -146,14 +148,6 @@ def _get_dataset_loader(
     raise ValueError(msg)
 
 
-def _as_tuple(value: Any) -> tuple[Any, ...]:
-    """Normalize a scalar, ``None``, or sequence into a tuple, dropping ``None`` items."""
-    if value is None:
-        return ()
-    values = value if isinstance(value, tuple) else (value,)
-    return tuple(item for item in values if item is not None)
-
-
 def _resolve_paths(
     loader: _DatasetLoader, name: str, *, download: bool
 ) -> tuple[tuple[Path, ...], tuple[Path, ...]]:
@@ -164,7 +158,7 @@ def _resolve_paths(
         loader.download()
 
     # Re-read `path` after downloading: archive members only resolve once extracted
-    paths = tuple(Path(p) for p in _as_str_list(loader.path))
+    paths = tuple(Path(p) for p in loader.path)
     if missing := [str(p) for p in paths if not p.exists()]:
         missing_str = '\n\t'.join(missing)
         msg = (
@@ -172,7 +166,7 @@ def _resolve_paths(
             f'Missing:\n\t{missing_str}'
         )
         raise FileNotFoundError(msg)
-    loadable = tuple(Path(p) for p in _as_str_list(getattr(loader, 'path_loadable', [])))
+    loadable = tuple(Path(p) for p in getattr(loader, 'path_loadable', ()))
     return paths, loadable
 
 
@@ -191,17 +185,18 @@ def _collect_metadata(
         paths=paths,
         loadable_paths=loadable,
         num_files=getattr(loader, 'num_files', 0),
-        extensions=_as_tuple(getattr(loader, 'unique_extension', None)),
-        file_sizes=_as_tuple(getattr(loader, '_filesize_bytes', None)),
+        extensions=getattr(loader, 'unique_extension', ()),
+        file_sizes=getattr(loader, '_filesize_bytes', ()),
         total_size=getattr(loader, 'total_size', '0.0 B'),
-        reader_types=_as_tuple(getattr(loader, 'unique_reader_type', None)),
-        source_urls=_as_tuple(getattr(loader, 'source_url', None)),
+        reader_types=getattr(loader, 'unique_reader_type', ()),
+        source_urls=getattr(loader, 'source_url', ()),
+        is_builtin=isinstance(loader, _Downloadable) and loader.is_builtin,
     )
 
 
 def _get_reader(loader: _DatasetLoader, name: str) -> pv.BaseReader[Any]:
     """Return the reader for the example's main file."""
-    readers = _as_tuple(getattr(loader, '_reader', None))
+    readers = tuple(r for r in getattr(loader, '_reader', ()) if r is not None)
     if not readers:
         msg = (
             f'Example {name!r} has no reader. It is either generated in memory or '

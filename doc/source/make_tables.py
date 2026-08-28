@@ -56,8 +56,7 @@ from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
-from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
-from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
+from pyvista.examples._dataset_loader import _FileProps
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
@@ -2583,10 +2582,7 @@ class DatasetCard:
 
         add('mod', DATASET_GALLERY_MODULES[loader._module])
 
-        dataset_types = loader.unique_dataset_type
-        if not isinstance(dataset_types, tuple):
-            dataset_types = (dataset_types,)
-        for dataset_type in dataset_types:
+        for dataset_type in loader.unique_dataset_type:
             name = 'None' if dataset_type is type(None) else dataset_type.__name__
             add('dtype', name)
 
@@ -2598,13 +2594,11 @@ class DatasetCard:
             add('ctype', 'N/A (no cells)', slug='na')
 
         reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if reader_types is None:
-            add('reader', 'N/A (generated in code)', slug='na')
-        else:
-            if not isinstance(reader_types, tuple):
-                reader_types = (reader_types,)
+        if reader_types:
             for reader_type in reader_types:
                 add('reader', reader_type.__name__)
+        else:
+            add('reader', 'N/A (generated in code)', slug='na')
 
         # Uses DATASET_GALLERY_SIZE_BINS' own slugs so bins sort numerically, not alphabetically.
         total_size_bytes = DatasetPropsGenerator._try_getattr(loader, '_total_size_bytes')
@@ -2716,7 +2710,7 @@ class DatasetPropsGenerator:
         return '``' + str(num) + '``' if num else None
 
     @staticmethod
-    def generate_file_ext(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
+    def generate_file_ext(loader: _FileProps):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         def _format_ext(file_ext_: list[str]):
@@ -2725,8 +2719,6 @@ class DatasetPropsGenerator:
         sep = ',\n'
         file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
         if file_ext:
-            file_ext = loader.unique_extension
-            file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
             if len(file_ext) > 10:
                 # Limit number of extensions displayed
                 first = _format_ext(file_ext[:3])
@@ -2737,44 +2729,33 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_reader_type(
-        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+        loader: _FileProps,
     ):
         """Format reader type(s) with doc references to reader class(es)."""
-        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if reader_type is None:
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if not reader_types:
             return '``N/A (generated in code)``'
-        else:
-            reader_type = (
-                repr(loader.unique_reader_type)
-                .replace("<class '", ':class:`~')
-                .replace("'>", '`')
-                .replace('(', '')
-                .replace(')', '')
-            ).replace(', ', '\n')
-        return reader_type
+        return '\n'.join(f':class:`~{_get_fullname(cls)}`' for cls in reader_types)
 
     @staticmethod
     def generate_importer_method(
-        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+        loader: _FileProps,
     ):
         """Format Plotter importer method with a doc reference."""
-        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if reader_type is None:
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if not reader_types or len(reader_types) != 1:
             return None
 
-        if importer := READER_IMPORTERS.get(reader_type):
+        if importer := READER_IMPORTERS.get(reader_types[0]):
             return f':meth:`~pyvista.Plotter.{importer}`'
         return None
 
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
         """Format dataset type(s) with doc references to dataset class(es)."""
-        dataset_types = loader.unique_dataset_type
-        if not isinstance(dataset_types, tuple):
-            dataset_types = (dataset_types,)
         return '\n'.join(
             '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
-            for cls in dataset_types
+            for cls in loader.unique_dataset_type
         )
 
     @staticmethod
@@ -2818,14 +2799,10 @@ class DatasetPropsGenerator:
 
         if not isinstance(loader, _Downloadable):
             return None
-        # Collect url names and links as sequences
-        name = loader.source_name
-        names = [name] if isinstance(name, str) else name
-        url = loader.web_url
-        urls = [url] if isinstance(url, str) else url
-
         # Use dict to create an ordered set to make sure links are unique
-        url_dict = {url: name for name, url in zip(names, urls, strict=True)}
+        url_dict = {
+            url: name for name, url in zip(loader.source_name, loader.web_url, strict=True)
+        }
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         return '\n'.join(rst_links)

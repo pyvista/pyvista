@@ -197,7 +197,7 @@ def test_single_file_loader(file_loader, use_archive):
         expected_path_is_absolute = True
 
     # test initial path
-    path = file_loader.path
+    (path,) = file_loader.path
     assert os.path.basename(path) == basename
     assert not os.path.isfile(path)
 
@@ -209,12 +209,12 @@ def test_single_file_loader(file_loader, use_archive):
     # test download
     if isinstance(file_loader, (_DownloadableFile, _SingleFileDownloadableDatasetLoader)):
         assert isinstance(file_loader, _Downloadable)
-        path_download = file_loader.download()
+        (path_download,) = file_loader.download()
         assert os.path.isfile(path_download)
         assert os.path.isabs(path_download)
-        assert file_loader.path == path_download
-        assert 'https://github.com/pyvista/data/raw/master/Data/' in file_loader.source_url
-        assert 'https://github.com/pyvista/data/blob/master/Data/' in file_loader.web_url
+        assert file_loader.path == (path_download,)
+        assert 'https://github.com/pyvista/data/raw/master/Data/' in file_loader.source_url[0]
+        assert 'https://github.com/pyvista/data/blob/master/Data/' in file_loader.web_url[0]
     else:
         with pytest.raises(AttributeError):
             file_loader.download()
@@ -232,7 +232,7 @@ def test_single_file_loader(file_loader, use_archive):
         with pytest.raises(AttributeError):
             file_loader.load()
 
-    assert os.path.isfile(file_loader.path)
+    assert os.path.isfile(file_loader.path[0])
 
 
 def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
@@ -338,22 +338,23 @@ def dataset_loader_one_file_local():
 
 def test_dataset_loader_one_file_local(dataset_loader_one_file_local):
     loader = dataset_loader_one_file_local
-    assert isinstance(loader.path, str)
+    assert len(loader.path) == 1
     assert loader.num_files == 1
     assert loader._total_size_bytes == 17941
     assert loader.total_size == '17.9 KB'
-    assert loader.unique_extension == '.ply'
-    assert isinstance(loader._reader, pv.PLYReader)
-    assert loader.unique_reader_type is pv.PLYReader
+    assert loader.unique_extension == ('.ply',)
+    assert isinstance(loader._reader[0], pv.PLYReader)
+    assert loader.unique_reader_type == (pv.PLYReader,)
     assert isinstance(loader.dataset, pv.PolyData)
     assert isinstance(loader.dataset_iterable[0], pv.PolyData)
-    assert loader.unique_dataset_type is pv.PolyData
-    assert loader.source_name == 'ant.ply'
-    assert (
-        loader.source_url == 'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/ant.ply'
+    assert loader.unique_dataset_type == (pv.PolyData,)
+    assert loader.is_builtin
+    assert loader.source_name == ('ant.ply',)
+    assert loader.source_url == (
+        'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/ant.ply',
     )
-    assert (
-        loader.web_url == 'https://github.com/pyvista/pyvista/blob/main/pyvista/examples/ant.ply'
+    assert loader.web_url == (
+        'https://github.com/pyvista/pyvista/blob/main/pyvista/examples/ant.ply',
     )
     assert loader.unique_cell_types == (pv.CellType.TRIANGLE,)
 
@@ -368,19 +369,20 @@ def dataset_loader_one_file():
 
 def test_dataset_loader_one_file(dataset_loader_one_file):
     loader = dataset_loader_one_file
-    assert isinstance(loader.path, str)
+    assert len(loader.path) == 1
     assert loader.num_files == 1
     assert loader._total_size_bytes == 60449
     assert loader.total_size == '60.4 KB'
-    assert loader.unique_extension == '.vtp'
-    assert isinstance(loader._reader, pv.XMLPolyDataReader)
-    assert loader.unique_reader_type is pv.XMLPolyDataReader
+    assert loader.unique_extension == ('.vtp',)
+    assert isinstance(loader._reader[0], pv.XMLPolyDataReader)
+    assert loader.unique_reader_type == (pv.XMLPolyDataReader,)
     assert isinstance(loader.dataset, pv.PolyData)
     assert isinstance(loader.dataset_iterable[0], pv.PolyData)
-    assert loader.unique_dataset_type is pv.PolyData
-    assert loader.source_name == 'cow.vtp'
-    assert loader.source_url == 'https://github.com/pyvista/data/raw/master/Data/cow.vtp'
-    assert loader.web_url == 'https://github.com/pyvista/data/blob/master/Data/cow.vtp'
+    assert loader.unique_dataset_type == (pv.PolyData,)
+    assert not loader.is_builtin
+    assert loader.source_name == ('cow.vtp',)
+    assert loader.source_url == ('https://github.com/pyvista/data/raw/master/Data/cow.vtp',)
+    assert loader.web_url == ('https://github.com/pyvista/data/blob/master/Data/cow.vtp',)
     assert loader.unique_cell_types == (
         pv.CellType.TRIANGLE,
         pv.CellType.POLYGON,
@@ -413,10 +415,10 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     assert len(loader._reader) == 2
     assert isinstance(loader._reader[0], pv.MetaImageReader)
     assert loader._reader[1] is None
-    assert loader.unique_reader_type is pv.MetaImageReader
+    assert loader.unique_reader_type == (pv.MetaImageReader,)
     assert isinstance(loader.dataset, pv.ImageData)
     assert isinstance(loader.dataset_iterable[0], pv.ImageData)
-    assert loader.unique_dataset_type is pv.ImageData
+    assert loader.unique_dataset_type == (pv.ImageData,)
     assert loader.source_name == ('HeadMRVolume.mhd', 'HeadMRVolume.raw')
     assert loader.source_url == (
         'https://github.com/pyvista/data/raw/master/Data/HeadMRVolume.mhd',
@@ -448,13 +450,13 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert loader.num_files == 2
     assert loader._total_size_bytes == 132818
     assert loader.total_size == '132.8 KB'
-    assert loader.unique_extension == '.slc'
+    assert loader.unique_extension == ('.slc',)
     assert pv.get_ext(loader.path[0]) == '.slc'
     assert pv.get_ext(loader.path[1]) == '.slc'
     assert len(loader._reader) == 2
     assert isinstance(loader._reader[0], pv.SLCReader)
     assert isinstance(loader._reader[1], pv.SLCReader)
-    assert loader.unique_reader_type is pv.SLCReader
+    assert loader.unique_reader_type == (pv.SLCReader,)
     assert isinstance(loader.dataset, pv.MultiBlock)
     dataset1, dataset2 = loader.dataset
     assert isinstance(dataset1, pv.ImageData)
@@ -488,22 +490,20 @@ def dataset_loader_cubemap():
 
 def test_dataset_loader_cubemap(dataset_loader_cubemap):
     loader = dataset_loader_cubemap
-    assert os.path.isdir(loader.path)
+    assert os.path.isdir(loader.path[0])
     assert loader.num_files == 6
     assert loader._total_size_bytes == 606113
     assert loader.total_size == '606.1 KB'
-    assert loader.unique_extension == '.jpg'
+    assert loader.unique_extension == ('.jpg',)
     assert isinstance(loader.dataset, pv.Texture)
     assert isinstance(loader.dataset_iterable[0], pv.Texture)
-    assert loader.unique_dataset_type is pv.Texture
-    assert loader.source_name == 'cubemap_park/cubemap_park.zip'
-    assert (
-        loader.source_url
-        == 'https://github.com/pyvista/data/raw/master/Data/cubemap_park/cubemap_park.zip'
+    assert loader.unique_dataset_type == (pv.Texture,)
+    assert loader.source_name == ('cubemap_park/cubemap_park.zip',)
+    assert loader.source_url == (
+        'https://github.com/pyvista/data/raw/master/Data/cubemap_park/cubemap_park.zip',
     )
-    assert (
-        loader.web_url
-        == 'https://github.com/pyvista/data/blob/master/Data/cubemap_park/cubemap_park.zip'
+    assert loader.web_url == (
+        'https://github.com/pyvista/data/blob/master/Data/cubemap_park/cubemap_park.zip',
     )
 
     assert loader.unique_cell_types == (pv.CellType.PIXEL,)
@@ -519,21 +519,21 @@ def dataset_loader_dicom():
 
 def test_dataset_loader_dicom(dataset_loader_dicom):
     loader = dataset_loader_dicom
-    assert os.path.isdir(loader.path)
+    assert os.path.isdir(loader.path[0])
     assert loader.num_files == 3
     assert loader._total_size_bytes == 1583688
     assert loader.total_size == '1.6 MB'
-    assert loader.unique_extension == '.dcm'
-    assert isinstance(loader._reader, pv.DICOMReader)
-    assert loader.unique_reader_type is pv.DICOMReader
+    assert loader.unique_extension == ('.dcm',)
+    assert isinstance(loader._reader[0], pv.DICOMReader)
+    assert loader.unique_reader_type == (pv.DICOMReader,)
     assert isinstance(loader.dataset, pv.ImageData)
-    assert loader.unique_dataset_type is pv.ImageData
-    assert loader.source_name == 'DICOM_Stack/data.zip'
-    assert (
-        loader.source_url == 'https://github.com/pyvista/data/raw/master/Data/DICOM_Stack/data.zip'
+    assert loader.unique_dataset_type == (pv.ImageData,)
+    assert loader.source_name == ('DICOM_Stack/data.zip',)
+    assert loader.source_url == (
+        'https://github.com/pyvista/data/raw/master/Data/DICOM_Stack/data.zip',
     )
-    assert (
-        loader.web_url == 'https://github.com/pyvista/data/blob/master/Data/DICOM_Stack/data.zip'
+    assert loader.web_url == (
+        'https://github.com/pyvista/data/blob/master/Data/DICOM_Stack/data.zip',
     )
     assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
@@ -576,7 +576,7 @@ def test_dataset_loader_from_nested_files_and_directory(
         pv.MetaImageReader,
     }
     assert loader.dataset is None
-    assert loader.unique_dataset_type is type(None)
+    assert loader.unique_dataset_type == (type(None),)
     loader.load_and_store_dataset()
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
@@ -622,21 +622,21 @@ def dataset_loader_nested_multiblock():
 def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock):
     loader = dataset_loader_nested_multiblock
     assert loader.num_files == 1
-    assert os.path.isfile(loader.path)
-    assert loader._filesize_bytes == 69732
-    assert loader._filesize_format == '69.7 KB'
+    assert os.path.isfile(loader.path[0])
+    assert loader._filesize_bytes == (69732,)
+    assert loader._filesize_format == ('69.7 KB',)
     assert loader._total_size_bytes == 69732
     assert loader.total_size == '69.7 KB'
-    assert loader.unique_extension == '.exo'
-    assert isinstance(loader._reader, pv.ExodusIIReader)
-    assert loader.unique_reader_type is pv.ExodusIIReader
+    assert loader.unique_extension == ('.exo',)
+    assert isinstance(loader._reader[0], pv.ExodusIIReader)
+    assert loader.unique_reader_type == (pv.ExodusIIReader,)
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert len(loader.dataset_iterable) == 12
     assert loader.unique_dataset_type == (pv.MultiBlock, pv.UnstructuredGrid)
-    assert loader.source_name == 'mesh_fs8.exo'
-    assert loader.source_url == 'https://github.com/pyvista/data/raw/master/Data/mesh_fs8.exo'
-    assert loader.web_url == 'https://github.com/pyvista/data/blob/master/Data/mesh_fs8.exo'
+    assert loader.source_name == ('mesh_fs8.exo',)
+    assert loader.source_url == ('https://github.com/pyvista/data/raw/master/Data/mesh_fs8.exo',)
+    assert loader.web_url == ('https://github.com/pyvista/data/blob/master/Data/mesh_fs8.exo',)
     assert loader.unique_cell_types == (
         pv.CellType.TRIANGLE,
         pv.CellType.QUAD,
@@ -651,13 +651,13 @@ def test_load_dataset_no_reader():
     dataset.download()
     match = '`pyvista.get_reader` does not support a file with the .npy extension'
     with pytest.raises(ValueError, match=match):
-        pv.get_reader(dataset.path)
-    assert dataset.unique_extension == '.npy'
-    assert dataset._reader is None
-    assert dataset.unique_reader_type is None
+        pv.get_reader(dataset.path[0])
+    assert dataset.unique_extension == ('.npy',)
+    assert dataset._reader == (None,)
+    assert dataset.unique_reader_type == ()
 
     # try loading .npy file directly
-    loader = _SingleFileDatasetLoader(dataset.path)
+    loader = _SingleFileDatasetLoader(dataset.path[0])
     match = 'Error loading dataset from path'
     with pytest.raises(RuntimeError, match=match):
         loader.load()
@@ -758,12 +758,6 @@ def test_downloadable_file_download_missing_path_raises():
     loader = _DownloadableFile('foo.vtk', download_func=lambda _: '/nonexistent/path/xyz')
     with pytest.raises(RuntimeError, match='Downloaded path does not exist'):
         loader.download()
-
-
-def test_multi_file_dataset_loader_files_not_resolved_raises(tmp_path):
-    loader = _MultiFileDatasetLoader(str(tmp_path))
-    with pytest.raises(RuntimeError, match='Files have not been resolved yet'):
-        _ = loader._file_objects
 
 
 def test_multi_file_dataset_loader_load_without_load_func_raises():
