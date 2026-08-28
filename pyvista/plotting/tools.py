@@ -47,26 +47,37 @@ def _prepare_offscreen_macos_render_window(  # pragma: no cover
        ``Accessory`` hides the Dock icon while still allowing the process
        to be activated later; ``Prohibited`` also forbids activation, which
        leaves any later on-screen window stuck behind other applications.
+       An application already running on the ``Regular`` policy is left
+       alone: the activation policy is process-global, so demoting it
+       would strip the Dock icon and menu bar from a host GUI toolkit,
+       such as a Qt application embedding a plotter.
     2. ``SetConnectContextToNSView(False)`` stops this particular render
        window from creating a real NSWindow.
 
     Safe to call unconditionally on any platform or render window type;
     each step no-ops where it doesn't apply (non-macOS, missing PyObjC,
-    non-Cocoa render windows).
+    non-Cocoa render windows, a visible application).
     """
 
     def _suppress_dock_icon():
         if sys.platform != 'darwin':
             return
         try:  # type:ignore[unreachable]
+            from AppKit import NSApp  # noqa: PLC0415
             from AppKit import NSApplication  # noqa: PLC0415
             from AppKit import NSApplicationActivationPolicyAccessory  # noqa: PLC0415
-
-            NSApplication.sharedApplication().setActivationPolicy_(
-                NSApplicationActivationPolicyAccessory,
-            )
+            from AppKit import NSApplicationActivationPolicyRegular  # noqa: PLC0415
         except ImportError:
-            pass
+            return
+
+        # NSApp() reads the shared application without creating one, so a
+        # process that has none still gets its Dock icon suppressed below
+        app = NSApp()
+        if app is not None and app.activationPolicy() == NSApplicationActivationPolicyRegular:
+            return
+        NSApplication.sharedApplication().setActivationPolicy_(
+            NSApplicationActivationPolicyAccessory,
+        )
 
     def _disable_cocoa_nsview_context():
         if hasattr(render_window, 'SetConnectContextToNSView'):
