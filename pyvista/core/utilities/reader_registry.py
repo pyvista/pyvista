@@ -13,6 +13,9 @@ from typing import Any
 from typing import NamedTuple
 from typing import Protocol
 from typing import TypedDict
+from typing import TypeVar
+from typing import Union
+from typing import cast
 from typing import overload
 
 import pooch
@@ -20,6 +23,7 @@ import pooch
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities._registry_helpers import handler_source
 from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import BaseReader
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -34,6 +38,22 @@ class ReaderHandler(Protocol):
         """Read *path* and return the resulting dataset."""
 
 
+# A bare callable, or a BaseReader subclass.
+ReaderProvider = Union[ReaderHandler, type['BaseReader[Any]']]  # noqa: UP007
+
+
+def _is_reader_class(obj: object) -> bool:
+    """Return ``True`` when *obj* is a :class:`~pyvista.BaseReader` subclass."""
+    return isinstance(obj, type) and issubclass(obj, BaseReader)
+
+
+READER_GROUP = 'pyvista.readers'
+
+# Declaring the intent in metadata is what separates a deliberate replacement
+# from an accidental one, so this group is silent and the other is an error.
+READER_OVERRIDE_GROUP = 'pyvista.readers.override'
+
+
 class ReaderRegistration(NamedTuple):
     """Describe one registered custom reader.
 
@@ -46,23 +66,43 @@ class ReaderRegistration(NamedTuple):
     extension : str
         File extension the reader is registered against, including the
         leading dot (for example, ``'.myformat'``).
-    handler : callable
-        The reader callable.
+    handler : callable or type[pyvista.BaseReader]
+        The reader callable, or the :class:`~pyvista.BaseReader`
+        subclass when the extension was registered with a reader class.
     source : str
         Human-readable origin in the form ``'module.qualname'`` for
         explicit registrations or the entry-point ``value`` for
         plugin-discovered registrations.
+    reader_class : bool
+        ``True`` when ``handler`` is a :class:`~pyvista.BaseReader`
+        subclass, meaning :func:`pyvista.get_reader` resolves this
+        extension as well as :func:`pyvista.read`.
+
+        .. versionadded:: 0.49.0
+
+    override : bool
+        ``True`` when this reader replaces one PyVista ships, either
+        through ``register_reader(..., override=True)`` or through the
+        ``pyvista.readers.override`` entry-point group. Check this first
+        when a built-in format reads differently than expected: it names
+        the plugin that took the extension over.
+
+        .. versionadded:: 0.49.0
 
     """
 
     extension: str
-    handler: ReaderHandler
+    handler: ReaderProvider
     source: str
+    reader_class: bool = False
+    override: bool = False
 
 
 class _RegistryState(TypedDict):
     ext: dict[str, ReaderHandler]
+    classes: dict[str, type[BaseReader[Any]]]
     sources: dict[str, str]
+    overrides: set[str]
     pending: dict[str, list[EntryPoint]]
     entry_points_loaded: bool
 
@@ -78,7 +118,7 @@ class LocalFileRequiredError(Exception):
     --------
     >>> import pyvista as pv
     >>> from pyvista.core.utilities.reader_registry import LocalFileRequiredError
-    >>> @pv.register_reader('.myformat')  # doctest: +SKIP
+    >>> @pv.register_reader('.myremoteformat')  # doctest: +SKIP
     ... def my_reader(path, **kwargs):
     ...     if '://' in path:
     ...         raise LocalFileRequiredError
@@ -88,7 +128,14 @@ class LocalFileRequiredError(Exception):
 
 
 _custom_ext_readers: dict[str, ReaderHandler] = {}
+# Separate from ``_custom_ext_readers`` because the two dispatch differently:
+# a handler is called by ``pv.read``, a class is returned by ``pv.get_reader``.
+# An extension appears in at most one.
+_custom_class_readers: dict[str, type[BaseReader[Any]]] = {}
 _custom_ext_reader_sources: dict[str, str] = {}
+# Recorded even when no built-in serves the extension, so a plugin that
+# declares the intent up front survives PyVista later shipping a reader for it.
+_override_ext_readers: set[str] = set()
 # Entry-point metadata, populated by ``_ensure_entry_points``. Maps each
 # extension to the list of ``EntryPoint`` records that declared it.
 # The plugin module itself is *not* imported until that extension is
@@ -114,7 +161,9 @@ def _save_registry_state() -> _RegistryState:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_readers.copy(),
+        'classes': _custom_class_readers.copy(),
         'sources': _custom_ext_reader_sources.copy(),
+        'overrides': _override_ext_readers.copy(),
         'pending': {k: list(v) for k, v in _pending_ext_readers.items()},
         'entry_points_loaded': _entry_points_loaded,
     }
@@ -125,8 +174,12 @@ def _restore_registry_state(state: _RegistryState) -> None:
     global _entry_points_loaded  # noqa: PLW0603
     _custom_ext_readers.clear()
     _custom_ext_readers.update(state['ext'])
+    _custom_class_readers.clear()
+    _custom_class_readers.update(state['classes'])
     _custom_ext_reader_sources.clear()
     _custom_ext_reader_sources.update(state['sources'])
+    _override_ext_readers.clear()
+    _override_ext_readers.update(state['overrides'])
     _pending_ext_readers.clear()
     _pending_ext_readers.update({k: list(v) for k, v in state['pending'].items()})
     _entry_points_loaded = state['entry_points_loaded']
@@ -209,19 +262,22 @@ def _download_uri(uri: str, ext: str) -> str:
         return tmp_name
 
 
+_T_Provider = TypeVar('_T_Provider', bound=ReaderProvider)
+
+
 @overload
 def register_reader(
     key: str,
     handler: None = None,
     *,
     override: bool = False,
-) -> Callable[[ReaderHandler], ReaderHandler]: ...
+) -> Callable[[_T_Provider], _T_Provider]: ...
 
 
 @overload
 def register_reader(
     key: str,
-    handler: ReaderHandler,
+    handler: ReaderProvider,
     *,
     override: bool = False,
 ) -> None: ...
@@ -229,36 +285,59 @@ def register_reader(
 
 def register_reader(
     key: str,
-    handler: ReaderHandler | None = None,
+    handler: ReaderProvider | None = None,
     *,
     override: bool = False,
-) -> Callable[[ReaderHandler], ReaderHandler] | None:
+) -> Callable[[_T_Provider], _T_Provider] | None:
     """Register a custom reader for a file extension.
 
     Can be used as a plain call or as a decorator.
 
+    Two kinds of reader may be registered:
+
+    * A :class:`~pyvista.BaseReader` **subclass**. This is the preferred
+      form. The class is resolved by :func:`pyvista.get_reader` exactly
+      like a built-in reader, so keyword arguments passed to
+      :func:`pyvista.read` set reader attributes, ``progress_bar`` and
+      ``validate`` are honored, VTK error observers are attached, and
+      mixins such as :class:`~pyvista.TimeReader` and
+      :class:`~pyvista.PointCellDataSelection` work unchanged.
+
+    * A bare **callable** ``handler(path, **kwargs)``. This is the
+      lighter form for a format that has no reader-level state to
+      expose. :func:`pyvista.read` calls it directly;
+      :func:`pyvista.get_reader` raises :class:`ValueError` for the
+      extension because there is no reader object to hand back.
+
     .. versionadded:: 0.48.0
+
+    .. versionchanged:: 0.49.0
+        ``handler`` may be a :class:`~pyvista.BaseReader` subclass.
 
     Parameters
     ----------
     key : str
         A file extension (for example, ``'.myformat'``).
 
-    handler : callable, optional
-        A callable with signature ``handler(path: str, **kwargs)`` that
-        returns a :class:`pyvista.DataSet`.  When omitted the function
-        acts as a decorator and returns the decorated callable unchanged.
+    handler : callable or type[pyvista.BaseReader], optional
+        A :class:`~pyvista.BaseReader` subclass, or a callable with
+        signature ``handler(path: str, **kwargs)`` that returns a
+        :class:`pyvista.DataSet`.  When omitted the function acts as a
+        decorator and returns the decorated object unchanged.
 
     override : bool, default: False
         If ``True``, allow overriding a built-in VTK reader for this
         extension and silence the warning that would otherwise fire when
-        replacing an existing custom registration.
+        replacing an existing custom registration. The equivalent for a
+        plugin discovered through entry points is to declare the entry
+        point in the ``pyvista.readers.override`` group rather than
+        ``pyvista.readers``.
 
     Returns
     -------
     callable or None
         When used as a decorator (``handler`` omitted), returns the
-        decorated function.  Otherwise returns ``None``.
+        decorated function or class.  Otherwise returns ``None``.
 
     Raises
     ------
@@ -279,6 +358,8 @@ def register_reader(
         Sibling API for registering custom writers.
     pyvista.registered_readers
         Introspect every registered reader.
+    pyvista.get_reader
+        Resolves registered :class:`~pyvista.BaseReader` subclasses.
 
     Examples
     --------
@@ -290,15 +371,28 @@ def register_reader(
 
     Use as a decorator.
 
-    >>> @pv.register_reader('.myformat')  # doctest: +SKIP
+    >>> @pv.register_reader('.myotherformat')  # doctest: +SKIP
     ... def my_reader(path, **kwargs): ...
+
+    Register a :class:`~pyvista.BaseReader` subclass so that
+    :func:`pyvista.get_reader` resolves the extension too. Where VTK has no
+    reader for the format, :class:`~pyvista.BaseVTKReader` supplies the
+    parsing half.
+
+    >>> class _MyVTKReader(pv.BaseVTKReader):
+    ...     def UpdateInformation(self): ...
+    ...     def Update(self):
+    ...         self._data_object = pv.PolyData()
+    >>> @pv.register_reader('.mybinaryformat')  # doctest: +SKIP
+    ... class MyReader(pv.BaseReader):
+    ...     _class_reader = _MyVTKReader
 
     """
     if handler is None:
         # Decorator form: @pv.register_reader('.ext')
-        def _decorator(fn: ReaderHandler) -> ReaderHandler:
-            _register(key, fn, override=override)
-            return fn
+        def _decorator(obj: _T_Provider) -> _T_Provider:
+            _register(key, obj, override=override)
+            return obj
 
         return _decorator
 
@@ -306,17 +400,21 @@ def register_reader(
     return None
 
 
+def _normalize_ext(key: str) -> str:
+    """Return ``key`` in lowercase, with a leading dot."""
+    key = key.lower()
+    return key if key.startswith('.') else f'.{key}'
+
+
 def _register(
     key: str,
-    handler: ReaderHandler,
+    handler: ReaderProvider,
     *,
     override: bool = False,
     source: str | None = None,
 ) -> None:
-    """Register a handler in the extension registry."""
-    key = key.lower()
-    if not key.startswith('.'):
-        key = f'.{key}'
+    """Register a handler or reader class in the extension registry."""
+    key = _normalize_ext(key)
     if not override and key in CLASS_READERS:
         msg = (
             f'Cannot register custom reader for "{key}": '
@@ -324,53 +422,131 @@ def _register(
             f'Use override=True to replace it.'
         )
         raise ValueError(msg)
-    if not override and key in _custom_ext_readers:
+    if not override and (key in _custom_ext_readers or key in _custom_class_readers):
         existing_source = _custom_ext_reader_sources.get(key, '<unknown>')
         warn_external(
             f'Registering reader for "{key}" replaces an existing custom '
             f'reader from {existing_source}.',
         )
-    _custom_ext_readers[key] = handler
+    # One reader per extension: clear both, or the loser keeps answering on
+    # whichever dispatch path consults it.
+    _custom_ext_readers.pop(key, None)
+    _custom_class_readers.pop(key, None)
+    if override:
+        _override_ext_readers.add(key)
+    else:
+        _override_ext_readers.discard(key)
+    if _is_reader_class(handler):
+        _custom_class_readers[key] = cast('type[BaseReader[Any]]', handler)
+    else:
+        _custom_ext_readers[key] = cast('ReaderHandler', handler)
     _custom_ext_reader_sources[key] = source if source is not None else handler_source(handler)
 
 
 def _get_ext_handler(ext: str) -> ReaderHandler | None:
-    """Look up a custom extension handler, importing the plugin lazily.
+    """Look up a custom extension *callable*, importing the plugin lazily.
+
+    Returns ``None`` for an extension registered with a
+    :class:`~pyvista.BaseReader` subclass: those are resolved by
+    :func:`pyvista.get_reader` instead, so that :func:`pyvista.read`
+    falls through to the same code path built-in readers use.
 
     Built-in extensions never trigger entry-point plugin imports—only
     extensions that an installed plugin has actually claimed do.
     """
-    handler = _custom_ext_readers.get(ext)
-    if handler is not None:
-        return handler
-    _ensure_entry_points()
-    if ext in _pending_ext_readers:
-        _resolve_pending_reader(ext)
+    _resolve_ext(ext)
     return _custom_ext_readers.get(ext)
 
 
-def _ensure_entry_points() -> None:
-    """Scan ``pyvista.readers`` entry-point metadata once.
+def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
+    """Look up a registered reader class, importing the plugin lazily.
 
-    Populates :data:`_pending_ext_readers` with every extension declared
-    by an installed plugin. The plugin modules themselves are **not**
-    imported here; the cost is one ``importlib.metadata.entry_points``
-    call. Plugin imports are deferred to :func:`_resolve_pending_reader`,
-    which runs only when a reader for that specific extension is
-    actually requested.
+    Consulted by :func:`pyvista.get_reader` ahead of ``CLASS_READERS``, so an
+    override wins on that path as well as on :func:`pyvista.read`.
+    """
+    ext = _normalize_ext(ext)
+    _resolve_ext(ext)
+    return _custom_class_readers.get(ext)
+
+
+def _resolve_ext(ext: str) -> None:
+    """Make sure any plugin claiming *ext* has been imported."""
+    if ext in _custom_ext_readers or ext in _custom_class_readers:
+        return
+    _ensure_entry_points()
+    if ext in _pending_ext_readers:
+        _resolve_pending_reader(ext)
+
+
+def _ensure_entry_points() -> None:
+    """Scan the reader entry-point metadata once.
+
+    Reads both :data:`READER_GROUP` and :data:`READER_OVERRIDE_GROUP`,
+    recording which extensions were declared with the intent to replace a
+    built-in. Populates :data:`_pending_ext_readers` with every extension
+    declared by an installed plugin. The plugin modules themselves are
+    **not** imported here; the cost is two
+    ``importlib.metadata.entry_points`` calls. Plugin imports are
+    deferred to :func:`_resolve_pending_reader`, which runs only when a
+    reader for that specific extension is actually requested.
+
+    The ordinary group is scanned first. One entry point declared in both
+    groups is a contradictory declaration and resolves to the ordinary,
+    strict reading; the error it produces names the override group, so a
+    package in that state is told what to do.
     """
     global _entry_points_loaded  # noqa: PLW0603
     if _entry_points_loaded:
         return
     _entry_points_loaded = True
 
-    for ep in entry_points(group='pyvista.readers'):
-        key = ep.name.lower()
-        if not key.startswith('.'):
-            key = f'.{key}'
-        if key in _custom_ext_readers:
-            continue
-        _pending_ext_readers.setdefault(key, []).append(ep)
+    seen: set[tuple[str, str]] = set()
+    for group, is_override in ((READER_GROUP, False), (READER_OVERRIDE_GROUP, True)):
+        for ep in entry_points(group=group):
+            # Only a double that ignores ``group=`` yields one entry point
+            # twice; let the strict first pass stand rather than granting an
+            # override nobody declared.
+            identity = (str(ep.name), str(ep.value))
+            if identity in seen:
+                continue
+            seen.add(identity)
+            key = _normalize_ext(ep.name)
+            if key in _custom_ext_readers or key in _custom_class_readers:
+                continue
+            if is_override:
+                _override_ext_readers.add(key)
+            _pending_ext_readers.setdefault(key, []).append(ep)
+
+
+def _entry_point_package(ep: EntryPoint) -> str:
+    """Return the distribution name behind ``ep``, best effort.
+
+    ``EntryPoint.dist`` is unset for one constructed by hand, so fall back to
+    the module half of its value.
+    """
+    dist = getattr(ep, 'dist', None)
+    name = getattr(dist, 'name', None)
+    if isinstance(name, str) and name:
+        return name
+    return str(ep.value).partition(':')[0]
+
+
+def _undeclared_override_message(ext: str, ep: EntryPoint) -> str:
+    """Build the error raised when a plugin shadows a built-in by accident."""
+    builtin = CLASS_READERS[ext].__name__
+    return (
+        f'The package "{_entry_point_package(ep)}" declares a "{ext}" reader in the '
+        f'"{READER_GROUP}" entry-point group, but PyVista already reads "{ext}" with '
+        f'{builtin}. Registering it would silently change what every '
+        f'`pyvista.read("...{ext}")` call in this environment returns, so PyVista '
+        f'refuses rather than guess.\n'
+        f'If replacing {builtin} is intended, the package should declare the entry '
+        f'point in the "{READER_OVERRIDE_GROUP}" group instead:\n\n'
+        f'    [project.entry-points."{READER_OVERRIDE_GROUP}"]\n'
+        f'    "{ext}" = "{ep.value}"\n\n'
+        f'If it is not intended, the package should claim a different extension. '
+        f'Uninstalling "{_entry_point_package(ep)}" also restores {builtin}.'
+    )
 
 
 def _resolve_pending_reader(ext: str) -> bool:
@@ -389,11 +565,20 @@ def _resolve_pending_reader(ext: str) -> bool:
     fall straight through without re-triggering the import or
     re-emitting the warning.
 
+    An entry point may resolve to either a callable handler or a
+    :class:`~pyvista.BaseReader` subclass; the loaded object decides
+    which of the two registries it lands in.
+
     """
-    eps = _pending_ext_readers.pop(ext, None)
+    eps = _pending_ext_readers.get(ext)
     if not eps:
         return False
     winner = eps[0]
+    if ext in CLASS_READERS and ext not in _override_ext_readers:
+        # Before the pop, so the entry survives and the second read raises
+        # too rather than falling through to the built-in.
+        raise ValueError(_undeclared_override_message(ext, winner))
+    del _pending_ext_readers[ext]
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
@@ -404,7 +589,10 @@ def _resolve_pending_reader(ext: str) -> bool:
             f'Failed to load pyvista.readers entry point "{winner.value}" for "{ext}": {err}'
         )
         return False
-    _custom_ext_readers[ext] = handler
+    if _is_reader_class(handler):
+        _custom_class_readers[ext] = handler
+    else:
+        _custom_ext_readers[ext] = handler
     _custom_ext_reader_sources[ext] = winner.value
     if len(eps) > 1:
         providers = ', '.join(ep.value for ep in eps)
@@ -423,7 +611,9 @@ def _list_custom_exts() -> list[str]:
     formats. The plugin modules themselves are **not** imported.
     """
     _ensure_entry_points()
-    return list(_custom_ext_readers.keys() | _pending_ext_readers.keys())
+    return list(
+        _custom_ext_readers.keys() | _custom_class_readers.keys() | _pending_ext_readers.keys()
+    )
 
 
 def registered_readers() -> tuple[ReaderRegistration, ...]:
@@ -434,13 +624,22 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
     import emits a ``UserWarning`` and is skipped; the rest still appear
     in the result.
 
+    This is the call to reach for when a built-in format reads
+    differently than expected: a record whose ``override`` is ``True``
+    names the plugin that took the extension over, and its ``source``
+    says where that plugin came from.
+
     .. versionadded:: 0.48.0
+
+    .. versionchanged:: 0.49.0
+        Records carry ``reader_class`` and ``override``.
 
     Returns
     -------
     tuple[ReaderRegistration, ...]
         One record per registered extension. Each record exposes
-        ``extension``, ``handler``, and ``source``.
+        ``extension``, ``handler``, ``source``, ``reader_class``, and
+        ``override``.
 
     Examples
     --------
@@ -457,12 +656,23 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
     """
     _ensure_entry_points()
     for ext in list(_pending_ext_readers):
-        _resolve_pending_reader(ext)
+        try:
+            _resolve_pending_reader(ext)
+        except ValueError as err:
+            # Introspection must not be the thing that raises. The entry
+            # stays pending, so reading that extension still does.
+            warn_external(str(err))
+    registered: list[tuple[str, ReaderProvider, bool]] = [
+        *((ext, handler, False) for ext, handler in _custom_ext_readers.items()),
+        *((ext, reader, True) for ext, reader in _custom_class_readers.items()),
+    ]
     return tuple(
         ReaderRegistration(
             extension=ext,
             handler=handler,
             source=_custom_ext_reader_sources.get(ext, '<unknown>'),
+            reader_class=is_class,
+            override=ext in _override_ext_readers,
         )
-        for ext, handler in _custom_ext_readers.items()
+        for ext, handler, is_class in registered
     )

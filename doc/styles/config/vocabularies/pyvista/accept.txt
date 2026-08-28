@@ -327,6 +327,7 @@ meshio
 metaclass
 metafiles
 mipmap
+mixins
 mne
 msh
 multiblock
