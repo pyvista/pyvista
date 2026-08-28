@@ -91,7 +91,6 @@ test = [
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
-  'pytest-mypy-plugins<4.1.0',
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
