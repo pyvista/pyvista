@@ -34,32 +34,27 @@ class ExampleMetadata:
 
     Notes
     -----
-    The fields describe the example's files and where they come from. Properties of
-    the dataset itself, such as its type or its cell types, require reading the files
-    and are available from the dataset returned with ``output='dataset'``.
+    The fields are limited to what an example cannot be asked for directly. Anything
+    derivable is left out: the extensions are the suffixes of ``paths``, the total size
+    is ``sum(file_sizes)``, and the reader types and the file which is read both come
+    from the readers returned with ``output='readers'``.
 
     Examples
     --------
-    Get the metadata for the ``'frog'`` example.
+    Get the metadata for the ``'frog'`` example, which is stored as two files.
 
     >>> from pyvista import examples
     >>> metadata = examples.get_example('frog', output='metadata')
     >>> metadata.name
     'frog'
-    >>> metadata.num_files
+    >>> len(metadata.paths)
     2
-    >>> metadata.extensions
-    ('.mhd', '.zraw')
 
-    Sizes are in bytes, so they compare directly.
+    Sizes are in bytes, one per path, so examples compare directly.
 
-    >>> metadata.total_size == sum(metadata.file_sizes)
+    >>> bunny = examples.get_example('bunny', output='metadata')
+    >>> sum(metadata.file_sizes) > sum(bunny.file_sizes)
     True
-
-    Only one of its two files is read to produce the dataset.
-
-    >>> len(metadata.loadable_paths)
-    1
 
     """
 
@@ -72,29 +67,11 @@ class ExampleMetadata:
     paths: tuple[str, ...] = ()
     """Local path of every file or folder belonging to the example, in declaration order."""
 
-    loadable_paths: tuple[str, ...] = ()
-    """Local path of the file or files which are read to produce the dataset."""
-
-    num_files: int = 0
-    """Number of files, counting the contents of any folder in ``paths``."""
-
-    extensions: tuple[str, ...] = ()
-    """Unique file extensions of the example's files."""
-
     file_sizes: tuple[int, ...] = ()
-    """Size in bytes of each entry in ``paths``, folders counted in full."""
-
-    total_size: int = 0
-    """Total size of all files in bytes."""
-
-    reader_types: tuple[type[pv.BaseReader[Any]], ...] = ()
-    """Unique reader types used to read the example's files."""
+    """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
     source_urls: tuple[str, ...] = ()
     """URL each entry in ``paths`` is downloaded from, empty if it has none."""
-
-    is_builtin: bool = False
-    """Whether the example ships with PyVista, so it is available with no download."""
 
 
 def _supported_modules() -> tuple[ModuleType, ...]:
@@ -153,12 +130,10 @@ def _get_dataset_loader(
     raise ValueError(msg)
 
 
-def _resolve_paths(
-    loader: _DatasetLoader, name: str, *, download: bool
-) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """Return the example's file paths and its loadable file paths."""
+def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tuple[str, ...]:
+    """Return the example's file paths, downloading them first if allowed."""
     if not hasattr(loader, 'path'):
-        return (), ()
+        return ()
     if download and isinstance(loader, _Downloadable):
         loader.download()
 
@@ -171,8 +146,7 @@ def _resolve_paths(
             f'Missing:\n\t{missing_str}'
         )
         raise FileNotFoundError(msg)
-    loadable = tuple(getattr(loader, 'path_loadable', ()))
-    return paths, loadable
+    return paths
 
 
 def _collect_metadata(
@@ -183,19 +157,12 @@ def _collect_metadata(
     download: bool,
 ) -> ExampleMetadata:
     """Gather every file and source property the loader exposes."""
-    paths, loadable = _resolve_paths(loader, name, download=download)
     return ExampleMetadata(
         name=name,
         function=function,
-        paths=paths,
-        loadable_paths=loadable,
-        num_files=getattr(loader, 'num_files', 0),
-        extensions=getattr(loader, 'unique_extension', ()),
+        paths=_resolve_paths(loader, name, download=download),
         file_sizes=getattr(loader, '_filesize_bytes', ()),
-        total_size=getattr(loader, '_total_size_bytes', 0),
-        reader_types=getattr(loader, 'unique_reader_type', ()),
         source_urls=getattr(loader, 'source_url', ()),
-        is_builtin=isinstance(loader, _Downloadable) and loader.is_builtin,
     )
 
 
@@ -317,7 +284,7 @@ def get_example(
         _resolve_paths(loader, dataset_name, download=download)
         return _get_readers(loader)
     if output == 'paths':
-        return _resolve_paths(loader, dataset_name, download=download)[0]
+        return _resolve_paths(loader, dataset_name, download=download)
 
     _resolve_paths(loader, dataset_name, download=download)
     return loader.load()

@@ -109,32 +109,22 @@ def test_get_example_metadata():
 
     assert isinstance(metadata, examples.ExampleMetadata)
     assert metadata.name == 'uniform'
-    assert metadata.is_builtin
     assert metadata.function is examples.load_uniform
-    assert metadata.num_files == 1
-    assert metadata.extensions == ('.vtk',)
-    assert metadata.reader_types == (pv.VTKDataSetReader,)
-    assert metadata.total_size == sum(metadata.file_sizes) > 0
     assert metadata.source_urls == (
         'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
     )
-
-    assert metadata.paths == metadata.loadable_paths
-    assert len(metadata.paths) == len(metadata.file_sizes) == metadata.num_files
+    # one size per path, in the same order
+    assert len(metadata.file_sizes) == len(metadata.paths) == 1
+    assert metadata.file_sizes[0] == Path(metadata.paths[0]).stat().st_size
 
 
 def test_get_example_metadata_in_memory():
     """An example generated in memory has no files and no source."""
     metadata = examples.get_example('structured', output='metadata')
 
-    assert metadata.num_files == 0
-    assert metadata.total_size == 0
     for empty in (
         metadata.paths,
-        metadata.loadable_paths,
-        metadata.extensions,
         metadata.file_sizes,
-        metadata.reader_types,
         metadata.source_urls,
     ):
         assert empty == ()
@@ -142,38 +132,25 @@ def test_get_example_metadata_in_memory():
 
 @pytest.mark.needs_download
 def test_get_example_metadata_folder():
-    """A folder counts as one path but reports the files it contains."""
+    """A folder is one path, sized and typed by looking inside it."""
     metadata = examples.get_example('cubemap_park', output='metadata')
 
-    assert len(metadata.paths) == 1
+    assert len(metadata.paths) == len(metadata.file_sizes) == 1
     assert Path(metadata.paths[0]).is_dir()
-    assert metadata.num_files == 6
+    # the folder is sized by what it contains, not by the directory entry
+    assert metadata.file_sizes[0] > 0
 
 
 @pytest.mark.needs_download
 def test_get_example_metadata_multiple_files():
-    """A multi-file example reports every file, but only the ones it reads as loadable."""
+    """A multi-file example reports every file, with one size and one URL each."""
     metadata = examples.get_example('frog', output='metadata')
 
-    assert metadata.num_files == 2
     assert len(metadata.paths) == 2
-    assert metadata.extensions == ('.mhd', '.zraw')
-    assert metadata.loadable_paths == (metadata.paths[0],)
-    assert metadata.reader_types == (pv.MetaImageReader,)
-
-
-@pytest.mark.needs_download
-def test_get_example_is_builtin_only_for_packaged_files():
-    """Only examples shipped inside the package report ``is_builtin``."""
-    # `uniform` is a `_Downloadable` loader whose file ships with PyVista
-    assert examples.get_example('uniform', output='metadata').is_builtin
-    assert not examples.get_example('bunny', output='metadata').is_builtin
-    assert not examples.get_example('frog', output='metadata').is_builtin
-
-
-def test_get_example_in_memory_is_not_builtin():
-    """An example generated in memory has no files, so it is not built-in."""
-    assert not examples.get_example('structured', output='metadata').is_builtin
+    assert len(metadata.file_sizes) == len(metadata.source_urls) == 2
+    # the file which is actually read is the reader's, not a separate field
+    readers = examples.get_example('frog', output='readers')
+    assert [reader.path for reader in readers] == [metadata.paths[0]]
 
 
 def test_get_example_download_false_uses_local_files():
