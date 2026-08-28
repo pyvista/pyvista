@@ -51,13 +51,16 @@
 
 These are also available on {{ objname }}, and are documented with the class that
 defines them.
-{% for base, items in inherited %}
-.. dropdown:: From :class:`~{{ base }}` ({{ items | length }})
+{% for base_module, base_name, items in inherited %}
+.. currentmodule:: {{ base_module }}
+
+.. dropdown:: From :class:`~{{ base_module }}.{{ base_name }}` ({{ items | length }})
 
    .. autosummary::
 {% for item in items %}
-      ~{{ base }}.{{ item }}
+      ~{{ base_name }}.{{ item }}
 {%- endfor %}
 {% endfor %}
+.. currentmodule:: {{ module }}
 {% endif %}
 {% endblock %}

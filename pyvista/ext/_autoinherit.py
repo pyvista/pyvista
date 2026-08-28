@@ -173,8 +173,13 @@ def own_members(  # numpydoc ignore=RT01
 
 def inherited_member_groups(  # numpydoc ignore=RT01
     module: str, objname: str, names: Sequence[str]
-) -> list[tuple[str, list[str]]]:
-    """Return ``[(class documented as, [members])]`` for pages ``module.objname`` links to."""
+) -> list[tuple[str, str, list[str]]]:
+    """Return ``[(module, class, [members])]`` for the pages ``module.objname`` links to.
+
+    The module is split out so the template can set ``currentmodule`` to it: each summary
+    line is the first line of a docstring written for the home class's page, and any
+    reference it makes relative to that module only resolves under it.
+    """
     cls = _class_from(module, objname)
     documented = _documented_classes()
     groups: dict[type, list[str]] = {}
@@ -184,7 +189,7 @@ def inherited_member_groups(  # numpydoc ignore=RT01
             groups.setdefault(home, []).append(name)
     order = {base: index for index, base in enumerate(cls.__mro__)}
     return [
-        (documented[home], sorted(groups[home]))
+        (*documented[home].rsplit('.', 1), sorted(groups[home]))
         for home in sorted(groups, key=lambda base: order[base])
     ]
 
