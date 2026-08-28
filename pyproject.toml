@@ -346,7 +346,7 @@ checks = [
   'GL03', # Considering enforcing
   'GL06', # Found unknown section
   'GL07', # 'Sections are in the wrong order. Correct order is: {correct_sections}',
-  'GL08', # The object does not have a docstring
+  'GL08', # Fires on @overload stubs and property setters, which numpydoc cannot skip; ruff D101/D102/D103 covers this
   'GL09', # Deprecation warning should precede extended summary (check broken)
   'PR01', # 'Parameters {missing_params} not documented',
   'PR02', # 'Unknown parameters {unknown_params}',
@@ -365,8 +365,8 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 exclude = [ # don't report on objects that match any of these regex
-  '\.*Reader(\.|$)', # classes inherit from BaseReader
-  '\._.*$', # Ignore anything that's private (e.g., starts with _)
+  # Only the member itself, not members of a private class: those are documented.
+  '\._[^.]*$',
   '^plot_directive\..*$',
   '^viewer_directive\..*$',
 ]
