@@ -2121,7 +2121,7 @@ def test_transform_apply_to_points(scale_transform, translate_transform, method,
         expected = array + VECTOR
 
     if method == pv.Transform.apply:
-        transformed = method(trans, array, 'points')
+        transformed = method(trans, array, mode='points')
     else:
         transformed = method(trans, array)
     assert np.allclose(transformed, expected)
@@ -2140,7 +2140,7 @@ def test_transform_apply_to_vectors(scale_transform, translate_transform, method
         expected = array
 
     if method == pv.Transform.apply:
-        transformed = method(trans, array, 'vectors')
+        transformed = method(trans, array, mode='vectors')
     else:
         transformed = method(trans, array)
     assert np.allclose(transformed, expected)
@@ -2157,7 +2157,7 @@ def test_transform_apply_to_dataset(scale_transform, mode, method):
     if mode == 'all_vectors':
         expected = expected * SCALE
 
-    transformed = method(scale_transform, mesh, mode)
+    transformed = method(scale_transform, mesh, mode=mode)
     assert np.allclose(transformed['vector'], expected)
 
 
@@ -2167,11 +2167,11 @@ def test_transform_apply_to_actor(scale_transform, translate_transform, mode, me
     expected_matrix = scale_transform.matrix
     actor = pv.Actor()
 
-    transformed = method(scale_transform, actor, mode)
+    transformed = method(scale_transform, actor, mode=mode)
     assert np.allclose(transformed.user_matrix, expected_matrix)
 
     # Transform again
-    transformed = method(translate_transform, transformed, mode)
+    transformed = method(translate_transform, transformed, mode=mode)
     if mode == 'replace':
         expected_matrix = translate_transform.matrix
     else:
@@ -2192,21 +2192,21 @@ def test_transform_apply_invalid_mode():
         "['active_vectors', 'all_vectors', None]"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        trans.apply(mesh, 'points')
+        trans.apply(mesh, mode='points')
 
     match = (
         "Transformation mode 'all_vectors' is not supported for arrays. Mode must be one of\n"
         "['points', 'vectors', None]"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        trans.apply(array, 'all_vectors')
+        trans.apply(array, mode='all_vectors')
 
     match = (
         "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
         "['replace', 'pre-multiply', 'post-multiply', None]"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        trans.apply(actor, 'vectors')
+        trans.apply(actor, mode='vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])

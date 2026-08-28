@@ -2704,6 +2704,7 @@ class DataSet(DataSetFilters, DataObject):
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
@@ -2909,6 +2910,7 @@ class DataSet(DataSetFilters, DataObject):
             out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
         return list(set(out))
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def point_neighbors_levels(
         self: Self,
         ind: int,
@@ -2985,6 +2987,7 @@ class DataSet(DataSetFilters, DataObject):
         method = self.point_neighbors
         return self._get_levels_neihgbors(ind, n_levels, method)
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def cell_neighbors_levels(
         self: Self,
         ind: int,

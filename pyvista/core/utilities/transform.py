@@ -12,6 +12,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
@@ -1600,6 +1601,7 @@ class Transform(
         inverse: bool = ...,
         copy: bool = ...,
     ) -> Prop3D: ...
+    @_deprecate_positional_args(allowed=['obj'], version=(0, 52))
     def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
@@ -1813,9 +1815,9 @@ class Transform(
             allowed = ['replace', 'pre-multiply', 'post-multiply', None]
             _check_mode('actors', mode, allowed)
             if mode in ['post-multiply', None]:
-                return obj.transform(matrix, 'post', inplace=inplace)
+                return obj.transform(matrix, multiply_mode='post', inplace=inplace)
             elif mode == 'pre-multiply':
-                return obj.transform(matrix, 'pre', inplace=inplace)
+                return obj.transform(matrix, multiply_mode='pre', inplace=inplace)
             else:
                 actor = obj.copy() if copy else obj
                 actor.user_matrix = matrix
@@ -1891,7 +1893,7 @@ class Transform(
             Apply this transformation to an actor.
 
         """
-        return self.apply(points, 'points', inverse=inverse, copy=copy)
+        return self.apply(points, mode='points', inverse=inverse, copy=copy)
 
     def apply_to_vectors(
         self,
@@ -1938,8 +1940,9 @@ class Transform(
             Apply this transformation to an actor.
 
         """
-        return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
+        return self.apply(vectors, mode='vectors', inverse=inverse, copy=copy)
 
+    @_deprecate_positional_args(allowed=['dataset'], version=(0, 52))
     def apply_to_dataset(
         self,
         dataset: _DataSetOrMultiBlockType,
@@ -1996,8 +1999,9 @@ class Transform(
             Transform a dataset.
 
         """
-        return self.apply(dataset, mode, inverse=inverse, copy=copy)
+        return self.apply(dataset, mode=mode, inverse=inverse, copy=copy)
 
+    @_deprecate_positional_args(allowed=['actor'], version=(0, 52))
     def apply_to_actor(
         self,
         actor: Prop3D,
@@ -2056,7 +2060,7 @@ class Transform(
             Transform an actor.
 
         """
-        return self.apply(actor, mode, inverse=inverse, copy=copy)
+        return self.apply(actor, mode=mode, inverse=inverse, copy=copy)
 
     def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveArrays:
         """Decompose the current transformation into its components.
