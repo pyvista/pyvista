@@ -497,6 +497,7 @@ banned-from = [
   'copy',
   'ctypes',
   'datetime',
+  'difflib',
   'doctest',
   'faulthandler',
   'functools',
