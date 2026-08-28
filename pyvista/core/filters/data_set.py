@@ -7479,7 +7479,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # Lazy import since these are from plotting module
         import matplotlib.colors  # noqa: PLC0415
 
-        from pyvista.core._validation.validate import _validate_color_sequence  # noqa: PLC0415
+        from pyvista.plotting.colors import _validate_color_sequence  # noqa: PLC0415
         from pyvista.plotting.colors import get_cmap_safe  # noqa: PLC0415
 
         def _local_validate_color_sequence(

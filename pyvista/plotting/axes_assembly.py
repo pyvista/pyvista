@@ -20,7 +20,7 @@ from pyvista import BoundsTuple
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core._validation.validate import _validate_color_sequence
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
