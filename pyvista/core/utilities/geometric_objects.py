@@ -583,10 +583,10 @@ def StructuredSphere(
     Parameters
     ----------
     radius : float | sequence[float], default: 0.5
-        Sphere radius. If a sequence, then describes the radial coordinates of
-        the cells as a range of values. The sequence must be positive and
-        sorted in ascending order, and generates a 3D grid with concentric
-        layers of cells.
+        Sphere radius, which must be greater than zero. If a sequence, then
+        describes the radial coordinates of the cells as a range of values, and
+        generates a 3D grid with concentric layers of cells. The sequence must
+        be sorted in strictly ascending order.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
