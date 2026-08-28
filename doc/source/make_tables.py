@@ -26,6 +26,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+from typing import get_overloads
 
 import cmcrameri
 import cmocean
@@ -3092,30 +3093,65 @@ class DatasetCarousel(DocTable):
         return path
 
 
+def _annotation_str(annotation: Any) -> str:
+    """Return a return annotation as the source text it was written as."""
+    if isinstance(annotation, str):
+        return annotation
+    return getattr(annotation, '__name__', str(annotation))
+
+
+def _union_members(annotation: str) -> set[str]:
+    """Split a return annotation into its union members, so order does not matter."""
+    return {part.strip() for part in annotation.split('|')}
+
+
+def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
+    """Return the dataset type an example loads and the type ``load=False`` gives back."""
+    dataset_type = type(card.loader.dataset).__name__
+    # `_download_dataset` collapses to a bare path only when there is one to return
+    loadable = getattr(card.loader, 'path_loadable', ())
+    return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
+
+
 def _validate_function_annotation(card: DatasetCard) -> str | None:
-    """Return a mismatch message if the download/load function's return annotation is wrong."""
+    """Return a message if a download/load function's return annotations are wrong.
+
+    Every ``@overload`` is checked as well as the implementation, because the overloads
+    are what a caller and a type checker actually see; an implementation annotated as a
+    union says nothing about which branch returns which half.
+    """
     if card.loader._module not in DATASET_GALLERY_MODULES:
         return None
 
-    runtime_name = type(card.loader.dataset).__name__
     function = card.loader._function
-    params = inspect.signature(function).parameters
+    signature = inspect.signature(function)
+    dataset_type, path_type = _expected_return_types(card)
 
-    expected_annotation = runtime_name
-    if 'texture' in params:
-        expected_annotation = f'Texture | {expected_annotation}'
-    if 'load' in params:
-        # `_download_dataset` collapses to a bare path only when there is one to return
-        loadable = getattr(card.loader, 'path_loadable', ())
-        expected_annotation += ' | str' if len(loadable) == 1 else ' | tuple[str, ...]'
+    expected = {dataset_type}
+    if 'texture' in signature.parameters:
+        expected.add('Texture')
+    if 'load' in signature.parameters:
+        expected.add(path_type)
 
-    ann = inspect.signature(function).return_annotation
-    ann_name = ann if isinstance(ann, str) else ann.__name__
-    if expected_annotation != ann_name:
-        return (
-            f'{function.__name__!r} annotated type is {ann_name!r}, '
-            f'expected {expected_annotation!r}'
-        )
+    problems = []
+    actual = _annotation_str(signature.return_annotation)
+    if _union_members(actual) != expected:
+        problems.append(f'annotated {actual!r}, expected {" | ".join(sorted(expected))!r}')
+
+    for overload in get_overloads(function):
+        overload_signature = inspect.signature(overload)
+        load = overload_signature.parameters.get('load')
+        if load is None or 'Literal[False]' not in _annotation_str(load.annotation):
+            continue
+        returns = _annotation_str(overload_signature.return_annotation)
+        if _union_members(returns) != {path_type}:
+            problems.append(
+                f'`load=False` overload returns {returns!r}, expected {path_type!r}',
+            )
+
+    if problems:
+        joined = '\n\t'.join(problems)
+        return f'{function.__name__!r}:\n\t{joined}'
     return None
 
 
