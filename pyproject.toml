@@ -264,6 +264,12 @@ filterwarnings = [
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
+  # The console script launcher's own handle on `pytest.EXE`, opened by zipimport at
+  # startup and left for interpreter exit to close. The reference leak check collects
+  # aggressively enough to finalise it mid-run, where it surfaces as an unraisable
+  # against whichever test happens to be running (Windows, Python 3.11). Scoped to that
+  # one file so a genuinely unclosed file still fails.
+  'ignore:.*_io\.FileIO.*pytest\.EXE:pytest.PytestUnraisableExceptionWarning',
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk via trame-pyvista
