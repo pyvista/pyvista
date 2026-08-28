@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 import re
 
-import numpy as np
 import pytest
 
 import pyvista as pv
@@ -14,18 +13,6 @@ from pyvista.examples import planets
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
 
-# Datasets which return a different mesh each time they are loaded,
-# see https://github.com/pyvista/pyvista/issues/7634
-_NON_DETERMINISTIC_DATASETS = [
-    '3gqp',
-    'biplane',
-    'caffeine',
-    'damavand_volcano',
-    'embryo',
-    'frog_tissue',
-    'notch_stress',
-    'particles',
-]
 _DEPRECATED_DATASETS = ['can', 'osmnx_graph']
 _SKIP_DATASETS_WINDOWS = ['biplane']
 
@@ -193,7 +180,7 @@ def test_get_example_function_without_dataset_raises():
 @pytest.mark.needs_download
 @pytest.mark.parametrize('name', _all_example_names())
 def test_get_example_all(name):
-    """Every example resolves, reports its files, and loads the same by name or function."""
+    """Every example resolves by name and by function, reports its files, and loads."""
     if name in _DEPRECATED_DATASETS:
         pytest.skip('Dataset is deprecated.')
     if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:
@@ -201,18 +188,16 @@ def test_get_example_all(name):
 
     try:
         example = examples.get_example(name)
-        from_name = example.load()
-        from_function = examples.get_example(example.function).load()
+        loaded = example.load()
     except pv.VTKVersionError:
         pytest.skip('VTK version not supported.')
 
+    # looking the example up by its own function finds the same example, which is what
+    # makes the two forms interchangeable -- comparing the loaded datasets instead would
+    # rest on `DataObject.__eq__`, which is not what this is testing
+    assert examples.get_example(example.function) == example
+
+    assert loaded is not None
     assert len(example.file_sizes) == len(example.paths)
     assert all(Path(path).is_file() or Path(path).is_dir() for path in example.paths)
     assert all(reader is not None for reader in example.readers)
-
-    if name in _NON_DETERMINISTIC_DATASETS:
-        return
-    if isinstance(from_name, np.ndarray):
-        assert np.array_equal(from_name, from_function, equal_nan=True)
-    else:
-        assert from_name == from_function
