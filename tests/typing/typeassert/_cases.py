@@ -12,15 +12,20 @@ if TYPE_CHECKING:
     from types import CodeType
 
 ASSERTION = 'assert_types'
+SKIP_RUNTIME = 'SKIP_RUNTIME'
 
 
 class CaseError(Exception):
     """Raised when a case file is not shaped the way the framework expects."""
 
 
+class CaseSkipped(Exception):  # noqa: N818
+    """Raised instead of running a case the file asks to skip at runtime."""
+
+
 @dataclass(frozen=True)
 class Case:
-    """One `assert_types(expression, ExpectedType)` line, runnable on its own."""
+    """One `assert_types(expression, ExpectedType)` line."""
 
     path: Path
     lines: frozenset[int]
@@ -33,26 +38,58 @@ class Case:
         """Return the test id, which reads as the claim the case makes."""
         return f'{self.expression} -> {self.expected}'
 
-    def run(self) -> None:
-        """Execute this case's line, and only it, in a namespace of its own."""
-        namespace: dict[str, Any] = {'__name__': self.path.stem, '__file__': str(self.path)}
-        # Running the case file's own code is the point of the framework.
-        exec(self.code, namespace)  # noqa: S102
-
 
 @dataclass(frozen=True)
 class CaseFile:
-    """One case file: the lines that assert something, and the lines that do not."""
+    """One case file: the cases it declares, and the setup they share."""
 
     path: Path
     cases: tuple[Case, ...]
     setup_lines: frozenset[int]
+    setup_code: CodeType | None = None
     error: str | None = None
 
     @property
     def name(self) -> str:
         """Return the file name, used to scope test ids."""
         return self.path.name
+
+    def setup_namespace(self) -> dict[str, Any]:
+        """Execute this file's setup and return the namespace it produced."""
+        namespace: dict[str, Any] = {'__name__': self.path.stem, '__file__': str(self.path)}
+        # Running the case file's own code is the point of the framework.
+        exec(self.setup_code, namespace)  # noqa: S102
+        return namespace
+
+    def run(self, case: Case) -> None:
+        """Execute one case, and only it, against a fresh copy of the setup.
+
+        Rebuilding the setup for every case is what keeps cases independent: one
+        cannot observe another's state, and reordering the file changes nothing.
+        """
+        namespace = self.setup_namespace()
+        reason = skip_reason(namespace, case)
+        if reason is not None:
+            raise CaseSkipped(reason)
+        exec(case.code, namespace)  # noqa: S102
+
+    def unknown_skips(self, namespace: dict[str, Any]) -> list[str]:
+        """Return `SKIP_RUNTIME` keys that match no case, so a stale one is caught."""
+        declared = namespace.get(SKIP_RUNTIME) or {}
+        expressions = {case.expression for case in self.cases}
+        return sorted(key for key in declared if key not in expressions)
+
+
+def skip_reason(namespace: dict[str, Any], case: Case) -> str | None:
+    """Return why `case` should not run, from the file's `SKIP_RUNTIME` mapping.
+
+    A case file maps an expression to the reason running it would fail — a
+    platform crash, an unavailable dependency. Mypy still checks the case, so
+    only the runtime half is skipped. Building the mapping conditionally is
+    ordinary Python, since it is read after the file's setup has run.
+    """
+    declared = namespace.get(SKIP_RUNTIME) or {}
+    return declared.get(case.expression) or None
 
 
 def _case_call(node: ast.AST) -> ast.Call | None:
@@ -92,10 +129,6 @@ def _reject_nested_assertions(tree: ast.Module, path: Path) -> None:
 def collect_case_file(path: Path) -> CaseFile:
     """Parse one case file into its cases and the setup they share.
 
-    Each case compiles to the file's setup statements followed by that one case,
-    so running it rebuilds everything it depends on from scratch. Cases cannot
-    reach each other's state, and none of this depends on line order.
-
     A file this cannot make sense of yields a `CaseFile` carrying the reason
     rather than raising, so a malformed file fails its own test instead of
     aborting collection for the session.
@@ -113,6 +146,9 @@ def _parse_case_file(path: Path) -> CaseFile:
     _reject_nested_assertions(tree, path)
 
     setup = [node for node in tree.body if _case_call(node) is None]
+    setup_module = ast.Module(body=setup, type_ignores=[])
+    setup_code = compile(ast.fix_missing_locations(setup_module), str(path), 'exec')
+
     cases = []
     for node in tree.body:
         call = _case_call(node)
@@ -121,7 +157,7 @@ def _parse_case_file(path: Path) -> CaseFile:
         if len(call.args) != 2:
             msg = f'{path.name}:{node.lineno}: `{ASSERTION}` takes an expression and a type.'
             raise CaseError(msg)
-        module = ast.Module(body=[*setup, node], type_ignores=[])
+        module = ast.Module(body=[node], type_ignores=[])
         cases.append(
             Case(
                 path=path,
@@ -133,8 +169,12 @@ def _parse_case_file(path: Path) -> CaseFile:
         )
 
     case_lines = frozenset().union(*(case.lines for case in cases)) if cases else frozenset()
-    setup_lines = frozenset(range(1, len(source.splitlines()) + 1)) - case_lines
-    return CaseFile(path=path, cases=tuple(cases), setup_lines=setup_lines)
+    return CaseFile(
+        path=path,
+        cases=tuple(cases),
+        setup_lines=frozenset(range(1, len(source.splitlines()) + 1)) - case_lines,
+        setup_code=setup_code,
+    )
 
 
 def collect_cases(directory: Path) -> list[CaseFile]:
