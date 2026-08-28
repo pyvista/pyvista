@@ -26,9 +26,10 @@ from typing import NamedTuple
 
 import pytest
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+from tests.conftest import PYVISTA_ROOT_DIR
+
 CASES_DIR = Path(__file__).parent / 'cases'
-CASES_PACKAGE = str(CASES_DIR.relative_to(PROJECT_ROOT)).replace('/', '.').replace('\\', '.')
+CASES_PACKAGE = '.'.join(CASES_DIR.relative_to(PYVISTA_ROOT_DIR).parts)
 
 # `path:line:col: severity: message`, with the column omitted for whole-file diagnostics.
 _DIAGNOSTIC = re.compile(r'^(?P<path>.+?):(?P<line>\d+):(?:\d+:)? (?P<severity>\w+): (?P<msg>.*)$')
@@ -130,7 +131,9 @@ def _run_mypy(cache_dir: Path) -> str:
         '--package',
         CASES_PACKAGE,
     ]
-    process = subprocess.run(args, capture_output=True, cwd=PROJECT_ROOT, text=True, check=False)
+    process = subprocess.run(
+        args, capture_output=True, cwd=PYVISTA_ROOT_DIR, text=True, check=False
+    )
     if process.stderr:
         msg = f'Mypy failed to run:\n{" ".join(args)}\n\n{process.stderr}'
         raise RuntimeError(msg)
@@ -144,7 +147,7 @@ def _parse_diagnostics(output: str) -> dict[Path, list[tuple[int, str]]]:
         match = _DIAGNOSTIC.match(line)
         if match is None or match['severity'] != 'error':
             continue
-        path = (PROJECT_ROOT / match['path']).resolve()
+        path = (PYVISTA_ROOT_DIR / match['path']).resolve()
         diagnostics.setdefault(path, []).append((int(match['line']), match['msg']))
     return diagnostics
 
@@ -154,7 +157,7 @@ def mypy_diagnostics(worker_id) -> dict[Path, list[tuple[int, str]]]:
     """Run Mypy once per session and return its errors keyed by file."""
     # A cache dir per xdist worker: the run is cheap once warm, and sharing one
     # cache between concurrent workers is what makes it stale.
-    cache_dir = PROJECT_ROOT / '.mypy_cache' / f'typing-cases-{worker_id}'
+    cache_dir = PYVISTA_ROOT_DIR / '.mypy_cache' / f'typing-cases-{worker_id}'
     return _parse_diagnostics(_run_mypy(cache_dir))
 
 
