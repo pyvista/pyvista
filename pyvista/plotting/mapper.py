@@ -415,9 +415,9 @@ class _DataSetMapper(_BaseMapper):
     still derived from the mapped array (``True``) or has been pinned by
     the caller (``False``). It starts ``True``. Setting ``scalar_range``
     directly, or calling :meth:`set_scalars` with an explicit ``clim``,
-    flips it to ``False`` via :meth:`_set_scalar_range`. While ``True``,
+    flips it to ``False`` via ``_set_scalar_range``. While ``True``,
     the range auto-refreshes from the mapped array in
-    :meth:`_maybe_set_default_scalar_range`, which is called from
+    ``_maybe_set_default_scalar_range``, which is called from
     :meth:`set_active_scalars` and the ``dataset`` setter. Once
     ``False``, auto-refresh is suppressed so user-supplied ``clim``
     values are preserved.

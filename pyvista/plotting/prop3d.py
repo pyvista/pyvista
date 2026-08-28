@@ -566,7 +566,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
 class _Prop3DMixin(_BoundsSizeMixin, ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
-    Derived classes need to implement the :meth:`_post_set_update` method to define
+    Derived classes need to implement the ``_post_set_update`` method to define
     their behavior, for example, manually apply a transformation.
     """
 
