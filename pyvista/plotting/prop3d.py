@@ -390,7 +390,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         *,
         inplace: bool = False,
     ):
-        """Apply a transformation to this object's :attr:`~Prop3D.user_matrix`.
+        """Apply a transformation to this object's :attr:`~pyvista.Prop3D.user_matrix`.
 
         .. note::
 
