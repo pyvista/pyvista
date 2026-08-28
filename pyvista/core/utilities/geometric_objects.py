@@ -631,7 +631,6 @@ def StructuredSphere(
     pyvista.SolidSphere : Sphere that fills 3D space.
     pyvista.SolidSphereGeneric : Solid sphere using flexible sampling.
     pyvista.CylinderStructured : Cylinder as a :class:`~pyvista.StructuredGrid`.
-    :ref:`create_sphere_example` : Examples of creating spheres in other ways.
 
     Examples
     --------
