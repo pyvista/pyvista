@@ -1433,6 +1433,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     @property
     def lookup_table(self):  # numpydoc ignore=RT01
+        """Return or set the lookup table used to map scalars to colors."""
         return self._lut
 
     @lookup_table.setter
