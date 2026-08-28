@@ -2485,8 +2485,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @_deprecate_positional_args(allowed=['xyz'], version=(0, 52))
-    def translate(
+    def translate(  # type: ignore[misc]
         self: _MeshType_co,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
