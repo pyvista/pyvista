@@ -201,10 +201,17 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
 
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
-        x-y-z order. However, the actual rotations are applied about the
-        y axis first, then the x axis and finally the z axis.
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :meth:`~pyvista.Prop3D.rotate_y` first, then
+        :meth:`~pyvista.Prop3D.rotate_x` and finally
+        :meth:`~pyvista.Prop3D.rotate_z`.
 
         Rotations are applied about the specified :attr:`~origin`.
+
+        See Also
+        --------
+        pyvista.Prop3D.rotation_from
+            Alternative method for setting the orientation.
 
         Examples
         --------
