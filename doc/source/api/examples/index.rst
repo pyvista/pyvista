@@ -46,6 +46,38 @@ See the API reference for more downloads:
 
    examples.downloads
 
+Any Example
+-----------
+:func:`~pyvista.examples.get_example` is a single entry point for every built-in,
+downloadable, and planetary example. Called with a name it returns the same dataset
+the example's own function does:
+
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.get_example('bunny')
+   >>> mesh.plot()
+
+The ``output`` argument returns the example's files, a reader for them, or its
+metadata instead of the dataset. Every example reports its files as a tuple, however
+many it has, which is useful for the datasets made up of more than one file:
+
+.. code-block:: python
+
+   >>> from pyvista import examples
+   >>> reader = examples.get_example('notch_displacement', output='reader')
+   >>> metadata = examples.get_example('frog', output='metadata')
+   >>> metadata.total_size
+   '5.2 MB'
+
+See the API reference for details:
+
+.. autosummary::
+   :toctree: _autosummary
+
+   examples.get_example
+   examples.ExampleMetadata
+
 Demos
 -----
 PyVista also contains some demos which can be used to quickly
