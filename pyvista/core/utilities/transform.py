@@ -1728,7 +1728,7 @@ class Transform(
         use the ``'vectors'`` mode. Note how the translation component is not applied
         to vectors.
 
-        >>> transformed = transform.apply(array, 'vectors')
+        >>> transformed = transform.apply(array, mode='vectors')
         >>> transformed
         array([[ 2.,  4.,  6.],
                [ 8., 10., 12.]])

@@ -174,6 +174,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                 raise TypeError(msg)
         self._key_press_event_callbacks[key].append(callback)
 
+    @_deprecate_positional_args(allowed=['max_steps'], version=(0, 52))
     def add_timer_event(self, max_steps, duration, callback):
         """Add a function to callback as timer event.
 

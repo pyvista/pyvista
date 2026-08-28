@@ -1607,6 +1607,7 @@ class PickingComponent(_NoNewAttrMixin):
             **kwargs,
         )
 
+    @_deprecate_positional_args(allowed=['callback'], version=(0, 52))
     def enable_block_picking(self, callback=None, side='left'):
         """Enable composite block picking.
 

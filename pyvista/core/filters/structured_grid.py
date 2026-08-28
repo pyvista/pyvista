@@ -79,6 +79,7 @@ class StructuredGridFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
+    @_deprecate_positional_args(allowed=['other'], version=(0, 52))
     def concatenate(self, other, axis, tolerance=0.0):
         """Concatenate a structured grid to this grid.
 

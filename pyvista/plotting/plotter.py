@@ -919,6 +919,7 @@ class BasePlotter(_BoundsSizeMixin):
         )
         return self._trame_component().export_html(filename)
 
+    @_deprecate_positional_args(allowed=['filename'], version=(0, 52))
     def export_vtksz(
         self,
         filename: str | Path | None = 'scene-export.vtksz',
@@ -5387,6 +5388,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         return cast('Actor', actor)
 
+    @_deprecate_positional_args(allowed=['clim'], version=(0, 52))
     def update_scalar_bar_range(
         self, clim: float | Sequence[float], name: str | None = None
     ) -> None:
@@ -6756,6 +6758,7 @@ class BasePlotter(_BoundsSizeMixin):
             labels = [phrase.format(val) for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
+    @_deprecate_positional_args(allowed=['points'], version=(0, 52))
     def add_points(
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet,

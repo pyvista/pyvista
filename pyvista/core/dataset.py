@@ -2742,20 +2742,20 @@ class DataSet(DataSetFilters, DataObject):
         Get the neighbor cell ids that have at least one point in common with
         the 0-th cell.
 
-        >>> mesh.cell_neighbors(0, 'points')
+        >>> mesh.cell_neighbors(0, connections='points')
         [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
 
         Get the neighbor cell ids that have at least one edge in common with
         the 0-th cell.
 
-        >>> mesh.cell_neighbors(0, 'edges')
+        >>> mesh.cell_neighbors(0, connections='edges')
         [1, 3, 12]
 
         For unstructured grids with cells of dimension 3 (Tetrahedron for example),
         cell neighbors can be defined using faces.
 
         >>> mesh = examples.download_tetrahedron()
-        >>> mesh.cell_neighbors(0, 'faces')
+        >>> mesh.cell_neighbors(0, connections='faces')
         [1, 5, 7]
 
         Show a visual example.
@@ -2794,7 +2794,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     )
         ...
         ...     # Add neighbors
-        ...     ids = mesh.cell_neighbors(i_cell, connection)
+        ...     ids = mesh.cell_neighbors(i_cell, connections=connection)
         ...     cells = mesh.extract_cells(ids)
         ...     _ = pl.add_mesh(cells, color='red', show_edges=True)
         ...     _ = add_point_labels(
@@ -2943,7 +2943,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
-        >>> pt_nbr_levels = mesh.point_neighbors_levels(0, 3)
+        >>> pt_nbr_levels = mesh.point_neighbors_levels(0, n_levels=3)
         >>> pt_nbr_levels = list(pt_nbr_levels)
         >>> pt_nbr_levels[0]
         [2, 226, 198, 170, 142, 114, 86, 30, 58, 254]

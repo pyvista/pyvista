@@ -93,6 +93,7 @@ _legacy_dataset_types = Literal[  # no PointSet
 ]
 
 
+@_deprecate_positional_args(allowed=['filename'], version=(0, 52))
 def get_reader(filename, force_ext=None):
     """Get a reader for fine-grained control of reading data files.
 

@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 
+@_deprecate_positional_args(allowed=['path'], version=(0, 52))
 def cubemap(path='', prefix='', ext='.jpg'):
     """Construct a cubemap from 6 images from a directory.
 
@@ -51,7 +53,9 @@ def cubemap(path='', prefix='', ext='.jpg'):
     Load a skybox given a directory, prefix, and file extension.
 
     >>> import pyvista as pv
-    >>> skybox = pv.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+    >>> skybox = pv.cubemap(
+    ...     'my_directory', prefix='skybox', ext='.jpeg'
+    ... )  # doctest:+SKIP
 
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']

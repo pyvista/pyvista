@@ -7,6 +7,7 @@ import os
 import sys
 
 from pyvista import _vtk
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
 
 # Qt GUI modules that would expose a live QGuiApplication, newest binding first
@@ -90,6 +91,7 @@ def _offscreen_probe_render_window():
     return _vtk.vtkRenderWindow()
 
 
+@_deprecate_positional_args(allowed=['number_of_peels'], version=(0, 52))
 @functools.cache
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     """Check if depth peeling is available.

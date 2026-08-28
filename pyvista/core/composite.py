@@ -404,6 +404,7 @@ class MultiBlock(
         | Iterator[tuple[str, _TypeMultiBlockLeaf]]
         | Iterator[tuple[int | tuple[int, ...], str, _TypeMultiBlockLeaf]]
     ): ...
+    @_deprecate_positional_args(allowed=['contents'], version=(0, 52))
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',

@@ -722,6 +722,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             for chart in self._charts:
                 chart._render_event(*args, **kwargs)
 
+    @_deprecate_positional_args(allowed=['number_of_peels'], version=(0, 52))
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
 
@@ -751,7 +752,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             number_of_peels = self._theme.depth_peeling.number_of_peels
         if occlusion_ratio is None:
             occlusion_ratio = self._theme.depth_peeling.occlusion_ratio
-        depth_peeling_supported = check_depth_peeling(number_of_peels, occlusion_ratio)
+        depth_peeling_supported = check_depth_peeling(
+            number_of_peels, occlusion_ratio=occlusion_ratio
+        )
         if depth_peeling_supported:
             self.SetUseDepthPeeling(True)
             self.SetMaximumNumberOfPeels(number_of_peels)
@@ -3910,7 +3913,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
                 old_image = pv.wrap(texture.GetInputDataObject(i, 0))
-                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
+                new_image = old_image.resample(
+                    resample, interpolation='linear', anti_aliasing=True
+                )
                 texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:

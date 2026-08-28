@@ -32,6 +32,7 @@ THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 LOGO_TITLE = 'PyVista'
 
 
+@_deprecate_positional_args(allowed=['grid'], version=(0, 52))
 def atomize(grid, shift_fac=0.1, scale=0.9):
     """Break apart and shrink and/or scale the individual cells of a mesh.
 
@@ -327,6 +328,7 @@ def plot_logo(  # noqa: PLR0917
         return pl.show(cpos=cpos, **kwargs)
 
 
+@_deprecate_positional_args(allowed=['density'], version=(0, 52))
 def logo_atomized(density=0.05, scale=0.6, depth=0.05):
     """Generate a voxelized pyvista logo with intra-cell spacing.
 
