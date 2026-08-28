@@ -166,10 +166,6 @@ class _PointSet(DataSet):
             Same type as the input, but with the specified cells
             removed.
 
-        See Also
-        --------
-        :ref:`ghost_cells_example`
-
         Examples
         --------
         Remove 20 cells from an unstructured grid.
