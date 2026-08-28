@@ -5,6 +5,7 @@ Extract Edges
 ~~~~~~~~~~~~~
 
 Extract edges from a surface.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -16,7 +17,8 @@ from pyvista import examples
 #
 # 1. boundary (used by one polygon) or a line cell
 # 2. non-manifold (used by three or more polygons)
-# 3. feature edges (edges used by two triangles and whose dihedral angle > feature_angle)
+# 3. feature edges (edges used by two triangles and whose dihedral angle
+#    exceeds ``feature_angle``)
 # 4. manifold edges (edges used by exactly two polygons).
 #
 # The :func:`extract_feature_edges() <pyvista.DataSetFilters.extract_feature_edges>`
@@ -79,7 +81,7 @@ pl.add_mesh(mesh, color=True)
 pl.add_mesh(edges, color='red', line_width=5)
 pl.camera_position = pv.CameraPosition(
     position=(-0.2, -0.13, 0.12),
-    focal_point=(-0.015, 0.10, -0.0),
+    focal_point=(-0.015, 0.1, 0.0),
     viewup=(0.28, 0.26, 0.9),
 )
 pl.show()

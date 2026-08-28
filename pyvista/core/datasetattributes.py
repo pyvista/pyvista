@@ -87,10 +87,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         :vtk:`vtkFieldData`.
 
     dataset : :vtk:`vtkDataSet`
-        The :vtk:`vtkDataSet` containing the vtkobject.
+        The :vtk:`vtkDataSet` containing the ``vtkobject``.
 
     association : FieldAssociation
-        The array association type of the vtkobject.
+        The array association type of the ``vtkobject``.
 
     Notes
     -----
@@ -98,7 +98,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     the active scalars, vectors, normals, and texture coordinates.
     In the arrays list, ``SCALARS`` denotes that these are the active
     scalars, ``VECTORS`` denotes that these arrays are tagged as the
-    active vectors data (i.e. data with magnitude and direction) and
+    active vectors data (that is, data with magnitude and direction) and
     so on.
 
     Examples
@@ -142,8 +142,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     Active Texture  : TextureCoordinates
     Active Normals  : Normals
     Contains arrays :
-        Normals                 float32    (4, 3)               NORMALS
         TextureCoordinates      float32    (4, 2)               TCOORDS
+        Normals                 float32    (4, 3)               NORMALS
         my-data                 int64      (4,)
         my-other-data           int64      (4,)
         vectors1                float64    (4, 3)               VECTORS
@@ -352,7 +352,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     @property
     def active_vectors(self: Self) -> NumpyArray[float] | None:
-        """Return the active vectors as a pyvista_ndarray.
+        """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
             Can no longer be used to set the active vectors.  Either use
@@ -363,7 +363,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Returns
         -------
         Optional[np.ndarray]
-            Active vectors as a pyvista_ndarray.
+            Active vectors as a ``pyvista_ndarray``.
 
         Examples
         --------
@@ -1051,7 +1051,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def to_arrow(self: Self) -> pyarrow.Table:
         """Return this attribute set as a :class:`pyarrow.Table`.
 
-        Each array becomes a column. Multi-component arrays (e.g. a
+        Each array becomes a column. Multi-component arrays (for example, a
         ``(N, 3)`` vector field) are expanded to one column per component,
         named ``{array_name}_{i}``. Only ``point_data`` and ``cell_data``
         can be converted. ``field_data`` raises :class:`ValueError`
@@ -1167,7 +1167,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Examples
         --------
         Add an array to ``point_data`` to a DataSet and then clear the
-        point_data.
+        ``point_data``.
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
@@ -1484,8 +1484,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Active Texture  : TextureCoordinates
         Active Normals  : Normals
         Contains arrays :
-            Normals                 float32    (4, 3)               NORMALS
             TextureCoordinates      float32    (4, 2)               TCOORDS
+            Normals                 float32    (4, 3)               NORMALS
 
         >>> mesh.point_data.active_normals
         pyvista_ndarray([[0., 0., 1.],
@@ -1593,7 +1593,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             raise AttributeError(msg)
 
     def _raise_no_texture_coordinates(self: Self) -> None:
-        """Raise AttributeError when attempting access texture_coordinates for field data."""
+        """Raise AttributeError when attempting access ``texture_coordinates`` for field data."""
         if self.association == FieldAssociation.NONE:
             msg = 'FieldData does not have active texture coordinates.'
             raise AttributeError(msg)

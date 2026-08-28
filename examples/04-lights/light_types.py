@@ -4,6 +4,8 @@
 Light Types
 ~~~~~~~~~~~
 
+Demonstrate PyVista's three types of lights.
+
 Lights come in three types:
 
   * headlights, the axis of which always coincides with the view of the camera,
@@ -40,7 +42,7 @@ pl.show()
 
 
 # %%
-# Camera light
+# Camera Light
 # ============
 #
 # Camera lights define their :py:attr:`pyvista.Camera.position` and
@@ -61,7 +63,7 @@ pl.show()
 
 
 # %%
-# Scene light
+# Scene Light
 # ===========
 #
 # Scene lights are attached to the scene, their position and focal point are

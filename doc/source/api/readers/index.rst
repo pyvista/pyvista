@@ -41,6 +41,7 @@ Reader Classes
     GESignaReader
     GIFReader
     GLTFReader
+    GRDECLReader
     HDFReader
     HDRReader
     JPEGReader
@@ -55,6 +56,7 @@ Reader Classes
     OpenFOAMReader
     ParticleReader
     PDBReader
+    PExodusIIReader
     PLYReader
     PNGReader
     PNMReader
@@ -67,8 +69,10 @@ Reader Classes
     STLReader
     SegYReader
     SeriesReader
+    ThreeDSReader
     TIFFReader
     TecplotReader
+    VRMLReader
     VTKDataSetReader
     VTKPDataSetReader
     XMLImageDataReader
@@ -210,6 +214,7 @@ formats. These are used internally by :meth:`pyvista.DataObject.save`.
    BaseWriter
    BMPWriter
    DataSetWriter
+   EnSightWriter
    HDFWriter
    HoudiniPolyDataWriter
    IVWriter

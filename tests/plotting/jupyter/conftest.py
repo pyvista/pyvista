@@ -25,6 +25,14 @@ import pytest
 def _eager_resolve_trame_component():
     """Resolve the trame plotter component before any per-test snapshots.
 
+    Also warm up the process-lifetime trame server: the first vtksz/HTML
+    export launches a server singleton whose helper keeps a
+    ``vtkWebApplication`` (and its protocol objects) alive for the rest of
+    the process by design (``trame.app.core.AVAILABLE_SERVERS``,
+    trame_vtk's ``HELPERS_PER_SERVER``). Exporting once here, outside any
+    ``check_gc`` snapshot, keeps those objects from being blamed on
+    whichever exporting test happens to run first.
+
     Also normalize the jupyter backend registry: importing
     ``trame_pyvista`` registers ``trame``/``server``/``client``/``html``
     via :func:`register_jupyter_backend` (an "explicit" registration
@@ -41,6 +49,8 @@ def _eager_resolve_trame_component():
     pl = pv.Plotter()
     try:
         _ = pl.trame  # triggers entry-point import + descriptor install
+        pl.add_mesh(pv.Cone())
+        pl.trame.export_vtksz(filename=None)  # launch the trame server
     finally:
         pl.close()
 

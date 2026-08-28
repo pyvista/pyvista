@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import given
@@ -15,6 +16,7 @@ from pyvista import _vtk
 from pyvista import colors
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
+from pyvista.plotting._typing import ThemeOptions
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
@@ -285,6 +287,17 @@ def test_themes(theme):
         pv.set_plot_theme('testing')
 
 
+def test_theme_options_literal_matches_native_themes():
+    # ``ThemeOptions`` is a hand-written ``Literal`` covering only the distinct,
+    # user-facing built-in themes; it must stay in sync with ``_NATIVE_THEMES``
+    # minus the names deliberately left out (see ``ThemeOptions``'s comment).
+    # Use ``__members__`` since plain iteration skips value-aliases like ``default``.
+    excluded = {'default', 'vtk', 'testing', 'document_build'}
+    literal_names = set(get_args(ThemeOptions))
+    native_names = set(pv.plotting.themes._NATIVE_THEMES.__members__)
+    assert literal_names == native_names - excluded
+
+
 def test_invalid_theme():
     with pytest.raises(ValueError):  # noqa: PT011
         pv.set_plot_theme('this is not a valid theme')
@@ -419,6 +432,8 @@ def test_set_hidden_line_removal(default_theme):
         ('full_screen', True),
         ('nan_color', (0.5, 0.5, 0.5)),
         ('edge_color', (1.0, 0.0, 0.0)),
+        ('border_color', (0.25, 0.5, 0.75)),
+        ('border_width', 2.5),
         ('outline_color', (1.0, 0.0, 0.0)),
         ('floor_color', (1.0, 0.0, 0.0)),
         ('show_scalar_bar', False),
@@ -786,3 +801,13 @@ def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
 def test_box_axes(default_theme):
     default_theme.axes.box = True
     _ = pv.Sphere().plot(theme=default_theme)
+
+
+def test_testing_theme_pins_notebook_off():
+    """Detected notebook mode would route a plotting test through the trame backend.
+
+    That launches the process-lifetime ``pyvista-jupyter`` server, and whichever test
+    creates it first is blamed for the ``vtkWebApplication`` it leaves behind
+    (pyvista/pyvista#8929).
+    """
+    assert pv.plotting.themes._TestingTheme().notebook is False

@@ -45,7 +45,7 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
 
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
-    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
+    if pv.vtk_version_info >= (9, 7):
         to_be_updated: Any = alg
     else:
         try:
@@ -115,6 +115,7 @@ def _get_output(
     active_scalars=None,
     active_scalars_field='point',
     points_dtype=None,
+    keep_pointset=True,
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
@@ -126,8 +127,9 @@ def _get_output(
             data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
-    # return a PointSet if input is a pointset
-    if isinstance(ido, pv.PointSet):
+    # return a PointSet if input is a pointset, unless the algorithm generates
+    # cells (e.g. glyph), in which case flattening to a PointSet would drop them
+    if keep_pointset and isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
 
@@ -178,14 +180,11 @@ def _check_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm
                 mesh_out.points_to_single()
 
 
-from .composite import CompositeFilters as CompositeFilters
-from .data_object import DataObjectFilters as DataObjectFilters
-
-# Re-export submodules to maintain the same import paths
-# before filters.py was split into submodules
-from .data_set import DataSetFilters as DataSetFilters
-from .image_data import ImageDataFilters as ImageDataFilters
-from .poly_data import PolyDataFilters as PolyDataFilters
-from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters
-from .structured_grid import StructuredGridFilters as StructuredGridFilters
-from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters
+from .composite import CompositeFilters as CompositeFilters  # noqa: E402
+from .data_object import DataObjectFilters as DataObjectFilters  # noqa: E402
+from .data_set import DataSetFilters as DataSetFilters  # noqa: E402
+from .image_data import ImageDataFilters as ImageDataFilters  # noqa: E402
+from .poly_data import PolyDataFilters as PolyDataFilters  # noqa: E402
+from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters  # noqa: E402
+from .structured_grid import StructuredGridFilters as StructuredGridFilters  # noqa: E402
+from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters  # noqa: E402

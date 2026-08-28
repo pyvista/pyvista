@@ -194,7 +194,7 @@ class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgori
     output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
         Output type.  Accepts a VTK class name string (e.g.
         ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
-        (e.g. :class:`pyvista.PolyData`).
+        (for example, :class:`pyvista.PolyData`).
 
     """
 
@@ -259,7 +259,7 @@ class CallbackFilterAlgorithm(PreserveTypeAlgorithmBase):
     output_type : str | type[pyvista.DataSet] | None, default: ``None``
         Fixed output type. Accepts a VTK class name string (e.g.
         ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
-        (e.g. :class:`pyvista.PolyData`). When ``None``, the output type is
+        (for example, :class:`pyvista.PolyData`). When ``None``, the output type is
         inferred from the input.
 
     nInputPorts : int, default: 1
@@ -444,7 +444,7 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
     The output carries a ``vtkOriginalPointIds`` point-data array that maps
     each output point back to its index in the original input mesh. Callers
     that need to remap input-length arrays onto the (potentially longer)
-    output topology (for example raw numpy scalars passed to ``add_mesh``)
+    output topology (for example raw NumPy scalars passed to ``add_mesh``)
     can do so via this tracker.
 
     Parameters
@@ -831,7 +831,7 @@ def callback_algorithm(
     Returns
     -------
     CallbackFilterAlgorithm
-        The callback filter wired to *inp*.
+        The callback filter wired to ``inp``.
 
     """
     alg = CallbackFilterAlgorithm(callback=callback, output_type=output_type)

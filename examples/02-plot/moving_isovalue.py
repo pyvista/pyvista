@@ -4,10 +4,11 @@
 Moving Isovalue
 ~~~~~~~~~~~~~~~
 
-Make an animation of an isovalue through a volumetric dataset
-such as :func:`~pyvista.examples.downloads.download_brain`.
-This example uses :meth:`~pyvista.Plotter.open_gif` and
-:meth:`~pyvista.Plotter.write_frame` to create the animation.
+Animate an isovalue moving through a volumetric dataset.
+
+Uses :func:`~pyvista.examples.downloads.download_brain` and
+:meth:`~pyvista.Plotter.open_gif`/:meth:`~pyvista.Plotter.write_frame` to
+create the animation.
 
 """
 
@@ -27,7 +28,7 @@ values = np.linspace(5, 150, num=15)
 surface = vol.contour(values[:1])
 
 # %%
-# Precompute the surfaces
+# Pre-compute the surfaces
 surfaces = [vol.contour([v]) for v in values]
 
 # %%
@@ -54,9 +55,9 @@ pl.add_mesh(vol.outline_corners(), color='k')
 
 print('Orient the view, then press "q" to close window and produce movie')
 pl.camera_position = pv.CameraPosition(
-    position=(392.9783280407326, 556.4341372317185, 235.51220650196404),
-    focal_point=(88.69563012828344, 119.06774369173661, 72.61750326143748),
-    viewup=(-0.19275936948097383, -0.2218876327549124, 0.9558293278131397),
+    position=(393.0, 556.4, 235.5),
+    focal_point=(88.7, 119.1, 72.62),
+    viewup=(-0.1928, -0.2219, 0.9558),
 )
 
 # initial render and do NOT close

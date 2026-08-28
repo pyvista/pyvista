@@ -1,11 +1,13 @@
 """
 .. _spherical_example:
 
-Plot data in spherical coordinates
+Plot Data in Spherical Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Generate and visualize meshes from data in longitude-latitude coordinates
-using :func:`~pyvista.grid_from_sph_coords`.
+Generate and visualize meshes from longitude-latitude coordinate data.
+
+Uses :func:`~pyvista.grid_from_sph_coords`.
+
 """
 
 import numpy as np
@@ -138,7 +140,7 @@ pl.show()
 
 
 # %%
-# Isurfaces of 3D data in spherical coordinates
+# Isosurfaces of 3D data in spherical coordinates
 
 # Number of vertical levels
 nlev = 10

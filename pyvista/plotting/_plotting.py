@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import operator
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
+from .utilities.algorithms import SmoothShadingAlgorithm
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
@@ -28,7 +30,7 @@ def _resolve_scalars_field(
     mesh: DataSet,
     preference: PointLiteral | CellLiteral,
 ) -> PointLiteral | CellLiteral:
-    """Decide whether raw numpy ``scalars`` attach to points or cells.
+    """Decide whether raw NumPy ``scalars`` attach to points or cells.
 
     Matches by length. When both dimensions coincide (``n_points ==
     n_cells``), falls back to ``preference``.
@@ -136,11 +138,11 @@ def _stamp_raw_numpy_scalars(  # noqa: PLR0917
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[str, PointLiteral | CellLiteral]:
-    """Attach a raw numpy scalars array to ``mesh`` under a unique name.
+    """Attach a raw NumPy scalars array to ``mesh`` under a unique name.
 
     Called from :meth:`Plotter.add_mesh` when the user passes a raw
-    numpy array rather than a named array. Stamping the array on the
-    mesh lets downstream pipeline stages (e.g. smooth-shading surface
+    NumPy array rather than a named array. Stamping the array on the
+    mesh lets downstream pipeline stages (for example, smooth-shading surface
     extraction) carry it forward, and lets callers later mutate the
     array via ``mesh[name] = ...`` to drive re-renders.
 
@@ -150,7 +152,7 @@ def _stamp_raw_numpy_scalars(  # noqa: PLR0917
         Mesh to mutate.
 
     scalars : numpy.ndarray
-        Raw numpy array whose first axis matches ``n_points`` or
+        Raw NumPy array whose first axis matches ``n_points`` or
         ``n_cells``.
 
     scalars_name : str
@@ -263,7 +265,7 @@ def _remap_scalars_through_topology_change(  # noqa: PLR0917
 
     original_scalar_name : str | None
         If set, the array is resolved by name on ``mesh``.  When
-        ``None`` (raw numpy + upstream vtkAlgorithm input), the
+        ``None`` (raw NumPy + upstream ``vtkAlgorithm`` input), the
         ``vtkOriginalPointIds`` tracker is used to remap point-length
         scalars.
 
@@ -281,10 +283,6 @@ def _remap_scalars_through_topology_change(  # noqa: PLR0917
         unchanged if no remap is possible.
 
     """
-    # Local import to avoid a top-level circular import: algorithms imports
-    # from core, core imports from plotting indirectly for Actor types.
-    from .utilities.algorithms import SmoothShadingAlgorithm  # noqa: PLC0415
-
     if original_scalar_name is not None:
         resolved = get_array(mesh, original_scalar_name, preference=preference, err=False)
         if resolved is not None:
@@ -304,7 +302,6 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
     Picks ``base_name`` if free on ``point_data``, ``cell_data``, and
     ``field_data``; otherwise appends a numeric suffix.
     """
-    import itertools  # noqa: PLC0415
 
     def _is_free(name: str) -> bool:
         return (
@@ -420,7 +417,7 @@ def _common_arg_parser(
     remove_existing_actor=None,
     **kwargs,
 ):
-    """Parse arguments in common between add_volume, composite, and mesh."""
+    """Parse arguments in common between ``add_volume``, composite, and mesh."""
     # supported aliases
     clim = kwargs.pop('rng', clim)
     cmap = kwargs.pop('colormap', cmap)

@@ -24,20 +24,6 @@ def cube_faces_source():
     return pv.CubeFacesSource()
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 3))
-def test_capsule_source():
-    algo = pv.CapsuleSource()
-    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
-    assert algo.radius == 0.5
-    assert algo.cylinder_length == 1.0
-    assert algo.theta_resolution == 30
-    assert algo.phi_resolution == 30
-    direction = np.random.default_rng().random(3)
-    algo.direction = direction
-    assert np.array_equal(algo.direction, direction)
-
-
 def test_cone_source():
     algo = pv.ConeSource()
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
@@ -79,7 +65,6 @@ def test_cylinder_source():
     assert np.array_equal(algo.direction, direction)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_cylinder_capsule_cap():
     algo = pv.CylinderSource()
     algo.capsule_cap = True
@@ -159,10 +144,7 @@ def test_text3d_source_empty_string():
     out = src.output
     assert out.n_points == 0
 
-    if pv.vtk_version_info == (9, 0, 3):
-        mx, mn = 1, -1
-    else:
-        mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
+    mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
 
     assert out.bounds == (mx, mn, mx, mn, mx, mn)
 
@@ -375,9 +357,18 @@ def test_sphere_source():
     assert algo.end_theta == 360.0
     assert algo.start_phi == 0.0
     assert algo.end_phi == 180.0
+    assert algo.tessellation == 'triangle'
+    assert algo.texture_coordinates is False
     center = (1.0, 2.0, 3.0)
     algo = pv.SphereSource(center=center)
     assert algo.center == center
+
+    algo.tessellation = 'phi_theta'
+    assert algo.tessellation == 'phi_theta'
+    algo.tessellation = 'triangle'
+    assert algo.tessellation == 'triangle'
+    algo.texture_coordinates = True
+    assert algo.texture_coordinates is True
 
 
 def test_line_source():

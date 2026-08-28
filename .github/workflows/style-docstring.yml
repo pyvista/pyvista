@@ -35,12 +35,12 @@ jobs:
       TOX_COLORED: "yes"
       PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -49,14 +49,14 @@ jobs:
         if: runner.os == 'Windows'
         uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
 
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         if: runner.os == 'Linux'
         with:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
@@ -77,33 +77,53 @@ jobs:
     name: Vale
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.14
 
-      - name: Install test dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
+      - name: Install Vale Dependencies
+        run: pip install 'docutils<0.22' 'sphinx-gallery<0.22.0'
 
-      # this is equivalent to
-      # vale --config doc/.vale.ini doc pyvista examples
-      # GHA SHA is pinned to a reviewdog branch commit
+      # Convert .py examples to .rst so Vale can parse their headings.
+      - name: Extract example RST for Vale
+        run: python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
+
+      # Same, for docstrings, so Vale can check their prose too.
+      - name: Extract docstring RST for Vale
+        run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
+
+      # `doc/run_vale.py` owns the path list; Vale runs here through the action
+      # instead, so that alerts appear inline on the pull request.
+      - name: Collect the paths Vale checks
+        id: vale-paths
+        run: echo "files=$(python3 doc/run_vale.py --print-files)" >> "$GITHUB_OUTPUT"
+
       - name: "Run Vale"
-        uses: errata-ai/vale-action@85f9f7f2c5f449ac0ae5b66662961bae3f77ca6a
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
-          files: '["doc", "pyvista", "examples"]'
-          vale_flags: "--config=doc/.vale.ini"
+          files: ${{ steps.vale-paths.outputs.files }}
+          config: doc/.vale.ini
           reporter: github-pr-check
-          level: error
           filter_mode: nofilter
-          fail_on_error: true
-          version: 2.29.5
-          reviewdog_url: https://github.com/reviewdog/reviewdog/releases/download/v0.17.5/reviewdog_0.17.5_Linux_x86_64.tar.gz
+          # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
+          fail_level: warning
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # A heading in a scanned file has to pass, so nothing above would notice
+      # `Google.Headings` going slack. This runs Vale over a fixture of
+      # headings that must be flagged, and fails if any of them stops being.
+      - name: Install Vale
+        run: |
+          curl -sSfL https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz \
+            | sudo tar -xz -C /usr/local/bin vale
+        env:
+          VALE_VERSION: 3.18.0
+
+      - name: "Check Vale still catches known-bad headings"
+        run: python3 tests/doc/vale/check_expected_failures.py

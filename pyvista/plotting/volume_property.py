@@ -119,14 +119,14 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
     @property
     def _lookup_table(self) -> LookupTable | None:
-        """Get the lookup table if applied via apply_lookup_table."""
+        """Get the lookup table if applied via ``apply_lookup_table``."""
         if self._lookup_table_ is not None:
             return self._lookup_table_()
         return None
 
     @_lookup_table.setter
     def _lookup_table(self, lookup_table: LookupTable):
-        """Set the lookup table if applied via apply_lookup_table."""
+        """Set the lookup table if applied via ``apply_lookup_table``."""
         if self._lookup_table is not None and self._lookup_table_observer_id is not None:
             # Clean up the old lookup table observer
             self._lookup_table.RemoveObserver(self._lookup_table_observer_id)

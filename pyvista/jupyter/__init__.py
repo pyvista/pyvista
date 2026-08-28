@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# noqa-reason: ``Callable`` is used in the ``JupyterBackendRegistration``
+# ``Callable`` is used in the ``JupyterBackendRegistration``
 # NamedTuple field annotations and must be available at runtime so that
 # ``typing.get_type_hints`` (called by Sphinx autodoc) can resolve them.
 from collections.abc import Callable  # noqa: TC003
@@ -67,7 +67,7 @@ def register_jupyter_backend(
     Parameters
     ----------
     name : str
-        Name of the backend (e.g. ``'custom'``). Must not collide with
+        Name of the backend (for example, ``'custom'``). Must not collide with
         a built-in backend name unless ``override=True`` is passed.
     handler : callable
         A callable with signature ``handler(plotter, **kwargs)`` that
@@ -179,7 +179,7 @@ def _ensure_entry_points() -> None:
         if name in _custom_backends:
             continue
         try:
-            # ep.load() runs third-party import machinery — it can raise
+            # ep.load() runs third-party import machinery—it can raise
             # literally anything. Convert to a warning so one broken
             # plugin cannot take down the Jupyter integration.
             handler = ep.load()

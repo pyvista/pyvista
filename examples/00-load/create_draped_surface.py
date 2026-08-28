@@ -31,6 +31,7 @@ have are technically shifted up and we have some NaN filler above the surface
 - its weird and just ignore it. You'll typically have a more uniform looking
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
+
 """
 
 import matplotlib.pyplot as plt
@@ -92,9 +93,9 @@ grid['values'] = data.ravel(order='F')
 # mesh and the possibilities are endless with PyVista.
 
 cpos = pv.CameraPosition(
-    position=(1217002.366883762, 345363.80666238244, 3816.828857791056),
-    focal_point=(1216322.4753436751, 344033.0310674846, 3331.052985309526),
-    viewup=(-0.17716571330686096, -0.25634368781817973, 0.9502106207279767),
+    position=(1217002.0, 345364.0, 3817.0),
+    focal_point=(1216322.0, 344033.0, 3331.0),
+    viewup=(-0.1772, -0.2563, 0.9502),
 )
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True

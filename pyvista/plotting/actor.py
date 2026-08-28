@@ -174,6 +174,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
         self._point_sprite_observer: int | None = None
+        self._camera_distortion_state: tuple[tuple[float, ...], tuple[float, float]] | None = None
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
@@ -528,10 +529,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         pyvista.Property
             The object describing backfaces.
 
-        See Also
-        --------
-        :ref:`backface_prop_example`
-
         Examples
         --------
         Clip a sphere by a plane and color the inside of the clipped sphere
@@ -588,7 +585,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             or ``'geometry'``.
 
         original : str
-            The VTK shader tag to replace (e.g., ``'//VTK::Color::Impl'``).
+            The VTK shader tag to replace (for example, ``'//VTK::Color::Impl'``).
 
         replacement : str
             The GLSL replacement code.
@@ -754,10 +751,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         ``opacity < 1`` unless depth peeling is enabled. See
         :func:`pyvista.Plotter.enable_depth_peeling`.
 
-        See Also
-        --------
-        :ref:`maximum_intensity_projection_example`
-
         References
         ----------
         Cowan, E.J., 2014. 'X-ray Plunge Projection' - Understanding
@@ -779,10 +772,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.enable_maximum_intensity_projection()
 
         """
-        if pv.vtk_version_info < (9, 3):
-            msg = 'Maximum intensity projection requires VTK >= 9.3.'
-            raise RuntimeError(msg)
-
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:
@@ -990,10 +979,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         """Install, update, or remove the point sprite shader replacement.
 
         The replacement is only active while the representation is
-        ``'Points'`` — for any other representation the ``gl_PointCoord``
+        ``'Points'``—for any other representation the ``gl_PointCoord``
         built-in is undefined and would otherwise corrupt fragment output.
-        Tracks the currently-applied shape (rather than a boolean) so
-        that unrelated property modifications (color, opacity, ...) do
+        Tracks the currently applied shape (rather than a boolean) so
+        that unrelated property modifications (color, opacity, and so on) do
         not repeatedly rebuild the shader, while still honoring real
         shape changes and representation transitions.
         """

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -28,7 +29,7 @@ def vtk_points(  # noqa: PLR0917
     force_float: bool = False,  # noqa: FBT001, FBT002
     allow_empty: bool = True,  # noqa: FBT001, FBT002
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
+    """Convert a NumPy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------
@@ -90,11 +91,7 @@ def vtk_points(  # noqa: PLR0917
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        size = (
-            vtk_object.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else vtk_object.GetCapacity()
-        )
+        size = vtk_object.GetSize() if pv.vtk_version_info < (9, 7) else vtk_object.GetCapacity()
         if size == points_.size:
             vtkpts = _vtk.vtkPoints()
             vtkpts.SetData(points_.VTKObject)
@@ -140,23 +137,16 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     >>> lines = pv.line_segments_from_points(points)
     >>> lines.plot()
 
-    See :ref:`graph_network_example` for more examples using this function.
-
     """
     if len(points) % 2 != 0:
         msg = 'An even number of points must be given to define each segment.'
         raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
-    n_lines = n_points // 2
-    lines = np.c_[
-        2 * np.ones(n_lines, np.int_),
-        np.arange(0, n_points - 1, step=2),
-        np.arange(1, n_points + 1, step=2),
-    ]
+    lines = cast('NumpyArray[int]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2))
     poly = pv.PolyData()
-    poly.points = points
-    poly.lines = lines
+    poly.points = cast('MatrixLike[float]', points)
+    poly.lines = pv.CellArray.from_regular_cells(lines)
     return poly
 
 
@@ -190,17 +180,17 @@ def lines_from_points(
     >>> poly = pv.lines_from_points(points)
     >>> poly.plot(line_width=5)
 
-    See :ref:`lorenz_attractor_example` for more examples using this function.
-
     """
     poly = pv.PolyData()
-    poly.points = points
-    cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
-    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
-    cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
+    poly.points = cast('MatrixLike[float]', points)
+    n_points = len(points)
+    point_ids = np.arange(n_points, dtype=pv.ID_TYPE)
+    cells = np.empty((n_points if close else n_points - 1, 2), dtype=pv.ID_TYPE)
+    cells[: n_points - 1, 0] = point_ids[:-1]
+    cells[: n_points - 1, 1] = point_ids[1:]
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
-    poly.lines = cells
+        cells[-1] = [n_points - 1, 0]
+    poly.lines = pv.CellArray.from_regular_cells(cells)
     return poly
 
 
@@ -210,7 +200,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
-) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
+) -> PolyData | tuple[PolyData, NumpyArray[np.float64], NumpyArray[np.float64]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -252,7 +242,7 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     init_normal : VectorLike[float] | str, optional
         Flip the normal of the plane such that it best aligns with this vector. Can be
-        a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
+        a vector or string specifying the axis by name (for example, ``'x'`` or ``'-x'``, etc.).
 
         .. versionadded:: 0.45.0
 
@@ -277,6 +267,8 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 2
+
     Fit a plane to a random point cloud.
 
     >>> import pyvista as pv
@@ -413,7 +405,7 @@ def fit_line_to_points(
 
     init_direction : VectorLike[float], optional
         Flip the direction of the line's points such that it best aligns with this
-        vector. Can be a vector or string specifying the axis by name (e.g. ``'x'``
+        vector. Can be a vector or string specifying the axis by name (for example, ``'x'``
         or ``'-x'``, etc.).
 
     return_meta : bool, default: False
@@ -440,6 +432,8 @@ def fit_line_to_points(
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 2
+
     Download a point cloud. The points trace a path along topographical surface.
 
     >>> import pyvista as pv
@@ -591,10 +585,7 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
     if faces.ndim != 2 or faces.shape[1] != 3:
         msg = 'Face array should have shape (M, 3).'
         raise ValueError(msg)
-    cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
-    cells[:, 0] = 3
-    cells[:, 1:] = faces
-    return pv.PolyData(points, cells)
+    return pv.PolyData.from_regular_faces(points, faces)
 
 
 def vector_poly_data(
@@ -725,7 +716,7 @@ def principal_axes(
     the third axis which explains the smallest percentage of variance.
 
     The axes may be used to build an oriented bounding box or to align the points to
-    another set of axes (e.g. the world XYZ axes).
+    another set of axes (for example, the world XYZ axes).
 
     .. note::
         The computed axes are not unique, and the sign of each axis direction can be
@@ -745,9 +736,6 @@ def principal_axes(
 
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
-
-    :ref:`point_cloud_orientation_example`
-        Example using this function with point clouds.
 
     Parameters
     ----------

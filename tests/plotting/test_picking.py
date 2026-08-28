@@ -54,7 +54,7 @@ def test_single_cell_picking():
 
 
 def test_picked_cells_attribute():
-    """Test the `picked_cells` attribute when selecting through multiple cells."""
+    """Test the ``picked_cells`` attribute when selecting through multiple cells."""
 
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), pickable=True)

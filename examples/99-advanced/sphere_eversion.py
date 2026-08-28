@@ -1,17 +1,19 @@
 """
 .. _sphere_eversion_example:
 
-Turning the sphere inside out
+Turning the Sphere Inside Out
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are several videos online talking about how a sphere can be turned inside
-out in a continuous fashion, for instance in `this YouTube video
-<https://www.youtube.com/watch?v=OI-To1eUtuU>`_.  Thanks to `an excellent paper
-by Adam Bednorz and Witold Bednorz, Differential and its Applications 64, 59
-(2019) <https://doi.org/10.1016/j.difgeo.2019.02.004>`_ (also available `on
-arXiv <https://arxiv.org/abs/1711.10466>`_), we can plot this so-called
-eversion of a sphere (turning it inside out without pinching or tearing the
-surface, in other words by preserving its topology).
+Plot the eversion of a sphere: turning it inside out without tearing it.
+
+There are several videos online talking about how a sphere can be turned
+inside out in a continuous fashion, for instance in `this YouTube video
+<https://www.youtube.com/watch?v=OI-To1eUtuU>`_. Thanks to `an excellent
+paper by Adam Bednorz and Witold Bednorz, Differential and its Applications
+64, 59 (2019) <https://doi.org/10.1016/j.difgeo.2019.02.004>`_ (also
+available `on arXiv <https://arxiv.org/abs/1711.10466>`_), we can plot this
+so-called eversion of a sphere (turning it inside out without pinching or
+tearing the surface, in other words by preserving its topology).
 
 The mathematics involved can seem a bit, well, involved. What matters is the
 overall process visible in the animation: first the sphere is corrugated and
@@ -52,7 +54,7 @@ def sphere_to_cylinder(theta, phi):
     return h, phi
 
 
-def cylinder_to_wormhole(h, phi, t, p, q):  # noqa: PLR0917
+def cylinder_to_wormhole(h, phi, t, p, q):
     """
     Map from a cylinder to an open wormhole using Eq. (4).
 
@@ -69,7 +71,7 @@ def cylinder_to_wormhole(h, phi, t, p, q):  # noqa: PLR0917
     return x, y, z
 
 
-def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
+def close_wormhole(x0, y0, z0, eta, xi, alpha):
     """
     Close the wormhole using Eqs. (7)-(8).
 
@@ -107,7 +109,7 @@ def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
     return x2, y2, z2
 
 
-def unfold_sphere(theta, phi, t, q, eta, lamda):  # noqa: PLR0917
+def unfold_sphere(theta, phi, t, q, eta, lamda):
     """
     Unfold the sphere using Eqs. (12), (15), (10).
 

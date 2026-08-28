@@ -39,8 +39,8 @@ structures them in a more pythonic manner for ease of use.
 If you'd like some background for how VTK structures its data, see
 `Introduction to VTK in Python by Kitware
 <https://vimeo.com/32232190>`_, as well as the numerous code examples
-on `Kitware's GitHub site
-<https://kitware.github.io/vtk-examples/site/>`_. An excellent
+on `Kitware's VTK examples site
+<https://examples.vtk.org/site/>`_. An excellent
 introduction to mathematical concepts relevant to 3D modeling in
 general implemented in VTK is provided by the `Discrete Differential
 Geometry YouTube Series
@@ -151,7 +151,7 @@ class, but there's a better, and more pythonic alternative by using
 :class:`numpy.ndarray`.
 
 
-Using NumPy with PyVista
+Using NumPy With PyVista
 ~~~~~~~~~~~~~~~~~~~~~~~~
 You can create a `NumPy <https://numpy.org/>`_ points array with:
 
@@ -168,7 +168,7 @@ everything from Python that is transferred over to VTK needs to be in a
 format that VTK can process.
 
 Should you wish to use VTK objects within PyVista, you can still do
-this. In fact, using :func:`pyvista.wrap`, you can even get a numpy-like
+this. In fact, using :func:`pyvista.wrap`, you can even get a NumPy-like
 representation of the data. For example:
 
 .. jupyter-execute::
@@ -182,7 +182,7 @@ a shallow copy of the data. In other words, we pass the pointer from
 the underlying C array to the :class:`numpy.ndarray`, meaning
 that the two arrays are now efficiently linked (in NumPy terminology,
 the returned array is a view into the underlying VTK data). This means
-that we can change the array using numpy array indexing and have it
+that we can change the array using NumPy array indexing and have it
 modified on the "VTK side".
 
 .. jupyter-execute::
@@ -191,7 +191,7 @@ modified on the "VTK side".
    >>> vtk_array.GetValue(0)
 
 Or we can change the value from the VTK array and see it reflected in
-the numpy wrapped array. Let's change the value back:
+the NumPy wrapped array. Let's change the value back:
 
 .. jupyter-execute::
 
@@ -261,7 +261,7 @@ and to do that we need to specify the cells (or faces) of this surface.
 Geometry and Mesh Connectivity/Topology Within PyVista
 ------------------------------------------------------
 With our previous example, we defined our "mesh" as three disconnected
-points. While this is useful for representing "point clouds," if we
+points. While this is useful for representing "point clouds", if we
 want to create a surface, we have to describe the connectivity of the
 mesh. To do this, let's define a single cell composed of three points
 in the same order as we defined earlier.
@@ -672,8 +672,8 @@ cannot be made so because field data is not expected to match the
 number of cells or points. As such, it also cannot be plotted.
 
 
-Vectors, Texture Coords, and Normals Attributes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vectors, Texture Coordinates, and Normals Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.DataSet.active_scalars>`:
 
 * :attr:`active_normals <pyvista.DataSet.active_normals>`

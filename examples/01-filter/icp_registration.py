@@ -1,11 +1,13 @@
 """
 .. _icp_registration_example:
 
-Register a Surface with ICP
+Register a Surface With ICP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Recover the rigid transform between two surfaces with the iterative closest
-point implementation behind :func:`pyvista.DataSetFilters.align`.
+Recover the rigid transform between two surfaces with iterative closest point.
+
+Implemented behind :func:`pyvista.DataSetFilters.align`.
+
 """
 
 import numpy as np
@@ -15,7 +17,7 @@ from pyvista import examples
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Load a reference surface
+# Load a Reference Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # The :func:`~pyvista.examples.downloads.download_action_figure` scan is an
 # asymmetric reference mesh.
@@ -34,7 +36,7 @@ cpos = pv.CameraPosition(
 
 
 # %%
-# Transform a copy away from the reference
+# Transform a Copy Away From the Reference
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The transformed copy stands in for an incoming scan that needs to be
 # registered back onto the reference.
@@ -51,7 +53,7 @@ pl.show()
 
 
 # %%
-# Recover the rigid transform
+# Recover the Rigid Transform
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # :func:`pyvista.DataSetFilters.align` runs ICP and returns both the aligned
 # mesh and the recovered transform matrix.
@@ -75,7 +77,7 @@ pl.show()
 
 
 # %%
-# Inspect the recovered transform
+# Inspect the Recovered Transform
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The returned matrix maps the transformed copy back onto the reference.
 
@@ -83,7 +85,7 @@ np.round(matrix, 3)
 
 
 # %%
-# Measure the residual distances
+# Measure the Residual Distances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # A successful registration leaves a small point-to-surface residual.
 

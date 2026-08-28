@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
-from itertools import product
+import itertools
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
 
@@ -14,6 +14,8 @@ from pyvista import _PrecisionOptions
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.filters import _maybe_convert_points_dtype
+from pyvista.core.filters import _set_output_points_precision
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -31,15 +33,6 @@ from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
 from .geometric_sources import translate
-
-with contextlib.suppress(ImportError):
-    from .geometric_sources import CapsuleSource
-
-from typing import TYPE_CHECKING
-
-from pyvista.core.filters import _maybe_convert_points_dtype
-from pyvista.core.filters import _set_output_points_precision
-
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -65,11 +58,11 @@ def Capsule(  # noqa: PLR0917
 
     .. warning::
        :func:`pyvista.Capsule` function rotates the capsule :class:`pyvista.PolyData`
-       in its own way. It rotates the output 90 degrees in z-axis, translates and
+       in its own way. It rotates the output 90 degrees in z-axis, translates, and
        orients the mesh to a new ``center`` and ``direction``.
 
     .. note::
-       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk
+       A :class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk
        versions below 9.3, a separate ``pyvista.CapsuleSource`` class is used instead.
        The mesh geometries are similar but not identical.
 
@@ -110,25 +103,15 @@ def Capsule(  # noqa: PLR0917
     >>> capsule.plot(show_edges=True)
 
     """
-    if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-        algo = CylinderSource(
-            center=center,
-            direction=direction,
-            radius=radius,
-            height=cylinder_length,
-            capping=True,
-            resolution=resolution,
-        )
-        algo.capsule_cap = True
-    else:
-        algo = CapsuleSource(
-            center=(0, 0, 0),
-            direction=(1, 0, 0),
-            radius=radius,
-            cylinder_length=cylinder_length,
-            theta_resolution=resolution,
-            phi_resolution=resolution,
-        )
+    algo = CylinderSource(
+        center=center,
+        direction=direction,
+        radius=radius,
+        height=cylinder_length,
+        capping=True,
+        resolution=resolution,
+    )
+    algo.capsule_cap = True
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
@@ -197,8 +180,6 @@ def Cylinder(  # noqa: PLR0917
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
-
-    See :ref:`chemistry_molecule_example` for more examples using this function.
 
     """
     algo = CylinderSource(
@@ -408,6 +389,8 @@ def Sphere(  # noqa: PLR0917
     end_theta: float = 360.0,
     start_phi: float = 0.0,
     end_phi: float = 180.0,
+    tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
+    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a sphere.
 
@@ -421,9 +404,6 @@ def Sphere(  # noqa: PLR0917
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole. ``phi=0`` is on the positive z-axis by default.
     ``theta=0`` is on the positive x-axis by default.
-
-    See :ref:`create_sphere_example` for examples on creating spheres in
-    other ways.
 
     Parameters
     ----------
@@ -457,6 +437,36 @@ def Sphere(  # noqa: PLR0917
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
 
+    tessellation : 'triangle' | 'phi_theta', default: 'triangle'
+        Configure the tessellation of the sphere.
+
+        - ``'triangle'``: tessellate with all :attr:`~pyvista.CellType.TRIANGLE` cells.
+        - ``'phi_theta'``: tessellate with :attr:`~pyvista.CellType.QUAD` cells
+          aligned to the phi and theta directions. Cells at the poles are
+          :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        .. versionadded:: 0.49
+
+    texture_coordinates : bool, default: False
+        If ``True``, include a ``'Texture Coordinates'`` array as the active texture coordinates.
+        Enabling this option will also generate a topological seam at ``theta=0`` by duplicating
+        vertices, and the sphere will not be a closed surface.
+
+        This option is only supported for complete spheres.
+
+        .. note::
+
+            For textures of Earth such as :func:`~pyvista.examples.examples.load_globe_texture`,
+            the texture's seam corresponds to 180 degrees longitude. Accordingly, it is necessary
+            to rotate the sphere 180 degrees along the polar axis, (for example, using
+            :meth:`~pyvista.DataObjectFilters.rotate_x`) to ensure correct orientation with
+            the Prime Meridian along the positive x-axis.
+
+            In this case, consider using :func:`~pyvista.examples.planets.load_planet` instead,
+            which already includes this rotation.
+
+        .. versionadded:: 0.49
+
     Returns
     -------
     pyvista.PolyData
@@ -467,6 +477,8 @@ def Sphere(  # noqa: PLR0917
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
+    :func:`pyvista.examples.planets.load_planet`
+        Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
 
     Examples
     --------
@@ -486,6 +498,21 @@ def Sphere(  # noqa: PLR0917
     >>> sphere = pv.Sphere(end_phi=90)
     >>> out = sphere.plot(show_edges=True)
 
+    Tessellate along ``phi`` and ``theta`` directions.
+    The sphere is mostly quads with triangles at the poles.
+
+    >>> sphere = pv.Sphere(tessellation='phi_theta')
+    >>> sorted(sphere.distinct_cell_types)
+    [<CellType.TRIANGLE: 5>, <CellType.QUAD: 9>]
+
+    >>> out = sphere.plot(show_edges=True)
+
+    Include texture coordinates.
+
+    >>> sphere = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    >>> sphere.active_texture_coordinates[0]
+    pyvista_ndarray([0., 1.], dtype=float32)
+
     """
     sphere = SphereSource(
         radius=radius,
@@ -495,6 +522,8 @@ def Sphere(  # noqa: PLR0917
         end_theta=end_theta,
         start_phi=start_phi,
         end_phi=end_phi,
+        tessellation=tessellation,
+        texture_coordinates=texture_coordinates,
     )
     surf = sphere.output
     surf.rotate_y(90, inplace=True)
@@ -574,7 +603,7 @@ def SolidSphere(  # noqa: PLR0917
 
     phi_resolution : int, default: 30
         Number of points in ``phi`` direction,
-        inclusive of polar axis, i.e. ``phi=0`` and ``phi=180``
+        inclusive of polar axis, that is, ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -648,7 +677,7 @@ def SolidSphere(  # noqa: PLR0917
         end_phi = np.pi if radians else 180.0
 
     radius = np.linspace(inner_radius, outer_radius, radius_resolution)
-    theta = np.linspace(start_theta, end_theta, theta_resolution)
+    theta = np.linspace(start_theta, end_theta, theta_resolution + 1)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
         radius=radius,
@@ -906,7 +935,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
         negative_axis = False
 
     # rest of points with theta changing quickest
-    for ir, iphi in product(radius, phi):
+    for ir, iphi in itertools.product(radius, phi):
         points.extend(_spherical_to_cartesian(ir, iphi, theta))
 
     cells = []
@@ -915,7 +944,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     def _index(ir: int, iphi: int, itheta: int) -> int:
         """Index for points not on axis.
 
-        Values of ir and phi here are relative to the first nonaxis values.
+        Values of ``ir`` and ``iphi`` here are relative to the first non-axis values.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1
@@ -954,7 +983,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 celltypes.append(pv.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
-        for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
+        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
             cells.append(5)
             cells.extend(
                 [
@@ -977,7 +1006,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
     if positive_axis:
-        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
             axis0 = ir + 1 if include_origin else ir
             axis1 = ir + 2 if include_origin else ir + 1
 
@@ -989,7 +1018,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 _index(ir + 1, 0, itheta),
                 _index(ir + 1, 0, itheta + 1),
             ]
-            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+            if pv.vtk_version_info < (9, 7):
                 raw_points = _reorder_wedge(raw_points)
 
             cells.append(6)
@@ -998,7 +1027,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     # now go downwards
     if negative_axis:
-        for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
+        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
 
@@ -1010,7 +1039,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 _index(ir + 1, nphi - 1, itheta + 1),
                 _index(ir + 1, nphi - 1, itheta),
             ]
-            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+            if pv.vtk_version_info < (9, 7):
                 raw_points = _reorder_wedge(raw_points)
 
             cells.append(6)
@@ -1020,7 +1049,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
+    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
         cells.append(8)
         cells.extend(
             [
@@ -1062,16 +1091,16 @@ def Plane(  # noqa: PLR0917
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
-        Size of the plane in the i direction.
+        Size of the plane in the ``i`` direction.
 
     j_size : float, default: 1.0
-        Size of the plane in the j direction.
+        Size of the plane in the ``j`` direction.
 
     i_resolution : int, default: 10
-        Number of points on the plane in the i direction.
+        Number of points on the plane in the ``i`` direction.
 
     j_resolution : int, default: 10
-        Number of points on the plane in the j direction.
+        Number of points on the plane in the ``j`` direction.
 
     Returns
     -------
@@ -1164,9 +1193,6 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     >>> pl.camera.azimuth = 45
     >>> pl.camera.zoom(0.8)
     >>> pl.show()
-
-    See :ref:`create_multiple_lines_example` and :ref:`color_lines_example`
-    for more examples.
 
     """
     if points is None:
@@ -1343,7 +1369,7 @@ def Box(
             The algorithm is not optimized when a 3 length vector is given.
 
         .. versionadded:: 0.47
-            Enable specifying different values for x, y and z directions.
+            Enable specifying different values for x, y, and z directions.
 
     quads : bool, default: True
         Flag to tell the source to generate either a quad or two
@@ -1561,7 +1587,7 @@ def Text3D(  # noqa: PLR0917
 ) -> PolyData:
     """Create 3D text from a string.
 
-    The text may be configured to have a specified width, height or depth.
+    The text may be configured to have a specified width, height, or depth.
 
     Parameters
     ----------
@@ -1604,7 +1630,6 @@ def Text3D(  # noqa: PLR0917
         of the text.
 
         .. versionadded:: 0.43
-
 
     Returns
     -------
@@ -1650,8 +1675,6 @@ def Text3D(  # noqa: PLR0917
     ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
     ... )
     >>> text_mesh.plot(cpos='xy', show_bounds=True)
-
-    See :ref:`create_text_3d_example` for more examples using this function.
 
     """
     return Text3DSource(
@@ -1801,7 +1824,7 @@ def CircularArc(  # noqa: PLR0917
         ``pointa`` and ``pointb``.
 
         By setting this to ``True``, the longest angular sector is
-        used instead (i.e. the negative coterminal angle to the
+        used instead (that is, the negative coterminal angle to the
         shortest one).
 
     Returns
@@ -1820,9 +1843,6 @@ def CircularArc(  # noqa: PLR0917
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
-
-    See :ref:`create_circular_arc_example` and :ref:`flight_paths_example`
-    for more examples using this function.
 
     """
     check_valid_vector(pointa, 'pointa')
@@ -1914,8 +1934,6 @@ def CircularArcFromNormal(  # noqa: PLR0917
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
-
-    See :ref:`create_circular_arc_example` for more examples using this function.
 
     """
     check_valid_vector(center, 'center')
@@ -2365,8 +2383,6 @@ def PlatonicSolid(
     >>> import pyvista as pv
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
-
-    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')

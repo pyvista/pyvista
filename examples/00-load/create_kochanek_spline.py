@@ -4,8 +4,10 @@
 Create a Kochanek Spline
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a Kochanek spline/polyline from a numpy array of XYZ vertices.
+Create a Kochanek spline/polyline from a NumPy array of XYZ vertices.
+
 Uses :func:`pyvista.KochanekSpline`.
+
 """
 
 # sphinx_gallery_start_ignore

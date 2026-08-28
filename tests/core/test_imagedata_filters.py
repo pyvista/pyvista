@@ -11,7 +11,6 @@ from pytest_cases import parametrize_with_cases
 import pyvista as pv
 from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 from tests.conftest import flaky_test
@@ -60,154 +59,6 @@ def frog_tissues():
     return examples.load_frog_tissues()
 
 
-def test_contour_labeled_deprecated():
-    match = 'This filter produces unexpected results and is deprecated.'
-    with pytest.raises(PyVistaDeprecationWarning, match=match):
-        pv.ImageData().contour_labeled()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled()
-
-    assert frog_tissues.point_data.active_scalars.max() == 29
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_smoothing(frog_tissues):
-    # Extract smooth surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(smoothing=True)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_reduced_labels_count(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(n_labels=2)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_boundary_output_style(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(output_style='boundary')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError):  # noqa: PT011
-            frog_tissues.contour_labeled(output_mesh_type='invalid')
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_output_style(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(NotImplementedError):
-            frog_tissues.contour_labeled(output_style='selected')
-
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError):  # noqa: PT011
-            frog_tissues.contour_labeled(output_style='invalid')
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_scalars(frog_tissues):
-    # Create a new array with reduced number of labels
-    frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
-
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(scalars='labels')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_scalars(frog_tissues):
-    # Nonexistent scalar key
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(KeyError):
-            frog_tissues.contour_labeled(scalars='nonexistent_key')
-
-    # Using cell data
-    frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError, match='Can only process point data'):
-            frog_tissues.contour_labeled(scalars='cell_data')
-
-    # When no scalas are given and active scalars are not point data
-    frog_tissues.set_active_scalars('cell_data', preference='cell')
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError, match='active scalars must be point array'):
-            frog_tissues.contour_labeled()
-
-
 @pytest.fixture
 def channels():
     # ImageData with cell data
@@ -245,7 +96,6 @@ def labeled_image():
 @pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_scalars_smoothing_output_mesh_type(
     labeled_image,
     smoothing,
@@ -299,7 +149,6 @@ def _remove_duplicate_points(polydata):
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
 @pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,
     select_inputs,
@@ -377,7 +226,6 @@ ALL_LABEL_IDS = {0, 2, 5}
 
 @pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 
@@ -387,7 +235,6 @@ def test_contour_labels_background_value(labeled_image, background_value):
 
 
 @pytest.mark.usefixtures('force_points_precision_single')
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
@@ -397,7 +244,6 @@ def test_contour_labels_pad_background(labeled_image):
 @pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
@@ -407,7 +253,6 @@ def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_o
 
 
 @pytest.mark.usefixtures('force_points_precision_single')
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
@@ -425,7 +270,6 @@ def test_contour_labels_cell_data(channels):
 
 @flaky_test
 @pytest.mark.usefixtures('force_points_precision_single')
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         contours = channels.contour_labels('strict_external', orient_faces=False)
@@ -434,14 +278,11 @@ def test_contour_labels_strict_external(channels):
     assert contours.active_scalars.ndim == 1
     assert np.all(contours.active_scalars > 0)
 
-    match = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_inputs=[0])
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_outputs=[0])
+    # Test that selecting inputs/outputs works with this mode
+    channels.contour_labels('strict_external', select_inputs=[1])
+    channels.contour_labels('strict_external', select_outputs=[2])
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
@@ -452,14 +293,6 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 3, 0))
-def test_contour_labels_raises_vtkversionerror():
-    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
-    with pytest.raises(pv.VTKVersionError, match=match):
-        pv.ImageData().contour_labels()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0
@@ -1199,8 +1032,10 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            '`invalid` is not a valid `operation_mask`. Use one of '
-            '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+            (
+                '`invalid` is not a valid `operation_mask`. Use one of '
+                '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].'
+            ),
         ),
         (
             (1, 1, 1),
@@ -1221,24 +1056,30 @@ def test_validate_dim_operation(
             '1D',
             operator.add,
             ValueError,
-            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
-            'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+            (
+                'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
+                'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.'
+            ),
         ),
         (
             (2, 1, 2),
             '3D',
             operator.sub,
             ValueError,
-            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
-            'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+            (
+                'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
+                'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.'
+            ),
         ),
         (
             (1, 2, 5),
             (True, False, True),
             operator.sub,
             ValueError,
-            'The mask (True, False, True), size [1 3 5], and operation sub would result in '
-            '[0 2 0] which contains <= 0 dimensions.',
+            (
+                'The mask (True, False, True), size [1 3 5], and operation sub would result in '
+                '[0 2 0] which contains <= 0 dimensions.'
+            ),
         ),
     ],
 )
@@ -1631,43 +1472,55 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'margin': (
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'dims_offset': (
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'dimensions': (
         dict(dimensions=CROPPED_DIMENSIONS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'mask': (
         dict(mask=MASK_ARRAY_NAME),

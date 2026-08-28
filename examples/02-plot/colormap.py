@@ -4,8 +4,10 @@
 Colormap Choices
 ~~~~~~~~~~~~~~~~
 
-Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
-values with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
+Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalars.
+
+Works with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
+
 """
 
 from matplotlib.colors import LinearSegmentedColormap
@@ -24,7 +26,7 @@ from pyvista import examples
 # See `Matplotlib's complete list of available colormaps`_,
 # `Colorcet's complete list`_, and `cmocean's complete list`_.
 #
-# .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/tutorials/colors/colormaps.html
+# .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/stable/tutorials/colors/colormaps.html
 # .. _Colorcet's complete list: https://colorcet.holoviz.org/user_guide/index.html
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 
@@ -66,7 +68,7 @@ my_colormap = ListedColormap(newcolors)
 mesh.plot(scalars='values', cmap=my_colormap)
 
 # %%
-# Or you could make a simple colormap... any Matplotlib colormap can be passed
+# Or you could make a simple colormap: any Matplotlib colormap can be passed
 # to PyVista.
 boring_cmap = plt.get_cmap('viridis', 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
@@ -159,7 +161,7 @@ pl.show()
 # This specific colormap uses exact RGB nodes at specific scalar fractions
 # (0.0, 0.1, 0.3, 0.5, 0.8, 0.9, 1.0) to create its distinct color bands.
 
-# Define the exact RGB nodes from the cgx source code
+# Define the exact RGB nodes from the ``cgx`` source code
 cgx_nodes = [
     (0.0, (0.50, 0.0, 1.0)),  # Purple
     (0.1, (0.00, 0.0, 0.8)),  # Dark Blue
@@ -178,7 +180,7 @@ cgx_cmap = LinearSegmentedColormap.from_list('cgx', cgx_nodes)
 mesh = examples.download_notch_stress()
 
 # %%
-# Plot the mesh using the custom cgx colormap
+# Plot the mesh using the custom ``cgx`` colormap
 cpos = pv.CameraPosition(
     position=(0.1249, -0.1242, 0.1698),
     focal_point=(0.1965, 0.0467, -0.0036),

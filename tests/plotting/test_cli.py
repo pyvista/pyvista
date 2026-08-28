@@ -34,7 +34,7 @@ def test_plot(
     monkeypatch: pytest.MonkeyPatch,
 ):
     """
-    Test a real call to `pv.plot` using CLI and compare images to a Plotter output.
+    Test a real call to ``pyvista.plot`` using CLI and compare images to a Plotter output.
     """
     monkeypatch.setenv('PYVISTA_PLOT_THEME', 'testing')
 

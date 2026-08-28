@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import wraps
+import functools
 import inspect
 import itertools
 import re
@@ -18,7 +18,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -127,7 +126,7 @@ class DocSubs:
     def _wrap_member(member):
         if callable(member):
 
-            @wraps(member)
+            @functools.wraps(member)
             def mem_sub(*args, **kwargs):
                 return member(*args, **kwargs)
 
@@ -143,7 +142,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """Doc subs wrapper.
 
     Only common attribute between methods and properties that we can
-    modify is __doc__, so use that to mark members that need doc
+    modify is ``__doc__``, so use that to mark members that need doc
     substitutions.
     Still, only methods can be marked for doc substitution (as for
     properties the docstring seems to be overwritten when specifying
@@ -647,7 +646,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         """Set the axis' scaling behavior.
 
         Allowed behaviors are ``'auto'`` to automatically rescale the
-        axis to fit all visible datapoints in the plot, or ``'fixed'``
+        axis to fit all visible data points in the plot, or ``'fixed'``
         to use the user defined range.
 
         Examples
@@ -1159,21 +1158,13 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 
 @abstract_class
 class _Chart(DocSubs):
-    """Common interface for vtkChart, vtkChartBox, vtkChartPie, and ChartMPL instances."""
+    """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
     # and 'chart_set_labels'.
     _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
-        try:
-            # Necessary for displaying charts, otherwise crashes on rendering
-            # Import lazily on init to delay import until it's needed
-            from vtkmodules import vtkRenderingContextOpenGL2  # noqa: F401, PLC0415, TID251
-        except ImportError:
-            msg = 'Unable to import `vtkRenderingContextOpenGL2`. Charts may not render.'
-            warn_external(msg)
-
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()
@@ -1570,7 +1561,7 @@ class _Chart(DocSubs):
 
         Examples
         --------
-        Create a {chart_name} with title 'My Chart'.
+        Create a {chart_name} with title 'Example Chart'.
 
         .. pyvista-plot::
            :force_static:
@@ -1692,7 +1683,7 @@ class _Chart(DocSubs):
         Returns
         -------
         np.ndarray
-            Numpy array of the last image when ``screenshot=True``
+            NumPy array of the last image when ``screenshot=True``
             is set. Optionally contains alpha values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
@@ -1967,7 +1958,7 @@ class _Plot(DocSubs):
 class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
-    Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
+    Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
     """
 
     DEFAULT_COLOR_SCHEME = 'qual_accent'
@@ -3195,11 +3186,6 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     grid : bool, default: True
         Show the background grid in the plot.
 
-    See Also
-    --------
-    :ref:`chart_basics_example`
-    :ref:`chart_overlays_example`
-
     Examples
     --------
     Plot a simple sine wave as a scatter and line plot.
@@ -3405,7 +3391,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             Values to plot on the Y-axis.
 
         fmt : str, default: "-"
-            A format string, e.g. ``'ro'`` for red circles. See the Notes
+            A format string, for example, ``'ro'`` for red circles. See the Notes
             section for a full description of the format strings.
 
         Returns
@@ -3987,7 +3973,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     def hide_axes(self) -> None:
         """Hide the x- and y-axis of this chart.
 
-        This includes all labels, ticks and the grid.
+        This includes all labels, ticks, and the grid.
 
         Examples
         --------
@@ -4023,7 +4009,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         The chart containing this plot.
 
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4128,12 +4114,12 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
     def update(self, data) -> None:
-        """Update the plot's underlying dataset(s).
+        """Update the plot's underlying datasets.
 
         Parameters
         ----------
         data : sequence[array_like]
-            The new dataset(s) used in this box plot.
+            The new datasets used in this box plot.
 
         Examples
         --------
@@ -4166,7 +4152,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     Parameters
     ----------
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4280,12 +4266,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized boxplot chart centered in the middle of the
@@ -4312,12 +4292,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------
@@ -4572,12 +4546,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized pie chart centered in the middle of the
@@ -4604,12 +4572,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------
@@ -4657,10 +4619,6 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         Flag indicating whether the chart should be redrawn when
         the plotter is rendered. For static charts, setting this
         to ``False`` can improve performance.
-
-    See Also
-    --------
-    :ref:`chart_overlays_example`
 
     Examples
     --------
@@ -4865,7 +4823,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
 
         Examples
         --------
-        Create a matplotlib chart with title 'My Chart'.
+        Create a Matplotlib chart with title 'Example Chart'.
 
 
         .. pyvista-plot::
@@ -4983,10 +4941,6 @@ class Charts(_NoNewAttrMixin):
         *charts : Chart2D | Chart3D
             One or more chart objects to be added to the collection.
 
-        See Also
-        --------
-        :ref:`chart_overlays_example`
-
         """
         if self._scene is None:
             self._setup_scene()
@@ -5016,8 +4970,8 @@ class Charts(_NoNewAttrMixin):
               or indices.
 
         toggle : bool, default: False
-            Instead of enabling interaction with the provided chart(s), interaction
-            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            Instead of enabling interaction with the provided charts, interaction
+            with the provided charts is toggled. Only applicable when ``interactive``
             is not a boolean.
 
         Returns

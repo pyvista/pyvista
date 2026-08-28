@@ -42,11 +42,11 @@ environmental variable to ``True`` before running the script.
 
 from __future__ import annotations
 
-from argparse import ArgumentParser
-from doctest import DocTestFinder
+import argparse
+import doctest
 import re
 import sys
-from textwrap import indent
+import textwrap
 from types import ModuleType
 
 import pyvista as pv
@@ -141,7 +141,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     doctests = {
         dt.name: dt
         for module in modules.values()
-        for dt in DocTestFinder(recurse=True).find(module, globs={})
+        for dt in doctest.DocTestFinder(recurse=True).find(module, globs={})
     }
 
     # loop over doctests in alphabetical order for sanity
@@ -182,7 +182,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     for name, (exc, erroring_code) in failures.items():
         print('-' * 60)
         print(f'{name}:')
-        print(indent(erroring_code, '    '))
+        print(textwrap.indent(erroring_code, '    '))
         print(repr(exc))
     print('-' * 60)
 
@@ -190,7 +190,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Look for name errors in doctests.')
+    parser = argparse.ArgumentParser(description='Look for name errors in doctests.')
     parser.add_argument(
         '-v',
         '--verbose',

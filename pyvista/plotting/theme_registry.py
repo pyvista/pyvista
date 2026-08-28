@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib import import_module
+import importlib
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
@@ -38,7 +38,7 @@ class ThemeRegistration(NamedTuple):
     kind : {'subclass', 'entry_point', 'alias'}
         How the name was registered.
     source : str
-        Human-readable origin (e.g. ``'my_package.theme.MyTheme'``).
+        Human-readable origin (for example, ``'my_package.theme.MyTheme'``).
 
     Examples
     --------
@@ -141,7 +141,7 @@ def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
 
 
 def _register_alias(name: str, cls: type[Theme]) -> None:
-    """Register a built-in name alias (e.g. ``'default' → DocumentTheme``).
+    """Register a built-in name alias (for example, ``'default' → DocumentTheme``).
 
     Bypasses collision detection so built-in aliases can coexist with
     auto-registered subclasses without warning.
@@ -176,7 +176,7 @@ def _resolve_theme(name: str) -> Theme | None:
     """Look up a theme by name and return a usable ``Theme`` instance.
 
     Explicit subclass registrations win over entry-point discoveries.
-    Entry-point plugins are imported lazily — only the plugin claiming
+    Entry-point plugins are imported lazily—only the plugin claiming
     *name* loads, sibling plugins stay pending.
     """
     normalized = _normalize_theme_name(name)
@@ -219,7 +219,7 @@ def _available_theme_names() -> tuple[str, ...]:
     """Return all currently registered theme names.
 
     Pending entry-point names appear in the result without triggering
-    plugin imports — only metadata is consulted.
+    plugin imports—only metadata is consulted.
     """
     _ensure_entry_points()
     names = (
@@ -294,6 +294,36 @@ def registered_themes() -> tuple[ThemeRegistration, ...]:
     return tuple(sorted(records, key=lambda r: r.name))
 
 
+def _resolve_theme_like(theme: str | Theme) -> Theme:
+    """Coerce a theme name, dotted path, or ``Theme`` instance to a ``Theme``.
+
+    Shared by ``set_plot_theme`` and ``Plotter`` so name resolution and
+    error messages stay consistent. Raises ``ValueError`` for an
+    unresolvable string, ``TypeError`` for any other non-``Theme`` input.
+    """
+    from .themes import Theme  # local import breaks circular dependency  # noqa: PLC0415
+
+    if isinstance(theme, str):
+        if ':' in theme:
+            cls = _resolve_dotted_path(theme)
+            return cls()
+        resolved = _resolve_theme(theme)
+        if resolved is None:
+            allowed = ', '.join(_available_theme_names())
+            msg = (
+                f'Theme "{theme}" not found. Available themes: {allowed}. '
+                'To load from an arbitrary module use "package.module:ClassName".'
+            )
+            raise ValueError(msg)
+        return resolved
+    if isinstance(theme, Theme):
+        return theme
+    msg = (  # type: ignore[unreachable]
+        f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+    )
+    raise TypeError(msg)
+
+
 def _resolve_dotted_path(spec: str) -> type[Theme]:
     """Resolve a ``'package.module:ClassName'`` spec to a ``Theme`` subclass."""
     from .themes import Theme  # local import breaks circular dependency  # noqa: PLC0415
@@ -306,7 +336,7 @@ def _resolve_dotted_path(spec: str) -> type[Theme]:
         msg = f'Invalid theme spec "{spec}".'
         raise ValueError(msg)
     try:
-        module = import_module(module_path)
+        module = importlib.import_module(module_path)
     except ImportError as exc:
         msg = f'Cannot import "{module_path}" from theme spec "{spec}": {exc}'
         raise ValueError(msg) from exc
@@ -345,7 +375,7 @@ def _ensure_entry_points() -> None:
             )
             continue
         if normalized in _registered_theme_classes:
-            # Explicit registration wins silently — user-owned registrations
+            # Explicit registration wins silently—user-owned registrations
             # shouldn't be shouted at just because a plugin also defines it.
             continue
         _pending_ep_themes.setdefault(normalized, []).append(ep)
@@ -375,7 +405,7 @@ def _resolve_pending_theme(name: str) -> bool:
     winner = eps[0]
     source = winner.value
     try:
-        # ep.load() runs third-party import machinery — it can raise
+        # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
         # cannot take down every theme lookup.
         loaded = winner.load()
@@ -420,7 +450,7 @@ def _register_discovered_theme(name: str, obj: object, *, source: str) -> None:
         return
 
     if normalized in _registered_theme_classes:
-        # Explicit registration wins silently — user-owned registrations
+        # Explicit registration wins silently—user-owned registrations
         # shouldn't be shouted at just because a plugin also defines it.
         return
 

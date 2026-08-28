@@ -16,16 +16,30 @@
   <a href="https://pypi.org/project/pyvista/"><img src="https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white" alt="PyPI" /></a>
   <a href="https://anaconda.org/conda-forge/pyvista"><img src="https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white" alt="Conda" /></a>
   <a href="https://numfocus.org/sponsored-projects/affiliated-projects"><img src="https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A" alt="NumFOCUS Affiliated" /></a>
-  <a href="https://doi.org/10.21105/joss.01450"><img src="http://joss.theoj.org/papers/10.21105/joss.01450/status.svg" alt="JOSS paper" /></a>
-  <a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" /></a>
+  <a href="https://doi.org/10.21105/joss.01450"><img src="https://joss.theoj.org/papers/10.21105/joss.01450/status.svg" alt="JOSS paper" /></a>
+  <a href="https://opensource.org/license/mit"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" /></a>
 </p>
 
-PyVista is:
+<p align="center">
+  <em>
+    PyVista is an open source, community-owned project, MIT licensed and
+    <a href="https://numfocus.org/sponsored-projects/affiliated-projects">NumFOCUS Affiliated</a>.
+  </em>
+</p>
+
+<p align="center">
+  <em>
+    <a href="https://codimensional.com"><strong>CoDimensional PBC</strong></a>,
+    founded by PyVista maintainers, is the project's commercial steward.
+  </em>
+</p>
+
+PyVista provides:
 
 - a NumPy-native API for 3D visualization and mesh analysis
 - dataset structures and filters for points, surfaces, and volumes
 - one plotting framework for notebooks, scripts, CI, and apps
-- streamlined 3D for newcomers and graphics experts alike
+- a streamlined 3D interface for newcomers and graphics experts alike
 
 ![PyVista IPython demo](https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif)
 
@@ -76,6 +90,25 @@ conda install -c conda-forge pyvista
 
 Try PyVista in your browser without installing anything, on
 [MyBinder](https://mybinder.org/v2/gh/pyvista/pyvista-examples/master).
+
+## Command line interface
+
+PyVista also installs a `pyvista` CLI for quick plotting, format conversion,
+and mesh validation, without writing any Python:
+
+```bash
+# Plot a mesh file in an interactive window
+pyvista plot bunny.stl
+
+# Convert a mesh file to another format
+pyvista convert bunny.stl .vtp
+
+# Validate a mesh's data, points, and cells
+pyvista validate bunny.stl
+```
+
+See the [CLI reference](https://docs.pyvista.org/api/cli) for the full
+set of commands and options.
 
 ## Documentation
 
@@ -197,7 +230,7 @@ If you use PyVista in scientific research, please cite the
 [![Good first issue](https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue)](https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 **Citation:**
-[![JOSS](http://joss.theoj.org/papers/10.21105/joss.01450/status.svg)](https://doi.org/10.21105/joss.01450)
+[![JOSS](https://joss.theoj.org/papers/10.21105/joss.01450/status.svg)](https://doi.org/10.21105/joss.01450)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg)](https://zenodo.org/records/8415866)
 
 **Community:**

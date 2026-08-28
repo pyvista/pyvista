@@ -7,6 +7,7 @@ from collections import UserDict
 from collections import defaultdict
 import importlib.util
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,6 +22,9 @@ from pyvista.typing.mypy_plugin import promote_type
 
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.accessor_registry import _clear_accessor_cache
+from .utilities.accessor_registry import _pending_accessor_names
+from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
@@ -45,6 +49,7 @@ if TYPE_CHECKING:
 
     from pyvista import MultiBlock
 
+    from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
     from .utilities.writer import BaseWriter
 
@@ -83,10 +88,10 @@ class DataObject(
     Parameters
     ----------
     *args :
-        Any extra args are passed as option to all wrapped data objects.
+        Any extra ``args`` are passed as option to all wrapped data objects.
 
     **kwargs :
-        Any extra keyword args are passed as option to all wrapped data objects.
+        Any extra keyword ``args`` are passed as option to all wrapped data objects.
 
     """
 
@@ -112,12 +117,9 @@ class DataObject(
         Before falling through to the VTK base class, check whether
         ``item`` matches a pending ``pyvista.accessors`` entry point.
         A match triggers a one-shot plugin import, after which normal
-        attribute resolution finds the newly-attached accessor
+        attribute resolution finds the newly attached accessor
         descriptor.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
-
         if _resolve_pending_accessor(item):
             return object.__getattribute__(self, item)
         return super().__getattribute__(item)
@@ -131,9 +133,6 @@ class DataObject(
         / Jupyter / REPL tab completion surface them without paying the
         plugin import cost ahead of time.
         """
-        # Lazy import to avoid a circular dependency at module load time.
-        from pyvista.core.utilities.accessor_registry import _pending_accessor_names
-
         return sorted({*super().__dir__(), *_pending_accessor_names()})
 
     def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
@@ -183,6 +182,11 @@ class DataObject(
         **writer_kwargs: Any,
     ) -> None:
         """Save this vtk object to file.
+
+        .. note::
+            Reading a file and saving it in another format is also available via
+            command-line interface. See :ref:`pyvista convert <cli_convert>` for
+            details.
 
         .. include:: /api/utilities/mesh_io.rst
 
@@ -235,7 +239,7 @@ class DataObject(
             these to expose format-specific options such as compression
             level or thread count.  When the target extension dispatches
             to a built-in VTK writer, passing any extra keyword arguments
-            raises :class:`TypeError` — PyVista never silently drops
+            raises :class:`TypeError`—PyVista never silently drops
             writer options.
 
             .. versionadded:: 0.48
@@ -292,8 +296,8 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext == '.vtkhdf' and binary is False:
-                msg = '.vtkhdf files can only be written in binary format.'
+            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+                msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
             # Save using the writer
@@ -309,8 +313,8 @@ class DataObject(
 
             writer.write()
 
-            if not file_path.exists():
-                msg = f'VTK writer failed to write file: {file_path}'
+            if not writer.written_path.exists():
+                msg = f'VTK writer failed to write file: {writer.written_path}'
                 raise OSError(msg)
 
         elif file_ext in _PICKLE_FILE_EXT:
@@ -537,7 +541,7 @@ class DataObject(
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
-    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def add_field_data(self: Self, array: ArrayLike[Any], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -546,8 +550,10 @@ class DataObject(
 
         Parameters
         ----------
-        array : sequence
-            Array of data to add to the dataset as a field array.
+        array : ArrayLike[Any]
+            Array of data to add to the dataset as a field array. Field data
+            is not tied to the geometry, so numeric, boolean, and string data
+            are all accepted.
 
         name : str
             Name to assign the field array.
@@ -653,15 +659,15 @@ class DataObject(
         as an array, the user dict provides a mapping for scalar values.
 
         Since the user dict is stored as field data, it is automatically saved
-        with the mesh when it is saved in a compatible file format (e.g. ``'.vtk'``).
+        with the mesh when it is saved in a compatible file format (for example, ``'.vtk'``).
         Any saved metadata is automatically de-serialized by PyVista whenever
         the user dict is accessed again. Since the data is stored as JSON, it
         may also be easily retrieved or read by other programs.
 
-        Any JSON-serializable values are permitted by the user dict, i.e. values
+        Any JSON-serializable values are permitted by the user dict, that is, values
         can have type ``dict``, ``list``, ``tuple``, ``str``, ``int``, ``float``,
         ``bool``, or ``None``. Storing NumPy arrays is not directly supported, but
-        these may be cast beforehand to a supported type, e.g. by calling ``tolist()``
+        these may be cast beforehand to a supported type, for example, by calling ``tolist()``
         on the array.
 
         To completely remove the user dict string from the dataset's field data,
@@ -765,7 +771,7 @@ class DataObject(
             raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:
-        """Init serialized dict array and ensure it is added to field_data."""
+        """Init serialized dict array and ensure it is added to ``field_data``."""
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
@@ -891,7 +897,14 @@ class DataObject(
 
         # Add this object's data to the state dictionary
         state_dict = serialized[1][0]
-        state_dict['_PYVISTA_STATE_DICT'] = self.__dict__.copy()
+        data_dict = self.__dict__.copy()
+        # Any cached vtk objects (e.g. vtkLocator objects) must be removed since
+        # these cannot be serialized
+        _clear_vtk_objects_from_dict(data_dict)
+        # Nor can a cached accessor's weak reference, and a cache is not worth carrying
+        _clear_accessor_cache(data_dict)
+
+        state_dict['_PYVISTA_STATE_DICT'] = data_dict
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
@@ -900,15 +913,15 @@ class DataObject(
     def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
         """Support pickle by serializing the VTK object data.
 
-        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT`
+        The format of the serialized VTK object data depends on ``pyvista.PICKLE_FORMAT``
         (case-insensitive).
         - If ``'xml'``, the data is serialized as an XML-formatted string.
         - If ``'legacy'``, the data is serialized to bytes in VTK's binary format.
 
         .. note::
 
-            These formats are custom PyVista legacy formats. The native 'vtk' format is
-            preferred since it supports more objects (e.g. MultiBlock).
+            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
+            preferred since it supports more objects (for example, MultiBlock).
 
         """
         if isinstance(self, pv.MultiBlock):
@@ -918,6 +931,7 @@ class DataObject(
             )
             raise TypeError(msg)
         state = self.__dict__.copy()
+        _clear_accessor_cache(state)  # a weak reference cannot be pickled
 
         if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
@@ -999,12 +1013,12 @@ class DataObject(
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
-        """Support unpickle of PyVista 'xml' and 'legacy' formats.
+        """Support unpickle of PyVista ``'xml'`` and ``'legacy'`` formats.
 
         .. note::
 
-            These formats are custom PyVista legacy formats. The native 'vtk' format is
-            preferred since it supports more objects (e.g. MultiBlock).
+            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
+            preferred since it supports more objects (for example, MultiBlock).
 
         """
         vtk_serialized = state.pop('vtk_serialized')
@@ -1077,3 +1091,20 @@ class DataObject(
         alg.SetInputDataObject(self)
         alg.Update()
         return wrap(alg.GetOutput())  # type:ignore[return-value]
+
+    def __del__(self) -> None:
+        """Delete the object."""
+        # There is nothing left to reclaim once the interpreter is shutting down, and
+        # by then the module globals needed below may already be ``None``: ``__dict__``
+        # raises through ``DisableVtkSnakeCase.__getattribute__``, which reroutes into
+        # ``__getattr__``, and ``vtkObjectBase`` is no longer a type to test against.
+        if sys.is_finalizing():
+            return
+        # Delete any cached vtk objects (locators, glyph geom, etc.)
+        _clear_vtk_objects_from_dict(self.__dict__)
+
+
+def _clear_vtk_objects_from_dict(dict_: dict[str, Any]) -> None:
+    for attr, value in tuple(dict_.items()):
+        if isinstance(value, _vtk.vtkObjectBase):
+            del dict_[attr]

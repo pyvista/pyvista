@@ -4,8 +4,10 @@
 Measure Distance Between Point Clouds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Color a source point cloud by the distance to its nearest neighbors in a target
-cloud using :func:`pyvista.DataSet.find_closest_point`.
+Color a point cloud by its distance to the nearest neighbors in a target cloud.
+
+Uses :func:`pyvista.DataSet.find_closest_point`.
+
 """
 
 import numpy as np
@@ -13,7 +15,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Create two related point clouds
+# Create Two Related Point Clouds
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Start from a scanned horse point cloud, subsample it, then displace a
 # perturbed copy so each source point has a nearby counterpart in the target.
@@ -29,7 +31,7 @@ target = pv.PolyData(source.points + offset + warp)
 
 
 # %%
-# Compute nearest-neighbor distances
+# Compute Nearest-Neighbor Distances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Query the target cloud for each source point and color the source by the
 # resulting distances.
@@ -69,7 +71,7 @@ pl.show()
 
 
 # %%
-# Inspect the distance range
+# Inspect the Distance Range
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The clouds are close but not identical.
 

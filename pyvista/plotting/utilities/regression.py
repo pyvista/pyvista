@@ -13,12 +13,11 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
-from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from pyvista import ImageData
+    from pyvista import Plotter
     from pyvista.core._typing_core import NumpyArray
-    from pyvista.plotting import Plotter
 
     ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
@@ -46,12 +45,12 @@ def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
 
 
 def wrap_image_array(arr):
-    """Wrap a numpy array as a pyvista.ImageData.
+    """Wrap a NumPy array as a ``pyvista.ImageData``.
 
     Parameters
     ----------
     arr : np.ndarray
-        A numpy array of shape (X, Y, (3 or 4)) and dtype ``np.uint8``. For
+        A NumPy array of shape (X, Y, (3 or 4)) and ``dtype`` ``np.uint8``. For
         example, an array of shape ``(768, 1024, 3)``.
 
     Raises
@@ -107,7 +106,7 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = cast('ImageData | None', wrap(imfilter.GetOutput()))
+    image = cast('ImageData | None', pv.wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
@@ -159,12 +158,21 @@ def image_from_window(  # noqa: PLR0917
     imfilter.SetInput(render_window)
     imfilter.SetScale(scale)
     imfilter.FixBoundaryOn()
-    imfilter.ReadFrontBufferOff()
     imfilter.ShouldRerenderOff()
     if ignore_alpha:
         imfilter.SetInputBufferTypeToRGB()
     else:
         imfilter.SetInputBufferTypeToRGBA()
+    # Read the front buffer, and say so once.  This used to be turned off here and then
+    # straight back on a few lines later, so only the second call ever took effect.
+    #
+    # The buffers are not interchangeable when multisampling is on (the default is
+    # ``multi_samples=8``).  A front-buffer read returns VTK's DisplayFramebuffer, which
+    # Frame() has already resolved with a gamma-correct shader; a back-buffer read
+    # returns the raw multisample framebuffer, which vtkOpenGLRenderWindow::ReadPixels
+    # resolves inline with a plain glBlitFramebuffer average.  The two disagree on every
+    # anti-aliased edge pixel, by enough to fail image regression.  Reported upstream at
+    # https://gitlab.kitware.com/vtk/vtk/-/work_items/20138
     imfilter.ReadFrontBufferOn()
     data = run_image_filter(imfilter)
     if off:
@@ -187,11 +195,11 @@ def compare_images(  # noqa: PLR0917
     Parameters
     ----------
     im1 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
-        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        Path, :class:`pyvista.Plotter`, NumPy array representing the output of
         a render window, or :vtk:`vtkImageData`.
 
     im2 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
-        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        Path, :class:`pyvista.Plotter`, NumPy array representing the output of
         a render window, or :vtk:`vtkImageData`.
 
     threshold : int, default: 1
@@ -201,7 +209,7 @@ def compare_images(  # noqa: PLR0917
 
     use_vtk : bool, default: True
         When disabled, computes the mean pixel error over the entire
-        image using numpy.  The difference between pixel is calculated
+        image using NumPy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
         of pixels.  This is faster than using
         :vtk:`vtkImageDifference` but potentially less accurate.
@@ -231,21 +239,17 @@ def compare_images(  # noqa: PLR0917
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData  # noqa: PLC0415
-    from pyvista import Plotter  # noqa: PLC0415
-    from pyvista import read  # noqa: PLC0415
-    from pyvista import wrap  # noqa: PLC0415
 
     def to_img(img: ImageCompareType) -> ImageData:
-        if isinstance(img, ImageData):
+        if isinstance(img, pv.ImageData):
             return img
         elif isinstance(img, _vtk.vtkImageData):  # pragma: no cover
-            return wrap(img)
+            return pv.wrap(img)
         elif isinstance(img, (str, Path)):
-            return read(img, cls=ImageData)
+            return pv.read(img, cls=pv.ImageData)
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
-        elif isinstance(img, Plotter):
+        elif isinstance(img, pv.Plotter):
             if img._first_time:  # must be rendered first else segfault
                 img._on_first_render_request()
                 img.render()

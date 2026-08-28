@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -225,6 +226,12 @@ def test_field_data_string(hexbeam):
     returned = hexbeam.field_data[field_name]
     assert returned == field_value
     assert isinstance(returned, str)
+
+    # a sequence of strings, not only a single one
+    field_name = 'spam'
+    field_value = ['I could', 'write', 'notes', 'here']
+    hexbeam.add_field_data(field_value, field_name)
+    assert hexbeam.field_data[field_name].tolist() == field_value
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
@@ -725,6 +732,56 @@ def test_rename_array_doesnt_delete():
     assert (mesh.point_data['renamed'] == 1).all()
 
 
+def test_rename_array_preserves_active_attributes():
+    # Regression test for issue #8746: renaming an array must not drop its active
+    # normals / texture coordinates / vectors / tensors designation, and must not
+    # promote the renamed array to the active scalars.
+    mesh = pv.Sphere()
+    n = mesh.n_points
+    point_data = mesh.point_data
+    point_data['my_normals'] = np.tile([0.0, 0.0, 1.0], (n, 1))
+    point_data.active_normals_name = 'my_normals'
+    point_data['my_tcoords'] = np.zeros((n, 2))
+    point_data.active_texture_coordinates_name = 'my_tcoords'
+    point_data['my_vectors'] = np.zeros((n, 3))
+    point_data.active_vectors_name = 'my_vectors'
+    point_data['my_tensors'] = np.zeros((n, 9))
+    mesh.active_tensors_name = 'my_tensors'
+    # Active normals/tcoords/vectors/tensors but explicitly NO active scalars:
+    # renaming must not add any.
+    point_data.active_scalars_name = None
+
+    def active_tensors_name():
+        # There is no attributes-level tensors accessor, and the dataset-level
+        # `active_tensors_name` reports stale state after a rename (see issue #8749),
+        # so read the actual state from VTK directly.
+        tensors = point_data.VTKObject.GetTensors()
+        return None if tensors is None else tensors.GetName()
+
+    # Sanity check the setup before renaming.
+    assert point_data.active_normals_name == 'my_normals'
+    assert point_data.active_texture_coordinates_name == 'my_tcoords'
+    assert point_data.active_vectors_name == 'my_vectors'
+    assert active_tensors_name() == 'my_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+    mesh.rename_array('my_normals', 'renamed_normals', preference='point')
+    mesh.rename_array('my_tcoords', 'renamed_tcoords', preference='point')
+    mesh.rename_array('my_vectors', 'renamed_vectors', preference='point')
+    mesh.rename_array('my_tensors', 'renamed_tensors', preference='point')
+
+    assert point_data.active_normals_name == 'renamed_normals'
+    assert point_data.active_normals is not None
+    assert point_data.active_texture_coordinates_name == 'renamed_tcoords'
+    assert point_data.active_texture_coordinates is not None
+    assert point_data.active_vectors_name == 'renamed_vectors'
+    assert point_data.active_vectors is not None
+    assert active_tensors_name() == 'renamed_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+
 def test_change_name_fail(hexbeam):
     with pytest.raises(KeyError):
         hexbeam.rename_array('not a key', '')
@@ -997,6 +1054,106 @@ def test_find_cells_intersecting_line():
         mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
 
 
+@pytest.mark.parametrize('points_dtype', [np.single, np.double])
+def test_intersect_with_line(points_dtype):
+    def assert_intersection_results(mesh_, points_, cell_ids_):
+        assert isinstance(points_, np.ndarray)
+        assert isinstance(cell_ids_, np.ndarray)
+        assert len(points_) == len(cell_ids_)
+        assert points_.dtype == mesh_.points.dtype
+        assert cell_ids_.dtype == np.int64
+        for idx in range(len(points_)):
+            cell = mesh_.get_cell(cell_ids_[idx])
+            point = points_[idx]
+            assert point in cell.points
+
+    # Manually create source to properly configure double precision points
+    source = _vtk.vtkSphereSource()
+    source.SetPhiResolution(10)
+    source.SetThetaResolution(10)
+    output_precision = (
+        _vtk.vtkAlgorithm.DOUBLE_PRECISION
+        if points_dtype == np.double
+        else _vtk.vtkAlgorithm.SINGLE_PRECISION
+    )
+    source.SetOutputPointsPrecision(output_precision)
+    source.Update()
+    mesh = pv.wrap(source.GetOutput())
+
+    assert mesh.points.dtype == points_dtype
+
+    # The exact value of pointb matters, see example from https://github.com/pyvista/pyvista/issues/8698
+    pointa = [0.0, 0, 5]
+    pointb = [0.0, 0, -1.687329400596207]
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb)
+
+    expected_points = [
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+    ]
+    # Use a set since the exact order depends on the OS and the points precision
+    # The exact order doesn't matter here, and the cell-id matching the point is tested separately
+    lower_ids = set(range(10))
+    upper_ids = set(range(10, 20))
+    expected_cell_ids = lower_ids | upper_ids
+
+    assert np.allclose(points, expected_points)
+    assert set(cell_ids.tolist()) == expected_cell_ids
+    assert_intersection_results(mesh, points, cell_ids)
+
+    # Test again with deduplicated points
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb, deduplicate_points=True)
+
+    expected_points = [[0.0, 0.0, 0.5], [0.0, 0.0, -0.5]]
+
+    assert_intersection_results(mesh, points, cell_ids)
+    assert np.allclose(points, expected_points)
+    # Only check cell id membership because the exact id returned depends on dtype and OS
+    assert cell_ids[0] in lower_ids
+    assert cell_ids[1] in upper_ids
+
+    # Test again with a tolerance of zero to show that zero tolerance can fail to properly
+    # locate both intersections (and therefore tolerance should not be zero by default)
+    points, cell_ids = mesh.intersect_with_line(
+        pointa, pointb, deduplicate_points=True, tolerance=0.0
+    )
+    assert points.ndim == 2
+    if sys.platform == 'darwin':
+        assert len(points) < 2
+    else:
+        assert len(points) == 2
+
+
+def test_build_locator_raises():
+    poly = pv.PolyData()
+    match = 'Building vtkStaticCellLocator requires a dataset with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
+
+    poly = pv.PolyData()
+    match = 'Building vtkPointLocator requires a dataset with points.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.find_closest_point([0, 0, 0])
+
+
 def test_find_cells_within_bounds():
     mesh = pv.Cube()
 
@@ -1257,7 +1414,11 @@ def test_explode(datasets):
     for dataset in datasets:
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
-        assert out.n_points > dataset.n_points
+        if dataset.n_cells == 0:
+            # no cells to separate, e.g. PointSet
+            assert out.n_points == dataset.n_points
+        else:
+            assert out.n_points > dataset.n_points
 
 
 @pytest.mark.usefixtures('force_points_precision_single')
@@ -1592,8 +1753,8 @@ def test_dimensionality():
 
 
 @pytest.mark.parametrize('empty', [True, False])
-def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
-    for mesh in datasets_plus_pointset:
+def test_min_max_cell_dimensionality(datasets, empty):
+    for mesh in datasets:
         test_mesh = type(mesh)() if empty else mesh
         min_dimensionality = test_mesh.min_cell_dimensionality
         max_dimensionality = test_mesh.max_cell_dimensionality
@@ -1614,8 +1775,8 @@ def test_distinct_cell_types_unstructured_grid():
     assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
 
 
-def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
-    for dataset in datasets_plus_pointset:
+def test_distinct_cell_types_all_datasets(datasets):
+    for dataset in datasets:
         distinct_cell_types = dataset.distinct_cell_types
         assert all(isinstance(celltype, pv.CellType) for celltype in distinct_cell_types)
         if dataset.n_cells == 0:
@@ -1639,6 +1800,32 @@ def test_distinct_cell_types_dimensions(dimensions):
 
     structured = image.cast_to_structured_grid()
     assert_distinct_cell_types(structured)
+
+
+@pytest.mark.parametrize(
+    ('mesh_', 'expected_type'),
+    [
+        (examples.load_explicit_structured(), pv.CellType.HEXAHEDRON),
+        (examples.load_structured(), pv.CellType.QUAD),
+    ],
+)
+def test_distinct_cell_types_hidden_cells(mesh_, expected_type):
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    expected = {pv.CellType.EMPTY_CELL, expected_type}
+    assert hidden.distinct_cell_types == expected
+    assert {cell.type for cell in hidden.cell} == expected
+
+
+def test_min_max_cell_dimensionality_hidden_cells_legacy(monkeypatch):
+    # Simulate legacy VTK to exercise the `_distinct_cell_dimensions` fallback path.
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0, 0))
+
+    mesh_ = examples.load_explicit_structured()
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    assert hidden.min_cell_dimensionality == 0
+    assert hidden.max_cell_dimensionality == 3
 
 
 def test_structured_grid_dimensionality():

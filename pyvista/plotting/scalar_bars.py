@@ -63,7 +63,7 @@ class ScalarBars(_NoNewAttrMixin):
         reset_camera: bool = False,  # noqa: FBT001, FBT002
         render: bool = False,  # noqa: FBT001, FBT002
     ):  # numpydoc ignore=PR01,RT01
-        """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
+        """Remove an actor's mapper from the given plotter's ``_scalar_bar_mappers``.
 
         This ensures that when actors are removed, their corresponding
         scalar bars are removed.
@@ -327,7 +327,7 @@ class ScalarBars(_NoNewAttrMixin):
             depending on the value of ``vertical``.
 
         position_x : float, optional
-            The percentage (0 to 1) along the windows's horizontal
+            The percentage (0 to 1) along the window's horizontal
             direction to place the bottom left corner of the colorbar.
             Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
@@ -335,7 +335,7 @@ class ScalarBars(_NoNewAttrMixin):
             depending on the value of ``vertical``.
 
         position_y : float, optional
-            The percentage (0 to 1) along the windows's vertical
+            The percentage (0 to 1) along the window's vertical
             direction to place the bottom left corner of the colorbar.
             Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or

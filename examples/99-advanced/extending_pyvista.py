@@ -4,8 +4,9 @@
 Extending PyVista
 ~~~~~~~~~~~~~~~~~
 
-A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended
-by users.  For example, if the user wants to keep track of the location of the
+A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended by users.
+
+For example, if the user wants to keep track of the location of the
 maximum point in the (1, 0, 1) direction on the mesh.
 
 There are two methods by which users can handle subclassing.  One is directly managing
@@ -34,7 +35,9 @@ pv.set_plot_theme('document')
 # furthest along in the (1, 0, 1) direction.
 
 
-class FooData(pv.PolyData):  # noqa: D101
+class FooData(pv.PolyData):
+    """Example ``PolyData`` subclass with a custom point property."""
+
     @property
     def max_point(self):
         """Returns index of point that is furthest along (1, 0, 1) direction."""
@@ -58,7 +61,7 @@ print(f'Maximum point index: {foo_sphere.max_point}')
 print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
-# Using an inplace operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
+# Using an in-place operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
@@ -110,7 +113,7 @@ print(f'Maximum point index: {foo_sphere.max_point}')
 print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
-# Using an inplace operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
+# Using an in-place operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)

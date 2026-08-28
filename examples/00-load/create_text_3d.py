@@ -5,12 +5,13 @@ Create 3D Text
 ~~~~~~~~~~~~~~
 
 Generate extruded text geometry with :func:`pyvista.Text3D`.
+
 """
 
 import pyvista as pv
 
 # %%
-# Create an extruded text mesh
+# Create an Extruded Text Mesh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The text is standard PolyData and can be transformed and plotted like any
 # other surface.
@@ -20,7 +21,7 @@ text
 
 
 # %%
-# Compare flat and extruded text
+# Compare Flat and Extruded Text
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ``depth=0`` produces flat glyphs; a positive depth extrudes them into 3D.
 

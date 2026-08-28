@@ -1,0 +1,245 @@
+"""Sphinx autodoc documenter for ``Enum`` subclasses, replacing ``enum_tools.autoenum``.
+
+Modeled on
+https://www.sphinx-doc.org/en/master/development/tutorials/autodoc_ext.html
+"""
+
+from __future__ import annotations
+
+from enum import Enum
+from enum import EnumMeta
+from enum import Flag
+import inspect
+from typing import TYPE_CHECKING
+from typing import Any
+
+from sphinx.ext.autodoc import ClassDocumenter
+from sphinx.ext.autodoc import ClassLevelDocumenter
+from sphinx.ext.autodoc import ObjectMember
+from sphinx.ext.autodoc import PropertyDocumenter
+from sphinx.util import logging
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
+    from sphinx.ext.autodoc import ObjectMembers
+
+logger = logging.getLogger(__name__)
+
+_SKIP_METACLASSES = (type, EnumMeta)
+
+
+def _is_enum(obj: Any) -> bool:
+    """Return whether ``obj`` is an ``Enum`` subclass."""
+    return isinstance(obj, type) and issubclass(obj, Enum)
+
+
+def _resolve(module: str, objname: str) -> Any:
+    """Import ``module`` and walk ``objname``'s dotted path to the object it names."""
+    import importlib  # noqa: PLC0415
+
+    obj = importlib.import_module(module)
+    for part in objname.split('.'):
+        obj = getattr(obj, part)
+    return obj
+
+
+def _metaclass_properties(cls: type) -> dict[str, property]:
+    """Return ``{name: property}`` for every ``property`` defined on ``cls``'s metaclass.
+
+    ``getattr(cls, name)`` evaluates a metaclass property eagerly, losing the descriptor
+    (and its docstring) that produced the value -- so this has to look at the metaclass
+    directly instead.
+    """
+    properties: dict[str, property] = {}
+    for meta in type(cls).__mro__:
+        if meta in _SKIP_METACLASSES:
+            continue
+        for name, value in vars(meta).items():
+            if isinstance(value, property) and name not in properties:
+                properties[name] = value
+    return properties
+
+
+def _instance_properties(cls: type) -> dict[str, property]:
+    """Return ``{name: property}`` for every ``property`` defined directly on ``cls``."""
+    return {
+        name: value
+        for name, value in vars(cls).items()
+        if isinstance(value, property) and not name.startswith('_')
+    }
+
+
+def metaclass_property_names(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the sorted metaclass property names of ``module.objname``.
+
+    Takes strings, not the live object, since that's all ``enum.rst`` (via
+    ``autosummary_context``) has to give it.
+    """
+    return sorted(_metaclass_properties(_resolve(module, objname)))
+
+
+def instance_property_names(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the sorted instance-property names defined directly on ``module.objname``."""
+    return sorted(_instance_properties(_resolve(module, objname)))
+
+
+def metaclass_property_descriptions(  # numpydoc ignore=RT01
+    module: str, objname: str
+) -> list[tuple[str, str]]:
+    """Return ``[(name, first docstring line)]`` for ``module.objname``'s metaclass properties.
+
+    ``.. autosummary::`` gets each entry's description the same eagerly evaluated way it gets
+    everything else here wrong -- so enum.rst builds its own table from this instead.
+    """
+    props = _metaclass_properties(_resolve(module, objname))
+    descriptions = []
+    for name in sorted(props):
+        doc = inspect.cleandoc(props[name].__doc__ or '')
+        descriptions.append((name, doc.splitlines()[0] if doc else ''))
+    return descriptions
+
+
+def _is_bitmask_like(cls: type[Enum]) -> bool:
+    """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two).
+
+    Only ``int``-valued enums (``IntEnum``, ``IntFlag``, and so on) can look like bit flags --
+    ``int(member.value)`` would raise, for example, for a ``str``-valued ``Enum``.
+    """
+    if issubclass(cls, Flag):
+        return True
+    if not issubclass(cls, int):
+        return False
+    values = [int(member.value) for member in cls]
+    return bool(values) and all(v == 0 or (v & (v - 1)) == 0 for v in values)
+
+
+def _format_value(value: Any, *, as_hex: bool) -> str:
+    """Format an enum member's value the way it should appear after ``:value:``."""
+    if as_hex:
+        return hex(value)
+    return repr(value) if isinstance(value, str) else str(value)
+
+
+class MetaclassPropertyDocumenter(PropertyDocumenter):
+    """Documents a ``property`` defined on a class's metaclass.
+
+    ``can_document_member`` always declines, so this is only ever reached via an
+    explicit ``.. autometaclassproperty::`` (written by ``metaclassproperty.rst``), never
+    via Sphinx's generic per-member dispatch -- so it can't compete with stock
+    ``PropertyDocumenter`` for ordinary properties. Only ``import_object`` needs to
+    change from stock ``PropertyDocumenter``: fetch the property itself rather than its
+    (eagerly evaluated) value.
+    """
+
+    objtype = 'metaclassproperty'
+    directivetype = 'property'
+
+    @classmethod
+    def can_document_member(
+        cls: type[PropertyDocumenter], member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:  # numpydoc ignore=RT01
+        """Decline always: only ever constructed directly by :class:`EnumDocumenter`."""
+        return False
+
+    def import_object(self, raiseerror: bool = False) -> bool:  # numpydoc ignore=RT01
+        """Resolve ``self.object`` to the metaclass property itself, not its evaluated value."""
+        ClassLevelDocumenter.import_object(self, raiseerror=False)
+        if self.parent is None:
+            return False
+        name = self.objpath[-1]
+        prop = _metaclass_properties(self.parent).get(name)
+        if prop is None:
+            logger.warning('%s is not a metaclass property of %r.', name, self.parent)
+            return False
+        self.object = prop
+        self.isclassmethod = True
+        return True
+
+
+class EnumDocumenter(ClassDocumenter):
+    """Documents an ``Enum`` subclass, as its own ``enum`` objtype/``autoenum`` directive.
+
+    ``directivetype`` stays ``'class'`` so xrefs and domain indexing match a normal class.
+    """
+
+    objtype = 'enum'
+    directivetype = 'class'
+    priority = ClassDocumenter.priority + 5
+
+    @classmethod
+    def can_document_member(
+        cls: type[ClassDocumenter], member: Any, membername: str, isattr: bool, parent: Any
+    ) -> bool:  # numpydoc ignore=RT01
+        """Return whether ``member`` is an ``Enum`` subclass."""
+        return _is_enum(member)
+
+    def filter_members(
+        self, members: ObjectMembers, want_all: bool
+    ) -> list[tuple[str, Any, bool]]:  # numpydoc ignore=RT01
+        """Drop enum members and metaclass properties; each is documented its own way."""
+        if not _is_enum(self.object):
+            return super().filter_members(members, want_all)
+
+        skip_names = set(self.object.__members__) | set(_metaclass_properties(self.object))
+        kept = [
+            member
+            for member in members
+            if (member.__name__ if isinstance(member, ObjectMember) else member[0])
+            not in skip_names
+        ]
+        return super().filter_members(kept, want_all)
+
+    def add_content(self, more_content: Any) -> None:
+        """Add the docstring, then (for enums) the member values."""
+        super().add_content(more_content)
+        if _is_enum(self.object):
+            self._document_members(self.get_sourcename())
+
+    def _document_members(self, sourcename: str) -> None:
+        """Write out each enum member's value and (if any) docstring, flat under one rubric.
+
+        Regular properties and metaclass properties (for example, ``dimension_map``) are *not*
+        written here -- both get their own page via enum.rst's Attributes table instead,
+        the same as any other class's attributes.
+        """
+        cls = self.object
+        as_hex = _is_bitmask_like(cls)
+
+        # A real section (not `.. rubric::`), so conf.py's hoist_docstring_sections picks
+        # it up too, same as numpydoc's own Parameters/Returns/Examples sections.
+        heading = 'Enum Members'
+        self.add_line('', sourcename)
+        self.add_line(heading, sourcename)
+        self.add_line('-' * len(heading), sourcename)
+        self.add_line('', sourcename)
+
+        for member in cls:
+            self.add_line(f'.. py:attribute:: {cls.__name__}.{member.name}', sourcename)
+            self.add_line(
+                f'   :value: {_format_value(member.value, as_hex=as_hex)}',
+                sourcename,
+            )
+            self.add_line('', sourcename)
+
+            doc = member.__doc__
+            if doc and doc != type(member).__doc__:
+                for line in inspect.cleandoc(doc).splitlines():
+                    self.add_line(f'   {line}'.rstrip(), sourcename)
+                self.add_line('', sourcename)
+
+
+def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
+    """Register the ``autoenum``/``autometaclassproperty`` directives.
+
+    ``MetaclassPropertyDocumenter.can_document_member`` always declines (see above), so
+    registering it can't put it in competition with the stock ``PropertyDocumenter`` for
+    ordinary properties -- it's only ever reached via an explicit
+    ``.. autometaclassproperty::``, written by ``metaclassproperty.rst``.
+    """
+    app.add_autodocumenter(EnumDocumenter)
+    app.add_autodocumenter(MetaclassPropertyDocumenter)
+    return {
+        'version': '0.1',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

@@ -6,6 +6,7 @@ from enum import EnumMeta
 from enum import IntEnum
 import textwrap
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
@@ -13,8 +14,12 @@ from typing import cast
 from typing import get_args
 
 from pyvista import _vtk
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.errors import PyVistaDeprecationWarning
 
+if TYPE_CHECKING:
+    from typing import Any
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
@@ -43,6 +48,20 @@ _ABSTRACT_DIMENSIONS: dict[int, _Dimension] = {
     _vtk.VTK_BEZIER_PYRAMID: 3,
 }
 
+_DEPRECATED_CELL_TYPES = {
+    'PARAMETRIC_CURVE',
+    'PARAMETRIC_SURFACE',
+    'PARAMETRIC_TRI_SURFACE',
+    'PARAMETRIC_QUAD_SURFACE',
+    'PARAMETRIC_TETRA_REGION',
+    'PARAMETRIC_HEX_REGION',
+    'HIGHER_ORDER_POLYGON',
+}
+_RENAMED_CELL_TYPES = {
+    'HIGHER_ORDER_QUAD': 'HIGHER_ORDER_QUADRILATERAL',
+    'HIGHER_ORDER_EDGE': 'HIGHER_ORDER_CURVE',
+}
+
 _GRID_TEMPLATE_NO_IMAGE = """
 .. grid:: 1
     :margin: 1
@@ -67,7 +86,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
+            .. image:: /../_build/pyvista_plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
@@ -514,8 +533,14 @@ _CELL_TYPE_INFO = dict(
     PARAMETRIC_HEX_REGION=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_HEX_REGION),
     ####################################################################################
     # Higher order cells
+    # The name EDGE is deprecated in VTK 9.7, replaced with CURVE, but same value
+    # Update the value to VTK_HIGHER_ORDER_CURVE once 9.7 is the minimum supported version
+    HIGHER_ORDER_CURVE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
     HIGHER_ORDER_EDGE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
     HIGHER_ORDER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TRIANGLE),
+    # The name QUAD is deprecated in VTK 9.7, replaced with QUADRILATERAL, but same value
+    # Update the value to VTK_HIGHER_ORDER_QUADRILATERAL once 9.7 is the minimum supported version
+    HIGHER_ORDER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
     HIGHER_ORDER_QUAD=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
     HIGHER_ORDER_POLYGON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_POLYGON),
     HIGHER_ORDER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TETRAHEDRON),
@@ -637,6 +662,19 @@ _CELL_TYPE_INFO = dict(
 )
 
 
+def _warn_deprecated_removed(member: CellType) -> None:
+    msg = f'{member!r} is deprecated and will be removed in a future version.'
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+def _warn_deprecated_renamed(name: str) -> None:
+    msg = (
+        f'CellType.{name} is deprecated and has been renamed. '
+        f'Use {_RENAMED_CELL_TYPES[name]} instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
 class _CellTypeMeta(EnumMeta):
     """Metaclass to enable class property definitions for CellType."""
 
@@ -644,6 +682,21 @@ class _CellTypeMeta(EnumMeta):
     _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
         MappingProxyType(_dimension_map)
     )
+
+    def __getattribute__(cls, name: str) -> Any:
+        member = super().__getattribute__(name)
+        if name in _DEPRECATED_CELL_TYPES:
+            _warn_deprecated_removed(member)
+        elif name in _RENAMED_CELL_TYPES:
+            _warn_deprecated_renamed(name)
+        return member
+
+    def __call__(cls, value: int, *args, **kwargs) -> CellType:  # type: ignore[override]
+        member = super().__call__(value, *args, **kwargs)  # type: ignore[var-annotated]
+        name = member.name
+        if name in _DEPRECATED_CELL_TYPES:
+            _warn_deprecated_removed(member)
+        return member
 
     @property
     def dimension_map(cls) -> MappingProxyType[_Dimension, frozenset[CellType]]:
@@ -656,7 +709,7 @@ class _CellTypeMeta(EnumMeta):
         Returns
         -------
         dict
-            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            Dictionary with cell dimensions ``0``, ``1``, ``2``, ``3`` as keys, and frozen sets as
             values with the respective :class:`CellType` members.
 
         See Also
@@ -700,7 +753,7 @@ class _CellTypeMeta(EnumMeta):
          <CellType.QUADRATIC_EDGE: 21>,
          <CellType.CUBIC_LINE: 35>,
          <CellType.PARAMETRIC_CURVE: 51>,
-         <CellType.HIGHER_ORDER_EDGE: 60>,
+         <CellType.HIGHER_ORDER_CURVE: 60>,
          <CellType.LAGRANGE_CURVE: 68>,
          <CellType.BEZIER_CURVE: 75>]
 
@@ -722,7 +775,7 @@ class _CellTypeMeta(EnumMeta):
          <CellType.PARAMETRIC_TRI_SURFACE: 53>,
          <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
          <CellType.HIGHER_ORDER_TRIANGLE: 61>,
-         <CellType.HIGHER_ORDER_QUAD: 62>,
+         <CellType.HIGHER_ORDER_QUADRILATERAL: 62>,
          <CellType.HIGHER_ORDER_POLYGON: 63>,
          <CellType.LAGRANGE_TRIANGLE: 69>,
          <CellType.LAGRANGE_QUADRILATERAL: 70>,
@@ -786,9 +839,10 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     Although point coordinates are defined in three dimensions, the cell topology can
     be 0, 1, 2, or 3-dimensional. Use :attr:`dimension` to check the topological dimension.
 
-    Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
-    cells consist of one or more primary cells, while primary cells cannot be
-    decomposed. Use :attr:`is_composite` to check if a cell type is primary or composite.
+    Cells can be primary (for example, triangle) or composite (for example, triangle
+    strip). Composite cells consist of one or more primary cells, while primary cells
+    cannot be decomposed. Use :attr:`is_composite` to check if a cell type is primary
+    or composite.
 
     Cells can also be characterized as linear or non-linear. Linear cells use
     linear or constant interpolation, while non-linear cells may use quadratic,
@@ -799,7 +853,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     the extremities are interpolatory.
 
     This enumeration defines all cell types used in VTK and supported by PyVista. The
-    type(s) of cell(s) to use is typically chosen based on application need, such as
+    types of cells to use is typically chosen based on application need, such as
     graphics rendering or numerical simulation.
 
     .. seealso::
@@ -809,12 +863,6 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
         :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
-
-        :ref:`linear_cells_example`
-            Detailed example using linear cells.
-
-        :ref:`create_polyhedron_example`
-            Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
 
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
@@ -835,14 +883,15 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 13
+
     Create a single cube. Notice how the cell type is defined using the
     ``CellType``.
 
     >>> import numpy as np
-    >>> from pyvista import CellType
     >>> import pyvista as pv
     >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
-    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
+    >>> cell_type = np.array([pv.CellType.HEXAHEDRON], np.int8)
     >>> points = np.array(
     ...     [
     ...         [0, 0, 0],
@@ -894,7 +943,7 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
         .. note::
 
             When specifying multi-line ``doc`` strings, the lines *must* be all aligned.
-            I.e. do not put the first line immediately after the triple quotes; instead
+            That is, do not put the first line immediately after the triple quotes; instead
             put the first line of text on a new line.
 
         Parameters
@@ -913,20 +962,20 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             the cell.
 
         _variable_points: bool, optional
-            Override the value shown for this cell type's `Points` badge. May be
-            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            Override the value shown for this cell type's ``Points`` badge. May be
+            useful for composite cells (for example, POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_edges: bool, optional
-            Override the value shown for this cell type's `Edges` badge. May be
-            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            Override the value shown for this cell type's ``Edges`` badge. May be
+            useful for composite cells (for example, POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         _variable_faces: bool, optional
-            Override the value shown for this cell type's `Faces` badge. May be
-            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            Override the value shown for this cell type's ``Faces`` badge. May be
+            useful for composite cells (for example, POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
@@ -1331,8 +1380,10 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
     PARAMETRIC_QUAD_SURFACE = _CELL_TYPE_INFO['PARAMETRIC_QUAD_SURFACE']
     PARAMETRIC_TETRA_REGION = _CELL_TYPE_INFO['PARAMETRIC_TETRA_REGION']
     PARAMETRIC_HEX_REGION = _CELL_TYPE_INFO['PARAMETRIC_HEX_REGION']
+    HIGHER_ORDER_CURVE = _CELL_TYPE_INFO['HIGHER_ORDER_CURVE']
     HIGHER_ORDER_EDGE = _CELL_TYPE_INFO['HIGHER_ORDER_EDGE']
     HIGHER_ORDER_TRIANGLE = _CELL_TYPE_INFO['HIGHER_ORDER_TRIANGLE']
+    HIGHER_ORDER_QUADRILATERAL = _CELL_TYPE_INFO['HIGHER_ORDER_QUADRILATERAL']
     HIGHER_ORDER_QUAD = _CELL_TYPE_INFO['HIGHER_ORDER_QUAD']
     HIGHER_ORDER_POLYGON = _CELL_TYPE_INFO['HIGHER_ORDER_POLYGON']
     HIGHER_ORDER_TETRAHEDRON = _CELL_TYPE_INFO['HIGHER_ORDER_TETRAHEDRON']

@@ -41,7 +41,7 @@ The source code for the plot may be included in one of two ways:
 **Options**
 The ``pyvista-plot`` directive supports the following options:
 
-    include-source : bool
+    include-source : ``bool``
         Whether to display the source code. The default can be changed
         using the ``pyvista_plot_include_source`` variable in :file:`conf.py`.
 
@@ -55,7 +55,7 @@ The ``pyvista-plot`` directive supports the following options:
         directives for which the ``:context:`` option was specified.  This only
         applies to inline code plot directives, not those run from files.
 
-    nofigs : None
+    ``nofigs`` : None
         When setting this flag, the code block will be run but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
@@ -64,25 +64,33 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
-    force_static : None
+    ``force_static`` : None
         When setting this flag, static images will be used instead of an
         interactive scene.
 
-    skip : bool, default: True
+    skip : ``bool``, default: True
         Whether to skip execution of this directive. If no argument is provided
-        i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
-        behaviour is controlled by the ``plot_skip`` boolean variable in
+        that is, ``:skip:``, then it defaults to ``:skip: true``.  Default
+        behaviour is controlled by the ``pyvista_plot_skip`` boolean variable in
         :file:`conf.py`.  Note that, if specified, this option overrides the
-        ``plot_skip`` configuration.
+        ``pyvista_plot_skip`` configuration.
 
     optional : None
         This flag marks the directive for *conditional* execution. Whether the
-        directive is executed is controlled by the ``plot_skip_optional``
+        directive is executed is controlled by the ``pyvista_plot_skip_optional``
         boolean variable in :file:`conf.py`.
 
-Additionally, this directive supports all the options of the `image`
+Additionally, this directive supports all the options of the ``image``
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
+
+
+**Open Graph previews**
+
+Add ``sphinx_autoopengraph`` to ``extensions`` for a sensible Open Graph link
+preview on every page. It is a separate, independent extension -- nothing about
+it is specific to plotting, and it is not enabled by enabling this directive.
+See :ref:`opengraph_docs`.
 
 
 **Configuration options**
@@ -93,32 +101,45 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 The plot directive has the following configuration options:
 
-    pyvista_plot_include_source : bool, default: True
+    ``pyvista_plot_include_source`` : bool, default: True
         Default value for the ``include-source`` directive option.
         Default is ``True``.
 
-    pyvista_plot_basedir : str
+    ``pyvista_plot_basedir`` : str
         Base directory, to which ``plot::`` file names are relative
         to.  If ``None`` or unset, file names are relative to the
         directory where the file containing the directive is.
 
-    pyvista_plot_html_show_formats : bool, default: True
+    ``pyvista_plot_html_show_formats`` : bool, default: True
         Whether to show links to the files in HTML. Default ``True``.
 
-    pyvista_plot_template : str
+    ``pyvista_plot_template`` : str
         Provide a customized Jinja2 template for preparing restructured text.
 
-    pyvista_plot_setup : str
+    ``pyvista_plot_setup`` : str
         Python code to be run before every plot directive block.
 
-    pyvista_plot_cleanup : str
+    ``pyvista_plot_cleanup`` : str
         Python code to be run after every plot directive block.
 
-    pyvista_plot_skip : bool, default: False
+    ``pyvista_plot_skip`` : bool, default: False
         Default value for the ``skip`` directive option.
 
-    pyvista_plot_skip_optional : bool, default: False
+    ``pyvista_plot_skip_optional`` : bool, default: False
         Whether to skip execution of ``optional`` directives.
+
+    ``pyvista_plot_autocodelink`` : bool, default: False
+        Hyperlink identifiers in the rendered output to their documented
+        targets. Requires the `sphinx-autocodelink
+        <https://github.com/user27182/sphinx-autocodelink>`_ package to be
+        installed (``pip install sphinx-autocodelink``); raises at build time
+        if enabled without it. Only applies to directives with
+        ``include-source`` on -- otherwise the code being linked from isn't
+        actually shown to the reader. Recorded under sphinx-autocodelink's
+        own default (uncategorized) bucket; rename its displayed label with
+        sphinx-autocodelink's own ``autocodelink_category_labels``.
+
+        .. versionadded:: 0.49
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
@@ -138,6 +159,13 @@ that indexed is incompatible with parallel builds due to race conditions.
 
 .. versionchanged:: 0.47
     Hash-based image naming is now used by default.
+
+.. versionchanged:: 0.49
+    Generated source code is now wrapped in a ``.. container:: pyvista-plot-source``
+    node. This has no effect on rendering, but allows other independent tooling
+    (e.g. the https://github.com/pyvista/sphinx-examples-as-code Sphinx extension)
+    to reliably locate this directive's generated code within a page.
+
 """
 
 from __future__ import annotations
@@ -145,7 +173,6 @@ from __future__ import annotations
 import doctest
 import hashlib
 import os
-from os.path import relpath
 from pathlib import Path
 import re
 import shutil
@@ -159,19 +186,25 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-# must enable BUILDING_GALLERY to keep windows active
-# enable offscreen to hide figures when generating them.
 import pyvista as pv
+
+try:
+    # Optional: only required when `pyvista_plot_autocodelink` is enabled.
+    from sphinx_autocodelink import record_namespace
+except ImportError:
+    record_namespace = None
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from docutils.parsers.rst.states import RSTState
     from sphinx.application import Sphinx
     from sphinx.config import Config
+    from sphinx.environment import BuildEnvironment
 
 
-pv.BUILDING_GALLERY = True
-pv.OFF_SCREEN = True
+# CSS class marking the ``.. container::`` node that wraps this directive's generated source code
+_PLOT_SOURCE_CLASS = 'pyvista-plot-source'
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -241,11 +274,35 @@ class PlotDirective(Directive):
 
 
 def setup(app: Sphinx):
-    """Set up the plot directive."""
+    """Set up the plot directive.
+
+    Sphinx calls this when it loads the extension, which is where the two globals
+    below belong: setting them at import time made merely importing this module
+    change how plotters behave for the rest of the process. ``BUILDING_GALLERY``
+    keeps render windows active (and holds each plotter strongly rather than
+    through a weak proxy), and ``OFF_SCREEN`` hides the figures while they are
+    generated -- both wanted for a documentation build, both surprising anywhere
+    else.
+    """
+    pv.BUILDING_GALLERY = True
+    pv.OFF_SCREEN = True
+
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
+    if record_namespace is not None:
+        app.setup_extension('sphinx_autocodelink')
+
+    def check_autocodelink_available(_app: Sphinx, config: Config) -> None:
+        if config.pyvista_plot_autocodelink and record_namespace is None:
+            msg = (
+                "'pyvista_plot_autocodelink' is enabled, but the 'sphinx-autocodelink' "
+                'package is not installed. Install it with `pip install sphinx-autocodelink`.'
+            )
+            raise RuntimeError(msg)
+
+    app.connect('config-inited', check_autocodelink_available)
 
     legacy_keys = [
         'plot_include_source',
@@ -298,6 +355,7 @@ def setup(app: Sphinx):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -380,8 +438,17 @@ def _show_or_plot_in_string(string):
 # Template
 # -----------------------------------------------------------------------------
 
-TEMPLATE = """
+TEMPLATE = (
+    """
+{% if source_code %}
+.. container:: """
+    + _PLOT_SOURCE_CLASS
+    + """
+
+   {{ source_code | indent(3, first=True) }}
+{% else %}
 {{ source_code }}
+{% endif %}
 
 .. only:: html
 
@@ -414,6 +481,7 @@ TEMPLATE = """
    {% endfor %}
 
 """
+)
 
 exception_template = """
 .. only:: html
@@ -445,7 +513,7 @@ class ImageFile:
 
     @property
     def stem(self):
-        """Return the basename without the suffix."""
+        """Return the ``basename`` without the suffix."""
         return Path(self.basename).stem
 
     def __repr__(self) -> str:  # pragma no cover
@@ -456,16 +524,16 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
+def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a
-    ```pyvista-plot::`` directive.  In the later case, the doctest parser will
-    present the code-block again with the ```pyvista-plot::`` directive
+    ``pyvista-plot::`` directive.  In the later case, the doctest parser will
+    present the code-block again with the ``pyvista-plot::`` directive
     and its options removed.
 
     Import a Python module from a path, and run the function given by
-    name, if function_name is not None.
+    name, if ``function_name`` is not None.
     """
     # do not execute code containing any SKIP directives
     if 'doctest:+SKIP' in code:
@@ -478,6 +546,8 @@ def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
         if pv.PLOT_DIRECTIVE_THEME is not None:
             pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)  # noqa: S102
+        if function_name is not None:
+            ns[function_name]()
     except (Exception, SystemExit) as err:  # pragma: no cover
         # Annotate traceback with source file and line
         tb = traceback.format_exc()
@@ -497,15 +567,23 @@ def render_figures(
     function_name,
     config,
     force_static,
+    env: BuildEnvironment | None = None,
+    include_source: bool = True,
+    state: RSTState | None = None,
 ):
-    """Run a pyplot script and save the images in *output_dir*.
+    """Run a pyplot script and save the images in *``output_dir``*.
 
-    Save the images under *output_dir* with file names derived from
-    *output_base*. Closed plotters are ignored if they were never
+    Save the images under *``output_dir``* with file names derived from
+    *``output_base``*. Closed plotters are ignored if they were never
     rendered.
+
+    If *env* is given and *``include_source``* is true, also records the code's identifiers
+    to hyperlink -- skipped when the source isn't shown, since there would be nothing on the
+    page for a reader to click through to. *state* is the calling directive's own
+    ``self.state``, passed through to sphinx-autocodelink for its own categorization.
     """
-    # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
-    # The doctest parser will present the code-block once again with the ```pyvista-plot::``
+    # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
+    # The doctest parser will present the code-block once again with the ``pyvista-plot::``
     # directive and its options properly parsed.
     if _contains_pyvista_plot(code):
         is_doctest = True
@@ -517,6 +595,7 @@ def render_figures(
     # Otherwise, we didn't find the files, so build them
     results = []
     ns = plot_context if context else {}
+    clean_pieces = []
 
     # Check for setup and teardown code for plots
     code_setup = config.pyvista_plot_setup
@@ -528,8 +607,10 @@ def render_figures(
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
+            clean_piece = doctest.script_from_examples(code_piece) if is_doctest else code_piece
+            clean_pieces.append(clean_piece)
             _run_code(
-                code=doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code=clean_piece,
                 code_path=code_path,
                 ns=ns,
                 function_name=function_name,
@@ -547,28 +628,43 @@ def render_figures(
                 for j, (_, plotter) in enumerate(figures.items()):
                     if plotter._gif_filename is not None:
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
+                        images.append(image_file)
                         shutil.move(plotter._gif_filename, image_file.filename)
-                    else:
-                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
-                        try:
-                            plotter.screenshot(image_file.filename)
-                        except RuntimeError:  # pragma no cover
-                            # ignore closed, unrendered plotters
-                            continue
-                        if force_static or (plotter.last_vtksz is None):
-                            images.append(image_file)
-                            continue
-                        else:
-                            image_file = ImageFile(
-                                output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz'
-                            )
-                            with Path(image_file.filename).open('wb') as f:
-                                f.write(plotter.last_vtksz)
+                        continue
+                    if not plotter._show_called:
+                        continue
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
+                    try:
+                        plotter.screenshot(image_file.filename)
+                    except RuntimeError:  # pragma no cover
+                        # ignore closed, unrendered plotters
+                        continue
+                    if force_static or (plotter.last_vtksz is None):
+                        images.append(image_file)
+                        continue
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
+                    with Path(image_file.filename).open('wb') as f:
+                        f.write(plotter.last_vtksz)
+
                     images.append(image_file)
 
             pv.close_all()  # close and clear all plotters
 
             results.append((code_piece, images))
+
+        if (
+            env is not None
+            and clean_pieces
+            and config.pyvista_plot_autocodelink
+            and include_source
+        ):
+            record_namespace(
+                env=env,
+                docname=env.docname,
+                source='\n'.join(clean_pieces),
+                namespace=ns,
+                state=state,
+            )
     finally:
         if code_cleanup:
             _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
@@ -668,11 +764,12 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
             output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
-    source_ext = Path(output_base).suffix
-    if source_ext in ('.py', '.rst', '.txt'):
+    if Path(output_base).suffix in ('.py', '.rst', '.txt'):  # pragma: no branch
+        # Python code is extracted from these inputs
+        ext_out = '.py'
         output_base = base
     else:
-        source_ext = ''
+        ext_out = ''
 
     # ensure that LaTeX includegraphics doesn't choke in foo.bar.pdf filenames
     output_base = output_base.replace('.', '-')
@@ -683,11 +780,11 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = relpath(source_file_name, setup.confdir)
+    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
+    build_dir = str(Path(setup.app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -699,17 +796,14 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.join(  # noqa: PTH118
-        relpath(setup.confdir, rst_dir),
-        source_rel_dir,
-    ).replace(os.path.sep, '/')
+    dest_dir_link = Path(os.path.relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
     try:
-        build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
+        build_dir_link = os.path.relpath(build_dir, rst_dir)
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
         build_dir_link = build_dir
-    _ = dest_dir_link + '/' + output_base + source_ext
+    build_dir_link = Path(build_dir_link).as_posix()
 
     # make figures
     errors = []
@@ -726,6 +820,9 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 function_name=function_name,
                 config=config,
                 force_static=force_static,
+                env=document.settings.env,
+                include_source=options['include-source'],
+                state=state,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter
@@ -789,17 +886,8 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     if total_lines:
         state_machine.insert_input(total_lines, source=source_file_name)
 
-    # copy image files to builder's output directory, if necessary
-    Path(dest_dir).mkdir(parents=True, exist_ok=True)
-
-    for _, images in results:
-        for image in images:
-            destimg = str(Path(dest_dir) / image.basename)
-            if image.filename != destimg:
-                shutil.copyfile(image.filename, destimg)
-
     # copy script (if necessary)
-    Path(dest_dir, output_base + source_ext).write_text(
+    Path(build_dir, output_base + ext_out).write_text(
         doctest.script_from_examples(code)
         if source_file_name == rst_file and is_doctest
         else code,

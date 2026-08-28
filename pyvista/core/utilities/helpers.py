@@ -96,16 +96,29 @@ def _dataset_array_lengths_match(obj: DataSet) -> bool:
     return ok
 
 
+def _composite_array_lengths_match(obj: MultiBlock | PartitionedDataSet) -> bool:
+    """Recursively apply :func:`_dataset_array_lengths_match` to every leaf DataSet."""
+    for i in range(len(obj)):
+        block = obj[i]
+        if block is None:
+            continue
+        if isinstance(block, pv.MultiBlock):
+            if not _composite_array_lengths_match(block):
+                return False
+        elif not _dataset_array_lengths_match(block):
+            return False
+    return True
+
+
 def _warn_if_invalid_data(obj: DataObject) -> None:
-    if pv.vtk_version_info < (9, 3, 0) or not hasattr(obj, 'validate_mesh'):
+    if not hasattr(obj, 'validate_mesh'):
         return
-    # Fast path: for a plain DataSet, a direct Python-side array-length check
-    # avoids the ~600us setup cost of the validate_mesh machinery on the
-    # common valid case. Composite and table types fall through to
-    # validate_mesh so their warning behavior is unchanged. When the fast
-    # path detects a mismatch we still call validate_mesh to produce the
-    # detailed warning message.
+    # Fast path avoiding the slow validate_mesh machinery on the common valid case.
     if isinstance(obj, pv.DataSet) and _dataset_array_lengths_match(obj):
+        return
+    if isinstance(obj, (pv.MultiBlock, pv.PartitionedDataSet)) and _composite_array_lengths_match(
+        obj,
+    ):
         return
     obj.validate_mesh('data', action='warn')
 
@@ -228,13 +241,9 @@ def wrap(  # noqa: PLR0911
     pyvista.DataSet
         The PyVista wrapped dataset.
 
-    See Also
-    --------
-    :ref:`wrap_trimesh_example`
-
     Examples
     --------
-    Wrap a numpy array representing a random point cloud.
+    Wrap a NumPy array representing a random point cloud.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -503,7 +512,7 @@ def is_inside_bounds(point, bounds):
     Parameters
     ----------
     point : sequence[float]
-        Three item cartesian point (i.e. ``[x, y, z]``).
+        Three item Cartesian point (that is, ``[x, y, z]``).
 
     bounds : sequence[float]
         Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.

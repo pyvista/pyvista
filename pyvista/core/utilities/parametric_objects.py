@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from math import pi
+import math
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
@@ -84,11 +84,6 @@ def Spline(
     -------
     pyvista.PolyData
         Line mesh of spline.
-
-    See Also
-    --------
-    :ref:`create_spline_example`
-    :ref:`distance_along_spline_example`
 
     Examples
     --------
@@ -238,8 +233,6 @@ def KochanekSpline(  # noqa: PLR0917
     >>> points = np.column_stack((x, y, z))
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color='k')
-
-    See :ref:`create_kochanek_spline_example` for an additional example.
 
     """
     if tension is None:
@@ -655,9 +648,9 @@ def ParametricEllipsoid(
     parametric_keywords(
         parametric_function,
         min_u=kwargs.pop('min_u', 0),
-        max_u=kwargs.pop('max_u', 2 * pi),
+        max_u=kwargs.pop('max_u', 2 * math.pi),
         min_v=kwargs.pop('min_v', 0.0),
-        max_v=kwargs.pop('max_v', pi),
+        max_v=kwargs.pop('max_v', math.pi),
         join_u=kwargs.pop('join_u', False),
         join_v=kwargs.pop('join_v', False),
         twist_u=kwargs.pop('twist_u', False),
@@ -1232,7 +1225,7 @@ def ParametricSuperToroid(  # noqa: PLR0917
     ParametricSuperToroid generates a supertoroid.  Essentially a
     supertoroid is a torus with the sine and cosine terms raised to a power.
     A supertoroid is a versatile primitive that is controlled by four
-    parameters r0, r1, n1 and n2. r0, r1 determine the type of torus whilst
+    parameters r0, r1, n1, and n2. r0, r1 determine the type of torus whilst
     the value of n1 determines the shape of the torus ring and n2 determines
     the shape of the cross section of the ring. It is the different values of
     these powers which give rise to a family of 3D shapes that are all
@@ -1366,9 +1359,9 @@ def ParametricTorus(
 def parametric_keywords(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     min_u: float = 0.0,
-    max_u: float = 2 * pi,
+    max_u: float = 2 * math.pi,
     min_v: float = 0.0,
-    max_v: float = 2 * pi,
+    max_v: float = 2 * math.pi,
     join_u: bool = False,  # noqa: FBT001, FBT002
     join_v: bool = False,  # noqa: FBT001, FBT002
     twist_u: bool = False,  # noqa: FBT001, FBT002

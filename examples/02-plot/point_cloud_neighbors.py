@@ -4,8 +4,8 @@
 Highlight Nearest Neighbors in a Point Cloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use :func:`pyvista.DataSet.find_closest_point` to inspect local neighborhoods in
-a point cloud.
+Use :func:`~pyvista.DataSet.find_closest_point` to inspect point-cloud neighborhoods.
+
 """
 
 import numpy as np
@@ -13,7 +13,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a cosmological point cloud
+# Load a Cosmological Point Cloud
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # :func:`~pyvista.examples.downloads.download_cloud_dark_matter` returns a
 # sampled N-body simulation. Pick a point near the middle of the cloud as
@@ -53,7 +53,7 @@ pl.show()
 
 
 # %%
-# Inspect the neighbor indices
+# Inspect the Neighbor Indices
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The returned indices index back into the original point array.
 

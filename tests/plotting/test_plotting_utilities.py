@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import sys
+from types import ModuleType
 from unittest.mock import Mock
 
 import numpy as np
@@ -14,6 +16,11 @@ from pyvista import examples
 from pyvista.plotting._plotting import _resolve_scalars_field
 from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.helpers import view_vectors
+from pyvista.plotting.utilities.gl_checks import _QT_GUI_MODULES
+from pyvista.plotting.utilities.gl_checks import _offscreen_probe_render_window
+from pyvista.plotting.utilities.gl_checks import _process_uses_egl
+from pyvista.plotting.utilities.gl_checks import _qt_platform_name
+from pyvista.plotting.utilities.gl_checks import uses_egl
 from pyvista.report import GPUInfo
 from pyvista.report import _get_render_window_class
 from tests.conftest import PILLOW_VERSION_INFO
@@ -64,14 +71,12 @@ def test_ray_trace_plot():
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.skip_check_gc
 def test_plot_curvature():
     sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.skip_check_gc
 def test_plot_curvature_pointset():
     grid = examples.load_structured()
     grid.plot_curvature(off_screen=True)
@@ -263,3 +268,118 @@ def test_add_mesh_raw_numpy_mismatched_length_raises():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Number of scalars'):
         pl.add_mesh(sphere, scalars=np.zeros(42, dtype=np.float32))
+
+
+def test_offscreen_probe_render_window(monkeypatch):
+    """GL probes must not create GLX windows inside a Wayland session.
+
+    Making a GLX context current in a process already using EGL (e.g. Qt on
+    the native wayland platform) aborts the process, so under Wayland the
+    probe window must be EGL-based. See pyvista/pyvistaqt#445.
+    """
+    monkeypatch.delenv('WAYLAND_DISPLAY', raising=False)
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    default_cls = type(_offscreen_probe_render_window())
+    assert issubclass(default_cls, pv._vtk.vtkRenderWindow)
+
+    monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    if not pv._vtk.has_attr('vtkEGLRenderWindow'):
+        pytest.skip('VTK build lacks vtkEGLRenderWindow')
+    assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
+
+    # an explicit VTK_DEFAULT_OPENGL_WINDOW override wins over the heuristic
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', default_cls.__name__)
+    assert type(_offscreen_probe_render_window()) is default_cls
+
+
+def test_uses_egl_wayland(monkeypatch):
+    """uses_egl must not instantiate the factory render window under Wayland.
+
+    Construction (and destruction) of the default GLX window aborts a process
+    already using EGL. See pyvista/pyvistaqt#445.
+    """
+    monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    has_x = pv._vtk.has_attr('vtkXOpenGLRenderWindow')
+    assert uses_egl() is not has_x
+
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', 'vtkEGLRenderWindow')
+    assert uses_egl() is True
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', 'vtkXOpenGLRenderWindow')
+    assert uses_egl() is False
+
+
+class _FakeApp:
+    def __init__(self, platform_name):
+        self._platform_name = platform_name
+
+    def platformName(self):  # noqa: N802
+        return self._platform_name
+
+
+def _fake_binding(monkeypatch, module_name, platform_name):
+    """Install a stand-in Qt binding exposing QGuiApplication.instance()."""
+    module = ModuleType(module_name)
+    app = None if platform_name is None else _FakeApp(platform_name)
+    module.QGuiApplication = type('QGuiApplication', (), {'instance': staticmethod(lambda: app)})
+    monkeypatch.setitem(sys.modules, module_name, module)
+
+
+@pytest.mark.parametrize('module_name', _QT_GUI_MODULES)
+def test_qt_platform_name(monkeypatch, module_name):
+    """A live Qt application reports the platform it actually connected to."""
+    _fake_binding(monkeypatch, module_name, 'xcb')
+    assert _qt_platform_name() == 'xcb'
+
+
+def test_qt_platform_name_no_application(monkeypatch):
+    """An imported binding with no application running answers nothing."""
+    for name in _QT_GUI_MODULES[1:]:
+        monkeypatch.delitem(sys.modules, name, raising=False)
+    _fake_binding(monkeypatch, _QT_GUI_MODULES[0], None)
+    assert _qt_platform_name() is None
+
+
+@pytest.mark.parametrize(
+    ('wayland_display', 'platform_name', 'expected'),
+    [
+        # The case this exists for: QT_QPA_PLATFORM=xcb runs Qt through
+        # XWayland inside a Wayland session, so the process's GL is GLX even
+        # though a compositor is running.
+        ('wayland-0', 'xcb', False),
+        ('wayland-0', 'wayland', True),
+        # Without a Qt application there is nothing better than the session.
+        ('wayland-0', None, True),
+        (None, None, False),
+        # A Qt application on X11 with no compositor at all.
+        (None, 'xcb', False),
+    ],
+)
+def test_process_uses_egl(monkeypatch, wayland_display, platform_name, expected):
+    """A running Qt application outranks the session variable."""
+    monkeypatch.delenv('WAYLAND_DISPLAY', raising=False)
+    if wayland_display is not None:
+        monkeypatch.setenv('WAYLAND_DISPLAY', wayland_display)
+    for name in _QT_GUI_MODULES:
+        monkeypatch.delitem(sys.modules, name, raising=False)
+    if platform_name is not None:
+        _fake_binding(monkeypatch, _QT_GUI_MODULES[0], platform_name)
+    assert _process_uses_egl() is expected
+
+
+def test_offscreen_probe_follows_qt_platform(monkeypatch):
+    """Qt on xcb inside a Wayland session must not get an EGL probe window.
+
+    An EGL render window cannot make its context current in a GLX process, so
+    every probe render logs ``Unable to eglMakeCurrent`` with EGL_BAD_ACCESS.
+    """
+    monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    if not pv._vtk.has_attr('vtkEGLRenderWindow'):
+        pytest.skip('VTK build lacks vtkEGLRenderWindow')
+
+    _fake_binding(monkeypatch, _QT_GUI_MODULES[0], 'xcb')
+    assert not isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
+
+    _fake_binding(monkeypatch, _QT_GUI_MODULES[0], 'wayland')
+    assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)

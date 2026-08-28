@@ -1,18 +1,19 @@
 """
 .. _image_fft_perlin_noise_example:
 
-Fast Fourier Transform with Perlin Noise
+Fast Fourier Transform With Perlin Noise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example shows how to apply a Fast Fourier Transform (FFT) to a
-:class:`pyvista.ImageData` using :func:`pyvista.ImageDataFilters.fft`
-filter.
+Apply an FFT to a :class:`~pyvista.ImageData` sampled from Perlin noise.
+
+Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
 Here, we demonstrate FFT usage by first generating Perlin noise using
 :func:`pyvista.sample_function() <pyvista.core.utilities.features.sample_function>` to
 sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
+
 """
 
 import numpy as np
