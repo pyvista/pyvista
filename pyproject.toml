@@ -89,7 +89,7 @@ test = [
   'pandas<=2.4.0',
   'polars<=1.44',
   'pyarrow<26.0.0',
-  'pycroscope<=0.2.0',
+  'pycroscope<0.6.0',
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
