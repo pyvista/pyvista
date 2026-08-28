@@ -216,6 +216,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*InteractorStyleHandler'),
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
+    (r'py:.*', '.*ReaderProvider'),
+    (r'py:.*', '.*_T_Provider'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
