@@ -10,7 +10,7 @@ from pytest_cases import filters as ft
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 
-import pyvista
+import pyvista as pv
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -60,7 +60,7 @@ def results_parser(monkeypatch: pytest.MonkeyPatch):
     It enables to get the test name (last part of the test path)
     as well as the status.
 
-    Results can be passed to the `RunResultsReport` class to better interact
+    Results can be passed to the ``RunResultsReport`` class to better interact
     with them.
     """
     monkeypatch.setenv('PYTEST_ADDOPTS', '-v')
@@ -111,36 +111,6 @@ def test_warnings_turned_to_errors(
     report = RunResultsReport(results)
     assert 'test_warning' in report.failed
     assert 'test_no_warnings' in report.passed
-
-
-@pytest.mark.parametrize('greater', [True, False])
-def test_warning_vtk(
-    pytester: pytest.Pytester,
-    results_parser: PytesterStdoutParser,
-    monkeypatch: pytest.MonkeyPatch,
-    greater: bool,
-):
-    tests = """
-    import pytest, warnings
-
-    def test_warning():
-        msg = "`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here."
-        warnings.warn(msg, DeprecationWarning)
-
-    """  # noqa: E501
-    monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 0) if not greater else (9, 1))
-
-    p = pytester.makepyfile(tests)
-    results = pytester.runpytest(p)
-
-    results.assert_outcomes(
-        passed=1 if not greater else 0,
-        failed=0 if not greater else 1,
-    )
-
-    results = results_parser.parse(results=results)
-    report = RunResultsReport(results)
-    assert 'test_warning' in (report.failed if greater else report.passed)
 
 
 @pytest.mark.parametrize('cml', [True, False])
@@ -201,7 +171,8 @@ class CasesNeedsVtk:
         """
 
         value = (8, 2, 0) if greater else (9, 2, 0)
-        monkeypatch.setattr(pyvista, 'vtk_version_info', value)
+        monkeypatch.setattr(pv, 'vtk_version_info', value)
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=0 if greater else 5, skipped=5 if greater else 0)
 
@@ -225,7 +196,8 @@ class CasesNeedsVtk:
         """
 
         value = (8, 2, 0) if lower else (9, 2, 0)
-        monkeypatch.setattr(pyvista, 'vtk_version_info', value)
+        monkeypatch.setattr(pv, 'vtk_version_info', value)
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=3 if lower else 0, skipped=0 if lower else 3)
 
@@ -244,7 +216,8 @@ class CasesNeedsVtk:
 
         """
 
-        monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 1, 0))
+        monkeypatch.setattr(pv, 'vtk_version_info', (9, 1, 0))
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(skipped=2)
 
@@ -260,7 +233,8 @@ class CasesNeedsVtk:
 
         """
 
-        monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 1, 0))
+        monkeypatch.setattr(pv, 'vtk_version_info', (9, 1, 0))
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=1)
 
@@ -280,7 +254,8 @@ class CasesNeedsVtk:
 
         """
 
-        monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2, 0))
+        monkeypatch.setattr(pv, 'vtk_version_info', (8, 2, 0))
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(skipped=2)
 
@@ -310,7 +285,8 @@ class CasesNeedsVtk:
         """
 
         value = (9, 0, 0) if between else (9, 2, 0)
-        monkeypatch.setattr(pyvista, 'vtk_version_info', value)
+        monkeypatch.setattr(pv, 'vtk_version_info', value)
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=5 if between else 0, skipped=0 if between else 5)
 
@@ -397,7 +373,8 @@ class CasesNeedsVtk:
 
         """
 
-        monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2))
+        monkeypatch.setattr(pv, 'vtk_version_info', (8, 2))
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, [
             r'SKIPPED.*Test needs VTK version >= \(9, 1, 0\), current is \(8, 2\)',
@@ -417,7 +394,8 @@ class CasesNeedsVtk:
 
         """
 
-        monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2))
+        monkeypatch.setattr(pv, 'vtk_version_info', (8, 2))
+        monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, ['SKIPPED.*foo']
 
@@ -448,6 +426,44 @@ def test_needs_vtk_version_reason(tests: str, match: list[str], pytester: pytest
     results.stdout.re_match_lines(match)
 
 
+def test_needs_vtk_version_raises_vtk_version_error(
+    pytester: pytest.Pytester,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0, 0))
+    tests = """
+    import pytest
+
+    @pytest.mark.needs_vtk_version(9, 0, 0)
+    def test1(): ...
+
+    @pytest.mark.needs_vtk_version(8, 9, 9)
+    def test2(): ...
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 0, 0))
+    def test3(): ...
+
+    @pytest.mark.needs_vtk_version(less_than=(8, 9, 9))
+    def test4(): ...
+
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(skipped=0, passed=0, errors=4)
+    expected_patterns = [
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test1>\.',
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test2>\.',
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test3>\.',
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test4>\.',
+    ]
+    results.stdout.re_match_lines(expected_patterns)
+
+
 @pytest.mark.skipif(os.name != 'nt', reason='Needs Windows platform to run')
 def test_skip_windows(
     pytester: pytest.Pytester,
@@ -474,8 +490,10 @@ def test_skip_windows(
     results.stdout.re_match_lines(
         [
             r'.*Marker `skip_windows` called with incorrect arguments\.',
-            r".*Signature should be: @pytest\.mark\.skip_windows\(reason: str = 'Test fails on "
-            r"Windows'\)",
+            (
+                r'.*Signature should be: @pytest\.mark\.skip_windows'
+                r"\(reason: str = 'Test fails on Windows'\)"
+            ),
         ]
     )
 
@@ -627,3 +645,16 @@ def test_skip_mac(
         assert 'test_skipped_platform_machine' in report.skipped
     else:
         assert 'test_skipped_platform_machine' in report.passed
+
+
+def test_notebook_mode_is_pinned_off():
+    """``reset_global_state`` pins notebook mode, rather than leaving it detected.
+
+    Left at its default of ``None``, a plotter asks scooby whether it is running in an
+    ipykernel, so on a machine that answers yes an ordinary plotting test renders through
+    the trame jupyter backend and launches the process-lifetime ``pyvista-jupyter``
+    server. Whichever test does that first is then blamed for the ``vtkWebApplication``
+    it leaves behind (pyvista/pyvista#8929). Tests that want a notebook pass
+    ``notebook=True`` themselves.
+    """
+    assert pv.global_theme.notebook is False

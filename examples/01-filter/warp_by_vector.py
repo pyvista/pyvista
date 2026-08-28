@@ -4,30 +4,24 @@
 Warping by Vectors
 ~~~~~~~~~~~~~~~~~~
 
-This example applies the :meth:`~pyvista.DataSetFilters.warp_by_vector`
-filter to a sphere mesh that has 3D displacement vectors defined at each node.
+Apply :meth:`~pyvista.DataSetFilters.warp_by_vector` to a sphere mesh.
+
+The sphere has 3D displacement vectors defined at each node.
+
 """
 
 # %%
-# We first compare the unwarped sphere to the warped sphere.
-from __future__ import annotations
-
-from itertools import product
-
+# We first compare the un-warped sphere to the warped sphere. Use
+# :func:`~pyvista.plot_compare` to show the meshes side-by-side. The keys of the
+# dict are used as labels.
 import pyvista as pv
 from pyvista import examples
 
 sphere = examples.load_sphere_vectors()
 warped = sphere.warp_by_vector()
 
-p = pv.Plotter(shape=(1, 2))
-p.subplot(0, 0)
-p.add_text('Before warp')
-p.add_mesh(sphere, color='white')
-p.subplot(0, 1)
-p.add_text('After warp')
-p.add_mesh(warped, color='white')
-p.show()
+datasets = {'Before warp': sphere, 'After warp': warped}
+pv.plot_compare(datasets, color='white')
 
 # %%
 # We then use several values for the scale factor applied to the warp
@@ -35,12 +29,10 @@ p.show()
 # unrealistic results.
 
 warp_factors = [0, 1.5, 3.5, 5.5]
-p = pv.Plotter(shape=(2, 2))
-for i, j in product(range(2), repeat=2):
-    idx = 2 * i + j
-    p.subplot(i, j)
-    p.add_mesh(sphere.warp_by_vector(factor=warp_factors[idx]))
-    p.add_text(f'factor={warp_factors[idx]}')
-p.show()
+datasets = {
+    f'factor={factor}': sphere.warp_by_vector(factor=factor) for factor in warp_factors
+}
+
+pv.plot_compare(datasets)
 # %%
 # .. tags:: filter

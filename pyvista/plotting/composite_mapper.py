@@ -2,21 +2,22 @@
 
 from __future__ import annotations
 
-from itertools import cycle
+import itertools
 import sys
 from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
 
-import pyvista
-from pyvista import vtk_version_info
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
@@ -26,10 +27,12 @@ if TYPE_CHECKING:
 
     import cycler
 
+    from pyvista import MultiBlock
+
     from ._typing import ColorLike
 
 
-class BlockAttributes:
+class BlockAttributes(_NoNewAttrMixin):
     """Block attributes used to set the attributes of a block.
 
     Parameters
@@ -182,10 +185,6 @@ class BlockAttributes:
 
         If opacity has not been set this will be ``None``.
 
-        Warnings
-        --------
-        VTK 9.0.3 has a bug where changing the opacity to less than 1.0 also
-        changes the edge visibility on the block that is partially transparent.
 
         Examples
         --------
@@ -264,7 +263,11 @@ class BlockAttributes:
         )
 
 
-class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplayAttributes):
+class CompositeAttributes(
+    _NoNewAttrMixin,
+    DisableVtkSnakeCase,
+    _vtk.vtkCompositeDataDisplayAttributes,
+):
     """Block attributes.
 
     Parameters
@@ -476,11 +479,7 @@ class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplay
 
         """
         try:
-            if vtk_version_info <= (9, 0, 3):  # pragma: no cover
-                vtk_ref = _vtk.reference(0)  # needed for <=9.0.3
-                block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)  # type: ignore[arg-type]
-            else:
-                block = self.DataObjectFromIndex(index, self._dataset)
+            block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             msg = f'Invalid block key: {index}'
             raise KeyError(msg) from None
@@ -495,13 +494,11 @@ class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplay
 
     def __len__(self):
         """Return the number of blocks in this dataset."""
-        from pyvista import MultiBlock  # avoid circular
-
         # start with 1 as there is always a composite dataset and this is the
         # root of the tree
         cc = 1
         for dataset in self._dataset:
-            if isinstance(dataset, MultiBlock):
+            if isinstance(dataset, pv.MultiBlock):
                 cc += len(dataset) + 1  # include the block itself
             else:
                 cc += 1
@@ -513,14 +510,7 @@ class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplay
             yield self[ii]
 
 
-class CompositePolyDataMapper(
-    _BaseMapper,
-    (
-        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
-        if vtk_version_info >= (9, 3)
-        else _vtk.vtkCompositePolyDataMapper2
-    ),
-):
+class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
     """Composite PolyData mapper.
 
     Parameters
@@ -564,8 +554,10 @@ class CompositePolyDataMapper(
         if interpolate_before_map is not None:
             self.interpolate_before_map = interpolate_before_map
 
+        self._orig_scalars_name: str | None = None
+
     @property
-    def dataset(self) -> pyvista.MultiBlock:  # numpydoc ignore=RT01
+    def dataset(self) -> MultiBlock:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -585,7 +577,7 @@ class CompositePolyDataMapper(
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: pyvista.MultiBlock):
+    def dataset(self, obj: MultiBlock):
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
@@ -647,7 +639,7 @@ class CompositePolyDataMapper(
         >>> actor, mapper = pl.add_composite(
         ...     dataset, scalars='data', show_scalar_bar=False
         ... )
-        >>> mapper.nan_color = 'r'
+        >>> pv.global_theme.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
 
@@ -696,9 +688,9 @@ class CompositePolyDataMapper(
         self.scalar_visibility = False
 
         if isinstance(color_cycler, bool):
-            colors = cycle(get_cycler('matplotlib'))
+            colors = itertools.cycle(get_cycler('matplotlib'))
         else:
-            colors = cycle(get_cycler(color_cycler))
+            colors = itertools.cycle(get_cycler(color_cycler))
 
         for attr in self.block_attr:
             attr.color = next(colors)['color']
@@ -795,7 +787,7 @@ class CompositePolyDataMapper(
             are installed, their colormaps can be specified by name.
 
         flip_scalars : bool
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         log_scale : bool
@@ -834,7 +826,7 @@ class CompositePolyDataMapper(
         if log_scale and clim[0] <= 0:
             clim = [sys.float_info.min, clim[1]]
 
-        if isinstance(cmap, pyvista.LookupTable):
+        if isinstance(cmap, pv.LookupTable):
             self.lookup_table = cmap
         else:
             if dtype == np.bool_:
@@ -861,7 +853,7 @@ class CompositePolyDataMapper(
                 scalar_bar_args.setdefault('below_label', 'below')
 
             if cmap is None:
-                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
+                cmap = pv.global_theme.cmap if self._theme is None else self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip=flip_scalars)

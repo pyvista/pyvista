@@ -1,0 +1,129 @@
+# check spelling, codestyle
+name: Style and Docstring Check
+
+on: [pull_request, merge_group, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: none
+
+jobs:
+  cache-pyvista-data:
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
+    with:
+      # Runner should match the actual runner used by the docstring job
+      runs-on: "blacksmith-4vcpu-ubuntu-2204"
+
+  docstringcheck:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: blacksmith-4vcpu-ubuntu-2204
+            python-version: "3.14" # Should be the latest version supported
+          - os: windows-latest
+            python-version: "3.10" # Should be the oldest version supported
+
+    runs-on: ${{ matrix.os }}
+
+    needs: cache-pyvista-data
+    env:
+      TOX_COLORED: "yes"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Setup headless display on Windows
+        if: runner.os == 'Windows'
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
+        if: runner.os == 'Linux'
+        with:
+          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          version: 3.0
+
+      - name: Restore pyvista/data cache
+        uses: actions/cache/restore@v6
+        with:
+          path: pyvista-data
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Test Package Docstrings (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a tox run -f doctest
+
+      - name: Test Package Docstrings (Windows)
+        if: runner.os == 'Windows'
+        run: tox run -f doctest
+
+  vale:
+    name: Vale
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.14
+
+      - name: Install Vale Dependencies
+        run: pip install 'docutils<0.22' 'sphinx-gallery<0.22.0'
+
+      # Convert .py examples to .rst so Vale can parse their headings.
+      - name: Extract example RST for Vale
+        run: python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
+
+      # Same, for docstrings, so Vale can check their prose too.
+      - name: Extract docstring RST for Vale
+        run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
+
+      # `doc/run_vale.py` owns the path list; Vale runs here through the action
+      # instead, so that alerts appear inline on the pull request.
+      - name: Collect the paths Vale checks
+        id: vale-paths
+        run: echo "files=$(python3 doc/run_vale.py --print-files)" >> "$GITHUB_OUTPUT"
+
+      - name: "Run Vale"
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        with:
+          files: ${{ steps.vale-paths.outputs.files }}
+          config: doc/.vale.ini
+          reporter: github-pr-check
+          filter_mode: nofilter
+          # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
+          fail_level: warning
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # A heading in a scanned file has to pass, so nothing above would notice
+      # `Google.Headings` going slack. This runs Vale over a fixture of
+      # headings that must be flagged, and fails if any of them stops being.
+      - name: Install Vale
+        run: |
+          curl -sSfL https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz \
+            | sudo tar -xz -C /usr/local/bin vale
+        env:
+          VALE_VERSION: 3.18.0
+
+      - name: "Check Vale still catches known-bad headings"
+        run: python3 tests/doc/vale/check_expected_failures.py

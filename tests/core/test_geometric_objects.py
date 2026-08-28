@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from itertools import permutations
+import itertools
 import re
 
 from hypothesis import given
@@ -45,6 +45,13 @@ def test_cylinder_structured():
     cyl = pv.CylinderStructured()
     assert np.any(cyl.points)
     assert np.any(cyl.n_cells)
+
+    match = 'must all be greater than 0.0'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[0.0, 1.0])
+    match = 'must be sorted in strict ascending order'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[1.0, 0.5])
 
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
@@ -106,6 +113,43 @@ def test_sphere_theta():
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
+def test_sphere_texture_coordinates():
+    sphere = pv.Sphere(texture_coordinates=False)
+    assert sphere.active_texture_coordinates is None
+    assert sphere.n_open_edges == 0
+
+    phi_resolution = 30
+    sphere = pv.Sphere(
+        texture_coordinates=True, tessellation='phi_theta', phi_resolution=phi_resolution
+    )
+    assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
+    assert sphere.n_open_edges == (phi_resolution - 1) * 2
+
+    phi_resolution = 50
+    sphere = pv.Sphere(
+        texture_coordinates=True, tessellation='phi_theta', phi_resolution=phi_resolution
+    )
+    assert sphere.n_open_edges == (phi_resolution - 1) * 2
+
+    match = 'Texture coordinates are not supported for partial spheres'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.Sphere(texture_coordinates=True, start_phi=1)
+    with pytest.raises(ValueError, match=match):
+        _ = pv.Sphere(texture_coordinates=True, start_theta=1)
+
+
+def test_sphere_tessellation():
+    sphere = pv.Sphere(tessellation='triangle')
+    assert sphere.distinct_cell_types == {pv.CellType.TRIANGLE}
+    assert sphere.n_cells == 1680
+    assert sphere.n_open_edges == 0
+
+    sphere = pv.Sphere(tessellation='phi_theta')
+    assert sphere.distinct_cell_types == {pv.CellType.TRIANGLE, pv.CellType.QUAD}
+    assert sphere.n_cells == 870
+    assert sphere.n_open_edges == 0
+
+
 def test_solid_sphere():
     sphere = pv.SolidSphere()
     assert isinstance(sphere, pv.UnstructuredGrid)
@@ -130,11 +174,18 @@ def test_solid_sphere_hollow():
 
 
 def test_solid_sphere_generic():
-    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
+    radius_resolution = 5
+    theta_resolution = 11
+    phi_resolution = 13
+    sphere = pv.SolidSphere(
+        radius_resolution=radius_resolution,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+    )
     sphere_seq = pv.SolidSphereGeneric(
-        radius=np.linspace(0, 0.5, 5),
-        theta=np.linspace(0, 360, 11),
-        phi=np.linspace(0, 180, 13),
+        radius=np.linspace(0, 0.5, radius_resolution),
+        theta=np.linspace(0, 360, theta_resolution + 1),
+        phi=np.linspace(0, 180, phi_resolution),
     )
     assert sphere == sphere_seq
 
@@ -235,7 +286,7 @@ def test_solid_sphere_resolution_errors():
         match=re.escape('max theta and min theta must be within 2 * np.pi'),
     ):
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
-    with pytest.raises(ValueError, match='maximum phi cannot be > np.pi'):
+    with pytest.raises(ValueError, match=r'maximum phi cannot be > np.pi'):
         pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
 
     with pytest.raises(ValueError, match='radius is not monotonically increasing'):
@@ -248,7 +299,7 @@ def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match='radius resolution must be 2 or more'):
         pv.SolidSphere(radius_resolution=1)
     with pytest.raises(ValueError, match='theta resolution must be 2 or more'):
-        pv.SolidSphere(theta_resolution=1)
+        pv.SolidSphere(theta_resolution=0)
     with pytest.raises(ValueError, match='phi resolution must be 2 or more'):
         pv.SolidSphere(phi_resolution=1)
 
@@ -509,20 +560,34 @@ def test_cone():
     assert np.any(cone.faces)
 
 
-def test_box():
-    geom = pv.Box()
-    assert np.any(geom.points)
-
+@pytest.mark.parametrize('level', [3, (3, 3, 3)])
+def test_box(level):
+    level_int = 3 if isinstance(level, int) else level[0]
     bounds = [-10.0, 10.0, 10.0, 20.0, -5.0, 5.0]
-    level = 3
     quads = True
     mesh1 = pv.Box(bounds, level=level, quads=quads)
-    assert mesh1.n_cells == (level + 1) * (level + 1) * 6
+    assert mesh1.n_cells == (level_int + 1) * (level_int + 1) * 6
     assert np.allclose(mesh1.bounds, bounds)
 
     quads = False
     mesh2 = pv.Box(bounds, level=level, quads=quads)
     assert mesh2.n_cells == mesh1.n_cells * 2
+
+
+def test_box_multi_level_equal():
+    box1 = pv.Box(level=5)
+    box2 = pv.Box(level=[5, 5, 5])
+    assert box1 == box2
+
+
+@pytest.mark.parametrize('level', [[3, 4, 5], (3, 3, 3)])
+@pytest.mark.parametrize(
+    ('quads', 'celltype'), [(True, pv.CellType.QUAD), (False, pv.CellType.TRIANGLE)]
+)
+def test_box_multi_level_cell_type(level, quads, celltype):
+    box = pv.Box(level=level, quads=quads)
+    celltypes = set(box.cast_to_unstructured_grid().celltypes)
+    assert celltypes == {celltype}
 
 
 def test_polygon():
@@ -572,12 +637,7 @@ def test_text_3d():
     assert mesh.n_points
     assert mesh.n_cells
 
-    bnds = mesh.bounds
-    actual_width, actual_height, actual_depth = (
-        bnds.x_max - bnds.x_min,
-        bnds.y_max - bnds.y_min,
-        bnds.z_max - bnds.z_min,
-    )
+    actual_width, actual_height, actual_depth = mesh.bounds_size
     assert np.isclose(actual_width, 2.0)
     assert np.isclose(actual_height, 3.0)
     assert np.isclose(actual_depth, 0.5)
@@ -696,7 +756,7 @@ def test_rectangle(points):
     )
 
     # Test all possible orders of the points
-    for pt_tuples in permutations(rotated, 4):
+    for pt_tuples in itertools.permutations(rotated, 4):
         mesh = pv.Rectangle(list(pt_tuples[0:3]))
         assert mesh.n_points
         assert mesh.n_cells
@@ -742,7 +802,7 @@ def test_rectangle_not_enough_points():
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
 
-    with pytest.raises(TypeError, match='Points must be given as length 3 np.ndarray or list'):
+    with pytest.raises(TypeError, match=r'Points must be given as length 3 np.ndarray or list'):
         pv.Rectangle([pointa, pointb])
 
 
@@ -781,6 +841,7 @@ def test_ellipse():
         range(5),
         [4, 8, 6, 12, 20],
         [4, 6, 8, 20, 12],
+        strict=True,
     ),
 )
 def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
@@ -791,7 +852,7 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
     # verify type of solid
     assert solid_from_str.n_points == n_vertices
-    assert solid_from_str.n_faces_strict == n_faces
+    assert solid_from_str.n_faces == n_faces
 
 
 def test_platonic_invalids():
@@ -808,7 +869,7 @@ def test_tetrahedron():
     center = (1, -2, 3)
     solid = pv.Tetrahedron(radius=radius, center=center)
     assert solid.n_points == 4
-    assert solid.n_faces_strict == 4
+    assert solid.n_faces == 4
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Tetrahedron(radius=2 * radius, center=center)
@@ -820,7 +881,7 @@ def test_octahedron():
     center = (1, -2, 3)
     solid = pv.Octahedron(radius=radius, center=center)
     assert solid.n_points == 6
-    assert solid.n_faces_strict == 8
+    assert solid.n_faces == 8
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Octahedron(radius=2 * radius, center=center)
@@ -832,7 +893,7 @@ def test_dodecahedron():
     center = (1, -2, 3)
     solid = pv.Dodecahedron(radius=radius, center=center)
     assert solid.n_points == 20
-    assert solid.n_faces_strict == 12
+    assert solid.n_faces == 12
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Dodecahedron(radius=2 * radius, center=center)
@@ -844,7 +905,7 @@ def test_icosahedron():
     center = (1, -2, 3)
     solid = pv.Icosahedron(radius=radius, center=center)
     assert solid.n_points == 12
-    assert solid.n_faces_strict == 20
+    assert solid.n_faces == 20
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Icosahedron(radius=2 * radius, center=center)
@@ -860,4 +921,4 @@ def test_icosphere():
     assert np.allclose(np.linalg.norm(icosphere.points - icosphere.center, axis=1), radius)
 
     icosahedron = pv.Icosahedron()
-    assert icosahedron.n_faces_strict * 4**nsub == icosphere.n_faces_strict
+    assert icosahedron.n_faces * 4**nsub == icosphere.n_faces

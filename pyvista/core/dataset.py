@@ -4,31 +4,36 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from copy import deepcopy
-from functools import partial
+import copy
+import functools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import TypeVar
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _vtk_core as _vtk
+from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
-from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
+from .formatting_html import _data_array_section
+from .formatting_html import _fmt_memory
+from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -36,6 +41,7 @@ from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
+from .utilities.arrays import parse_field_choice
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
@@ -47,11 +53,21 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from collections.abc import Iterator
 
+    import pandas
+    import pyarrow
     from typing_extensions import Self
 
+    from pyvista import Cell
+    from pyvista import CellType
+    from pyvista import PointSet
+
     from ._typing_core import MatrixLike
+    from ._typing_core import NumberType
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+    from ._typing_core import _ArrayLikeOrScalar
+
+    _Dimensionality = Literal[0, 1, 2, 3]
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -89,86 +105,11 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     """Active array info tuple for arrays that exist.
 
     This named tuple is similar to ActiveArrayInfoTuple except the
-    `name` attribute cannot be `None`.
+    ``name`` attribute cannot be ``None``.
     """
 
     association: FieldAssociation
     name: str
-
-
-class ActiveArrayInfo:
-    """Active array info class with support for pickling.
-
-    .. deprecated:: 0.45
-
-        Use :class:`pyvista.core.dataset.ActiveArrayInfoTuple` instead.
-
-    Parameters
-    ----------
-    association : pyvista.core.utilities.arrays.FieldAssociation
-        Array association.
-        Association of the array.
-
-    name : str
-        The name of the array.
-
-    """
-
-    def __init__(self: ActiveArrayInfo, association: FieldAssociation, name: str | None) -> None:
-        """Initialize."""
-        self.association = association
-        self.name = name
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
-            'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
-            PyVistaDeprecationWarning,
-        )
-
-    def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
-        """Return a copy of this object.
-
-        Returns
-        -------
-        ActiveArrayInfo
-            A copy of this object.
-
-        """
-        return ActiveArrayInfo(self.association, self.name)
-
-    def __getstate__(self: ActiveArrayInfo) -> dict[str, Any]:
-        """Support pickling."""
-        state = self.__dict__.copy()
-        state['association'] = int(self.association.value)
-        return state
-
-    def __setstate__(self: ActiveArrayInfo, state: dict[str, Any]) -> None:
-        """Support unpickling."""
-        self.__dict__ = state.copy()
-        self.association = FieldAssociation(state['association'])
-
-    @property
-    def _namedtuple(self: ActiveArrayInfo) -> ActiveArrayInfoTuple:
-        """Build a namedtuple on the fly to provide legacy support."""
-        return ActiveArrayInfoTuple(self.association, self.name)
-
-    def __iter__(self: ActiveArrayInfo) -> Iterator[FieldAssociation | str]:
-        """Provide namedtuple-like __iter__."""
-        return self._namedtuple.__iter__()
-
-    def __repr__(self: ActiveArrayInfo) -> str:
-        """Provide namedtuple-like __repr__."""
-        return self._namedtuple.__repr__()
-
-    def __getitem__(self: ActiveArrayInfo, item: int) -> FieldAssociation | str:
-        """Provide namedtuple-like __getitem__."""
-        return self._namedtuple.__getitem__(item)
-
-    def __eq__(self: ActiveArrayInfo, other: object) -> bool:
-        """Check equivalence (useful for serialize/deserialize tests)."""
-        if isinstance(other, ActiveArrayInfo):
-            same_association = int(self.association.value) == int(other.association.value)
-            return self.name == other.name and same_association
-        return False
 
 
 @promote_type(_vtk.vtkDataSet)
@@ -179,14 +120,14 @@ class DataSet(DataSetFilters, DataObject):
     Parameters
     ----------
     *args :
-        Any extra args are passed as option to spatially referenced objects.
+        Any extra ``args`` are passed as option to spatially referenced objects.
 
     **kwargs :
-        Any extra keyword args are passed as option to spatially referenced objects.
+        Any extra keyword ``args`` are passed as option to spatially referenced objects.
 
     """
 
-    plot = pyvista._plot.plot
+    plot = pv._plot.plot
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -196,15 +137,27 @@ class DataSet(DataSetFilters, DataObject):
         self._active_vectors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
 
+        # Used by glyph filter and plotter legend
+        self._glyph_geom: Sequence[_vtk.vtkDataSet] | None = None
+
     def __getattr__(self: Self, item: str) -> Any:
-        """Get attribute from base class if not found."""
+        """Get attribute from base class if not found.
+
+        Before falling through to the VTK base class, check whether
+        ``item`` matches a pending ``pyvista.accessors`` entry point.
+        A match triggers a one-shot plugin import, after which normal
+        attribute resolution finds the newly attached accessor
+        descriptor.
+        """
+        if _resolve_pending_accessor(item):
+            return object.__getattribute__(self, item)
         return super().__getattribute__(item)
 
     @property
     def active_scalars_info(self: Self) -> ActiveArrayInfoTuple:
         """Return the active scalar's association and name.
 
-        Association refers to the data association (e.g. point, cell, or
+        Association refers to the data association (for example, point, cell, or
         field) of the active scalars.
 
         Returns
@@ -263,7 +216,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_vectors_info(self: Self) -> ActiveArrayInfoTuple:
         """Return the active vector's association and name.
 
-        Association refers to the data association (e.g. point, cell, or
+        Association refers to the data association (for example, point, cell, or
         field) of the active vectors.
 
         Returns
@@ -447,7 +400,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property  # type: ignore[explicit-override, override]
+    @property
     def active_scalars_name(self: Self) -> str | None:
         """Return the name of the active scalars.
 
@@ -484,16 +437,16 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def points(self: Self) -> pyvista_ndarray:
-        """Return a reference to the points as a numpy object.
+        """Return a reference to the points as a NumPy object.
 
         Returns
         -------
         pyvista_ndarray
-            Reference to the points as a numpy object.
+            Reference to the points as a NumPy object.
 
         Examples
         --------
-        Create a mesh and return the points of the mesh as a numpy
+        Create a mesh and return the points of the mesh as a NumPy
         array.
 
         >>> import pyvista as pv
@@ -549,7 +502,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @points.setter
     def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
-        """Set a reference to the points as a numpy object.
+        """Set a reference to the points as a NumPy object.
 
         Parameters
         ----------
@@ -585,7 +538,7 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def arrows(
         self: Self,
-    ) -> pyvista.PolyData | None:
+    ) -> pv.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points or cells of the mesh and
@@ -638,40 +591,6 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
-
-    @property
-    def active_t_coords(self: Self) -> pyvista_ndarray | None:
-        """Return the active texture coordinates on the points.
-
-        Returns
-        -------
-        Optional[pyvista_ndarray]
-            Active texture coordinates on the points.
-
-        """
-        warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. '
-            'Use `DataSet.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.active_texture_coordinates
-
-    @active_t_coords.setter
-    def active_t_coords(self: Self, t_coords: NumpyArray[float]) -> None:
-        """Set the active texture coordinates on the points.
-
-        Parameters
-        ----------
-        t_coords : np.ndarray
-            Active texture coordinates on the points.
-
-        """
-        warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. '
-            'Use `DataSet.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     def set_active_scalars(
         self: Self,
@@ -865,9 +784,6 @@ class DataSet(DataSetFilters, DataObject):
         """
         field = get_array_association(self, old_name, preference=preference)
 
-        was_active = False
-        if self.active_scalars_name == old_name:
-            was_active = True
         if field == FieldAssociation.POINT:
             data = self.point_data
         elif field == FieldAssociation.CELL:
@@ -878,6 +794,20 @@ class DataSet(DataSetFilters, DataObject):
             msg = f'Array with name {old_name} not found.'
             raise KeyError(msg)
 
+        # An array can be the active scalars, normals, texture coordinates, vectors,
+        # etc. Popping it clears those designations on the vtkDataSetAttributes, and
+        # re-adding it can promote it to the active scalars even if it was not active
+        # before (``DataSetAttributes.__setitem__`` activates new arrays when there
+        # are no active scalars). Snapshot every attribute role before renaming and
+        # restore the exact same state afterwards
+        # (see https://github.com/pyvista/pyvista/issues/8746).
+        prior_active: dict[int, str | None] = {}
+        if field != FieldAssociation.NONE:
+            attributes = data.VTKObject
+            for attribute_type in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
+                attribute = attributes.GetAttribute(attribute_type)
+                prior_active[attribute_type] = None if attribute is None else attribute.GetName()
+
         arr = data.pop(old_name)
         # Update the array's name before reassigning. This prevents taking a copy of the array in
         # `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
@@ -885,8 +815,13 @@ class DataSet(DataSetFilters, DataObject):
         arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
 
-        if was_active and field != FieldAssociation.NONE:
-            self.set_active_scalars(new_name, preference=field)
+        # Restore active attributes
+        for attribute_type, prior_name in prior_active.items():
+            restored_name = new_name if prior_name == old_name else prior_name
+            attribute = data.VTKObject.GetAttribute(attribute_type)
+            current_name = None if attribute is None else attribute.GetName()
+            if current_name != restored_name:
+                data.VTKObject.SetActiveAttribute(restored_name, attribute_type)
 
     @property
     def active_scalars(self: Self) -> pyvista_ndarray | None:
@@ -981,7 +916,7 @@ class DataSet(DataSetFilters, DataObject):
         # If array has no tuples return a NaN range
         if arr is None:
             return (np.nan, np.nan)
-        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not (arr.dtype == bool or np.issubdtype(arr.dtype, np.number)):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
@@ -1000,8 +935,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if deep:
-            self._association_complex_names = deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = deepcopy(ido._association_bitarray_names)
+            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
+            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
@@ -1103,6 +1038,95 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
+
+    def _attributes_for_association(
+        self: Self, association: FieldAssociation
+    ) -> DataSetAttributes:
+        """Return :attr:`point_data` or :attr:`cell_data`; raise ``ValueError`` otherwise."""
+        if association is FieldAssociation.POINT:
+            return self.point_data
+        if association is FieldAssociation.CELL:
+            return self.cell_data
+        msg = f"association must resolve to 'point' or 'cell'; got {association.name}."
+        raise ValueError(msg)
+
+    def to_pandas(
+        self: Self, association: PointLiteral | CellLiteral = 'point'
+    ) -> pandas.DataFrame:
+        """Return this dataset's point or cell arrays as a :class:`pandas.DataFrame`.
+
+        Thin wrapper around :meth:`DataSetAttributes.to_pandas`. See that
+        method for column-expansion rules and ``dtype`` handling.
+
+        Requires :mod:`pandas`.
+
+        Parameters
+        ----------
+        association : str | pyvista.core.utilities.arrays.FieldAssociation, default: 'point'
+            Which attribute set to convert. Accepts ``'point'`` or
+            ``FieldAssociation.POINT``, which maps to :attr:`point_data`
+            (``n_points`` rows); or ``'cell'`` or ``FieldAssociation.CELL``,
+            which maps to :attr:`cell_data` (``n_cells`` rows). Field data is
+            not supported because its arrays may have differing lengths.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame with one column per (expanded) array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['scalars'] = range(mesh.n_points)
+        >>> df = mesh.to_pandas()
+        >>> list(df.columns)
+        ['scalars']
+
+        """
+        return self._attributes_for_association(parse_field_choice(association)).to_pandas()
+
+    def to_arrow(self: Self, association: PointLiteral | CellLiteral = 'point') -> pyarrow.Table:
+        """Return this dataset's point or cell arrays as a :class:`pyarrow.Table`.
+
+        Thin wrapper around :meth:`DataSetAttributes.to_arrow`.
+
+        Requires :mod:`pyarrow`.
+
+        Parameters
+        ----------
+        association : str | pyvista.core.utilities.arrays.FieldAssociation, default: 'point'
+            Which attribute set to convert. Accepts ``'point'`` /
+            ``FieldAssociation.POINT`` or ``'cell'`` / ``FieldAssociation.CELL``.
+
+        Returns
+        -------
+        pyarrow.Table
+            Table with one column per (expanded) array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['scalars'] = range(mesh.n_points)
+        >>> mesh.to_arrow().num_rows
+        8
+
+        """
+        return self._attributes_for_association(parse_field_choice(association)).to_arrow()
+
+    def __arrow_c_stream__(self: Self, requested_schema: object | None = None) -> object:
+        """Export :attr:`point_data` via the Arrow PyCapsule interface.
+
+        Delegates to :meth:`DataSetAttributes.__arrow_c_stream__` on
+        :attr:`point_data`. Callers wanting :attr:`cell_data` should use
+        ``mesh.cell_data`` directly or ``mesh.to_arrow('cell')``.
+
+        Requires :mod:`pyarrow`.
+        """
+        return self.point_data.__arrow_c_stream__(requested_schema)
 
     @property
     def cell_data(self: Self) -> DataSetAttributes:
@@ -1276,7 +1300,10 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def center(self: Self) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or return the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1294,6 +1321,11 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCenter()
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def volume(
@@ -1361,7 +1393,7 @@ class DataSet(DataSetFilters, DataObject):
 
         A mesh with 3D cells does not have an area.  To get
         the outer surface area, first extract the surface using
-        :func:`pyvista.DataSetFilters.extract_surface`.
+        :func:`~pyvista.DataObjectFilters.extract_surface`.
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.area
@@ -1381,9 +1413,9 @@ class DataSet(DataSetFilters, DataObject):
     def get_array(
         self: Self,
         name: str,
-        preference: Literal['cell', 'point', 'field'] = 'cell',
-    ) -> pyvista.pyvista_ndarray:
-        """Search both point, cell and field data for an array.
+        preference: CellLiteral | PointLiteral | FieldLiteral = 'cell',
+    ) -> pyvista_ndarray:
+        """Search both point, cell, and field data for an array.
 
         Parameters
         ----------
@@ -1490,7 +1522,7 @@ class DataSet(DataSetFilters, DataObject):
     def __getitem__(
         self: Self,
         index: tuple[str, Literal['cell', 'point', 'field']] | str,
-    ) -> NumpyArray[float]:
+    ) -> pyvista_ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, tuple):
             name, preference = index
@@ -1512,9 +1544,9 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: NumpyArray[float] | Sequence[float] | float,
+        scalars: _ArrayLikeOrScalar[NumberType],
     ) -> None:  # numpydoc ignore=PR01,RT01
-        """Add/set an array in the point_data, or cell_data accordingly.
+        """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
         It depends on the array's length, or specified mode.
 
@@ -1598,10 +1630,10 @@ class DataSet(DataSetFilters, DataObject):
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
         attrs.append(('N Points', self.GetNumberOfPoints(), '{}'))
-        if isinstance(self, pyvista.PolyData):
+        if isinstance(self, pv.PolyData):
             attrs.append(('N Strips', self.n_strips, '{}'))
         bds = self.bounds
-        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        fmt = f'{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}'
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
@@ -1615,52 +1647,139 @@ class DataSet(DataSetFilters, DataObject):
         It includes header details and information about all arrays.
 
         """
-        fmt = ''
-        if self.n_arrays > 0:
-            fmt += "<table style='width: 100%;'>"
-            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
-            fmt += '<tr><td>'
-        # Get the header info
-        fmt += self.head(display=False, html=True)
-        # Fill out arrays
-        if self.n_arrays > 0:
-            fmt += '</td><td>'
-            fmt += '\n'
-            fmt += "<table style='width: 100%;'>\n"
-            titles = ['Name', 'Field', 'Type', 'N Comp', 'Min', 'Max']
-            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
-            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
-            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
+        sections: list[str] = []
 
-            def format_array(
-                name: str,
-                arr: str | pyvista_ndarray,
-                field: Literal['Points', 'Cells', 'Fields'],
-            ) -> str:
-                """Format array information for printing (internal helper)."""
-                if isinstance(arr, str):
-                    # Convert string scalar into a numpy array. Otherwise, get_data_range
-                    # will treat the string as an array name, not an array value.
-                    arr = pyvista.pyvista_ndarray(arr)  # type: ignore[arg-type]
-                dl, dh = self.get_data_range(arr)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
-                if name == self.active_scalars_info.name:
-                    name = f'<b>{name}</b>'
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                return row.format(name, field, arr.dtype, ncomp, dl, dh)
+        # Metadata rows (always-visible)
+        meta: list[tuple[str, list[tuple[str, str]], str]] = []
 
-            for key, arr in self.point_data.items():
-                fmt += format_array(key, arr, 'Points')
-            for key, arr in self.cell_data.items():
-                fmt += format_array(key, arr, 'Cells')
-            for key, arr in self.field_data.items():
-                fmt += format_array(key, arr, 'Fields')
+        # Bounds
+        bds = self.bounds
+        fmt = pv.FLOAT_FORMAT
+        meta.append(
+            (
+                'Bounds',
+                [
+                    ('X', f'[{fmt.format(bds.x_min)}, {fmt.format(bds.x_max)}]'),
+                    ('Y', f'[{fmt.format(bds.y_min)}, {fmt.format(bds.y_max)}]'),
+                    ('Z', f'[{fmt.format(bds.z_min)}, {fmt.format(bds.z_max)}]'),
+                ],
+                repr(tuple(bds)),
+            )
+        )
 
-            fmt += '</table>\n'
-            fmt += '\n'
-            fmt += '</td></tr> </table>'
-        return fmt
+        # PolyData cell-type breakdown
+        if isinstance(self, pv.PolyData):
+            poly_items: list[tuple[str, str]] = []
+            if self.n_faces:
+                poly_items.append(('faces', f'{self.n_faces:,}'))
+            if self.n_lines:
+                poly_items.append(('lines', f'{self.n_lines:,}'))
+            if self.n_strips:
+                poly_items.append(('strips', f'{self.n_strips:,}'))
+            if self.n_verts:
+                poly_items.append(('verts', f'{self.n_verts:,}'))
+            if poly_items:
+                meta.append(('Cells', poly_items, ''))
+
+        # Grid-specific properties
+        if hasattr(self, 'dimensions'):
+            dims = self.dimensions
+            grid_items: list[tuple[str, str]] = [
+                ('dims', f'{dims[0]} x {dims[1]} x {dims[2]}'),
+            ]
+            if hasattr(self, 'spacing'):
+                sp = self.spacing
+                grid_items.append(
+                    ('spacing', f'({fmt.format(sp[0])}, {fmt.format(sp[1])}, {fmt.format(sp[2])})')
+                )
+            meta.append(('Grid', grid_items, ''))
+
+        # Collect active array names per association
+        pt_scalars = self.active_scalars_info
+        active_pt_scalars = (
+            pt_scalars.name if pt_scalars.association == FieldAssociation.POINT else None
+        )
+        active_cell_scalars = (
+            pt_scalars.name if pt_scalars.association == FieldAssociation.CELL else None
+        )
+        active_vectors = self.active_vectors_name
+        pt_normals = self.point_data.active_normals_name if self.point_data else None
+        cell_normals = self.cell_data.active_normals_name if self.cell_data else None
+        pt_tcoords = self.point_data.active_texture_coordinates_name if self.point_data else None
+
+        def _array_info(
+            attrs: DataSetAttributes,
+            *,
+            show_shape: bool = False,
+            show_range: bool = False,
+        ) -> list[tuple[str, int, str, str, str]]:
+            fmt = pv.FLOAT_FORMAT
+            result: list[tuple[str, int, str, str, str]] = []
+            for name, arr in attrs.items():
+                # Field data can contain str values at runtime despite
+                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
+                # Wrap str so .shape / .dtype are available.
+                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
+                ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
+                shape = str(tuple(coerced.shape)) if show_shape else ''
+                range_str = ''
+                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
+                    lo = fmt.format(np.nanmin(coerced))
+                    hi = fmt.format(np.nanmax(coerced))
+                    range_str = f'[{lo}, {hi}]'
+                result.append((name, ncomp, str(coerced.dtype), shape, range_str))
+            return result
+
+        vec_assoc = self.active_vectors_info.association
+        pt_vectors = active_vectors if vec_assoc == FieldAssociation.POINT else None
+        cell_vectors = active_vectors if vec_assoc == FieldAssociation.CELL else None
+
+        # Point Data
+        if self.point_data:
+            sections.append(
+                _data_array_section(
+                    'Point Data',
+                    _array_info(self.point_data, show_range=True),
+                    active_scalars=active_pt_scalars,
+                    active_vectors=pt_vectors,
+                    active_normals=pt_normals,
+                    active_tcoords=pt_tcoords,
+                )
+            )
+
+        # Cell Data
+        if self.cell_data:
+            sections.append(
+                _data_array_section(
+                    'Cell Data',
+                    _array_info(self.cell_data, show_range=True),
+                    active_scalars=active_cell_scalars,
+                    active_vectors=cell_vectors,
+                    active_normals=cell_normals,
+                )
+            )
+
+        # Field Data—show full shape since arrays are arbitrary length
+        if self.field_data:
+            sections.append(
+                _data_array_section(
+                    'Field Data',
+                    _array_info(self.field_data, show_shape=True),
+                )
+            )
+
+        return build_repr_html(
+            obj_type=type(self).__name__,
+            mesh_type=type(self).__name__,
+            header_badges=[
+                f'{self.n_points:,} points',
+                f'{self.n_cells:,} cells',
+                _fmt_memory(self.actual_memory_size),
+            ],
+            metadata=meta,
+            sections=sections,
+            text_repr=self.head(display=False, html=False),
+        )
 
     def __repr__(self: Self) -> str:
         """Return the object representation."""
@@ -1672,7 +1791,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @_deprecate_positional_args(allowed=['mesh'])
     def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
-        """Overwrite this dataset inplace with the new dataset's geometries and data.
+        """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
         ----------
@@ -1709,13 +1828,36 @@ class DataSet(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def cast_to_unstructured_grid(self: Self) -> pyvista.UnstructuredGrid:
-        """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
+    def cast_to_unstructured_grid(self: Self) -> pv.UnstructuredGrid:
+        """Get a new representation of this object as a :class:`~pyvista.UnstructuredGrid`.
+
+        .. note::
+
+            Casting preserves the cell types of the input. This means that any
+            :class:`~pyvista.CellType.PIXEL` and :class:`~pyvista.CellType.VOXEL` cells from
+            :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid` are preserved.
+            Use ``to_quads`` or ``to_hexahedra`` instead to convert the cell
+            type for these cases.
 
         Returns
         -------
         pyvista.UnstructuredGrid
             Dataset cast into a :class:`pyvista.UnstructuredGrid`.
+
+        Notes
+        -----
+        The coordinate precision of the input is preserved. This requires
+        special handling for datasets with implicit geometry
+        (:class:`~pyvista.RectilinearGrid`, :class:`~pyvista.ImageData`). The
+        underlying ``vtkAppendFilter`` detects point precision by inspecting the
+        input's stored points, but these datasets store their geometry
+        implicitly (per-axis coordinates, or origin and spacing) and have no
+        such points. The filter would otherwise default to single precision and
+        silently downcast double coordinates. A ``RectilinearGrid`` is cast to
+        double precision when any of its coordinate arrays is double; an
+        ``ImageData`` is always cast to double since its origin and spacing are
+        always stored in double precision. See the upstream VTK bug:
+        https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
 
         Examples
         --------
@@ -1733,11 +1875,25 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
+        # vtkAppendFilter falls back to single precision for datasets without
+        # explicit points (RectilinearGrid, ImageData) because it infers
+        # precision from vtkPointSet.GetPoints(), which is None for these types.
+        # Work around the VTK bug by setting output precision explicitly.
+        # See https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
+        # and https://github.com/pyvista/pyvista/issues/7931
+        if isinstance(self, pv.RectilinearGrid):
+            input_is_double = any(
+                coords.dtype == np.float64 for coords in (self.x, self.y, self.z)
+            )
+        else:
+            input_is_double = isinstance(self, pv.ImageData)
+        if input_is_double:
+            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         alg.Update()
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1757,10 +1913,6 @@ class DataSet(DataSetFilters, DataObject):
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
-        See Also
-        --------
-        :ref:`create_pointset_example`
-
         Examples
         --------
         >>> import pyvista as pv
@@ -1770,7 +1922,7 @@ class DataSet(DataSetFilters, DataObject):
         <class 'pyvista.core.pointset.PointSet'>
 
         """
-        pset = pyvista.PointSet()
+        pset = pv.PointSet()
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
@@ -1778,7 +1930,7 @@ class DataSet(DataSetFilters, DataObject):
         return pset
 
     @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001, FBT002
+    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pv.PolyData:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1827,7 +1979,7 @@ class DataSet(DataSetFilters, DataObject):
             Spatial Cell Data       float64    (1000,)
 
         """
-        pset = pyvista.PolyData(self.points.copy())
+        pset = pv.PolyData(self.points.copy())
         if pass_cell_data:
             cell_data = self.copy()
             cell_data.clear_point_data()
@@ -1853,6 +2005,11 @@ class DataSet(DataSetFilters, DataObject):
 
         See: https://github.com/pyvista/pyvista-support/issues/107
 
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkPointLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
         Parameters
         ----------
         point : sequence[float]
@@ -1873,6 +2030,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -1900,9 +2059,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = '`n` must be a positive integer.'
             raise ValueError(msg)
 
-        locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
+        locator = self._point_locator
         if n > 1:
             id_list = _vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)  # type: ignore[arg-type]
@@ -1916,6 +2073,11 @@ class DataSet(DataSetFilters, DataObject):
         return_closest_point: bool = False,  # noqa: FBT001, FBT002
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
         """Find index of closest cell in this mesh to the given point.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -1932,7 +2094,7 @@ class DataSet(DataSetFilters, DataObject):
         -------
         int or numpy.ndarray
             Index or indices of the cell in this mesh that is/are closest
-            to the given point(s).
+            to the given points.
 
             .. versionchanged:: 0.35.0
                Inputs of shape ``(1, 3)`` now return a :class:`numpy.ndarray`
@@ -1940,7 +2102,7 @@ class DataSet(DataSetFilters, DataObject):
 
         numpy.ndarray
             Point or points inside a cell of the mesh that is/are closest
-            to the given point(s).  Only returned if
+            to the given points.  Only returned if
             ``return_closest_point=True``.
 
             .. versionchanged:: 0.35.0
@@ -1958,7 +2120,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
-        :ref:`distance_between_surfaces_example`
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2015,11 +2178,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
-
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
-
+        locator = self._static_cell_locator
         cell = _vtk.vtkGenericCell()
 
         closest_cells: list[int] = []
@@ -2032,7 +2191,7 @@ class DataSet(DataSetFilters, DataObject):
             dist2 = _vtk.mutable(0.0)
 
             locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)  # type: ignore[call-overload]
-            closest_cells.append(int(cell_id))
+            closest_cells.append(int(cell_id))  # type: ignore[call-overload]
             closest_points.append(closest_point)
 
         out_cells: int | NumpyArray[int] = (
@@ -2050,6 +2209,11 @@ class DataSet(DataSetFilters, DataObject):
     ) -> int | NumpyArray[int]:
         """Find index of a cell that contains the given point.
 
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
         Parameters
         ----------
         point : VectorLike[float] | MatrixLike[float],
@@ -2058,7 +2222,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        int or numpy.ndarray
+        output : int | numpy.ndarray
             Index or indices of the cell in this mesh that contains
             the given point.
 
@@ -2072,6 +2236,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2101,10 +2267,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
-
+        locator = self._static_cell_locator
         containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if singular else np.array(containing_cells)
 
@@ -2112,11 +2275,16 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
     ) -> NumpyArray[int]:
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2126,13 +2294,15 @@ class DataSet(DataSetFilters, DataObject):
         pointb : VectorLike
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
+            :attr:`numpy.finfo`.
 
         Returns
         -------
         numpy.ndarray
-            Index or indices of the cell(s) whose bounds intersect
+            Index or indices of the cells whose bounds intersect
             the line.
 
         Warnings
@@ -2149,13 +2319,16 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
         DataSet.find_cells_intersecting_line
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
-        array([  86,   87, 1652, 1653])
+        >>> cell_ids = mesh.find_cells_along_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> sorted(cell_ids.tolist())
+        [86, 87, 1652, 1653]
 
         """
         if np.array(pointa).size != 3:
@@ -2164,11 +2337,11 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
-        locator.BuildLocator()
+        if tolerance is None:
+            tolerance = np.finfo(np.float32).eps
+
         id_list = _vtk.vtkIdList()
-        locator.FindCellsAlongLine(
+        self._static_cell_locator.FindCellsAlongLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
@@ -2180,12 +2353,16 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
-        tolerance: float = 0.0,
+        tolerance: float | None = None,
     ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
 
-        Line is defined from ``pointa`` to ``pointb``.  This
-        method requires vtk version >=9.2.0.
+        Line is defined from ``pointa`` to ``pointb``.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2195,13 +2372,15 @@ class DataSet(DataSetFilters, DataObject):
         pointb : sequence[float]
             Length 3 coordinate of the end of the line.
 
-        tolerance : float, default: 0.0
+        tolerance : float, optional
             The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
+            :attr:`numpy.finfo`.
 
         Returns
         -------
         numpy.ndarray
-            Index or indices of the cell(s) that intersect
+            Index or indices of the cells that intersect
             the line.
 
         See Also
@@ -2211,43 +2390,177 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_within_bounds
         DataSet.find_cells_along_line
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
-        array([  86, 1653])
+        >>> cell_ids = mesh.find_cells_intersecting_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> sorted(cell_ids.tolist())
+        [86, 1653]
 
         """
-        if pyvista.vtk_version_info < (9, 2, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.2.0'
-            raise VTKVersionError(msg)
+        return self.intersect_with_line(pointa, pointb, tolerance=tolerance)[1]
 
-        if np.array(pointa).size != 3:
+    def intersect_with_line(
+        self: Self,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        *,
+        tolerance: float | None = None,
+        deduplicate_points: bool = False,
+    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+        """Locate points and cell ids that intersect a line.
+
+        .. versionadded:: 0.49
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkStaticCellLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Length 3 coordinate of the start of the line.
+
+        pointb : sequence[float]
+            Length 3 coordinate of the end of the line.
+
+        tolerance : float, optional
+            The absolute tolerance to use to find cells along line.
+            The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
+            :attr:`numpy.finfo`.
+
+        deduplicate_points : bool, default: False
+            By default, duplicate intersection points may be returned if an intersection point
+            is shared by multiple cells; in this case, the same point is returned for each cell.
+            Set this to ``True`` to only return a set of unique intersection points.
+
+        Returns
+        -------
+        numpy.ndarray, numpy.ndarray
+            Tuple of arrays. The first is a 2D float array of intersection points, the second is
+            a 1D int array with indices of the cell IDs corresponding to the intersection points.
+            The number of intersection points always matches the number of intersection cell ids.
+
+        See Also
+        --------
+        PolyDataFilters.ray_trace
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
+        DataSet.find_cells_along_line
+
+        Examples
+        --------
+        Intersect a line with a surface mesh.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> points, cell_ids = mesh.intersect_with_line([0.0, 0, 0], [1.0, 0, 0])
+        >>> points
+        array([[0.4992667, 0.       , 0.       ],
+               [0.4992667, 0.       , 0.       ]], dtype=float32)
+
+        >>> cell_ids  # doctest:+SKIP
+        array([   86, 1653])
+
+        Observe that `two` identical points are returned since two adjacent cells were intersected.
+        Use ``deduplicate_points`` to return unique intersection points only.
+
+        >>> points, cell_ids = mesh.intersect_with_line(
+        ...     [0.0, 0, 0], [1.0, 0, 0], deduplicate_points=True
+        ... )
+        >>> points
+        array([[0.4992667, 0.       , 0.       ]], dtype=float32)
+
+        >>> cell_ids  # doctest:+SKIP
+        array([86])
+
+        Intersect a line with a 3D cell. Here we create a single
+        :attr:`~pyvista.CellType.HEXAHEDRON` from :class:`~pyvista.ImageData`.
+
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 2)).to_hexahedra()
+
+        Intersecting the cell returns a single intersection point where the line first "hits" the
+        cell.
+
+        >>> pointa, pointb = (-1.0, 0.5, 0.5), (1.0, 0.5, 0.5)
+        >>> mesh.intersect_with_line(pointa, pointb)
+        (array([[0. , 0.5, 0.5]]), array([0]))
+
+        Reversing the point order returns a `different` intersection point on the opposite side
+        of the cell.
+
+        >>> mesh.intersect_with_line(pointb, pointa)
+        (array([[1. , 0.5, 0.5]]), array([0]))
+
+        Converting the cell to a surface mesh will yield `both` intersections since each face
+        is now a separate cell.
+
+        >>> mesh.extract_surface(algorithm=None).intersect_with_line(pointa, pointb)
+        (array([[0. , 0.5, 0.5],
+               [1. , 0.5, 0.5]]), array([2, 3]))
+
+        An intersection is still found if the line coincides with one of the cell's edges.
+
+        >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
+        (array([[0., 0., 0.]]), array([0]))
+
+        Similarly, intersections are found when the line is coincident with planar cells.
+
+        >>> mesh = pv.Plane(i_resolution=2, j_resolution=2)
+        >>> mesh.intersect_with_line((0, 0, 0), (1, 0, 0))
+        (array([[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]], dtype=float32), array([0, 1, 2, 3]))
+
+        """
+        if (pointa := np.asarray(pointa)).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)
-        if np.array(pointb).size != 3:
+        if (pointb := np.asarray(pointb)).size != 3:
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
-        locator.BuildLocator()
+        if tolerance is None:
+            tolerance = np.finfo(np.float32).eps
+
+        # Init output
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
-        cell = _vtk.vtkGenericCell()
-        locator.IntersectWithLine(
+        dtype = self.points.dtype
+        if dtype == np.float64:
+            points.SetDataTypeToDouble()
+        else:
+            points.SetDataTypeToFloat()
+
+        self._static_cell_locator.IntersectWithLine(
             cast('Sequence[float]', pointa),
             cast('Sequence[float]', pointb),
             tolerance,
             points,
             id_list,
-            cell,
         )
-        return vtk_id_list_to_array(id_list)
+        intersection_points = _vtk.vtk_to_numpy(points.GetData())
+        intersection_cells = vtk_id_list_to_array(id_list)
+        if intersection_points.size and deduplicate_points:
+            _, idx = np.unique(intersection_points, return_index=True, axis=0)
+            intersection_points = intersection_points[idx][::-1]
+            intersection_cells = intersection_cells[idx][::-1]
+        return intersection_points, intersection_cells
 
     def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
+
+        .. warning::
+
+            This filter internally builds and caches a :vtk:`vtkCellTreeLocator`. If the mesh's
+            geometry is modified, the cache will no longer be valid.
 
         Parameters
         ----------
@@ -2266,6 +2579,8 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_closest_cell
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
+        DataSet.intersect_with_line
+        PolyDataFilters.ray_trace
 
         Examples
         --------
@@ -2277,14 +2592,11 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(bounds).size != 6:
             msg = 'Bounds must be a length six tuple of floats.'
             raise TypeError(msg)
-        locator = _vtk.vtkCellTreeLocator()
-        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
-        locator.BuildLocator()
         id_list = _vtk.vtkIdList()
-        locator.FindCellsWithinBounds(list(bounds), id_list)
+        self._cell_tree_locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self: Self, index: int) -> pyvista.Cell:
+    def get_cell(self: Self, index: int) -> Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2346,13 +2658,13 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()
+        cell = pv.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
 
     @property
-    def cell(self: Self) -> Iterator[pyvista.Cell]:
+    def cell(self: Self) -> Iterator[Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -2394,7 +2706,7 @@ class DataSet(DataSetFilters, DataObject):
             Cell ID.
 
         connections : str, default: "points"
-            Describe how the neighbor cell(s) must be connected to the current
+            Describe how the neighbor cells must be connected to the current
             cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
 
@@ -2641,6 +2953,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     text_color='white',
         ...     font_size=40,
         ...     point_size=10,
+        ...     always_visible=True,
         ... )
         >>>
         >>> # Add the first point label
@@ -2677,7 +2990,7 @@ class DataSet(DataSetFilters, DataObject):
             Cell ID.
 
         connections : str, default: "points"
-            Describe how the neighbor cell(s) must be connected to the current
+            Describe how the neighbor cells must be connected to the current
             cell to be considered as a neighbor.
             Can be either ``'points'``, ``'edges'`` or ``'faces'``.
 
@@ -2760,7 +3073,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        method = partial(self.cell_neighbors, connections=connections)
+        method = functools.partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def _get_levels_neihgbors(
@@ -2856,7 +3169,7 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-        if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+        if (9, 4, 0) <= pv.vtk_version_info < (9, 5, 0):
             # Need to reverse the order
             return out[::-1]
         return out
@@ -2880,8 +3193,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        bool or numpy.ndarray
-            Whether point(s) is/are inside cell. A single bool is only returned if
+        output : bool | numpy.ndarray
+            Whether points is/are inside cell. A single ``bool`` is only returned if
             the input point has shape ``(3,)``.
 
         Examples
@@ -2970,7 +3283,7 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
 
         """
-        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+        self.point_data.active_texture_coordinates = texture_coordinates
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
@@ -2990,4 +3303,491 @@ class DataSet(DataSetFilters, DataObject):
         False
 
         """
-        return self.n_points == 0
+        return self.n_points == 0 and self.n_cells == 0
+
+    @property
+    def dimensionality(self) -> _Dimensionality:
+        """Return the number of spatial dimensions spanned by this dataset's points.
+
+        This is equivalent to computing the matrix rank of the points.
+
+        .. versionchanged:: 0.47
+
+            This property is now generalized for all datasets. Previously, it was only available
+            for datasets with a ``dimensions`` property.
+
+        Notes
+        -----
+        :attr:`dimensionality`:
+
+        - ranges from ``0`` to ``3`` for all mesh types.
+        - is equivalent to :attr:`max_cell_dimensionality` and :attr:`min_cell_dimensionality`
+          for gridded data types :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
+        Returns
+        -------
+        int
+            The dimensionality of the dataset.
+
+        See Also
+        --------
+        max_cell_dimensionality, min_cell_dimensionality
+
+        Examples
+        --------
+        A single point has ``0`` dimensionality.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+        >>> mesh.dimensionality
+        0
+
+        With two points, the dimensionality is ``1``.
+
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> mesh.dimensionality
+        1
+
+        Two-dimensional :class:`~pyvista.ImageData` (that is, where one of its dimensions is
+        one) has a dimensionality of ``2``.
+
+        >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Plane` also has dimensionality of ``2``, even if it's arbitrarily
+        rotated in space.
+
+        >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Cube` has a dimensionality of 3.
+
+        >>> mesh = pv.Cube()
+        >>> mesh.dimensionality
+        3
+
+        """
+        if self.n_points == 0:
+            return 0
+        elif isinstance(self, pv.Grid):
+            # Fast path for gridded types
+            return self.max_cell_dimensionality
+
+        # Align points first to make rank computation more robust
+        aligned_points = self.align_xyz().points
+        return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
+
+    @property
+    def max_cell_dimensionality(self: Self) -> _Dimensionality:
+        """Return the maximum spatial dimensionality of all cells in this mesh.
+
+        .. versionadded:: 0.47
+
+        Notes
+        -----
+        :attr:`max_cell_dimensionality`:
+
+        - is always ``0`` for :class:`~pyvista.PointSet`
+        - ranges from ``0`` to ``2`` for :class:`~pyvista.PolyData`.
+        - ranges from ``0`` to ``3`` for all other mesh types.
+        - is equivalent to :attr:`dimensionality` for gridded data types
+          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
+        See Also
+        --------
+        min_cell_dimensionality, dimensionality, distinct_cell_types
+
+        Returns
+        -------
+        int
+            The maximum dimensionality of the dataset's cells.
+
+        Examples
+        --------
+        :class:`~pyvista.PointSet` has no cells, so its :attr:`max_cell_dimensionality` is always
+        ``0``.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = pv.Sphere().cast_to_pointset()
+        >>> mesh.max_cell_dimensionality
+        0
+
+        A :class:`~pyvista.PolyData` surface mesh with 2D polygonal cells such as
+        :func:`~pyvista.Sphere` has max cell dimensionality of ``2``.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.max_cell_dimensionality
+        2
+
+        Since there are no 1D :attr:`~pyvista.CellType.LINE` or 0D
+        :attr:`~pyvista.CellType.VERTEX` cells, the :attr:`min_cell_dimensionality` is also ``2``
+        in this case.
+
+        >>> mesh.min_cell_dimensionality
+        2
+
+        A :class:`~pyvista.UnstructuredGrid` with 3D cells such as :func:`~pyvista.SolidSphere`
+        has max and min cell dimensionality of ``3``.
+
+        >>> mesh = pv.SolidSphere()
+        >>> mesh.max_cell_dimensionality
+        3
+        >>> mesh.min_cell_dimensionality
+        3
+
+        A :func:`~pyvista.Line` or :func:`~pyvista.Spline` with 1D cells has a max and min
+        cell dimensionality of ``1``.
+
+        >>> mesh = pv.Line([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
+        >>> mesh.max_cell_dimensionality
+        1
+        >>> mesh.min_cell_dimensionality
+        1
+
+        A curvilinear :class:`~pyvista.StructuredGrid` such as the one from
+        :func:`~pyvista.examples.downloads.download_wavy` has 2D cells.
+
+        >>> mesh = examples.download_wavy()[0]
+        >>> mesh.max_cell_dimensionality
+        2
+        >>> mesh.min_cell_dimensionality
+        2
+
+        But it has a spatial :attr:`dimensionality` of ``3`` since its points span three
+        dimensions.
+
+        >>> mesh.dimensionality
+        3
+
+        The dimensionality can vary if there are mixed cell types. For example, load
+        :func:`~pyvista.examples.downloads.download_prostar`.
+
+        >>> mesh = examples.download_prostar()
+        >>> sorted(mesh.distinct_cell_types)  # doctest:+NORMALIZE_WHITESPACE
+        [<CellType.VERTEX: 1>, <CellType.LINE: 3>, <CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>,
+         <CellType.QUAD: 9>, <CellType.TETRA: 10>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>, <CellType.POLYHEDRON: 42>]
+
+        There are 3D volumetric cells, so the max dimensionality is ``3``.
+
+        >>> mesh.max_cell_dimensionality
+        3
+
+        And since there are :attr:`~pyvista.CellType.VERTEX` cells its
+        :attr:`min_cell_dimensionality` is ``0``.
+
+        >>> mesh.min_cell_dimensionality
+        0
+
+        """
+        if pv.vtk_version_info < (9, 4, 0):
+            return max(self._distinct_cell_dimensions)
+        return self.GetMaxSpatialDimension()
+
+    @property
+    def min_cell_dimensionality(self) -> _Dimensionality:
+        """Get the minimum spatial dimensionality of all cells in this mesh.
+
+        .. versionadded:: 0.47
+
+        Notes
+        -----
+        :attr:`min_cell_dimensionality`:
+
+        - is always ``0`` for :class:`~pyvista.PointSet`
+        - ranges from ``0`` to ``2`` for :class:`~pyvista.PolyData`.
+        - ranges from ``0`` to ``3`` for all other mesh types.
+        - is equivalent to :attr:`dimensionality` for gridded data types
+          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
+        See Also
+        --------
+        max_cell_dimensionality, dimensionality, distinct_cell_types
+
+        Returns
+        -------
+        int
+            The minimum dimensionality of the dataset's cells.
+
+        Examples
+        --------
+        Show the max and min cell dimensionality of a :attr:`~pyvista.CellType.LINE` cell and
+        :attr:`~pyvista.CellType.TRIANGLE` cell.
+
+        >>> from pyvista.examples import cells
+        >>> line = cells.Line()
+        >>> line.max_cell_dimensionality
+        1
+        >>> line.min_cell_dimensionality
+        1
+
+        >>> tri = cells.Triangle()
+        >>> tri.max_cell_dimensionality
+        2
+        >>> tri.min_cell_dimensionality
+        2
+
+        Merge the two cells and show the max and min cell dimensionality.
+
+        >>> merged = line + tri
+        >>> merged.max_cell_dimensionality
+        2
+        >>> merged.min_cell_dimensionality
+        1
+
+        """
+        if self.n_cells == 0:
+            # GetMinSpatialDimension returns 3 by default for meshes with no cells, which is odd
+            # because then we have min_cell_dimensionality > max_cell_dimensionality
+            return 0
+        if pv.vtk_version_info < (9, 5, 0):
+            return min(self._distinct_cell_dimensions)
+        return self.GetMinSpatialDimension()
+
+    @property
+    def _has_hidden_cells(self) -> bool:
+        """Return True if any cells are hidden via the ghost cell array."""
+        name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        if name not in self.cell_data:
+            return False
+        return bool(np.any(self.cell_data[name] == _vtk.vtkDataSetAttributes.HIDDENCELL))
+
+    @property
+    def _distinct_cell_dimensions(self) -> set[_Dimensionality]:
+        """Compute distinct dimensions of cells. Only needed for legacy vtk < 9.5."""
+        if self.n_cells == 0:
+            return {0}
+        elif hasattr(self, 'dimensions'):
+            if self._has_hidden_cells:
+                return {cell_type.dimension for cell_type in self.distinct_cell_types}
+            dims = np.array(self.dimensions)
+            return {int(3 - (dims == 1).sum())}  # type: ignore[arg-type]
+        elif isinstance(self, pv.PolyData):
+            distinct_dimensions = set()
+            if self.n_faces > 0 or self.n_strips > 0:
+                distinct_dimensions.add(2)
+            if self.n_lines > 0:
+                distinct_dimensions.add(1)
+            if self.n_verts > 0:
+                distinct_dimensions.add(0)
+            return distinct_dimensions  # type: ignore[return-value]
+        elif isinstance(self, pv.UnstructuredGrid):
+            distinct_dimensions = set()
+            for cell_type in self.distinct_cell_types:
+                distinct_dimensions.add(cell_type.dimension)
+            return distinct_dimensions  # type: ignore[return-value]
+        msg = f'Unexpected mesh type {type(self)}'
+        raise RuntimeError(msg)
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. warning::
+            Computing distinct cell types can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        See Also
+        --------
+        min_cell_dimensionality
+        max_cell_dimensionality
+        pyvista.UnstructuredGrid.celltypes
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        Load a mesh with mixed cells.
+
+        >>> mesh = examples.download_cow()
+        >>> sorted(mesh.distinct_cell_types)
+        [<CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>, <CellType.QUAD: 9>]
+
+        Load 2D image.
+
+        >>> mesh = examples.load_logo()
+        >>> mesh.distinct_cell_types
+        {<CellType.PIXEL: 8>}
+
+        """
+        if self.n_cells == 0:
+            return set()
+        has_hidden_cells = self._has_hidden_cells
+        if hasattr(self, 'dimensions') and not has_hidden_cells:
+            # Fast path for dimensioned grids without hidden/ghost cells
+            cell_dimension = next(iter(self._distinct_cell_dimensions))
+            if isinstance(self, pv.Grid):
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.PIXEL,
+                    3: pv.CellType.VOXEL,
+                }
+            else:
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.QUAD,
+                    3: pv.CellType.HEXAHEDRON,
+                }
+            return {mapping[cell_dimension]}
+
+        if hasattr(self, 'GetDistinctCellTypes'):
+            types = _vtk.vtkCellTypes()
+            self.GetDistinctCellTypes(types)
+            types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
+        elif hasattr(self, 'GetCellTypesArray'):
+            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
+        else:
+            grid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+            types_array = np.unique(grid.celltypes)
+        distinct_types = {pv.CellType(cell_num) for cell_num in types_array}
+        if has_hidden_cells:
+            # Casting to an unstructured grid (or VTK's own type-collection methods, depending
+            # on version) doesn't reliably preserve hidden cells as `EMPTY_CELL`, so add it
+            # explicitly whenever the ghost-cell array marks any cells as hidden.
+            distinct_types.add(pv.CellType.EMPTY_CELL)
+        return distinct_types
+
+    @property
+    def has_nonlinear_cells(self) -> bool:  # numpydoc ignore=RT01
+        """Return True if the mesh contains any non-linear cells.
+
+        .. note::
+            Only :class:`~pyvista.UnstructuredGrid` can have non-linear cells. This property is
+            therefore always False for all other dataset types.
+
+        .. warning::
+            Checking for non-linear cells can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.cells.Hexahedron()
+        >>> mesh.has_nonlinear_cells
+        False
+
+        >>> mesh = examples.cells.QuadraticHexahedron()
+        >>> mesh.has_nonlinear_cells
+        True
+
+        """
+        if not isinstance(self, pv.UnstructuredGrid):
+            return False
+        return not all(celltype.is_linear for celltype in self.distinct_cell_types)
+
+    @property
+    def bounding_sphere(self) -> tuple[float, tuple[float, float, float]]:
+        """Compute the radius and center of a bounding sphere.
+
+        The sphere is exact for meshes with 4 points or less, and is otherwise approximated
+        using Ritter's algorithm. Returns NaN values if there are no points.
+
+        Uses :vtk:`vtkCell.ComputeBoundingSphere` internally for the computation.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        float, tuple
+            Sphere radius as a float and center as a tuple of floats.
+
+        Examples
+        --------
+        Get the bounding sphere geometry of a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> radius, center = mesh.bounding_sphere
+
+        Create a sphere and plot it along with the original mesh.
+
+        >>> sphere = pv.Icosphere(radius=radius, center=center)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(sphere, style='wireframe', color='black')
+        >>> pl.view_xy()
+        >>> pl.camera.zoom(1.5)
+        >>> pl.show()
+
+        """
+        # Create grid with a single POLY_VERTEX cell containing all the points
+        n_points = self.n_points
+        cells = np.hstack([[n_points], np.arange(n_points)])
+        celltypes = np.array([pv.CellType.POLY_VERTEX], dtype=np.uint8)
+        grid = pv.UnstructuredGrid(cells, celltypes, self.points)
+
+        # Compute radius and center of the cell
+        center = [0.0, 0.0, 0.0]
+        r2 = grid.GetCell(0).ComputeBoundingSphere(center)
+        return float(r2**0.5), (center[0], center[1], center[2])
+
+    @functools.cached_property
+    def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkStaticCellLocator)
+
+    @functools.cached_property
+    def _cell_tree_locator(self) -> _vtk.vtkCellTreeLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkCellTreeLocator)
+
+    @functools.cached_property
+    def _point_locator(self) -> _vtk.vtkPointLocator:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        return _build_locator(self, _vtk.vtkPointLocator)
+
+    @functools.cached_property
+    def _obb_tree(self) -> _vtk.vtkOBBTree:  # numpydoc ignore=RT01
+        """Return the pre-built locator for this dataset."""
+        msg = (
+            'The obbTree property is deprecated. This property is primarily for internal use only,'
+            '\nand the vtkOBBTree locator does not reliably find intersections in some cases.'
+        )
+        warn_external(msg, PyVistaDeprecationWarning)
+        # Deprecated in 0.49, remove in 0.52
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Remove PolyData.obbTree and DataSet._obb_tree properties.'
+            raise RuntimeError(msg)
+        return _build_locator(self, _vtk.vtkOBBTree)
+
+
+_LocatorType = TypeVar('_LocatorType', bound=_vtk.vtkLocator)
+
+
+def _build_locator(mesh: DataSet, locator: type[_LocatorType]) -> _LocatorType:
+    if issubclass(locator, _vtk.vtkAbstractPointLocator):
+        if mesh.n_points < 1:
+            msg = f'Building {locator.__name__} requires a dataset with points.'
+            raise ValueError(msg)
+    elif mesh.n_points < 1 or mesh.n_cells < 1:
+        msg = f'Building {locator.__name__} requires a dataset with points and cells.'
+        raise ValueError(msg)
+    instance = locator()
+    instance.SetDataSet(mesh)
+    instance.BuildLocator()
+    return instance

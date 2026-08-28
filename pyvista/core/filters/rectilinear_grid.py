@@ -6,8 +6,8 @@ from collections.abc import Sequence
 
 import numpy as np
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
@@ -70,7 +70,7 @@ class RectilinearGridFilters:
         Divide a rectangular grid into tetrahedrons. Each cell contains by
         default 5 tetrahedrons.
 
-        First, create and plot the grid.
+        Create and plot the grid.
 
         >>> import numpy as np
         >>> import pyvista as pv

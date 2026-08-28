@@ -5,11 +5,10 @@ Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating parametric objects from :ref:`parametric_api`.
+
 """
 
-from __future__ import annotations
-
-from math import pi
+import math
 
 # sphinx_gallery_thumbnail_number = 12
 import pyvista as pv
@@ -37,15 +36,15 @@ ellipsoid.plot(color='lightblue')
 # ++++++++++++++++++++++++++++
 
 # cool plotting direction
-cpos = [
-    (21.9930, 21.1810, -30.3780),
-    (-1.1640, -1.3098, -0.1061),
-    (0.8498, -0.2515, 0.4631),
-]
+cpos = pv.CameraPosition(
+    position=(21.99, 21.18, -30.38),
+    focal_point=(-1.164, -1.31, -0.1061),
+    viewup=(0.8498, -0.2515, 0.4631),
+)
 
 
 # half ellipsoid
-part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=pi / 2)
+part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=math.pi / 2)
 part_ellipsoid.plot(color='lightblue', smooth_shading=True, cpos=cpos)
 
 
@@ -212,7 +211,7 @@ center = [0, 0, 0]
 resolution = 100
 
 arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
-poly = arc.extrude([0, 0, 1])
+poly = arc.extrude([0, 0, 1], capping=False)
 poly.plot(color='lightblue', cpos='iso', show_edges=True)
 # %%
 # .. tags:: load

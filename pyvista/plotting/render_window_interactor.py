@@ -3,33 +3,39 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from contextlib import contextmanager
-from functools import partial
-from inspect import signature
+import contextlib
+import functools
+import inspect
 import logging
 import time
+from typing import TYPE_CHECKING
 from typing import Literal
-import warnings
 import weakref
 
 import numpy as np
 
-from pyvista import vtk_version_info
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core._vtk_core import DisableVtkSnakeCase
-from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
+from .errors import MismatchedInteractorError
+from .interactor_style_registry import _get_interactor_style_handler
+from .interactor_style_registry import _validate_interactor_style
 from .opts import PickerType
+
+if TYPE_CHECKING:
+    from .interactor_style_registry import InteractorStyleHandler
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-class Timer:
+class Timer(_NoNewAttrMixin):
     """Timer class.
 
     Parameters
@@ -38,7 +44,7 @@ class Timer:
         Maximum number of steps to allow for the timer before destroying it.
 
     callback : callable
-        A callable that takes one argument. It will be passed `step`,
+        A callable that takes one argument. It will be passed ``step``,
         which is the number of times the timer event has occurred.
 
     """
@@ -55,15 +61,15 @@ class Timer:
         # https://github.com/pyvista/pyvista/pull/5618
         iren = obj
 
-        while self.step < self.max_steps:
+        if self.step < self.max_steps:
             self.callback(self.step)
             iren.GetRenderWindow().Render()
             self.step += 1
-        if self.id:
+        elif self.id:
             iren.DestroyTimer(self.id)
 
 
-class RenderWindowInteractor:
+class RenderWindowInteractor(_NoNewAttrMixin):
     """Wrap :vtk:`vtkRenderWindowInteractor`.
 
     This class has been added for the purpose of making some methods
@@ -106,11 +112,13 @@ class RenderWindowInteractor:
 
         # Map of observers to events
         self._observers = {}
+        self._last_key: str | None = None
         self._key_press_event_callbacks = defaultdict(list)
         self._click_event_callbacks = {  # type: ignore[var-annotated]
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ('LeftButtonPressEvent', 'RightButtonPressEvent')
         }
+        self._timer = None
         self._timer_event = None
         self._click_time = 0
         self._MAX_CLICK_DELAY = 0.8  # seconds
@@ -118,7 +126,9 @@ class RenderWindowInteractor:
 
         # Set default style
         self._style_class: _vtk.vtkInteractorStyle | None = None
-        self._style: Literal['Interactor', 'Context'] = 'Interactor'
+        self._style: Literal['Interactor', 'Context'] | None = 'Interactor'
+        self._prev_style_class: _vtk.vtkInteractorStyle | None = self._style_class
+        self._prev_style: Literal['Interactor', 'Context'] | None = self._style
         self.style = InteractorStyleRubberBandPick(self)
         self.__plotter = weakref.ref(plotter)
 
@@ -158,7 +168,7 @@ class RenderWindowInteractor:
         if not callable(callback):
             msg = 'callback must be callable.'
             raise TypeError(msg)
-        for param in signature(callback).parameters.values():
+        for param in inspect.signature(callback).parameters.values():
             if param.default is param.empty:
                 msg = '`callback` must not have any arguments without default values.'
                 raise TypeError(msg)
@@ -178,11 +188,7 @@ class RenderWindowInteractor:
 
         callback : callable
             A callable that takes one argument. It will be passed
-            `step`, which is the number of times the timer event has occurred.
-
-        See Also
-        --------
-        :ref:`animation_example`
+            ``step``, which is the number of times the timer event has occurred.
 
         Examples
         --------
@@ -240,7 +246,7 @@ class RenderWindowInteractor:
         >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
-        call = partial(try_callback, call)
+        call = functools.partial(try_callback, call)
         event = self._get_event_str(event)
 
         if (
@@ -476,6 +482,10 @@ class RenderWindowInteractor:
     ):
         """Get/set the current interactor style.
 
+        When set to a string, the name is resolved through the
+        interactor style registry (equivalent to calling
+        :meth:`enable_interactor_style`).
+
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
@@ -484,14 +494,19 @@ class RenderWindowInteractor:
 
         Returns
         -------
-        :vtk:`vtkInteractorStyle` | :vtk:`vtkContextInteractorStyle` | None
+        output : :vtk:`vtkInteractorStyle` | :vtk:`vtkContextInteractorStyle` | None
             The current interactor style.
 
         Examples
         --------
-        Set interactor style with a customized vtk interactor
+        Set interactor style by name.
 
         >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.iren.style = 'terrain_style'
+
+        Set interactor style with a customized vtk interactor.
+
         >>> from vtkmodules.vtkInteractionStyle import (
         ...     vtkInteractorStyleTrackballCamera,
         ... )
@@ -501,16 +516,19 @@ class RenderWindowInteractor:
         ...     def __repr__(self):
         ...         return 'A custom interactor style.'
 
-        >>> plotter = pv.Plotter()
-        >>> plotter.iren.style = MyCustomInteractorStyle()
-        >>> plotter.iren.style
+        >>> pl = pv.Plotter()
+        >>> pl.iren.style = MyCustomInteractorStyle()
+        >>> pl.iren.style
         A custom interactor style.
 
         """
         return self._style_class
 
     @style.setter
-    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | None):
+    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | str | None):
+        if isinstance(style, str):
+            self.enable_interactor_style(style)
+            return
         self._style = 'Interactor'
         self._style_class = style
         self.update_style()
@@ -527,7 +545,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -565,19 +583,11 @@ class RenderWindowInteractor:
 
         """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
-        if (
-            vtk_version_info < (9, 3, 0) and scene is not None and len(self._plotter.renderers) > 1
-        ):  # pragma: no cover
-            warnings.warn(
-                'Interaction with charts is not possible when using multiple subplots.'
-                'Upgrade to VTK 9.3 or newer to enable this feature.',
-            )
-            scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
-            self._style = self._prev_style  # type: ignore[has-type]
-            self.style = self._prev_style_class  # type: ignore[has-type]
+            self._style = self._prev_style
+            self.style = self._prev_style_class
             self._prev_style = None
             self._prev_style_class = None
         elif scene is not None and self._style != 'Context':
@@ -611,12 +621,12 @@ class RenderWindowInteractor:
         Camera interactive style (which is also the default):
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_trackball_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_trackball_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTrackballCamera(self)
@@ -690,12 +700,12 @@ class RenderWindowInteractor:
         dolly.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_custom_trackball_style(left='dolly')
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_custom_trackball_style(left='dolly')
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTrackballCamera(self)
@@ -775,7 +785,9 @@ class RenderWindowInteractor:
                 shift_release_action()
                 button_release()
 
-            return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
+            return functools.partial(try_callback, _press_callback), functools.partial(
+                try_callback, _release_callback
+            )
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
             button='left',
@@ -808,12 +820,12 @@ class RenderWindowInteractor:
         """Set the interactive style to 2D.
 
         For a 3-button mouse, the left button pans, the
-        right button dollys, the middle button spins, and the wheel
-        dollys.
-        ctrl + left button spins, shift + left button dollys,
-        ctrl + middle button pans, shift + middle button dollys,
+        right button dollies, the middle button spins, and the wheel
+        dollies.
+        ctrl + left button spins, shift + left button dollies,
+        ctrl + middle button pans, shift + middle button dollies,
         ctrl + right button rotates in 3D, and shift + right button
-        dollys.
+        dollies.
 
         Recommended to use with
         :func:`pyvista.Plotter.enable_parallel_projection`.
@@ -832,13 +844,13 @@ class RenderWindowInteractor:
         ParaView-like 2D style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_parallel_projection()
-        >>> plotter.enable_2d_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_parallel_projection()
+        >>> pl.enable_2d_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.enable_custom_trackball_style(
@@ -872,12 +884,12 @@ class RenderWindowInteractor:
         Actor interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_trackball_actor_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_trackball_actor_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTrackballActor(self)
@@ -900,12 +912,12 @@ class RenderWindowInteractor:
         interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_image_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_image_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleImage(self)
@@ -931,12 +943,12 @@ class RenderWindowInteractor:
         Camera interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_joystick_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_joystick_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleJoystickCamera(self)
@@ -963,12 +975,12 @@ class RenderWindowInteractor:
         Actor interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_joystick_actor_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_joystick_actor_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleJoystickActor(self)
@@ -987,12 +999,12 @@ class RenderWindowInteractor:
         Zoom interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_zoom_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_zoom_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleZoom(self)
@@ -1006,7 +1018,7 @@ class RenderWindowInteractor:
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
-        natural view up, e.g., terrain. The camera in such a scene is
+        natural view up, for example, terrain. The camera in such a scene is
         manipulated by specifying azimuth (angle around the view up
         vector) and elevation (the angle from the horizon). Similar to
         the default Trackball Camera style and in contrast to the
@@ -1061,21 +1073,21 @@ class RenderWindowInteractor:
         interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_terrain_style()
+        >>> pl.show()  # doctest:+SKIP
 
         Use controls that are closer to the default style:
 
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTerrain(self)
@@ -1106,7 +1118,7 @@ class RenderWindowInteractor:
                     self._plotter.reset_camera_clipping_range()
                 self._plotter.render()
 
-            callback = partial(try_callback, wheel_zoom_callback)
+            callback = functools.partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
                 self.style.add_observer(event, callback)
@@ -1124,7 +1136,7 @@ class RenderWindowInteractor:
                     self.style.EndPan()  # type: ignore[union-attr]
                     self.style.OnLeftButtonUp()  # type: ignore[union-attr]
 
-            callback = partial(try_callback, pan_on_shift_callback)
+            callback = functools.partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
                 self.style.add_observer(event, callback)
@@ -1148,12 +1160,12 @@ class RenderWindowInteractor:
         Pick interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_rubber_band_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_rubber_band_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleRubberBandPick(self)
@@ -1181,15 +1193,83 @@ class RenderWindowInteractor:
         2D interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_rubber_band_2d_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_rubber_band_2d_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleRubberBand2D(self)
+
+    def _instantiate_registered_interactor_style(
+        self, handler: InteractorStyleHandler
+    ) -> _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin:
+        """Instantiate a registered interactor style handler."""
+        if isinstance(handler, type) and issubclass(handler, InteractorStyleCaptureMixin):
+            style: object = handler(self)
+        elif isinstance(handler, type) and issubclass(handler, _vtk.vtkInteractorStyle):
+            style = handler()
+        else:
+            # Generic callable—pass the interactor so the factory can
+            # configure the style.  The cast is needed because mypy narrows
+            # ``Callable[..., Any]`` to a non-callable after two failing
+            # ``isinstance(handler, type)`` checks.
+            factory: InteractorStyleHandler = handler
+            style = factory(self)
+
+        if not isinstance(style, (_vtk.vtkInteractorStyle, InteractorStyleCaptureMixin)):
+            msg = (
+                'Registered interactor styles must resolve to an instance of `vtkInteractorStyle`.'
+            )
+            raise TypeError(msg)
+
+        return style
+
+    def enable_interactor_style(self, style: str | None = None) -> None:
+        """Set the interactive style to a built-in or registered mode.
+
+        Parameters
+        ----------
+        style : str, optional
+            Name of the interactor style to enable. Built-in styles use
+            names that mirror the public ``enable_*_style`` methods,
+            such as ``'terrain_style'``. If ``None``, use the current
+            plotter theme's :attr:`~pyvista.plotting.themes.Theme.interactor_style`
+            or the global theme when no plotter is attached.
+
+        Raises
+        ------
+        TypeError
+            If the registered handler does not resolve to an interactor
+            style instance.
+
+        ValueError
+            If the style name is not known.
+
+        Examples
+        --------
+        Enable a built-in interactor style by name.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.enable_interactor_style('terrain_style')
+
+        """
+        if style is None:
+            if self._plotter is not None:
+                style = self._plotter.theme.interactor_style
+            else:
+                style = pv.global_theme.interactor_style
+
+        validated = _validate_interactor_style(style)
+        handler = _get_interactor_style_handler(validated)
+
+        if isinstance(handler, str):
+            getattr(self, handler)()
+        elif handler is not None:
+            self.style = self._instantiate_registered_interactor_style(handler)
 
     def _simulate_keypress(self, key):
         """Simulate a keypress."""
@@ -1365,7 +1445,7 @@ class RenderWindowInteractor:
         msg = 'Poked renderer not found in Plotter.'
         raise RuntimeError(msg)
 
-    @contextmanager
+    @contextlib.contextmanager
     def poked_subplot(self):
         """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
@@ -1462,6 +1542,19 @@ class RenderWindowInteractor:
         if not self.initialized:
             msg = 'Render window interactor must be initialized before processing events.'
             raise RuntimeError(msg)
+        rw = self.interactor.GetRenderWindow()
+        if rw is not None:  # pragma: no cover
+            iren_cls = type(self.interactor).__name__
+            rw_cls = type(rw).__name__
+            del rw
+            if iren_cls == 'vtkXRenderWindowInteractor' and rw_cls != 'vtkXOpenGLRenderWindow':
+                msg = (
+                    f'Cannot process events: {iren_cls} requires an X-backed render window '
+                    f'but got {rw_cls}. This typically happens on headless Linux where VTK '
+                    f'falls back to EGL for rendering but the interactor still expects X. '
+                    f'Use vtkGenericRenderWindowInteractor for headless/EGL contexts.'
+                )
+                raise MismatchedInteractorError(msg)
         self.interactor.ProcessEvents()
 
     @property
@@ -1509,25 +1602,6 @@ class RenderWindowInteractor:
                 picker.SetTolerance(0.025)
         self.interactor.SetPicker(picker)
 
-    def add_pick_obeserver(self, observer):
-        """Add an observer to call back when pick events end.
-
-        .. deprecated:: 0.42.2
-            This function is deprecated. Use
-            :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
-
-        Parameters
-        ----------
-        observer : callable
-            The observer function to call when a pick event ends.
-
-        """
-        warnings.warn(
-            '`add_pick_obeserver` is deprecated, use `add_pick_observer`',
-            PyVistaDeprecationWarning,
-        )
-        self.add_pick_observer(observer)
-
     def add_pick_observer(self, observer):
         """Add an observer to call back when pick events end.
 
@@ -1563,13 +1637,7 @@ class RenderWindowInteractor:
     def terminate_app(self):
         """Terminate the app."""
         if self.initialized:
-            # #################################################################
-            # 9.0.2+ compatibility:
-            # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
-            if hasattr(self.interactor, 'GetDone'):
-                self.interactor.SetDone(True)
-            # #################################################################
-
+            self.interactor.SetDone(True)  # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
             self.interactor.TerminateApp()
 
     def close(self):
@@ -1592,8 +1660,8 @@ class RenderWindowInteractor:
 
 
 @abstract_class
-class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
-    """A mixin for subclasses of vtkInteractorStyle with capturing ability.
+class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
+    """A ``mixin`` for subclasses of vtkInteractorStyle with capturing ability.
 
     Use a custom capturing events because the default ones
     swallow the release events. See
@@ -1609,12 +1677,12 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
         # Ignore typing.
         self._observers = []
         self._observers.append(
-            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),  # type: ignore[arg-type]
+            self.AddObserver('LeftButtonPressEvent', functools.partial(try_callback, self._press)),  # type: ignore[arg-type]
         )
         self._observers.append(
             self.AddObserver(
                 'LeftButtonReleaseEvent',  # type: ignore[arg-type]
-                partial(try_callback, self._release),
+                functools.partial(try_callback, self._release),
             ),
         )
 

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import pytest
-
-import pyvista
-
-pytest_plugins = 'pytester'
-
 from typing import TYPE_CHECKING
 
+import pytest
+
+import pyvista as pv
 from tests.test_conftest import PytesterStdoutParser
 from tests.test_conftest import RunResultsReport
 from tests.test_conftest import results_parser  # noqa: F401
@@ -16,6 +13,8 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
+
+pytest_plugins = 'pytester'
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +50,7 @@ def test_skip_plotting_mark(
     def test_no_plotting():
         ...
     """
-    mock: MagicMock = mocker.patch.object(pyvista.plotting, 'system_supports_plotting')
+    mock: MagicMock = mocker.patch.object(pv.plotting, 'system_supports_plotting')
     mock.return_value = support_plotting
 
     p = pytester.makepyfile(tests)

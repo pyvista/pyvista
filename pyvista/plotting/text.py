@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .prop3d import _Prop3DMixin
 from .themes import Theme
@@ -23,8 +23,8 @@ from .tools import FONTS
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import ClassVar
 
+    from pyvista import Property
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -32,9 +32,21 @@ if TYPE_CHECKING:
 HorizontalOptions = Literal['left', 'center', 'right']
 VerticalOptions = Literal['bottom', 'center', 'top']
 
+# The places `Plotter.add_text` names to draw text in, as opposed to the coordinate it
+# also accepts
+TextPositionOptions = Literal[
+    'lower_left',
+    'lower_right',
+    'upper_left',
+    'upper_right',
+    'lower_edge',
+    'upper_edge',
+    'left_edge',
+    'right_edge',
+]
 
-@no_new_attr
-class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
+
+class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide
@@ -63,8 +75,8 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
     --------
     Create text annotation in four corners.
 
-    >>> from pyvista import CornerAnnotation
-    >>> text = CornerAnnotation(0, 'text')
+    >>> import pyvista as pv
+    >>> text = pv.CornerAnnotation(0, 'text')
     >>> prop = text.prop
 
     """
@@ -169,15 +181,14 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
         self.SetLinearFontScaleFactor(factor)
 
 
-@no_new_attr
-class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
+class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
     ----------
     text : str, optional
         Text string to be displayed.
-        "\n" is recognized as a carriage return/linefeed (line separator).
+        ``\n`` is recognized as a carriage return/linefeed (line separator).
         The characters must be in the UTF-8 encoding.
 
     position : Sequence[float], optional
@@ -195,8 +206,8 @@ class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     --------
     Create a text with text's property.
 
-    >>> from pyvista import Text
-    >>> text = Text()
+    >>> import pyvista as pv
+    >>> text = pv.Text()
     >>> prop = text.prop
 
     """
@@ -223,13 +234,13 @@ class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         -------
         str
             Text string to be displayed.
-            "\n" is recognized as a carriage return/linefeed (line separator).
+            ``\n`` is recognized as a carriage return/linefeed (line separator).
             The characters must be in the UTF-8 encoding.
 
         """
         return self.GetInput()
 
-    @input.setter
+    @input.setter  # noqa: A003
     def input(self, text: str):
         self.SetInput(text)
 
@@ -387,13 +398,6 @@ class Label(_Prop3DMixin, Text):
 
     """
 
-    _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
-        'size',
-        'relative_position',
-        '_relative_position',
-        '_prop3d',
-    )
-
     def __init__(
         self,
         text: str | None = None,
@@ -401,22 +405,22 @@ class Label(_Prop3DMixin, Text):
         relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
         *,
         size: int = 50,
-        prop: pyvista.Property | None = None,
-        name: str | None = None,
+        prop: Property | None = None,
+        name: str = 'Label',
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
         _Prop3DMixin.__init__(self)
-        self.relative_position = relative_position  # type: ignore[assignment]
-        self.position = position  # type: ignore[assignment]
+        self.relative_position = relative_position
+        self.position = position
         self.size = size
 
     @property
     def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the label in xyz space.
+        """Position of the label in ``xyz`` space.
 
         This is the "true" position of the label. Internally this is loosely
         equal to :attr:`~pyvista.Prop3D.position` + :attr:`relative_position`.
@@ -466,8 +470,7 @@ class Label(_Prop3DMixin, Text):
         return BoundsTuple(x, x, y, y, z, z)
 
 
-@no_new_attr
-class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
+class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters
@@ -520,8 +523,8 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     --------
     Create a text's property.
 
-    >>> from pyvista import TextProperty
-    >>> prop = TextProperty()
+    >>> import pyvista as pv
+    >>> prop = pv.TextProperty()
     >>> prop.opacity = 0.5
     >>> prop.background_color = 'b'
     >>> prop.background_opacity = 0.5
@@ -560,7 +563,7 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pyvista.global_theme)
+            self._theme.load_theme(pv.global_theme)
         else:
             self._theme.load_theme(theme)
         self.color = color
@@ -711,7 +714,7 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
         Returns
         -------
-        str | None
+        output : str | None
             Font family or None.
 
         """
@@ -769,7 +772,7 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
             Font file path.
 
         """
-        path = pathlib.Path(font_file)
+        path = Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
             msg = f'Unable to locate {path}'
@@ -881,3 +884,21 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
         """
         self.ShallowCopy(to_copy)
+
+
+# Where each of the positions `Plotter.add_text` accepts sits in a viewport, and how
+# text is anchored to it, as a fraction of the size of the viewport
+_TEXT_MARGIN = 0.02
+
+_TextPlacement = tuple[float, float, HorizontalOptions, VerticalOptions]
+
+_TEXT_POSITIONS: dict[TextPositionOptions, _TextPlacement] = {
+    'lower_left': (_TEXT_MARGIN, _TEXT_MARGIN, 'left', 'bottom'),
+    'lower_right': (1 - _TEXT_MARGIN, _TEXT_MARGIN, 'right', 'bottom'),
+    'upper_left': (_TEXT_MARGIN, 1 - _TEXT_MARGIN, 'left', 'top'),
+    'upper_right': (1 - _TEXT_MARGIN, 1 - _TEXT_MARGIN, 'right', 'top'),
+    'lower_edge': (0.5, _TEXT_MARGIN, 'center', 'bottom'),
+    'upper_edge': (0.5, 1 - _TEXT_MARGIN, 'center', 'top'),
+    'left_edge': (_TEXT_MARGIN, 0.5, 'left', 'center'),
+    'right_edge': (1 - _TEXT_MARGIN, 0.5, 'right', 'center'),
+}

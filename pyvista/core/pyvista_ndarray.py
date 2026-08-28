@@ -1,4 +1,4 @@
-"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+"""Contains ``pyvista_ndarray`` a NumPy ``ndarray`` type used in PyVista."""
 
 from __future__ import annotations
 
@@ -8,9 +8,12 @@ from typing import cast
 
 import numpy as np
 
-from . import _vtk_core as _vtk
+from pyvista import _vtk
+from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
+
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
+from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from typing import Any
@@ -23,8 +26,8 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02  # noqa: N801
-    """A ndarray which references the owning dataset and the underlying vtk array.
+class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
+    """A ``ndarray`` which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
@@ -77,11 +80,14 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             raise TypeError(msg)
 
         obj.association = association
-        obj.dataset = _vtk.vtkWeakReference()
-        if isinstance(dataset, _vtk.VTKObjectWrapper):
-            obj.dataset.Set(dataset.VTKObject)
+        if dataset is None:
+            obj.dataset = None
         else:
-            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
+            obj.dataset = _vtk.vtkWeakReference()
+            if isinstance(dataset, _vtk.VTKObjectWrapper):
+                obj.dataset.Set(dataset.VTKObject)
+            else:
+                obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
         return obj
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
@@ -120,7 +126,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             dataset.Get().Modified()
 
     def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
@@ -131,10 +137,4 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    def __getattr__(self, name: str) -> Any:
-        """Forward unknown attribute requests to VTKArray's __getattr__."""
-        if self.VTKObject is not None:
-            # Enforce rules for using VTK's snake_case API rules
-            _vtk.DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
-            return getattr(self.VTKObject, name)
-        raise AttributeError
+    __getattr__ = VTKObjectWrapperCheckSnakeCase.__getattr__

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import warnings
+
+from pyvista._warn_external import warn_external
 
 # Places to look for the utility
 _MODULES = [
@@ -46,7 +47,7 @@ def __getattr__(name):
         ``pyvista.utilities``.
 
     """
-    from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
     for module in _MODULES:
         feature, import_path = _try_import(module, name)
@@ -64,9 +65,6 @@ def __getattr__(name):
         f'`{name}` is now imported as: `{import_path}`.'
     )
 
-    warnings.warn(
-        message,
-        PyVistaDeprecationWarning,
-    )
+    warn_external(message, PyVistaDeprecationWarning)
 
     return feature

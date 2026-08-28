@@ -9,12 +9,13 @@ from typing import cast
 import matplotlib as mpl
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
@@ -27,8 +28,8 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
-    """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
+class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
+    """An ``ndarray`` which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
     the values array is updated.
@@ -77,7 +78,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
             self.table.Get().values = self
 
     def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
@@ -91,8 +92,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
     __getattr__ = _vtk.VTKArray.__getattr__
 
 
-@no_new_attr
-class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
+class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -114,7 +114,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Number of colors in the color map.
 
     flip : bool, default: False
-        Flip the direction of cmap. Most colormaps allow ``*_r`` suffix to do this
+        Flip the direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
     values : array_like[float], optional
@@ -144,7 +144,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Use a log scale when mapping scalar values.
 
     nan_color : ColorLike, optional
-        Color to render any values that are NANs.
+        Color to render any values that are NaNs.
 
     above_range_color : ColorLike, optional
         Color to render any values above :attr:`LookupTable.scalar_range`.
@@ -160,10 +160,6 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         A dictionary of annotations. Keys are the float values in the scalars
         range to annotate on the scalar bar and the values are the string
         annotations.
-
-    See Also
-    --------
-    :ref:`lookup_table_example`
 
     Examples
     --------
@@ -511,7 +507,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def nan_color(self) -> Color | None:  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) color.
 
-        Any values that are NANs will be rendered with this color.
+        Any values that are NaNs will be rendered with this color.
 
         Examples
         --------
@@ -535,7 +531,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def nan_opacity(self):  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) opacity.
 
-        Any values that are NANs will be rendered with this opacity.
+        Any values that are NaNs will be rendered with this opacity.
 
         Examples
         --------
@@ -558,7 +554,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             return
         color = self.nan_color
         if color is None:
-            color = Color(pyvista.global_theme.nan_color)
+            color = Color(pv.global_theme.nan_color)
         self.nan_color = Color(self.nan_color, opacity=value)
 
     @property
@@ -652,7 +648,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
-            self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
+            self.SetAboveRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
             self.SetUseAboveRangeColor(True)
         else:
             self.SetAboveRangeColor(*Color(value).float_rgba)
@@ -680,7 +676,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def above_range_opacity(self, value):
         color = self.above_range_color
         if color is None:
-            color = Color(pyvista.global_theme.above_range_color)
+            color = Color(pv.global_theme.above_range_color)
         self.above_range_color = Color(color, opacity=value)
 
     @property
@@ -716,7 +712,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
-            self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
+            self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
@@ -744,13 +740,13 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def below_range_opacity(self, value):
         color = self.below_range_color
         if color is None:
-            color = Color(pyvista.global_theme.below_range_color)
+            color = Color(pv.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
     @_deprecate_positional_args(allowed=['cmap', 'n_values'])
     def apply_cmap(
         self,
-        cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
+        cmap: ColormapOptions,
         n_values: int = 256,
         flip: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -768,7 +764,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             Number of colors in the color map.
 
         flip : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         Examples
@@ -959,12 +955,14 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
             return {}  # type: ignore[unreachable]
-        n_items = vtk_values.GetSize()
+        n_items = (
+            vtk_values.GetSize() if pv.vtk_version_info < (9, 7) else vtk_values.GetCapacity()
+        )
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
         vtk_str = self.GetAnnotations()
         values = [str(vtk_str.GetValue(ii)) for ii in range(n_items)]
-        return dict(zip(keys, values))
+        return dict(zip(keys, values, strict=True))
 
     @annotations.setter
     def annotations(self, values: dict[float, str] | None):
@@ -1013,10 +1011,10 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         # need a trivial polydata for this
-        mesh = pyvista.PolyData(np.zeros((2, 3)))
+        mesh = pv.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pyvista.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
+        pl = pv.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
@@ -1164,9 +1162,22 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)
-        else:
-            try:
-                return np.array([self.map_value(item) for item in value])
-            except:
-                msg = 'LookupTable __call__ expects a single value or an iterable.'
-                raise TypeError(msg)
+
+        try:
+            vtk_values: _vtk.vtkAbstractArray
+            if isinstance(value, _vtk.vtkDataArray):
+                vtk_values = value
+            else:
+                values = np.asarray(value)
+                if values.dtype == np.bool_:
+                    values = values.astype(np.uint8)
+                vtk_values = convert_array(values)
+            if not isinstance(vtk_values, _vtk.vtkDataArray):
+                raise TypeError
+            # Use VTK_COLOR_MODE_MAP_SCALARS to preserve lookup-table mapping for uint8 arrays.
+            rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
+        except (TypeError, ValueError) as err:
+            msg = 'LookupTable __call__ expects a single value or an iterable.'
+            raise TypeError(msg) from err
+
+        return rgba.reshape(-1, 4) / 255.0

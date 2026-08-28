@@ -1,0 +1,28 @@
+/* Let the PyVista HTML repr opt out of the theme's forced light backdrop.
+ *
+ * In dark mode pydata-sphinx-theme deliberately gives HTML cell outputs a light
+ * background and dark text, because notebook outputs (dataframes, widgets,
+ * images) generally assume a light background:
+ *
+ *   html[data-theme=dark] .bd-content div.cell_output .text_html:not(:has(table.dataframe)),
+ *   ... .widget-subarea, ... img {
+ *     background-color: var(--pst-color-text-base);
+ *     color: var(--pst-color-on-background);
+ *   }
+ *
+ * The PyVista repr is theme-aware and paints its own background and text (see
+ * pyvista/core/static/style.css), so on that backdrop its light text lands on a
+ * light surface and becomes unreadable. Opt the repr's container out and let the
+ * repr style itself; everything else keeps the theme's behaviour.
+ *
+ * This selector carries one more element than the theme's rule so that it wins:
+ * both have five classes, this has four elements to the theme's three.
+ */
+html[data-theme="dark"]
+  div.bd-content
+  div.cell_output
+  div.text_html:has(.pv-wrap) {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}

@@ -4,24 +4,20 @@
 Create Point Cloud
 ~~~~~~~~~~~~~~~~~~
 
-Create a :class:`pyvista.PolyData` object from a point cloud of vertices and
-scalar arrays for those points.
+Create a :class:`~pyvista.PolyData` point cloud from vertices and scalar arrays.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
 # %%
 # Point clouds are generally constructed in the :class:`pyvista.PolyData` class
 # and can easily have scalar/vector data arrays associated with the point
-# cloud. In this example, we'll work a bit backwards using a point cloud that
+# cloud. In this example, we'll work a bit backwards using a point cloud
 # that is available from our ``examples`` module. This however is no different
-# than creating a PyVista mesh with your own NumPy arrays of vertice locations.
+# than creating a PyVista mesh with your own NumPy arrays of vertex locations.
 
 
 # Seed the random number generator for generating data
@@ -125,12 +121,12 @@ arrows = point_cloud.glyph(
 )
 
 # Display the arrows
-plotter = pv.Plotter()
-plotter.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
-plotter.add_mesh(arrows, color='lightblue')
-# plotter.add_point_labels([point_cloud.center,], ['Center',],
+pl = pv.Plotter()
+pl.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
+pl.add_mesh(arrows, color='lightblue')
+# pl.add_point_labels([point_cloud.center,], ['Center',],
 #                          point_color='yellow', point_size=20)
-plotter.show_grid()
-plotter.show()
+pl.show_grid()
+pl.show()
 # %%
 # .. tags:: load

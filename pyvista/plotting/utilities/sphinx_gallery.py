@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 from typing import TYPE_CHECKING
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
@@ -39,8 +39,8 @@ def html_rst(
     srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
-    from sphinx_gallery.scrapers import _get_srcset_st
-    from sphinx_gallery.scrapers import figure_rst
+    from sphinx_gallery.scrapers import _get_srcset_st  # noqa: PLC0415
+    from sphinx_gallery.scrapers import figure_rst  # noqa: PLC0415
 
     if srcsetpaths is None:
         # this should never happen, but figure_rst is public, so
@@ -111,7 +111,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
 
     """
     image_names = []
-    figures = pyvista.plotting.plotter._ALL_PLOTTERS
+    figures = pv.plotting.plotter._ALL_PLOTTERS
     for plotter in figures.values():
         _process_events_before_scraping(plotter)
         fname = next(image_path_iterator)
@@ -120,10 +120,10 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         fname_withoutextension = str(path.parent / path.stem)
         fname = fname_withoutextension + '.png'
 
-        if hasattr(plotter, '_gif_filename'):
+        if (gif_filename := plotter._gif_filename) is not None:
             # move gif to fname
             fname = fname[:-3] + 'gif'
-            shutil.move(plotter._gif_filename, fname)
+            shutil.move(gif_filename, fname)
             image_names.append(fname)
         else:
             plotter.screenshot(fname)
@@ -135,7 +135,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
                     f.write(plotter.last_vtksz)  # type: ignore[arg-type]
                     image_names.append(fname)
 
-    pyvista.close_all()  # close and clear all plotters
+    pv.close_all()  # close and clear all plotters
     return image_names
 
 
@@ -161,9 +161,9 @@ class Scraper:
         Called by sphinx-gallery.
 
         """
-        from sphinx_gallery.scrapers import figure_rst
+        from sphinx_gallery.scrapers import figure_rst  # noqa: PLC0415
 
-        if not pyvista.BUILDING_GALLERY:
+        if not pv.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
         image_path_iterator = block_vars['image_path_iterator']
@@ -183,7 +183,8 @@ class DynamicScraper:  # pragma: no cover
 
     If the boolean variable ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True/False``
     is set as a global variable in the document then its value will be used as default for the
-    force_static argument of the pyvista-plot command. see also the notes at :func:plot_directive
+    ``force_static`` argument of the pyvista-plot command. see also the notes at
+    :func:plot_directive
 
     To alter the global value behavior just for some plots you may set the
     boolean variable ``PYVISTA_GALLERY_FORCE_STATIC = True``/
@@ -203,7 +204,7 @@ class DynamicScraper:  # pragma: no cover
         Called by sphinx-gallery.
 
         """
-        if not pyvista.BUILDING_GALLERY:
+        if not pv.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
         # read global option  if it exists

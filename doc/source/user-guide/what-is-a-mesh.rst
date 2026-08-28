@@ -1,6 +1,8 @@
 .. _what_is_a_mesh:
 
-What is a Mesh?
+.. autoopengraph_thumbnail:: 7
+
+What Is a Mesh?
 ===============
 In PyVista, a mesh is any spatially referenced information and usually
 consists of geometrical representations of a surface or volume in 3D
@@ -24,7 +26,7 @@ do not have to get bogged down in the nuances.
    underlying VTK data model, please see :ref:`pyvista_data_model`.
 
 
-What is a Point?
+What Is a Point?
 ----------------
 Points are the vertices of the mesh, also referred to as the Cartesian
 coordinates of the underlying structure. All PyVista datasets (meshes) have
@@ -44,13 +46,13 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
     :context:
 
     # must have this here as our global backend may not be static
-    import pyvista
-    pyvista.set_plot_theme('document')
-    pyvista.set_jupyter_backend('static')
-    pyvista.global_theme.window_size = [600, 400]
-    pyvista.global_theme.axes.show = False
-    pyvista.global_theme.anti_aliasing = 'fxaa'
-    pyvista.global_theme.show_scalar_bar = False
+    import pyvista as pv
+    pv.set_plot_theme('document')
+    pv.set_jupyter_backend('static')
+    pv.global_theme.window_size = [600, 400]
+    pv.global_theme.axes.show = False
+    pv.global_theme.anti_aliasing = 'fxaa'
+    pv.global_theme.show_scalar_bar = False
 
 
 .. pyvista-plot::
@@ -73,9 +75,9 @@ connectivity between points such as this gridded mesh:
     from pyvista import examples
 
     mesh = examples.load_hexbeam()
-    cpos = [(6.20, 3.00, 7.50),
-            (0.16, 0.13, 2.65),
-            (-0.28, 0.94, -0.21)]
+    cpos = pv.CameraPosition(position=(6.20, 3.00, 7.50),
+                             focal_point=(0.16, 0.13, 2.65),
+                             viewup=(-0.28, 0.94, -0.21))
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
@@ -95,14 +97,16 @@ Or this triangulated surface:
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_points(mesh.points, color='red',
                   point_size=2)
-    pl.camera_position = [(0.02, 0.30, 0.73),
-                          (0.02, 0.03, -0.022),
-                          (-0.03, 0.94, -0.34)]
+    pl.camera_position = pv.CameraPosition(
+        position=(0.02, 0.30, 0.73),
+        focal_point=(0.02, 0.03, -0.022),
+        viewup=(-0.03, 0.94, -0.34)
+    )
     pl.show()
 
 
 
-What is a Cell?
+What Is a Cell?
 ---------------
 A cell is the geometry between points that defines the connectivity or
 topology of a mesh. In the examples above, cells are defined by the
@@ -123,9 +127,11 @@ between eight points in that mesh:
     pl.add_mesh(single_cell, color='pink', edge_color='blue',
                 line_width=5, show_edges=True)
 
-    pl.camera_position = [(6.20, 3.00, 7.50),
-                          (0.16, 0.13, 2.65),
-                          (-0.28, 0.94, -0.21)]
+    pl.camera_position = pv.CameraPosition(
+        position=(6.20, 3.00, 7.50),
+        focal_point=(0.16, 0.13, 2.65),
+        viewup=(-0.28, 0.94, -0.21)
+    )
     pl.show()
 
 
@@ -134,13 +140,13 @@ points, a line between two points, or even a single point could be its
 own cell (but that's a special case).
 
 
-What are Attributes?
+What Are Attributes?
 --------------------
 Attributes are data values that live on either the points or cells of
 a mesh. In PyVista, we work with both point data and cell data and
 allow easy access to data dictionaries to hold arrays for attributes
 that live either on all points or on all cells of a mesh. These
-attributes can be accessed in a Dictionary-like attribute attached to
+attributes can be accessed in a dictionary-like attribute attached to
 any PyVista mesh accessible as one of the following:
 
 * :attr:`point_data <pyvista.DataSet.point_data>`

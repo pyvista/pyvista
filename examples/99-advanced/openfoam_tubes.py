@@ -3,18 +3,17 @@
 
 Plot CFD Data
 -------------
-Plot a CFD example from OpenFoam hosted on the public SimScale examples at
-`SimScale Project Library <https://www.simscale.com/projects/>`_.
+
+Plot a CFD example hosted on the public SimScale examples.
+
+From `SimScale Project Library <https://www.simscale.com/projects/>`_.
 
 This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 :ref:`openfoam_example` for a full example using this reader.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -37,7 +36,9 @@ air = block[0]
 y_slice = air.slice('y')
 
 pl = pv.Plotter()
-pl.add_mesh(y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'})
+pl.add_mesh(
+    y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'}
+)
 pl.add_mesh(air, color='w', opacity=0.25)
 pl.enable_anti_aliasing()
 pl.show()
@@ -61,7 +62,7 @@ pl.show()
 
 # %%
 # Now, actually generate the streamlines. Since the original inlet contains
-# 1000 points, let's reduce this to around 200 points by using every 5th point.
+# 1000 points, let's reduce this to around 200 points by using every fifth point.
 #
 # .. note::
 #    If we wanted a uniform subsampling of the inlet, we could use

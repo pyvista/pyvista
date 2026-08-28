@@ -2,21 +2,22 @@
 
 from __future__ import annotations
 
-import pooch
+import pyvista as pv
+from pyvista._warn_external import warn_external
+from pyvista.examples import downloads
+from pyvista.examples.downloads import _gltf_loader
 
-from .downloads import USER_DATA_PATH
+if pv.version_info >= (0, 52):  # pragma: no cover
+    msg = (
+        '`pyvista.examples.gltf` should be removed. This module and all of its '
+        'functions were deprecated in v0.49 and were scheduled for removal in v0.52.'
+    )
+    raise RuntimeError(msg)
 
-GLTF_FETCHER = pooch.create(
-    path=USER_DATA_PATH,
-    base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
-    registry={
-        'Avocado/glTF-Binary/Avocado.glb': None,
-        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
-        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
-        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
-        'SheenChair/glTF-Binary/SheenChair.glb': None,
-    },
-    retry_if_failed=3,
+warn_external(
+    '`pyvista.examples.gltf` is deprecated and will be removed in a future '
+    'version. Use `pyvista.examples.downloads` instead.',
+    pv.PyVistaDeprecationWarning,
 )
 
 
@@ -30,23 +31,21 @@ def download_damaged_helmet():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_damaged_helmet()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(cubemap)
-    >>> pl.show()
-
     """
-    return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
+    warn_external(
+        '`examples.gltf.download_damaged_helmet` is deprecated. Use '
+        '`examples.download_damaged_helmet` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_damaged_helmet(load=False)
 
 
 def download_sheen_chair():  # pragma: no cover
     """Download the sheen chair example.
+
+    .. deprecated:: 0.49.0
+        This example uses the unsupported glTF extension
+        ``KHR_texture_transform`` and will be removed in v0.52.
 
     Files hosted at https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -55,19 +54,19 @@ def download_sheen_chair():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_sheen_chair()
-    >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
     """
-    return GLTF_FETCHER.fetch('SheenChair/glTF-Binary/SheenChair.glb')
+    warn_external(
+        '`download_sheen_chair` is deprecated and will be removed in v0.52. '
+        'It uses the unsupported glTF extension `KHR_texture_transform`.',
+        pv.PyVistaDeprecationWarning,
+    )
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = (
+            "Remove this deprecated function and remove the 'sheen_chair' "
+            'dict mapping from the `_gltf_loader`'
+        )
+        raise RuntimeError(msg)
+    return _gltf_loader('sheen_chair').download()
 
 
 def download_gearbox():  # pragma: no cover
@@ -80,17 +79,12 @@ def download_gearbox():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_gearbox()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.show()
-
     """
-    return GLTF_FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
+    warn_external(
+        '`examples.gltf.download_gearbox` is deprecated. Use `examples.download_gearbox` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_gearbox(load=False)
 
 
 def download_avocado():  # pragma: no cover
@@ -103,17 +97,12 @@ def download_avocado():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_avocado()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.show()
-
     """
-    return GLTF_FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
+    warn_external(
+        '`examples.gltf.download_avocado` is deprecated. Use `examples.download_avocado` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_avocado(load=False)
 
 
 def download_milk_truck():  # pragma: no cover
@@ -126,14 +115,10 @@ def download_milk_truck():  # pragma: no cover
     str
         Filename of the gltf file.
 
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_milk_truck()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.show()
-
     """
-    return GLTF_FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
+    warn_external(
+        '`examples.gltf.download_milk_truck` is deprecated. Use '
+        '`examples.download_milk_truck` instead.',
+        pv.PyVistaDeprecationWarning,
+    )
+    return downloads.download_milk_truck(load=False)

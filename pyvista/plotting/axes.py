@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .actor import Actor
 from .axes_actor import AxesActor
 
 
-class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
+class Axes(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAxes):
     """PyVista wrapper for the VTK Axes class.
 
     Parameters
@@ -58,7 +60,7 @@ class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
 
     @property
     def origin(self):  # numpydoc ignore=RT01
-        """Return or set th origin of the axes in world coordinates.
+        """Return or set the origin of the axes in world coordinates.
 
         Examples
         --------

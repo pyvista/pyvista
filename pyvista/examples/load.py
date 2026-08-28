@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import FunctionType
+from typing import TYPE_CHECKING
 
-from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _get_dataset_loader
+
+if TYPE_CHECKING:
+    from pyvista.examples._dataset_loader import DatasetObject
 
 
 def load(

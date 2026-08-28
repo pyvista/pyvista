@@ -9,10 +9,7 @@ This example shows how to create meshes in different ways.
 """
 
 # sphinx_gallery_thumbnail_number = 5
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -24,7 +21,7 @@ mesh = pv.Sphere()
 mesh.plot(show_edges=True)
 
 # %%
-# This gives an :class:`pyvista.PolyData` mesh, i.e. a 2D surface.
+# This gives an :class:`pyvista.PolyData` mesh, that is, a 2D surface.
 
 mesh
 
@@ -44,7 +41,7 @@ boundaries
 mesh.get_cell(0).type
 
 # %%
-# Structured quadrilateral mesh of Sphere
+# Structured Quadrilateral Mesh of Sphere
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The structure of the mesh can be important. Instead of a
 # triangulated mesh, it can be useful to have a structured
@@ -69,7 +66,7 @@ mesh = pv.StructuredGrid(x, y, z)
 
 # %%
 # The mesh has :attr:`~pyvista.CellType.QUAD` cells. The cells that look triangular
-# at the poles are actually degenerate quadrilaterals, i.e. two
+# at the poles are actually degenerate quadrilaterals, that is, two
 # points are coincident at the pole, as will be shown later.
 
 mesh.plot(show_edges=True)
@@ -109,13 +106,13 @@ pl.add_mesh(boundaries, line_width=10, color='red')
 pl.show()
 
 # %%
-# Generate quadrilateral mesh of Sphere
+# Generate Quadrilateral Mesh of Sphere
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This example shows how a more complicated mesh can be defined.
 #
 # In contrast to the example above, this example generates a mesh
-# that does not have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE` cells
-# will be used at the poles.  First, regenerate the structured data.
+# that does not have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE`
+# cells will be used at the poles. First, regenerate the structured data.
 
 radius = 0.5
 ntheta = 9
@@ -136,7 +133,7 @@ phi = phi[1:-1]
 nphi -= 2
 
 # %%
-# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for
+# Use :func:`pyvista.spherical_to_cartesian` to generate Cartesian coordinates for
 # points in the ``(N, 3)`` format required by PyVista.  Note that this method results in
 # the theta variable changing the fastest.
 
@@ -157,7 +154,7 @@ points = np.append(points, [[0.0, 0.0, -radius]], axis=0)
 # position.  Otherwise, we will form quadrilaterals between two adjacent points
 # on consecutive ``phi`` positions.
 #
-# The first triangle in the mesh is point id ``0``, i.e. the pole, and
+# The first triangle in the mesh is point id ``0``, that is, the pole, and
 # the first two points at the first ``phi`` position, id's ``1`` and ``2``.
 # the next triangle contains the pole again and the next set of points,
 # id's ``2`` and ``3`` and so on.  The last point in the ring, id ``8`` connects
@@ -188,8 +185,8 @@ pl.show()
 # by connecting points across two levels of ``phi``.  For point ``1``
 # and point ``2``, these are connected to point ``9`` and point ``10``. Note
 # for quadrilaterals it must be defined in a consistent direction.
-# Again, the last point(s) in the theta direction connect back to the
-# first point(s).
+# Again, the last points in the theta direction connect back to the
+# first points.
 
 for i in range(1, ntheta):
     faces.extend([4, i, i + 1, i + ntheta + 1, i + ntheta])
@@ -227,13 +224,23 @@ faces.extend([3, 0, ntheta, 1])
 for j in range(nphi - 1):
     for i in range(1, ntheta):
         faces.extend(
-            [4, j * ntheta + i, j * ntheta + i + 1, i + (j + 1) * ntheta + 1, i + (j + 1) * ntheta]
+            [
+                4,
+                j * ntheta + i,
+                j * ntheta + i + 1,
+                i + (j + 1) * ntheta + 1,
+                i + (j + 1) * ntheta,
+            ]
         )
 
-    faces.extend([4, (j + 1) * ntheta, j * ntheta + 1, (j + 1) * ntheta + 1, (j + 2) * ntheta])
+    faces.extend(
+        [4, (j + 1) * ntheta, j * ntheta + 1, (j + 1) * ntheta + 1, (j + 2) * ntheta]
+    )
 
 for i in range(1, ntheta):
-    faces.extend([3, nphi * ntheta + 1, (nphi - 1) * ntheta + i, (nphi - 1) * ntheta + i + 1])
+    faces.extend(
+        [3, nphi * ntheta + 1, (nphi - 1) * ntheta + i, (nphi - 1) * ntheta + i + 1]
+    )
 
 faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 
@@ -244,8 +251,8 @@ faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 mesh = pv.PolyData(points, faces=faces)
 
 # %%
-# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like :func:`pyvista.Sphere`.
-# To demonstrate this, there are no boundaries on the mesh
+# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like
+# :func:`pyvista.Sphere`. To demonstrate this, there are no boundaries on the mesh
 # as indicated by no points/cells being extracted.
 
 boundaries = mesh.extract_feature_edges(

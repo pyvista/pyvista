@@ -4,19 +4,19 @@
 Compare Field Across Mesh Regions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here is some velocity data from a glacier modelling simulation that is compared
-across nodes in the simulation. We have simplified the mesh to have the
-simulation node value already on the mesh.
+Plot glacier velocity data from a modelling simulation.
 
-This was originally posted to `pyvista/pyvista-support#83 <https://github.com/pyvista/pyvista-support/issues/83>`_.
+This is compared across nodes in the simulation. We have simplified the
+mesh to have the simulation node value already on the mesh.
+
+This was originally posted to `pyvista/pyvista-support#83
+<https://github.com/pyvista/pyvista-support/issues/83>`_.
 
 The modeling results are courtesy of `Urruty Benoit <https://github.com/BenoitURRUTY>`_
-and  are from the `Elmer/Ice <http://elmerice.elmerfem.org>`_ simulation
+and  are from the `Elmer/Ice <https://elmerice.elmerfem.org>`_ simulation
 software.
 
 """
-
-from __future__ import annotations
 
 import numpy as np
 
@@ -46,12 +46,12 @@ def extract_node(node):
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(mesh, scalars='node_value')
+pl = pv.Plotter()
+pl.add_mesh(mesh, scalars='node_value')
 for node in np.unique(mesh['node_value']):
     loc = extract_node(node).center
-    p.add_point_labels(loc, [f'Node {node}'])
-p.show(cpos='xy')
+    pl.add_point_labels(loc, [f'Node {node}'])
+pl.show(cpos='xy')
 
 
 # %%
@@ -78,11 +78,11 @@ pl.show(cpos='xy')
 pl = pv.Plotter()
 pl.add_mesh(a.glyph(orient='ssavelocity', factor=20), **vel_dargs)
 pl.add_mesh(b.glyph(orient='ssavelocity', factor=20), **vel_dargs)
-pl.camera_position = [
-    (-1114684.6969340036, 293863.65389149904, 752186.603224546),
-    (-1114684.6969340036, 293863.65389149904, 0.0),
-    (0.0, 1.0, 0.0),
-]
+pl.camera_position = pv.CameraPosition(
+    position=(-1115000.0, 293900.0, 752200.0),
+    focal_point=(-1115000.0, 293900.0, 0.0),
+    viewup=(0.0, 1.0, 0.0),
+)
 pl.show()
 
 
@@ -101,20 +101,22 @@ pl = pv.Plotter()
 pl.add_arrows(a.points, flow_a, mag=10000, color='b', label='flow_a')
 pl.add_arrows(b.points, flow_b, mag=10000, color='r', label='flow_b')
 pl.add_legend()
-pl.camera_position = [
-    (-1044239.3240694795, 354805.0268606294, 484178.24825854995),
-    (-1044239.3240694795, 354805.0268606294, 0.0),
-    (0.0, 1.0, 0.0),
-]
+pl.camera_position = pv.CameraPosition(
+    position=(-1044000.0, 354800.0, 484200.0),
+    focal_point=(-1044000.0, 354800.0, 0.0),
+    viewup=(0.0, 1.0, 0.0),
+)
 pl.show()
 
 
 # %%
-# flow_a that agrees with the mean flow path of flow_b
+# ``flow_a`` that agrees with the mean flow path of ``flow_b``
 agree = flow_a.dot(flow_b.mean(0))
 
 pl = pv.Plotter()
-pl.add_mesh(a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block b'})
+pl.add_mesh(
+    a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block b'}
+)
 pl.add_mesh(b, color='w')
 pl.show(cpos='xy')
 
@@ -123,5 +125,7 @@ agree = flow_b.dot(flow_a.mean(0))
 
 pl = pv.Plotter()
 pl.add_mesh(a, color='w')
-pl.add_mesh(b, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block a'})
+pl.add_mesh(
+    b, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block a'}
+)
 pl.show(cpos='xy')

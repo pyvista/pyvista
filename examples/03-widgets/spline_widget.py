@@ -4,23 +4,21 @@
 Spline Widget
 ~~~~~~~~~~~~~
 
+Enable and disable the spline widget to interactively create a poly line.
 
-A spline widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_spline_widget` and
-:func:`pyvista.Plotter.clear_spline_widgets` methods respectively.
-This widget allows users to interactively create a poly line (spline) through
-a scene and use that spline.
+Uses :func:`pyvista.Plotter.add_spline_widget` and
+:func:`pyvista.Plotter.clear_spline_widgets`. This widget allows users to
+interactively create a poly line (spline) through a scene and use that
+spline.
 
 A common task with splines is to slice a volumetric dataset using an irregular
 path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.DataObjectFilters.slice_along_line` filter named
 :func:`pyvista.Plotter.add_mesh_slice_spline`.
+
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -38,10 +36,12 @@ points = np.array(
     ],
 )
 
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='black')
-p.add_mesh_slice_spline(mesh, initial_points=points, n_handles=5)
-p.camera_position = [(30, -42, 30), (0.0, 0.0, 0.0), (-0.09, 0.53, 0.84)]
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='black')
+pl.add_mesh_slice_spline(mesh, initial_points=points, n_handles=5)
+pl.camera_position = pv.CameraPosition(
+    position=(30, -42, 30), focal_point=(0.0, 0.0, 0.0), viewup=(-0.09, 0.53, 0.84)
+)
+pl.show()
 # %%
 # .. tags:: widgets

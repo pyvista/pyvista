@@ -9,14 +9,8 @@ rendering, additional features, etc). As ``pyvista`` does not provide
 ``vtk``, you will have to either build it manually or install the default
 wheel from PyPI.
 
-.. note::
-   Should you need a prebuilt wheel, a variety of prebuilt wheels can be found at
-   `pyvista-wheels <https://github.com/pyvista/pyvista-wheels>`_, but you may be
-   better off building your own. These are not "official" wheels and will soon
-   be removed in favor of more "official" wheel variants from VTK directly.
-
 Reference the official directions for `Building VTK
-<https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/dev/build.md>`_.
+<https://docs.vtk.org/en/latest/build_instructions/index.html>`_.
 The following directions assume you want to build a Python wheel non-standard
 situations like EGL.
 
@@ -57,7 +51,7 @@ wheel size.
     git clone https://gitlab.kitware.com/vtk/vtk.git
     mkdir vtk/build
     cd vtk/build
-    git checkout v9.1.0  # optional to select a version, but recommended
+    git checkout v9.6.0  # optional to select a version, but recommended
 
     export PYBIN=/usr/bin/python3.10  # select your version of choice
     cmake -GNinja \
@@ -105,7 +99,7 @@ modifying the above ``cmake`` command with:
    git clone https://github.com/Kitware/VTK
    mkdir VTK/build
    cd VTK/build \
-   git checkout v9.1.0
+   git checkout v9.6.0
    cd /VTK/build
    cmake -GNinja \
      -DCMAKE_BUILD_TYPE=Release \
@@ -151,7 +145,7 @@ instead of ``xvfb``:
 
    git clone https://github.com/Kitware/VTK.git
    cd VTK
-   git checkout v9.1.0
+   git checkout v9.6.0
    mkdir build
    cd build
 

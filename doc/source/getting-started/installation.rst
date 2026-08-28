@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.9+.
+PyVista is supported on Python versions 3.10+.
 
 For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
@@ -66,7 +66,24 @@ To install this package with ``conda`` run::
 .. asciinema:: 507565
 
 
-Installing the Current Development Branch from GitHub
+Pixi
+~~~~
+
+`Pixi <https://pixi.sh/>`_ is a modern package management tool that provides fast, reliable, and reproducible software environments. It can be used as an alternative to conda/mamba for managing PyVista installations.
+
+To install PyVista using pixi, first ensure you have pixi installed (see `pixi installation instructions <https://pixi.sh/latest/#installation>`_), then run::
+
+    pixi add pyvista
+
+This will add PyVista to your ``pixi.toml`` file and install it in your project environment. To use PyVista in your pixi environment::
+
+    pixi shell
+    python -c 'import pyvista as pv; print(pv.__version__)'
+
+Pixi automatically handles all dependencies and ensures compatibility across different platforms.
+
+
+Installing the Current Development Branch From GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release. To install ``pyvista`` from the latest
@@ -86,6 +103,50 @@ Alternatively, you can clone the repository with git and install it with pip.
 
 Note the development flag ``-e``. This allows you to change pyvista
 in-place without having to reinstall it for each change.
+
+
+.. _dev_wheels:
+
+Development Wheels
+~~~~~~~~~~~~~~~~~~
+
+The PyVista documentation site also hosts a `PEP 503
+<https://peps.python.org/pep-0503/>`_ "simple repository" of wheels built
+from the latest commit on ``main``. These wheels are rebuilt and
+republished by the documentation pipeline on every push to ``main``, so the
+index always points at the most recent ``main`` build, with no GitHub clone
+or checkout required.
+
+To install the latest development wheel:
+
+.. code-block:: bash
+
+   pip install --upgrade --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+
+To keep PyPI as the source for dependencies and only pull ``pyvista`` itself
+from the development index, use ``--extra-index-url`` instead:
+
+.. code-block:: bash
+
+   pip install --upgrade --pre --extra-index-url https://dev.pyvista.org/wheels/simple/ pyvista
+
+Each build is published with a `PEP 440
+<https://peps.python.org/pep-0440/>`_ local version segment of the form
+``<base>+g<short-sha>`` (for example ``0.48.dev0+g11c36e50``), so the
+specific commit a wheel was built from is always recoverable from its
+version string. Running ``pip install --pre -U pyvista`` against the
+development index will always pick up the newest commit's wheel.
+
+A human-readable landing page listing the current build is available at
+`dev.pyvista.org/wheels/ <https://dev.pyvista.org/wheels/>`_.
+
+.. warning::
+
+   These wheels are **unsupported development builds**. They may contain
+   in-progress changes, regressions, or breaking API changes that have not
+   yet been released. Use them for testing upcoming features or reproducing
+   reports against ``main``, not for production. For stable releases,
+   install from PyPI as usual.
 
 
 Optional Dependencies
@@ -112,6 +173,53 @@ The following are a list of optional dependencies and their purpose:
 | ``rtree``                         | Vectorised ray tracing                  |
 | ``pyembree``                      |                                         |
 +-----------------------------------+-----------------------------------------+
+
+
+.. _vtk_backend:
+
+VTK Backend
+~~~~~~~~~~~
+
+PyVista runs against stock `VTK <https://vtk.org/>`__ by default, and nothing
+below is required to use it.
+
+`cvista <https://github.com/pyvista/cvista>`_ is a community fork of VTK,
+developed in the open by the PyVista maintainers. It is smaller than the stock
+wheel and ships as three stackable packages, so an offline data-processing
+install need not carry the rendering stack. It is entirely opt-in::
+
+    pip install 'pyvista[cvista]'
+
+That installs the fork alongside stock ``vtk``; because it imports under its own
+``cvista`` name, it does not clobber an existing install. When it is present
+PyVista selects it automatically.
+
+Set ``PYVISTA_VTK_BACKEND`` to choose explicitly. It must be set **before**
+PyVista is imported, since the backend is resolved at import time::
+
+    PYVISTA_VTK_BACKEND=vtkmodules   # force stock VTK, even if cvista is installed
+    PYVISTA_VTK_BACKEND=cvista       # force the fork
+
+.. note::
+
+   A process must use **one** VTK build throughout. Libraries that import VTK
+   themselves default to stock VTK, so mixing them with a PyVista running on
+   cvista produces wrapped-type errors rather than a clean failure. ``trame``
+   is the common case; point it at the same build with its own setting::
+
+       VTK_MODULE_NAME=cvista
+
+Use :func:`pyvista.vtk_backend` to check which build is active at runtime --
+useful for raising a clear error when a build does not ship a module a feature
+needs, since the two do not carry identical module sets:
+
+.. code-block:: python
+
+    import pyvista as pv
+
+    if pv.vtk_backend() != 'vtk':
+        msg = f'This feature is not supported on the {pv.vtk_backend()} backend.'
+        raise RuntimeError(msg)
 
 
 Source / Developers
@@ -160,8 +268,8 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#user-content-testing
+.. _Contributing Guide: https://dev.pyvista.org/contributing
+.. _Testing: https://dev.pyvista.org/contributing#unit-testing
 
 
 Running on CI Services
@@ -188,35 +296,26 @@ PyVista on the notebook hosting service MyBinder_.
 .. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _MyBinder: https://mybinder.org
 
-To get started, the Docker container will need to have ``libgl1-mesa-dev`` and
-``xvfb`` installed through ``apt-get``. For MyBinder, include the following in
-a file called ``apt.txt``::
+The Docker container only needs VTK's runtime GL libraries. For MyBinder,
+include the following in a file called ``apt.txt``::
 
-    libgl1-mesa-dev
-    xvfb
+    libopengl0
+    libgl1
+    libegl1
+    libxrender1
 
-Then, you need to configure the headless display, for MyBinder, create a file
-called ``start`` and include the following set up script that will run every
-time your Docker container is launched:
+That is the complete system-library set: ``libegl1`` enables EGL so VTK
+picks up GPU acceleration automatically when the container is run with the
+NVIDIA container runtime, and falls back to Mesa's ``llvmpipe`` software
+renderer on CPU-only hosts. As of VTK 9.5, headless off-screen rendering
+works out of the box with the stock PyPI ``vtk`` wheel, so no ``Xvfb`` or
+``DISPLAY`` setup is required.
 
-.. code-block:: bash
-
-    #!/bin/bash
-    set -x
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    which Xvfb
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-    set +x
-    exec "$@"
-
-
-All you have to do next is include PyVista in your Python requirements and you
-can get to visualizing your data. If you need more help than this on setting up
-PyVista for these types of services, hop on Discussions page and chat with the developers
-or take a look at `this repository`_ that is currently using PyVista on
-MyBinder.
+Include PyVista in your Python requirements and ``pv.Plotter(off_screen=True)``
+will render. If you need more help than this on setting up PyVista for
+these types of services, hop on the Discussions page and chat with the
+developers or take a look at `this repository`_ that is currently using
+PyVista on MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 
@@ -227,39 +326,29 @@ Docker case. As an example, here are the complete steps to use PyVista on AWS
 EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``).
 Other servers would work similarly.
 
-After logging into the remote server, install Miniconda and related packages:
+After logging into the remote server, install VTK's runtime GL libraries
+and set up Python:
 
 .. code-block:: bash
 
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    bash miniconda.sh -b -p miniconda
-    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.9
-    conda activate vtk_env
-    conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista trame
+    sudo apt update && sudo apt install -y \
+        libopengl0 libgl1 libegl1 libxrender1
+    python -m venv vtk_env
+    source vtk_env/bin/activate
+    pip install jupyter 'pyvista[jupyter]'
 
-    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
-    # https://stackoverflow.com/q/32389599
-    # https://askubuntu.com/q/629692
-    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
-
-Then, configure the headless display:
-
-.. code-block:: bash
-
-    sudo apt-get install xvfb
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
+With ``libegl1`` installed, VTK 9.5+ renders off-screen via EGL out of the
+box, so no ``Xvfb`` or ``DISPLAY`` configuration is required. Set
+``PYVISTA_OFF_SCREEN=true`` in your shell (or pass ``off_screen=True``
+when constructing a ``Plotter``) and ``pv.Plotter(off_screen=True)`` will
+just work.
 
 Reconnect to the server with port-forwarding, and start Jupyter:
 
 .. code-block:: bash
 
     ssh -i "your-ssh-key" your-user-name@your-server-ip -L 8888:localhost:8888
-    conda activate vtk_env
+    source vtk_env/bin/activate
     jupyter lab --NotebookApp.token='' --no-browser --port=8888
 
 Visit ``localhost:8888`` in the web browser.
@@ -270,41 +359,21 @@ Similar to the example of the remote server above, the windows subsystem for Lin
 not provide an x-server for visualization. Instead, the fastest way to get up and
 running on WSL is through `JupyterLab <https://jupyter.org/>`_.
 
-First, make sure you have installed the correct environment through Miniconda and
-related packages:
+First, install VTK's runtime GL libraries and set up Python:
 
 .. code-block:: bash
 
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    bash miniconda.sh -b -p miniconda
-    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.9
-    conda activate vtk_env
-    conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista[jupyter] trame
-
-    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
-    # https://stackoverflow.com/q/32389599
-    # https://askubuntu.com/q/629692
-    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+    sudo apt update && sudo apt install -y \
+        libopengl0 libgl1 libegl1 libxrender1
+    python -m venv vtk_env
+    source vtk_env/bin/activate
+    pip install jupyter 'pyvista[jupyter]'
 
 VTK Link to Jupyter
 ^^^^^^^^^^^^^^^^^^^
-There are two ways to get vtk rendering 3D objects in JupyterLab. First you
-can follow the example above for remote servers, skipping over the ``ssh``
-instructions.
-
-Configure the headless display:
-
-.. code-block:: bash
-
-    sudo apt-get install xvfb
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-
-Start Jupyter:
+As of VTK 9.5, headless off-screen rendering works out of the box with
+the stock PyPI ``vtk`` wheel when ``libegl1`` is installed. No ``Xvfb``
+or ``DISPLAY`` configuration is needed. Start Jupyter:
 
 .. code-block:: bash
 
@@ -317,9 +386,9 @@ should be displayed in JupyterLab.
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
 
-    pl = pyvista.Plotter(shape=(1, 2))
+    pl = pv.Plotter(shape=(1, 2))
     actor = pl.add_mesh(pyvista.Cube())
     pl.subplot(0, 1)
     actor = pl.add_mesh(pyvista.Sphere())
@@ -328,22 +397,22 @@ should be displayed in JupyterLab.
 
 Your visualizations should now be showing directly in the Jupyter frontend.
 
-Running with Sphinx-Gallery
+Running With Sphinx-Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In your ``conf.py``, add the following:
 
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
 
     # necessary when building the sphinx gallery
-    pyvista.BUILDING_GALLERY = True
-    pyvista.OFF_SCREEN = True
+    pv.BUILDING_GALLERY = True
+    pv.OFF_SCREEN = True
 
     # Optional - set parameters like theme or window size
-    pyvista.set_plot_theme('document')
-    pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+    pv.set_plot_theme('document')
+    pv.global_theme.window_size = np.array([1024, 768]) * 2
 
     extensions = [
         ...,
@@ -365,16 +434,16 @@ the string ``'pyvista'`` above and by registering the
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
     # necessary when building the sphinx gallery
-    pyvista.BUILDING_GALLERY = True
-    pyvista.OFF_SCREEN = True
+    pv.BUILDING_GALLERY = True
+    pv.OFF_SCREEN = True
 
     # Optional - set parameters like theme or window size
-    pyvista.set_plot_theme('document')
-    pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+    pv.set_plot_theme('document')
+    pv.global_theme.window_size = np.array([1024, 768]) * 2
 
     extensions = [
         ...,

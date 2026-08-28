@@ -112,3 +112,8 @@ def test_partitioned_dataset_repr(ant, sphere, uniform, airplane):
     assert partitions._repr_html_() is not None
     assert repr(partitions) is not None
     assert str(partitions) is not None
+
+
+def test_partitioned_is_empty(sphere):
+    assert PartitionedDataSet().is_empty
+    assert not PartitionedDataSet([sphere]).is_empty

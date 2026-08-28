@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from math import pi
+from collections.abc import Sequence
+import math
 from typing import TYPE_CHECKING
-import warnings
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .geometric_sources import translate
 from .helpers import wrap
@@ -22,28 +23,66 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
+_ParametrizeByOptions = Literal['length', 'index']
+_BoundaryConstraintOptions = Literal['finite_difference', 'clamped', 'second', 'scaled_second']
 
-def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None = None) -> PolyData:
+
+def Spline(
+    points: VectorLike[float] | MatrixLike[float],
+    n_points: int | None = None,
+    *,
+    closed: bool = False,
+    parametrize_by: _ParametrizeByOptions = 'length',
+    boundary_constraints: _BoundaryConstraintOptions
+    | tuple[_BoundaryConstraintOptions, _BoundaryConstraintOptions] = 'clamped',
+    boundary_values: float | tuple[float | None, float | None] | None = None,
+    **kwargs,
+) -> PolyData:
     """Create a spline from points.
 
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points to build a spline out of.  Array must be 3D
-        and directionally ordered.
+        Array of points to build a spline out of. Array must be 3D and
+        directionally ordered.
 
     n_points : int, optional
         Number of points to interpolate along the points array. Defaults to
         ``points.shape[0]``.
 
+    closed : bool, default: False
+        Close the spline if ``True`` (both ends are joined). Not closed by default.
+
+    parametrize_by : str, default: 'length'
+        Parametrize spline by ``'length'`` or by point ``'index'``.
+
+    boundary_constraints : str | Sequence[str], optional, default: 'clamped'
+        Derivative constraint type at both boundaries of the spline.
+        Can be set by a single string or a sequence of length 2 (one for each left/right end).
+        Each value must be one of:
+
+        - ``'finite_difference'``: The first derivative at the left(right) most point is determined
+          from the line defined from the first(last) two points.
+        - ``'clamped'``: Default: the first derivative at the left(right) most point is set to
+          Left(Right) ``boundary_values``. (Default)
+        - ``'second'``: The second derivative at the left(right) most point is set to
+          Left(Right) ``boundary_values``.
+        - ``'scaled_second'``: The second derivative at left(right) most points is
+          Left(Right) ``boundary_values`` times second derivative at first interior point.
+
+    boundary_values : float | Sequence[float | None], optional
+        Values of derivative at both ends of the spline used by the ``boundary_constraints`` type.
+        Can be set a single float, or a sequence of floats or None (one value for each left/right
+        end). If a single value is provided, the same value is used for both ends.
+        Value must be None for each end with boundary constraint type ``'finite_difference'``.
+
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
         Line mesh of spline.
-
-    See Also
-    --------
-    :ref:`distance_along_spline_example`
 
     Examples
     --------
@@ -65,17 +104,84 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     ... )
 
     """
+
+    # Validate inputs
+    def check_constraint(value: str, name: str) -> None:
+        _validation.check_contains(
+            get_args(_BoundaryConstraintOptions), must_contain=value, name=name
+        )
+
     points_ = _validation.validate_arrayNx3(points, name='points')
+    _validation.check_contains(
+        get_args(_ParametrizeByOptions), must_contain=parametrize_by, name='parametrize_by'
+    )
+
+    # Ensure we have valid constraint, value pairs
+    name = 'boundary_constraints'
+    _validation.check_instance(boundary_constraints, Sequence, name=name)
+    if isinstance(boundary_constraints, str):
+        check_constraint(boundary_constraints, name=name)
+        constraints_pair = (boundary_constraints, boundary_constraints)
+    else:
+        _validation.check_length(boundary_constraints, exact_length=2, name=name)
+        check_constraint(boundary_constraints[0], name=name)
+        check_constraint(boundary_constraints[1], name=name)
+        constraints_pair = boundary_constraints
+
+    if boundary_values is None:
+        values_list: list[float | None]
+        values_list = [None if c == 'finite_difference' else 0.0 for c in constraints_pair]
+        values_pair: Sequence[float | None] = values_list
+    else:
+        name = 'boundary_values'
+        allowed_types = float, int, type(None)
+        _validation.check_instance(boundary_values, (Sequence, *allowed_types), name=name)
+        if isinstance(boundary_values, Sequence):
+            _validation.check_length(boundary_values, exact_length=2, name=name)
+            for val in boundary_values:
+                _validation.check_instance(val, allowed_types, name=name)
+            values_pair = boundary_values
+        else:
+            values_pair = (boundary_values, boundary_values)
+
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
+
+    if closed:
+        spline_function.ClosedOn()
+    else:
+        spline_function.ClosedOff()
+
+    if parametrize_by == 'length':
+        spline_function.ParameterizeByLengthOn()
+    else:
+        spline_function.ParameterizeByLengthOff()
+
+    _boundary_types_dict = {
+        'finite_difference': 0,
+        'clamped': 1,
+        'second': 2,
+        'scaled_second': 3,
+    }
+    for left_right, constraint, value in zip(
+        ('Left', 'Right'), constraints_pair, values_pair, strict=True
+    ):
+        method = f'Set{left_right}Constraint'
+        getattr(spline_function, method)(_boundary_types_dict[constraint])
+
+        if value is not None:
+            if constraint == 'finite_difference':
+                msg = f'finite difference boundary value must be None, got {value}'
+                raise ValueError(msg)
+            method = f'Set{left_right}Value'
+            getattr(spline_function, method)(value)
 
     # get interpolation density
     u_res = n_points
     if u_res is None:
         u_res = points_.shape[0]
-
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res=u_res)
+    spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
     return spline.compute_arc_length()
 
 
@@ -127,8 +233,6 @@ def KochanekSpline(  # noqa: PLR0917
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color='k')
 
-    See :ref:`create_kochanek_spline_example` for an additional example.
-
     """
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
@@ -146,7 +250,7 @@ def KochanekSpline(  # noqa: PLR0917
 
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
@@ -543,9 +647,9 @@ def ParametricEllipsoid(
     parametric_keywords(
         parametric_function,
         min_u=kwargs.pop('min_u', 0),
-        max_u=kwargs.pop('max_u', 2 * pi),
+        max_u=kwargs.pop('max_u', 2 * math.pi),
         min_v=kwargs.pop('min_v', 0.0),
-        max_v=kwargs.pop('max_v', pi),
+        max_v=kwargs.pop('max_v', math.pi),
         join_u=kwargs.pop('join_u', False),
         join_v=kwargs.pop('join_v', False),
         twist_u=kwargs.pop('twist_u', False),
@@ -880,14 +984,6 @@ def ParametricPseudosphere(**kwargs) -> PolyData:
 
 @_deprecate_positional_args
 def ParametricRandomHills(  # noqa: PLR0917
-    numberofhills: int | None = None,
-    hillxvariance: float | None = None,
-    hillyvariance: float | None = None,
-    hillamplitude: float | None = None,
-    randomseed: int | None = None,
-    xvariancescalefactor: float | None = None,
-    yvariancescalefactor: float | None = None,
-    amplitudescalefactor: float | None = None,
     number_of_hills: int | None = None,
     hill_x_variance: float | None = None,
     hill_y_variance: float | None = None,
@@ -909,56 +1005,6 @@ def ParametricRandomHills(  # noqa: PLR0917
 
     Parameters
     ----------
-    numberofhills : int, default: 30
-        The number of hills.
-
-        .. versionchanged:: 0.43.0
-            The ``numberofhills`` parameter has been renamed to ``number_of_hills``.
-
-    hillxvariance : float, default: 2.5
-        The hill variance in the x-direction.
-
-        .. versionchanged:: 0.43.0
-            The ``hillxvariance`` parameter has been renamed to ``hill_x_variance``.
-
-    hillyvariance : float, default: 2.5
-        The hill variance in the y-direction.
-
-        .. versionchanged:: 0.43.0
-            The ``hillyvariance`` parameter has been renamed to ``hill_y_variance``.
-
-    hillamplitude : float, default: 2
-        The hill amplitude (height).
-
-        .. versionchanged:: 0.43.0
-            The ``hillamplitude`` parameter has been renamed to ``hill_amplitude``.
-
-    randomseed : int, default: 1
-        The Seed for the random number generator,
-        a value of 1 will initialize the random number generator,
-        a negative value will initialize it with the system time.
-
-        .. versionchanged:: 0.43.0
-            The ``randomseed`` parameter has been renamed to ``random_seed``.
-
-    xvariancescalefactor : float, default: 13
-        The scaling factor for the variance in the x-direction.
-
-        .. versionchanged:: 0.43.0
-            The ``xvariancescalefactor`` parameter has been renamed to ``x_variance_scale_factor``.
-
-    yvariancescalefactor : float, default: 13
-        The scaling factor for the variance in the y-direction.
-
-        .. versionchanged:: 0.43.0
-            The ``yvariancescalefactor`` parameter has been renamed to ``y_variance_scale_factor``.
-
-    amplitudescalefactor : float, default: 13
-        The scaling factor for the amplitude.
-
-        .. versionchanged:: 0.43.0
-            The ``amplitudescalefactor`` parameter has been renamed to ``amplitude_scale_factor``.
-
     number_of_hills : int, default: 30
         The number of hills.
 
@@ -1003,84 +1049,28 @@ def ParametricRandomHills(  # noqa: PLR0917
 
     """
     parametric_function = _vtk.vtkParametricRandomHills()
-    if numberofhills is not None:
-        parametric_function.SetNumberOfHills(numberofhills)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`numberofhills` argument is deprecated. Please use `number_of_hills`.',
-            PyVistaDeprecationWarning,
-        )
-    elif number_of_hills is not None:
+    if number_of_hills is not None:
         parametric_function.SetNumberOfHills(number_of_hills)
 
-    if hillxvariance is not None:
-        parametric_function.SetHillXVariance(hillxvariance)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`hillxvariance` argument is deprecated. Please use `hill_x_variance`.',
-            PyVistaDeprecationWarning,
-        )
-    elif hill_x_variance is not None:
+    if hill_x_variance is not None:
         parametric_function.SetHillXVariance(hill_x_variance)
 
-    if hillyvariance is not None:
-        parametric_function.SetHillYVariance(hillyvariance)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`hillyvariance` argument is deprecated. Please use `hill_y_variance`.',
-            PyVistaDeprecationWarning,
-        )
-    elif hill_y_variance is not None:
+    if hill_y_variance is not None:
         parametric_function.SetHillYVariance(hill_y_variance)
 
-    if hillamplitude is not None:
-        parametric_function.SetHillAmplitude(hillamplitude)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`hillvariance` argument is deprecated. Please use `hill_variance`.',
-            PyVistaDeprecationWarning,
-        )
-    elif hill_amplitude is not None:
+    if hill_amplitude is not None:
         parametric_function.SetHillAmplitude(hill_amplitude)
 
-    if randomseed is not None:
-        parametric_function.SetRandomSeed(randomseed)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`randomseed` argument is deprecated. Please use `random_seed`.',
-            PyVistaDeprecationWarning,
-        )
-    elif random_seed is not None:
+    if random_seed is not None:
         parametric_function.SetRandomSeed(random_seed)
 
-    if xvariancescalefactor is not None:
-        parametric_function.SetXVarianceScaleFactor(xvariancescalefactor)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`xvariancescalefactor` argument is deprecated. Please use `x_variance_scale_factor`.',
-            PyVistaDeprecationWarning,
-        )
-    elif x_variance_scale_factor is not None:
+    if x_variance_scale_factor is not None:
         parametric_function.SetXVarianceScaleFactor(x_variance_scale_factor)
 
-    if yvariancescalefactor is not None:
-        parametric_function.SetYVarianceScaleFactor(yvariancescalefactor)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`yvariancescalefactor` argument is deprecated. Please use `y_variance_scale_factor`.',
-            PyVistaDeprecationWarning,
-        )
-    elif y_variance_scale_factor is not None:
+    if y_variance_scale_factor is not None:
         parametric_function.SetYVarianceScaleFactor(y_variance_scale_factor)
 
-    if amplitudescalefactor is not None:
-        parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
-        # Deprecated on v0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            '`amplitudescalefactor` argument is deprecated. Please use `amplitude_scale_factor`.',
-            PyVistaDeprecationWarning,
-        )
-    elif amplitude_scale_factor is not None:
+    if amplitude_scale_factor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitude_scale_factor)
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
@@ -1234,7 +1224,7 @@ def ParametricSuperToroid(  # noqa: PLR0917
     ParametricSuperToroid generates a supertoroid.  Essentially a
     supertoroid is a torus with the sine and cosine terms raised to a power.
     A supertoroid is a versatile primitive that is controlled by four
-    parameters r0, r1, n1 and n2. r0, r1 determine the type of torus whilst
+    parameters r0, r1, n1, and n2. r0, r1 determine the type of torus whilst
     the value of n1 determines the shape of the torus ring and n2 determines
     the shape of the cross section of the ring. It is the different values of
     these powers which give rise to a family of 3D shapes that are all
@@ -1368,9 +1358,9 @@ def ParametricTorus(
 def parametric_keywords(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     min_u: float = 0.0,
-    max_u: float = 2 * pi,
+    max_u: float = 2 * math.pi,
     min_v: float = 0.0,
-    max_v: float = 2 * pi,
+    max_v: float = 2 * math.pi,
     join_u: bool = False,  # noqa: FBT001, FBT002
     join_v: bool = False,  # noqa: FBT001, FBT002
     twist_u: bool = False,  # noqa: FBT001, FBT002

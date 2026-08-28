@@ -31,9 +31,8 @@ have are technically shifted up and we have some NaN filler above the surface
 - its weird and just ignore it. You'll typically have a more uniform looking
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
-"""
 
-from __future__ import annotations
+"""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -93,17 +92,17 @@ grid['values'] = data.ravel(order='F')
 # And now we can plot it, process it, or do anything, because it is a PyVista
 # mesh and the possibilities are endless with PyVista.
 
-cpos = [
-    (1217002.366883762, 345363.80666238244, 3816.828857791056),
-    (1216322.4753436751, 344033.0310674846, 3331.052985309526),
-    (-0.17716571330686096, -0.25634368781817973, 0.9502106207279767),
-]
+cpos = pv.CameraPosition(
+    position=(1217002.0, 345364.0, 3817.0),
+    focal_point=(1216322.0, 344033.0, 3331.0),
+    viewup=(-0.1772, -0.2563, 0.9502),
+)
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
-p = pv.Plotter()
-p.add_mesh(grid, cmap='seismic', clim=[-1, 1])
-p.add_mesh(pv.PolyData(path), color='orange')
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(grid, cmap='seismic', clim=[-1, 1])
+pl.add_mesh(pv.PolyData(path), color='orange')
+pl.show(cpos=cpos)
 # %%
 # .. tags:: load

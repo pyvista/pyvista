@@ -35,16 +35,13 @@ must be all triangle meshes, which you can check with
 
 .. warning::
    If your boolean operations don't react the way you think they
-   should (i.e. the wrong parts disappear), one of your meshes
+   should (that is, the wrong parts disappear), one of your meshes
    probably has its normals pointing inward. Use
    :func:`pyvista.PolyDataFilters.plot_normals` to visualize the normals.
-
 
 """
 
 # sphinx_gallery_thumbnail_number = 6
-from __future__ import annotations
-
 import pyvista as pv
 
 sphere_a = pv.Sphere()
@@ -118,8 +115,8 @@ pl.show()
 
 
 # %%
-# Behavior due to flipped faces
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Behavior Due to Flipped Faces
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Note that these boolean filters behave differently depending on the
 # orientation of the faces. This is because the orientation determines
 # which parts are considered to be the "outside" or the "inside" portion

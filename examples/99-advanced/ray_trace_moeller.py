@@ -4,21 +4,20 @@
 Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates the Moeller-Trumbore intersection algorithm
-using :class:`~pyvista.PolyData`.
+Demonstrate the Moeller-Trumbore ray/triangle intersection algorithm.
+
+Uses :class:`~pyvista.PolyData`.
 
 For additional details, please reference the following:
 
 - `Moeller-Trumbore intersection algorithm <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>`_
-- `Fast Minimum Storage Ray Triangle Intersectio <https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf>`_
+- `Fast Minimum Storage Ray Triangle Intersection <https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf>`_
 
 First, define the ray triangle intersection method.
+
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 
@@ -86,7 +85,7 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
 # %%
 
 # Create a basic triangle within pyvista
-points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]])
+points = np.array([[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
 faces = np.array([3, 0, 1, 2])
 tri = pv.PolyData(points, faces)
 
@@ -114,7 +113,9 @@ if inter:
     point = tri.points[0] * a + tri.points[1] * b + tri.points[2] * c
 
     pl = pv.Plotter()
-    pl.add_text(f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26)
+    pl.add_text(
+        f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26
+    )
     pl.add_mesh(tri)
     _ = pl.add_arrows(
         np.array([start]),
@@ -123,8 +124,15 @@ if inter:
         color='r',
         style='wireframe',
     )
-    pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True, color='b')
-    pl.add_point_labels(tri, [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'], font_size=40)
+    pl.add_points(
+        np.array([point]), point_size=20, render_points_as_spheres=True, color='b'
+    )
+    pl.add_point_labels(
+        tri,
+        [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'],
+        font_size=40,
+        always_visible=True,
+    )
     pl.show_bounds()
     pl.camera_position = 'xy'
     pl.show()

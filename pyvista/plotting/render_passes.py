@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import weakref
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-
-from . import _vtk
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
@@ -22,7 +22,7 @@ POST_PASS = [
 ]
 
 
-class RenderPasses:
+class RenderPasses(_NoNewAttrMixin):
     """Class to support multiple render passes for a renderer.
 
     Notes
@@ -45,6 +45,7 @@ class RenderPasses:
     def __init__(self, renderer):
         """Initialize render passes."""
         self._renderer_ref = weakref.ref(renderer)
+        self._closed = False
 
         self._passes = {}
         self._fxaa_pass = None
@@ -114,6 +115,23 @@ class RenderPasses:
             return self._renderer_ref()
         return None  # type: ignore[unreachable]
 
+    def _check_closed(self):
+        """Raise if the renderer has already been closed."""
+        if self._closed:
+            msg = 'The renderer has been closed.'
+            raise RuntimeError(msg)
+
+    def close(self):
+        """Delete all render passes and mark them permanently unusable.
+
+        Unlike plain ``deep_clean()``, this is only called once the owning
+        renderer itself is closed, so it also latches ``_closed`` -- any
+        further attempt to enable/disable a pass then raises instead of
+        silently no-op'ing.
+        """
+        self._closed = True
+        self.deep_clean()
+
     def deep_clean(self):
         """Delete all render passes."""
         if self._renderer is not None:
@@ -149,6 +167,7 @@ class RenderPasses:
 
     def disable_edl_pass(self):
         """Disable the EDL pass."""
+        self._check_closed()
         if self._edl_pass is None:
             return
         self._remove_pass(self._edl_pass)
@@ -172,6 +191,7 @@ class RenderPasses:
 
     def remove_blur_pass(self):
         """Remove a single :vtk:`vtkGaussianBlurPass` pass."""
+        self._check_closed()
         if self._blur_passes:
             # order of the blur passes does not matter
             self._remove_pass(self._blur_passes.pop())
@@ -185,6 +205,7 @@ class RenderPasses:
             The enabled shadow pass.
 
         """
+        self._check_closed()
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
             return None
@@ -196,6 +217,7 @@ class RenderPasses:
 
     def disable_shadow_pass(self):
         """Disable shadow pass."""
+        self._check_closed()
         if self._shadow_map_pass is None:
             return
         self._pass_collection.RemoveItem(self._shadow_map_pass.GetShadowMapBakerPass())
@@ -232,6 +254,7 @@ class RenderPasses:
 
     def disable_depth_of_field_pass(self):
         """Disable the depth of field pass."""
+        self._check_closed()
         if self._dof_pass is None:
             return
         self._remove_pass(self._dof_pass)
@@ -276,6 +299,7 @@ class RenderPasses:
 
     def disable_ssao_pass(self):
         """Disable the screen space ambient occlusion pass."""
+        self._check_closed()
         if self._ssao_pass is None:
             return
         self._remove_pass(self._ssao_pass)
@@ -298,6 +322,7 @@ class RenderPasses:
 
     def disable_ssaa_pass(self):
         """Disable super-sample anti-aliasing pass."""
+        self._check_closed()
         if self._ssaa_pass is None:
             return
         self._remove_pass(self._ssaa_pass)
@@ -305,9 +330,7 @@ class RenderPasses:
 
     def _update_passes(self):
         """Reassemble pass delegation."""
-        if hasattr(self._renderer, '_closed') and self._renderer._closed:
-            msg = 'The renderer has been closed.'
-            raise RuntimeError(msg)
+        self._check_closed()
 
         current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:

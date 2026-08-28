@@ -6,8 +6,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 if TYPE_CHECKING:
@@ -37,6 +39,8 @@ def plot_arrows(cent, direction, **kwargs):
     See Also
     --------
     pyvista.plot
+    pyvista.plot_compare
+    pyvista.Plotter
 
     Examples
     --------
@@ -58,11 +62,11 @@ def plot_arrows(cent, direction, **kwargs):
     >>> pv.plot_arrows(cent, direction)
 
     """
-    return pyvista.plot([cent, direction], **kwargs)
+    return pv.plot([cent, direction], **kwargs)
 
 
 @_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
-def plot_compare_four(  # noqa: PLR0917
+def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     data_a,
     data_b,
     data_c,
@@ -80,35 +84,54 @@ def plot_compare_four(  # noqa: PLR0917
 ):
     """Plot a 2 by 2 comparison of data objects.
 
+    .. deprecated:: 0.49
+        Use :func:`~pyvista.plot_compare` instead, which supports any number of
+        data objects::
+
+            plot_compare([data_a, data_b, data_c, data_d])
+
     Parameters
     ----------
     data_a : pyvista.DataSet
         The data object to display in the top-left corner.
+
     data_b : pyvista.DataSet
         The data object to display in the top-right corner.
+
     data_c : pyvista.DataSet
         The data object to display in the bottom-left corner.
+
     data_d : pyvista.DataSet
         The data object to display in the bottom-right corner.
+
     display_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``add_mesh`` method.
+
     plotter_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``Plotter`` constructor.
+
     show_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``show`` method.
-    screenshot : str or bool, default: None
+
+    screenshot : str | bool, default: None
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
+
     camera_position : list, default: None
         The camera position to use in the plot.
+
     outline : pyvista.DataSet, default: None
         An outline to plot around the data objects.
+
     outline_color : str, default: 'k'
         The color of the outline.
-    labels : tuple of str, default: ('A', 'B', 'C', 'D')
+
+    labels : tuple[str, str, str, str], default: ('A', 'B', 'C', 'D')
         The labels to display for each data object.
+
     link : bool, default: True
         If ``True``, link the views of the subplots.
+
     notebook : bool, default: None
         If ``True``, display the plot in a Jupyter notebook.
 
@@ -117,7 +140,23 @@ def plot_compare_four(  # noqa: PLR0917
     pyvista.Plotter
         The plotter object.
 
+    See Also
+    --------
+    pyvista.plot_compare
+    pyvista.plot
+    pyvista.Plotter
+
     """
+    # Deprecated on 0.49.0, estimated removal on 0.52.0
+    warn_external(
+        '`plot_compare_four` is deprecated. Use `plot_compare` instead, '
+        'which supports any number of data objects.',
+        PyVistaDeprecationWarning,
+    )
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
+
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]
 
@@ -130,7 +169,7 @@ def plot_compare_four(  # noqa: PLR0917
 
     plotter_kwargs['notebook'] = notebook
 
-    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
+    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):
@@ -146,7 +185,8 @@ def plot_compare_four(  # noqa: PLR0917
         pl.link_views()
         # when linked, camera must be reset such that the view range
         # of all subrender windows matches
-        pl.reset_camera()
+        if camera_position is None:
+            pl.reset_camera()
 
     return pl.show(screenshot=screenshot, **show_kwargs)
 
@@ -169,7 +209,7 @@ def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], Nu
         ``[x, y, z]`` vector that points in the viewing direction.
 
     viewup : numpy.ndarray
-        ``[x, y, z]`` vector that points to the viewup direction.
+        ``[x, y, z]`` vector that points to the ``viewup`` direction.
 
     """
     if view == 'xy':

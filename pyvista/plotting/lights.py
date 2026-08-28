@@ -3,25 +3,16 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-# imports here rather than in _vtk to avoid circular imports
-try:
-    from vtkmodules.vtkCommonMath import vtkMatrix4x4
-    from vtkmodules.vtkRenderingCore import vtkLight
-    from vtkmodules.vtkRenderingCore import vtkLightActor
-except ImportError:  # pragma: no cover
-    from vtk import vtkLight  # type: ignore[no-redef]
-    from vtk import vtkLightActor  # type: ignore[no-redef]
-    from vtk import vtkMatrix4x4  # type: ignore[no-redef]
-
-from typing import TYPE_CHECKING
-
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core._vtk_core import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
 
@@ -43,7 +34,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(DisableVtkSnakeCase, vtkLight):
+class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     """Light class.
 
     Parameters
@@ -61,7 +52,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         :py:attr:`focal_point` property.
 
     color : ColorLike, optional
-        The color of the light. The ambient, diffuse and specular
+        The color of the light. The ambient, diffuse, and specular
         colors will all be set to this color on creation.
 
     light_type : str | int, default: 'scene light'
@@ -86,7 +77,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
     positional : bool, optional
         Set if the light is positional.
 
-        The default is a directional light, i.e. an infinitely distant
+        The default is a directional light, that is, an infinitely distant
         point source. A positional light with a cone angle of at least
         90 degrees acts like a spherical point source. A positional
         light with a cone angle that is less than 90 degrees is known
@@ -219,12 +210,12 @@ class Light(DisableVtkSnakeCase, vtkLight):
             self.attenuation_values = attenuation_values
 
         # Add the light actor
-        self.actor = vtkLightActor()
+        self.actor = _vtk.vtkLightActor()
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
     def __repr__(self) -> str:
-        """Print a repr specifying the id of the light and its light type."""
+        """Print a ``repr`` specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
     def __eq__(self, other) -> bool:
@@ -262,6 +253,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
                     if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
                         return False
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __del__(self):
         """Clean up when the light is being destroyed."""
@@ -508,15 +501,15 @@ class Light(DisableVtkSnakeCase, vtkLight):
         brightness.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
-        >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
+        >>> pl = pv.Plotter(lighting='none')
+        >>> _ = pl.add_mesh(pv.Cube(), color='cyan')
         >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
         >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
-        ...     plotter.add_light(light)
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.show()
 
         """
         return self.GetIntensity()
@@ -552,7 +545,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
     def positional(self):  # numpydoc ignore=RT01
         """Return or set whether the light is positional.
 
-        The default is a directional light, i.e. an infinitely distant
+        The default is a directional light, that is, an infinitely distant
         point source. A positional light with a cone angle of at least
         90 degrees acts like a spherical point source. A positional
         light with a cone angle that is less than 90 degrees is known
@@ -631,13 +624,13 @@ class Light(DisableVtkSnakeCase, vtkLight):
         Examples
         --------
         Plot three planes lit by three spotlights with exponents of 1,
-        2 and 5.  The one with the lowest exponent has the broadest
+        2, and 5.  The one with the lowest exponent has the broadest
         beam.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
+        ...     _ = pl.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -645,9 +638,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         ...     light.exponent = exponent
         ...     light.positional = True
         ...     light.cone_angle = 80
-        ...     plotter.add_light(light)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         return self.GetExponent()
@@ -663,7 +656,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The angle is in degrees and is measured between the axis of
         the cone and an extremal ray of the cone. A value smaller than
         90 has spot lighting effects, anything equal to and above 90
-        is just a positional light, i.e. a spherical point source.
+        is just a positional light, that is, a spherical point source.
 
         Regarding the angular distribution of the light, the cone
         angle merely truncates the beam, the shape of which is defined
@@ -673,10 +666,6 @@ class Light(DisableVtkSnakeCase, vtkLight):
         If the light's cone angle is increased to 90 degrees or above,
         its actor (if previously shown) is automatically hidden.
 
-        See Also
-        --------
-        :ref:`beam_shape_example`
-
         Examples
         --------
         Plot three planes lit by three spotlights with varying cone
@@ -684,16 +673,16 @@ class Light(DisableVtkSnakeCase, vtkLight):
         variation of the intensity of the beams.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
+        ...     _ = pl.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
-        ...     plotter.add_light(light)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         return self.GetConeAngle()
@@ -710,7 +699,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         """Return or set the quadratic attenuation constants.
 
         The values are 3-length sequences which specify the constant,
-        linear and quadratic constants in this order. These parameters
+        linear, and quadratic constants in this order. These parameters
         only have an effect for positional lights.
 
         Attenuation refers to the dampening of a beam of light as it
@@ -718,10 +707,6 @@ class Light(DisableVtkSnakeCase, vtkLight):
         describe three different profiles for dampening with
         distance. A larger attenuation constant corresponds to more
         rapid decay with distance.
-
-        See Also
-        --------
-        :ref:`attenuation_example`
 
         Examples
         --------
@@ -732,11 +717,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         box gets lit by both lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset in 1, 2.5, 4:
-        ...     _ = plotter.add_mesh(
-        ...         pv.Cube(center=(offset, offset, 0)), color='white'
-        ...     )
+        ...     _ = pl.add_mesh(pv.Cube(center=(offset, offset, 0)), color='white')
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
@@ -748,9 +731,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         ...     light.cone_angle = 90
         ...     light.positional = True
         ...     light.attenuation_values = attenuation_constants
-        ...     plotter.add_light(light)
-        >>> plotter.view_vector((-1, -1, 1))
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_vector((-1, -1, 1))
+        >>> pl.show()
 
         """
         return self.GetAttenuationValues()
@@ -775,7 +758,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         linear transformation and a translation (an affine
         transform). The 3-by-3 principal submatrix (the top left
         corner of the matrix) encodes a three-dimensional linear
-        transformation (e.g. some rotation around the origin). The top
+        transformation (for example, some rotation around the origin). The top
         three elements in the last column of the matrix encode a
         three-dimensional translation. The last row of the matrix is
         redundant.
@@ -804,7 +787,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
 
     @transform_matrix.setter
     def transform_matrix(self, matrix: TransformLike):
-        if matrix is None or isinstance(matrix, vtkMatrix4x4):
+        if matrix is None or isinstance(matrix, _vtk.vtkMatrix4x4):
             self.SetTransformMatrix(matrix)
         else:
             trans = _validation.validate_transform4x4(matrix)
@@ -825,7 +808,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         defined in a coordinate space where the camera is located at
         (0, 0, 1), looking towards (0, 0, 0) at a distance of 1, with
         up being (0, 1, 0). Camera lights use the transform matrix to
-        establish this space, i.e. they have a fixed :py:attr:`position`
+        establish this space, that is, they have a fixed :py:attr:`position`
         with respect to the camera, and moving the camera only
         affects the :py:attr:`world_position` via changes in the
         :py:attr:`transform_matrix` (and the same goes for the focal
@@ -846,16 +829,16 @@ class Light(DisableVtkSnakeCase, vtkLight):
         light kit of plotters.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights[:2]
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights[:2]
         >>> [light.light_type for light in lights]
         [<LightType.HEADLIGHT: 1>, <LightType.CAMERA_LIGHT: 2>]
 
         Change the light type of the default light kit's headlight to a scene light.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights[:2]
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights[:2]
         >>> lights[0].light_type = pv.Light.SCENE_LIGHT
         >>> [light.light_type for light in lights]
         [<LightType.SCENE_LIGHT: 3>, <LightType.CAMERA_LIGHT: 2>]
@@ -880,8 +863,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         Verify that the first light of the default light kit is a headlight.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights
         >>> [light.is_headlight for light in lights]
         [True, False, False, False, False]
 
@@ -898,8 +881,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         are camera lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights
         >>> [light.is_camera_light for light in lights]
         [False, True, True, True, True]
 
@@ -916,8 +899,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         scene lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> pl = pv.Plotter()
+        >>> lights = pl.renderer.lights
         >>> [light.is_scene_light for light in lights]
         [False, False, False, False, False]
 
@@ -982,7 +965,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         Examples
         --------
         Create a light that shines on the origin from a 30-degree
-        elevation in the xz plane.
+        elevation in the ``xz`` plane.
 
         >>> import pyvista as pv
         >>> light = pv.Light()
@@ -1057,7 +1040,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
             setattr(new_light, attr, value)
 
         if deep and self.transform_matrix is not None:
-            new_light.transform_matrix = vtkMatrix4x4()
+            new_light.transform_matrix = _vtk.vtkMatrix4x4()
             new_light.transform_matrix.DeepCopy(self.transform_matrix)
         else:
             new_light.transform_matrix = self.transform_matrix
@@ -1140,7 +1123,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
             Wrapped light.
 
         """
-        if not isinstance(vtk_light, vtkLight):
+        if not isinstance(vtk_light, _vtk.vtkLight):
             msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
             raise TypeError(msg)
 
@@ -1178,9 +1161,9 @@ class Light(DisableVtkSnakeCase, vtkLight):
         visualize the light using an actor.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(), color='white')
-        >>> for light in plotter.renderer.lights:
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(), color='white')
+        >>> for light in pl.renderer.lights:
         ...     light.intensity /= 5
         >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
         >>> spotlight.positional = True
@@ -1188,8 +1171,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         >>> spotlight.intensity = 10
         >>> spotlight.exponent = 40
         >>> spotlight.show_actor()
-        >>> plotter.add_light(spotlight)
-        >>> plotter.show()
+        >>> pl.add_light(spotlight)
+        >>> pl.show()
 
         """
         if not self.positional or self.cone_angle >= 90:

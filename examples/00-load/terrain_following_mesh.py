@@ -16,9 +16,8 @@ In this example, we demonstrate a simple way to make a 3D grid/mesh that
 follows a given topographic surface. In this example, it is important to note
 that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
-"""
 
-from __future__ import annotations
+"""
 
 import numpy as np
 
@@ -70,11 +69,11 @@ mesh['Elevation'] = zz.ravel(order='F')
 mesh
 
 # %%
-cpos = [
-    (1826736.796308761, 5655837.275274233, 4676.8405505181745),
-    (1821066.1790519988, 5649248.765538796, 943.0995128226014),
-    (-0.2797856225380979, -0.27966946337594883, 0.9184252809434081),
-]
+cpos = pv.CameraPosition(
+    position=(1826737.0, 5655837.0, 4677.0),
+    focal_point=(1821066.0, 5649249.0, 943.0),
+    viewup=(-0.2798, -0.2797, 0.9184),
+)
 
 mesh.plot(show_edges=True, lighting=False, cpos=cpos)
 # %%

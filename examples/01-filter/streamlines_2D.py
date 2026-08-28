@@ -5,20 +5,19 @@
 ~~~~~~~~~~~~~~
 
 Integrate a vector field to generate streamlines on a 2D surface.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
 
 # %%
 # This example generates streamlines of flow around a cylinder in cross flow.
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
 # %%
 # The data is multiblock with the fluid data as the first block.
-# The data lies in the `xy` plane, i.e. `z=0`, with no `z` velocity.
+# The data lies in the `xy` plane, that is, `z=0`, with no `z` velocity.
 
 mesh = examples.download_cylinder_crossflow()
 fluid_mesh = mesh[0]
@@ -40,14 +39,16 @@ one_streamline = fluid_mesh.streamlines(
 )
 
 clim = [0, 20]
-camera_position = [(7, 0, 20.0), (7, 0.0, 0.0), (0.0, 1.0, 0.0)]
+camera_position = pv.CameraPosition(
+    position=(7, 0, 20.0), focal_point=(7, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+)
 
-p = pv.Plotter()
+pl = pv.Plotter()
 for i in range(1, len(mesh)):
-    p.add_mesh(mesh[i], color='k')
-p.add_mesh(one_streamline.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
-p.view_xy()
-p.show(cpos=camera_position)
+    pl.add_mesh(mesh[i], color='k')
+pl.add_mesh(one_streamline.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
+pl.view_xy()
+pl.show(cpos=camera_position)
 
 # %%
 # To generate multiple streamlines, a line source can be used with the ``pointa``
@@ -61,12 +62,12 @@ line_streamlines = fluid_mesh.streamlines(
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
-p = pv.Plotter()
+pl = pv.Plotter()
 for i in range(1, len(mesh)):
-    p.add_mesh(mesh[i], color='k')
-p.add_mesh(line_streamlines.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
-p.view_xy()
-p.show(cpos=camera_position)
+    pl.add_mesh(mesh[i], color='k')
+pl.add_mesh(line_streamlines.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
+pl.view_xy()
+pl.show(cpos=camera_position)
 
 # %%
 # The behavior immediately downstream of the cylinder is still not apparent
@@ -85,12 +86,12 @@ line_streamlines = fluid_mesh.streamlines_evenly_spaced_2D(
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
-p = pv.Plotter()
+pl = pv.Plotter()
 for i in range(1, len(mesh)):
-    p.add_mesh(mesh[i], color='k')
-p.add_mesh(line_streamlines.tube(radius=0.02), scalars='vorticity_mag', clim=clim)
-p.view_xy()
-p.show(cpos=camera_position)
+    pl.add_mesh(mesh[i], color='k')
+pl.add_mesh(line_streamlines.tube(radius=0.02), scalars='vorticity_mag', clim=clim)
+pl.view_xy()
+pl.show(cpos=camera_position)
 
 # %%
 # The streamlines are only approximately evenly spaced and capture the

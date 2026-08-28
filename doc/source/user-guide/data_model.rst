@@ -39,8 +39,8 @@ structures them in a more pythonic manner for ease of use.
 If you'd like some background for how VTK structures its data, see
 `Introduction to VTK in Python by Kitware
 <https://vimeo.com/32232190>`_, as well as the numerous code examples
-on `Kitware's GitHub site
-<https://kitware.github.io/vtk-examples/site/>`_. An excellent
+on `Kitware's VTK examples site
+<https://examples.vtk.org/site/>`_. An excellent
 introduction to mathematical concepts relevant to 3D modeling in
 general implemented in VTK is provided by the `Discrete Differential
 Geometry YouTube Series
@@ -62,14 +62,14 @@ consider a single cell within a |PolyData|:
    :include-source: false
    :force_static:
 
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
    points = [[.2, 0, 0], [1.3, 0, 0], [1, 1.2, 0], [0, 1, 0]]
    cells = [4, 0, 1, 2, 3]
-   mesh = pyvista.PolyData(points, cells)
+   mesh = pv.PolyData(points, cells)
 
-   pl = pyvista.Plotter()
+   pl = pv.Plotter()
    pl.add_mesh(mesh, show_edges=False)
    pl.add_mesh(mesh.extract_feature_edges(), line_width=5, color='k')
    pl.add_point_labels(mesh.points, [f'Point {i}' for i in range(4)], font_size=20, point_size=20)
@@ -86,7 +86,6 @@ shapes. The most important dataset classes are shown below:
 .. pyvista-plot::
    :context:
    :include-source: false
-
 
    from pyvista import demos
    demos.plot_datasets()
@@ -152,7 +151,7 @@ class, but there's a better, and more pythonic alternative by using
 :class:`numpy.ndarray`.
 
 
-Using NumPy with PyVista
+Using NumPy With PyVista
 ~~~~~~~~~~~~~~~~~~~~~~~~
 You can create a `NumPy <https://numpy.org/>`_ points array with:
 
@@ -169,13 +168,13 @@ everything from Python that is transferred over to VTK needs to be in a
 format that VTK can process.
 
 Should you wish to use VTK objects within PyVista, you can still do
-this. In fact, using :func:`pyvista.wrap`, you can even get a numpy-like
+this. In fact, using :func:`pyvista.wrap`, you can even get a NumPy-like
 representation of the data. For example:
 
 .. jupyter-execute::
 
-   >>> import pyvista
-   >>> wrapped = pyvista.wrap(vtk_array)
+   >>> import pyvista as pv
+   >>> wrapped = pv.wrap(vtk_array)
    >>> wrapped
 
 Note that when wrapping the underlying VTK array, we actually perform
@@ -183,7 +182,7 @@ a shallow copy of the data. In other words, we pass the pointer from
 the underlying C array to the :class:`numpy.ndarray`, meaning
 that the two arrays are now efficiently linked (in NumPy terminology,
 the returned array is a view into the underlying VTK data). This means
-that we can change the array using numpy array indexing and have it
+that we can change the array using NumPy array indexing and have it
 modified on the "VTK side".
 
 .. jupyter-execute::
@@ -192,7 +191,7 @@ modified on the "VTK side".
    >>> vtk_array.GetValue(0)
 
 Or we can change the value from the VTK array and see it reflected in
-the numpy wrapped array. Let's change the value back:
+the NumPy wrapped array. Let's change the value back:
 
 .. jupyter-execute::
 
@@ -221,9 +220,9 @@ containing just the three points:
 
 .. jupyter-execute::
 
-   >>> from_vtk = pyvista.PolyData(vtk_array)
-   >>> from_np = pyvista.PolyData(np_points)
-   >>> from_list = pyvista.PolyData(points)
+   >>> from_vtk = pv.PolyData(vtk_array)
+   >>> from_np = pv.PolyData(np_points)
+   >>> from_list = pv.PolyData(points)
 
 These point meshes all contain three points and are effectively
 identical. Let's show this by accessing the underlying points array
@@ -248,9 +247,9 @@ can see the entire process.
 .. pyvista-plot::
    :context:
 
-   >>> import pyvista
+   >>> import pyvista as pv
    >>> points = [[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]]
-   >>> mesh = pyvista.PolyData(points)
+   >>> mesh = pv.PolyData(points)
    >>> mesh.plot(show_bounds=True, cpos='xy', point_size=20)
 
 We'll get into PyVista's data classes and attributes later, but for
@@ -262,7 +261,7 @@ and to do that we need to specify the cells (or faces) of this surface.
 Geometry and Mesh Connectivity/Topology Within PyVista
 ------------------------------------------------------
 With our previous example, we defined our "mesh" as three disconnected
-points. While this is useful for representing "point clouds," if we
+points. While this is useful for representing "point clouds", if we
 want to create a surface, we have to describe the connectivity of the
 mesh. To do this, let's define a single cell composed of three points
 in the same order as we defined earlier.
@@ -299,7 +298,7 @@ representation that this geometry contains three points and one cell
 
 .. jupyter-execute::
 
-   >>> mesh = pyvista.PolyData(points, cells)
+   >>> mesh = pv.PolyData(points, cells)
    >>> mesh
 
 Let's also plot this:
@@ -307,7 +306,7 @@ Let's also plot this:
 .. pyvista-plot::
    :context:
 
-   >>> mesh = pyvista.PolyData(points, [3, 0, 1, 2])
+   >>> mesh = pv.PolyData(points, [3, 0, 1, 2])
    >>> mesh.plot(cpos='xy', show_edges=True)
 
 While we're at it, let's annotate this plot to describe this mesh.
@@ -316,7 +315,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
    >>> label_coords = mesh.points + [0, 0, 0.01]
    >>> pl.add_point_labels(
@@ -324,6 +323,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    ...     [f'Point {i}' for i in range(3)],
    ...     font_size=20,
    ...     point_size=20,
+   ...     always_visible=True,
    ... )
    >>> pl.add_point_labels([0.43, 0.2, 0], ['Cell 0'], font_size=20)
    >>> pl.camera_position = 'xy'
@@ -398,7 +398,7 @@ a simple mesh containing four isometric cells by starting with a
 
 .. jupyter-execute::
 
-   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
+   >>> grid = pv.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
    >>> ugrid
 
@@ -408,14 +408,14 @@ Let's also plot this basic mesh:
    :context:
    :include-source: False
 
-   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
+   >>> grid = pv.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
 
 .. pyvista-plot::
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
@@ -493,7 +493,7 @@ assigned.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
    >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
@@ -569,7 +569,7 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
@@ -672,12 +672,12 @@ cannot be made so because field data is not expected to match the
 number of cells or points. As such, it also cannot be plotted.
 
 
-Vectors, Texture Coords, and Normals Attributes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vectors, Texture Coordinates, and Normals Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.DataSet.active_scalars>`:
 
 * :attr:`active_normals <pyvista.DataSet.active_normals>`
-* :attr:`active_t_coords <pyvista.DataSet.active_t_coords>`
+* :attr:`active_texture_coordinates <pyvista.DataSet.active_texture_coordinates>`
 * :attr:`active_vectors <pyvista.DataSet.active_vectors>`
 
 
@@ -694,8 +694,8 @@ it will be computed.
 
 Active Texture Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :attr:`active_t_coords
-<pyvista.DataSet.active_t_coords>` array is used for
+The :attr:`active_texture_coordinates
+<pyvista.DataSet.active_texture_coordinates>` array is used for
 rendering textures. See :ref:`texture_example` for examples using
 this array.
 
