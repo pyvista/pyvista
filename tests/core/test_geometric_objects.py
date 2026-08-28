@@ -192,6 +192,25 @@ def test_structured_sphere_radius_sequence():
     assert sphere.volume == pytest.approx(expected, rel=1e-3)
 
 
+@pytest.mark.parametrize(
+    ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (30, 150, 90, 270)]
+)
+def test_structured_sphere_matches_solid_sphere(start_phi, end_phi, start_theta, end_theta):
+    # The docstring claims the two tessellate identically at the same resolutions
+    kwargs = dict(
+        theta_resolution=8,
+        phi_resolution=5,
+        start_phi=start_phi,
+        end_phi=end_phi,
+        start_theta=start_theta,
+        end_theta=end_theta,
+    )
+    structured = pv.StructuredSphere(radius=np.linspace(0.25, 0.5, 3), **kwargs)
+    solid = pv.SolidSphere(inner_radius=0.25, outer_radius=0.5, radius_resolution=3, **kwargs)
+    assert structured.n_cells == solid.n_cells
+    assert structured.volume == pytest.approx(solid.volume)
+
+
 def test_structured_sphere_angles():
     sphere = pv.StructuredSphere(start_theta=90, end_theta=270, start_phi=30, end_phi=150)
     assert sphere.dimensions == (1, 30, 31)
