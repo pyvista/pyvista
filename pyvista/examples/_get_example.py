@@ -59,10 +59,10 @@ class ExampleMetadata:
     """
 
     name: str
-    """Name of the example, e.g. ``'frog'``."""
+    """Name of the example, such as ``'frog'``."""
 
     function: Callable[..., Any]
-    """Public function which returns this example, e.g. ``examples.download_frog``."""
+    """Public function which returns this example, such as ``examples.download_frog``."""
 
     paths: tuple[Path, ...] = ()
     """Local path of every file or folder belonging to the example, in declaration order."""
@@ -251,9 +251,9 @@ def get_example(
     Parameters
     ----------
     name : str | Callable
-        Name of the example, e.g. ``'bunny'``, or the function which returns it,
-        e.g. ``examples.download_bunny``. A ``'download_'`` or ``'load_'`` prefix
-        on the name is optional.
+        Name of the example, such as ``'bunny'``, or the function which returns it,
+        such as ``examples.download_bunny``. A ``'download_'`` or ``'load_'``
+        prefix on the name is optional.
 
     output : 'dataset' | 'paths' | 'reader' | 'metadata', default: 'dataset'
         What to return.

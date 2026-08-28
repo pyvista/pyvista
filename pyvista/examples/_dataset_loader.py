@@ -150,7 +150,7 @@ class _Downloadable(Protocol):
         return self._source_url()
 
     def _source_url(self, *, web_blob: bool = False) -> tuple[str, ...]:
-        """Join each base url with its source name, optionally as a browsable blob url."""
+        """Join each base url with its source name, optionally as a blob url for a browser."""
         base_urls = list(self.base_url)
         if web_blob:
             # Ensure urls are not based on a local cache path
