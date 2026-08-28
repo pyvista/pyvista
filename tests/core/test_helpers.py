@@ -318,6 +318,21 @@ def test_points_dtype_preserve_survives_a_grid_intermediate(monkeypatch):
     assert mesh.voxelize(spacing=0.1).points.dtype == np.float32
 
 
+def test_points_dtype_preserve_ignores_integer_points(monkeypatch):
+    # Points can be stored as integers, and a filter's interpolated output would be
+    # truncated onto them if 'preserve' took that dtype as the target
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.PolyData(
+        [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]],
+        lines=[[2, 0, 1], [2, 2, 3]],
+        force_float=False,
+    )
+
+    assert mesh.points.dtype == np.int64
+    assert filters._points_dtype(mesh) is None
+    assert np.issubdtype(mesh.ruled_surface(resolution=(21, 21)).points.dtype, np.floating)
+
+
 def test_points_dtype_float64_warns_when_vtk_cannot_deliver(monkeypatch):
     # Casting up fixes the dtype but not the values, so say so rather than
     # reporting a precision that was not delivered

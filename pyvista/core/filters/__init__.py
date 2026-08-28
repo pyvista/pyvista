@@ -87,7 +87,13 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     setting = pv.global_config.points_dtype
     if setting != 'preserve':
         return np.dtype(setting)
-    return mesh.points.dtype if isinstance(mesh, _vtk.vtkPointSet) else None
+    if not isinstance(mesh, _vtk.vtkPointSet):
+        return None
+    # Only the two precisions VTK stores points in are meaningful to preserve. Points
+    # can be integers -- `pv.PolyData(..., force_float=False)` keeps them -- and casting
+    # a filter's interpolated output back to those would truncate it.
+    dtype = mesh.points.dtype
+    return dtype if dtype in (np.dtype(np.float32), np.dtype(np.float64)) else None
 
 
 def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:

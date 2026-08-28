@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -171,3 +172,7 @@ def test_ruled_surface():
     )
     ruled = poly.ruled_surface(resolution=(21, 21))
     assert ruled.n_cells
+    # The input points are integers, but the surface between them is not: keeping the
+    # input dtype here would truncate every interpolated point onto the corners
+    assert np.issubdtype(ruled.points.dtype, np.floating)
+    assert len(np.unique(ruled.points[:, 2])) > len(np.unique(poly.points[:, 2]))
