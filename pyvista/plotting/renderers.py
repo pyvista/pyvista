@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 import itertools
 import re
+from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
@@ -18,6 +19,9 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from .background_renderer import BackgroundRenderer
 from .colors import Color
 from .renderer import Renderer
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _SeamSegment = tuple[tuple[float, float], tuple[float, float]]
 
@@ -666,7 +670,7 @@ class Renderers(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['image_path'], version=(0, 52))
     def add_background_renderer(
         self,
-        image_path: str,
+        image_path: str | Path,
         scale: float,
         as_global: bool,  # noqa: FBT001
     ):
@@ -674,7 +678,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        image_path : str
+        image_path : str | Path
             Path to an image file.
 
         scale : float
