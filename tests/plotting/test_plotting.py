@@ -7343,6 +7343,9 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         data,
         show_edges=True,
         link=False,
+        # Three columns per row, so the panes are portrait and the pinned camera
+        # would otherwise crop the geometry
+        zoom=0.7,
         cpos=pv.CameraPosition(
             position=(1.087, 1.087, 1.087),
             focal_point=(0.0, 0.0, 0.0),
