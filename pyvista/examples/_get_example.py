@@ -32,9 +32,9 @@ class Example:
     Notes
     -----
     The fields are limited to what an example cannot be asked for directly. Anything
-    derivable is left out: the extensions are the suffixes of :attr:`paths`, the total
+    derivable is left out: the extensions are the suffixes of ``paths``, the total
     size is ``sum(file_sizes)``, and the reader types and the file which is read both
-    come from :attr:`readers`.
+    come from ``readers``.
 
     Examples
     --------
@@ -76,10 +76,10 @@ class Example:
     """Local path of every file or folder belonging to the example, in declaration order."""
 
     file_sizes: tuple[int, ...] = ()
-    """Size in bytes of each entry in :attr:`paths`, one per path, folders counted in full."""
+    """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
     source_urls: tuple[str, ...] = ()
-    """URL each entry in :attr:`paths` is downloaded from, empty if it has none."""
+    """URL each entry in ``paths`` is downloaded from, empty if it has none."""
 
     _loader: _DatasetLoader | None = field(default=None, repr=False, compare=False)
 
@@ -88,7 +88,7 @@ class Example:
         """Return a reader for each file which has one.
 
         Empty for examples read with a custom function or generated in memory, and
-        shorter than :attr:`paths` when only some files are read directly.
+        shorter than ``paths`` when only some files are read directly.
 
         Returns
         -------
