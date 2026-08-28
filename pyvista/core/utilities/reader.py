@@ -896,26 +896,71 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
         self._active_time_set = 0
 
     @property
-    def number_time_points(self):  # noqa: D102
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+            Number of time points or iterations available to read.
+
+        """
         item = self.reader.GetTimeSets().GetItem(self.active_time_set)
         if item is None:
             return 0
         return item.GetSize() if pv.vtk_version_info < (9, 7) else item.GetCapacity()
 
-    def time_point_value(self, time_point):  # noqa: D102
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+            Value of the time point or iteration.
+
+        """
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
 
     @property
-    def active_time_value(self):  # noqa: D102
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+            Active time or iteration value.
+
+        """
         return self.reader.GetTimeValue()
 
-    def set_active_time_value(self, time_value):  # noqa: D102
+    def set_active_time_value(self, time_value):
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
         if time_value not in self.time_values:
             msg = f'Not a valid time {time_value} from available time values: {self.time_values}'
             raise ValueError(msg)
         self.reader.SetTimeValue(time_value)
 
-    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
         self.reader.SetTimeValue(self.time_point_value(time_point))
 
     @property
@@ -968,14 +1013,43 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.enable_all_patch_arrays()
 
     @property
-    def number_time_points(self):  # noqa: D102
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+            Number of time points or iterations available to read.
+
+        """
         return self.reader.GetTimeValues().GetNumberOfValues()
 
-    def time_point_value(self, time_point):  # noqa: D102
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+            Value of the time point or iteration.
+
+        """
         return self.reader.GetTimeValues().GetValue(time_point)
 
     @property
-    def active_time_value(self):  # noqa: D102
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+            Active time or iteration value.
+
+        """
         try:
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
@@ -983,13 +1057,29 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             raise AttributeError(msg) from err
         return value
 
-    def set_active_time_value(self, time_value):  # noqa: D102
+    def set_active_time_value(self, time_value):
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
         if time_value not in self.time_values:
             msg = f'Not a valid time {time_value} from available time values: {self.time_values}'
             raise ValueError(msg)
         self.reader.UpdateTimeStep(time_value)
 
-    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
@@ -2115,25 +2205,78 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         return self.reader._active_datasets
 
     @property
-    def time_values(self):  # noqa: D102
+    def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+            All time or iteration values.
+
+        """
         return self.reader._time_values
 
     @property
-    def number_time_points(self):  # noqa: D102
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+            Number of time points or iterations available to read.
+
+        """
         return len(self.reader._time_values)
 
-    def time_point_value(self, time_point):  # noqa: D102
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+            Value of the time point or iteration.
+
+        """
         return self.reader._time_values[time_point]
 
     @property
-    def active_time_value(self):  # noqa: D102
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+            Active time or iteration value.
+
+        """
         # all active datasets have the same time
         return self.reader._active_datasets[0].time
 
-    def set_active_time_value(self, time_value) -> None:  # noqa: D102
+    def set_active_time_value(self, time_value) -> None:
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
         self.reader._SetActiveTime(time_value)
 
-    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
         self.set_active_time_value(self.time_values[time_point])
 
 
@@ -2276,26 +2419,97 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
     _cell_attr_err_msg = 'Nek5000 data does not contain cell arrays, this method cannot be used'
 
     @property
-    def number_cell_arrays(self):  # noqa: D102
+    def number_cell_arrays(self):
+        """Return the number of cell arrays.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
     @property
-    def cell_array_names(self):  # noqa: D102
+    def cell_array_names(self):
+        """Return the list of all cell array names.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def enable_cell_array(self, name) -> None:  # noqa: ARG002, D102
+    def enable_cell_array(self, name) -> None:  # noqa: ARG002
+        """Enable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def disable_cell_array(self, name) -> None:  # noqa: ARG002, D102
+    def disable_cell_array(self, name) -> None:  # noqa: ARG002
+        """Disable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def cell_array_status(self, name):  # noqa: ARG002, D102
+    def cell_array_status(self, name):  # noqa: ARG002
+        """Get status of cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def enable_all_cell_arrays(self) -> None:  # noqa: D102
+    def enable_all_cell_arrays(self) -> None:
+        """Enable all cell arrays.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def disable_all_cell_arrays(self) -> None:  # noqa: D102
+    def disable_all_cell_arrays(self) -> None:
+        """Disable all cell arrays.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
         raise AttributeError(self._cell_attr_err_msg)
 
 
@@ -3001,7 +3215,15 @@ class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
         """
         return self.reader.GetNumberOfGrids()
 
-    def set_active_time_value(self, time_value):  # noqa: D102
+    def set_active_time_value(self, time_value):
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
         if time_value not in self.time_values:
             msg = f'Not a valid time {time_value} from available time values: {self.time_values}'
             raise ValueError(msg)
@@ -3009,22 +3231,67 @@ class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
         self.reader.UpdateTimeStep(time_value)
 
     @property
-    def number_time_points(self):  # noqa: D102
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+            Number of time points or iterations available to read.
+
+        """
         return len(self.time_values)
 
-    def time_point_value(self, time_point):  # noqa: D102
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+            Value of the time point or iteration.
+
+        """
         return self.time_values[time_point]
 
     @property
-    def time_values(self):  # noqa: D102
+    def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+            All time or iteration values.
+
+        """
         info = self.reader.GetOutputInformation(0)
         return list(info.Get(_vtk.vtkCompositeDataPipeline.TIME_STEPS()))
 
     @property
-    def active_time_value(self):  # noqa: D102
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+            Active time or iteration value.
+
+        """
         return self._active_time_value
 
-    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
         self.set_active_time_value(self.time_values[time_point])
 
     def _set_defaults_post(self) -> None:
@@ -4373,24 +4640,77 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         return self.reader._active_dataset
 
     @property
-    def time_values(self):  # noqa: D102
+    def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+            All time or iteration values.
+
+        """
         return self.reader._time_values
 
     @property
-    def number_time_points(self):  # noqa: D102
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+            Number of time points or iterations available to read.
+
+        """
         return len(self.reader._time_values)
 
-    def time_point_value(self, time_point):  # noqa: D102
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+            Value of the time point or iteration.
+
+        """
         return self.reader._time_values[time_point]
 
     @property
-    def active_time_value(self):  # noqa: D102
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+            Active time or iteration value.
+
+        """
         return self.reader._active_dataset.time
 
-    def set_active_time_value(self, time_value) -> None:  # noqa: D102
+    def set_active_time_value(self, time_value) -> None:
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
         self.reader._SetActiveTime(time_value)
 
-    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
         self.set_active_time_value(self.time_values[time_point])
 
 
