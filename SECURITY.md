@@ -7,7 +7,7 @@ Security vulnerability reports will be accepted and acted upon for all released 
 ## Reporting a Vulnerability
 
 Allow the community to report potential security vulnerabilities to maintainers and repository owners privately.
-[Learn more about private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability).
+[Learn more about private vulnerability reporting](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
 
 ## Trust model
 

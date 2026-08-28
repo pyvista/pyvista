@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import faulthandler
 import functools
-from importlib import metadata
-from inspect import BoundArguments
-from inspect import Parameter
-from inspect import Signature
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import requires
+from importlib.metadata import version
+import importlib.util
+import inspect
 import os
+from pathlib import Path
 import platform
 import re
 
@@ -16,7 +18,9 @@ import PIL
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
     _restore_registry_state as _restore_accessor_registry_state,
@@ -32,25 +36,77 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
-from pyvista.plotting.component_registry import (
-    _restore_registry_state as _restore_component_registry_state,
-)
-from pyvista.plotting.component_registry import (
-    _save_registry_state as _save_component_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _restore_registry_state as _restore_style_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _save_registry_state as _save_style_registry_state,
-)
-from pyvista.plotting.theme_registry import (
-    _restore_registry_state as _restore_theme_registry_state,
-)
-from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
-from pyvista.plotting.utilities.gl_checks import uses_egl
+
+# Unconditional, unlike the Hypothesis probe below: every environment that runs pytest
+# over tests/ has to carry refleak, the docs-test dependency group included.
+from tests.gc_check import assert_no_leaks
+from tests.gc_check import check_enabled
+from tests.gc_check import stash_phase_report
+from tests.gc_check import take_snapshot
+
+# Probe the active backend for a rendering module (precise, and no import-error control flow).
+HAS_PLOTTING = importlib.util.find_spec(f'{_vtk._VTK_ROOT}.vtkRenderingCore') is not None
+
+if HAS_PLOTTING:
+    from pyvista.plotting.component_registry import (
+        _restore_registry_state as _restore_component_registry_state,
+    )
+    from pyvista.plotting.component_registry import (
+        _save_registry_state as _save_component_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _restore_registry_state as _restore_style_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _save_registry_state as _save_style_registry_state,
+    )
+    from pyvista.plotting.theme_registry import (
+        _restore_registry_state as _restore_theme_registry_state,
+    )
+    from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
+    from pyvista.plotting.utilities.gl_checks import uses_egl
+else:  # core-only VTK backend: rendering modules are absent
+
+    def _save_component_registry_state():
+        return None
+
+    def _restore_component_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_style_registry_state():
+        return None
+
+    def _restore_style_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_theme_registry_state():
+        return None
+
+    def _restore_theme_registry_state(state):  # noqa: ARG001
+        return None
+
+    def uses_egl():
+        return False
+
+
+def _has_vtk_module(module_name: str) -> bool:
+    """Probe the active backend for an IO module a core-only build may omit.
+
+    Lets ``pytest_collection_modifyitems`` auto-apply ``needs_io_extra`` so the
+    core-only subset can deselect the readers/writers that wrap these lazily.
+    """
+    return importlib.util.find_spec(f'{_vtk._VTK_ROOT}.{module_name}') is not None
+
+
+# IO-tier VTK modules a core-only build may omit; each backs lazily-wrapped readers/writers.
+HAS_IO_HDF = _has_vtk_module('vtkIOHDF')  # HDFReader, .vtkhdf save
+HAS_IO_ENSIGHT = _has_vtk_module('vtkIOEnSight')  # EnSightReader (.case)
+HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
+HAS_IO_EXTRA = HAS_IO_HDF and HAS_IO_ENSIGHT and HAS_IO_CHEMISTRY
 
 pv.OFF_SCREEN = True
+
+PYVISTA_ROOT_DIR = Path(__file__).parent.parent
 
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
@@ -131,17 +187,22 @@ def global_variables_reset():
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
-    try:
-        import matplotlib as mpl
-    except ImportError:
-        pass
-    else:
-        mpl.rcdefaults()
-        mpl.use('agg', force=True)
+    import matplotlib as mpl
+
+    mpl.rcdefaults()
+    mpl.use('agg', force=True)
 
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Pin notebook mode off. Left to its default the plotter asks scooby whether it is
+    # in an ipykernel, so a test that plots renders through the trame jupyter backend on
+    # any machine that answers yes -- which launches the process-lifetime
+    # 'pyvista-jupyter' server, and whichever test does that first is blamed for the
+    # vtkWebApplication it leaves behind (pyvista/pyvista#8929). Tests that want a
+    # notebook pass notebook=True themselves.
+    pv.global_theme.notebook = False
+
     # Default is to allow new 'private' attributes for downstream packages,
     # but for PyVista itself we enforce no new attributes
     pv.allow_new_attributes(False)
@@ -254,7 +315,7 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def datasets_no_pointset():
     return [
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
@@ -265,8 +326,8 @@ def datasets():
 
 
 @pytest.fixture
-def datasets_plus_pointset(datasets, ant):
-    return [*datasets, ant.cast_to_pointset()]
+def datasets(datasets_no_pointset, pointset):
+    return [*datasets_no_pointset, pointset]
 
 
 @pytest.fixture
@@ -310,9 +371,24 @@ def pointset():
 
 
 @pytest.fixture
+def multiblock_all_no_pointset(datasets_no_pointset):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    return pv.MultiBlock(datasets_no_pointset)
+
+
+@pytest.fixture
 def multiblock_all(datasets):
     """Return datasets fixture combined in a pyvista multiblock."""
     return pv.MultiBlock(datasets)
+
+
+@pytest.fixture
+def multiblock_all_no_pointset_with_nested_and_none(
+    datasets_no_pointset, multiblock_all_no_pointset
+):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    multiblock_all_no_pointset.append(None)
+    return pv.MultiBlock([*datasets_no_pointset, None, multiblock_all_no_pointset])
 
 
 @pytest.fixture
@@ -345,17 +421,241 @@ def image(texture):
     return texture.to_image()
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # noqa: ARG001
+    """Stash per-phase reports so the leak check can skip on failure."""
+    outcome = yield
+    stash_phase_report(item, outcome.get_result())
+
+
+@pytest.fixture(autouse=True)
+def check_gc(request):
+    """Snapshot live VTK objects so leaks from this test can be detected.
+
+    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
+    with one that also watches plotters (a fixture of the same name in a nearer conftest
+    wins), and takes the snapshot this hook's counterpart there checks.
+    """
+    node = request.node
+    if (
+        # On VTK < 9.6 CellArray must hold its own arrays, so this can never pass there
+        not _SETDATA_TAKES_OWNERSHIP or not check_enabled(node)
+    ):
+        yield
+        return
+    take_snapshot(node, _vtk.vtkObjectBase, 'VTK', owner=__name__)
+    yield
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Close every plotter, and check that nothing the test created outlived it."""
+    yield
+    # Unconditional and repository-wide: a test that leaves a plotter open leaves a
+    # render window open for every test after it, wherever that test lives, and whether
+    # or not this run is checking for leaks. A no-op when nothing was plotted.
+    pv.close_all()
+    # Sweeping VTK's ghost map costs no strictness: it drops an entry only once the C++
+    # object behind it is dead, which makes that entry deferred bookkeeping rather than a
+    # leak. A ghost whose C++ object is still alive -- the shape #8873 shipped, planted by
+    # tests/core/test_gc.py -- survives the sweep and is still reported.
+    assert_no_leaks(item, owner=__name__, flush_ghosts=True)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionstart():
+    """Register Hypothesis' global PRNG now, while the heap is still thawed.
+
+    The leak check freezes the heap for the whole body of every test it covers (see
+    :mod:`tests.gc_check`), and ``gc.get_referrers()`` does not look in the permanent
+    generation. Hypothesis creates and registers its global PRNG lazily, on the first
+    ``@given`` test in the process, and ``register_random`` sanity-checks that PRNG with
+    ``gc.get_referrers()``. Run inside a frozen body, that comes back empty, so Hypothesis
+    warns that the PRNG looks collectable -- and ``filterwarnings = ['error']`` turns the
+    warning into a failure of that first test.
+
+    Two conditions have to line up for that. On Python 3.14 ``threading.local()``
+    allocates its per-thread dict at construction, so the dict holding the PRNG is built
+    when ``hypothesis.core`` is imported and lands in the permanent generation; through
+    3.13 it is created on first access, inside the frozen window, where it stays visible.
+    And the lazy ``register_random`` only runs under ``derandomize=True``, which comes
+    from Hypothesis' ``ci`` profile, auto-loaded when ``CI`` is set. A local run on 3.13,
+    or without ``CI``, will not reproduce it; xdist only picks which test takes the hit.
+
+    Running one throwaway example here does that registration once, at session start,
+    where nothing is frozen. Deleting this brings the failures back.
+
+    ``trylast`` so it runs after Hypothesis' own ``pytest_sessionstart``, which is where
+    Hypothesis stops treating the process as still initializing; before that it warns
+    about strategies being evaluated in a plugin.
+    """
+    # The docs-test dependency group installs no Hypothesis, and this conftest still has
+    # to import under it, so probe for the package instead of importing it at module scope.
+    if importlib.util.find_spec('hypothesis') is None:
+        return
+
+    from hypothesis import HealthCheck
+    from hypothesis import given
+    from hypothesis import settings
+    from hypothesis import strategies as st
+
+    @settings(
+        max_examples=1, deadline=None, database=None, suppress_health_check=list(HealthCheck)
+    )
+    @given(_=st.none())
+    def warm_up_prng(_):
+        pass
+
+    warm_up_prng()
+
+
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
+    parser.addoption(
+        '--no_check_gc',
+        action='store_true',
+        default=False,
+        help='skip the reference leak check, which is otherwise run (see tests/gc_check.py)',
+    )
     parser.addoption(
         '--playwright',
         action='store_true',
         default=False,
         help='run Playwright-based tests',
     )
+    parser.addoption(
+        '--doc_build',
+        action='store_true',
+        default=False,
+        help='run tests that require the documentation to already be built',
+    )
 
 
-def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
+# --- core-only test selection --------------------------------------------------
+# Auto-apply ``needs_rendering`` (by location / fixture / name) so `-m "not
+# needs_rendering"` selects the subset that runs without any rendering module -- the
+# offline use case served by the rendering-free ``cvista`` core wheel.
+
+# Fixtures that build a real Plotter; requesting one marks the test needs_rendering.
+_RENDERING_FIXTURES = frozenset({'texture', 'image'})
+
+# Otherwise-core tests exercising formats implemented in rendering-only modules
+# (Text3D, VRML/3DS/Facet readers, texture reads). Scattered inside core modules,
+# so matched by test-name substring.
+_RENDERING_NAME_KEYWORDS = (
+    'text3d',
+    'text_3d',
+    'vrml_reader',
+    'threeds_reader',
+    'facetreader',
+    'read_texture',
+    'jpeg_reader',
+)
+
+
+def _name_needs_rendering(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw in _RENDERING_NAME_KEYWORDS)
+
+
+# Non-``tests/plotting`` modules (relative to ``tests/``) whose tests require
+# rendering because they construct a Plotter at runtime.
+_RENDERING_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'test_cli.py',
+        'examples/test_gltf.py',
+        'typing/test_return_type.py',
+        # These also evaluate plotting symbols at module scope, so on a
+        # rendering-free backend they are skipped at collection time (see
+        # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+# Subset of ``_RENDERING_MODULES`` importing rendering at module scope, so on a
+# rendering-free backend they must be skipped at collection time (a marker is too late).
+_RENDERING_ONLY_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+
+# Tests exercising an IO-tier format a core-only build omits, matched by name
+# substring and gated on the matching ``HAS_IO_*`` probe (a no-op on a full build).
+_IO_EXTRA_NAME_KEYWORDS = (
+    ('hdf', HAS_IO_HDF),  # HDFReader, .vtkhdf save, download_can_crushed_hdf
+    ('ensight', HAS_IO_ENSIGHT),  # EnSightReader (.case)
+    ('pdbreader', HAS_IO_CHEMISTRY),  # PDBReader
+    ('gaussian_cubes_reader', HAS_IO_CHEMISTRY),  # GaussianCubeReader (.cube)
+)
+
+
+def _name_needs_io_extra(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw, available in _IO_EXTRA_NAME_KEYWORDS if not available)
+
+
+def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
+    """Skip collecting modules that import rendering at module scope.
+
+    Only relevant when the active VTK backend ships no rendering modules
+    (``HAS_PLOTTING is False``); otherwise these modules collect and run
+    normally (and carry the ``needs_rendering`` marker).
+    """
+    if HAS_PLOTTING:
+        return None
+
+    tests_root = Path(__file__).parent
+    try:
+        rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
+    except ValueError:
+        return None
+    return True if rel in _RENDERING_ONLY_MODULES else None
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ARG001
+    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` markers.
+
+    See ``_RENDERING_*`` and ``_IO_EXTRA_*`` above. The ``needs_io_extra``
+    marking only fires when the relevant ``HAS_IO_*`` probe reports the module
+    absent, so it is a no-op on a full VTK build.
+    """
+    tests_root = Path(__file__).parent
+    plotting_dir = tests_root / 'plotting'
+    mark = pytest.mark.needs_rendering
+    io_extra_mark = pytest.mark.needs_io_extra
+    for item in items:
+        path = Path(str(getattr(item, 'fspath', item.nodeid)))
+        rel = None
+        try:
+            rel = path.relative_to(tests_root).as_posix()
+        except ValueError:
+            rel = path.as_posix()
+
+        needs = (
+            plotting_dir in path.parents
+            or rel in _RENDERING_MODULES
+            or bool(_RENDERING_FIXTURES.intersection(getattr(item, 'fixturenames', ())))
+            or _name_needs_rendering(item)
+        )
+        if needs:
+            item.add_marker(mark)
+        if _name_needs_io_extra(item):
+            item.add_marker(io_extra_mark)
+
+
+def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
     try:
@@ -373,8 +673,8 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
 
 def _get_min_max_vtk_version(
     item_mark: pytest.Mark,
-    sig: Signature,
-) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    sig: inspect.Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, inspect.BoundArguments]:
     bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
 
     def _pad_version(val: tuple[int] | None):
@@ -420,31 +720,53 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
+    if item_mark := item.get_closest_marker('skip_vtk_backend'):
+        sig = inspect.Signature(
+            [
+                inspect.Parameter(
+                    b := 'backend',
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=str,
+                ),
+                inspect.Parameter(
+                    r := 'reason',
+                    kind=inspect.Parameter.KEYWORD_ONLY,
+                    default='Test diverges on this VTK backend',
+                    annotation=str,
+                ),
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        backend = bounds.arguments[b]
+        if pv.vtk_backend() == backend:
+            pytest.skip(f'{backend} backend: {bounds.arguments[r]}')
+
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     'args',
-                    kind=Parameter.VAR_POSITIONAL,
+                    kind=inspect.Parameter.VAR_POSITIONAL,
                     annotation=int | tuple[int],
                 ),
-                Parameter(
+                inspect.Parameter(
                     'at_least',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     annotation=tuple[int] | None,
                     default=None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'less_than',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=tuple[int] | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     'reason',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -490,11 +812,11 @@ def pytest_runtest_setup(item: pytest.Item):
                 pytest.skip(reason=reason)
 
     if item_mark := item.get_closest_marker('skip_egl'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails when using OSMesa/EGL VTK build',
                     annotation=str,
                 )
@@ -506,11 +828,11 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_windows'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on Windows',
                     annotation=str,
                 )
@@ -522,23 +844,23 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
-        sig = Signature(
+        sig = inspect.Signature(
             [
-                Parameter(
+                inspect.Parameter(
                     r := 'reason',
-                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on MacOS',
                     annotation=str,
                 ),
-                Parameter(
+                inspect.Parameter(
                     p := 'processor',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
-                Parameter(
+                inspect.Parameter(
                     m := 'machine',
-                    kind=Parameter.KEYWORD_ONLY,
+                    kind=inspect.Parameter.KEYWORD_ONLY,
                     default=None,
                     annotation=str | None,
                 ),
@@ -565,12 +887,16 @@ def pytest_runtest_setup(item: pytest.Item):
     if item.get_closest_marker('needs_playwright') and not playwright:
         pytest.skip(f'Playwright test not enabled with {flag}')
 
+    doc_build = item.config.getoption(flag := '--doc_build')
+    if item.get_closest_marker('needs_doc_build') and not doc_build:
+        pytest.skip(f'Documentation build required, not enabled with {flag}')
+
 
 def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}
-    for item in metadata.requires('pyvista'):
+    for item in requires('pyvista'):
         pkg_name = re.findall(r'[a-z0-9_\-]+', item, re.IGNORECASE)[0]
         if pkg_name == 'pyvista':
             continue
@@ -587,9 +913,9 @@ def pytest_report_header(config):  # noqa: ARG001
     items = []
     for name in required:
         try:
-            version = metadata.version(name)
-            items.append(f'{name}-{version}')
-        except metadata.PackageNotFoundError:
+            pkg_version = version(name)
+            items.append(f'{name}-{pkg_version}')
+        except PackageNotFoundError:
             items.append(f'{name} (not found)')
     lines.append('required packages: ' + ', '.join(items))
 
@@ -598,9 +924,9 @@ def pytest_report_header(config):  # noqa: ARG001
         installed = []
         for name in extra[pkg_extra]:
             try:
-                version = metadata.version(name)
-                installed.append(f'{name}-{version}')
-            except metadata.PackageNotFoundError:
+                pkg_version = version(name)
+                installed.append(f'{name}-{pkg_version}')
+            except PackageNotFoundError:
                 not_found.append(name)
         if installed:
             plrl = 's' if len(installed) != 1 else ''

@@ -10,7 +10,7 @@ rendering, additional features, etc). As ``pyvista`` does not provide
 wheel from PyPI.
 
 Reference the official directions for `Building VTK
-<https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/dev/build.md>`_.
+<https://docs.vtk.org/en/latest/build_instructions/index.html>`_.
 The following directions assume you want to build a Python wheel non-standard
 situations like EGL.
 

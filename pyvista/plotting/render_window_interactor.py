@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from contextlib import contextmanager
-from functools import partial
-from inspect import signature
+import contextlib
+import functools
+import inspect
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -16,9 +16,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -46,7 +44,7 @@ class Timer(_NoNewAttrMixin):
         Maximum number of steps to allow for the timer before destroying it.
 
     callback : callable
-        A callable that takes one argument. It will be passed `step`,
+        A callable that takes one argument. It will be passed ``step``,
         which is the number of times the timer event has occurred.
 
     """
@@ -170,7 +168,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if not callable(callback):
             msg = 'callback must be callable.'
             raise TypeError(msg)
-        for param in signature(callback).parameters.values():
+        for param in inspect.signature(callback).parameters.values():
             if param.default is param.empty:
                 msg = '`callback` must not have any arguments without default values.'
                 raise TypeError(msg)
@@ -190,11 +188,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         callback : callable
             A callable that takes one argument. It will be passed
-            `step`, which is the number of times the timer event has occurred.
-
-        See Also
-        --------
-        :ref:`animation_example`
+            ``step``, which is the number of times the timer event has occurred.
 
         Examples
         --------
@@ -252,7 +246,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
-        call = partial(try_callback, call)
+        call = functools.partial(try_callback, call)
         event = self._get_event_str(event)
 
         if (
@@ -589,14 +583,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
-        if (
-            vtk_version_info < (9, 3, 0) and scene is not None and len(self._plotter.renderers) > 1
-        ):  # pragma: no cover
-            warn_external(
-                'Interaction with charts is not possible when using multiple subplots.'
-                'Upgrade to VTK 9.3 or newer to enable this feature.',
-            )
-            scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
@@ -799,7 +785,9 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                 shift_release_action()
                 button_release()
 
-            return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
+            return functools.partial(try_callback, _press_callback), functools.partial(
+                try_callback, _release_callback
+            )
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
             button='left',
@@ -832,12 +820,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to 2D.
 
         For a 3-button mouse, the left button pans, the
-        right button dollys, the middle button spins, and the wheel
-        dollys.
-        ctrl + left button spins, shift + left button dollys,
-        ctrl + middle button pans, shift + middle button dollys,
+        right button dollies, the middle button spins, and the wheel
+        dollies.
+        ctrl + left button spins, shift + left button dollies,
+        ctrl + middle button pans, shift + middle button dollies,
         ctrl + right button rotates in 3D, and shift + right button
-        dollys.
+        dollies.
 
         Recommended to use with
         :func:`pyvista.Plotter.enable_parallel_projection`.
@@ -1030,7 +1018,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
-        natural view up, e.g., terrain. The camera in such a scene is
+        natural view up, for example, terrain. The camera in such a scene is
         manipulated by specifying azimuth (angle around the view up
         vector) and elevation (the angle from the horizon). Similar to
         the default Trackball Camera style and in contrast to the
@@ -1130,7 +1118,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                     self._plotter.reset_camera_clipping_range()
                 self._plotter.render()
 
-            callback = partial(try_callback, wheel_zoom_callback)
+            callback = functools.partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
                 self.style.add_observer(event, callback)
@@ -1148,7 +1136,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                     self.style.EndPan()  # type: ignore[union-attr]
                     self.style.OnLeftButtonUp()  # type: ignore[union-attr]
 
-            callback = partial(try_callback, pan_on_shift_callback)
+            callback = functools.partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
                 self.style.add_observer(event, callback)
@@ -1224,7 +1212,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         elif isinstance(handler, type) and issubclass(handler, _vtk.vtkInteractorStyle):
             style = handler()
         else:
-            # Generic callable — pass the interactor so the factory can
+            # Generic callable—pass the interactor so the factory can
             # configure the style.  The cast is needed because mypy narrows
             # ``Callable[..., Any]`` to a non-callable after two failing
             # ``isinstance(handler, type)`` checks.
@@ -1457,7 +1445,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         msg = 'Poked renderer not found in Plotter.'
         raise RuntimeError(msg)
 
-    @contextmanager
+    @contextlib.contextmanager
     def poked_subplot(self):
         """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
@@ -1673,7 +1661,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
 @abstract_class
 class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
-    """A mixin for subclasses of vtkInteractorStyle with capturing ability.
+    """A ``mixin`` for subclasses of vtkInteractorStyle with capturing ability.
 
     Use a custom capturing events because the default ones
     swallow the release events. See
@@ -1689,12 +1677,12 @@ class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtk
         # Ignore typing.
         self._observers = []
         self._observers.append(
-            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),  # type: ignore[arg-type]
+            self.AddObserver('LeftButtonPressEvent', functools.partial(try_callback, self._press)),  # type: ignore[arg-type]
         )
         self._observers.append(
             self.AddObserver(
                 'LeftButtonReleaseEvent',  # type: ignore[arg-type]
-                partial(try_callback, self._release),
+                functools.partial(try_callback, self._release),
             ),
         )
 

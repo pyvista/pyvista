@@ -1,10 +1,11 @@
 """
 .. _clip_with_plane_box_example:
 
-Clipping with Planes & Boxes
+Clipping With Planes & Boxes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Clip/cut any dataset using planes or boxes.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -16,7 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Clip with Plane
+# Clip With Plane
 # +++++++++++++++
 #
 # Clip any dataset by a user defined plane using the
@@ -37,7 +38,7 @@ pl.show()
 
 
 # %%
-# Clip with Bounds
+# Clip With Bounds
 # ++++++++++++++++
 #
 # Clip any dataset by a set of XYZ bounds using the
@@ -55,7 +56,7 @@ pl.show()
 
 
 # %%
-# Clip with Rotated Box
+# Clip With Rotated Box
 # +++++++++++++++++++++
 #
 # Clip any dataset by an arbitrarily rotated solid box using the

@@ -29,7 +29,7 @@ RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
 class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
-    """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
+    """An ``ndarray`` which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
     the values array is updated.
@@ -78,7 +78,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
             self.table.Get().values = self
 
     def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
@@ -114,7 +114,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Number of colors in the color map.
 
     flip : bool, default: False
-        Flip the direction of cmap. Most colormaps allow ``*_r`` suffix to do this
+        Flip the direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
     values : array_like[float], optional
@@ -144,7 +144,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Use a log scale when mapping scalar values.
 
     nan_color : ColorLike, optional
-        Color to render any values that are NANs.
+        Color to render any values that are NaNs.
 
     above_range_color : ColorLike, optional
         Color to render any values above :attr:`LookupTable.scalar_range`.
@@ -160,10 +160,6 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         A dictionary of annotations. Keys are the float values in the scalars
         range to annotate on the scalar bar and the values are the string
         annotations.
-
-    See Also
-    --------
-    :ref:`lookup_table_example`
 
     Examples
     --------
@@ -511,7 +507,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def nan_color(self) -> Color | None:  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) color.
 
-        Any values that are NANs will be rendered with this color.
+        Any values that are NaNs will be rendered with this color.
 
         Examples
         --------
@@ -535,7 +531,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def nan_opacity(self):  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) opacity.
 
-        Any values that are NANs will be rendered with this opacity.
+        Any values that are NaNs will be rendered with this opacity.
 
         Examples
         --------
@@ -768,7 +764,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             Number of colors in the color map.
 
         flip : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         Examples
@@ -960,9 +956,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if vtk_values is None:
             return {}  # type: ignore[unreachable]
         n_items = (
-            vtk_values.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else vtk_values.GetCapacity()  # type: ignore[attr-defined]
+            vtk_values.GetSize() if pv.vtk_version_info < (9, 7) else vtk_values.GetCapacity()
         )
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
@@ -1168,9 +1162,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)
-        else:
-            try:
-                return np.array([self.map_value(item) for item in value])
-            except (TypeError, ValueError):
-                msg = 'LookupTable __call__ expects a single value or an iterable.'
-                raise TypeError(msg)
+
+        try:
+            vtk_values: _vtk.vtkAbstractArray
+            if isinstance(value, _vtk.vtkDataArray):
+                vtk_values = value
+            else:
+                values = np.asarray(value)
+                if values.dtype == np.bool_:
+                    values = values.astype(np.uint8)
+                vtk_values = convert_array(values)
+            if not isinstance(vtk_values, _vtk.vtkDataArray):
+                raise TypeError
+            # Use VTK_COLOR_MODE_MAP_SCALARS to preserve lookup-table mapping for uint8 arrays.
+            rgba = convert_array(self.MapScalars(vtk_values, 1, -1))
+        except (TypeError, ValueError) as err:
+            msg = 'LookupTable __call__ expects a single value or an iterable.'
+            raise TypeError(msg) from err
+
+        return rgba.reshape(-1, 4) / 255.0

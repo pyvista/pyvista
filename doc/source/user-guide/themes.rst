@@ -27,6 +27,7 @@ parameters:
 .. pyvista-plot::
    :context:
 
+   >>> import pyvista as pv
    >>> from pyvista import examples
    >>> dragon = examples.download_dragon()
    >>> dragon.plot(cpos='xy')
@@ -57,7 +58,7 @@ This is identical to plotting the mesh with the following parameters:
    ... )
 
 
-Creating A Custom Theme
+Creating a Custom Theme
 -----------------------
 You can customize a theme based on one of the built-in themes and then
 apply it globally with:

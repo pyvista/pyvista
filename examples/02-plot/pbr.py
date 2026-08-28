@@ -4,9 +4,9 @@
 Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VTK 9 introduced Physically Based Rendering (PBR) and we have exposed
-that functionality in PyVista. Read the `blog about PBR
-<https://blog.kitware.com/vtk-pbr/>`_ for more details.
+VTK 9 introduced Physically Based Rendering (PBR), exposed in PyVista.
+
+Read the `blog about PBR <https://www.kitware.com/vtk-pbr/>`_ for more details.
 
 PBR is only supported for :class:`pyvista.PolyData` and can be
 triggered via the ``pbr`` keyword argument of ``add_mesh``. Also use
@@ -22,7 +22,7 @@ a statue as though it were metallic.
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-from itertools import product
+import itertools
 
 import pyvista as pv
 from pyvista import examples
@@ -56,7 +56,7 @@ colors = ['red', 'teal', 'black', 'orange', 'silver']
 pl = pv.Plotter()
 pl.set_environment_texture(cubemap)
 
-for i, j in product(range(5), range(6)):
+for i, j in itertools.product(range(5), range(6)):
     sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
     pl.add_mesh(sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5)
 

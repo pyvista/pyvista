@@ -1,5 +1,7 @@
 .. title:: PyVista
 
+.. autoopengraph_thumbnail:: none
+
 .. raw:: html
 
     <div class="banner">
@@ -27,6 +29,13 @@
    </p>
 
 
+.. Register the top-level ``pyvista`` module so that ``:mod:`pyvista``` and the
+   Python module index resolve to this page. This must not be immediately
+   followed by a ``raw`` directive: docutils propagates the empty target's id
+   onto the next node, and a raw node is written verbatim without an ``id``.
+
+.. py:module:: pyvista
+
 Overview
 ********
 
@@ -44,7 +53,7 @@ Use PyVista for figures in papers and presentations, interactive analysis in
 notebooks, and as the visualization layer of larger Python tools.
 
 
-Built for production
+Built for Production
 ~~~~~~~~~~~~~~~~~~~~
 
 3D code has to keep working when the underlying graphics stack changes.
@@ -61,7 +70,7 @@ what science and engineering teams reach for when code written today has to
 still produce the same picture two years from now.
 
 
-Built to extend
+Built to Extend
 ~~~~~~~~~~~~~~~
 
 Downstream libraries build on PyVista through a small, lazily evaluated
@@ -72,7 +81,7 @@ contract pandas exposes for tabular accessors and xarray exposes for labeled
 arrays. See :ref:`extending-pyvista` for the full contract.
 
 For a curated, continuously updated list of domain-specific tooling that
-interoperates with or is built on PyVista, see
+inter-operates with or is built on PyVista, see
 `awesome-pyvista <https://github.com/pyvista/awesome-pyvista>`_.
 
 Reach for the underlying `VTK`_ toolkit directly only when there is genuinely
@@ -108,6 +117,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    examples/index
    api/index
    extras/index
+   contributing
 
 
 Brief Examples
@@ -158,7 +168,7 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
    mesh.plot(scalars='Nodal Stress', component=0, cmap='turbo', cpos='xy')
 
 
-Simple Point Cloud with NumPy
+Simple Point Cloud With NumPy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Easily integrate with NumPy and create a variety of geometries and plot
 them. You could use any geometry to create your glyphs, or even plot
@@ -299,7 +309,7 @@ Status
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/license/mit/
+   :target: https://opensource.org/license/mit
 
 .. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
    :target: https://communityinviter.com/apps/pyvista/pyvista

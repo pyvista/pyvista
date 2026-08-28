@@ -22,6 +22,7 @@ from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGri
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
 from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core._vtk_utilities import vtk_backend as vtk_backend
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
@@ -59,7 +60,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 # get the int type from vtk
-ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
+ID_TYPE: type[np.int32 | np.longlong] = _get_vtk_id_type()
 
 if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
@@ -92,7 +93,7 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
+PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'

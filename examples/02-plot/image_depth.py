@@ -1,11 +1,14 @@
 """
 .. _image_depth_example:
 
-Render a depth image
+Render a Depth Image
 ~~~~~~~~~~~~~~~~~~~~
 
-Use :meth:`~pyvista.Plotter.get_image_depth` to plot a depth image as viewed from a
-camera overlooking the :func:`~pyvista.examples.examples.load_random_hills` example mesh.
+Plot a depth image as viewed from a camera overlooking an example mesh.
+
+Uses :meth:`~pyvista.Plotter.get_image_depth` with the
+:func:`~pyvista.examples.examples.load_random_hills` example mesh.
+
 """
 
 import matplotlib.pyplot as plt

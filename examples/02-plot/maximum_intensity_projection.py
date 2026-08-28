@@ -2,23 +2,24 @@
 .. _maximum_intensity_projection_example:
 
 Maximum Intensity Projection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Maximum Intensity Projection (MIP) is a rendering technique for point
-clouds that reorders vertex depth so points with higher scalar values
-are always rendered in front, regardless of their actual distance from
-the camera.
+Maximum Intensity Projection (MIP) reorders point-cloud depth by scalar value.
+
+Points with higher scalar values are always rendered in front, regardless
+of their actual distance from the camera.
 
 This is useful for dense point cloud visualization where high-value
 data points would otherwise be hidden behind lower-value points that
 happen to be closer to the viewer. The technique was proposed by
 Cowan (2014) for visualizing grade data in mining applications, where
-it is referred to as "X-ray plunge projection."
+it is referred to as "X-ray plunge projection".
 
 MIP works by replacing the z-coordinate in OpenGL clip space with the
 negated, normalized scalar value via a custom vertex shader. This
 means that depth ordering is driven entirely by scalar magnitude
 rather than spatial position.
+
 """
 
 # sphinx_gallery_start_ignore
@@ -33,7 +34,7 @@ from pyvista import examples
 
 # %%
 # Normal vs. MIP Rendering
-# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~
 # Using a sample of the knee dataset, we compare normal rendering
 # (left) where closer points occlude farther ones, with MIP rendering
 # (right) where the highest scalar values punch through to the front.
@@ -66,8 +67,8 @@ pl.show()
 
 
 # %%
-# MIP with Circle Point Sprites
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# MIP With Circle Point Sprites
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MIP modifies the vertex shader while point sprites modify the
 # fragment shader, so both features compose cleanly on the same actor.
 # Using circle sprites with MIP produces a cleaner visualization than

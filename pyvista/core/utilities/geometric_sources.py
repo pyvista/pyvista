@@ -23,7 +23,6 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -89,229 +88,6 @@ def translate(
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center, dtype=surf.points.dtype)
-
-
-if vtk_version_info < (9, 3):
-
-    class CapsuleSource(_NoNewAttrMixin, _vtk.vtkCapsuleSource):  # type: ignore[misc]
-        """Capsule source algorithm class.
-
-        .. versionadded:: 0.44.0
-
-        Parameters
-        ----------
-        center : sequence[float], default: (0.0, 0.0, 0.0)
-            Center in ``[x, y, z]``.
-
-        direction : sequence[float], default: (1.0, 0.0, 0.0)
-            Direction of the capsule in ``[x, y, z]``.
-
-        radius : float, default: 0.5
-            Radius of the capsule.
-
-        cylinder_length : float, default: 1.0
-            Cylinder length of the capsule.
-
-        theta_resolution : int, default: 30
-            Set the number of points in the azimuthal direction (ranging
-            from ``start_theta`` to ``end_theta``).
-
-        phi_resolution : int, default: 30
-            Set the number of points in the polar direction (ranging from
-            ``start_phi`` to ``end_phi``).
-
-        Examples
-        --------
-        Create a default CapsuleSource.
-
-        >>> import pyvista as pv
-        >>> source = pv.CapsuleSource()
-        >>> source.output.plot(show_edges=True, line_width=5)
-
-        """
-
-        @_deprecate_positional_args
-        def __init__(  # noqa: PLR0917
-            self: CapsuleSource,
-            center: VectorLike[float] = (0.0, 0.0, 0.0),
-            direction: VectorLike[float] = (1.0, 0.0, 0.0),
-            radius: float = 0.5,
-            cylinder_length: float = 1.0,
-            theta_resolution: int = 30,
-            phi_resolution: int = 30,
-        ) -> None:
-            """Initialize the capsule source class."""
-            super().__init__()
-            self.center = center
-            self.direction = direction
-            self.radius = radius
-            self.cylinder_length = cylinder_length
-            self.theta_resolution = theta_resolution
-            self.phi_resolution = phi_resolution
-
-        @property
-        def center(self: CapsuleSource) -> tuple[float, float, float]:
-            """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
-
-            Returns
-            -------
-            tuple[float, float, float]
-                Center in ``[x, y, z]``. Axis of the capsule passes through this
-                point.
-
-            """
-            return self.GetCenter()
-
-        @center.setter
-        def center(self: CapsuleSource, center: VectorLike[float]) -> None:
-            """Set the center in ``[x, y, z]``. Axis of the capsule passes through this point.
-
-            Parameters
-            ----------
-            center : sequence[float]
-                Center in ``[x, y, z]``. Axis of the capsule passes through this
-                point.
-
-            """
-            self.SetCenter(*center)
-
-        @property
-        def direction(self: CapsuleSource) -> tuple[float, float, float]:
-            """Get the direction vector in ``[x, y, z]``. Orientation vector of the capsule.
-
-            Returns
-            -------
-            sequence[float]
-                Direction vector in ``[x, y, z]``. Orientation vector of the
-                capsule.
-
-            """
-            return self._direction
-
-        @direction.setter
-        def direction(self: CapsuleSource, direction: VectorLike[float]) -> None:
-            """Set the direction in ``[x, y, z]``. Axis of the capsule passes through this point.
-
-            Parameters
-            ----------
-            direction : sequence[float]
-                Direction vector in ``[x, y, z]``. Orientation vector of the
-                capsule.
-
-            """
-            valid_direction = _validation.validate_array3(
-                direction, dtype_out=float, to_tuple=True
-            )
-            self._direction = cast('tuple[float, float, float]', valid_direction)
-
-        @property
-        def cylinder_length(self: CapsuleSource) -> float:
-            """Get the cylinder length along the capsule in its specified direction.
-
-            Returns
-            -------
-            float
-                Cylinder length along the capsule in its specified direction.
-
-            """
-            return self.GetCylinderLength()
-
-        @cylinder_length.setter
-        def cylinder_length(self: CapsuleSource, length: float) -> None:
-            """Set the cylinder length of the capsule.
-
-            Parameters
-            ----------
-            length : float
-                Cylinder length of the capsule.
-
-            """
-            self.SetCylinderLength(length)
-
-        @property
-        def radius(self: CapsuleSource) -> float:
-            """Get base radius of the capsule.
-
-            Returns
-            -------
-            float
-                Base radius of the capsule.
-
-            """
-            return self.GetRadius()
-
-        @radius.setter
-        def radius(self: CapsuleSource, radius: float) -> None:
-            """Set base radius of the capsule.
-
-            Parameters
-            ----------
-            radius : float
-                Base radius of the capsule.
-
-            """
-            self.SetRadius(radius)
-
-        @property
-        def theta_resolution(self: CapsuleSource) -> int:
-            """Get the number of points in the azimuthal direction.
-
-            Returns
-            -------
-            int
-                The number of points in the azimuthal direction.
-
-            """
-            return self.GetThetaResolution()
-
-        @theta_resolution.setter
-        def theta_resolution(self: CapsuleSource, theta_resolution: int) -> None:
-            """Set the number of points in the azimuthal direction.
-
-            Parameters
-            ----------
-            theta_resolution : int
-                The number of points in the azimuthal direction.
-
-            """
-            self.SetThetaResolution(theta_resolution)
-
-        @property
-        def phi_resolution(self: CapsuleSource) -> int:
-            """Get the number of points in the polar direction.
-
-            Returns
-            -------
-            int
-                The number of points in the polar direction.
-
-            """
-            return self.GetPhiResolution()
-
-        @phi_resolution.setter
-        def phi_resolution(self: CapsuleSource, phi_resolution: int) -> None:
-            """Set the number of points in the polar direction.
-
-            Parameters
-            ----------
-            phi_resolution : int
-                The number of points in the polar direction.
-
-            """
-            self.SetPhiResolution(phi_resolution)
-
-        @property
-        def output(self: CapsuleSource) -> PolyData:
-            """Get the output data object for a port on this algorithm.
-
-            Returns
-            -------
-            pyvista.PolyData
-                Capsule surface.
-
-            """
-            self.Update()
-            return wrap(self.GetOutput())
 
 
 class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
@@ -897,7 +673,7 @@ class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSour
 class Text3DSource(_NoNewAttrMixin):
     """3D text from a string.
 
-    Generate 3D text from a string with a specified width, height or depth.
+    Generate 3D text from a string with a specified width, height, or depth.
 
     .. versionadded:: 0.43
 
@@ -1285,7 +1061,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Returns
         -------
         float
-            XLength along the cone in its specified direction.
+            ``XLength`` along the cone in its specified direction.
 
         """
         return self.GetXLength()
@@ -1297,7 +1073,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Parameters
         ----------
         x_length : float
-            XLength of the cone.
+            ``XLength`` of the cone.
 
         """
         self.SetXLength(x_length)
@@ -1309,7 +1085,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Returns
         -------
         float
-            YLength along the cone in its specified direction.
+            ``YLength`` along the cone in its specified direction.
 
         """
         return self.GetYLength()
@@ -1321,7 +1097,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Parameters
         ----------
         y_length : float
-            YLength of the cone.
+            ``YLength`` of the cone.
 
         """
         self.SetYLength(y_length)
@@ -1333,7 +1109,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Returns
         -------
         float
-            ZLength along the cone in its specified direction.
+            ``ZLength`` along the cone in its specified direction.
 
         """
         return self.GetZLength()
@@ -1345,7 +1121,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Parameters
         ----------
         z_length : float
-            ZLength of the cone.
+            ``ZLength`` of the cone.
 
         """
         self.SetZLength(z_length)
@@ -2407,10 +2183,10 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
     Parameters
     ----------
     i_resolution : int, default: 10
-        Number of points on the plane in the i direction.
+        Number of points on the plane in the ``i`` direction.
 
     j_resolution : int, default: 10
-        Number of points on the plane in the j direction.
+        Number of points on the plane in the ``j`` direction.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
@@ -2447,48 +2223,48 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
 
     @property
     def i_resolution(self: PlaneSource) -> int:
-        """Number of points on the plane in the i direction.
+        """Number of points on the plane in the ``i`` direction.
 
         Returns
         -------
         int
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         """
         return self.GetXResolution()
 
     @i_resolution.setter
     def i_resolution(self: PlaneSource, i_resolution: int) -> None:
-        """Set number of points on the plane in the i direction.
+        """Set number of points on the plane in the ``i`` direction.
 
         Parameters
         ----------
         i_resolution : int
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         """
         self.SetXResolution(i_resolution)
 
     @property
     def j_resolution(self: PlaneSource) -> int:
-        """Number of points on the plane in the j direction.
+        """Number of points on the plane in the ``j`` direction.
 
         Returns
         -------
         int
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         """
         return self.GetYResolution()
 
     @j_resolution.setter
     def j_resolution(self: PlaneSource, j_resolution: int) -> None:
-        """Set number of points on the plane in the j direction.
+        """Set number of points on the plane in the ``j`` direction.
 
         Parameters
         ----------
         j_resolution : int
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         """
         self.SetYResolution(j_resolution)
@@ -3240,7 +3016,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
     :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
-    The generated axes are "true-to-scale" by default, i.e. a shaft with a
+    The generated axes are "true-to-scale" by default, that is, a shaft with a
     radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
     arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
 
@@ -3581,7 +3357,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
     def shaft_type(self: AxesGeometrySource) -> str:  # numpydoc ignore=RT01
         """Shaft type for all axes.
 
-        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        Must be a string, for example, ``'cylinder'`` or ``'cube'`` or any other supported
         geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
         may also be specified. In this case, the dataset must be oriented such that it
         "points" in the positive z direction.
@@ -3620,7 +3396,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
     def tip_type(self: AxesGeometrySource) -> str:  # numpydoc ignore=RT01
         """Tip type for all axes.
 
-        Must be a string, e.g. ``'cone'`` or ``'sphere'`` or any other supported
+        Must be a string, for example, ``'cone'`` or ``'sphere'`` or any other supported
         geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
         may also be specified. In this case, the dataset must be oriented such that it
         "points" in the positive z direction.
@@ -4462,7 +4238,7 @@ class CubeFacesSource(CubeSource):
         ) -> tuple[NumpyArray[float], NumpyArray[float]]:
             """Create a picture-frame from 4 points defining a rectangle.
 
-            The inner points of the frame are generated by scaling the quad_points by
+            The inner points of the frame are generated by scaling the ``quad_points`` by
             the length-3 scaling factor.
             """
             inner_points = _scale_points(quad_points.copy(), center, scale)

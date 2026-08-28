@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from functools import wraps
+import functools
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -23,12 +23,12 @@ if TYPE_CHECKING:
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
+    @functools.wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
     def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
+    @functools.wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
     def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
@@ -49,7 +49,7 @@ class UnstructuredGridFilters(DataSetFilters):
         >>> grid = examples.load_tetbeam()
         >>> grid.plot(show_edges=True, line_width=2)
 
-        Now, subdivide and plot.
+        Subdivide and plot the result.
 
         >>> subdivided = grid.subdivide_tetra()
         >>> subdivided.plot(show_edges=True, line_width=2)

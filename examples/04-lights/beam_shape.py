@@ -4,12 +4,15 @@
 Beam Shape
 ~~~~~~~~~~
 
-The default directional lights are infinitely distant point sources, for which
-the only geometric customization option is the choice of beam direction defined
-by the light's position and focal point. Positional lights, however, have more
-options for beam customization.
+Compare beam customization options for directional and positional lights.
+
+The default directional lights are infinitely distant point sources, for
+which the only geometric customization option is the choice of beam
+direction defined by the light's position and focal point. Positional
+lights, however, have more options for beam customization.
 
 Consider two hemispheres:
+
 """
 
 # sphinx_gallery_thumbnail_number = 5
@@ -79,7 +82,7 @@ pl.show()
 # light's nominal position. It could still display attenuation, see the
 # :ref:`attenuation_example` example.
 #
-# Switching to a spotlight (i.e. a positional light with a cone angle less
+# Switching to a spotlight (that is, a positional light with a cone angle less
 # than 90 degrees) will enable beam shaping using the :py:attr:`pyvista.Light.exponent`
 # property. Let's put our hemispheres side by side for this, and put a light in
 # the center of each: one spotlight, one merely positional.

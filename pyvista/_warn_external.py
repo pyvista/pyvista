@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import itertools
-import pathlib
+from pathlib import Path
 import re
 import sys
 import warnings
 
 
 def warn_external(message: str, category: type[Warning] | None = None) -> None:
-    """`warnings.warn` wrapper that sets *stacklevel* to "outside PyVista".
+    """``warnings.warn`` wrapper that sets *``stacklevel``* to "outside PyVista".
 
     Taken and modified from Matplotlib
     https://github.com/matplotlib/matplotlib/blob/db83efff4d7d3849f8bffbd1f6cdfc43d74c9aea/lib/matplotlib/_api/__init__.py#L395
@@ -17,7 +17,7 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
     kwargs = {}
     if sys.version_info[:2] >= (3, 12):
         # Go to Python's `site-packages` or `pyvista` from an editable install.
-        basedir = pathlib.Path(__file__).parents[1]
+        basedir = Path(__file__).parents[1]
         kwargs['skip_file_prefixes'] = (str(basedir / 'pyvista'),)
     else:
         frame = sys._getframe()

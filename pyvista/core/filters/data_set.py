@@ -164,8 +164,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> np.abs(dist).mean()  # doctest:+SKIP
         9.997635192915073e-05
 
-        See :ref:`icp_registration_example` for more examples using this filter.
-
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
@@ -202,7 +200,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Note that the transformation is not unique, since the signs of the principal
         axes are arbitrary. Consequently, applying this filter to similar meshes
-        may result in dissimilar alignment (e.g. one axis may point up instead of down).
+        may result in dissimilar alignment (for example, one axis may point up instead of down).
         To address this, the sign of one or two axes may optionally be "seeded" with a
         vector which approximates the axis or axes of the input. This can be useful
         for cases where the orientation of the input has a clear physical meaning.
@@ -219,19 +217,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Approximate direction vector of this mesh's primary axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.).
+            name (for example, ``'x'`` or ``'-x'``, etc.).
 
         axis_1_direction : VectorLike[float] | str, optional
             Approximate direction vector of this mesh's secondary axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.).
+            name (for example, ``'x'`` or ``'-x'``, etc.).
 
         axis_2_direction : VectorLike[float] | str, optional
             Approximate direction vector of this mesh's third axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.).
+            name (for example, ``'x'`` or ``'-x'``, etc.).
 
         cell_centers : bool, default: False
             Use the mesh's :meth:`~pyvista.DataObjectFilters.cell_centers` when
@@ -523,10 +521,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(sphere, color='w', style='wireframe')
         >>> pl.show()
 
-        See :ref:`clip_with_surface_example` and
-        :ref:`voxelize_example` for more examples using
-        this filter.
-
         """
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
@@ -564,7 +558,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         value : float | VectorLike[float], default: 0.0
             Set the clipping value. Can also be set as a range of values.
-            The range produces an output similar to an isovolume filter of Paraview.
+            The range produces an output similar to an isovolume filter of ParaView.
 
         inplace : bool, default: False
             Update mesh in-place.
@@ -583,7 +577,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        Remove the part of the mesh with "sample_point_scalars" above 100.
+        Remove the part of the mesh with ``sample_point_scalars`` above 100.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -600,7 +594,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     scalars='sample_point_scalars', value=100, both=True
         ... )
 
-        Remove the part of the mesh with "sample_point_scalars" below 100.
+        Remove the part of the mesh with ``sample_point_scalars`` below 100.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -610,7 +604,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> clipped.plot()
 
-        Clip the part of the mesh with "sample_point_scalars" between 200 and 250.
+        Clip the part of the mesh with ``sample_point_scalars`` between 200 and 250.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -619,12 +613,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     scalars='sample_point_scalars', value=(200, 250)
         ... )
         >>> clipped.plot()
-
-        .. seealso::
-
-            :ref:`compare_threshold_filters_example`
-                This example showcases this filter and
-                other similar ones.
 
         """
         if isinstance(self, _vtk.vtkPolyData):
@@ -736,9 +724,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> clipped = cube.clip_surface(sphere)
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
-        See :ref:`clip_with_surface_example` for more examples using
-        this filter.
-
         """
         if not isinstance(surface, _vtk.vtkPolyData):
             surface = wrap(surface).extract_surface(
@@ -838,7 +823,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         component_mode : {'component', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multicomponent scalars.  'component' (default)
+            multi-component scalars.  'component' (default)
             uses only the ``component``.  'all' requires all
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
@@ -870,10 +855,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Threshold-like filter for ``ImageData`` to keep some values and replace others.
-        :ref:`compare_threshold_filters_example`
-            This example showcases this filter and
-            other similar ones.
-
 
         Returns
         -------
@@ -924,9 +905,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_scalar_bar=False,
         ...     show_edges=True,
         ... )
-
-        See :ref:`using_filters_example` and :ref:`image_representations_example`
-        for more examples using this filter.
 
         """
         # set the scalars to threshold on
@@ -1157,7 +1135,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             or ``'cell'``.
 
         component_mode : {'component', 'all', 'any'}, default: 'all'
-            The method to satisfy the criteria for multicomponent scalars.
+            The method to satisfy the criteria for multi-component scalars.
             ``'component'`` uses only the single component specified by
             ``component``. ``'all'`` drops a cell if any component is NaN.
             ``'any'`` keeps a cell as long as at least one component is
@@ -1202,9 +1180,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> bool(np.any(np.isnan(cleaned.point_data['values'])))
         False
 
-        See :ref:`using_filters_example` for an end-to-end filter pipeline
-        that begins with this filter.
-
         """
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
@@ -1215,7 +1190,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if arr.dtype == bool or not np.issubdtype(arr.dtype, np.floating):
             return self.cast_to_unstructured_grid()
         if arr.size == 0 or bool(np.all(np.isnan(arr))):
-            # Entire array is NaN (or empty) — no cells survive. Avoid passing
+            # Entire array is NaN (or empty)—no cells survive. Avoid passing
             # a (nan, nan) range into VTK's threshold filter.
             return self.extract_cells(
                 np.array([], dtype=int),
@@ -1267,8 +1242,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> sphere = pv.Sphere()
         >>> outline = sphere.outline()
         >>> pv.plot([sphere, outline], line_width=5)
-
-        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkOutlineFilter()
@@ -1360,7 +1333,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        Create an image data volume from a point cloud using gaussian splatter.
+        Create an image data volume from a point cloud using Gaussian splatter.
 
         >>> import pyvista as pv
 
@@ -1381,8 +1354,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation  # noqa: PLC0415
-
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()
@@ -1591,10 +1562,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> out.plot(color='lightblue', smooth_shading=True)
 
-        See :ref:`using_filters_example`, :ref:`marching_cubes_example`, or
-        :ref:`gyroid_example` for more examples using this
-        filter.
-
         """
         if method == 'contour':
             alg = _vtk.vtkContourFilter()
@@ -1705,7 +1672,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         name : str, default: "Texture Coordinates"
             The string name to give the new texture coordinates if applying
-            the filter inplace.
+            the filter in-place.
 
         use_bounds : bool, default: False
             Use the bounds to set the mapping plane by default (bottom plane
@@ -1719,10 +1686,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.DataSet
             Original dataset with texture coordinates if
             ``inplace=True``, otherwise a copied dataset.
-
-        Examples
-        --------
-        See :ref:`topo_map_example`
 
         """
         if use_bounds:
@@ -1791,12 +1754,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         inplace : bool, default: False
             If ``True``, the new texture coordinates will be added to
-            the dataset inplace. If ``False`` (default), a new dataset
+            the dataset in-place. If ``False`` (default), a new dataset
             is returned with the texture coordinates.
 
         name : str, default: "Texture Coordinates"
             The string name to give the new texture coordinates if applying
-            the filter inplace.
+            the filter in-place.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1806,10 +1769,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.DataSet
             Dataset containing the texture mapped to a sphere.  Return
             type matches input.
-
-        Examples
-        --------
-        See :ref:`texture_example`.
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -1945,9 +1904,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     show_scalar_bar=False,
         ... )
         >>> pl.show()
-
-        See :ref:`glyph_example`, :ref:`movie_glyphs_example`, and
-        :ref:`glyph_table_example` for more examples using this filter.
 
         """
         dataset = self
@@ -2110,7 +2066,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Glyphs')
 
-        output = _get_output(alg)
+        # Glyphs always produce cell geometry (e.g. arrows), so the output
+        # should remain PolyData even if the input was a cell-less PointSet.
+        output = _get_output(alg, keep_pointset=False)
 
         # Storing geom on the algorithm, for later use in legends.
         output._glyph_geom = geoms
@@ -2152,9 +2110,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         share a point. However, if a ``scalar_range`` is provided, cells
         must also have at least one point with scalar values in the
         specified range to be considered connected.
-
-        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
-        more examples using this filter.
 
         .. versionadded:: 0.43.0
 
@@ -2215,7 +2170,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         label_regions : bool, default: True
             If ``True``, ``'RegionId'`` point and cell scalar arrays are stored.
             Each region is assigned a unique ID. IDs are zero-indexed and are
-            assigned by region cell count in descending order (i.e. the largest
+            assigned by region cell count in descending order (that is, the largest
             region has ID ``0``).
 
         region_assignment_mode : str, default: "descending"
@@ -2228,7 +2183,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             .. versionadded:: 0.47
 
-            .. admonition:: ParaView compatibility
+            .. admonition:: ParaView Compatibility
                 :class: note dropdown
 
                 The default value ``"descending"`` differs from ParaView's, which
@@ -2292,7 +2247,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> conn = mesh.connectivity('all')
         >>> np.unique(conn['RegionId'])
-        pyvista_ndarray([0, 1, 2])
+        pyvista_ndarray([0, 1, 2]...)
 
         Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
 
@@ -2711,8 +2666,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> len(bodies)
         2
 
-        See :ref:`split_vol` for more examples using this filter.
-
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
@@ -2780,7 +2733,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        First, plot the unwarped mesh.
+        First, plot the un-warped mesh.
 
         >>> from pyvista import examples
         >>> mesh = examples.download_st_helens()
@@ -2790,8 +2743,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
-
-        See :ref:`compute_normals_example` for more examples using this filter.
 
         """
         factor = kwargs.pop('scale_factor', factor)
@@ -2880,9 +2831,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vector_example` and :ref:`warp_by_vector_eigenmodes_example` for
-        more examples using this filter.
-
         """
         vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
         arr = get_array(self, vectors_, preference='point')
@@ -2962,8 +2910,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> edges = grid.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
 
-        See :ref:`convex_hull_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkDelaunay3D()
         alg.SetInputData(self)
@@ -2992,7 +2938,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         This filter produces and output data array, but does not modify the
         input dataset. If you wish to extract cells or points, various
-        threshold filters are available (i.e., threshold the output array).
+        threshold filters are available (that is, threshold the output array).
 
         .. warning::
            The filter assumes that the surface is closed and
@@ -3123,7 +3069,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         .. note::
             This filter generates a data array, but does not modify the
             input dataset. If you wish to extract cells or points, various
-            threshold filters are available (i.e., threshold the output array).
+            threshold filters are available (that is, threshold the output array).
 
         .. versionadded:: 0.47
 
@@ -3171,7 +3117,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See Also
         --------
         compute_implicit_distance, extract_points, extract_cells
-        :ref:`extract_cells_inside_surface_example`
 
         Examples
         --------
@@ -3263,7 +3208,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
 
-        If the cell topology is more useful for interpolating, e.g. from a
+        If the cell topology is more useful for interpolating, for example, from a
         discretized FEM or CFD simulation, use
         :func:`pyvista.DataObjectFilters.sample` instead.
 
@@ -3274,7 +3219,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             this object are interpolated onto this mesh.
 
         sharpness : float, default: 2.0
-            Set the sharpness (i.e., falloff) of the Gaussian kernel. As the
+            Set the sharpness (that is, falloff) of the Gaussian kernel. As the
             sharpness increases the effects of distant points are reduced.
 
         radius : float, optional
@@ -3287,7 +3232,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             the strategy is set to ``'mask_points'``, then an output array is
             created that marks points as being valid (=1) or null (invalid =0)
             (and the NullValue is set as well). If the strategy is set to
-            ``'null_value'``, then the output data value(s) are set to the
+            ``'null_value'``, then the output data values are set to the
             ``null_value`` (specified in the output point data). Finally, the
             strategy ``'closest_point'`` is to simply use the closest point to
             perform the interpolation.
@@ -3343,9 +3288,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
-
-        See :ref:`interpolate_example`, :ref:`interpolate_sample_example`,
-        and :ref:`resampling_example` for more examples using this filter.
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
@@ -3446,7 +3388,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         pointa, pointb : sequence[float], optional
             The coordinates of a start and end point for a line source. This
-            will override the sphere and start_position point source.
+            will override the sphere and ``start_position`` point source.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3458,17 +3400,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         streamlines : pyvista.PolyData
             This produces polylines as the output, with each cell
-            (i.e., polyline) representing a streamline. The attribute values
+            (that is, polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
 
         source : pyvista.PolyData
             The points of the source are the seed points for the streamlines.
             Only returned if ``return_source=True``.
-
-        Examples
-        --------
-        See the :ref:`streamlines_example` example.
 
         """
         if source_center is None:
@@ -3568,8 +3506,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         initial_step_length : float, default: 0.5
             Initial step size used for line integration, expressed ib length
             unitsL or cell length units (see ``step_unit`` parameter).
-            either the starting size for an adaptive integrator, e.g., RK45, or
-            the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4).
+            either the starting size for an adaptive integrator, for example, RK45, or
+            the constant / fixed size for non-adaptive ones, that is, RK2 and RK4).
 
         step_unit : {'cl', 'l'}, default: "cl"
             Uniform integration step unit. The valid unit is now limited to
@@ -3578,11 +3516,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         min_step_length : float, default: 0.01
             Minimum step size used for line integration, expressed in length or
-            cell length units. Only valid for an adaptive integrator, e.g., RK45.
+            cell length units. Only valid for an adaptive integrator, for example, RK45.
 
         max_step_length : float, default: 1.0
             Maximum step size used for line integration, expressed in length or
-            cell length units. Only valid for an adaptive integrator, e.g., RK45.
+            cell length units. Only valid for an adaptive integrator, for example, RK45.
 
         max_steps : int, default: 2000
             Maximum number of steps for integrating a streamline.
@@ -3627,14 +3565,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         pyvista.PolyData
             Streamlines. This produces polylines as the output, with
-            each cell (i.e., polyline) representing a streamline. The
+            each cell (that is, polyline) representing a streamline. The
             attribute values associated with each streamline are
             stored in the cell data, whereas those associated with
             streamline-points are stored in the point data.
-
-        Examples
-        --------
-        See the :ref:`streamlines_example` example.
 
         """
         integration_direction_lower = str(integration_direction).strip().lower()
@@ -3717,9 +3651,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetIntegratorTypeToRungeKutta45()
         # set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocatorToStaticCellLocator()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 7):
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
+
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg)
@@ -3745,8 +3686,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         """Generate evenly spaced streamlines on a 2D dataset.
 
-        This filter only supports datasets that lie on the xy plane, i.e. ``z=0``.
-        Particular care must be used to choose a `separating_distance`
+        This filter only supports datasets that lie on the xy plane, that is, ``z=0``.
+        Particular care must be used to choose a ``separating_distance``
         that do not result in too much memory being utilized.  The
         default unit is cell length.
 
@@ -3815,7 +3756,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         pyvista.PolyData
             This produces polylines as the output, with each cell
-            (i.e., polyline) representing a streamline. The attribute
+            (that is, polyline) representing a streamline. The attribute
             values associated with each streamline are stored in the
             cell data, whereas those associated with streamline-points
             are stored in the point data.
@@ -3838,8 +3779,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> _ = pl.add_mesh(streams.tube(radius=0.02), scalars='vorticity_mag')
         >>> pl.view_xy()
         >>> pl.show()
-
-        See :ref:`streamlines_2D_example` for more examples using this filter.
 
         """
         if integrator_type not in [2, 4]:
@@ -3896,7 +3835,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Set interpolator type
         if interpolator_type in ['c', 'cell']:
-            alg.SetInterpolatorTypeToCellLocator()
+            if pv.vtk_version_info >= (9, 7):
+                alg.SetCellLocatorToModifiedBSPTree()
+            else:
+                alg.SetInterpolatorTypeToCellLocator()
+        elif pv.vtk_version_info >= (9, 7):
+            # This is a point locator adaptor
+            alg.SetCellLocatorToJumpAndWalkCellLocator()
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
@@ -3933,10 +3878,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         pyvista.PolyData
             Decimated boundary.
-
-        Examples
-        --------
-        See the :ref:`linked_views_example` example.
 
         """
         return (
@@ -4033,7 +3974,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
-        Plot the variables of interest in 2D using matplotlib where the
+        Plot the variables of interest in 2D using Matplotlib where the
         X-axis is distance from Point A and the Y-axis is the variable
         of interest. Note that this filter returns ``None``.
 
@@ -4082,10 +4023,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Set component of vector-valued scalars to plot. Must be
             nonnegative and less than the number of components. If ``None``,
             all components are plotted.
-
-        Examples
-        --------
-        See the :ref:`plot_over_line_example` example.
 
         """
         from matplotlib import pyplot as plt  # noqa: PLC0415
@@ -4578,10 +4515,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        See Also
-        --------
-        :ref:`plot_over_circular_arc_example`
-
         Examples
         --------
         Sample a dataset along a high resolution circular arc and plot.
@@ -4653,13 +4586,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Return a subset of the grid.
+        r"""Return a subset of the grid.
 
         Parameters
         ----------
         ind : int | VectorLike[int]
-            Cell indices to extract. Can be a single int or a vector of ints.
-            A bool vector is also supported; the vector size should match the number of cells.
+            Cell indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of cells.
 
         invert : bool, default: False
             Invert the selection.
@@ -4738,22 +4671,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
         extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
-        if pv.vtk_version_info >= (9, 3, 0):
-            # We set the arrays manually earlier
-            extract.SetPassThroughCellIds(False)
+        # We set the arrays manually earlier
+        extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract)
 
         # Make active scalars match input
         info = self.active_scalars_info
         subgrid.set_active_scalars(info.name, info.association)
-
-        if pv.vtk_version_info >= (9, 3, 0):
-            return subgrid
-
-        # Process output arrays
-        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
-            del data[name]
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -4863,18 +4788,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
-        values: None
-        | (
+        values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        ) = None,
+        )
+        | None = None,
         *,
-        ranges: None
-        | (
+        ranges: (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
             | dict[tuple[float, float], str]
-        ) = None,
+        )
+        | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -4896,7 +4821,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Parameters
         ----------
         values : float | ArrayLike[float] | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
+            Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
@@ -4908,7 +4833,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 ``values`` can be a single vector or an array of row vectors.
 
         ranges : array_like | dict, optional
-            Range(s) of values to extract. Can be a single range (i.e. a sequence of
+            Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The endpoints of the ranges are included in the
@@ -4933,13 +4858,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
-            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Specify the components to use when ``scalars`` is a multi-component array.
             Has no effect when the scalars have a single component. Must be one of:
 
             - number: specify the component number as a 0-indexed integer. The selected
-              component must have the specified value(s).
-            - ``'any'``: any single component can have the specified value(s).
-            - ``'all'``: all individual components must have the specified values(s).
+              component must have the specified values.
+            - ``'any'``: any single component can have the specified values.
+            - ``'all'``: all individual components must have the specified values.
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         **kwargs : dict, optional
@@ -4963,7 +4888,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> image = examples.load_channels()
         >>> np.unique(image.active_scalars)
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
 
         Split the image into its separate regions. Here, we also remove the first
         region for visualization.
@@ -5048,7 +4973,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_cell_ids: bool = True,
         progress_bar: bool = False,
     ):
-        """Return a subset of the mesh based on the value(s) of point or cell data.
+        """Return a subset of the mesh based on the values of point or cell data.
 
         Points and cells may be extracted with a single value, multiple values, a range
         of values, or any mix of values and ranges. This enables threshold-like
@@ -5060,9 +4985,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         **Point data**
 
-            All cells with at least one point with the specified value(s) are returned.
+            All cells with at least one point with the specified values are returned.
             Optionally, set ``adjacent_cells`` to ``False`` to only extract points from
-            cells where all points in the cell strictly have the specified value(s).
+            cells where all points in the cell strictly have the specified values.
             In these cases, a point is only included in the output if that point is part
             of an extracted cell.
 
@@ -5071,7 +4996,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         **Cell Data**
 
-            Only the cells (and their points) with the specified values(s) are included
+            Only the cells (and their points) with the specified values are included
             in the output.
 
         Internally, :meth:`~pyvista.DataSetFilters.extract_points` is called to extract
@@ -5087,7 +5012,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Parameters
         ----------
         values : float | ArrayLike[float] | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
+            Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
@@ -5099,7 +5024,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 ``values`` can be a single vector or an array of row vectors.
 
         ranges : ArrayLike[float] | dict, optional
-            Range(s) of values to extract. Can be a single range (i.e. a sequence of
+            Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The endpoints of the ranges are included in the
@@ -5124,13 +5049,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
-            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Specify the components to use when ``scalars`` is a multi-component array.
             Has no effect when the scalars have a single component. Must be one of:
 
             - number: specify the component number as a 0-indexed integer. The selected
-              component must have the specified value(s).
-            - ``'any'``: any single component can have the specified value(s).
-            - ``'all'``: all individual components must have the specified values(s).
+              component must have the specified values.
+            - ``'any'``: any single component can have the specified values.
+            - ``'all'``: all individual components must have the specified values.
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
@@ -5192,9 +5117,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar filter for thresholding a mesh by value.
         partition
             Split a mesh into a number of sub-parts.
-        :ref:`compare_threshold_filters_example`
-            This example showcases this filter and
-            other similar ones.
 
         Returns
         -------
@@ -5251,7 +5173,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Any combination of values and ranges may be specified.
 
-        E.g. extract a single value and two ranges, and split the result into separate
+        For example, extract a single value and two ranges, and split the result into separate
         blocks of a MultiBlock.
 
         >>> extracted = mesh.extract_values(
@@ -5279,14 +5201,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Extract values from a single component.
 
-        E.g. extract points with a strong red component (i.e. > 0.8).
+        For example, extract points with a strong red component (that is, > 0.8).
 
         >>> extracted = point_cloud.extract_values(ranges=[0.8, 1.0], component_mode=0)
         >>> extracted.plot(**plot_kwargs)
 
         Extract values from all components.
 
-        E.g. extract points where all RGB components are dark (i.e. < 0.5).
+        For example, extract points where all RGB components are dark (that is, < 0.5).
 
         >>> extracted = point_cloud.extract_values(
         ...     ranges=[0.0, 0.5], component_mode='all'
@@ -5295,7 +5217,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Extract specific multi-component values.
 
-        E.g. round the scalars to create binary RGB components, and extract only green
+        For example, round the scalars to create binary RGB components, and extract only green
         and blue components.
 
         >>> point_cloud['colors'] = np.round(point_cloud['colors'])
@@ -5581,7 +5503,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         """Extract values using validated input.
 
-        Internal method for extract_values filter to avoid repeated calls to input
+        Internal method for ``extract_values`` filter to avoid repeated calls to input
         validation methods.
         """
 
@@ -5742,7 +5664,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
         >>> ind[:10]
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]...)
 
         """
         surf = DataObjectFilters.extract_surface(
@@ -5771,7 +5693,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             1) Boundary (used by one polygon) or a line cell.
             2) Non-manifold (used by three or more polygons).
             3) Feature edges (edges used by two triangles and whose
-               dihedral angle > feature_angle).
+               dihedral angle > ``feature_angle``).
             4) Manifold edges (edges used by exactly two polygons).
 
         Parameters
@@ -5814,8 +5736,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> feat_edges = hex_beam.extract_feature_edges()
         >>> feat_edges.clear_data()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
-
-        See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
         dataset: DataSet = self
@@ -5943,11 +5863,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ``merge_points=True``.
 
         inplace : bool, default: False
-            Updates grid inplace when True if the input type is an
+            Updates grid in-place when ``True`` if the input type is an
             :class:`pyvista.UnstructuredGrid`.
 
         main_has_priority : bool, default: True
-            When this parameter is true and merge_points is true,
+            When this parameter is true and ``merge_points`` is true,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
@@ -6109,9 +6029,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
-            msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
@@ -6196,8 +6113,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> hills = examples.load_random_hills()
         >>> deriv = hills.compute_derivative()
         >>> deriv.plot(scalars='gradient')
-
-        See the :ref:`gradients_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkGradientFilter()
@@ -6397,8 +6312,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> integrated['data'][0]
         np.float64(6.28)
 
-        See the :ref:`integrate_data_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
@@ -6438,7 +6351,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ignored.
 
             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
-            of the output dataset(s).
+            of the output datasets.
 
         as_composite : bool, default: True
             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
@@ -6519,7 +6432,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             The names of the blocks of the returned :class:`~pyvista.MultiBlock`
             correspond to the oriented box's local axes, not the global x-y-z axes.
-            E.g. the normal of the ``'+X'`` face of the returned box has the same
+            For example, the normal of the ``'+X'`` face of the returned box has the same
             direction as the box's primary axis, and is not necessarily pointing in
             the +x direction ``(1, 0, 0)``.
 
@@ -6539,19 +6452,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Approximate direction vector of this mesh's primary axis. If set, the first
             axis in the returned ``axes`` metadata is flipped such that it best aligns
             with the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.).
+            name (for example, ``'x'`` or ``'-x'``, etc.).
 
         axis_1_direction : VectorLike[float] | str, optional
             Approximate direction vector of this mesh's secondary axis. If set, the second
             axis in the returned ``axes`` metadata is flipped such that it best aligns
             with the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.).
+            name (for example, ``'x'`` or ``'-x'``, etc.).
 
         axis_2_direction : VectorLike[float] | str, optional
             Approximate direction vector of this mesh's third axis. If set, the third
             axis in the returned ``axes`` metadata is flipped such that it best aligns
             with the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.).
+            name (for example, ``'x'`` or ``'-x'``, etc.).
 
         frame_width : float, optional
             Set the width of the frame. Only has an effect if ``box_style`` is
@@ -6723,7 +6636,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
             each face. Set this ``False`` to merge the output and return
             :class:`~pyvista.PolyData` with six cells instead. The faces in both
-            outputs are separate, i.e. there are duplicate points at the corners.
+            outputs are separate, that is, there are duplicate points at the corners.
 
         See Also
         --------
@@ -6951,7 +6864,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        split.points += np.repeat(vec, np.diff(split.cell_offsets), axis=0)
         return split
 
     def separate_cells(  # type: ignore[misc]
@@ -6982,9 +6895,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> sep_grid.n_points
         320
 
-        See the :ref:`point_cell_scalars_example` for a more detailed example
-        using this filter.
-
         """
         return self.shrink(1.0)
 
@@ -6997,13 +6907,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
-        dataset containing only cells of the specified type(s). Note that if
-        the input dataset is homogeneous (e.g., all cells are of the same type)
+        dataset containing only cells of the specified types. Note that if
+        the input dataset is homogeneous (for example, all cells are of the same type)
         and the cell type is one of the cells specified, then the input dataset
         is shallow copied to the output.
 
         The type of output dataset is always the same as the input type. Since
-        structured types of data (i.e., :class:`pyvista.ImageData`,
+        structured types of data (that is, :class:`pyvista.ImageData`,
         :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilinearGrid`)
         are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
@@ -7078,7 +6988,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         This filter renumbers scalar label data of any type with ``N`` labels
         such that the output labels are contiguous from ``[0, N)`` and
         sorted in descending order from largest to smallest (by label count).
-        I.e., the largest label will have a value of ``0`` and the smallest
+        That is, the largest label will have a value of ``0`` and the smallest
         label will have a value of ``N-1``.
 
         The filter is a convenience method for :func:`pyvista.DataSetFilters.pack_labels`
@@ -7181,10 +7091,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Notes
         -----
-        This filter uses :vtk:`vtkPackLabels` as the underlying method which
-        requires VTK version 9.3 or higher. If :vtk:`vtkPackLabels` is not
-        available, packing is done with ``NumPy`` instead which may be
-        slower. For best performance, consider upgrading VTK.
+        This filter uses :vtk:`vtkPackLabels` as the underlying method.
 
         .. versionadded:: 0.43
 
@@ -7192,7 +7099,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ----------
         sort : bool, default: False
             Whether to sort the output by label count in descending order
-            (i.e. from largest to smallest).
+            (that is, from largest to smallest).
 
         scalars : str, optional
             Name of scalars to pack. Defaults to currently active scalars.
@@ -7207,8 +7114,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             saved to ``'packed_labels'``.
 
         progress_bar : bool, default: False
-            If ``True``, display a progress bar. Has no effect if VTK
-            version is lower than 9.3.
+            If ``True``, display a progress bar.
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -7264,61 +7170,30 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             raise TypeError(msg)
 
         # Do packing
-        if _vtk.has_attr('vtkPackLabels'):  # pragma: no cover
-            alg = _vtk.vtkPackLabels()
-            alg.SetInputDataObject(self)
-            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-            if sort:
-                alg.SortByLabelCount()
-            alg.PassFieldDataOn()
-            alg.PassCellDataOn()
-            alg.PassPointDataOn()
-            _update_alg(alg, progress_bar=progress_bar, message='Packing labels')
-            result = _get_output(alg)
+        alg = _vtk.vtkPackLabels()
+        alg.SetInputDataObject(self)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+        if sort:
+            alg.SortByLabelCount()
+        alg.PassFieldDataOn()
+        alg.PassCellDataOn()
+        alg.PassPointDataOn()
+        _update_alg(alg, progress_bar=progress_bar, message='Packing labels')
+        result = _get_output(alg)
 
-            if output_scalars is not scalars:
-                # vtkPackLabels does not pass un-packed labels through to the
-                # output, so add it back here
-                if field == FieldAssociation.POINT:
-                    result.point_data[scalars] = self.point_data[scalars]
-                else:
-                    result.cell_data[scalars] = self.cell_data[scalars]
-            result.rename_array('PackedLabels', output_scalars)
-
-            if inplace:
-                self.copy_from(result, deep=False)
-                return self
-            return result
-
-        else:  # Use numpy
-            # Get mapping from input ID to output ID
-            arr = cast(
-                'pv.pyvista_ndarray',
-                get_array(self, scalars, preference=preference, err=True),
-            )
-            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
-            if sort:
-                label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
-            label_range_in = np.arange(0, np.max(label_numbers_in))
-            label_numbers_out = label_range_in[: len(label_numbers_in)]
-
-            # Pack/sort array
-            packed_array = np.zeros_like(arr)
-            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=False):
-                packed_array[arr == num_in] = num_out
-
-            result = self if inplace else self.copy(deep=True)
-
-            # Add output to mesh
+        if output_scalars is not scalars:
+            # vtkPackLabels does not pass un-packed labels through to the
+            # output, so add it back here
             if field == FieldAssociation.POINT:
-                result.point_data[output_scalars] = packed_array
+                result.point_data[scalars] = self.point_data[scalars]
             else:
-                result.cell_data[output_scalars] = packed_array
+                result.cell_data[scalars] = self.cell_data[scalars]
+        result.rename_array('PackedLabels', output_scalars)
 
-            # vtkPackLabels sets active scalars by default, so do the same here
-            result.set_active_scalars(output_scalars, preference=field)  # type: ignore[arg-type]
-
-            return result
+        if inplace:
+            self.copy_from(result, deep=False)
+            return self
+        return result
 
     def color_labels(  # type: ignore[misc]
         self: DataSet,
@@ -7349,7 +7224,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             between labels and colors such that a given label will always have the same
             color, regardless of the number of labels present in the dataset.
 
-            This option is used by default for unsigned 8-bit integer inputs, i.e.
+            This option is used by default for unsigned 8-bit integer inputs, that is
             scalars with whole numbers and a maximum range of ``[0, 255]``.
 
         -   ``'cycle'`` : The specified ``colors`` are cycled through sequentially,
@@ -7383,13 +7258,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Make labeled data contiguous. May be used as a pre-processing step before
             coloring.
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this filter.
-
         Parameters
         ----------
         colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
-            Color(s) to use. Specify a dictionary to explicitly control the mapping
+            Colors to use. Specify a dictionary to explicitly control the mapping
             from label values to colors. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
             control the mapping. A single color is also supported to color the entire
@@ -7484,7 +7356,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(image_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
 
         Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
@@ -7513,7 +7385,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> label_ids = np.unique(subset_labels.active_scalars)
         >>> label_ids
-        pyvista_ndarray([1, 2, 3])
+        pyvista_ndarray([1, 2, 3]...)
 
         Despite the changes to the dataset, the regions have the same coloring
         as before.
@@ -7551,7 +7423,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> scalars = image_labels.active_scalars
         >>> scalars[scalars > 2] *= -1
         >>> np.unique(scalars)
-        pyvista_ndarray([-4, -3,  0,  1,  2])
+        pyvista_ndarray([-4, -3,  0,  1,  2]...)
 
         Color the mesh and enable ``negative_indexing``. With this option enabled,
         the ``'index'`` coloring mode is used by default, and therefore the positive
@@ -7582,7 +7454,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> labeled_data = dataset.connectivity()
         >>> np.unique(labeled_data.active_scalars)
         pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
-                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]...)
 
         Color the dataset with default arguments. Despite having 26 separately colored
         regions, the colors from the default glasbey-style colormap are all relatively
@@ -7807,7 +7679,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         all other options, the geometry is implicitly defined such that the generated
         mask fits the bounds of the input surface.
 
-        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
         spacing is set to ``1/100`` of the input mesh's length.
 
@@ -7827,7 +7699,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         .. note::
             This filter does not discard internal surfaces, due, for instance, to
             intersecting meshes. Instead, the intersection will be considered as
-            background which may produce unexpected results. See `Examples`.
+            background which may produce unexpected results. See Examples.
 
         Parameters
         ----------
@@ -7863,7 +7735,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
-            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
             The ``p``-th percentile is computed from the cumulative distribution function
             (CDF) of lengths which are representative of the cell length scales present
             in the input. The CDF is computed by:
@@ -7890,7 +7762,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         -------
         ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
-            has dtype :class:`numpy.uint8` if the foreground and background values are
+            has ``dtype`` :class:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
 
         See Also
@@ -8264,7 +8136,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         all other options, the geometry is implicitly defined such that the generated
         grid fits the bounds of the input mesh.
 
-        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
         spacing is set to ``1/100`` of the input mesh's length.
 
@@ -8318,7 +8190,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
-            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
             The ``p``-th percentile is computed from the cumulative distribution function
             (CDF) of lengths which are representative of the cell length scales present
             in the input. The CDF is computed by:
@@ -8380,7 +8252,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
         >>> cpos = pv.CameraPosition(
-        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 0, 0)
+        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 1, 0)
         ... )
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
@@ -8441,7 +8313,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         all other options, the geometry is implicitly defined such that the generated
         mesh fits the bounds of the input mesh.
 
-        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
         used by default to estimate the spacing.
 
         .. versionadded:: 0.46
@@ -8484,7 +8356,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
-            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
             The ``p``-th percentile is computed from the cumulative distribution function
             (CDF) of lengths which are representative of the cell length scales present
             in the input. The CDF is computed by:
@@ -8588,7 +8460,7 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *
 
 
 def _set_threshold_limit(alg, *, value, method, invert):
-    """Set vtkThreshold limits and function.
+    """Set ``vtkThreshold`` limits and function.
 
     Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
 
@@ -8637,12 +8509,12 @@ def _swap_axes(vectors, values):
     """Swap axes vectors based on their respective values.
 
     The vector with the larger component along its projected axis is selected to precede
-    the vector with the smaller component. E.g. a symmetric point cloud with equal
+    the vector with the smaller component. For example, a symmetric point cloud with equal
     std in any direction could have its principal axes computed such that the first
     axis is +Y, second is +X, and third is +Z. This function will swap the first two
     axes so that the order is XYZ instead of YXZ.
 
-    This function is intended to be used by `align_xyz` and is only exposed as a
+    This function is intended to be used by ``align_xyz`` and is only exposed as a
     module-level function for testing purposes.
     """
 

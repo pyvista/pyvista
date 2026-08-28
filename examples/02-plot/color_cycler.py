@@ -5,6 +5,7 @@ Color Cycling
 ~~~~~~~~~~~~~
 
 Cycle through colors when sequentially adding meshes to a plotter.
+
 """
 
 # %%

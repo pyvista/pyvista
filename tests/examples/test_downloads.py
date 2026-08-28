@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
 from pathlib import Path
 from pathlib import PureWindowsPath
 import re
@@ -60,7 +59,7 @@ def _is_valid_url(url):
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
-        sources = test_case.dataset_loader[1].source_url_blob
+        sources = test_case.dataset_loader[1].source_url
     except pv.VTKVersionError as e:
         reason = e.args[0]
         pytest.skip(reason)
@@ -240,7 +239,7 @@ def test_warn_if_path_not_accessible_file_blocks(tmp_path):
 
 @pytest.mark.skip_windows(reason='CI has admin rights and can write to system dirs.')
 def test_warn_if_path_not_accessible_no_write_permission():
-    system_dir = pathlib.Path('/etc')
+    system_dir = Path('/etc')
     assert system_dir.exists()
     assert not os.access(system_dir, os.W_OK)
     blocked_dir = system_dir / 'blocked'

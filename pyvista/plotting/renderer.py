@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import partial
-from functools import wraps
-from html import escape
+import functools
+import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -247,7 +246,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = viewup
 
     def to_list(self):
-        """Convert to a list of the position, focal point, and viewup.
+        """Convert to a list of the position, focal point, and ``viewup``.
 
         Returns
         -------
@@ -295,7 +294,7 @@ class CameraPosition(_NoNewAttrMixin):
                 ('viewup', [('', vup)], vup),
             ]
         )
-        text_fallback = escape(repr(self))
+        text_fallback = html.escape(repr(self))
 
         return (
             f'<div><style>{css}</style>'
@@ -341,7 +340,7 @@ class CameraPosition(_NoNewAttrMixin):
 
     @property
     def viewup(self):  # numpydoc ignore=RT01
-        """Viewup vector of the camera."""
+        """The view-up vector of the camera."""
         return self._viewup
 
     @viewup.setter
@@ -369,7 +368,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         parent,
         border=True,  # noqa: FBT002
         border_color='w',
-        border_width=2.0,
+        border_width=1.0,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
@@ -406,6 +405,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._charts: Charts | None = None
 
         self._border_actor: _vtk.vtkActor2D | None = None
+        self._border_actor_secondary: _vtk.vtkActor2D | None = None
+        self._border_requested_width: float | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -812,7 +813,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='white', width=2.0):
+    def add_border(self, color='white', width=1.0, edges=None):
         """Add borders around the frame.
 
         Parameters
@@ -820,8 +821,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         color : ColorLike, default: "white"
             Color of the border.
 
-        width : float, default: 2.0
+        width : float, default: 1.0
             Width of the border.
+
+        edges : sequence[str], optional
+            Which edges of the frame to draw. Any subset of
+            ``('top', 'left', 'bottom', 'right')``. When ``None``
+            (the default) all four edges are drawn.
 
         Returns
         -------
@@ -831,7 +837,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         points = np.array([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
 
-        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
+        edge_lines = {
+            'top': [2, 0, 1],
+            'left': [2, 1, 2],
+            'bottom': [2, 2, 3],
+            'right': [2, 3, 0],
+        }
+        if edges is None:
+            edges = ('top', 'left', 'bottom', 'right')
+        lines = np.array([edge_lines[e] for e in edges]).ravel()
 
         poly = pv.PolyData()
         poly.points = points
@@ -847,12 +861,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(Color(color).float_rgb)
-        actor.GetProperty().SetLineWidth(width)
+        # Every edge drawn here sits exactly on this renderer's own 0/1
+        # viewport boundary, by construction. VTK's 2D line rasterizer
+        # clips away roughly half of a line's width right at that
+        # boundary, so the drawn width is doubled to compensate -- the
+        # border then actually renders at the requested `width`, e.g.
+        # matching interior lines drawn at the same nominal width.
+        actor.GetProperty().SetLineWidth(width * 2)
 
         self.AddViewProp(actor)
         self.Modified()
 
         self._border_actor = actor
+        self._border_requested_width = width
         return actor
 
     @property
@@ -862,9 +883,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def border_width(self):  # numpydoc ignore=RT01
-        """Return the border width."""
+        """Return the border width.
+
+        This is the width originally requested, not the (doubled) value
+        actually given to VTK to compensate for edge clipping -- see
+        :meth:`add_border`.
+        """
         if self.has_border:
-            return self._border_actor.GetProperty().GetLineWidth()  # type: ignore[union-attr]
+            return self._border_requested_width
         return 0
 
     @property
@@ -873,6 +899,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
+
+    def _drop_border_actor(self):
+        """Remove this renderer's own border actors, if any.
+
+        Used when subplot seams are being drawn by a shared overlay
+        renderer so neighboring renderers don't each rasterize their
+        own clipped copy of the boundary line.
+        """
+        border_actor = self._border_actor
+        secondary_actor = self._border_actor_secondary
+        if border_actor is None and secondary_actor is None:
+            return
+        if border_actor is not None:
+            self.RemoveViewProp(border_actor)
+        if secondary_actor is not None:
+            self.RemoveViewProp(secondary_actor)
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.Modified()
 
     def add_chart(self, chart, *charts):
         """Add a chart to this renderer.
@@ -898,7 +944,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))  # type: ignore[arg-type]
+            self.AddObserver(
+                'StartEvent',  # type: ignore[arg-type]
+                functools.partial(try_callback, self._before_render_event),
+            )
         self._charts.add_chart(chart, *charts)
 
     @property
@@ -925,7 +974,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @wraps(Charts.set_interaction)
+    @functools.wraps(Charts.set_interaction)
     @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
@@ -935,7 +984,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @wraps(Charts.get_charts_by_pos)
+    @functools.wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
@@ -1150,9 +1199,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         add_axes
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -1241,9 +1287,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_north_arrow_widget
             Add north arrow as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------
@@ -1359,9 +1402,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add any actor as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------
@@ -1488,9 +1528,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add a custom mesh as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------
@@ -1647,9 +1684,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add any actor as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------
@@ -1965,11 +1999,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         remove_bounds_axes
         update_bounds_axes
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-        :ref:`bounds_example`
-            Additional examples using this method.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -2263,11 +2292,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         remove_bounds_axes
         update_bounds_axes
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-        :ref:`bounds_example`
-            Additional examples using this method.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -2463,10 +2487,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scene (minimum z).
 
         i_resolution : int, default: 10
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         j_resolution : int, default: 10
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         color : ColorLike, optional
             Color of all labels and axis titles.  Default gray.
@@ -2807,12 +2831,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @_deprecate_positional_args(allowed=['vector'])
     def set_viewup(self, vector, reset=True, render=True) -> None:  # noqa: FBT002
-        """Set camera viewup vector.
+        """Set camera ``viewup`` vector.
 
         Parameters
         ----------
         vector : sequence[float]
-            New camera viewup vector.
+            New camera ``viewup`` vector.
 
         reset : bool, default: True
             Whether to reset the camera after setting the camera
@@ -2820,7 +2844,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         render : bool, default: True
             If the render window is being shown, trigger a render
-            after setting the viewup.
+            after setting the ``viewup``.
 
         Examples
         --------
@@ -3023,7 +3047,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     ) -> None:
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and z-axis.
+        Scaling in performed independently on the X, Y, and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
@@ -3086,7 +3110,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @_deprecate_positional_args
     def get_default_cam_pos(self, negative=False):  # noqa: FBT002
-        """Return the default focal points and viewup.
+        """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
 
@@ -3472,8 +3496,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blurring_example` for a full example using this method.
-
         """
         self._render_passes.add_blur_pass()
 
@@ -3531,8 +3553,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
-
-        See :ref:`depth_of_field_example` for a full example using this method.
 
         """
         self._render_passes.enable_depth_of_field_pass(
@@ -3660,10 +3680,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
 
-        See Also
-        --------
-        :ref:`ssao_example`
-
         Examples
         --------
         Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
@@ -3755,17 +3771,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = (
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.'
-            )
-            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3827,18 +3832,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
-            sampling rate explicitly or set to ``True`` to downsample the
-            texture to 1/16th of its original resolution. By default, the
+            sampling rate explicitly or set to ``True`` to down-sample the
+            texture to 1/16 of its original resolution. By default, the
             theme value for ``resample_environment_texture`` is used, which
             is ``False`` for the standard theme.
 
-            Downsampling the texture can substantially improve performance for
-            some environments, e.g. headless setups or if GPU support is limited.
+            Down-sampling the texture can substantially improve performance for
+            some environments, for example, headless setups or if GPU support is limited.
 
             .. note::
 
                 This will resample the texture used for image-based lighting only,
-                e.g. the texture used for rendering reflective surfaces. It
+                for example, the texture used for rendering reflective surfaces. It
                 does `not` resample the background texture.
 
             .. versionadded:: 0.45
@@ -3868,7 +3873,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         Add a skybox cubemap as an environment texture and show that the
         lighting from the texture is mapped on to a sphere dataset. Note how
-        even when disabling the default lightkit, the scene lighting will still
+        even when disabling the default ``'light kit'``, the scene lighting will still
         be mapped onto the actor.
 
         >>> from pyvista import examples
@@ -3953,9 +3958,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.RemoveAllObservers()
         self._remove_axes_widget()
 
+        # Detach all props from the underlying vtkRenderer's actual scene graph.
+        # Just dropping our own Python-side references (below) isn't enough: VTK's
+        # own C++ reference counting keeps a prop (and everything it owns, e.g. the
+        # cube axes actor's axis label arrays) alive as long as it's still attached
+        # here, regardless of whether we still hold a Python attribute pointing to it.
+        self.RemoveAllViewProps()
+
         self._bounding_box = None
         self._box_object = None
         self._marker_actor = None
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.cube_axes_actor = None
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -4011,6 +4028,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self._box_object = None
         # remove reference to parent last
         self.parent = None
@@ -4038,9 +4057,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def viewport(self):  # numpydoc ignore=RT01
-        """Viewport of the renderer.
+        """The viewport of the renderer.
 
-        Viewport describes the ``(xstart, ystart, xend, yend)`` square
+        The viewport describes the ``(xstart, ystart, xend, yend)`` square
         of the renderer relative to the main renderer window.
 
         For example, a renderer taking up the entire window will have
@@ -4051,7 +4070,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Returns
         -------
         tuple
-            Viewport in the form ``(xstart, ystart, xend, yend)``.
+            ``viewport`` in the form ``(xstart, ystart, xend, yend)``.
 
         Examples
         --------
@@ -4126,7 +4145,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
               item to add, and ``color`` is the color of the label to add.
             * Three strings ([label, color, face]) where ``label`` is the name
               of the item to add, ``color`` is the color of the label to add,
-              and ``face`` is a string which defines the face (i.e. ``circle``,
+              and ``face`` is a string which defines the face (that is, ``circle``,
               ``triangle``, ``box``, etc.).
               ``face`` could be also ``"none"`` (no face shown for the entry),
               or a :class:`pyvista.PolyData`.
@@ -4137,7 +4156,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            list, or a matplotlib color string (for example, ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
             disabled.
 
@@ -4171,7 +4190,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         face : str | pyvista.PolyData, optional
             Face shape of legend face. Defaults to a triangle for most meshes,
             with the exception of glyphs where the glyph is shown
-            (e.g. arrows).
+            (for example, arrows).
 
             You may set it to one of the following:
 
@@ -4198,10 +4217,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         -------
         :vtk:`vtkLegendBoxActor`
             Actor for the legend.
-
-        See Also
-        --------
-        :ref:`legend_example`
 
         Examples
         --------
@@ -4385,7 +4400,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         The ruler is a 2D object that is not occluded by 3D objects.
         To avoid issues with perspective, it is recommended to use
-        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        parallel projection, that is, :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
         The title and labels are placed to the right of ruler moving from
@@ -4420,7 +4435,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. '%E'.
+            A ``printf`` style format for labels, for example, '%E'.
 
         title : str, default: "Distance"
             The title to display.
@@ -4619,7 +4634,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. ``'%E'``.
+            A ``printf`` style format for labels, for example, ``'%E'``.
             See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0
@@ -4646,7 +4661,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         Please be aware that the axes and scale values are subject to perspective
         effects. The distances are computed in the focal plane of the camera. When
-        there are large view angles (i.e., perspective projection), the computed
+        there are large view angles (that is, perspective projection), the computed
         distances may provide users the wrong sense of scale. These effects are not
         present when parallel projection is enabled.
 

@@ -4,8 +4,10 @@
 Shadows
 ~~~~~~~
 
-Demonstrate the usage of lights and shadows in PyVista with :class:`~pyvista.Light`
-objects and the :meth:`~pyvista.Plotter.enable_shadows` plotting method.
+Demonstrate the usage of lights and shadows in PyVista.
+
+Uses :class:`~pyvista.Light` objects and :meth:`~pyvista.Plotter.enable_shadows`.
+
 """
 
 import numpy as np
@@ -107,7 +109,7 @@ pl.show()
 
 
 # %%
-# Here, we use a lower shadow_attenuation value to demonstrate how the
+# Here, we use a lower ``shadow_attenuation`` value to demonstrate how the
 # light can travel through more planes.
 
 pl = pv.Plotter(lighting=None, window_size=(800, 800))

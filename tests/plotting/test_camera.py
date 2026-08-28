@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import io
+from io import StringIO
+import re
 
 import numpy as np
 import pytest
@@ -79,7 +80,7 @@ def paraview_pvcc():
     projection = False
 
     return (
-        io.StringIO(tmp),
+        StringIO(tmp),
         position,
         focal,
         view_up,
@@ -169,6 +170,27 @@ def test_up(camera):
     up = (0.410018, 0.217989, 0.885644)
     camera.up = up
     assert np.allclose(camera.up, up)
+
+
+@pytest.mark.parametrize('zero', [(0, 0, 0), (0.0, 0.0, 0.0), np.zeros(3)])
+def test_up_raises_zero_vector(camera, zero):
+    original = camera.up
+    with pytest.raises(ValueError, match=re.escape('Camera up vector cannot be zero.')):
+        camera.up = zero
+    assert camera.up == original
+
+
+def test_camera_position_raises_zero_viewup():
+    # VTK used to silently substitute (0, 1, 0) here. See #7826.
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match=re.escape('Camera up vector cannot be zero.')):
+        pl.camera_position = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+
+
+def test_set_viewup_raises_zero_vector():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match=re.escape('Camera up vector cannot be zero.')):
+        pl.set_viewup((0, 0, 0))
 
 
 def test_enable_parallel_projection(camera):

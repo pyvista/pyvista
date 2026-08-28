@@ -1,12 +1,14 @@
 """
 .. _customize_trame_toolbar_example:
 
-Customize Trame toolbar
-~~~~~~~~~~~~~~~~~~~~~~~~
+Customize Trame Toolbar
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Bring more of the power of trame to the jupyter view.
+
 This example shows how to add custom tools using the
-`jupyter_kwargs` option with :meth:`~pyvista.Plotter.show`.
+``jupyter_kwargs`` option with :meth:`~pyvista.Plotter.show`.
+
 """
 
 import asyncio
@@ -71,7 +73,7 @@ def custom_tools():
 # %%
 # The button callback function ``button_play`` needs to be created before starting
 # the server. This function will toggle the boolean state variable ``play``
-# and flush the server, i.e. "force" the server to see the change.
+# and flush the server, that is, "force" the server to see the change.
 # We will see more on the state variables in a bit, but we need to create the
 # function here otherwise the server will complain ``button_play`` does not exist.
 
@@ -133,7 +135,7 @@ ctrl.view_update = widget.viewer.update
 
 # trame callbacks
 @state.change('play')
-async def _play(play, **kwargs):  # noqa: ARG001
+async def _play(play, **kwargs):
     while state.play:
         state.resolution += 1
         state.flush()
@@ -143,13 +145,13 @@ async def _play(play, **kwargs):  # noqa: ARG001
 
 
 @state.change('resolution')
-def update_resolution(resolution, **kwargs):  # noqa: ARG001
+def update_resolution(resolution, **kwargs):
     algo.resolution = resolution
     ctrl.view_update()
 
 
 @state.change('visibility')
-def set_visibility(visibility, **kwargs):  # noqa: ARG001
+def set_visibility(visibility, **kwargs):
     toggle = {'Hide': 0, 'Show': 1}
     mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()

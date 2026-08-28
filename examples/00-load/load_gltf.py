@@ -1,9 +1,12 @@
 """
 .. _load_gltf_example:
 
-Working with glTF Files
+Working With glTF Files
 ~~~~~~~~~~~~~~~~~~~~~~~
-Import a glTF file directly into a PyVista plotting scene.  For more
+
+Import a glTF file directly into a PyVista plotting scene.
+
+For more
 details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 
@@ -16,7 +19,7 @@ based rendering and VTK v9 supports high dynamic range textures.
 import pyvista as pv
 from pyvista import examples
 
-helmet_file = examples.gltf.download_damaged_helmet()
+helmet_file = examples.download_damaged_helmet(load=False)
 texture = examples.download_dikhololo_night()
 
 

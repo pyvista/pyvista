@@ -13,7 +13,7 @@ forward to the component for backward compatibility.
 
 from __future__ import annotations
 
-from functools import partial
+import functools
 from typing import TYPE_CHECKING
 import weakref
 
@@ -62,7 +62,7 @@ def _launch_pick_event(interactor, _event):
 
 
 def _poked_context_callback(plotter, *args, **kwargs):
-    """Use _poked_context_callback in a poked renderer context."""
+    """Invoke a picking callback from within a poked renderer subplot context."""
     with plotter.iren.poked_subplot():
         try_callback(*args, **kwargs)
 
@@ -294,7 +294,7 @@ class PickingComponent(_NoNewAttrMixin):
     Attributes
     ----------
     picked_path : pyvista.PolyData | None
-        Polyline accumulated by :meth:`enable_path_picking`.
+        PolyLine accumulated by :meth:`enable_path_picking`.
     picked_geodesic : pyvista.PolyData | None
         Geodesic polyline accumulated by :meth:`enable_geodesic_picking`.
     picked_horizon : pyvista.PolyData | None
@@ -315,7 +315,7 @@ class PickingComponent(_NoNewAttrMixin):
         # Mesh-aware picking state
         self._picked_actor = None
         self._picked_mesh = None
-        self._picked_cell: None | pv.MultiBlock | pv.UnstructuredGrid = None
+        self._picked_cell: pv.MultiBlock | pv.UnstructuredGrid | None = None
         self._picking_text = None
         self._picked_block_index = None
         # Path / geodesic / horizon state
@@ -356,7 +356,7 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_mesh
 
     @property
-    def picked_cells(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
+    def picked_cells(self) -> pv.UnstructuredGrid | pv.MultiBlock | None:
         r"""Return the cell-picked object.
 
         Returns
@@ -433,12 +433,12 @@ class PickingComponent(_NoNewAttrMixin):
         if left_clicking:
             self._picking_left_clicking_observer = self._plotter.iren.add_observer(
                 'LeftButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
         else:
             self._picking_right_clicking_observer = self._plotter.iren.add_observer(
                 'RightButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
 
     def _validate_picker_not_in_use(self):
@@ -584,8 +584,6 @@ class PickingComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(pv.Sphere())
         >>> _ = pl.add_mesh(pv.Cube(), pickable=False)
         >>> pl.enable_point_picking(show_message='Pick a point')
-
-        See :ref:`point_picking_example` for a full example using this method.
 
 
         """
@@ -842,7 +840,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -882,8 +880,6 @@ class PickingComponent(_NoNewAttrMixin):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_surface_point_picking()
-
-        See :ref:`surface_point_picking_example` for a full example using this method.
 
 
         """
@@ -996,7 +992,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -1010,8 +1006,8 @@ class PickingComponent(_NoNewAttrMixin):
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -1040,8 +1036,6 @@ class PickingComponent(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_mesh_picking()
-
-        See :ref:`mesh_picking_example` for a full example using this method.
 
 
         """
@@ -1427,7 +1421,7 @@ class PickingComponent(_NoNewAttrMixin):
         through : bool, default: True
             When ``True`` the picker will select all cells
             through the mesh(es). When ``False``, the picker will select
-            only visible cells on the selected surface(s).
+            only visible cells on the selected surfaces.
 
         show : bool, default: True
             Show the selection interactively.
@@ -1540,7 +1534,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -1559,11 +1553,6 @@ class PickingComponent(_NoNewAttrMixin):
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
-
-        See Also
-        --------
-        :ref:`element_picking_example`
-
 
         """
         mode = ElementType.from_any(mode)

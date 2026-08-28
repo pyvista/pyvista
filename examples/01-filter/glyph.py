@@ -5,6 +5,7 @@ Plotting Glyphs (Vectors or PolyData)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
+
 """
 
 import math
@@ -16,7 +17,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter
+# Glyphing can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
 mesh = examples.download_carotid().threshold(145, scalars='scalars')
 mask = mesh['scalars'] < 210
@@ -32,8 +33,8 @@ glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.003, geom=geom)
 pl = pv.Plotter()
 pl.add_mesh(glyphs, show_scalar_bar=False, lighting=False, cmap='coolwarm')
 pl.camera_position = pv.CameraPosition(
-    position=(146.53, 91.28, 21.70),
-    focal_point=(125.00, 94.45, 19.81),
+    position=(146.5, 91.28, 21.7),
+    focal_point=(125.0, 94.45, 19.81),
     viewup=(-0.086, 0.007, 0.996),
 )  # view only part of the vector field
 cpos = pl.show(return_cpos=True)

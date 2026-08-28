@@ -1,26 +1,52 @@
 extends: capitalization
 message: "'%s' should use title-style capitalization."
-link: "https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings"
+link: "https://docs.vale.sh/checks/capitalization"
 level: warning
+# Although this lives in `styles/Google`, the headings use AP title case,
+# not Google's sentence case. Capitalize every word except:
+#     a an the and but or nor for of in on at to by as if per via en vs
+# and capitalize even those when they are the first or last word of the
+# heading. This is what Vale's `$title` applies by default; no `style`
+# is set.
+#
+#   Clip With Plane                   not  Clip with Plane
+#   Textures From Files               not  Textures from Files
+#   What Is a Mesh?                   not  What is a Mesh?
+#   Distance Between Two Surfaces     not  Distance between Two Surfaces
+#   List-Like Features                not  List-like Features
+#   Modify Which Actors Are Pickable  not  Modify Which Actors are Pickable
+#   A Guide to the Data Model              first and last always capitalized
+#
+# `to` is the one word left to the author: `Built to Extend` and `Built To
+# Extend` both pass. See the exception below for why.
 scope: heading
 match: $title
+# Every word must be right: the default of 0.8 passes a heading whose words are
+# 80% correct, so a single miscased word slips through in anything five words
+# or longer.
+threshold: 1.0
+# Don't auto-exempt every vocab word (PyVista's Vocab is spelling-only content
+# like widget/spline/arrays), which forces a single casing everywhere and
+# breaks normal title-case on headings that use one of those words -- keep
+# the curated list below instead.
+vocab: false
 indicators:
   - ":"
+# Vale matches an exception as an unanchored pattern, so a bare `a` exempted
+# every word containing the letter -- `calibration`, `camera` -- and silently
+# turned this rule off for most headings. Anchor every entry to the start of a
+# word so each one exempts only itself; the trailing `\b` still allows a
+# possessive or an attached comma (`pytest's`, `glTF.`).
 exceptions:
-  - gRPC
-  - from
-  - a
-  - PyVista
-  - with
-  - within
-  - your
-  - own
-  - is
-  - are
-  - VTK
-  - PointSet
-  - HTML
-  - to
-  - for
-  - through
-  - pytest
+  # PyVista's one deviation from AP. AP capitalizes `to` in an infinitive, but
+  # Vale decides that by asking whether the next word is tagged as a noun: it
+  # capitalizes `to a Plane`, and misses the infinitive in `Learning to Plot`
+  # because `Plot` is also a noun. Keep `to` lower-case throughout instead.
+  - ^to\b
+
+  # Terms that carry their own casing
+  - ^bit\b # the `-bit` in `(64-bit)`
+  - ^glTF\b
+  - ^mini\b # Apple's `Mac mini`
+  - ^pytest\b
+  - ^pyvista\.\w+\b # allow the `pyvista.` namespace in headings

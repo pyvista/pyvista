@@ -195,7 +195,7 @@ def cell_quality_info(
     - ``acceptable_range``: Well-behaved cells have values in this range.
     - ``normal_range``: All cells except those with degeneracies have values in this range.
     - ``full_range``: All cells including degenerate ones have values in this range.
-    - ``unit_cell_value``: The quality measure value for a reference unit cell (e.g.
+    - ``unit_cell_value``: The quality measure value for a reference unit cell (for example
       equilateral triangle with edge length of one for triangles).
 
     This information can help inform if a particular cell is of high or low quality.
@@ -214,7 +214,6 @@ def cell_quality_info(
     .. include:: /api/core/cell_quality/cell_quality_info_table_WEDGE.rst
 
     .. include:: /api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
-
 
     .. note::
 
@@ -298,8 +297,6 @@ def cell_quality_info(
 
     >>> info_quad.unit_cell_value
     1.0
-
-    See :ref:`mesh_quality_example` for more examples using this function.
 
     """
 

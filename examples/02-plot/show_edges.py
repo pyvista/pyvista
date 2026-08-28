@@ -4,8 +4,9 @@
 Show Edges
 ~~~~~~~~~~
 
-Show the edges of all geometries within a mesh using the
-:attr:`~pyvista.Property.show_edges` property.
+Show the edges of all geometries within a mesh.
+
+Uses the :attr:`~pyvista.Property.show_edges` property.
 
 """
 
@@ -13,7 +14,7 @@ Show the edges of all geometries within a mesh using the
 # Sometimes it can be useful to show all of the edges of a mesh when rendering
 # to communicate aspects of the dataset like resolution.
 #
-# Showing the edges for any rendered dataset is as simple as specifying the
+# Showing the edges for any rendered dataset is as simple as specifying
 # the ``show_edges`` keyword argument to ``True`` when plotting a dataset.
 
 # sphinx_gallery_thumbnail_number = 1

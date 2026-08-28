@@ -10,10 +10,12 @@ from types import ModuleType  # noqa: TC003
 import scooby
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._vtk import _VTK_ROOT
 
+# ``{pkg}`` is filled with the selected VTK backend (vtkmodules or cvista) in `_run`.
 _cmd_render_window_info = """
-from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
-import vtkmodules.vtkRenderingOpenGL2
+from {pkg}.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+import {pkg}.vtkRenderingOpenGL2
 ren = vtkRenderer()
 win = vtkRenderWindow()
 win.OffScreenRenderingOn()
@@ -26,14 +28,16 @@ print('vtkRenderWindow class name: ', win.GetClassName())
 """
 
 _cmd_math_text = """
-import vtkmodules.vtkRenderingFreeType
-import vtkmodules.vtkRenderingMatplotlib
-print(vtkmodules.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported())
+import {pkg}.vtkRenderingFreeType
+import {pkg}.vtkRenderingMatplotlib
+print({pkg}.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported())
 """
 
 
 def _run(cmd: str):
-    return subprocess.run([sys.executable, '-c', cmd], check=False, capture_output=True)
+    return subprocess.run(
+        [sys.executable, '-c', cmd.format(pkg=_VTK_ROOT)], check=False, capture_output=True
+    )
 
 
 def _get_cached_render_window_info(attr_name: str = ''):
@@ -67,16 +71,10 @@ def _get_render_window_class() -> str:  # numpydoc ignore=RT01
 def check_matplotlib_vtk_compatibility() -> bool:
     """Check if VTK and Matplotlib versions are compatible for MathText rendering.
 
-    This function is primarily geared towards checking if MathText rendering is
-    supported with the given versions of VTK and Matplotlib. It follows the
-    version constraints:
+    MathText rendering is only supported with Matplotlib >= 3.6
 
-    * VTK <= 9.2.2 requires Matplotlib < 3.6
-    * VTK > 9.2.2 requires Matplotlib >= 3.6
-
-    Other version combinations of VTK and Matplotlib will work without
-    errors, but some features (like MathText/LaTeX rendering) may
-    silently fail.
+    Other versions of Matplotlib will work without errors, but some features
+    (like MathText/LaTeX rendering) may silently fail.
 
     Returns
     -------
@@ -92,15 +90,8 @@ def check_matplotlib_vtk_compatibility() -> bool:
     """
     import matplotlib as mpl  # noqa: PLC0415
 
-    from pyvista import vtk_version_info  # noqa: PLC0415
-
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
-    if vtk_version_info <= (9, 2, 2):
-        return not mpl_vers >= (3, 6)
-    elif vtk_version_info > (9, 2, 2):
-        return mpl_vers >= (3, 6)
-    msg = 'Uncheckable versions.'  # pragma: no cover
-    raise RuntimeError(msg)  # pragma: no cover
+    return mpl_vers >= (3, 6)
 
 
 def check_math_text_support() -> bool:
@@ -191,16 +182,9 @@ class GPUInfo:
 class Report(scooby.Report):
     """Generate a PyVista software environment report.
 
-    .. versionadded:: 0.47
-
-        The report can now be generated using the shell command:
-
-        .. code-block:: shell
-
-            pyvista report --sort ...
-
-        Run ``pyvista report --help`` for more details on available parameters.
-
+    .. note::
+        This class is also available via command-line interface. See
+        :ref:`pyvista report <cli_report>` for details.
 
     Parameters
     ----------
@@ -291,7 +275,10 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = [
+            # cvista extra (alternative VTK backend)
+            'cvista',
             # Misc.
+            'pyobjc-framework-Cocoa',
             'pytest-pyvista',
             'pyvistaqt',
             'PyQt5',

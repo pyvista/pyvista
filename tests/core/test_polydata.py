@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from math import pi
-import pathlib
+import math
 from pathlib import Path
 import re
 from unittest.mock import patch
@@ -12,6 +11,7 @@ import trimesh
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaFutureWarning
@@ -153,12 +153,12 @@ def test_init_as_points():
 
     vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
     cells = np.array([1, 0, 1, 1, 1, 2], np.int16)
-    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).cells
     assert np.allclose(to_check, cells)
 
     # from list
     mesh.verts = [[1, 0], [1, 1], [1, 2]]
-    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).cells
     assert np.allclose(to_check, cells)
 
     mesh = pv.PolyData()
@@ -173,6 +173,12 @@ def test_init_as_points_from_list():
     points = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
     mesh = pv.PolyData(points)
     assert np.allclose(mesh.points, points)
+
+
+def test_init_as_points_uses_fixed_size_storage():
+    mesh = pv.PolyData(np.zeros((3, 3)))
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetVerts().IsStorageFixedSize()
 
 
 def test_invalid_init():
@@ -222,6 +228,21 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
     match = re.escape(
         f'Cell array size is invalid. Size ({len(np.ravel(value))}) does not match expected size ({expected}).'  # noqa: E501
     )
+    with pytest.raises(CellSizeError, match=match):
+        setattr(mesh, arr, value)
+
+    with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
+        _ = pv.PolyData(points, **{arr: value})
+
+
+@pytest.mark.parametrize('arr', ['faces', 'strips', 'lines', 'verts'])
+@pytest.mark.parametrize('value', [[-1, 2, 0], [0, -1, 3], [-2, 2, 0]])
+def test_invalid_connectivity_arrays_negative_size(arr: str, value: list[int]):
+    generator = np.random.default_rng(seed=None)
+    points = generator.random((10, 3))
+    mesh = pv.PolyData(points)
+
+    match = re.escape('Cell array size is invalid. A cell has a negative number of points.')
     with pytest.raises(CellSizeError, match=match):
         setattr(mesh, arr, value)
 
@@ -359,23 +380,30 @@ def test_ray_trace_origin():
 
 def test_vtk_obb_tree_raises():
     poly = pv.PolyData()
-    match = 'Building the OBB tree requires PolyData with points and cells.'
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    match = 'Building vtkOBBTree requires a dataset with points and cells.'
+    match_warn = (
+        'The obbTree property is deprecated. This property is primarily for internal use only,'
+        '\nand the vtkOBBTree locator does not reliably find intersections in some cases.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
     poly = pv.PolyData()
     poly.points = [[0.0, 0.0, 0.0]]
     assert poly.n_points == 1
     assert poly.n_cells == 0
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
     poly = pv.PolyData()
     poly.faces = [3, 0, 0, 0]
     assert poly.n_points == 0
     assert poly.n_cells == 1
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
 
 def test_polydata_subclass_del():
@@ -763,7 +791,7 @@ def test_save(sphere, extension, binary, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
+    path = Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     sphere.save(path)
     assert path.is_file()
 
@@ -1044,7 +1072,7 @@ def test_clean(sphere):
 
 def test_area(sphere_dense, cube_dense):
     radius = 0.5
-    ideal_area = 4 * pi * radius**2
+    ideal_area = 4 * math.pi * radius**2
     assert np.isclose(sphere_dense.area, ideal_area, rtol=1e-3)
 
     ideal_area = 6 * np.cbrt(cube_dense.volume) ** 2
@@ -1052,7 +1080,7 @@ def test_area(sphere_dense, cube_dense):
 
 
 def test_volume(sphere_dense):
-    ideal_volume = (4 / 3.0) * pi * radius**3
+    ideal_volume = (4 / 3.0) * math.pi * radius**3
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
@@ -1062,6 +1090,15 @@ def test_remove_points_any(sphere):
     sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
     assert np.allclose(sphere_mod.points, sphere.points[ind])
+
+
+def test_remove_points_uses_fixed_size_storage(sphere):
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
+    remove_mask[:3] = True
+    sphere_mod, _ = sphere.remove_points(remove_mask, inplace=False, mode='any')
+    assert sphere_mod.is_all_triangles
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert sphere_mod.GetPolys().IsStorageFixedSize()
 
 
 def test_remove_points_all(sphere):
@@ -1381,6 +1418,8 @@ def test_regular_faces(deep):
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
     assert np.array_equal(mesh.faces, expected_faces)
     assert np.array_equal(mesh.regular_faces, faces)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_set_regular_faces():
@@ -1468,3 +1507,11 @@ def test_merge_points(inplace):
     assert output.n_points == 8
     assert isinstance(mesh, pv.PolyData)
     assert (mesh is output) == inplace
+
+
+def test_offset_array():
+    # Private, but geovista reads it, so removing it breaks the integration tests.
+    # It still works while deprecated in favour of `face_offsets`.
+    mesh = pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]])
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_offsets`'):
+        assert np.array_equal(mesh._offset_array, [0, 3, 6])

@@ -4,15 +4,15 @@
 Color Several Lines
 ~~~~~~~~~~~~~~~~~~~
 
-Render several :func:`pyvista.MultipleLines` polylines and color them by a
-line-wise scalar value.
+Render several :func:`~pyvista.MultipleLines` polylines colored by a scalar value.
+
 """
 
 import numpy as np
 import pyvista as pv
 
 # %%
-# Build a small family of curves
+# Build a Small Family of Curves
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each curve carries a single ``line_id`` cell scalar so the merged dataset
 # can be colored line-by-line.
@@ -36,7 +36,7 @@ curves
 
 
 # %%
-# Tube and color the lines
+# Tube and Color the Lines
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Coloring by ``line_id`` gives each line a single uniform color.
 

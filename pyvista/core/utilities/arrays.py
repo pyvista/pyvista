@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import Sequence
-import enum
-from itertools import product
+from enum import Enum
+import itertools
 import json
 from typing import TYPE_CHECKING
 from typing import Any
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
-class FieldAssociation(enum.Enum):
+class FieldAssociation(Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
     POINT = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)
@@ -114,7 +114,7 @@ def _coerce_pointslike_arg(
     *,
     copy: bool = False,
 ) -> tuple[NumpyArray[float], bool]:
-    """Check and coerce arg to (n, 3) np.ndarray.
+    """Check and coerce ``arg`` to (n, 3) np.ndarray.
 
     Parameters
     ----------
@@ -203,7 +203,7 @@ def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkA
     if deep:
         new_array.DeepCopy(array)
     else:
-        new_array.ShallowCopy(array)  # type: ignore[attr-defined]
+        new_array.ShallowCopy(array)
 
     return new_array
 
@@ -278,11 +278,11 @@ def convert_array(  # noqa: PLR0917
     Parameters
     ----------
     arr : np.ndarray | :vtk:`vtkDataArray`
-        A numpy array or :vtk:`vtkDataArray` to convert.
+        A NumPy array or :vtk:`vtkDataArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
-        If input is numpy array then deep copy values.
+        If input is a NumPy array then deep copy values.
     array_type : int, optional
         VTK array type ID as specified in ``vtkType.h``.
 
@@ -336,7 +336,7 @@ def get_array(  # noqa: PLR0917
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
     err: bool = False,  # noqa: FBT001, FBT002
 ) -> pyvista_ndarray | None:
-    """Search point, cell and field data for an array.
+    """Search point, cell, and field data for an array.
 
     Parameters
     ----------
@@ -497,6 +497,19 @@ def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> N
         f'must match either the number of points ({dataset.n_points}) '
         f'or the number of cells ({dataset.n_cells}).'
     )
+    if scalars.size == dataset.n_points:
+        matching_association = f'the number of points ({dataset.n_points})'
+    elif scalars.size == dataset.n_cells:
+        matching_association = f'the number of cells ({dataset.n_cells})'
+    else:
+        matching_association = None
+
+    if matching_association is not None:
+        msg += (
+            f' The scalars have shape {scalars.shape}, and their total size '
+            f'({scalars.size}) matches {matching_association}. Consider flattening '
+            "the scalars with `scalars.ravel(order='F')` before assigning them."
+        )
     raise ValueError(msg)
 
 
@@ -584,7 +597,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
 
 
 def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
-    """Return row array of a vtk object.
+    """Return row array of a VTK object.
 
     Parameters
     ----------
@@ -608,14 +621,14 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
 
 
 def get_vtk_type(typ: npt.DTypeLike) -> int:
-    """Look up the VTK type for a given numpy data type.
+    """Look up the VTK type for a given NumPy data type.
 
     Corrects for string type mapping issues.
 
     Parameters
     ----------
     typ : numpy.dtype
-        Numpy data type.
+        NumPy data type.
 
     Returns
     -------
@@ -690,14 +703,14 @@ def convert_string_array(
 def convert_string_array(
     arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
-    """Convert a numpy array of strings to a :vtk:`vtkStringArray` or vice versa.
+    """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
     If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
 
     Parameters
     ----------
     arr : numpy.ndarray | str
-        Numpy string array to convert.
+        NumPy string array to convert.
 
     name : str, optional
         Name to set the :vtk:`vtkStringArray` to.
@@ -760,12 +773,12 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
     ----------
     matrix : :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         The vtk matrix to be converted to a ``numpy.ndarray``.
-        Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
+        Returned ``ndarray`` has shape (3, 3) or (4, 4) as appropriate.
 
     Returns
     -------
     numpy.ndarray
-        Numpy array containing the data from ``matrix``.
+        NumPy array containing the data from ``matrix``.
 
     """
     if isinstance(matrix, _vtk.vtkMatrix3x3):
@@ -779,7 +792,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
         )
         raise TypeError(msg)
     array = np.zeros(shape)
-    for i, j in product(range(shape[0]), range(shape[1])):
+    for i, j in itertools.product(range(shape[0]), range(shape[1])):
         array[i, j] = matrix.GetElement(i, j)
     return array
 
@@ -809,7 +822,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
         msg = f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).'
         raise ValueError(msg)
     m, n = array.shape
-    for i, j in product(range(m), range(n)):
+    for i, j in itertools.product(range(m), range(n)):
         matrix.SetElement(i, j, array[i, j])
     return matrix
 
@@ -1035,7 +1048,7 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
         This method does nothing. It only exists to make the pickle library happy.
         Classes that store an instance of this class must pickle this array directly.
-        E.g. DataObjects can support this by storing this array as field data
+        For example, DataObjects can support this by storing this array as field data
         """
 
     def __setstate__(self: _SerializedDictArray, state: Any) -> None:
@@ -1043,7 +1056,7 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
         This method does nothing. It only exists to make the pickle library happy.
         Classes that store an instance of this class must pickle this array directly.
-        E.g. DataObjects can support this by storing this array as field data
+        For example, DataObjects can support this by storing this array as field data
         """
 
     # Override any/all `UserDict` or `MutableMapping` methods which mutate

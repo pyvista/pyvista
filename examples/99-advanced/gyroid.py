@@ -4,15 +4,18 @@
 Plot a Gyroid Surface
 ---------------------
 
-Contour an implicit gyroid field stored on :class:`pyvista.ImageData` into a
-periodic surface with :func:`pyvista.DataSetFilters.contour`.
+Contour an implicit gyroid field into a periodic surface.
+
+Uses a field stored on :class:`pyvista.ImageData` with
+:func:`pyvista.DataSetFilters.contour`.
+
 """
 
 import numpy as np
 import pyvista as pv
 
 # %%
-# Sample the implicit field
+# Sample the Implicit Field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # The gyroid is the zero level set of
 # ``sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x)``.
@@ -33,7 +36,7 @@ grid
 
 
 # %%
-# Extract the zero isosurface
+# Extract the Zero Isosurface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The contour weaves through the periodic sample volume.
 

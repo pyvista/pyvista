@@ -5,6 +5,7 @@ Applying Textures
 ~~~~~~~~~~~~~~~~~
 
 Plot a mesh with an image projected onto it as a texture.
+
 """
 
 from matplotlib.pyplot import get_cmap
@@ -14,7 +15,7 @@ from pyvista import examples
 
 # %%
 # Texture mapping is easily implemented using PyVista. Many of the geometric
-# objects come preloaded with texture coordinates, so quickly creating a
+# objects come pre-loaded with texture coordinates, so quickly creating a
 # surface and displaying an image is simply:
 
 # load a sample texture
@@ -30,7 +31,7 @@ surf.plot(texture=tex)
 # But what if your dataset doesn't have texture coordinates? Then you can
 # harness the :func:`pyvista.DataSetFilters.texture_map_to_plane` filter to
 # properly map an image to a dataset's surface.
-# For example, let's map that same image of bricks to a curvey surface:
+# For example, let's map that same image of bricks to a curvy surface:
 
 # create a structured surface
 x = np.arange(-10, 10, 0.25)
@@ -66,7 +67,7 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# Textures from Files
+# Textures From Files
 # +++++++++++++++++++
 #
 # What about loading your own texture from an image? This is often most easily
@@ -107,7 +108,7 @@ tex = pv.numpy_to_texture(image)
 curvsurf.plot(texture=tex)
 
 # %%
-# Create a GIF Movie with updating textures
+# Create a GIF Movie With Updating Textures
 # +++++++++++++++++++++++++++++++++++++++++
 # Generate a moving gif from an active plotter with updating textures.
 
@@ -146,13 +147,14 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 pl.close()
 
 # %%
-# Textures with Transparency
+# Textures With Transparency
 # ++++++++++++++++++++++++++
 #
 # Textures can also specify per-pixel opacity values. The image must
-# contain a 4th channel specifying the opacity value from 0 [transparent] to
+# contain a fourth channel specifying the opacity value from 0 [transparent] to
 # 255 [fully visible]. To enable this feature just pass the opacity array as the
-# 4th channel of the image as a 3 dimensional matrix with shape [nrows, ncols, 4]
+# fourth channel of the image as a 3 dimensional matrix with shape
+# [``nrows``, ``ncols``, 4]
 # :func:`pyvista.numpy_to_texture`.
 #
 # Here we can download an image that has an alpha channel:
@@ -203,7 +205,7 @@ curvsurf.plot(texture=tex, cpos='xy')
 # %%
 # Spherical Texture Coordinates
 # +++++++++++++++++++++++++++++
-# We have a built in convienance method for mapping textures to spherical
+# We have a built in convenience method for mapping textures to spherical
 # coordinate systems much like the planar mapping demoed above.
 mesh = pv.Sphere()
 tex = examples.download_masonry_texture()
@@ -218,8 +220,8 @@ mesh.plot(texture=tex)
 # contributed example from `this support issue <https://github.com/pyvista/pyvista-support/issues/257>`_
 #
 # Manually create the texture coordinates for a globe map. First, we create
-# the mesh that will be used as the globe. Note the `start_theta` for a slight
-# overlappig
+# the mesh that will be used as the globe. Note the ``start_theta`` for a slight
+# overlap.
 sphere = pv.Sphere(
     radius=1,
     theta_resolution=120,

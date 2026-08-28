@@ -5,11 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import cached_property
-from functools import wraps
+import functools
 import numbers
 from pathlib import Path
-from textwrap import dedent
+import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
@@ -20,14 +19,19 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
 
 from .cell import CellArray
+from .cell import _get_connectivity
 from .cell import _get_connectivity_array
 from .cell import _get_irregular_cells
 from .cell import _get_offset_array
+from .cell import _get_offsets
 from .cell import _get_regular_cells
+from .cell import _make_cell_array
 from .celltype import CellType
 from .dataset import DataSet
 from .errors import CellSizeError
@@ -39,6 +43,7 @@ from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
 from .utilities.arrays import convert_array
+from .utilities.cells import _get_regular_cells_from_dict
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
@@ -47,6 +52,7 @@ from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 from .utilities.writer import BaseWriter
+from .utilities.writer import EnSightWriter
 from .utilities.writer import HDFWriter
 from .utilities.writer import HoudiniPolyDataWriter
 from .utilities.writer import IVWriter
@@ -183,9 +189,11 @@ class _PointSet(DataSet):
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
         target = self if inplace else self.copy()
-
-        target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        target.cell_data[array_name] = ghost_cells
         target.RemoveGhostCells()
+        with contextlib.suppress(KeyError):
+            del target.cell_data[array_name]
         return target
 
     def points_to_double(self) -> Self:
@@ -231,11 +239,11 @@ class _PointSet(DataSet):
         Parameters
         ----------
         xyz : VectorLike[float]
-            A vector of three floats of cartesian values to translate the mesh with.
+            A vector of three floats of Cartesian values to translate the mesh with.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed. This is
+            the points, normals, and active vectors are transformed. This is
             only valid when not updating in place.
 
         inplace : bool, default: False
@@ -287,7 +295,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
-        List, numpy array, or sequence containing point locations. Must be an
+        List, NumPy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
     deep : bool, default: False
@@ -310,7 +318,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     Examples
     --------
-    Create a simple point cloud of 10 points from a numpy array.
+    Create a simple point cloud of 10 points from a NumPy array.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -411,14 +419,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)
+    @functools.wraps(DataSet.plot)
     def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @wraps(PolyDataFilters.threshold)
+    @functools.wraps(PolyDataFilters.threshold)
     def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -426,7 +434,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.threshold_percent)
+    @functools.wraps(PolyDataFilters.threshold_percent)
     def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -436,7 +444,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @wraps(PolyDataFilters.explode)
+    @functools.wraps(PolyDataFilters.explode)
     def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
@@ -445,7 +453,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.delaunay_3d)
+    @functools.wraps(PolyDataFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
@@ -553,9 +561,30 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
+    def extract_all_edges(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def compute_cell_sizes(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def cell_quality(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def _dataset_cell_quality(self, *args, **kwargs):  # noqa: ARG002
+        """Raise cell operations are not supported.
+
+        This backs ``cell_quality`` when applied to a block within a
+        :class:`~pyvista.MultiBlock` via ``generic_filter``, which dispatches
+        per-block rather than through the public ``cell_quality`` method.
+        """
+        raise PointSetCellOperationError
+
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
-    """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
+    """Dataset consisting of surface geometry (for example, vertices, lines, and polygons).
 
     The surface geometry is defined by its :attr:`~pyvista.DataSet.points` and four separate
     cell connectivity arrays:
@@ -568,14 +597,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
       :attr:`~pyvista.CellType.QUAD`, and :attr:`~pyvista.CellType.POLYGON` cells.
     - :attr:`strips` for 2-dimensional :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-    Cell types can be mixed, and any combination of cell connectivity array(s) may be specified.
+    Cell types can be mixed, and any combination of cell connectivity arrays may be specified.
 
     :class:`~pyvista.PolyData` can be initialized in several ways:
 
     - Create an empty mesh
     - Initialize from a :vtk:`vtkPolyData`
     - Using points only
-    - Using points with verts, faces, lines, and/or strips
+    - Using points with ``verts``, faces, lines, and/or strips
     - From a file
 
     If a points array is provided with no cell connectivity, the :attr:`verts` connectivity is
@@ -672,6 +701,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 3
+
     >>> import vtk
     >>> import numpy as np
     >>> from pyvista import examples
@@ -754,7 +785,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
     mesh. The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and
-    ``GetVerts`` return the underlying ``CellArray``s for the ``faces``,
+    ``GetVerts`` return the underlying ``CellArray`` objects for the ``faces``,
     ``lines``, ``strips``, and ``verts`` properties respectively.
     Reusing cell arrays like this can be a performance optimization for
     large meshes because it avoids allocating new arrays.
@@ -768,8 +799,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> _ = pl.add_mesh(small_sphere, color='red', show_edges=True)
     >>> _ = pl.add_mesh(larger_sphere, color='blue', opacity=0.3, show_edges=True)
     >>> pl.show()
-
-    See :ref:`create_poly_example` for more examples.
 
     """
 
@@ -849,7 +878,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 - vtkDataArray
 
                 Instead got: {type(var_inp)}"""
-            raise TypeError(dedent(msg.strip('\n')))
+            raise TypeError(textwrap.dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
         if faces is lines is strips is verts is None:
@@ -890,11 +919,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return DataSet.__str__(self)
 
     @staticmethod
-    def _make_vertex_cells(npoints: int) -> NumpyArray[int]:
-        cells = np.empty((npoints, 2), dtype=pv.ID_TYPE)
-        cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
-        return cells
+    def _make_vertex_cells(npoints: int) -> CellArray:
+        connectivity = cast('NumpyArray[int]', np.arange(npoints, dtype=pv.ID_TYPE).reshape(-1, 1))
+        return CellArray.from_regular_cells(connectivity)
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -904,14 +931,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in vertex 0, and ``pX_Y`` is the
-        Y'th point in vertex X.
+        where ``n0`` is the number of points in vertex 0, and ``pX_Y`` is
+        point Y in vertex X.
 
         Vertices can be a single :attr:`~pyvista.CellType.VERTEX` cell with connectivity
         to a single point, or a :attr:`~pyvista.CellType.POLY_VERTEX` with connectivity
         to multiple points.
 
-        For example, a single vertex and poly-vertex with five points might be represented as::
+        For example, a single vertex and polyvertex with five points might be represented as::
 
            [1, 0, 5, 3, 2, 4, 1, 5]
 
@@ -938,7 +965,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> points = rng.random((5, 3))
         >>> pdata = pv.PolyData(points)
         >>> pdata.verts
-        array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
+        array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4]...)
 
         Set vertex cells.  Note how the mesh plots both the surface
         mesh and the additional vertices in a single plot.
@@ -982,14 +1009,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in line 0, and ``pX_Y`` is the
-        Y'th point in line X.
+        where ``n0`` is the number of points in line 0, and ``pX_Y`` is
+        point Y in line X.
 
         Lines can be a single :attr:`~pyvista.CellType.LINE` cell with connectivity
         to two points, or a :attr:`~pyvista.CellType.POLY_LINE` with connectivity
         to any number of points.
 
-        For example, a single line and poly-line with five points might be represented as::
+        For example, a single line and polyline with five points might be represented as::
 
            [2, 0, 1, 5, 3, 2, 4, 6, 5]
 
@@ -1012,7 +1039,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> points = np.random.default_rng().random((3, 3))
         >>> spline = pv.Spline(points, 10)
         >>> spline.lines
-        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
         """
         self.GetLines().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
@@ -1033,8 +1060,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
-        Y'th point in face X.
+        where ``n0`` is the number of points in face 0, and ``pX_Y`` is
+        point Y in face X.
 
         Faces can be :attr:`~pyvista.CellType.TRIANGLE`, :attr:`~pyvista.CellType.QUAD`,
         or :attr:`~pyvista.CellType.POLYGON` cells.
@@ -1073,7 +1100,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> import pyvista as pv
         >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
         >>> plane.faces
-        array([4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7])
+        array([4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]...)
 
         Note how the faces contain a "padding" indicating the number
         of points per face:
@@ -1082,7 +1109,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([[4, 0, 1, 4, 3],
                [4, 1, 2, 5, 4],
                [4, 3, 4, 7, 6],
-               [4, 4, 5, 8, 7]])
+               [4, 4, 5, 8, 7]]...)
 
         Set the faces directly. The following example creates a simple plane
         with a single square faces and modifies it to have two triangles
@@ -1091,7 +1118,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh = pv.Plane(i_resolution=1, j_resolution=1)
         >>> mesh.faces = [3, 0, 1, 2, 3, 3, 2, 1]
         >>> mesh.faces
-        array([3, 0, 1, 2, 3, 3, 2, 1])
+        array([3, 0, 1, 2, 3, 3, 2, 1]...)
 
         """
         self.GetPolys().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
@@ -1115,7 +1142,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Returns
         -------
         numpy.ndarray
-            Array of face indices with shape (n_faces, face_size).
+            Array of face indices with shape (``n_faces``, ``face_size``).
 
         See Also
         --------
@@ -1137,7 +1164,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([[0, 1, 4, 3],
                [1, 2, 5, 4],
                [3, 4, 7, 6],
-               [4, 5, 8, 7]])
+               [4, 5, 8, 7]]...)
 
         """
         regular_faces = _get_regular_cells(self.GetPolys())
@@ -1153,7 +1180,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]) -> None:  # numpydoc ignore=PR01
-        """Set the face cells from an (n_faces, face_size) array."""
+        """Set the face cells from an (``n_faces``, ``face_size``) array."""
         self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
@@ -1164,15 +1191,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         faces: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
+        """Alternate :class:`pyvista.PolyData` constructor from points and regular face arrays.
 
         Parameters
         ----------
         points : MatrixLike[float]
-            A (n_points, 3) array of points.
+            A (``n_points``, 3) array of points.
 
         faces : MatrixLike[int]
-            A (n_faces, face_size) array of face indices. For a triangle mesh, ``face_size = 3``.
+            A (``n_faces``, ``face_size``) array of face indices. For a triangle mesh,
+            ``face_size = 3``.
 
         deep : bool, default: False
             Whether to deep copy the faces array into :vtk:`vtkCellArray` connectivity data.
@@ -1206,7 +1234,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Returns
         -------
         tuple[numpy.ndarray]
-            Tuple of length n_faces where each element is an array of point
+            Tuple of length ``n_faces`` where each element is an array of point
             indices for points in that face.
 
         See Also
@@ -1237,12 +1265,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
-        """Alternate `pyvista.PolyData` convenience constructor from point and ragged face arrays.
+        """Alternate :class:`pyvista.PolyData` constructor from points and ragged face arrays.
 
         Parameters
         ----------
         points : MatrixLike[float]
-            A (n_points, 3) array of points.
+            A (``n_points``, 3) array of points.
 
         faces : Sequence[VectorLike[int]]
             A sequence of face vectors containing point indices.
@@ -1289,8 +1317,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in strip 0, and ``pX_Y`` is the
-        Y'th point in strip X.
+        where ``n0`` is the number of points in strip 0, and ``pX_Y`` is
+        point Y in strip X.
 
         Only the connectivity of :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells is stored in this
         array.
@@ -1318,7 +1346,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> polygon = pv.Rectangle()
         >>> extruded = polygon.extrude((0, 0, 1), capping=False)
         >>> extruded.strips
-        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+        array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4]...)
         >>> extruded.n_strips
         4
 
@@ -1366,11 +1394,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return False
 
         # early return if not all triangular
-        if self._connectivity_array.size % 3:
+        if self.GetPolys().GetNumberOfConnectivityIds() % 3:
             return False
 
         # next, check if there are three points per face
-        return bool((np.diff(self._offset_array) == 3).all())
+        return self.GetPolys().IsHomogeneous() == 3
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
@@ -1389,13 +1417,680 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.boolean_union(other_mesh)
 
     @property
+    def vert_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the vertex cells.
+
+        The offsets array has ``n_verts + 1`` values and stores the index into
+        :attr:`vert_connectivity` at which each vertex cell begins. The point ids of
+        vertex cell ``i`` are ``vert_connectivity[vert_offsets[i]:vert_offsets[i + 1]]``.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity. ``len(vert_offsets) - 1`` is therefore
+        :attr:`n_verts`, not :attr:`~pyvista.DataSet.n_cells`.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of vertex cell offsets with ``n_verts + 1`` values.
+
+        See Also
+        --------
+        vert_connectivity
+            Point ids that define the vertex cells.
+        n_verts
+            Number of vertex cells, one less than the size of this array.
+        verts
+            Vertex cells in the legacy padded format.
+        line_offsets, face_offsets, strip_offsets
+            Offsets arrays of the other :class:`~pyvista.PolyData` cell types.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The new offsets must remain
+        consistent with the current :attr:`vert_connectivity`; to replace both at once,
+        assign a :class:`pyvista.CellArray` to :attr:`verts`. See the examples below.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
+        >>> mesh.vert_offsets
+        array([0, 1, 2, 3]...)
+
+        The offsets and connectivity together describe each vertex cell.
+
+        >>> mesh.vert_connectivity[mesh.vert_offsets[0] : mesh.vert_offsets[1]]
+        array([0]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.vert_offsets.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the three point ids are re-partitioned into a
+        single polyvertex cell.
+
+        >>> mesh.vert_offsets = [0, 3]
+        >>> mesh.n_verts
+        1
+
+        To replace the offsets and connectivity together, assign a
+        :class:`pyvista.CellArray` to :attr:`verts`.
+
+        >>> mesh.verts = pv.CellArray.from_arrays([0, 1, 2], [0, 1])
+        >>> mesh.n_verts
+        2
+
+        """
+        return _get_offsets(self.GetVerts())
+
+    @vert_offsets.setter
+    def vert_offsets(self, offsets: VectorLike[int]) -> None:
+        self.SetVerts(_make_cell_array(offsets, self.vert_connectivity))
+
+    @property
+    def vert_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the vertex cells.
+
+        The connectivity array stores the point ids of every vertex cell, one cell after
+        another and without any padding. Use :attr:`vert_offsets` to determine where
+        each vertex cell begins and ends.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the vertex cells.
+
+        See Also
+        --------
+        vert_offsets
+            Index into this array at which each vertex cell begins.
+        n_verts
+            Number of vertex cells.
+        verts
+            Vertex cells in the legacy padded format.
+        line_connectivity, face_connectivity, strip_connectivity
+            Connectivity arrays of the other :class:`~pyvista.PolyData` cell types.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change the
+        connectivity, assign a new array to this property. The input is copied, so the
+        mesh never aliases an array that may be modified later. To replace the offsets
+        and connectivity together, assign a :class:`pyvista.CellArray` to :attr:`verts`.
+
+        Where that copy is too expensive, assign a :class:`pyvista.CellArray` built with
+        :meth:`~pyvista.CellArray.from_arrays` and ``deep=False`` to :attr:`verts`, and
+        keep a reference to the connectivity array. The mesh then wraps that array, so
+        writing to it changes the vertex cells without any copy. Nothing validates the
+        point ids written this way.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
+        >>> mesh.vert_connectivity
+        array([0, 1, 2]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.vert_connectivity.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the order of the vertex cells is reversed.
+
+        >>> mesh.vert_connectivity = [2, 1, 0]
+        >>> mesh.vert_connectivity
+        array([2, 1, 0]...)
+
+        For a mesh large enough that the copy matters, keep the connectivity array and
+        edit it in place.
+
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1, 2], dtype=pv.ID_TYPE)
+        >>> mesh.verts = pv.CellArray.from_arrays(
+        ...     [0, 1, 2, 3], connectivity, deep=False
+        ... )
+        >>> connectivity[:] = [2, 0, 1]
+        >>> mesh.vert_connectivity
+        array([2, 0, 1]...)
+
+        """
+        return _get_connectivity(self.GetVerts())
+
+    @vert_connectivity.setter
+    def vert_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self.SetVerts(_make_cell_array(self.vert_offsets, connectivity))
+
+    @property
+    def line_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the line cells.
+
+        The offsets array has ``n_lines + 1`` values and stores the index into
+        :attr:`line_connectivity` at which each line begins. The point ids of line ``i``
+        are ``line_connectivity[line_offsets[i]:line_offsets[i + 1]]``.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity. ``len(line_offsets) - 1`` is therefore
+        :attr:`n_lines`, not :attr:`~pyvista.DataSet.n_cells`.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of line offsets with ``n_lines + 1`` values.
+
+        See Also
+        --------
+        line_connectivity
+            Point ids that define the lines.
+        n_lines
+            Number of line cells, one less than the size of this array.
+        lines
+            Lines in the legacy padded format.
+        vert_offsets, face_offsets, strip_offsets
+            Offsets arrays of the other :class:`~pyvista.PolyData` cell types.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The new offsets must remain
+        consistent with the current :attr:`line_connectivity`; to replace both at once,
+        assign a :class:`pyvista.CellArray` to :attr:`lines`. See the examples below.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> points = [[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]]
+        >>> mesh = pv.Spline(points, 10)
+        >>> mesh.line_offsets
+        array([ 0, 10]...)
+
+        The offsets and connectivity together describe each line.
+
+        >>> mesh.line_connectivity[mesh.line_offsets[0] : mesh.line_offsets[1]]
+        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.line_offsets.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the single polyline is split into two.
+
+        >>> mesh.line_offsets = [0, 5, 10]
+        >>> mesh.n_lines
+        2
+
+        To replace the offsets and connectivity together, assign a
+        :class:`pyvista.CellArray` to :attr:`lines`.
+
+        >>> mesh.lines = pv.CellArray.from_arrays([0, 2], [0, 9])
+        >>> mesh.n_lines
+        1
+
+        """
+        return _get_offsets(self.GetLines())
+
+    @line_offsets.setter
+    def line_offsets(self, offsets: VectorLike[int]) -> None:
+        self.SetLines(_make_cell_array(offsets, self.line_connectivity))
+
+    @property
+    def line_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the line cells.
+
+        The connectivity array stores the point ids of every line, one line after
+        another and without any padding. Use :attr:`line_offsets` to determine where
+        each line begins and ends.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the lines.
+
+        See Also
+        --------
+        line_offsets
+            Index into this array at which each line begins.
+        n_lines
+            Number of line cells.
+        lines
+            Lines in the legacy padded format.
+        vert_connectivity, face_connectivity, strip_connectivity
+            Connectivity arrays of the other :class:`~pyvista.PolyData` cell types.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change the
+        connectivity, assign a new array to this property. The input is copied, so the
+        mesh never aliases an array that may be modified later. To replace the offsets
+        and connectivity together, assign a :class:`pyvista.CellArray` to :attr:`lines`.
+
+        Where that copy is too expensive, assign a :class:`pyvista.CellArray` built with
+        :meth:`~pyvista.CellArray.from_arrays` and ``deep=False`` to :attr:`lines`, and
+        keep a reference to the connectivity array. The mesh then wraps that array, so
+        writing to it changes the lines without any copy. Nothing validates the point
+        ids written this way.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Line()
+        >>> mesh.line_connectivity
+        array([0, 1]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.line_connectivity.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the line is reversed.
+
+        >>> mesh.line_connectivity = [1, 0]
+        >>> mesh.line_connectivity
+        array([1, 0]...)
+
+        For a mesh large enough that the copy matters, keep the connectivity array and
+        edit it in place.
+
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1], dtype=pv.ID_TYPE)
+        >>> mesh.lines = pv.CellArray.from_arrays([0, 2], connectivity, deep=False)
+        >>> connectivity[:] = [1, 0]
+        >>> mesh.line_connectivity
+        array([1, 0]...)
+
+        """
+        return _get_connectivity(self.GetLines())
+
+    @line_connectivity.setter
+    def line_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self.SetLines(_make_cell_array(self.line_offsets, connectivity))
+
+    @property
+    def face_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the polygonal faces.
+
+        The offsets array has ``n_faces + 1`` values and stores the index into
+        :attr:`face_connectivity` at which each face begins. The point ids of face ``i``
+        are ``face_connectivity[face_offsets[i]:face_offsets[i + 1]]``.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity. ``len(face_offsets) - 1`` is therefore
+        :attr:`n_faces`, which is only equal to :attr:`~pyvista.DataSet.n_cells` for a
+        mesh made up of faces alone.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face offsets with ``n_faces + 1`` values.
+
+        See Also
+        --------
+        face_connectivity
+            Point ids that define the faces.
+        n_faces
+            Number of faces, one less than the size of this array.
+        faces
+            Faces in the legacy padded format.
+        regular_faces
+            Faces as a 2D array, when every face has the same size.
+        vert_offsets, line_offsets, strip_offsets
+            Offsets arrays of the other :class:`~pyvista.PolyData` cell types.
+        pyvista.UnstructuredGrid.cell_offsets
+            Equivalent property for an unstructured grid.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The new offsets must remain
+        consistent with the current :attr:`face_connectivity`; to replace both at once,
+        assign a :class:`pyvista.CellArray` to :attr:`faces`. See the examples below.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> points = pv.Rectangle().points
+        >>> mesh = pv.PolyData.from_regular_faces(points, [[0, 1, 2], [1, 3, 2]])
+        >>> mesh.face_offsets
+        array([0, 3, 6]...)
+
+        The offsets and connectivity together describe each face.
+
+        >>> mesh.face_connectivity[mesh.face_offsets[0] : mesh.face_offsets[1]]
+        array([0, 1, 2]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.face_offsets.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the six connectivity ids are re-partitioned
+        into three 2-point cells.
+
+        >>> mesh.face_offsets = [0, 2, 4, 6]
+        >>> mesh.n_faces
+        3
+
+        To replace the offsets and connectivity together, assign a
+        :class:`pyvista.CellArray` to :attr:`faces`.
+
+        >>> mesh.faces = pv.CellArray.from_arrays([0, 4], [0, 1, 3, 2])
+        >>> mesh.n_faces
+        1
+
+        """
+        return _get_offsets(self.GetPolys())
+
+    @face_offsets.setter
+    def face_offsets(self, offsets: VectorLike[int]) -> None:
+        self.SetPolys(_make_cell_array(offsets, self.face_connectivity))
+
+    @property
+    def face_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the polygonal faces.
+
+        The connectivity array stores the point ids of every face, one face after
+        another and without any padding. Use :attr:`face_offsets` to determine where
+        each face begins and ends.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the faces.
+
+        See Also
+        --------
+        face_offsets
+            Index into this array at which each face begins.
+        n_faces
+            Number of faces.
+        faces
+            Faces in the legacy padded format.
+        vert_connectivity, line_connectivity, strip_connectivity
+            Connectivity arrays of the other :class:`~pyvista.PolyData` cell types.
+        pyvista.UnstructuredGrid.cell_connectivity
+            Equivalent property for an unstructured grid.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change the
+        connectivity, assign a new array to this property. The input is copied, so the
+        mesh never aliases an array that may be modified later. To replace the offsets
+        and connectivity together, assign a :class:`pyvista.CellArray` to :attr:`faces`.
+
+        Where that copy is too expensive, assign a :class:`pyvista.CellArray` built with
+        :meth:`~pyvista.CellArray.from_arrays` and ``deep=False`` to :attr:`faces`, and
+        keep a reference to the connectivity array. The mesh then wraps that array, so
+        writing to it changes the faces without any copy. Nothing validates the point
+        ids written this way.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> points = pv.Rectangle().points
+        >>> mesh = pv.PolyData.from_regular_faces(points, [[0, 1, 2], [1, 3, 2]])
+        >>> mesh.face_connectivity
+        array([0, 1, 2, 1, 3, 2]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.face_connectivity.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the winding of both triangles is reversed.
+
+        >>> mesh.face_connectivity = [2, 1, 0, 2, 3, 1]
+        >>> mesh.face_connectivity
+        array([2, 1, 0, 2, 3, 1]...)
+
+        For a mesh large enough that the copy matters, keep the connectivity array and
+        edit it in place.
+
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1, 2, 1, 3, 2], dtype=pv.ID_TYPE)
+        >>> mesh.faces = pv.CellArray.from_arrays([0, 3, 6], connectivity, deep=False)
+        >>> connectivity[:] = [0, 2, 1, 1, 2, 3]
+        >>> mesh.face_connectivity
+        array([0, 2, 1, 1, 2, 3]...)
+
+        Note that arrays derived from the old topology, such as ``'Normals'``, are not
+        recomputed by either approach and should be removed or regenerated.
+
+        """
+        return _get_connectivity(self.GetPolys())
+
+    @face_connectivity.setter
+    def face_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self.SetPolys(_make_cell_array(self.face_offsets, connectivity))
+
+    @property
+    def strip_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the triangle strips.
+
+        The offsets array has ``n_strips + 1`` values and stores the index into
+        :attr:`strip_connectivity` at which each strip begins. The point ids of strip
+        ``i`` are ``strip_connectivity[strip_offsets[i]:strip_offsets[i + 1]]``.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity. ``len(strip_offsets) - 1`` is therefore
+        :attr:`n_strips`, not :attr:`~pyvista.DataSet.n_cells`.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of strip offsets with ``n_strips + 1`` values.
+
+        See Also
+        --------
+        strip_connectivity
+            Point ids that define the strips.
+        n_strips
+            Number of strips, one less than the size of this array.
+        strips
+            Strips in the legacy padded format.
+        vert_offsets, line_offsets, face_offsets
+            Offsets arrays of the other :class:`~pyvista.PolyData` cell types.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The new offsets must remain
+        consistent with the current :attr:`strip_connectivity`; to replace both at once,
+        assign a :class:`pyvista.CellArray` to :attr:`strips`. See the examples below.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Rectangle().extrude((0, 0, 1), capping=False)
+        >>> mesh.strip_offsets
+        array([ 0,  4,  8, 12, 16]...)
+
+        The offsets and connectivity together describe each strip.
+
+        >>> mesh.strip_connectivity[mesh.strip_offsets[0] : mesh.strip_offsets[1]]
+        array([0, 1, 4, 5]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.strip_offsets.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the four strips are merged into two.
+
+        >>> mesh.strip_offsets = [0, 8, 16]
+        >>> mesh.n_strips
+        2
+
+        To replace the offsets and connectivity together, assign a
+        :class:`pyvista.CellArray` to :attr:`strips`.
+
+        >>> mesh.strips = pv.CellArray.from_arrays([0, 4], [0, 1, 4, 5])
+        >>> mesh.n_strips
+        1
+
+        """
+        return _get_offsets(self.GetStrips())
+
+    @strip_offsets.setter
+    def strip_offsets(self, offsets: VectorLike[int]) -> None:
+        self.SetStrips(_make_cell_array(offsets, self.strip_connectivity))
+
+    @property
+    def strip_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the triangle strips.
+
+        The connectivity array stores the point ids of every strip, one strip after
+        another and without any padding. Use :attr:`strip_offsets` to determine where
+        each strip begins and ends.
+
+        Vertices, lines, faces, and strips are held in four separate cell arrays, each
+        with its own offsets and connectivity.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the strips.
+
+        See Also
+        --------
+        strip_offsets
+            Index into this array at which each strip begins.
+        n_strips
+            Number of strips.
+        strips
+            Strips in the legacy padded format.
+        vert_connectivity, line_connectivity, face_connectivity
+            Connectivity arrays of the other :class:`~pyvista.PolyData` cell types.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change the
+        connectivity, assign a new array to this property. The input is copied, so the
+        mesh never aliases an array that may be modified later. To replace the offsets
+        and connectivity together, assign a :class:`pyvista.CellArray` to :attr:`strips`.
+
+        Where that copy is too expensive, assign a :class:`pyvista.CellArray` built with
+        :meth:`~pyvista.CellArray.from_arrays` and ``deep=False`` to :attr:`strips`, and
+        keep a reference to the connectivity array. The mesh then wraps that array, so
+        writing to it changes the strips without any copy. Nothing validates the point
+        ids written this way.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Rectangle().extrude((0, 0, 1), capping=False)
+        >>> mesh.strip_connectivity[:4]
+        array([0, 1, 4, 5]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> mesh.strip_connectivity.flags['WRITEABLE']
+        False
+
+        Assign a new array instead. Here the first strip is wound the other way.
+
+        >>> connectivity = mesh.strip_connectivity.copy()
+        >>> connectivity[:4] = [1, 0, 5, 4]
+        >>> mesh.strip_connectivity = connectivity
+        >>> mesh.strip_connectivity[:4]
+        array([1, 0, 5, 4]...)
+
+        For a mesh large enough that the copy matters, keep the connectivity array and
+        edit it in place.
+
+        >>> import numpy as np
+        >>> connectivity = np.array([0, 1, 4, 5], dtype=pv.ID_TYPE)
+        >>> mesh.strips = pv.CellArray.from_arrays([0, 4], connectivity, deep=False)
+        >>> connectivity[:] = [1, 0, 5, 4]
+        >>> mesh.strip_connectivity
+        array([1, 0, 5, 4]...)
+
+        """
+        return _get_connectivity(self.GetStrips())
+
+    @strip_connectivity.setter
+    def strip_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self.SetStrips(_make_cell_array(self.strip_offsets, connectivity))
+
+    @property
     def _offset_array(self) -> NumpyArray[int]:
-        """Return the array used to store cell offsets."""
+        """Return the array used to store cell offsets.
+
+        .. deprecated:: 0.49
+            Use :attr:`face_offsets` instead. Note that :attr:`face_offsets` is
+            read-only, whereas this property returns a writeable array.
+
+        Notes
+        -----
+        Since VTK 9.6.2 a cell array with equal-sized cells stores its offsets
+        implicitly, in which case the array returned here is generated on access
+        rather than being a view of VTK's memory.
+
+        """
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        # Unused internally since #8873, but geovista reads it, so it gets a deprecation
+        # cycle rather than being deleted; see tests/core/test_polydata.py
+        warn_external(
+            '`PolyData._offset_array` is deprecated. Use `PolyData.face_offsets` '
+            'instead, which returns a read-only array.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `PolyData._offset_array`.'
+            raise RuntimeError(msg)
         return _get_offset_array(self.GetPolys())
 
     @property
     def _connectivity_array(self) -> NumpyArray[int]:
-        """Return the array with the point ids that define the cells' connectivity."""
+        """Return the array with the point ids that define the cells' connectivity.
+
+        .. deprecated:: 0.49
+            Use :attr:`face_connectivity` instead. Note that :attr:`face_connectivity`
+            is read-only, whereas this property returns a writeable array.
+
+        """
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`PolyData._connectivity_array` is deprecated. Use '
+            '`PolyData.face_connectivity` instead, which returns a read-only array.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `PolyData._connectivity_array`.'
+            raise RuntimeError(msg)
         return _get_connectivity_array(self.GetPolys())
 
     @property
@@ -1565,7 +2260,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         filename : str, Path
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
-            ftype.  Can be one of many of the supported  the following
+            ``ftype``.  Can be one of many of the supported  the following
             types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
             ``'.obj'``, ``'.iv'``).
 
@@ -1582,7 +2277,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             If a string is provided, the texture array will be saved
             to disk as that name.  If an array is provided, the
             texture array will be saved as ``'RGBA'`` if the array
-            contains an alpha channel (i.e. 4 component array), or
+            contains an alpha channel (that is, 4 component array), or
             as ``'RGB'`` if the array is just a 3 component array.
 
             .. note::
@@ -1788,11 +2483,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @cached_property
+    @property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
-        """Return the obbTree of the polydata.
+        """Return the OBB tree of the polydata.
 
-        An obbTree is an object to generate oriented bounding box (OBB)
+        An OBB tree is an object to generate oriented bounding box (OBB)
         trees. An oriented bounding box is a bounding box that does not
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
@@ -1803,14 +2498,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             This property is expensive to compute and is therefore cached. If the mesh's
             geometry is modified, the obb tree will no longer be valid.
 
+        .. deprecated:: 0.49
+            This property is primarily for internal use only, and the vtkOBBTree locator does
+            not reliably find intersections in some cases.
+
         """
-        if self.n_points < 1 or self.n_cells < 1:
-            msg = 'Building the OBB tree requires PolyData with points and cells.'
-            raise ValueError(msg)
-        obb_tree = _vtk.vtkOBBTree()
-        obb_tree.SetDataSet(self)
-        obb_tree.BuildLocator()
-        return obb_tree
+        return self._obb_tree
 
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01
@@ -1860,13 +2553,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.n_open_edges == 0
 
-    def __del__(self) -> None:
-        """Delete the object."""
-        # avoid a reference cycle that can't be resolved with vtkPolyData
-        self._glyph_geom = None
-        with contextlib.suppress(KeyError):
-            del self.__dict__['obbTree']
-
 
 @abstract_class
 class PointGrid(_PointSet):
@@ -1902,6 +2588,18 @@ class PointGrid(_PointSet):
             algorithm=None, pass_cellid=False, pass_pointid=False
         ).triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
+
+
+def _require_polyhedron_face_cell_arrays(name: str) -> None:
+    """Raise if the installed VTK does not keep the polyhedron faces in cell arrays."""
+    if not _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS:
+        msg = (
+            f'`UnstructuredGrid.{name}` requires VTK 9.4 or newer. Earlier versions '
+            f'store a polyhedron as a single padded face stream with no offsets or '
+            f'connectivity arrays of its own; use `polyhedron_faces` and '
+            f'`polyhedron_face_locations` instead.'
+        )
+        raise VTKVersionError(msg)
 
 
 class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
@@ -1963,14 +2661,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
 
-    See the :ref:`create_unstructured_surface_example` example for more details
-    on creating unstructured grids within PyVista.
-
     """
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
+        '.case': EnSightWriter,
     }
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
@@ -2048,8 +2744,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             raise ValueError(msg)
 
         nr_points = points.shape[0]
-        cell_types, cells = create_mixed_cells(cells_dict, nr_points)
-        self._from_arrays(cells, cell_types, points, deep=deep)
+        regular_cells = _get_regular_cells_from_dict(cells_dict, nr_points)
+        if regular_cells is None:
+            cell_types, cells = create_mixed_cells(cells_dict, nr_points)
+            self._from_arrays(cells, cell_types, points, deep=deep)
+        else:
+            cell_types, connectivity = regular_cells
+            if not deep:
+                connectivity = connectivity.copy()
+            vtkcells = CellArray.from_regular_cells(connectivity, deep=deep)
+            self._from_arrays(vtkcells, cell_types, points, deep=deep)
 
     def _from_arrays(
         self,
@@ -2060,7 +2764,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         deep: bool = True,
         force_float: bool = True,
     ) -> None:
-        """Create VTK unstructured grid from numpy arrays.
+        """Create VTK unstructured grid from NumPy arrays.
 
         Parameters
         ----------
@@ -2074,7 +2778,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             example below.
 
         points : sequence[float]
-            Numpy array containing point locations.
+            NumPy array containing point locations.
 
         deep : bool, default: True
             When ``True``, makes a copy of the points array.  Default
@@ -2089,12 +2793,13 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Examples
         --------
         >>> import numpy as np
-        >>> from pyvista import CellType
         >>> import pyvista as pv
         >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
         >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
         >>> cells = np.hstack((cell0_ids, cell1_ids))
-        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
+        >>> cell_type = np.array(
+        ...     [pv.CellType.HEXAHEDRON, pv.CellType.HEXAHEDRON], np.int8
+        ... )
 
         >>> cell1 = np.array(
         ...     [
@@ -2130,12 +2835,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         # convert to arrays upfront
-        cells = np.asarray(cells)
         cell_type = np.asarray(cell_type)
         points = np.asarray(points)
 
         # Convert to vtk arrays
-        vtkcells = CellArray(cells)
+        vtkcells = cells if isinstance(cells, _vtk.vtkCellArray) else CellArray(np.asarray(cells))
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
@@ -2146,9 +2850,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self.SetCells(cell_type, vtkcells)
 
     def _check_for_consistency(self):
-        """Check if size of offsets and celltypes match the number of cells.
+        """Check if size of offsets and ``celltypes`` match the number of cells.
 
-        Checks if the number of offsets and celltypes correspond to
+        Checks if the number of offsets and ``celltypes`` correspond to
         the number of cells.  Called after initialization of the self
         from arrays.
         """
@@ -2159,23 +2863,23 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             )
             raise ValueError(msg)
 
-        if self.n_cells != self.offset.size - 1:  # pragma: no cover
+        if self.n_cells != self.cell_offsets.size - 1:  # pragma: no cover
             msg = (
-                f'Size of the offset ({self.offset.size}) '
+                f'Size of the offsets ({self.cell_offsets.size}) '
                 f'must be one greater than the number of cells ({self.n_cells})'
             )
             raise ValueError(msg)
 
     @property
     def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the cell data as a numpy object.
+        """Return the cell data as a NumPy object.
 
         This is the old style VTK data layout::
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
-        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is the
-        Y'th point in cell X.
+        where ``n0`` is the number of points in cell 0, and ``pX_Y`` is
+        point Y in cell X.
 
         For example, a triangle and a line might be represented as::
 
@@ -2187,7 +2891,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         --------
         pyvista.DataSet.get_cell
         pyvista.UnstructuredGrid.cell_connectivity
-        pyvista.UnstructuredGrid.offset
+        pyvista.UnstructuredGrid.cell_offsets
 
         Notes
         -----
@@ -2207,7 +2911,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> grid = examples.load_hexbeam()
         >>> grid.cells[:18]
         array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,  8, 36, 18, 54,
-               90])
+               90]...)
 
         While you cannot change the array inplace, you can overwrite it. For example:
 
@@ -2235,9 +2939,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         .. deprecated:: 0.45.0
             This property is deprecated and will be removed in a future release.
-            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            VTK has deprecated ``GetFaces`` and ``GetFaceLocations`` in VTK 9.4 and
             may be removed in a future release of VTK. Please use
-            `polyhedron_faces` instead.
+            ``polyhedron_faces`` instead.
 
         Returns
         -------
@@ -2294,9 +2998,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         .. deprecated:: 0.45.0
             This property is deprecated and will be removed in a future release.
-            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            VTK has deprecated ``GetFaces`` and ``GetFaceLocations`` in VTK 9.4 and
             may be removed in a future release of VTK. Please use
-            `polyhedron_face_locations` instead.
+            ``polyhedron_face_locations`` instead.
 
         Returns
         -------
@@ -2355,24 +3059,289 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
             return convert_array(arr)
 
+    def _get_polyhedron_faces(self, name: str) -> _vtk.vtkCellArray:
+        """Return the polyhedron faces cell array, or raise on a VTK that has none."""
+        _require_polyhedron_face_cell_arrays(name)
+        faces = self.GetPolyhedronFaces()
+        return _vtk.vtkCellArray() if faces is None else faces  # type: ignore[redundant-expr]
+
+    def _get_polyhedron_face_locations(self, name: str) -> _vtk.vtkCellArray:
+        """Return the polyhedron face locations cell array, or raise on an old VTK."""
+        _require_polyhedron_face_cell_arrays(name)
+        locations = self.GetPolyhedronFaceLocations()
+        return _vtk.vtkCellArray() if locations is None else locations  # type: ignore[redundant-expr]
+
     @property
-    def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
+    def polyhedron_face_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the polyhedron faces.
+
+        Every :attr:`~pyvista.CellType.POLYHEDRON` in the grid contributes its faces to
+        one shared cell array. The offsets array has one value per face plus one, and
+        stores the index into :attr:`polyhedron_face_connectivity` at which each face
+        begins. The point ids of face ``i`` run from ``polyhedron_face_offsets[i]`` to
+        ``polyhedron_face_offsets[i + 1]`` in :attr:`polyhedron_face_connectivity`.
+
+        The faces are shared across the whole grid, so which of them belong to which
+        cell is recorded separately in :attr:`polyhedron_face_location_offsets` and
+        :attr:`polyhedron_face_location_connectivity`.
+
+        A grid holding no polyhedron has no faces for VTK to store, and the array is
+        ``[0]``.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face offsets with one value per polyhedron face plus one.
+
+        Raises
+        ------
+        pyvista.core.errors.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_connectivity
+            Point ids that define the faces.
+        polyhedron_face_location_offsets
+            Index into the face ids at which each cell begins.
+        polyhedron_faces
+            Faces in the legacy padded format.
+        cell_offsets
+            Offsets of the cells themselves, which do not describe a polyhedron.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the faces together with the
+        cells, the cell types and the face locations, so there is no way to assign the
+        faces alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_offsets
+        array([ 0,  3,  6,  9, 12]...)
+
+        The single tetrahedral polyhedron has four triangular faces.
+
+        >>> len(grid.polyhedron_face_offsets) - 1
+        4
+
+        The offsets and connectivity together describe each face.
+
+        >>> start, stop = grid.polyhedron_face_offsets[:2]
+        >>> grid.polyhedron_face_connectivity[start:stop]
+        array([0, 2, 1]...)
+
+        """
+        return _get_offsets(self._get_polyhedron_faces('polyhedron_face_offsets'))
+
+    @property
+    def polyhedron_face_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the polyhedron faces.
+
+        The connectivity array stores the point ids of every polyhedron face in the
+        grid, one face after another and without any padding. Use
+        :attr:`polyhedron_face_offsets` to determine where each face begins and ends.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the polyhedron faces.
+
+        Raises
+        ------
+        pyvista.core.errors.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_offsets
+            Index into this array at which each face begins.
+        polyhedron_face_location_connectivity
+            Ids of the faces that make up each cell.
+        polyhedron_faces
+            Faces in the legacy padded format.
+        cell_connectivity
+            Connectivity of the cells themselves, which is empty for a polyhedron.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the faces together with the
+        cells, the cell types and the face locations, so there is no way to assign the
+        faces alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_connectivity
+        array([0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> grid.polyhedron_face_connectivity.flags['WRITEABLE']
+        False
+
+        """
+        return _get_connectivity(self._get_polyhedron_faces('polyhedron_face_connectivity'))
+
+    @property
+    def polyhedron_face_location_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array of the polyhedron face locations.
+
+        The offsets array has :attr:`~pyvista.DataSet.n_cells` ``+ 1`` values and stores
+        the index into :attr:`polyhedron_face_location_connectivity` at which each cell
+        begins. The face ids of cell ``i`` run from
+        ``polyhedron_face_location_offsets[i]`` to
+        ``polyhedron_face_location_offsets[i + 1]`` in
+        :attr:`polyhedron_face_location_connectivity`.
+
+        Every cell has an entry, not just the polyhedra. A cell that is not a
+        :attr:`~pyvista.CellType.POLYHEDRON` has no faces of its own, so its two offsets
+        are equal and its slice is empty. A grid holding no polyhedron at all has no
+        face locations for VTK to store, and the array is ``[0]``.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face location offsets with ``n_cells + 1`` values.
+
+        Raises
+        ------
+        pyvista.core.errors.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_location_connectivity
+            Ids of the faces that make up each cell.
+        polyhedron_face_offsets
+            Index into the point ids at which each face begins.
+        polyhedron_face_locations
+            Face locations in the legacy padded format.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the face locations together
+        with the cells, the cell types and the faces, so there is no way to assign them
+        alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_location_offsets
+        array([0, 4]...)
+
+        There is one entry per cell regardless of whether the cell is a polyhedron.
+
+        >>> len(grid.polyhedron_face_location_offsets) - 1 == grid.n_cells
+        True
+
+        """
+        return _get_offsets(
+            self._get_polyhedron_face_locations('polyhedron_face_location_offsets')
+        )
+
+    @property
+    def polyhedron_face_location_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the polyhedron face locations.
+
+        The connectivity array stores the ids of the faces that make up each cell, one
+        cell after another and without any padding. A face id indexes
+        :attr:`polyhedron_face_offsets`. Use
+        :attr:`polyhedron_face_location_offsets` to determine where each cell begins and
+        ends.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        numpy.ndarray
+            Ids of the faces that make up each cell.
+
+        Raises
+        ------
+        pyvista.core.errors.VTKVersionError
+            If VTK is older than 9.4, which stores polyhedra as a single padded face
+            stream instead.
+
+        See Also
+        --------
+        polyhedron_face_location_offsets
+            Index into this array at which each cell begins.
+        polyhedron_face_connectivity
+            Point ids that define the faces these ids refer to.
+        polyhedron_face_locations
+            Face locations in the legacy padded format.
+
+        Notes
+        -----
+        This property is read-only. VTK can only replace the face locations together
+        with the cells, the cell types and the faces, so there is no way to assign them
+        alone without leaving the grid inconsistent. Build a new grid instead.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> grid.polyhedron_face_location_connectivity
+        array([0, 1, 2, 3]...)
+
+        Follow a face id back to the point ids of that face.
+
+        >>> face = grid.polyhedron_face_location_connectivity[0]
+        >>> start, stop = grid.polyhedron_face_offsets[face : face + 2]
+        >>> grid.polyhedron_face_connectivity[start:stop]
+        array([0, 2, 1]...)
+
+        """
+        return _get_connectivity(
+            self._get_polyhedron_face_locations('polyhedron_face_location_connectivity')
+        )
+
+    @property
+    def cells_dict(  # numpydoc ignore=RT01
+        self,
+    ) -> dict[np.uint8, NumpyArray[int] | list[NumpyArray[int]]]:
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
-        type in an ordered fashion.  Note that this function only
-        works with element types of fixed sizes.
+        type in an ordered fashion.  For a cell type whose cells all have
+        the same number of points the value is a single ``[N, D]`` array;
+        for a cell type with a data-defined number of points whose cells
+        differ in size (for example, :attr:`~pyvista.CellType.POLYGON`) the value
+        is instead a list of ``N`` 1D arrays, one per cell.
 
         .. versionchanged:: 0.46
 
             An empty dict ``{}`` is returned instead of ``None`` if
             the input is empty.
 
+        .. versionchanged:: 0.49
+
+            Cell types with a data-defined number of points are now
+            supported (previously this raised a ``ValueError``).
+
         Returns
         -------
         dict
             A dictionary mapping containing all cells of this unstructured grid.
-            Structure: vtk_enum_type (int) -> cells (:class:`numpy.ndarray`).
+            Structure: ``vtk_enum_type`` (int) -> cells (:class:`numpy.ndarray`).
 
         See Also
         --------
@@ -2405,20 +3374,119 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the cell connectivity as a numpy array.
+    def cell_offsets(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the offsets array.
 
-        This is effectively :attr:`UnstructuredGrid.cells` without the
-        padding.
+        The offsets array has :attr:`~pyvista.DataSet.n_cells` ``+ 1`` values and
+        stores the index into :attr:`cell_connectivity` at which each cell begins. The
+        point ids of cell ``i`` are ``cell_connectivity[cell_offsets[i]:cell_offsets[i + 1]]``.
+
+        .. versionadded:: 0.49
 
         Returns
         -------
         numpy.ndarray
-            Connectivity array.
+            Array of cell offsets with ``n_cells + 1`` values.
 
         See Also
         --------
+        cell_connectivity
+            Point ids that define the cells.
+        cells
+            Cells in the legacy padded format.
+        celltypes
+            Cell type of each cell.
+        pyvista.PolyData.face_offsets
+            Equivalent property for the faces of a polygonal mesh.
+        polyhedron_face_offsets
+            Offsets for the faces of polyhedral cells, which VTK stores separately
+            from the cell offsets.
+
+        Notes
+        -----
+        The returned array is read-only and cannot be modified in place. To change
+        the offsets, assign a new array to this property. The number of cells must
+        not change, since :attr:`celltypes` must stay in sync; to change the number
+        of cells, assign to :attr:`cells` or build a new grid. See the examples below.
+
+        Examples
+        --------
+        Return the cell offset array. Since this mesh is composed of all hexahedral
+        cells, note how each cell starts at 8 greater than the prior cell.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> hex_beam = pv.read(examples.hexbeamfile)
+        >>> hex_beam.cell_offsets
+        array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
+               104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
+               208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
+               312, 320]...)
+
+        The array is read-only and writing to it raises a ``ValueError``.
+
+        >>> hex_beam.cell_offsets.flags['WRITEABLE']
+        False
+
+        """
+        return _get_offsets(self._get_cells())
+
+    @cell_offsets.setter
+    def cell_offsets(self, offsets: VectorLike[int]) -> None:
+        self._replace_cell_array(_make_cell_array(offsets, self.cell_connectivity))
+
+    @property
+    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array.
+
+        The connectivity array stores the point ids of every cell, one cell after
+        another and without any padding. It is effectively :attr:`cells` without the
+        padding. Use :attr:`cell_offsets` to determine where each cell begins and ends.
+
+        .. versionchanged:: 0.49
+            The property is now settable, and modifying the returned array in place is
+            deprecated.
+
+        .. warning::
+            Modifying the returned array in place is deprecated. The array becomes
+            read-only in v0.52, matching :attr:`pyvista.PolyData.face_connectivity`
+            and :attr:`pyvista.CellArray.cell_connectivity`. Assign a new array to
+            this property instead.
+
+            No runtime warning is emitted, since nothing can hook
+            ``ndarray.__setitem__``. This is a documentation-only deprecation, so do
+            not expect a warning to tell you when the array is written to.
+
+        Returns
+        -------
+        numpy.ndarray
+            Point ids that define the cells.
+
+        See Also
+        --------
+        cell_offsets
+            Index into this array at which each cell begins.
+        cells
+            Cells in the legacy padded format.
         pyvista.DataSet.get_cell
+        pyvista.PolyData.face_connectivity
+            Equivalent property for the faces of a polygonal mesh.
+        polyhedron_face_connectivity
+            Point ids for the faces of polyhedral cells, which VTK stores separately
+            from the cell connectivity.
+
+        Notes
+        -----
+        The returned array is still writeable, but modifying it in place is deprecated
+        and it becomes read-only in v0.52. To change the connectivity, assign a new
+        array to this property. The input is copied, so the grid never aliases an array
+        that may be modified later. The new connectivity must remain consistent with the
+        current :attr:`cell_offsets`; to replace both at once, assign to :attr:`cells`
+        or build a new grid.
+
+        Unlike :attr:`pyvista.PolyData.faces`, :attr:`cells` does not accept a
+        :class:`pyvista.CellArray`, so a grid cannot wrap connectivity that the caller
+        keeps a handle to. Every route here copies.
 
         Examples
         --------
@@ -2428,11 +3496,101 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> from pyvista import examples
         >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.cell_connectivity[:16]
-        array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90])
+        array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90]...)
+
+        Assign a new array to change it.
+
+        >>> connectivity = hex_beam.cell_connectivity.copy()
+        >>> connectivity[0] = 1
+        >>> hex_beam.cell_connectivity = connectivity
+        >>> hex_beam.cell_connectivity[:8]
+        array([ 1,  2,  8,  7, 27, 36, 90, 81]...)
+
+        To change the number of cells, or the number of points in a cell of fixed
+        size, build a new grid so that :attr:`celltypes` can change with it.
+
+        >>> grid = pv.UnstructuredGrid(
+        ...     [8, 0, 2, 8, 7, 27, 36, 90, 81],
+        ...     [pv.CellType.HEXAHEDRON],
+        ...     hex_beam.points,
+        ... )
+        >>> grid.n_cells
+        1
+
+        Note that arrays derived from the old topology are not recomputed by either
+        approach and should be removed or regenerated.
 
         """
-        carr = self._get_cells()
-        return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
+        # Deprecated writeability on 0.49.0. Unlike `PolyData.face_connectivity` and
+        # `CellArray.cell_connectivity`, which are new names and read-only from the
+        # start, this property already existed and returned a writeable array, so the
+        # array stays writeable for a transition period rather than breaking callers.
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = (
+                'Make `UnstructuredGrid.cell_connectivity` read-only, matching '
+                '`PolyData.face_connectivity` and `CellArray.cell_connectivity`.'
+            )
+            raise RuntimeError(msg)
+        return _get_connectivity_array(self._get_cells())
+
+    @cell_connectivity.setter
+    def cell_connectivity(self, connectivity: VectorLike[int]) -> None:
+        self._replace_cell_array(_make_cell_array(self.cell_offsets, connectivity))
+
+    def _replace_cell_array(self, cell_array: CellArray) -> None:
+        """Replace the cell array, keeping :attr:`celltypes` in sync.
+
+        :attr:`celltypes` is not part of the cell array, so it is carried over
+        unchanged. The new cells must therefore still be described by it: both the
+        number of cells and, for every cell type with a fixed size, the number of
+        points per cell.
+
+        A polyhedron is described by a separate face stream which the cell array does
+        not carry, so grids containing one are rejected rather than silently emptied.
+
+        """
+        celltypes = self.celltypes
+        if CellType.POLYHEDRON in celltypes:
+            msg = (
+                "Cell type 'POLYHEDRON' cannot be modified by setting `cell_offsets` or "
+                '`cell_connectivity` because a polyhedron is defined by its faces, not a '
+                'flat list of point indices. Set `cells` or create a new '
+                '`UnstructuredGrid` instead.'
+            )
+            raise ValueError(msg)
+
+        new_sizes = np.diff(cell_array.cell_offsets)
+        old_sizes = np.diff(self.cell_offsets)
+        n_cells = cell_array.n_cells
+        if n_cells != celltypes.size:
+            msg = (
+                f'Number of cells ({n_cells}) does not match the number of cell types '
+                f'({celltypes.size}). The number of cells cannot be changed by setting '
+                f'`cell_offsets` or `cell_connectivity` because `celltypes` must stay '
+                f'in sync. Set `cells` or create a new `UnstructuredGrid` instead.'
+            )
+            raise ValueError(msg)
+
+        # Only cells whose size changed are checked. A cell type with a variable
+        # number of points, e.g. POLYGON, may be resized freely, and a mesh that was
+        # already inconsistent is left as it was rather than being newly rejected.
+        resized = np.flatnonzero(new_sizes != old_sizes)
+        for index in resized:
+            cell_type = CellType(int(celltypes[index]))
+            try:
+                expected = cell_type.n_points
+            except ValueError:
+                continue
+            msg = (
+                f'Cell {index} would have {new_sizes[index]} '
+                f'points but its cell type {cell_type.name} requires {expected}. '
+                f'Setting `cell_offsets` or `cell_connectivity` must keep every cell '
+                f'consistent with `celltypes`. Set `cells` or create a new '
+                f'`UnstructuredGrid` instead.'
+            )
+            raise ValueError(msg)
+
+        self.SetCells(self._get_cell_types_array(), cell_array)
 
     @_deprecate_positional_args
     def linear_copy(self, deep: bool = False):  # noqa: FBT001, FBT002
@@ -2492,8 +3650,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         # underlying vtkCellArray's connectivity buffer with vtk_to_numpy,
         # so reading it 4-7 times in the loop redundantly allocates wrappers.
         if np.any(quad_quad_mask) or np.any(quad_tri_mask):
-            cell_offsets = lgrid.offset
-            cell_conn = lgrid.cell_connectivity
+            lgrid_cells = lgrid._get_cells()
+            cell_offsets = _get_offset_array(lgrid_cells)
+            cell_conn = _get_connectivity_array(lgrid_cells)
 
         if np.any(quad_quad_mask):
             quad_offset = cell_offsets[:-1][quad_quad_mask]
@@ -2555,11 +3714,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return array
 
     @property
-    def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def offset(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the cell locations array.
 
         This is the location of the start of each cell in
         :attr:`cell_connectivity`.
+
+        .. deprecated:: 0.49
+            Use :attr:`cell_offsets` instead.
 
         Returns
         -------
@@ -2572,27 +3734,20 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         need to modify this array, create a copy of it using
         :func:`numpy.copy`.
 
-        Examples
-        --------
-        Return the cell offset array.  Since this mesh is composed of
-        all hexahedral cells, note how each cell starts at 8 greater
-        than the prior cell.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.offset
-        array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
-               104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
-               208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
-               312, 320])
-
         """
-        carr = self._get_cells()
-        # This will be the number of cells + 1.
-        array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
-        array.flags['WRITEABLE'] = False
-        return array
+        # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
+        warn_external(
+            '`UnstructuredGrid.offset` is deprecated. Use `UnstructuredGrid.cell_offsets` '
+            'instead.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 52):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove `UnstructuredGrid.offset`.'
+            raise RuntimeError(msg)
+        return _get_offsets(self._get_cells())
 
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
@@ -2694,10 +3849,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     **kwargs : dict, optional
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
-
-    See Also
-    --------
-    :ref:`create_structured_surface_example`
 
     Examples
     --------
@@ -2801,7 +3952,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return DataSet.__str__(self)
 
     def _from_arrays(self, x, y, z, *, force_float: bool = True):
-        """Create VTK structured grid directly from numpy arrays.
+        """Create VTK structured grid directly from NumPy arrays.
 
         Parameters
         ----------
@@ -2879,7 +4030,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Returns
         -------
         numpy.ndarray
-            Numpy array of all X coordinates.
+            NumPy array of all X coordinates.
 
         Examples
         --------
@@ -2949,7 +4100,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
-        Hides cells by setting the ghost_cells array to ``HIDDENCELL``.
+        Hides cells by setting the ``ghost_cells`` array to ``HIDDENCELL``.
 
         Parameters
         ----------
@@ -3003,7 +4154,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
         """Hide points without deleting them.
 
-        Hides points by setting the ghost_points array to ``HIDDENPOINT``.
+        Hides points by setting the ``ghost_points`` array to ``HIDDENPOINT``.
 
         Parameters
         ----------
@@ -3047,7 +4198,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Raises
         ------
         TypeError
-            If the structured grid is not 3D (i.e., any dimension is 1).
+            If the structured grid is not 3D (that is, any dimension is 1).
 
         """
         if any(n == 1 for n in self.dimensions):
@@ -3113,10 +4264,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         combination of fields allowed by ``validate_mesh``.
 
         .. versionadded:: 0.47
-
-    See Also
-    --------
-    :ref:`create_explicit_structured_grid_example`
 
     Examples
     --------
@@ -3266,7 +4413,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell and the node numbers of the cell.
 
         points : MatrixLike[float]
-            Numpy array containing point locations.
+            NumPy array containing point locations.
 
         """
         if len(dims) != 3:
@@ -3274,7 +4421,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             raise ValueError(msg)
 
         else:
-            n_cells = np.prod([n - 1 for n in dims])  # type: ignore[arg-type]
+            n_cells = np.prod([n - 1 for n in dims])
 
         if isinstance(cells, dict):
             celltypes = list(cells)
@@ -3288,14 +4435,16 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                 msg = f'Expected cells to be of shape ({n_cells}, 8)'
                 raise ValueError(msg)
 
-            cells = np.column_stack((np.full(n_cells, 8), cells)).flatten()
+            cell_array = CellArray.from_regular_cells(cells)
 
         elif len(cells) != 9 * n_cells:
             msg = f'Expected cells to be length {9 * n_cells}'
             raise ValueError(msg)
+        else:
+            cell_array = CellArray(cells)
 
         self.SetDimensions(dims[0], dims[1], dims[2])  # type: ignore[arg-type]
-        self.SetCells(CellArray(cells))
+        self.SetCells(cell_array)
         self.SetPoints(vtk_points(points))
 
     def cast_to_unstructured_grid(self) -> UnstructuredGrid:
@@ -3600,7 +4749,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         Returns
         -------
         tuple[int, int, int]
-            Number of sampling points in the I, J and Z directions respectively.
+            Number of sampling points in the ``i``, ``j``, and ``k`` directions respectively.
 
         Examples
         --------
@@ -3616,7 +4765,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
-        Different from `bounds`, which returns the bounding box of the
+        Different from ``bounds``, which returns the bounding box of the
         complete grid, this method returns the bounding box of the
         visible cells, where the ghost cell array is not
         ``HIDDENCELL``.
@@ -3624,7 +4773,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         Returns
         -------
         tuple[float, float, float]
-            The limits of the visible grid in the X, Y and Z
+            The limits of the visible grid in the X, Y, and Z
             directions respectively.
 
         Examples
@@ -3712,7 +4861,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def cell_coords(
         self,
         ind: int | VectorLike[int],
-    ) -> None | MatrixLike[int]:
+    ) -> MatrixLike[int] | None:
         """Return the cell structured coordinates.
 
         The cell structured coordinates are the ``(i, j, k)`` index of a cell
@@ -3813,7 +4962,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     [(0, 0, +1), (4, 5, 6, 7), (0, 1, 2, 3)],
                 ]
                 for f in faces:
-                    coords = np.sum([cell_coords, f[0]], axis=0)  # type: ignore[arg-type]
+                    coords = np.sum([cell_coords, f[0]], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
                         points = self.get_cell(ind).points
@@ -3829,7 +4978,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_coords = self.cell_coords(ind)
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
             for n in cell_neighbors:
-                coords = np.sum([cell_coords, n], axis=0)  # type: ignore[arg-type]
+                coords = np.sum([cell_coords, n], axis=0)
                 ind = self.cell_id(coords)
                 if ind:
                     indices.append(ind)
@@ -3841,7 +4990,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
-                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)  # type: ignore[arg-type]
+                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)
                     ind = self.cell_id(coords)
                     if ind:
                         indices.append(ind)
@@ -3858,7 +5007,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     cell_z = cell_z.reshape((2, 2))
                     cell_zmin = cell_z.min(axis=1)
                     cell_zmax = cell_z.max(axis=1)
-                    coords = np.sum([cell_coords, f[0]], axis=0)  # type: ignore[arg-type]
+                    coords = np.sum([cell_coords, f[0]], axis=0)
                     for k in range(nk):
                         coords[2] = k
                         ind = self.cell_id(coords)
@@ -3991,7 +5140,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             array = array.reshape((-1, 1))  # type: ignore[assignment]
             array = array.astype(np.uint8)  # type: ignore[assignment]
             array = np.unpackbits(array, axis=1)  # type: ignore[assignment]
-            array = array.sum(axis=1)
+            array = array.sum(axis=1)  # type: ignore[assignment]
             self.cell_data['number_of_connections'] = array
             return self
         else:

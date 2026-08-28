@@ -4,8 +4,10 @@
 Plot Curved Flight Paths on a Globe
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Connect cities with elevated circular arcs from :func:`pyvista.CircularArc` to
-create a simple route map.
+Connect cities with elevated circular arcs to create a simple route map.
+
+Uses :func:`pyvista.CircularArc`.
+
 """
 
 import numpy as np
@@ -31,7 +33,7 @@ def latlon_to_xyz(latitude: float, longitude: float, radius: float = 1.0) -> np.
 
 
 # %%
-# Define city locations and routes
+# Define City Locations and Routes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The routes are lifted slightly above the globe to keep them visible.
 
@@ -61,7 +63,7 @@ for start, stop in routes:
 
 
 # %%
-# Render the route map
+# Render the Route Map
 # ~~~~~~~~~~~~~~~~~~~~
 # Great-circle arcs follow the curvature of the sphere instead of cutting
 # straight through it.

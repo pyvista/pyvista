@@ -815,7 +815,6 @@ def test_logo_widget():
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_camera3d_widget():
     sphere = pv.Sphere()
@@ -939,7 +938,6 @@ def test_clear_logo_widget():
     pl.show(cpos='xy')
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_clear_camera3d_widget():
     mesh = pv.Cube()
@@ -951,7 +949,7 @@ def test_clear_camera3d_widget():
 
 
 class TestEventParser:
-    """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
+    """Class to regroup tests for widgets that use the  ``_parse_interaction_event()`` function"""
 
     @pytest.fixture
     def plotter(self):

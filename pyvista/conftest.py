@@ -8,6 +8,16 @@ import matplotlib as mpl
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
+
+collect_ignore = [  # Avoid importing deprecated modules
+    'examples/download_3ds.py',
+    'examples/gltf.py',
+    'examples/vrml.py',
+]
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -26,7 +36,7 @@ def autoclose_plotters():
 
 @pytest.fixture(autouse=True)
 def reset_global_theme():
-    """Reset global_theme."""
+    """Reset ``global_theme``."""
     # this stops any doctest-module tests from overriding the global theme and
     # creating test side effects
     pv.set_plot_theme('document_build')

@@ -249,9 +249,9 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     """
     # camera position
     cpos = pv.CameraPosition(
-        position=(6.879481857604187, -32.143727535933195, 23.05622921691103),
-        focal_point=(-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
-        viewup=(-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
+        position=(6.879, -32.14, 23.06),
+        focal_point=(-0.2336, -0.696, -0.7227),
+        viewup=(-0.008901, 0.6018, 0.7986),
     )
 
     # Make data
@@ -416,9 +416,9 @@ def plot_beam(notebook=None):
 
     # Camera position
     cpos = pv.CameraPosition(
-        position=(11.915126303095157, 6.11392754955802, 3.6124956735471914),
+        position=(11.92, 6.114, 3.612),
         focal_point=(0.0, 0.375, 2.0),
-        viewup=(-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
+        viewup=(-0.4255, 0.9024, -0.0679),
     )
 
     cmap = 'bwr'

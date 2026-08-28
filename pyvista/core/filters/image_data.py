@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
+import contextlib
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -137,8 +138,6 @@ class ImageDataFilters(DataSetFilters):
         >>> smoothed = grid.gaussian_smooth()
         >>> smoothed.plot(show_scalar_bar=False)
 
-        See :ref:`gaussian_smoothing_example` for a full example using this filter.
-
         """
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
@@ -184,7 +183,7 @@ class ImageDataFilters(DataSetFilters):
         The Median filter that replaces each pixel with the median value from a
         rectangular neighborhood around that pixel. Neighborhoods can be no
         more than 3 dimensional. Setting one axis of the neighborhood
-        kernelSize to 1 changes the filter into a 2D median.
+        ``kernelSize`` to 1 changes the filter into a 2D median.
 
         See :vtk:`vtkImageMedian3D` for more details.
 
@@ -282,15 +281,16 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         i, j, k : int | VectorLike[int] | slice, optional
-            Indices to slice along the I, J, and K coordinate axes, respectively. Specify an
-            integer for a single index, or two integers ``[start, stop)`` for a range of indices.
+            Indices to slice along the ``i``, ``j``, and ``k`` coordinate axes, respectively.
+            Specify an integer for a single index, or two integers ``[start, stop)`` for a range
+            of indices.
 
             .. note::
 
                 Like regular Python slicing:
 
-                - Half-open intervals are used, i.e. the ``start`` index is included in the range
-                  but the ``stop`` index is not.
+                - Half-open intervals are used, that is, the ``start`` index is included
+                  in the range but the ``stop`` index is not.
                 - Negative indexing is supported.
                 - An ``IndexError`` is raised when a single integer is specified as the index and
                   the index is out-of-bounds.
@@ -305,7 +305,7 @@ class ImageDataFilters(DataSetFilters):
 
             - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
             - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
-              i.e. ``[offset, offset + dimensions - 1]``.
+              that is, ``[offset, offset + dimensions - 1]``.
 
             The main difference between these modes is the inclusion or exclusion of the
             :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
@@ -323,10 +323,10 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
-            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
-            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
-            reference frame is modified.
+            The rebasing effectively applies a positive translation in world (XYZ)
+            coordinates and a similar (that is, inverse) negative translation in voxel
+            (IJK) coordinates. As a result, the :attr:`~pyvista.DataSet.bounds` of the
+            output are unchanged, but the coordinate reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset specified by
             the indexing.
@@ -393,8 +393,6 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced == sliced2
         True
 
-        See :ref:`slice_example` for more examples using this filter.
-
         """
 
         def _set_default_start_and_stop(rng, default_start, default_stop):
@@ -425,17 +423,17 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(  # noqa: PLR0917
-        self,
+    def extract_subset(  # type: ignore[misc] # noqa: PLR0917
+        self: ImageData,
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
         rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Select piece (e.g., volume of interest).
+        r"""Select piece (for example, volume of interest).
 
-        To use this filter set the VOI ivar which are i-j-k min/max indices
+        To use this filter set the VOI ``ivar`` which are i-j-k min/max indices
         that specify a rectangular region in the data. (Note that these are
         0-offset.) You can also specify a sampling rate to subsample the
         data.
@@ -447,12 +445,12 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
         rate : sequence[int], default: (1, 1, 1)
-            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
@@ -469,10 +467,10 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
-            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
-            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
-            reference frame is modified.
+            The rebasing effectively applies a positive translation in world (XYZ)
+            coordinates and a similar (that is, inverse) negative translation in voxel
+            (IJK) coordinates. As a result, the :attr:`~pyvista.DataSet.bounds` of the
+            output are unchanged, but the coordinate reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset specified by
             the ``voi`` parameter.
@@ -500,11 +498,20 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
+
+        # VTK mutates direction and origin inconsistently, so we fix it up here
+        result.direction_matrix = self.direction_matrix
+        result.origin = self.origin
         if rebase_coordinates:
             # Adjust for the confusing issue with the extents
             #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-            result.origin = result.points[0]
             result.offset = (0, 0, 0)
+            result.origin = (self.index_to_physical_matrix @ (*voi[::2], 1.0))[:3]
+        elif not np.allclose(rate, 1):
+            # Sampling affects the expected offset, so we need to re-encode the original offset
+            # based on its location in physical space, converted back to output coordinates
+            transform = self.index_to_physical_matrix @ result.physical_to_index_matrix
+            result.offset = np.floor((transform @ (*voi[::2], 1.0))[:3])
         return result
 
     @staticmethod
@@ -514,8 +521,8 @@ class ImageDataFilters(DataSetFilters):
             min_ind = axis * 2
             max_ind = axis * 2 + 1
 
-            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
-            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))
         return out
 
     def crop(  # type: ignore[misc]
@@ -549,8 +556,8 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
            values to define the cropping region.
 
-        These methods are all independent, e.g. it is not possible to specify both ``factor`` and
-        ``margin``.
+        These methods are all independent, for example, it is not possible to specify
+        both ``factor`` and ``margin``.
 
         By default, the cropped output's :attr:`~pyvista.ImageData.dimensions` are typically less
         than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
@@ -611,7 +618,7 @@ class ImageDataFilters(DataSetFilters):
 
             The length of the scalar array must equal the number of points.
 
-            This mesh will be cropped to the bounds of the foreground values of the array, i.e.
+            This mesh will be cropped to the bounds of the foreground values of the array, that is
             values that are not equal to the specified ``background_value``.
 
         padding : int | VectorLike[int], optional
@@ -642,7 +649,7 @@ class ImageDataFilters(DataSetFilters):
 
         fill_value : float | VectorLike[float], optional
             Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
-            a single float or a multi-component vector (e.g. RGB vector).
+            a single float or a multi-component vector (for example, RGB vector).
 
         rebase_coordinates : bool, default: False
             Rebase the coordinate reference of the cropped output:
@@ -650,10 +657,10 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
-            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
-            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
-            reference frame is modified.
+            The rebasing effectively applies a positive translation in world (XYZ)
+            coordinates and a similar (that is, inverse) negative translation in voxel
+            (IJK) coordinates. As a result, the :attr:`~pyvista.DataSet.bounds` of the
+            output are unchanged, but the coordinate reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset used by the
             crop.
@@ -680,11 +687,10 @@ class ImageDataFilters(DataSetFilters):
         extract_subset
             Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
 
-        :ref:`crop_labeled_example`
-            Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
-
         Examples
         --------
+        .. autoopengraph_thumbnail:: 4
+
         Load a grayscale image.
 
         >>> import numpy as np
@@ -749,7 +755,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image_plotter(cropped).show()
 
         Use ``factor`` to crop 40% of the image. This `keeps` 40% of the pixels along each axis,
-        and `removes` 60% (i.e. 30% from each side).
+        and `removes` 60% (that is, 30% from each side).
 
         >>> cropped = gray_image.crop(factor=0.4)
         >>> cropped.dimensions
@@ -1260,9 +1266,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are dilated, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are dilated, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1285,7 +1291,7 @@ class ImageDataFilters(DataSetFilters):
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
                   as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the dilation to two values, e.g. for multi-label segmentation masks.
+                  the dilation to two values, for example, for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1309,6 +1315,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 3
+
         .. pyvista-plot::
             :force_static:
 
@@ -1412,9 +1420,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are eroded, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are eroded, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1437,7 +1445,7 @@ class ImageDataFilters(DataSetFilters):
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
                   as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the erosion to two values, e.g. for multi-label segmentation masks.
+                  the erosion to two values, for example, for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1563,9 +1571,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are opened, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are opened, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1669,9 +1677,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are closed, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+            Determines the size of the kernel along the xyz-axes. Only non-singleton
+            dimensions are closed, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
+            produce the same result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1792,7 +1800,7 @@ class ImageDataFilters(DataSetFilters):
         ----------
         threshold : float or sequence[float]
             Single value or (min, max) to be used for the data threshold.  If
-            a sequence, then length must be 2. Threshold(s) for deciding which
+            a sequence, then length must be 2. Thresholds for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
         in_value : float, default: 1.0
@@ -1838,8 +1846,6 @@ class ImageDataFilters(DataSetFilters):
 
         >>> ithresh = uni.image_threshold(100)
         >>> ithresh.plot()
-
-        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is None:
@@ -1933,9 +1939,7 @@ class ImageDataFilters(DataSetFilters):
             return _get_output(alg)
 
         threshold_filter = (
-            _binary_image_threshold
-            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
-            else _image_threshold
+            _binary_image_threshold if pv.vtk_version_info >= (9, 7) else _image_threshold
         )
         output = threshold_filter(
             threshold_val=threshold_val,
@@ -1959,7 +1963,7 @@ class ImageDataFilters(DataSetFilters):
         power of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
-        dimension. This makes images with prime number dimensions (i.e. 17x17)
+        dimension. This makes images with prime number dimensions (that is, 17x17)
         much slower to compute. FFTs of multidimensional meshes (i.e volumes)
         are decomposed so that each axis executes serially.
 
@@ -2007,8 +2011,6 @@ class ImageDataFilters(DataSetFilters):
         Contains arrays :
         PNGImage                complex128 (298620,)          SCALARS
 
-        See :ref:`image_fft_example` for a full example using this filter.
-
         """
         # check for active scalars, otherwise risk of segfault
         if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
@@ -2043,7 +2045,7 @@ class ImageDataFilters(DataSetFilters):
         of two sizes.
 
         The filter uses a butterfly diagram for each prime factor of the
-        dimension. This makes images with prime number dimensions (i.e. 17x17)
+        dimension. This makes images with prime number dimensions (that is, 17x17)
         much slower to compute. FFTs of multidimensional meshes (i.e volumes)
         are decomposed so that each axis executes serially.
 
@@ -2091,8 +2093,6 @@ class ImageDataFilters(DataSetFilters):
         Active Normals  : None
         Contains arrays :
             PNGImage                complex128 (298620,)            SCALARS
-
-        See :ref:`image_fft_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()
@@ -2171,10 +2171,6 @@ class ImageDataFilters(DataSetFilters):
         rfft : Reverse fast Fourier transform.
         high_pass : High-pass filtering of FFT output.
 
-        Examples
-        --------
-        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
-
         """
         self._check_fft_scalars()
         alg = _vtk.vtkImageButterworthLowPass()
@@ -2252,10 +2248,6 @@ class ImageDataFilters(DataSetFilters):
         rfft : Reverse fast Fourier transform.
         low_pass : Low-pass filtering of FFT output.
 
-        Examples
-        --------
-        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
-
         """
         self._check_fft_scalars()
         alg = _vtk.vtkImageButterworthHighPass()
@@ -2272,7 +2264,7 @@ class ImageDataFilters(DataSetFilters):
         return output
 
     def _change_fft_output_scalars(self, dataset, orig_name, out_name) -> None:
-        """Modify the name and dtype of the output scalars for an FFT filter."""
+        """Modify the name and ``dtype`` of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
         if pdata.active_scalars_name != name:
@@ -2284,7 +2276,7 @@ class ImageDataFilters(DataSetFilters):
     def _check_fft_scalars(self):
         """Check for complex active scalars.
 
-        This is necessary for rfft, low_pass, and high_pass filters.
+        This is necessary for rfft, ``low_pass``, and ``high_pass`` filters.
 
         """
         # check for complex active point scalars, otherwise the risk of segfault
@@ -2322,180 +2314,6 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast('pv.ImageData', wrap(alg.GetOutput()))
 
-    @_deprecate_positional_args
-    def contour_labeled(  # noqa: PLR0917
-        self,
-        n_labels: int | None = None,
-        smoothing: bool = False,  # noqa: FBT001, FBT002
-        smoothing_num_iterations: int = 50,
-        smoothing_relaxation_factor: float = 0.5,
-        smoothing_constraint_distance: float = 1,
-        output_mesh_type: Literal['quads', 'triangles'] = 'quads',
-        output_style: Literal['default', 'boundary'] = 'default',
-        scalars: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> pv.PolyData:
-        """Generate labeled contours from 3D label maps.
-
-        SurfaceNets algorithm is used to extract contours preserving sharp
-        boundaries for the selected labels from the label maps.
-        Optionally, the boundaries can be smoothened to reduce the staircase
-        appearance in case of low resolution input label maps.
-
-        This filter requires that the :class:`ImageData` has integer point
-        scalars, such as multi-label maps generated from image segmentation.
-
-        .. note::
-           Requires ``vtk>=9.3.0``.
-
-        .. deprecated:: 0.45
-            This filter produces unexpected results and is deprecated.
-            Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
-            See https://github.com/pyvista/pyvista/issues/5981 for details.
-
-            To replicate the default behavior from this filter, call `contour_labels`
-            with the following arguments:
-
-            .. code-block:: python
-
-                image.contour_labels(
-                    boundary_style='strict_external',  # old filter strictly uses external polygons
-                    smoothing=False,  # old filter does not apply smoothing
-                    output_mesh_type='quads',  # old filter generates quads
-                    pad_background=False,  # old filter generates open surfaces at input edges
-                    orient_faces=False,  # old filter does not orient faces
-                    simplify_output=False,  # old filter returns multi-component scalars
-                )
-
-        Parameters
-        ----------
-        n_labels : int, optional
-            Number of labels to be extracted (all are extracted if None is given).
-
-        smoothing : bool, default: False
-            Apply smoothing to the meshes.
-
-        smoothing_num_iterations : int, default: 50
-            Number of smoothing iterations.
-
-        smoothing_relaxation_factor : float, default: 0.5
-            Relaxation factor of the smoothing.
-
-        smoothing_constraint_distance : float, default: 1
-            Constraint distance of the smoothing.
-
-        output_mesh_type : str, default: 'quads'
-            Type of the output mesh. Must be either ``'quads'``, or ``'triangles'``.
-
-        output_style : str, default: 'default'
-            Style of the output mesh. Must be either ``'default'`` or ``'boundary'``.
-            When ``'default'`` is specified, the filter produces a mesh with both
-            interior and exterior polygons. When ``'boundary'`` is selected, only
-            polygons on the border with the background are produced (without interior
-            polygons). Note that style ``'selected'`` is currently not implemented.
-
-        scalars : str, optional
-            Name of scalars to process. Defaults to currently active scalars.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            :class:`pyvista.PolyData` Labeled mesh with the segments labeled.
-
-        References
-        ----------
-        Sarah F. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation
-        of Sharp Boundaries, Journal of Computer Graphics Techniques (JCGT), vol. 11,
-        no. 1, 34-54, 2022. Available online http://jcgt.org/published/0011/01/03/
-
-        https://www.kitware.com/really-fast-isocontouring/
-
-        Examples
-        --------
-        See :ref:`contouring_example` for a full example using this filter.
-
-        See Also
-        --------
-        pyvista.DataSetFilters.contour
-            Generalized contouring method which uses MarchingCubes or FlyingEdges.
-
-        pyvista.DataSetFilters.pack_labels
-            Function used internally by SurfaceNets to generate contiguous label data.
-
-        """
-        warn_external(
-            'This filter produces unexpected results and is deprecated. '
-            'Use `contour_labels` instead.'
-            '\nRefer to the documentation for `contour_labeled` for details on how to '
-            'transition to the new filter.'
-            '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
-            PyVistaDeprecationWarning,
-        )
-
-        if not _vtk.has_attr('vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
-            raise VTKVersionError(msg)
-
-        alg = _vtk.vtkSurfaceNets3D()
-        if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-            if field != FieldAssociation.POINT:
-                msg = 'If `scalars` not given, active scalars must be point array.'
-                raise ValueError(msg)
-        else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
-            if field != FieldAssociation.POINT:
-                msg = (
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
-                )
-                raise ValueError(msg)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
-        )  # args: (idx, port, connection, field, name)
-        alg.SetInputData(self)
-        if n_labels is not None:
-            alg.GenerateLabels(n_labels, 1, n_labels)
-        if output_mesh_type == 'quads':
-            alg.SetOutputMeshTypeToQuads()
-        elif output_mesh_type == 'triangles':
-            alg.SetOutputMeshTypeToTriangles()
-        else:
-            msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'  # type: ignore[unreachable]
-            raise ValueError(msg)
-        if output_style == 'default':
-            alg.SetOutputStyleToDefault()
-        elif output_style == 'boundary':
-            alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':  # type: ignore[unreachable]
-            msg = f'Output style "{output_style}" is not implemented'
-            raise NotImplementedError(msg)
-        else:
-            msg = f'Invalid output style "{output_style}", use "default" or "boundary"'
-            raise ValueError(msg)
-        if smoothing:
-            alg.SmoothingOn()
-            alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
-            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
-            alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
-        else:
-            alg.SmoothingOff()
-        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pv.vtk_verbosity('off'):
-            _update_alg(
-                alg, progress_bar=progress_bar, message='Performing Labeled Surface Extraction'
-            )
-        return wrap(alg.GetOutput())
-
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
         boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
@@ -2519,8 +2337,8 @@ class ImageDataFilters(DataSetFilters):
 
         This filter uses :vtk:`vtkSurfaceNets3D`
         to extract polygonal surface contours from non-continuous label maps, which
-        corresponds to discrete regions in an input 3D image (i.e., volume). It is
-        designed to generate surfaces from image point data, e.g. voxel point
+        corresponds to discrete regions in an input 3D image (that is, volume). It is
+        designed to generate surfaces from image point data, for example, voxel point
         samples from 3D medical images, though images with cell data are also supported.
 
         The generated surface is smoothed using a constrained smoothing filter, which
@@ -2536,21 +2354,17 @@ class ImageDataFilters(DataSetFilters):
             Polygons between a foreground region and the background have the
             form ``[foreground, background]``.
 
-            E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
+            For example, ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
 
         Internal boundary values
 
             Polygons between two connected foreground regions are sorted in ascending order.
 
-            E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
+            For example, ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (that is, internal and
         external) may be returned.
-
-        .. note::
-
-            This filter requires VTK version ``9.3.0`` or greater.
 
         .. versionadded:: 0.45
 
@@ -2571,9 +2385,7 @@ class ImageDataFilters(DataSetFilters):
             The ``'strict_external'`` style can be used as a fast alternative to
             ``'external'``. This style `strictly` generates external polygons and does
             not compute or consider internal boundaries. This computation is fast, but
-            also results in jagged, non-smooth boundaries between regions. The
-            ``select_inputs`` and ``select_outputs`` options cannot be used with this
-            style.
+            also results in jagged, non-smooth boundaries between regions.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -2604,7 +2416,7 @@ class ImageDataFilters(DataSetFilters):
 
             Since the smoothing operation occurs across all input regions, using this
             option to filter the output means that the selected output regions will have
-            the same shape (i.e. smoothed in the same manner), regardless of the outputs
+            the same shape (that is, smoothed in the same manner), regardless of the outputs
             that are selected. This is useful for generating a surface for specific
             labels while also preserving sharp boundaries with non-selected outputs.
 
@@ -2679,12 +2491,12 @@ class ImageDataFilters(DataSetFilters):
               of external boundaries always match the foreground values of the input.
 
             - Internal boundaries are simplified by assigning them unique negative
-              values sequentially. E.g. the boundary label ``[1, 2]`` is replaced with
+              values sequentially. For example, the boundary label ``[1, 2]`` is replaced with
               ``-1``, ``[1, 3]`` is replaced with ``-2``, etc. The mapping to negative
               values is not fixed, and can change depending on the input.
 
               This simplification is particularly useful for unsigned integer labels
-              (e.g. scalars with ``'uint8'`` dtype) since external boundaries
+              (for example, scalars with ``'uint8'`` ``dtype``) since external boundaries
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
@@ -2748,18 +2560,15 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.color_labels`
             Color labeled data, e.g. labeled volumes or contours.
 
-        :ref:`contouring_example`, :ref:`anatomical_groups_example`
-            Additional examples using this filter.
-
         References
         ----------
         S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
         Sharp Boundaries, J. Computer Graphics Techniques, 2022. Available online:
-        http://jcgt.org/published/0011/01/03/
+        https://jcgt.org/published/0011/01/03/
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
         Discrete Isocontouring Algorithm. arXiv:2401.14906. 2024. Available online:
-        `http://arxiv.org/abs/2401.14906 <http://arxiv.org/abs/2401.14906>`__
+        `https://arxiv.org/abs/2401.14906 <https://arxiv.org/abs/2401.14906>`__
 
         Examples
         --------
@@ -2772,7 +2581,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image = examples.load_channels()
         >>> label_ids = np.unique(image.active_scalars)
         >>> label_ids
-        pyvista_ndarray([0, 1, 2, 3, 4])
+        pyvista_ndarray([0, 1, 2, 3, 4]...)
         >>> image.dimensions
         (251, 251, 101)
 
@@ -2809,7 +2618,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([1, 2, 3, 4])
+        pyvista_ndarray([1, 2, 3, 4]...)
 
         Set ``simplify_output`` to ``False`` to generate a two-component
         array instead showing the two boundary regions associated with each polygon.
@@ -2819,14 +2628,14 @@ class ImageDataFilters(DataSetFilters):
         2
 
         Show the unique values. Since only ``'external'`` boundaries are generated
-        by default, the second component is always ``0`` (i.e. the ``background_value``).
+        by default, the second component is always ``0`` (that is, the ``background_value``).
         Note that all four foreground regions share a boundary with the background.
 
         >>> np.unique(contours['boundary_labels'], axis=0)
         array([[1, 0],
                [2, 0],
                [3, 0],
-               [4, 0]])
+               [4, 0]]...)
 
         Repeat the example but this time generate internal contours only. The generated
         array is 2D by default.
@@ -2845,7 +2654,7 @@ class ImageDataFilters(DataSetFilters):
                [1, 4],
                [2, 3],
                [2, 4],
-               [3, 4]])
+               [3, 4]]...)
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
@@ -2856,7 +2665,7 @@ class ImageDataFilters(DataSetFilters):
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
-        pyvista_ndarray([-5, -4, -3, -2, -1])
+        pyvista_ndarray([-5, -4, -3, -2, -1]...)
 
         >>> labels_plotter(contours, zoom=1.5).show()
 
@@ -2877,11 +2686,11 @@ class ImageDataFilters(DataSetFilters):
 
         The sharp features are now smoothed and the internal boundaries are now labeled
         as external boundaries. Note that using ``'all'`` here is optional since
-        using ``select_inputs`` converts previously-internal boundaries into external
+        using ``select_inputs`` converts previously internal boundaries into external
         ones.
 
         Do not pad the image with background values before contouring. Since the input image
-        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        has foreground regions visible at the edges of the image (for example, the ``+Z`` bound),
         setting ``pad_background=False`` in this example causes the top and sides of
         the mesh to be "open".
 
@@ -2895,7 +2704,7 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
-        less than one may help preserve sharp features (e.g. corners).
+        less than one may help preserve sharp features (for example, corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
         >>> labels_plotter(surf, zoom=1.5).show()
@@ -2910,13 +2719,12 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
-        temp_scalars_name = '_PYVISTA_TEMP'
 
-        def _get_unique_labels_no_background(
-            array: NumpyArray[int], background: int
-        ) -> NumpyArray[int]:
-            unique = np.unique(array)
-            return unique[unique != background]
+        def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
+            if selection is None:
+                return np.array([], dtype=int)
+            unique = np.unique(np.atleast_1d(selection))
+            return unique[unique != background_value]
 
         def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             if scalars_ is None:
@@ -2925,31 +2733,14 @@ class ImageDataFilters(DataSetFilters):
             else:
                 field = image.get_array_association(scalars_, preference='point')
 
-            return (
+            image = (
                 image
                 if field == FieldAssociation.POINT
                 else image.cells_to_points(scalars=scalars_, copy=False)
             )
-
-        def _process_select_inputs(
-            image: ImageData,
-            select_inputs_: int | VectorLike[int],
-            scalars_: pyvista_ndarray,
-        ) -> NumpyArray[int]:
-            select_inputs = np.atleast_1d(select_inputs_)
-            # Remove non-selected label ids from the input. We do this by setting
-            # non-selected ids to the background value to remove them from the input
-            temp_scalars = scalars_.copy()
-            input_ids = _get_unique_labels_no_background(temp_scalars, background_value)
-            keep_labels = [*select_inputs, background_value]
-            for label in input_ids:
-                if label not in keep_labels:
-                    temp_scalars[temp_scalars == label] = background_value
-
-            image.point_data[temp_scalars_name] = temp_scalars
-            image.set_active_scalars(temp_scalars_name, preference='point')
-
-            return input_ids
+            if input_ids.size > 0:
+                return image.select_values(input_ids)
+            return image
 
         def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D):
             if output_mesh_type is None:
@@ -2963,57 +2754,11 @@ class ImageDataFilters(DataSetFilters):
             alg_: _vtk.vtkSurfaceNets3D,
             *,
             array_: pyvista_ndarray,
-            select_inputs_: int | VectorLike[int] | None,
-            select_outputs_: int | VectorLike[int] | None,
         ):
-            # WARNING: Setting the output style to default or boundary does not really work
-            # as expected. Specifically, `SetOutputStyleToDefault` by itself will not actually
-            # produce meshes with interior faces at the boundaries between foreground regions
-            # (even though this is what is suggested by the docs). Instead, simply calling
-            # `SetLabels` below will enable internal boundaries, regardless of the value of
-            # `OutputStyle`. Also, using `SetOutputStyleToBoundary` generates jagged/rough
-            # 'lines' between two exterior regions; enabling internal boundaries fixes this.
-            input_ids = (
-                _process_select_inputs(alg_input, select_inputs_, array_)
-                if select_inputs_ is not None
-                else None
-            )
-            alg_.SetOutputStyleToSelected()
-            if select_outputs_ is not None:
-                # Use selected outputs
-                output_ids = _get_unique_labels_no_background(
-                    np.atleast_1d(select_outputs_),
-                    background_value,
-                )
-            elif input_ids is not None:
-                # Set outputs to be same as inputs
-                output_ids = input_ids
-            else:
-                # Output all labels
-                output_ids = _get_unique_labels_no_background(
-                    array_,
-                    background_value,
-                )
-            output_ids = output_ids.astype(float)
-
-            # Add selected outputs
-            [alg.AddSelectedLabel(label_id) for label_id in output_ids]  # type: ignore[func-returns-value]
-
-            # The following logic enables the generation of internal boundaries
-            if input_ids is not None:
-                # Generate internal boundaries for selected inputs only
-                internal_ids: NumpyArray[int] = input_ids
-            elif select_outputs is None:
-                # No inputs or outputs selected, so generate internal
-                # boundaries for all labels in input array
-                internal_ids = output_ids
-            else:
-                internal_ids = _get_unique_labels_no_background(
-                    array_,
-                    background_value,
-                )
-
-            [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
+            # Always output all labels for surface nets; user-selected outputs are filtered later
+            ids = np.unique(array_)
+            ids = ids[ids != background_value]
+            [alg_.SetLabel(int(val), float(val)) for val in ids]  # type: ignore[func-returns-value]
 
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
@@ -3048,12 +2793,6 @@ class ImageDataFilters(DataSetFilters):
             else:
                 alg_.SmoothingOff()
 
-        if not _vtk.has_attr('vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
-            raise VTKVersionError(msg)
-
         if orient_faces is None:
             orient_faces = bool(pv.vtk_version_info < (9, 6, 0))
         else:
@@ -3074,6 +2813,7 @@ class ImageDataFilters(DataSetFilters):
             must_contain=output_mesh_type,
             name='output_mesh_type',
         )
+        input_ids = _validate_selection(select_inputs)
 
         alg_input = _get_alg_input(self, scalars)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
@@ -3089,17 +2829,10 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        if boundary_style == 'strict_external':
-            # Use default alg parameters
-            if select_inputs is not None or select_outputs is not None:
-                msg = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-                raise TypeError(msg)
-        else:
+        if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
                 array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
-                select_inputs_=select_inputs,
-                select_outputs_=select_outputs,
             )
         _configure_smoothing(
             alg,
@@ -3117,11 +2850,21 @@ class ImageDataFilters(DataSetFilters):
 
         output: pv.PolyData = _get_output(alg)
 
-        (  # Clear temp scalars from input
-            alg_input.point_data.remove(temp_scalars_name)
-            if temp_scalars_name in alg_input.point_data
-            else None
-        )
+        # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
+        with contextlib.suppress(KeyError):
+            del output.point_data['NonManifoldTableIndices']
+
+        if select_outputs is not None:
+            output_ids = _validate_selection(select_outputs)
+            ugrid = output.extract_values(
+                output_ids,
+                component_mode='any',
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+            output = ugrid.extract_surface(
+                algorithm='geometry', pass_cellid=False, pass_pointid=False
+            )
 
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
@@ -3138,12 +2881,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
-        is_external = 'external' in boundary_style
+        want_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = is_external
+            simplify_output = want_external
         if simplify_output:
             # Simplify scalars to a single component
-            if not is_external:
+            if not want_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -3159,17 +2902,6 @@ class ImageDataFilters(DataSetFilters):
 
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
-
-        if select_outputs is not None:
-            # This option generates unused points
-            # Use clean to remove these points (without merging points)
-            output.clean(
-                point_merging=False,
-                lines_to_points=False,
-                polys_to_lines=False,
-                strips_to_polys=False,
-                inplace=True,
-            )
 
         if orient_faces and output.n_cells > 0:
             if pv.vtk_version_info >= (9, 4):
@@ -3215,17 +2947,18 @@ class ImageDataFilters(DataSetFilters):
 
         To change the image data's representation, the input points are used to
         represent the centers of the output cells. This has the effect of "growing" the
-        input image dimensions by one along each axis (i.e. half the cell width on each
+        input image dimensions by one along each axis (that is, half the cell width on each
         side). For example, an image with 100 points and 99 cells along an axis at the
         input will have 101 points and 100 cells at the output. If the input has 1mm
         spacing, the axis size will also increase from 99mm to 100mm. By default,
         only non-singleton dimensions are increased such that 1D or 2D inputs remain
         1D or 2D at the output.
 
-        Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
-        or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
-        re-meshing enables the same data to be used with either kind of filter while
-        ensuring the input data to those filters has the appropriate representation.
+        Since filters may be inherently cell-based (for example, some
+        :class:`~pyvista.DataSetFilters`) or may operate on point data exclusively
+        (for example, most :class:`~pyvista.ImageDataFilters`), re-meshing enables the
+        same data to be used with either kind of filter while ensuring the input data
+        to those filters has the appropriate representation.
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as voxel cells instead of as points.
 
@@ -3263,20 +2996,20 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'`` (default): convenience alias to not modify singleton
               dimensions.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
-            If ``False``, the input and output will both refer to the same data array(s).
+            If ``False``, the input and output will both refer to the same data arrays.
 
         Returns
         -------
@@ -3334,13 +3067,13 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have increased by half the spacing
         - The output ``N Cells`` equals the input ``N Points``
 
-        Since the input points are 3D (i.e. there are no singleton dimensions), the
+        Since the input points are 3D (that is, there are no singleton dimensions), the
         output cells are 3D :attr:`~pyvista.CellType.VOXEL` cells.
 
         >>> cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
-        If the input points are 2D (i.e. one dimension is singleton), the
+        If the input points are 2D (that is, one dimension is singleton), the
         output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells when ``dimensions`` is
         set to ``'preserve'``.
 
@@ -3380,8 +3113,6 @@ class ImageDataFilters(DataSetFilters):
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='point')
@@ -3418,15 +3149,16 @@ class ImageDataFilters(DataSetFilters):
 
         To change the image data's representation, the input cell centers are used to
         represent the output points. This has the effect of "shrinking" the
-        input image dimensions by one along each axis (i.e. half the cell width on each
+        input image dimensions by one along each axis (that is, half the cell width on each
         side). For example, an image with 101 points and 100 cells along an axis at the
         input will have 100 points and 99 cells at the output. If the input has 1mm
         spacing, the axis size will also decrease from 100mm to 99mm.
 
-        Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
-        or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
-        re-meshing enables the same data to be used with either kind of filter while
-        ensuring the input data to those filters has the appropriate representation.
+        Since filters may be inherently cell-based (for example, some
+        :class:`~pyvista.DataSetFilters`) or may operate on point data exclusively
+        (for example, most :class:`~pyvista.ImageDataFilters`), re-meshing enables the
+        same data to be used with either kind of filter while ensuring the input data
+        to those filters has the appropriate representation.
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as points instead of as voxel cells.
 
@@ -3464,13 +3196,13 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'`` (default): convenience alias to not modify singleton
               dimensions.
@@ -3481,7 +3213,7 @@ class ImageDataFilters(DataSetFilters):
 
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
-            If ``False``, the input and output will both refer to the same data array(s).
+            If ``False``, the input and output will both refer to the same data arrays.
 
         Returns
         -------
@@ -3539,8 +3271,6 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have decreased by half the spacing
         - The output ``N Points`` equals the input ``N Cells``
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='cell')
@@ -3587,13 +3317,13 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'``: convenience alias to not modify singleton
               dimensions.
@@ -3714,7 +3444,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         pad_value : float | sequence[float] | 'mirror' | 'wrap', default: 0.0
-            Padding value(s) given to new points outside the original image extent.
+            Padding values given to new points outside the original image extent.
             Specify:
 
             - a number: New points are filled with the specified constant value.
@@ -3742,13 +3472,13 @@ class ImageDataFilters(DataSetFilters):
             - Can be specified as a sequence of 3 boolean to apply padding on a per
                 dimension basis.
             - ``1`` or ``'1D'``: apply padding such that the output is a 1D ImageData
-              where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``.
+              where exactly one dimension is greater than one, for example, ``(>1, 1, 1)``.
               Only valid for 0D or 1D inputs.
             - ``2`` or ``'2D'``: apply padding such that the output is a 2D ImageData
-              where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``.
+              where exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``.
               Only valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: apply padding such that the output is a 3D ImageData,
-              where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``.
+              where all three dimensions are greater than one, for example, ``(>1, >1, >1)``.
               Valid for any 0D, 1D, 2D, or 3D inputs.
 
             .. note::
@@ -3784,7 +3514,7 @@ class ImageDataFilters(DataSetFilters):
         Examples
         --------
         Pad a grayscale image with a 100-pixel wide border. The padding is black
-        (i.e. has a value of ``0``) by default.
+        (that is, has a value of ``0``) by default.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -4016,7 +3746,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
-        Only points whose `scalar` value is within the `scalar_range` are considered for
+        Only points whose ``scalar`` value is within the ``scalar_range`` are considered for
         connectivity. A 4-connectivity is used for 2D images or a 6-connectivity for 3D
         images. This filter operates on point-based data. If cell-based data are provided,
         they are re-meshed to a point-based representation using
@@ -4067,7 +3797,7 @@ class ImageDataFilters(DataSetFilters):
 
         label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
             Determine how the extracted regions are labelled. If ``'size'``, label regions
-            by decreasing size (i.e., count of cells), starting at ``1``. If ``'constant'``,
+            by decreasing size (that is, count of cells), starting at ``1``. If ``'constant'``,
             label with the provided ``constant_value``. If ``'seeds'``, label according to
             the seed order, starting at ``1``.
 
@@ -4075,7 +3805,7 @@ class ImageDataFilters(DataSetFilters):
             The constant label value to use. Has no effect if ``label_mode`` is not ``'seeds'``.
 
         inplace : bool, default: False
-            If ``True``, perform an inplace labelling of the ImageData. Else, returns a
+            If ``True``, perform an in-place labelling of the ImageData. Else, returns a
             new ImageData.
 
         progress_bar : bool, default: False
@@ -4091,7 +3821,7 @@ class ImageDataFilters(DataSetFilters):
             The labels of each extracted regions.
 
         NDArray[int]
-            The size (i.e., number of cells) of each extracted regions.
+            The size (that is, number of cells) of each extracted regions.
 
         See Also
         --------
@@ -4328,13 +4058,13 @@ class ImageDataFilters(DataSetFilters):
             - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
               dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
             - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
-              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              exactly one dimension is greater than one, for example, ``(>1, 1, 1)``. Only valid
               for 0D or 1D inputs.
             - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
-              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              exactly two dimensions are greater than one, for example, ``(>1, >1, 1)``. Only
               valid for 0D, 1D, or 2D inputs.
             - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
-              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              three dimensions are greater than one, for example, ``(>1, >1, >1)``. Valid for
               any 0D, 1D, 2D, or 3D inputs.
             - ``'preserve'``: convenience alias to not modify singleton
               dimensions.
@@ -4491,30 +4221,31 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
 
-            Singleton input dimensions are not resampled by this filter, e.g. 2D
+            Singleton input dimensions are not resampled by this filter, for example, 2D
             images will remain 2D. An output dimension may be reduced to a singleton,
-            however, e.g. to flatten a 3D volume into a single 2D slice.
+            however, for example, to flatten a 3D volume into a single 2D slice.
 
         .. versionadded:: 0.45
 
         Parameters
         ----------
         sample_rate : float | VectorLike[float], optional
-            Sampling rate(s) to use. Can be a single value or vector of three values
+            Sampling rates to use. Can be a single value or vector of three values
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
             Interpolation mode to use.
 
-            - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
+            - ``'nearest'`` (default) duplicates (if up-sampling) or removes (if down-sampling)
               values but does not modify them.
             - ``'linear'`` and ``'cubic'`` use linear and cubic interpolation, respectively.
             - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
               and may be used to preserve sharp details and/or reduce image artifacts.
             - ``'bspline'`` uses an n-degree basis spline to smoothly interpolate across points.
               The default degree is ``3``, but can range from ``0`` to ``9``. Append the desired
-              degree to the string to set it, e.g. ``'bspline5'`` for a 5th-degree B-spline.
+              degree to the string to set it, for example, ``'bspline5'`` for a
+              fifth-degree B-spline.
 
             .. versionadded:: 0.47
                 Added ``'bspline'`` interpolation.
@@ -4524,7 +4255,7 @@ class ImageDataFilters(DataSetFilters):
                 - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
                 - use ``'linear'`` for speed-critical tasks
                 - use ``'cubic'`` for upscaling or general-purpose resampling
-                - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
+                - use ``'lanczos'`` for high-detail down-sampling (at the cost of some ringing)
                 - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
                 - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
@@ -4555,7 +4286,7 @@ class ImageDataFilters(DataSetFilters):
                 along each axis). See examples.
 
         anti_aliasing : bool, default: False
-            Enable antialiasing. This will blur the image as part of the resampling
+            Enable anti-aliasing. This will blur the image as part of the resampling
             to reduce image artifacts when down-sampling. Has no effect when up-sampling.
 
         extend_border : bool, optional
@@ -4563,7 +4294,7 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
             resampled points will be larger than the input image bounds.
             Enabling this option also has the effect that the re-sampled spacing
-            will directly correlate with the resampled dimensions, e.g. if
+            will directly correlate with the resampled dimensions, for example, if
             the dimensions are doubled the spacing will be halved. See examples.
 
             This option is enabled by default when resampling point data. Has no effect
@@ -4577,7 +4308,7 @@ class ImageDataFilters(DataSetFilters):
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         inplace : bool, default: False
-            If ``True``, resample the image inplace. By default, a new
+            If ``True``, resample the image in-place. By default, a new
             :class:`~pyvista.ImageData` instance is returned.
 
         progress_bar : bool, default: False
@@ -4604,6 +4335,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 9
+
         Create a small 2D grayscale image with dimensions ``3 x 2`` for demonstration.
 
         >>> import pyvista as pv
@@ -4684,10 +4417,10 @@ class ImageDataFilters(DataSetFilters):
           Spacing:      5.000e-01, 5.000e-01, 1.000e+00
           N Arrays:     1
 
-        Note that the upsampled :attr:`~pyvista.ImageData.dimensions` are doubled and
+        Note that the up-sampled :attr:`~pyvista.ImageData.dimensions` are doubled and
         the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
         however, that the physical bounds of the input differ from the output.
-        The upsampled :attr:`~pyvista.ImageData.origin` also differs:
+        The up-sampled :attr:`~pyvista.ImageData.origin` also differs:
 
         >>> image.origin
         (0.0, 0.0, 0.0)
@@ -4788,7 +4521,7 @@ class ImageDataFilters(DataSetFilters):
 
         Alternatively, we could have set the dimensions explicitly. Since we want
         ``9 x 4 x 1`` cells along the x-y-z axes (respectively), we set the dimensions
-        to ``(10, 5, 2)``, i.e. one more than the desired number of cells.
+        to ``(10, 5, 2)``, that is, one more than the desired number of cells.
 
         >>> resampled = volume.resample(dimensions=(10, 5, 2))
         >>> resampled.plot(show_edges=True, cmap='grey')
@@ -4835,14 +4568,14 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.dimensions
         (458, 342, 1)
 
-        Downsample the gourds image to 1/10th its original resolution using ``'lanczos'``
+        Down-sample the gourds image to 1/10 its original resolution using ``'lanczos'``
         interpolation.
 
         >>> downsampled = gourds.resample(1 / 8, 'lanczos')
         >>> downsampled.dimensions
         (80, 60, 1)
 
-        Compare the downsampled image to the original and zoom in to show detail.
+        Compare the ``downsampled`` image to the original and zoom in to show detail.
 
         >>> def compare_images_plotter(image1, image2):
         ...     pl = pv.Plotter(shape=(1, 2))
@@ -4857,7 +4590,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = compare_images_plotter(gourds, downsampled)
         >>> pl.show()
 
-        Note that downsampling can create image artifacts caused by aliasing. Enable
+        Note that down-sampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
         >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
@@ -4867,7 +4600,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = compare_images_plotter(downsampled, downsampled2)
         >>> pl.show()
 
-        Load an MRI of a knee and downsample it.
+        Load an MRI of a knee and down-sample it.
 
         >>> knee = pv.examples.download_knee().resample(
         ...     0.1, 'linear', anti_aliasing=True
@@ -4881,7 +4614,7 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = image_plotter(knee, clim=[vmin, vmax])
         >>> pl.show()
 
-        Upsample it with B-spline interpolation. The interpolation is very smooth.
+        Up-sample it with B-spline interpolation. The interpolation is very smooth.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
         >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
@@ -5181,7 +4914,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         values : float | ArrayLike[float] | dict, optional
-            Value(s) to select. Can be a number, an iterable of numbers, or a dictionary
+            Values to select. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
@@ -5193,7 +4926,7 @@ class ImageDataFilters(DataSetFilters):
                 ``values`` can be a single vector or an array of row vectors.
 
         ranges : ArrayLike[float] | dict, optional
-            Range(s) of values to select. Can be a single range (i.e. a sequence of
+            Ranges of values to select. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The endpoints of the ranges are included in the
@@ -5230,13 +4963,13 @@ class ImageDataFilters(DataSetFilters):
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
-            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Specify the components to use when ``scalars`` is a multi-component array.
             Has no effect when the scalars have a single component. Must be one of:
 
             - number: specify the component number as a 0-indexed integer. The selected
-              component must have the specified value(s).
-            - ``'any'``: any single component can have the specified value(s).
-            - ``'all'``: all individual components must have the specified values(s).
+              component must have the specified values.
+            - ``'any'``: any single component can have the specified values.
+            - ``'all'``: all individual components must have the specified values.
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
@@ -5484,11 +5217,12 @@ class ImageDataFilters(DataSetFilters):
         concatenated along the specified ``axis``, and all images must have:
 
         #. identical dimensions except along the specified ``axis``,
-        #. the same scalar dtype, and
+        #. the same scalar ``dtype``, and
         #. the same number of scalar components.
 
         Use ``mode`` for cases with mismatched dimensions, ``dtype_policy`` for cases with
-        mismatched dtypes, and/or ``component_policy`` for cases with mismatched scalar components.
+        mismatched ``dtypes``, and/or ``component_policy`` for cases with mismatched scalar
+        components.
 
         The output has the same :attr:`~pyvista.ImageData.origin` and
         :attr:`~pyvista.ImageData.spacing` as the first input. The origin and spacing of all other
@@ -5499,7 +5233,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         images : ImageData | Sequence[ImageData]
-            The input image(s) to concatenate. The default active scalars are used for all images.
+            The input images to concatenate. The default active scalars are used for all images.
 
         axis : int | str, default: 'x'
             Axis along which the images are concatenated:
@@ -5521,7 +5255,7 @@ class ImageDataFilters(DataSetFilters):
               to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
               except the on-axis dimension is `also` resampled.
             - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
-              preserve their aspect ratio(s).
+              preserve their aspect ratios.
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that
@@ -5537,13 +5271,13 @@ class ImageDataFilters(DataSetFilters):
                 mismatched dimensions.
 
         dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
-            - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
-              have the same dtype, else a ``TypeError`` is raised.
-            - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
-              image scalars. This option safely casts all input arrays to a common dtype before
+            - ``'strict'``: Do not cast any scalar array ``dtypes``. All images being
+              concatenated must have the same ``dtype``, else a ``TypeError`` is raised.
+            - ``'promote'``: Use :func:`numpy.result_type` to compute the ``dtype`` of the output
+              image scalars. This option safely casts all input arrays to a common ``dtype`` before
               concatenating.
-            - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
-              unsafe as it may downcast values and lose precision.
+            - ``'match'``: Cast all array ``dtypes`` to match the input's ``dtype``. This
+              casting is unsafe as it may downcast values and lose precision.
 
         component_policy : 'strict' | 'promote_rgba', default: 'strict'
             - ``'strict'``: Do not modify the number of components of any scalars. All images being
@@ -5552,8 +5286,8 @@ class ImageDataFilters(DataSetFilters):
             - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
               with one component may be promoted to RGB scalars by duplicating values,
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
-              For integer dtypes, the opacity is set to the max int representable by the dtype;
-              for floats it is set to ``1.0``.
+              For integer ``dtypes``, the opacity is set to the max int representable by the
+              ``dtype``; for floats it is set to ``1.0``.
 
         background_value : float | VectorLike[float], default: 0
             Value or multi-component vector to use as background. The output may be padded with
@@ -5618,7 +5352,7 @@ class ImageDataFilters(DataSetFilters):
             (100, 100, 1)
 
             Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
-            concatenated image. Linear interpolation with antialiasing is used to avoid sampling
+            concatenated image. Linear interpolation with anti-aliasing is used to avoid sampling
             artifacts.
 
             >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
@@ -5917,7 +5651,7 @@ class ImageDataFilters(DataSetFilters):
                             needs_padding = (dimensions_diff > 0) & (np.arange(3) != axis_num)
                             dimensions_padding[needs_padding] = dimensions_diff[needs_padding]
                             pad_size = np.zeros((6,), dtype=int)
-                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1  # type: ignore[assignment]
+                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1
                             pad_size[pad_ind] = dimensions_padding[needs_padding]
                             img_copy = img_copy.pad_image(
                                 pad_size=pad_size, pad_value=background_value

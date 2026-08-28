@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
 from enum import IntEnum
-import pathlib
+from pathlib import Path
 import re
 from typing import TYPE_CHECKING
 from typing import Any
@@ -140,7 +140,7 @@ class _FRDData:
 
 
 class _FRDParser:
-    """Parses a CalculiX FRD file into an FRDData object."""
+    """Parses a CalculiX FRD file into an ``FRDData`` object."""
 
     # Compiled regex to fix scientific notation formatting issues
     _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
@@ -150,7 +150,7 @@ class _FRDParser:
 
     def parse(self) -> _FRDData:
         frd_data = _FRDData()
-        with pathlib.Path(self._filename).open(errors='replace') as file_stream:
+        with Path(self._filename).open(errors='replace') as file_stream:
             lines = _LineTrackingStream(file_stream)
             for line in lines:
                 s = line.strip()
@@ -181,7 +181,7 @@ class _FRDParser:
         """Reorder node IDs from CalculiX to VTK conventions."""
         if etype == FRDElementType.HE20:
             return node_ids[:8] + node_ids[8:12] + node_ids[16:20] + node_ids[12:16]
-        if etype == FRDElementType.PE6 and pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
+        if etype == FRDElementType.PE6 and pv.vtk_version_info < (9, 7):
             return [node_ids[0], node_ids[2], node_ids[1], node_ids[3], node_ids[5], node_ids[4]]
         if etype == FRDElementType.PE15:
             return node_ids[:9] + node_ids[12:15] + node_ids[9:12]
@@ -454,7 +454,7 @@ class _FRDParser:
             types.append(ctype)
 
         grid = pv.UnstructuredGrid(
-            np.array(cells, dtype=np.int64),
+            np.array(cells, dtype=pv.ID_TYPE),
             np.array(types, dtype=np.uint8),
             points,
         )

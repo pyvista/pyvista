@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
 import itertools
-import pathlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -180,7 +180,7 @@ class MultiBlock(
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
                 for key, block in args[0].items():
@@ -190,7 +190,7 @@ class MultiBlock(
                 raise TypeError(msg)
 
         elif len(args) > 1:
-            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.'
+            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock`` supports 0 or 1 arguments.'
             raise ValueError(msg)
 
         # Upon creation make sure all nested structures are wrapped
@@ -216,7 +216,7 @@ class MultiBlock(
     _OrderLiteral = Literal['nested_first', 'nested_last']
 
     class _RecursiveIteratorBasicKwargs(TypedDict, total=False):
-        """Define kwargs which have no impact on return type."""
+        """Define ``kwargs`` which have no impact on return type."""
 
         skip_empty: bool
         prepend_names: bool
@@ -430,7 +430,7 @@ class MultiBlock(
             Values to include in the iterator.
 
             - ``'ids'``: Return an iterator with nested block indices.
-            - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
+            - ``'names'``: Return an iterator with nested block names (that is, :meth:`keys`).
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
             - ``'all'``: Return an iterator with nested ``(index, name, block)`` triplets.
@@ -757,8 +757,8 @@ class MultiBlock(
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
 
         Any nested :class:`MultiBlock` blocks will have its :attr:`~pyvista.DataObject.field_data`
-        contents moved to the root block, (i.e. `this` ``MultiBock``). By default, this
-        data will be cleared from the nested block(s) but a copy may be made instead.
+        contents moved to the root block, (that is, `this` ``MultiBlock``). By default, this
+        data will be cleared from the nested blocks but a copy may be made instead.
 
         If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
         the root user-dict is also updated to include the nested block's user-dict
@@ -1131,7 +1131,7 @@ class MultiBlock(
         (<class 'pyvista.core.composite.MultiBlock'>, <class 'NoneType'>)
 
         Flatten the ``MultiBlock``. The nested ``MultiBlock`` containers are removed
-        and only their contents are returned (i.e. the three end nodes).
+        and only their contents are returned (that is, the three end nodes).
 
         >>> flat = nested.flatten()
         >>> flat.n_blocks
@@ -1874,7 +1874,7 @@ class MultiBlock(
         return
 
     def _navigate_to_parent(self, indices: Sequence[int]) -> tuple[MultiBlock, int]:
-        """Navigate to the parent MultiBlock and return (parent, final_index)."""
+        """Navigate to the parent MultiBlock and return (parent, ``final_index``)."""
         _validation.check_length(indices, min_length=1, name='index')
         # Navigate through the indices except the last one
         target: _TypeMultiBlockLeaf = self
@@ -1909,7 +1909,7 @@ class MultiBlock(
     ) -> None:
         """Set a block with a VTK data object.
 
-        To set the name simultaneously, pass a string name as the 2nd index.
+        To set the name simultaneously, pass a string name as the second index.
 
         Examples
         --------
@@ -2310,10 +2310,7 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        if pv.vtk_version_info >= (9, 3):  # pragma: no cover
-            self.CompositeShallowCopy(to_copy)
-        else:
-            self.ShallowCopy(to_copy)
+        self.CompositeShallowCopy(to_copy)
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks
@@ -2572,7 +2569,7 @@ class MultiBlock(
 
     @property
     def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01
-        """Return a set of all block type(s).
+        """Return a set of all block types.
 
         .. versionadded:: 0.45
 
@@ -2605,7 +2602,7 @@ class MultiBlock(
 
     @property
     def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
-        """Return a set of all nested block type(s).
+        """Return a set of all nested block types.
 
         .. versionadded:: 0.45
 

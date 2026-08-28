@@ -3,8 +3,10 @@
 
 Visualize Anatomical Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This example visualizes different anatomical groups using the segmentation
-labels available from the downloadable datasets
+
+Visualize anatomical groups from whole-body CT segmentation labels.
+
+Uses the downloadable datasets
 :func:`~pyvista.examples.downloads.download_whole_body_ct_female` and
 :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
@@ -12,6 +14,7 @@ These datasets include labels for 117 anatomical structures. In this example,
 the labels are grouped by filtering the list of labels and coloring the
 labels with the recommended RGB values used by the 3DSlicer
 `TotalSegmentator Extension <https://github.com/lassoan/SlicerTotalSegmentator>`_.
+
 """
 
 import pyvista as pv
@@ -66,8 +69,8 @@ print('}')
 
 
 # %%
-# filter_labels
-# =============
+# ``filter_labels``
+# =================
 # To visualize a particular group of anatomic regions, we first define a function
 # to filter the labels by name. Given a list of terms, the function returns
 # any label which contains any of the search terms.
@@ -79,8 +82,8 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
 
 
 # %%
-# plot_anatomy
-# ============
+# ``plot_anatomy``
+# ================
 # Define a function which, given a list of terms, will look up labels associated
 # with those terms, generate contours for the labels, and plot the result. The function
 # uses :meth:`~pyvista.ImageDataFilters.contour_labels` for generating contours and

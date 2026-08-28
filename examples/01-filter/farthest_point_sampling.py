@@ -4,8 +4,7 @@
 Farthest Point Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Subsample a point cloud so the kept points stay spaced apart instead of
-clumping in dense regions.
+Subsample a point cloud so the kept points stay spaced apart.
 
 Farthest point sampling (FPS) starts from a random seed and repeatedly picks
 the point that is farthest from the current sample set. Compared to a
@@ -13,7 +12,7 @@ uniform random draw, it gives a much more even covering of the input cloud.
 
 References
 ----------
-Y. Eldar et al., "The farthest point strategy for progressive image sampling,"
+Y. Eldar et al., "The farthest point strategy for progressive image sampling",
 *Proc. 12th IAPR Int. Conf. on Pattern Recognition*, Vol. 2, 1994, pp. 93-97,
 `doi:10.1109/ICPR.1994.577129 <https://doi.org/10.1109/ICPR.1994.577129>`_.
 
@@ -25,7 +24,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a point cloud
+# Load a Point Cloud
 # ~~~~~~~~~~~~~~~~~~
 # :func:`~pyvista.examples.downloads.download_horse_points` returns a scanned
 # horse with uneven point density.
@@ -35,7 +34,7 @@ cloud
 
 
 # %%
-# Implement farthest point sampling
+# Implement Farthest Point Sampling
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each iteration tracks the distance from every input point to its closest
 # already-sampled neighbor and picks the point with the largest such
@@ -65,7 +64,7 @@ random_cloud = pv.PolyData(cloud.points[random_ids])
 
 
 # %%
-# Compare with a uniform random draw
+# Compare With a Uniform Random Draw
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The random subsample (left, red) leaves visible gaps and clumps. The
 # farthest-point subsample (right, blue) lays the points down in a more
@@ -114,7 +113,7 @@ pl.show()
 
 
 # %%
-# Quantify the coverage gap
+# Quantify the Coverage Gap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # For each input point, find the distance to its closest sample and report
 # the worst case. Lower is better.

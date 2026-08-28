@@ -4,8 +4,11 @@
 Create Circular Arcs
 ~~~~~~~~~~~~~~~~~~~~
 
-Generate arc geometry with :func:`pyvista.CircularArc` and
+Generate circular arc geometry.
+
+Demonstrates usage of :func:`pyvista.CircularArc` and
 :func:`pyvista.CircularArcFromNormal`.
+
 """
 
 import numpy as np
@@ -14,7 +17,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Create an arc from two endpoints
+# Create an Arc From Two Endpoints
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The first arc is defined directly from its endpoints and center.
 
@@ -42,7 +45,7 @@ pl.show()
 
 
 # %%
-# Create an arc from a normal and angle
+# Create an Arc From a Normal and Angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Use this form when you already know the plane the arc lies in.
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import wraps
+import functools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -334,9 +334,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         z: NumpyArray[float],
         check_duplicates: bool = False,
     ) -> None:
-        """Create VTK rectilinear grid directly from numpy arrays.
+        """Create VTK rectilinear grid directly from NumPy arrays.
 
-        Each array gives the uniques coordinates of the mesh along each axial
+        Each array gives the unique coordinates of the mesh along each axial
         direction. To help ensure you are using this correctly, we take the unique
         values of each argument.
 
@@ -383,7 +383,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def meshgrid(
         self: Self,
     ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
-        """Return a meshgrid of numpy arrays for this mesh.
+        """Return a meshgrid of NumPy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
         coordinates for this mesh in ``ij`` indexing. These are a copy
@@ -392,7 +392,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         Returns
         -------
         tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
-            Tuple of numpy arrays representing the points of this mesh.
+            Tuple of NumPy arrays representing the points of this mesh.
 
         """
         # Converting to tuple needed to be consistent type across numpy version
@@ -406,7 +406,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
-        """Return a copy of the points as an ``(n, 3)`` numpy array.
+        """Return a copy of the points as an ``(n, 3)`` NumPy array.
 
         Returns
         -------
@@ -665,10 +665,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.47
 
-    See Also
-    --------
-    :ref:`create_uniform_grid_example`
-
     Examples
     --------
     Create an empty ImageData.
@@ -879,7 +875,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
-        """Build a copy of the implicitly defined points as a numpy array.
+        """Build a copy of the implicitly defined points as a NumPy array.
 
         Returns
         -------
@@ -1260,7 +1256,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)
+    @functools.wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
@@ -1290,7 +1286,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def index_to_physical_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to transform index space (ijk) to physical space (xyz).
+        """Return or set 4x4 matrix to transform index space (``ijk``) to physical space (``xyz``).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
@@ -1326,7 +1322,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to transform from physical space (xyz) to index space (ijk).
+        """Return or set the 4x4 matrix from physical (``xyz``) to index (``ijk``) space.
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,

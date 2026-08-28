@@ -3,8 +3,10 @@
 
 Mesh Validation
 ~~~~~~~~~~~~~~~
-This example explores different cases where a mesh may not be considered valid as defined
-by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
+
+Explore different cases where a mesh may not be considered valid.
+
+As defined by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 
 """
 
@@ -13,7 +15,7 @@ import pyvista as pv
 from pyvista.examples import plot_cell
 
 # %%
-# Non-convex cells
+# Non-Convex Cells
 # ----------------
 # Many VTK algorithms assume that cells are convex. This can result in incorrect outputs
 # and may also affect rendering. For example, let's create :class:`~pyvista.PolyData`
@@ -50,7 +52,7 @@ print(report.is_valid)
 plot_cell(triangles, 'xy')
 
 # %%
-# Cells with inverted faces
+# Cells With Inverted Faces
 # -------------------------
 # Cells with inverted faces can result in incorrect geometric computations such as
 # cell volume or centroid. To demonstrate this, we first create a valid
@@ -102,7 +104,7 @@ invalid_centroid = invalid_polyhedron.cell_centers().points[0].tolist()
 print(invalid_centroid)
 
 # %%
-# Self-intersecting cells
+# Self-Intersecting Cells
 # -----------------------
 # Most :class:`cell types <pyvista.CellType>` have a defined point order which must
 # be respected. For example, let's try to create a :attr:`~pyvista.CellType.HEXAHEDRON`
@@ -158,7 +160,7 @@ print(report.is_valid)
 plot_cell(hexahedron)
 
 # %%
-# Meshes with unused points
+# Meshes With Unused Points
 # -------------------------
 # Unused points are points not associated with any cells. These points are not processed
 # consistently by filters and are often ignored or removed. To demonstrate this, create an
