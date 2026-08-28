@@ -1,11 +1,10 @@
 """Check the static types asserted by the cases in ``tests/typing/cases``.
 
 Each case file is an ordinary pytest module: its test functions build a value
-and pin its type twice, once with :func:`typing_extensions.assert_type` for
-Mypy and once with
-:func:`~tests.typing.type_assertions.assert_runtime_type` for the interpreter.
-Running the module under pytest checks the runtime half; this module runs Mypy
-over the same files and checks the static half.
+and pin its type twice, once with `typing_extensions.assert_type` for Mypy and
+once with `assert_runtime_type` for the interpreter. Running the module under
+pytest checks the runtime half; this module runs Mypy over the same files and
+checks the static half.
 
 Mypy runs in a subprocess from a session-scoped fixture rather than at
 collection time, so a Mypy failure fails these tests instead of aborting the
@@ -35,7 +34,9 @@ CASES_PACKAGE = '.'.join(CASES_DIR.relative_to(PYVISTA_ROOT_DIR).parts)
 _DIAGNOSTIC = re.compile(r'^(?P<path>.+?):(?P<line>\d+):(?:\d+:)? (?P<severity>\w+): (?P<msg>.*)$')
 
 
-ASSERTIONS = ('assert_type', 'assert_runtime_type')
+STATIC_ASSERTION = 'assert_type'
+RUNTIME_ASSERTION = 'assert_runtime_type'
+MODULE_SCOPE = '<module>'
 
 
 class _Assertion(NamedTuple):
@@ -69,7 +70,7 @@ def _collect_assertions(node: ast.FunctionDef) -> tuple[_Assertion, ...]:
         if (
             isinstance(child, ast.Call)
             and isinstance(child.func, ast.Name)
-            and child.func.id in ASSERTIONS
+            and child.func.id in (STATIC_ASSERTION, RUNTIME_ASSERTION)
             and len(child.args) == 2
         ):
             target, expected = child.args
@@ -102,15 +103,16 @@ def _collect_cases() -> list[_Case]:
             for node in tree.body
             if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')
         ]
+        covered = frozenset()
         for node in functions:
             lines = frozenset(range(node.lineno, (node.end_lineno or node.lineno) + 1))
             cases.append(_Case(path, node.name, lines, _collect_assertions(node)))
+            covered |= lines
         # Whatever is left -- imports, fixtures, module constants -- is its own case,
         # so a broken import reads as such instead of failing every case in the file.
-        covered = frozenset().union(*(case.lines for case in cases if case.path == path))
         module_lines = frozenset(range(1, len(source.splitlines()) + 1)) - covered
         if module_lines:
-            cases.append(_Case(path, '<module>', module_lines))
+            cases.append(_Case(path, MODULE_SCOPE, module_lines))
     return cases
 
 
@@ -134,8 +136,9 @@ def _run_mypy(cache_dir: Path) -> str:
     process = subprocess.run(
         args, capture_output=True, cwd=PYVISTA_ROOT_DIR, text=True, check=False
     )
-    if process.stderr:
-        msg = f'Mypy failed to run:\n{" ".join(args)}\n\n{process.stderr}'
+    # Mypy exits 1 when it reports diagnostics and 2 when it could not run at all.
+    if process.returncode > 1 or process.stderr:
+        msg = f'Mypy failed to run:\n{" ".join(args)}\n\n{process.stderr}{process.stdout}'
         raise RuntimeError(msg)
     return process.stdout
 
@@ -162,10 +165,13 @@ def mypy_diagnostics(worker_id) -> dict[Path, list[tuple[int, str]]]:
 
 
 def pytest_generate_tests(metafunc):
-    """Generate one static test per case function."""
+    """Generate one test per case, over module scope as well where it applies."""
+    cases = _collect_cases()
     if 'case' in metafunc.fixturenames:
-        cases = _collect_cases()
         metafunc.parametrize('case', cases, ids=[case.id for case in cases])
+    if 'case_function' in metafunc.fixturenames:
+        functions = [case for case in cases if case.name != MODULE_SCOPE]
+        metafunc.parametrize('case_function', functions, ids=[case.id for case in functions])
 
 
 def test_static_type(case: _Case, mypy_diagnostics) -> None:
@@ -183,25 +189,32 @@ def test_static_type(case: _Case, mypy_diagnostics) -> None:
         pytest.fail(f'Mypy reported {len(errors)} error(s) in {case.name}:\n{report}')
 
 
-def test_asserts_both_types(case: _Case) -> None:
+def test_asserts_both_types(case_function: _Case) -> None:
     """Assert this case pins its type statically and at runtime, to the same type.
 
     Checked from the source rather than from Mypy, so a case that only pins one
     of the two -- and therefore proves nothing about the two agreeing -- is
     reported even when Mypy cannot run.
     """
-    if case.name == '<module>':
+    if case_function.name == '<module>':
         pytest.skip('Module scope holds no type assertions.')
 
-    static = [assertion for assertion in case.assertions if assertion.kind == ASSERTIONS[0]]
-    runtime = [assertion for assertion in case.assertions if assertion.kind == ASSERTIONS[1]]
+    static = [
+        assertion for assertion in case_function.assertions if assertion.kind == STATIC_ASSERTION
+    ]
+    runtime = [
+        assertion for assertion in case_function.assertions if assertion.kind == RUNTIME_ASSERTION
+    ]
     if not static:
-        pytest.fail(f'{case.name} makes no `{ASSERTIONS[0]}` call.')
+        pytest.fail(f'{case_function.name} makes no `{STATIC_ASSERTION}` call.')
 
-    positional = [assertion for assertion in case.assertions if not assertion.target_is_name]
+    positional = [
+        assertion for assertion in case_function.assertions if not assertion.target_is_name
+    ]
     if positional:
+        name = case_function.path.name
         reported = '\n'.join(
-            f'{case.path.name}:{assertion.line}: {assertion.kind}({assertion.target}, ...)'
+            f'{name}:{assertion.line}: {assertion.kind}({assertion.target}, ...)'
             for assertion in positional
         )
         pytest.fail(
@@ -214,9 +227,10 @@ def test_asserts_both_types(case: _Case) -> None:
     )
     if unpaired:
         reported = '\n'.join(
-            f'{ASSERTIONS[1]}({target}, {expected})' for target, expected in unpaired
+            f'{RUNTIME_ASSERTION}({target}, {expected})' for target, expected in unpaired
         )
         pytest.fail(
-            f'Every `{ASSERTIONS[0]}` needs a matching `{ASSERTIONS[1]}`, so that the '
-            f'static and runtime halves pin the same type. Missing from {case.name}:\n{reported}'
+            f'Every `{STATIC_ASSERTION}` needs a matching `{RUNTIME_ASSERTION}`, so that the '
+            f'static and runtime halves pin the same type. '
+            f'Missing from {case_function.name}:\n{reported}'
         )
