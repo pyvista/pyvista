@@ -401,7 +401,7 @@ def register_reader(
 
 
 def _normalize_ext(key: str) -> str:
-    """Return *key* lowercased and with a leading dot."""
+    """Return ``key`` in lowercase, with a leading dot."""
     key = key.lower()
     return key if key.startswith('.') else f'.{key}'
 
@@ -519,7 +519,7 @@ def _ensure_entry_points() -> None:
 
 
 def _entry_point_package(ep: EntryPoint) -> str:
-    """Return the distribution name behind *ep*, best effort.
+    """Return the distribution name behind ``ep``, best effort.
 
     ``EntryPoint.dist`` is unset for one constructed by hand, so fall back to
     the module half of its value.
