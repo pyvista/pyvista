@@ -890,6 +890,12 @@ def download_head(load: Literal[False]) -> str: ...
 def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
     """Download head dataset.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('head').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2515,6 +2521,12 @@ def download_frog(load: Literal[False]) -> str: ...
 def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
     """Download frog dataset.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('frog').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2724,6 +2736,12 @@ def download_doorman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT0
     .. versionchanged:: 0.44.0
         Add support for downloading the texture images.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('doorman').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2836,6 +2854,12 @@ def download_parallel_exodus(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_parallel_exodus(*, load: Literal[False]) -> str: ...
 def download_parallel_exodus(*, load: bool = True) -> MultiBlock | str:
     """Download parallel Exodus dataset.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('parallel_exodus').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -4887,6 +4911,12 @@ def download_sky_box_cube_map(load: Literal[False]) -> str: ...
 def download_sky_box_cube_map(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
     """Download a skybox cube map texture.
 
+    .. note::
+        ``load=False`` returns an empty tuple, because this example has no single
+        file which is read directly. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('sky_box_cube_map').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -5741,6 +5771,12 @@ def download_cylinder_crossflow(load: Literal[False]) -> str: ...
 def download_cylinder_crossflow(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
     """Download CFD result for cylinder in cross flow at Re=35.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('cylinder_crossflow').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -5788,6 +5824,12 @@ def download_naca(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_naca(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
     """Download NACA airfoil dataset in EnSight format.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('naca').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -5842,6 +5884,12 @@ def download_lshape(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_lshape(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
     """Download LShape dataset in EnSight format.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('lshape').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -8227,6 +8275,12 @@ def download_meshio_xdmf(load: bool = True) -> MultiBlock | str:  # noqa: FBT001
 
     The dataset was created by ``test_time_series`` test function in meshio.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('meshio_xdmf').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8697,6 +8751,12 @@ def download_whole_body_ct_female(
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('whole_body_ct_male').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8826,6 +8886,18 @@ def download_room_cff(load: Literal[False]) -> str: ...
 def download_room_cff(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
     """Download a room model in CFF format.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('room_cff').paths <pyvista.examples.get_example>`.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('whole_body_ct_female').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8931,6 +9003,12 @@ def download_headsq(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
     The headsq dataset is a 3D MRI scan of a human head.
 
     .. versionadded:: 0.44.0
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('headsq').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -9195,6 +9273,12 @@ def download_prostar(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT0
 
     .. versionadded:: 0.44.0
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('prostar').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -9280,6 +9364,12 @@ def download_full_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
 
     .. versionadded:: 0.45.0
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('full_head').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, optional
@@ -9324,6 +9414,12 @@ def download_nek5000(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT0
     """Download 2D nek5000 data example.
 
     .. versionadded:: 0.45.0
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('nek5000').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
