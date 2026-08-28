@@ -1399,29 +1399,51 @@ helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
 How the Cases Run
 """""""""""""""""
-Every case becomes two tests, named after the claim it makes rather than after
-where it sits in the file:
+Each case file is collected as a test file of its own, and every case in it
+becomes two tests, named after the claim it makes rather than after where it
+sits in the file:
 
 .. code-block:: text
 
-    test_runtime_type[wrap.py: pv.wrap(pv.PolyData()) -> pv.PolyData]
-    test_static_type[wrap.py: pv.wrap(pv.PolyData()) -> pv.PolyData]
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static]
 
-``test_runtime_type`` compiles the file's setup followed by that one case and
-runs it in a namespace of its own, so a case cannot reach another case's state
-and reordering a file changes nothing. The runtime check is backed by
+The runtime half compiles the file's setup, runs it in a namespace of its own
+and then executes that one case against it, so a case cannot reach another
+case's state and reordering a file changes nothing. It is backed by
 `pycroscope.runtime <https://pycroscope.readthedocs.io/en/latest/reference/runtime.html>`_,
-which walks containers exhaustively, so it catches a ``None`` at any position in a
-``list[DataSet]``, not only the first element.
+which walks containers exhaustively, so it catches a ``None`` at any position in
+a ``list[DataSet]``, not only the first element.
 
-``test_static_type`` reads a single Mypy run, made once per session in a
-separate process, and reports the diagnostics landing on that case's lines.
-Mypy failing to run fails only these tests. Lines that are not cases are covered
-by ``test_case_file_setup``, one per file, so a broken import reads as a broken
-import.
+The static half reads a single Mypy run, made once per session in a separate
+process, and reports the diagnostics landing on that case's lines. Mypy failing
+to run fails only these tests. Lines that are not cases are covered by a
+``setup`` test, one per file, so a broken import reads as a broken import.
 
-The framework itself is in ``tests/typing/typeassert`` and knows nothing about
-PyVista.
+Skipping a Case
+"""""""""""""""
+A case that cannot run everywhere, because it crashes a platform or needs a
+dependency that is not always present, is named in a ``SKIP_RUNTIME`` mapping
+in its own file:
+
+.. code-block:: python
+
+    SKIP_RUNTIME = {
+        "expression exactly as written": "why running it fails here",
+    }
+
+Only the runtime half is skipped; Mypy still checks the case. The mapping is
+read after the file's setup has run, so making an entry conditional is ordinary
+Python. An entry naming an expression that no case makes fails the ``setup``
+test, so a skip cannot quietly outlive the case it was written for.
+
+The Framework
+"""""""""""""
+``tests/typing/typeassert`` holds the framework and knows nothing about
+PyVista: ``_assertions`` is the assertion, ``_cases`` parses a case file,
+``_mypy`` runs the checker, and ``plugin`` is the pytest integration.
+``tests/typing/conftest.py`` is the only part that says where the cases live.
+``tests/typing/test_typeassert.py`` tests the framework itself, in plain Python.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
