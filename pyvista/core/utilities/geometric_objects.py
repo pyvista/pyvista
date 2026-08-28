@@ -562,12 +562,6 @@ def StructuredSphere(
     Pole. ``phi=0`` is on the positive z-axis by default.
     ``theta=0`` is on the positive x-axis by default.
 
-    Note that the poles have degenerate cells with coincident points, and that a
-    full 360-degree sweep of ``theta`` has a seam of duplicate points where the
-    start and end angles meet. Both are required by the grid's structure. Use
-    :meth:`~pyvista.DataObjectFilters.extract_surface` and
-    :meth:`~pyvista.PolyDataFilters.clean` to merge the duplicate points.
-
     With a sequence of radii the tessellation matches :func:`~pyvista.SolidSphere`
     at the same resolutions, cell for cell and by volume; only the storage
     differs. Every cell here is a :attr:`~pyvista.CellType.HEXAHEDRON`, collapsed
@@ -576,6 +570,13 @@ def StructuredSphere(
     :func:`~pyvista.SolidSphere` can fill the center. Prefer this function for the
     ``i-j-k`` ordering, which addresses the grid by radius, ``phi`` and ``theta``
     directly.
+
+    Note that the poles have degenerate cells with coincident points, and that a
+    full 360-degree sweep of ``theta`` has a seam of duplicate points where the
+    start and end angles meet. Both are required by the grid's structure. Use
+    :func:`~pyvista.Sphere` with ``tessellation='phi_theta'`` for a 2D surface,
+    or :func:`~pyvista.SolidSphere` for a 3D volume; neither has coincident
+    points or degenerate cells.
 
     .. versionadded:: 0.49
 
