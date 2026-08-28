@@ -84,16 +84,13 @@ def test_get_example_metadata():
     assert isinstance(metadata, examples.ExampleMetadata)
     assert metadata.name == 'uniform'
     assert metadata.function is examples.load_uniform
-    assert metadata.module == 'pyvista.examples.examples'
-    assert metadata.downloadable
     assert metadata.num_files == 1
     assert metadata.extensions == ('.vtk',)
     assert metadata.reader_types == (pv.VTKDataSetReader,)
-    assert metadata.total_size_bytes == sum(metadata.file_sizes)
     assert metadata.total_size.endswith('KB')
-    assert metadata.source_names == ('uniform.vtk',)
-    assert metadata.source_urls[0].startswith('https://')
-    assert metadata.web_urls[0].startswith('https://')
+    assert metadata.source_urls == (
+        'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
+    )
 
     assert metadata.paths == metadata.loadable_paths
     assert len(metadata.paths) == len(metadata.file_sizes) == metadata.num_files
@@ -103,7 +100,6 @@ def test_get_example_metadata_in_memory():
     """An example generated in memory has no files and no source."""
     metadata = examples.get_example('structured', output='metadata')
 
-    assert not metadata.downloadable
     assert metadata.num_files == 0
     for empty in (
         metadata.paths,
@@ -111,9 +107,7 @@ def test_get_example_metadata_in_memory():
         metadata.extensions,
         metadata.file_sizes,
         metadata.reader_types,
-        metadata.source_names,
         metadata.source_urls,
-        metadata.web_urls,
     ):
         assert empty == ()
 

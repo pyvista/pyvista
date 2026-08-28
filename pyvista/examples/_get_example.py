@@ -65,12 +65,6 @@ class ExampleMetadata:
     function: Callable[..., Any]
     """Public function which returns this example, e.g. ``examples.download_frog``."""
 
-    module: str
-    """Name of the module defining the example, e.g. ``'pyvista.examples.downloads'``."""
-
-    downloadable: bool
-    """Whether the example is read from files rather than generated in memory."""
-
     paths: tuple[Path, ...] = ()
     """Local path of every file or folder belonging to the example, in declaration order."""
 
@@ -86,23 +80,14 @@ class ExampleMetadata:
     file_sizes: tuple[int, ...] = ()
     """Size in bytes of each entry in :attr:`paths`, folders counted in full."""
 
-    total_size_bytes: int = 0
-    """Total size of all files in bytes."""
-
     total_size: str = '0.0 B'
     """Total size of all files, formatted for display."""
 
     reader_types: tuple[type[pv.BaseReader[Any]], ...] = ()
     """Unique reader types used to read the example's files."""
 
-    source_names: tuple[str, ...] = ()
-    """Name of each entry in :attr:`paths` relative to its base URL."""
-
     source_urls: tuple[str, ...] = ()
-    """URL each entry in :attr:`paths` is downloaded from."""
-
-    web_urls: tuple[str, ...] = ()
-    """URL of the web page hosting each entry in :attr:`paths`, to open in a browser."""
+    """URL each entry in :attr:`paths` is downloaded from, empty if it has none."""
 
 
 def _supported_modules() -> tuple[ModuleType, ...]:
@@ -200,23 +185,17 @@ def _collect_metadata(
 ) -> ExampleMetadata:
     """Gather every file and source property the loader exposes."""
     paths, loadable = _resolve_paths(loader, name, download=download)
-    downloadable = isinstance(loader, _Downloadable)
     return ExampleMetadata(
         name=name,
         function=function,
-        module=function.__module__,
-        downloadable=downloadable,
         paths=paths,
         loadable_paths=loadable,
         num_files=getattr(loader, 'num_files', 0),
         extensions=_as_tuple(getattr(loader, 'unique_extension', None)),
         file_sizes=_as_tuple(getattr(loader, '_filesize_bytes', None)),
-        total_size_bytes=getattr(loader, '_total_size_bytes', 0),
         total_size=getattr(loader, 'total_size', '0.0 B'),
         reader_types=_as_tuple(getattr(loader, 'unique_reader_type', None)),
-        source_names=_as_tuple(getattr(loader, 'source_name', None)) if downloadable else (),
-        source_urls=_as_tuple(getattr(loader, 'source_url', None)) if downloadable else (),
-        web_urls=_as_tuple(getattr(loader, 'web_url', None)) if downloadable else (),
+        source_urls=_as_tuple(getattr(loader, 'source_url', None)),
     )
 
 
