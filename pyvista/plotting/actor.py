@@ -559,6 +559,7 @@ class Actor(Prop3D, _vtk.vtkActor):
     def backface_prop(self, value: Property) -> None:
         self.SetBackfaceProperty(value)
 
+    @_deprecate_positional_args(allowed=['shader_type'], version=(0, 52))
     def add_shader_replacement(
         self,
         shader_type: ShaderType | str,
@@ -618,8 +619,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor = pl.add_mesh(mesh, style='points', point_size=20)
         >>> actor.add_shader_replacement(
         ...     'fragment',
-        ...     '//VTK::Color::Impl',
-        ...     '//VTK::Color::Impl\n'
+        ...     original='//VTK::Color::Impl',
+        ...     replacement='//VTK::Color::Impl\n'
         ...     'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
         ...     'if (dot(p, p) > 1.0) discard;\n',
         ... )
@@ -814,8 +815,8 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         self.add_shader_replacement(
             'vertex',
-            '//VTK::LineWidthGLES30::Impl',
-            glsl_code,
+            original='//VTK::LineWidthGLES30::Impl',
+            replacement=glsl_code,
             replace_first=True,
             replace_all=False,
             _feature_name='mip',
@@ -996,8 +997,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         if target is not None:
             self.add_shader_replacement(
                 'fragment',
-                '//VTK::Color::Impl',
-                _POINT_SPRITE_SHADERS[target],
+                original='//VTK::Color::Impl',
+                replacement=_POINT_SPRITE_SHADERS[target],
                 replace_first=True,
                 replace_all=False,
                 _feature_name='point_sprite',

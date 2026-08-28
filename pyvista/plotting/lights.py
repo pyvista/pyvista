@@ -936,6 +936,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """
         self.SwitchOff()
 
+    @_deprecate_positional_args(allowed=['elev'], version=(0, 52))
     def set_direction_angle(self, elev, azim):
         """Set the position and focal point of a directional light.
 
@@ -969,7 +970,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.set_direction_angle(30, 0)
+        >>> light.set_direction_angle(30, azim=0)
 
         """
         self.positional = False

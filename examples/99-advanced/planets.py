@@ -37,7 +37,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # Light of the Sun.
 light = pv.Light()
-light.set_direction_angle(30, -20)
+light.set_direction_angle(30, azim=-20)
 
 # Load planets
 mercury = examples.planets.load_planet(radius=2439.0)
