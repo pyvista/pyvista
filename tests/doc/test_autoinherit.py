@@ -77,6 +77,35 @@ def test_scan_qualifies_names_with_the_current_module():
     }
 
 
+def test_scan_skips_options_other_than_toctree():
+    text = """
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: enum
+   :nosignatures:
+
+   CellType
+"""
+    assert autoinherit._scan(text) == {'pyvista.CellType'}
+
+
+def test_resolve_returns_none_for_a_missing_attribute():
+    assert autoinherit._resolve('pyvista.NotAnAttribute') is None
+
+
+def test_resolve_returns_none_when_nothing_imports():
+    assert autoinherit._resolve('not_a_module_pyvista_would_ship') is None
+
+
+def test_documented_classes_needs_the_extension_to_be_loaded(monkeypatch):
+    monkeypatch.setattr(autoinherit, '_srcdir', None)
+    monkeypatch.setattr(autoinherit, '_documented', None)
+    with pytest.raises(RuntimeError, match='is not loaded'):
+        autoinherit._documented_classes()
+
+
 def test_provider_finds_the_class_that_defines_the_member():
     assert autoinherit._provider(pv.PolyData, 'remove_cells') is _PointSet
     assert autoinherit._provider(pv.ImageData, 'dimensions') is Grid
