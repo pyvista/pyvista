@@ -79,7 +79,17 @@ def test_validate_transform4x4(transform_like):
 def test_validate_transform4x4_raises():
     with pytest.raises(ValueError, match=re.escape('Shape must be one of [(3, 3), (4, 4)].')):
         validate_transform4x4(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match='Input transform must be one of'):
+    match = (
+        'Input transform must be one of:'
+        '\n\tvtkMatrix4x4'
+        '\n\tvtkMatrix3x3'
+        '\n\tvtkTransform'
+        '\n\t4x4 np.ndarray'
+        '\n\t3x3 np.ndarray'
+        '\n\tscipy.spatial.transform.Rotation'
+        "\nGot 'abc' with type <class 'str'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         validate_transform4x4('abc')
 
 
