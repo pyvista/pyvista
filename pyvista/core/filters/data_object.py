@@ -3259,7 +3259,7 @@ class DataObjectFilters:
             self, origin, normal, plane, default_normal='x'
         )
         # create the plane for clipping
-        function = generate_plane(normal_, origin_)
+        function = generate_plane(normal_, origin=origin_)
         # run the clip
         result = self._clip_with_function(
             function,
@@ -3723,7 +3723,7 @@ class DataObjectFilters:
             self, origin, normal, plane, default_normal='x'
         )
         # create the plane for clipping
-        implicit_function = generate_plane(normal_, origin_)
+        implicit_function = generate_plane(normal_, origin=origin_)
         return self.slice_implicit(
             implicit_function,
             generate_triangles=generate_triangles,

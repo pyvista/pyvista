@@ -2144,7 +2144,7 @@ class PolyDataFilters(DataSetFilters):
             self, origin, normal, plane, default_normal='x'
         )
         # create the plane for clipping
-        vtk_plane = generate_plane(normal_, origin_)
+        vtk_plane = generate_plane(normal_, origin=origin_)
         collection = _vtk.vtkPlaneCollection()
         collection.AddItem(vtk_plane)
 
@@ -3422,7 +3422,7 @@ class PolyDataFilters(DataSetFilters):
             # Default validated origin is the mesh's center which we need to translate
             origin_ -= normal_ * self.length / 2.0
         # Make plane
-        plane = generate_plane(normal_, origin_)
+        plane = generate_plane(normal_, origin=origin_)
         # choose what mesh to use
         mesh = self.copy() if not inplace else self
         # Perform projection in place on the copied mesh

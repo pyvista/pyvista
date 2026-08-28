@@ -746,6 +746,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_tensors_info = ActiveArrayInfoTuple(field, name)
 
+    @_deprecate_positional_args(allowed=['old_name', 'new_name'], version=(0, 52))
     def rename_array(
         self: Self,
         old_name: str,
