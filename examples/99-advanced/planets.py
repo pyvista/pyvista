@@ -29,7 +29,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Plot the Solar System with Stars in the Background
+# Plot the Solar System With Stars in the Background
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This section relies on calculations in `Visualizing Celestial Bodies in 3D
 # <https://tamaskis.github.io/files/Visualizing_Celestial_Bodies_in_3D.pdf>`_.

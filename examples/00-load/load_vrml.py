@@ -1,7 +1,7 @@
 """
 .. _load_vrml_example:
 
-Working with VRML Files
+Working With VRML Files
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Import a VRML file directly into a PyVista plotting scene.

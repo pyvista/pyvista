@@ -7,6 +7,7 @@ from collections import UserDict
 from collections import defaultdict
 import importlib.util
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -1093,6 +1094,12 @@ class DataObject(
 
     def __del__(self) -> None:
         """Delete the object."""
+        # There is nothing left to reclaim once the interpreter is shutting down, and
+        # by then the module globals needed below may already be ``None``: ``__dict__``
+        # raises through ``DisableVtkSnakeCase.__getattribute__``, which reroutes into
+        # ``__getattr__``, and ``vtkObjectBase`` is no longer a type to test against.
+        if sys.is_finalizing():
+            return
         # Delete any cached vtk objects (locators, glyph geom, etc.)
         _clear_vtk_objects_from_dict(self.__dict__)
 

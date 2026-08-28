@@ -99,7 +99,7 @@ test = [
   'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
-  'sphinx-autocodelink>=0.6,<0.7',
+  'sphinx-autocodelink==0.9.0',
   'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.2.0',
   'sphinx-design<0.7.0',
@@ -145,7 +145,7 @@ docs = [
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
-  'sphinx-autocodelink==0.6.2',
+  'sphinx-autocodelink==0.9.0',
   'sphinx-autoopengraph==0.2.1',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
@@ -555,6 +555,8 @@ pyvista = "pv"
 '*/conf.py' = ['E402']
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+# A command-line script: it reports what it runs, like `make` does.
+'doc/run_vale.py' = ['T20']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',

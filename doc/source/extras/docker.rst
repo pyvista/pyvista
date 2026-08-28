@@ -33,7 +33,7 @@ start playing around with pyvista in jupyterlab. For example:
     `Working with the Docker registry <https://docs.github.com/en/enterprise-server@3.0/packages/working-with-a-github-packages-registry/working-with-the-docker-registry>`_)
 
 
-Create Your Own Docker Container with PyVista
+Create Your Own Docker Container With PyVista
 ---------------------------------------------
 Both the ``latest`` and ``latest-slim`` images are produced from a single
 multi-stage Dockerfile at ``docker/Dockerfile``. The PyVista wheel is built
@@ -64,7 +64,7 @@ argument:
   docker build --build-arg PY_VERSION=3.12 \
     -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
 
-GPU Rendering with the NVIDIA Container Runtime
+GPU Rendering With the NVIDIA Container Runtime
 -----------------------------------------------
 Both published images ship with ``libegl1`` and set
 ``NVIDIA_VISIBLE_DEVICES=all`` plus

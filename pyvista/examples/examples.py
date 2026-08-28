@@ -632,9 +632,6 @@ def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 
     >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
     >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
-    See :ref:`atomic_orbitals_example` for additional examples using
-    this function.
-
     .. seealso::
 
         :ref:`Hydrogen Orbital Dataset <hydrogen_orbital_dataset>`

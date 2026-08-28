@@ -25,7 +25,7 @@ a jupyter notebook:
    trame
 
 
-Usage with PyVista
+Usage With PyVista
 ~~~~~~~~~~~~~~~~~~
 There are two ways to set the jupyter plotting backend. First, it can
 be done on a plot by plot basis by setting the ``jupyter_backend`` parameter in

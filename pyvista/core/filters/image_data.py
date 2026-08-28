@@ -2560,9 +2560,6 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.color_labels`
             Color labeled data, e.g. labeled volumes or contours.
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this filter.
-
         References
         ----------
         S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
@@ -3273,8 +3270,6 @@ class ImageDataFilters(DataSetFilters):
         - The dimensions have decreased by one
         - The bounds have decreased by half the spacing
         - The output ``N Points`` equals the input ``N Cells``
-
-        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:

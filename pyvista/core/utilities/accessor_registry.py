@@ -693,6 +693,10 @@ def _resolve_pending_accessor(name: str) -> bool:
     re-emitting the warning.
 
     """
+    if name.startswith('_'):
+        # Registered names never start with an underscore, so private and dunder
+        # lookups can skip the entry-point scan entirely.
+        return False
     _ensure_entry_points()
     module_path = _pending_accessors.pop(name, None)
     if module_path is None:

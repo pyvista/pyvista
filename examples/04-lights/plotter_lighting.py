@@ -92,7 +92,7 @@ pl.show()
 
 
 # %%
-# Custom Lighting with Shadows
+# Custom Lighting With Shadows
 # ============================
 #
 # Here, we ``enable_shadows`` to enhance the effect that the lighting

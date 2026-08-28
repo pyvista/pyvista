@@ -1,6 +1,6 @@
 .. _pyinstaller:
 
-Freezing PyVista with PyInstaller
+Freezing PyVista With PyInstaller
 =================================
 You can make some fantastic standalone programs with ``pyinstaller``
 and ``pyvista``, and you can even make a graphical user interface

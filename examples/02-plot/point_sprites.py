@@ -56,7 +56,7 @@ pl.show()
 
 
 # %%
-# Using ``point_shape`` with ``add_mesh``
+# Using ``point_shape`` With ``add_mesh``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The ``point_shape`` parameter works alongside ``point_size`` and
 # ``style='points'``. If ``render_points_as_spheres`` is ``True``

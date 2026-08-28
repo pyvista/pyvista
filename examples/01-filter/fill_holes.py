@@ -1,7 +1,7 @@
 """
 .. _fill_holes_example:
 
-Repair a Surface with ``fill_holes``
+Repair a Surface With ``fill_holes``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Seal small openings in a surface with :func:`pyvista.PolyDataFilters.fill_holes`.

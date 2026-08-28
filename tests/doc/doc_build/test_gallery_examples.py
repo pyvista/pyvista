@@ -68,6 +68,10 @@ EXAMPLES_SRC_DIR = PYVISTA_ROOT_DIR / 'examples'
 _CROSSREF_RE = re.compile(r':(meth|func|class|mod|attr|exc|data|ref|obj):`[^`]+`')
 _ANCHOR_RE = re.compile(r'^\s*\.\.\s+_(.+?):\s*$', re.MULTILINE)
 _BACKREF_LIST_RE = re.compile(r'<ul class="sphinx-autocodelink-index">(.*?)</ul>', re.DOTALL)
+# matches a gallery-card thumbnail backreference (autocodelink_gallery_cards)
+_BACKREF_THUMBNAIL_RE = re.compile(
+    r'<div class="sphx-glr-thumbcontainer"[^>]*>(.*?)</div>', re.DOTALL
+)
 _BACKREF_HREF_RE = re.compile(r'href="([^"]*)"')
 
 
@@ -126,6 +130,8 @@ def load_backref_target_names() -> set[str]:
         content = page.read_text(encoding='utf-8')
         for list_block in _BACKREF_LIST_RE.findall(content):
             names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(list_block))
+        for thumb_block in _BACKREF_THUMBNAIL_RE.findall(content):
+            names.update(Path(href).name for href in _BACKREF_HREF_RE.findall(thumb_block))
     return names
 
 
@@ -168,6 +174,28 @@ def test_example_has_cross_reference_from_api(case):
         pytest.fail(msg)
 
 
+def test_color_labels_used_in_includes_anatomical_groups_example():
+    """Sanity check: `color_labels` is only called inside a local helper function in
+    `anatomical_groups.py`, so this only passes if a ref inside a local function
+    resolves and cross-links automatically, not just top-level module scope."""
+    page = next(Path(BUILD_HTML_DIR).rglob('pyvista.DataSetFilters.color_labels.html'), None)
+    assert page is not None, (
+        f'pyvista.DataSetFilters.color_labels.html not found under {BUILD_HTML_DIR}. '
+        'Build the documentation first.'
+    )
+    content = page.read_text(encoding='utf-8')
+    used_in_hrefs = {
+        Path(href).name
+        for list_block in _BACKREF_LIST_RE.findall(content)
+        for href in _BACKREF_HREF_RE.findall(list_block)
+    } | {
+        Path(href).name
+        for thumb_block in _BACKREF_THUMBNAIL_RE.findall(content)
+        for href in _BACKREF_HREF_RE.findall(thumb_block)
+    }
+    assert 'anatomical_groups.html' in used_in_hrefs
+
+
 @pytest.mark.parametrize('case', EXAMPLE_CASES, ids=EXAMPLE_CASE_IDS)
 def test_example_anchor(case):
     def format_anchor(anchor):
@@ -190,20 +218,20 @@ def test_example_anchor(case):
         raise pytest.fail(msg)
 
 
-# -- no "See Also" entry duplicates an example already in "Used In" -----------
-# Both numpydoc's own "See Also" section and a raw `.. seealso::` directive get hoisted
-# to a real ``<section>``/``<h2>See Also`` heading (conf.py's promote_seealso_admonitions),
-# not left as an `.. admonition:: seealso` div. A hand-written link to a gallery example
-# there is only a problem once sphinx-autocodelink's own "Used In" section already shows
-# the same example -- at that point it's pure duplication, and unlike "Used In", it never
-# gets rechecked against what the example actually does. A "See Also" example that "Used
-# In" doesn't (yet) cover is left alone -- that's real information, not redundancy.
+# -- no hand-written ref duplicates an example already in "Used In" -----------
+# Covers "See Also" entries and the trailing "See X for more examples" pointers that
+# accumulate at the end of "Examples". Only a duplicate of what "Used In" already shows
+# counts: a ref it doesn't cover is real information. Refs inside a parameter description
+# explain that parameter and render outside both sections, so they're out of scope.
 
 _SEE_ALSO_RE = re.compile(r'<section[^>]*>\s*<h2>See Also.*?</section>', re.DOTALL)
+_EXAMPLES_SECTION_RE = re.compile(r'<section[^>]*>\s*<h2>Examples.*?</section>', re.DOTALL)
 _BACKREFS_SECTION_RE = re.compile(
     r'<section class="sphinx-autocodelink-backrefs"[^>]*>.*?</section>', re.DOTALL
 )
 _EXAMPLE_HREF_RE = re.compile(r'href="([^"]*/examples/[^"]*)"')
+#: Auto-linked `pyvista.examples` hrefs inside doctests aren't hand-written pointers.
+_CODE_BLOCK_RE = re.compile(r'<pre[^>]*>.*?</pre>', re.DOTALL)
 
 
 def _example_hrefs(blocks: list[str]) -> set[str]:
@@ -212,21 +240,34 @@ def _example_hrefs(blocks: list[str]) -> set[str]:
     return {Path(href.split('#')[0]).name for href in hrefs}
 
 
-def test_see_also_does_not_duplicate_used_in_examples():
+def _prose_example_hrefs(blocks: list[str]) -> set[str]:
+    """Like :func:`_example_hrefs`, ignoring links inside code blocks."""
+    return _example_hrefs([_CODE_BLOCK_RE.sub('', block) for block in blocks])
+
+
+@pytest.mark.parametrize(
+    ('section', 'pattern', 'hrefs'),
+    [
+        ('See Also', _SEE_ALSO_RE, _example_hrefs),
+        ('Examples', _EXAMPLES_SECTION_RE, _prose_example_hrefs),
+    ],
+    ids=['see-also', 'examples'],
+)
+def test_section_does_not_duplicate_used_in_examples(section, pattern, hrefs):
     pages = sorted(Path(BUILD_HTML_DIR).rglob('*.html'))
     assert pages, f'no built pages found under {BUILD_HTML_DIR}. Build the documentation first.'
 
     failures = {}
     for page in pages:
         html_text = page.read_text(encoding='utf-8')
-        see_also_examples = _example_hrefs(_SEE_ALSO_RE.findall(html_text))
+        section_examples = hrefs(pattern.findall(html_text))
         used_in_examples = _example_hrefs(_BACKREFS_SECTION_RE.findall(html_text))
-        duplicated = see_also_examples & used_in_examples
+        duplicated = section_examples & used_in_examples
         if duplicated:
             failures[page.stem] = duplicated
 
     note = (
-        'Remove the "See Also" entry for each example below -- it duplicates that same '
+        f'Remove the "{section}" reference to each example below -- it duplicates that same '
         'example already listed in the page\'s own "Used In" section:\n'
     )
     assert not failures, note + '\n'.join(

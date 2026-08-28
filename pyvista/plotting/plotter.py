@@ -52,6 +52,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import try_callback
 
 from ._plotting import _common_arg_parser
 from ._plotting import _reduce_multicomponent_scalars_on_mesh
@@ -158,6 +159,40 @@ if TYPE_CHECKING:
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 FPS_1_OVER_60 = 1 / 60
+_N_DISTORTION_COEFFICIENTS = 4
+_CAMERA_DISTORTION_FEATURE = 'camera_distortion'
+_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM = 'u_distortion_coefficients'
+_CAMERA_DISTORTION_SCALE_UNIFORM = 'u_distortion_projection_scale'
+_CAMERA_DISTORTION_VERTEX = """
+// The default vtk assignment of gl_Position is inserted below this line:
+//VTK::PositionVC::Impl
+
+// gl_Position now holds the undistorted clip coordinates, and is the only
+// position this shader may rely on: whether view coordinates are also in
+// scope depends on the mapper, and on whether the actor is lit.
+//
+// u_distortion_projection_scale holds the (0, 0) and (1, 1) entries of the
+// camera's projection matrix. Dividing the normalized device coordinates by
+// them recovers the normalized camera coordinates -- x and y in units of
+// the focal length -- that a calibration reports its coefficients in.
+
+float clip_w = gl_Position.w;
+float x = gl_Position.x / (clip_w * u_distortion_projection_scale.x);
+float y = gl_Position.y / (clip_w * u_distortion_projection_scale.y);
+float rSquared = x * x + y * y;
+float k1 = u_distortion_coefficients[0];
+float k2 = u_distortion_coefficients[1];
+float p1 = u_distortion_coefficients[2];
+float p2 = u_distortion_coefficients[3];
+float radial = 1.0 + k1 * rSquared + k2 * rSquared * rSquared;
+float new_x = x * radial + 2.0 * p1 * x * y + p2 * (rSquared + 2.0 * x * x);
+float new_y = y * radial + 2.0 * p2 * x * y + p1 * (rSquared + 2.0 * y * y);
+
+// Back to clip coordinates. z and w are left alone, so the distortion moves
+// geometry across the view plane without changing its depth.
+gl_Position.x = new_x * u_distortion_projection_scale.x * clip_w;
+gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
+"""
 
 if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -285,6 +320,54 @@ def _warn_xserver() -> None:  # pragma: no cover
             'Alternatively, an offscreen version using OSMesa libraries '
             'and ``vtk`` is available as of VTK 9.5.\n',
         )
+
+
+def _validate_distortion_coefficients(
+    coefficients: VectorLike[float],
+) -> tuple[float, float, float, float]:
+    """Return the Brown-Conrady coefficients as a tuple of four floats.
+
+    Returns
+    -------
+    tuple[float, float, float, float]
+        ``(k1, k2, p1, p2)``.
+
+    """
+    values = np.asarray(coefficients, dtype=float).ravel()
+    if values.size != _N_DISTORTION_COEFFICIENTS:
+        msg = (
+            '`coefficients` must have four values (k1, k2, p1, p2), '
+            f"got {values.size}. Higher-order radial terms such as OpenCV's k3 are "
+            'not supported.'
+        )
+        raise ValueError(msg)
+    k1, k2, p1, p2 = (float(value) for value in values)
+    return k1, k2, p1, p2
+
+
+def _projection_scale(renderer: Renderer) -> tuple[float, float]:
+    """Return the x and y scale factors of a renderer's projection matrix.
+
+    Dividing normalized device coordinates by these recovers coordinates in
+    units of the focal length. A parallel projection has no focal length --
+    its scale factors carry the units of the scene -- so they are normalized
+    to put the top of the viewport at one, which keeps a set of coefficients
+    doing the same thing whatever the scene is measured in.
+
+    Returns
+    -------
+    tuple[float, float]
+        The ``(0, 0)`` and ``(1, 1)`` entries of the projection matrix VTK
+        builds for this renderer's camera and viewport.
+
+    """
+    matrix = renderer.camera.GetProjectionTransformMatrix(
+        renderer.GetTiledAspectRatio(), -1.0, 1.0
+    )
+    x_scale, y_scale = matrix.GetElement(0, 0), matrix.GetElement(1, 1)
+    if renderer.camera.parallel_projection:
+        return x_scale / y_scale, 1.0
+    return x_scale, y_scale
 
 
 @abstract_class
@@ -511,6 +594,10 @@ class BasePlotter(_BoundsSizeMixin):
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
 
+        self._camera_distortion_coefficients: tuple[float, ...] | None = None
+        self._camera_distortion_observers: list[tuple[Renderer, int]] = []
+        self._camera_distortion_warned: set[str] = set()
+
         self._initialized = True
         self._suppress_rendering = False
 
@@ -655,8 +742,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_gltf_example` for a full example using this method.
-
         """
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
@@ -693,8 +778,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
-
-        See :ref:`load_vrml_example` for a full example using this method.
 
         """
         filename = Path(filename).expanduser().resolve()
@@ -1447,9 +1530,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> pl.show()
 
-        See :ref:`anti_aliasing_example` for a full example demonstrating
-        VTK's anti-aliasing approaches.
-
         """
         # apply MSAA to entire render window
         if aa_type == 'msaa':
@@ -1490,9 +1570,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.disable_anti_aliasing()
         >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
         >>> pl.show()
-
-        See :ref:`anti_aliasing_example` for a full example demonstrating
-        VTK's anti-aliasing approaches.
 
         """
         self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
@@ -1703,6 +1780,189 @@ class BasePlotter(_BoundsSizeMixin):
     def remove_blurring(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
+
+    def enable_camera_distortion(self, coefficients: VectorLike[float]) -> None:
+        """Render every actor through a distorted camera model.
+
+        Brown-Conrady distortion is applied by a vertex shader replacement on
+        each actor, so it displaces geometry rather than resampling the
+        rendered image: geometry that is coarse relative to the distortion
+        does not curve smoothly. Actors are swept before every render, so
+        anything added afterwards is distorted too, including actors a
+        :vtk:`vtkImporter` puts in the scene without going through
+        :func:`~pyvista.Plotter.add_actor`.
+
+        Two kinds of prop are drawn by shaders with no vertices to displace,
+        and are rendered undistorted alongside the rest of the scene, with a
+        warning: volumes, which are ray cast, and Gaussian points, which are
+        drawn as sprites.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        coefficients : VectorLike[float]
+            Distortion coefficients ``(k1, k2, p1, p2)``. ``k1`` and ``k2``
+            are the radial terms, negative for pincushion and positive for
+            barrel; ``p1`` and ``p2`` are the tangential terms. Higher-order
+            radial terms such as OpenCV's ``k3`` are not supported.
+
+            They are applied in normalized camera coordinates, the units a
+            calibration such as ``cv2.calibrateCamera`` reports them in, so
+            the same numbers give the same distortion at any field of view.
+            A parallel projection has no focal length to normalize by; there
+            the top of the viewport stands in for one.
+
+        See Also
+        --------
+        disable_camera_distortion
+
+        Examples
+        --------
+        Plot a grid through an undistorted camera. The coefficients act on
+        the distance from the optical axis, so a wide-angle lens filling the
+        frame is where the distortion is easiest to see -- and the kind of
+        lens that distorts most in the first place.
+
+        The shader is not carried into an interactive scene, so these plots
+        are rendered statically.
+
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> grid = pv.Plane(i_size=3.0, j_size=3.0, i_resolution=16, j_resolution=16)
+            >>> wide_angle = [(0.0, 0.0, 3.2), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(grid, show_edges=True, color='white')
+            >>> pl.camera_position = wide_angle
+            >>> pl.camera.view_angle = 70.0
+            >>> pl.show()
+
+        Now with barrel distortion, which bows the straight edges outward.
+
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> grid = pv.Plane(i_size=3.0, j_size=3.0, i_resolution=16, j_resolution=16)
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(grid, show_edges=True, color='white')
+            >>> pl.camera_position = [(0.0, 0.0, 3.2), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+            >>> pl.camera.view_angle = 70.0
+            >>> pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
+            >>> pl.show()
+
+        """
+        self._camera_distortion_coefficients = _validate_distortion_coefficients(coefficients)
+        if not self._camera_distortion_observers:
+            self._camera_distortion_observers = [
+                (
+                    renderer,
+                    renderer.AddObserver(
+                        'StartEvent',
+                        functools.partial(try_callback, self._apply_camera_distortion),
+                    ),
+                )
+                for renderer in self.renderers
+            ]
+        self._apply_camera_distortion()
+
+    def disable_camera_distortion(self) -> None:
+        """Return every actor to the undistorted camera model.
+
+        .. versionadded:: 0.49
+
+        See Also
+        --------
+        enable_camera_distortion
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.enable_camera_distortion((0.4, 0.15, 0.0, 0.0))
+        >>> pl.disable_camera_distortion()
+
+        """
+        self._camera_distortion_coefficients = None
+        for renderer, observer in self._camera_distortion_observers:
+            renderer.RemoveObserver(observer)
+        self._camera_distortion_observers = []
+        for renderer in self.renderers:
+            for prop in renderer.actors.values():
+                if getattr(prop, '_camera_distortion_state', None) is None:
+                    continue
+                if isinstance(prop, Actor):
+                    prop.clear_shader_replacements(_feature_name=_CAMERA_DISTORTION_FEATURE)
+                else:
+                    prop.GetShaderProperty().ClearVertexShaderReplacement(
+                        '//VTK::PositionVC::Impl', True
+                    )
+                uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
+                uniforms.RemoveUniform(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM)
+                uniforms.RemoveUniform(_CAMERA_DISTORTION_SCALE_UNIFORM)
+                prop._camera_distortion_state = None
+
+    def _warn_undistorted(self, subject: str) -> None:
+        """Warn once for each kind of prop the distortion shader cannot reach."""
+        if subject in self._camera_distortion_warned:
+            return
+        self._camera_distortion_warned.add(subject)
+        warn_external(
+            f'Camera distortion does not apply to {subject}. They are rendered '
+            'undistorted alongside any distorted actors.'
+        )
+
+    def _apply_camera_distortion(self, *_args) -> None:
+        """Give every actor the distortion shader and keep its uniforms current."""
+        coefficients = self._camera_distortion_coefficients
+        if coefficients is None:  # pragma: no cover - disable removes the observer first
+            return
+        for renderer in self.renderers:
+            state = (coefficients, _projection_scale(renderer))
+            for prop in renderer.actors.values():
+                if not isinstance(prop, _vtk.vtkActor):
+                    if isinstance(prop, Volume):
+                        self._warn_undistorted(
+                            'volumes, which are ray cast rather than rasterized from vertices'
+                        )
+                    continue
+                if isinstance(prop.GetMapper(), _vtk.vtkPointGaussianMapper):
+                    # These points are drawn as sprites by a shader of their own,
+                    # which has no place to put the displacement.
+                    self._warn_undistorted('Gaussian points, which are drawn as sprites')
+                    continue
+                # Writing a uniform marks the shader for a rebuild, so leave the
+                # actors whose state is already current alone.
+                if getattr(prop, '_camera_distortion_state', None) != state:
+                    self._distort_actor(prop, state)
+
+    def _distort_actor(
+        self, prop: _vtk.vtkActor, state: tuple[tuple[float, ...], tuple[float, float]]
+    ) -> None:
+        """Attach the distortion shader to one actor and set its uniforms."""
+        coefficients, projection_scale = state
+        if getattr(prop, '_camera_distortion_state', None) is None:
+            if isinstance(prop, Actor):
+                prop.add_shader_replacement(
+                    'vertex',
+                    '//VTK::PositionVC::Impl',
+                    _CAMERA_DISTORTION_VERTEX,
+                    replace_first=True,
+                    replace_all=False,
+                    _feature_name=_CAMERA_DISTORTION_FEATURE,
+                )
+            else:
+                # A `vtkImporter` populates the render window with plain VTK
+                # actors, which carry none of PyVista's shader bookkeeping.
+                prop.GetShaderProperty().AddVertexShaderReplacement(
+                    '//VTK::PositionVC::Impl', True, _CAMERA_DISTORTION_VERTEX, False
+                )
+        uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
+        uniforms.SetUniform4f(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM, coefficients)
+        uniforms.SetUniform2f(_CAMERA_DISTORTION_SCALE_UNIFORM, projection_scale)
+        prop._camera_distortion_state = state  # type: ignore[attr-defined]
 
     @functools.wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -5865,8 +6125,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl = pv.Plotter()
         >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
-        See :ref:`gif_example` for a full example using this method.
-
         """
         try:
             from imageio import __version__  # noqa: PLC0415
@@ -5904,8 +6162,6 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.open_movie(filename)  # doctest:+SKIP
         >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
         >>> pl.write_frame()  # doctest:+SKIP
-
-        See :ref:`movie_example` for a full example using this method.
 
         """
         # if off screen, show has not been called and we must render
@@ -6919,8 +7175,6 @@ class BasePlotter(_BoundsSizeMixin):
         ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
         ... )
 
-        See :ref:`orbit_example` for a full example using this method.
-
         """
         if viewup is None:
             viewup = self._theme.camera.viewup
@@ -7021,8 +7275,6 @@ class BasePlotter(_BoundsSizeMixin):
         ...     factor=2.0, n_points=24, shift=0.0, viewup=viewup
         ... )
         >>> pl.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
-
-        See :ref:`orbit_example` for a full example using this method.
 
         """
         if focus is None:

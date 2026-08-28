@@ -86,7 +86,7 @@ array_after = points_volume.points_to_cells().cells_to_points().active_scalars
 np.array_equal(array_before, array_after)
 
 # %%#
-# Point Filters with Image Data
+# Point Filters With Image Data
 # -----------------------------
 # Use a point representation of the image when working with point-based
 # filters such as :meth:`~pyvista.ImageDataFilters.image_threshold`. If the
@@ -124,7 +124,7 @@ points_ithresh_as_cells.plot(show_edges=True)
 # The binary data is now correctly visualized as binary data.
 
 # %%#
-# Cell Filters with Image Data
+# Cell Filters With Image Data
 # ----------------------------
 # Use a cell representation of the image when working with cell-based filters
 # such as :meth:`~pyvista.DataSetFilters.threshold`. If the image only has point
