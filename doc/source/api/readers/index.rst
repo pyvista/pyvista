@@ -141,7 +141,7 @@ for zero-config discovery at install time.
 **Handler signature**
 
 A writer handler is a callable ``handler(dataset, path, **kwargs)``
-that writes *dataset* to *path*.  Any extra keyword arguments passed
+that writes ``dataset`` to ``path``.  Any extra keyword arguments passed
 to :meth:`pyvista.DataObject.save` beyond its documented parameters
 are forwarded verbatim to the handler as ``**kwargs``. Use them to
 expose format-specific options such as compression level, thread

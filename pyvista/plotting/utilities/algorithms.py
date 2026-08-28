@@ -787,7 +787,7 @@ def source_algorithm(
     """Create a source algorithm that generates data from a callable.
 
     A source has no input port. It produces data from scratch via
-    *generator*.
+    ``generator``.
 
     Parameters
     ----------

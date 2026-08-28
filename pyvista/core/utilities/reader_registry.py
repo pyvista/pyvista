@@ -28,10 +28,10 @@ if TYPE_CHECKING:
 
 
 class ReaderHandler(Protocol):
-    """Callable that reads *path* and returns a :class:`pyvista.DataSet`."""
+    """Callable that reads ``path`` and returns a :class:`pyvista.DataSet`."""
 
     def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
-        """Read *path* and return the resulting dataset."""
+        """Read ``path`` and return the resulting dataset."""
 
 
 class ReaderRegistration(NamedTuple):
@@ -133,7 +133,7 @@ def _restore_registry_state(state: _RegistryState) -> None:
 
 
 def has_scheme(value: str) -> bool:
-    """Return ``True`` if *value* starts with a URI scheme (for example, ``https://``).
+    """Return ``True`` if ``value`` starts with a URI scheme (for example, ``https://``).
 
     Parameters
     ----------
@@ -143,7 +143,7 @@ def has_scheme(value: str) -> bool:
     Returns
     -------
     bool
-        ``True`` if *value* contains a ``://`` scheme prefix before
+        ``True`` if ``value`` contains a ``://`` scheme prefix before
         the first ``/``.
 
     """
@@ -155,7 +155,7 @@ def has_scheme(value: str) -> bool:
 
 
 def _download_uri(uri: str, ext: str) -> str:
-    """Download a remote URI to a temporary file, preserving *ext*.
+    """Download a remote URI to a temporary file, preserving ``ext``.
 
     Uses ``fsspec`` when available (supports ``s3://``, ``gs://``,
     ``az://``, ``http://``, and any other registered filesystem).
@@ -263,7 +263,7 @@ def register_reader(
     Raises
     ------
     ValueError
-        If ``key`` collides with a built-in VTK reader and *override*
+        If ``key`` collides with a built-in VTK reader and ``override``
         is ``False``.
 
     Warns
@@ -374,7 +374,7 @@ def _ensure_entry_points() -> None:
 
 
 def _resolve_pending_reader(ext: str) -> bool:
-    """Import the plugin claiming *ext*, if any.
+    """Import the plugin claiming ``ext``, if any.
 
     Returns
     -------
