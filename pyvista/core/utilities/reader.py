@@ -203,7 +203,14 @@ class BaseVTKReader(ABC):
         self._observers = []
 
     def GetProgress(self):
-        """Return the load progress, ``0.0`` before the data loads and ``1.0`` after."""
+        """Return the load progress, ``0.0`` before the data loads and ``1.0`` after.
+
+        Returns
+        -------
+        float
+            ``1.0`` if the data has loaded, ``0.0`` otherwise.
+
+        """
         return 0.0 if self._data_object is None else 1.0
 
     def UpdateObservers(self, event_type) -> None:
@@ -220,7 +227,14 @@ class BaseVTKReader(ABC):
         """
 
     def GetOutputDataObject(self, *args):  # noqa: ARG002
-        """Return stored data."""
+        """Return stored data.
+
+        Returns
+        -------
+        pyvista.DataObject | None
+            Stored data, or ``None`` before the data loads.
+
+        """
         return self._data_object
 
 
@@ -343,6 +357,11 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     @property
     def path(self) -> str:
         """Return or set the filename or directory of the reader.
+
+        Returns
+        -------
+        str
+            Filename or directory of the reader.
 
         Examples
         --------
@@ -640,6 +659,7 @@ class TimeReader(ABC):
         Returns
         -------
         int
+            Number of time points or iterations available to read.
 
         """
 
@@ -655,6 +675,7 @@ class TimeReader(ABC):
         Returns
         -------
         float
+            Value of the time point or iteration.
 
         """
 
@@ -665,6 +686,7 @@ class TimeReader(ABC):
         Returns
         -------
         list[float]
+            All time or iteration values.
 
         """
         return [self.time_point_value(idx) for idx in range(self.number_time_points)]
@@ -677,6 +699,7 @@ class TimeReader(ABC):
         Returns
         -------
         float
+            Active time or iteration value.
 
         """
 
@@ -1168,6 +1191,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         int
+            Number of patch arrays in the dataset.
 
         Examples
         --------
@@ -1188,6 +1212,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         list[str]
+            Names of the patch arrays.
 
         Examples
         --------
@@ -1308,7 +1333,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         dict[str, bool]
-            dict key is the patch name and the value is whether it will be read.
+            Dict key is the patch name and the value is whether it will be read.
 
         Examples
         --------
@@ -1666,7 +1691,14 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
 
     @property
     def auto_detect_format(self):
-        """Whether to try to automatically detect format such as byte order, etc."""
+        """Whether to try to automatically detect format such as byte order, etc.
+
+        Returns
+        -------
+        bool
+            Whether the format is automatically detected.
+
+        """
         return bool(self.reader.GetAutoDetectFormat())
 
     @auto_detect_format.setter
@@ -1731,6 +1763,12 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
+
+        Returns
+        -------
+        bool
+            Whether intermediate computed quantities are preserved.
+
         """
         return self.reader.GetPreserveIntermediateFunctions()
 
@@ -1740,7 +1778,14 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
 
     @property
     def gamma(self):
-        """Ratio of specific heats."""
+        """Ratio of specific heats.
+
+        Returns
+        -------
+        float
+            Ratio of specific heats.
+
+        """
         return self.reader.GetGamma()
 
     @gamma.setter
@@ -1749,7 +1794,14 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
 
     @property
     def r_gas_constant(self):
-        """Gas constant."""
+        """Gas constant.
+
+        Returns
+        -------
+        float
+            Gas constant.
+
+        """
         return self.reader.GetR()
 
     @r_gas_constant.setter
@@ -1856,6 +1908,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         Returns
         -------
         list[str]
+            List of all base array names.
 
         """
         return [self.reader.GetBaseArrayName(i) for i in range(self.number_base_arrays)]
@@ -1867,6 +1920,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         Returns
         -------
         int
+            Number of base arrays.
 
         """
         return self.reader.GetNumberOfBaseArrays()
@@ -1930,6 +1984,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         Returns
         -------
         list[str]
+            List of all family array names.
 
         """
         return [self.reader.GetFamilyArrayName(i) for i in range(self.number_family_arrays)]
@@ -1941,6 +1996,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         Returns
         -------
         int
+            Number of family arrays.
 
         """
         return self.reader.GetNumberOfFamilyArrays()
@@ -1988,6 +2044,11 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         matching This can be useful for unsteady solutions when
         FlowSolutionPointers are not reliable.
 
+        Returns
+        -------
+        bool
+            Whether an unsteady pattern is used.
+
         Examples
         --------
         Set reading the unsteady pattern to ``True``.
@@ -2011,6 +2072,11 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     def vector_3d(self) -> bool:
         """Return or set adding an empty dimension to vectors in case of 2D solutions.
 
+        Returns
+        -------
+        bool
+            Whether an empty dimension is added to vectors.
+
         Examples
         --------
         Set adding an empty physical dimension to vectors to ``True``.
@@ -2033,6 +2099,11 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     @property
     def load_boundary_patch(self) -> bool:
         """Return or set loading boundary patches.
+
+        Returns
+        -------
+        bool
+            Whether boundary patches are loaded.
 
         Notes
         -----
@@ -2178,6 +2249,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         Returns
         -------
         list[pyvista.BaseReader]
+            The active readers.
 
         """
         return self.reader._active_readers
@@ -2189,6 +2261,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         Returns
         -------
         list[pyvista.PVDDataSet]
+            All datasets.
 
         """
         return self.reader._datasets
@@ -2200,6 +2273,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         Returns
         -------
         list[pyvista.PVDDataSet]
+            All active datasets.
 
         """
         return self.reader._active_datasets
@@ -2329,6 +2403,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         Returns
         -------
         int
+            Number of time points or iterations available to read.
 
         """
         return self.reader.GetNumberOfTimeSteps()
@@ -2340,6 +2415,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         Returns
         -------
         list[float]
+            All time or iteration values.
 
         """
         vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
@@ -2358,6 +2434,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         Returns
         -------
         float
+            Value of the time point or iteration.
 
         """
         return self.time_values[time_point]
@@ -2369,6 +2446,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         Returns
         -------
         float
+            Active time or iteration value.
 
         """
         vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
@@ -2383,6 +2461,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         Returns
         -------
         int
+            Active time point.
 
         """
         return self.time_values.index(self.active_time_value)
@@ -2983,7 +3062,14 @@ class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
 
     @property
     def elevation(self) -> bool:
-        """Convert depths to elevations and flip grid along Z axis."""
+        """Convert depths to elevations and flip grid along Z axis.
+
+        Returns
+        -------
+        bool
+            Whether depths are converted to elevations.
+
+        """
         return self._reader.elevation
 
     @elevation.setter
@@ -2992,7 +3078,14 @@ class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
 
     @property
     def other_keywords(self) -> Sequence[str] | None:
-        """Additional keywords to read."""
+        """Additional keywords to read.
+
+        Returns
+        -------
+        Sequence[str] | None
+            Additional keywords to read.
+
+        """
         return self._reader.other_keywords
 
     @other_keywords.setter
@@ -3660,7 +3753,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         Table
-            Global data from Exodus II file
+            Global data from Exodus II file.
 
         """
         global_extractor = _vtk.vtkExtractExodusGlobalTemporalVariables()
@@ -3759,6 +3852,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         int
+            Number of time points or iterations available to read.
 
         """
         return self.reader.GetNumberOfTimeSteps()
@@ -3982,6 +4076,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         list[float]
+            All time or iteration values.
 
         """
         vtkStreaming = _vtk.vtkStreamingDemandDrivenPipeline()
@@ -4000,6 +4095,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         float
+            Value of the time point or iteration.
 
         """
         return self.time_values[time_point]
@@ -4011,6 +4107,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         float
+            Active time or iteration value.
 
         """
         return self.time_values[self.reader.GetTimeStep()]
@@ -4052,6 +4149,11 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         .. versionadded:: 0.49
 
+        Returns
+        -------
+        bool
+            Whether mode shape animation is enabled.
+
         """
         return bool(self.reader.GetAnimateModeShapes())
 
@@ -4068,6 +4170,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         int
+            Number of side set arrays.
 
         """
         return self.reader.GetNumberOfSideSetArrays()
@@ -4081,6 +4184,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         Returns
         -------
         list[str]
+            List of all side set array names.
 
         """
         return [self.reader.GetSideSetArrayName(i) for i in range(self.number_side_set_arrays)]
@@ -4267,16 +4371,37 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
 
     @property
     def number_time_points(self) -> int:
-        """Return the total number of time points."""
+        """Return the total number of time points.
+
+        Returns
+        -------
+        int
+            Total number of time points.
+
+        """
         return len(self.reader._time_steps)
 
     def time_point_value(self, time_point: int) -> float:
-        """Return the time value associated with the given time point."""
+        """Return the time value associated with the given time point.
+
+        Returns
+        -------
+        float
+            Time value associated with the given time point.
+
+        """
         return self.reader._time_steps[time_point]
 
     @property
     def time_values(self) -> list[float]:
-        """Return the list of available time values."""
+        """Return the list of available time values.
+
+        Returns
+        -------
+        list[float]
+            List of available time values.
+
+        """
         return list(self.reader._time_steps)
 
     def set_active_time_point(self, time_point: int) -> None:
@@ -4303,7 +4428,14 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
 
     @property
     def active_time_value(self) -> float:
-        """Return the active time value."""
+        """Return the active time value.
+
+        Returns
+        -------
+        float
+            Active time value.
+
+        """
         steps = self.reader._time_steps
         if not steps:
             return 0.0
@@ -4613,6 +4745,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         Returns
         -------
         pyvista.BaseReader
+            The active reader.
 
         """
         return self.reader._active_reader
@@ -4624,6 +4757,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         Returns
         -------
         list[pyvista.SeriesDataSet]
+            All datasets.
 
         """
         return self.reader._datasets
@@ -4635,6 +4769,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         Returns
         -------
         pyvista.SeriesDataSet
+            The active dataset.
 
         """
         return self.reader._active_dataset
