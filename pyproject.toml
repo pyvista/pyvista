@@ -61,15 +61,14 @@ pinned = [ # Pinned versions of core dependencies
 # Deliberately empty: integration envs use the target project's test deps, not ours (see tox.ini)
 integration = []
 
-typing-core = [
+typing = [
   'meshio<5.4.0',
   'mypy<2.4.0',
   'npt-promote==0.2',
+  'numpy>=2.0.0',
   'trimesh<4.13.0',
   { include-group = 'pinned' },
 ]
-
-typing = ['numpy>=2.0.0', { include-group = 'typing-core' }]
 
 test = [
   'cmcrameri<1.10.0',
@@ -83,7 +82,6 @@ test = [
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'libcst<1.8.7',
-  'meshio<5.4.0',
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
@@ -113,7 +111,7 @@ test = [
   'tqdm<4.70.0',
   'trame-pyvista<0.2.0',
   'typing-extensions<4.17.0',
-  { include-group = 'typing-core' },
+  { include-group = 'typing' },
 ]
 
 test-playwright = ['playwright<1.62.0', { include-group = 'test' }]
@@ -264,7 +262,6 @@ filterwarnings = [
   'error',
 
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
-  "ignore:'mypy_extensions.NoReturn' is deprecated, and will be removed in a future version.",
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
