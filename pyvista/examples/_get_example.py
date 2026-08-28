@@ -71,13 +71,13 @@ class ExampleMetadata:
     """Local path of the file or files which are read to produce the dataset."""
 
     num_files: int = 0
-    """Number of files, counting the contents of any folder in :attr:`paths`."""
+    """Number of files, counting the contents of any folder in ``paths``."""
 
     extensions: tuple[str, ...] = ()
     """Unique file extensions of the example's files."""
 
     file_sizes: tuple[int, ...] = ()
-    """Size in bytes of each entry in :attr:`paths`, folders counted in full."""
+    """Size in bytes of each entry in ``paths``, folders counted in full."""
 
     total_size: str = '0.0 B'
     """Total size of all files, formatted for display."""
@@ -86,7 +86,7 @@ class ExampleMetadata:
     """Unique reader types used to read the example's files."""
 
     source_urls: tuple[str, ...] = ()
-    """URL each entry in :attr:`paths` is downloaded from, empty if it has none."""
+    """URL each entry in ``paths`` is downloaded from, empty if it has none."""
 
     is_builtin: bool = False
     """Whether the example ships with PyVista, so it is available with no download."""
@@ -237,12 +237,12 @@ def get_example(
 def get_example(
     name: str | Callable[..., Any],
     *,
-    output: _Output = 'dataset',
+    output: Literal['dataset', 'paths', 'reader', 'metadata'] = 'dataset',
     download: bool = True,
 ) -> DatasetObject | tuple[Path, ...] | pv.BaseReader[Any] | ExampleMetadata:
     """Get any example dataset, its files, its reader, or its metadata.
 
-    This is a single entry point for every example in :mod:`pyvista.examples`,
+    This is a single entry point for every example in
     :mod:`pyvista.examples.examples`, :mod:`pyvista.examples.downloads`, and
     :mod:`pyvista.examples.planets`. ``get_example('bunny')`` is equivalent to
     :func:`~pyvista.examples.downloads.download_bunny`, and ``output`` selects
@@ -273,8 +273,11 @@ def get_example(
 
     Returns
     -------
-    DataSet | MultiBlock | Texture | ndarray | tuple[Path, ...] | BaseReader | ExampleMetadata
-        The dataset, file paths, reader, or metadata, depending on ``output``.
+    DataSet | tuple[Path, ...] | pyvista.BaseReader | ExampleMetadata
+        The dataset, its file paths, a reader for it, or its metadata, depending on
+        ``output``. Examples which load as a :class:`~pyvista.MultiBlock`,
+        :class:`~pyvista.Texture` or :class:`numpy.ndarray` return that in place of a
+        :class:`~pyvista.DataSet`.
 
     See Also
     --------
