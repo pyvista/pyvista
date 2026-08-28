@@ -618,17 +618,10 @@ def StructuredSphere(
 
     See Also
     --------
-    pyvista.Sphere
-        Sphere as :class:`~pyvista.PolyData`.
-
-    pyvista.SolidSphere
-        Solid sphere as :class:`~pyvista.UnstructuredGrid`.
-
-    pyvista.CylinderStructured
-        Cylinder as :class:`~pyvista.StructuredGrid`.
-
-    :ref:`create_sphere_example`
-        Examples of creating spheres in other ways.
+    pyvista.Sphere : Sphere that describes outer 2D surface.
+    pyvista.SolidSphere : Sphere that fills 3D space.
+    pyvista.CylinderStructured : Cylinder as a structured grid.
+    :ref:`create_sphere_example` : Examples of creating spheres in other ways.
 
     Examples
     --------
@@ -648,7 +641,7 @@ def StructuredSphere(
     (1, 10, 21)
 
     Use a sequence of radii to generate a 3D grid with concentric layers of
-    cells, e.g. to model the layers of an atmosphere.
+    cells. This is useful for modeling volumetric data such as an atmosphere.
 
     >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
     >>> sphere.dimensions

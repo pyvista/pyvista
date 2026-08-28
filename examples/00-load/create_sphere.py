@@ -126,8 +126,8 @@ mesh.dimensions
 # %%
 # Unlike the other meshes in this example, this one is not limited to a
 # surface. Pass a sequence of radii to generate a 3D grid of
-# :attr:`~pyvista.CellType.HEXAHEDRON` cells with concentric layers, e.g. to
-# model the layers of an atmosphere.
+# :attr:`~pyvista.CellType.HEXAHEDRON` cells with concentric layers, such as
+# the layers of an atmosphere.
 
 mesh = pv.StructuredSphere(
     radius=np.linspace(0.2, 0.5, 4), theta_resolution=30, phi_resolution=15
