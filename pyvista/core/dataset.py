@@ -1876,12 +1876,20 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
-        # vtkAppendFilter falls back to single precision for datasets without explicit
-        # points (RectilinearGrid, ImageData) because it infers precision from
-        # vtkPointSet.GetPoints(), which is None for these types. `_update_alg` works
-        # around that by setting the output precision explicitly from `points.dtype`.
+        # vtkAppendFilter falls back to single precision for datasets without
+        # explicit points (RectilinearGrid, ImageData) because it infers
+        # precision from vtkPointSet.GetPoints(), which is None for these types.
+        # Work around the VTK bug by setting output precision explicitly.
         # See https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
         # and https://github.com/pyvista/pyvista/issues/7931
+        if isinstance(self, pv.RectilinearGrid):
+            input_is_double = any(
+                coords.dtype == np.float64 for coords in (self.x, self.y, self.z)
+            )
+        else:
+            input_is_double = isinstance(self, pv.ImageData)
+        if input_is_double:
+            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         _update_alg(alg)
         return _get_output(alg)
 

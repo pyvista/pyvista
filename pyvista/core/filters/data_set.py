@@ -8419,11 +8419,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> vox.bounds
         BoundsTuple(x_min = -0.13155962526798248,
-                    x_max =  0.18016336858272555,
+                    x_max =  0.18016336858272552,
                     y_min = -0.12048563361167908,
                     y_max =  0.18769524991512299,
                     z_min = -0.14300920069217682,
-                    z_max =  0.09650979591302634)
+                    z_max =  0.09650979936122894)
 
         Create a voxelized mesh with ``3 x 4 x 5`` cells. Since ``dimensions`` is the
         number of points, not cells, we need to add ``1`` to get the number of desired cells.

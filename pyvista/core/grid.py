@@ -96,13 +96,12 @@ class Grid(DataSet):
 
     def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
         """Apply :attr:`pyvista.core.config.Config.points_dtype` to points generated on demand."""
-        dtype = _points_dtype() or self._generated_points_dtype()
-        return points if points.dtype == dtype else cast('pyvista_ndarray', points.astype(dtype))
-
-    def _generated_points_dtype(self) -> np.dtype[Any]:
-        """Return the dtype generated points have under the ``'preserve'`` setting."""
-        # ImageData has no coordinate arrays: its origin and spacing are always double.
-        return np.dtype(np.float64)
+        # `'preserve'` leaves these alone: they are generated rather than stored, so
+        # there is no dtype of the caller's to preserve.
+        dtype = _points_dtype()
+        if dtype is None or points.dtype == dtype:
+            return points
+        return cast('pyvista_ndarray', points.astype(dtype))
 
     def to_hexahedra(self: Self) -> UnstructuredGrid:
         """Convert voxels to hexahedra.
@@ -414,16 +413,6 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         if TYPE_CHECKING:
             out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
-
-    def _generated_points_dtype(self) -> np.dtype[Any]:
-        """Return the dtype generated points have under the ``'preserve'`` setting."""
-        # VTK synthesizes double-precision points regardless of how the coordinate
-        # arrays are stored, so report the precision the grid actually holds.
-        return np.dtype(
-            np.float64
-            if any(coords.dtype == np.float64 for coords in (self.x, self.y, self.z))
-            else np.float32
-        )
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:

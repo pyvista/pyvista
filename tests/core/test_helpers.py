@@ -10,6 +10,7 @@ import trimesh
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core import filters
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -283,6 +284,38 @@ def test_points_dtype_applies_to_filters_and_sources(dtype, monkeypatch):
         warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
         assert pv.Arrow().points.dtype == expected
         assert pv.Sphere().shrink().points.dtype == expected
+
+
+@pytest.mark.parametrize('grid', [pv.ImageData(dimensions=(3, 3, 3)), pv.RectilinearGrid()])
+def test_points_dtype_preserve_ignores_generated_points(grid, monkeypatch, mocker):
+    # Reading `.points` on these materializes the lazy structured array VTK 9.4+
+    # returns, so 'preserve' must not touch it just to learn a dtype
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    spy = mocker.patch.object(type(grid), 'points', new_callable=mocker.PropertyMock)
+
+    assert filters._points_dtype(grid) is None
+    spy.assert_not_called()
+
+
+def test_points_dtype_preserve_leaves_image_filters_to_vtk(monkeypatch):
+    # ImageData generates its points from its always-double origin and spacing, so
+    # treating that as a request would double the output of every image pipeline
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image['d'] = np.arange(image.n_points, dtype=float)
+
+    assert image.points.dtype == np.float64
+    assert image.contour().points.dtype == np.float32
+    # ... but casting the coordinates themselves must keep them (#7931)
+    assert image.cast_to_unstructured_grid().points.dtype == np.float64
+
+
+def test_points_dtype_preserve_survives_a_grid_intermediate(monkeypatch):
+    # `voxelize` builds an ImageData on the way, which must not widen the output
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.Sphere()
+    assert mesh.points.dtype == np.float32
+    assert mesh.voxelize(spacing=0.1).points.dtype == np.float32
 
 
 def test_points_dtype_float64_warns_when_vtk_cannot_deliver(monkeypatch):

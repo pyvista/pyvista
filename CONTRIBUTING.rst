@@ -800,6 +800,9 @@ add a keyword of its own for precision.
 - Neither helper needs to know whether the algorithm supports double precision. The
   ones that do not are cast, and warn with ``PyVistaPrecisionWarning`` when the user
   asked for ``'float64'`` -- so no filter needs a keyword to opt out of the setting.
+- Under ``'preserve'`` only the meshes that store their points constrain the output.
+  ``ImageData`` and ``RectilinearGrid`` generate theirs, so a filter reading one, or
+  building one as an intermediate, leaves the precision to VTK.
 
 Testing
 ^^^^^^^

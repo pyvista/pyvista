@@ -75,12 +75,19 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     ``mesh`` is the input of the algorithm being run, and is only consulted under the
     ``'preserve'`` setting. Pass nothing for an algorithm with no input, such as a
     geometry source, where ``'preserve'`` has nothing to preserve.
+
+    ``'preserve'`` preserves the dtype of points a mesh actually stores.
+    :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid` store none --
+    theirs are generated on demand from the origin and spacing, or from the coordinate
+    arrays -- so they constrain nothing and VTK picks the output precision. Treating
+    their generated double as a request would double every image pipeline's output, and
+    a filter that builds one as an intermediate would silently widen an unrelated
+    single-precision input.
     """
     setting = pv.global_config.points_dtype
     if setting != 'preserve':
         return np.dtype(setting)
-    points = getattr(mesh, 'points', None)
-    return None if points is None else points.dtype
+    return mesh.points.dtype if isinstance(mesh, _vtk.vtkPointSet) else None
 
 
 def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
@@ -88,7 +95,7 @@ def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
 
     Algorithms that support ``SetOutputPointsPrecision`` compute in the requested
     precision, which is both cheaper and more accurate than casting afterwards. The
-    rest ignore this and are corrected by :func:`_enforce_points_dtype`.
+    rest ignore this and are corrected by ``_enforce_points_dtype``.
 
     ``vtkAlgorithm.DEFAULT_PRECISION`` is *supposed* to match the input precision on
     its own, but in practice some filters do not honor it for some mesh types --

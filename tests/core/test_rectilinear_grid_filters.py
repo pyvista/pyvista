@@ -84,5 +84,7 @@ def test_to_tetrahedra_pass_cell_data(tiny_rectilinear):
 
 
 def test_to_tetrahedra_points_dtype(rectilinear):
+    # RectilinearGrid generates its points rather than storing them, so 'preserve'
+    # constrains nothing here and vtkRectilinearGridToTetrahedra picks single
     assert rectilinear.points.dtype == np.double
-    assert rectilinear.to_tetrahedra().points.dtype == np.double
+    assert rectilinear.to_tetrahedra().points.dtype == np.single

@@ -1611,9 +1611,7 @@ def test_imagedata_direction_matrix():
     # Check that filters make use of the direction matrix internally
     image['data'] = np.ones((image.n_points,))
     filtered = image.threshold()
-    # `expected_bounds` comes from a single-precision Box, the filter output from
-    # double-precision ImageData points, so the two agree only to single precision
-    assert np.allclose(filtered.bounds, expected_bounds)
+    assert filtered.bounds == expected_bounds
 
     # Check that points make use of the direction matrix internally
     poly_points = pv.PolyData(image.points)

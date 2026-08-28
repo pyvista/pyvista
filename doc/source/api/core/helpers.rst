@@ -50,3 +50,5 @@ Global Configuration
    :members:
 
 .. autoclass:: pyvista.InvalidMeshWarning
+
+.. autoclass:: pyvista.PyVistaPrecisionWarning

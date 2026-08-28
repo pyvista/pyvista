@@ -1132,16 +1132,14 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale='z_axis')
     glyph3 = grid.glyph(geom=geom, orient='z_axis', scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    # The glyphs inherit the double-precision points of the ImageData input, so the
-    # rotated bounds land within rounding of the expected values rather than exactly on
-    assert np.isclose(glyph1.bounds.z_min, geom.bounds.x_min * scale)
-    assert np.isclose(glyph1.bounds.z_max, geom.bounds.x_max * scale)
-    assert np.isclose(glyph2.bounds.x_min, geom.bounds.x_min * scale)
-    assert np.isclose(glyph2.bounds.x_max, geom.bounds.x_max * scale)
-    assert np.isclose(glyph3.bounds.z_min, geom.bounds.x_min)
-    assert np.isclose(glyph3.bounds.z_max, geom.bounds.x_max)
-    assert np.isclose(glyph4.bounds.x_min, geom.bounds.x_min)
-    assert np.isclose(glyph4.bounds.x_max, geom.bounds.x_max)
+    assert glyph1.bounds.z_min == geom.bounds.x_min * scale
+    assert glyph1.bounds.z_max == geom.bounds.x_max * scale
+    assert glyph2.bounds.x_min == geom.bounds.x_min * scale
+    assert glyph2.bounds.x_max == geom.bounds.x_max * scale
+    assert glyph3.bounds.z_min == geom.bounds.x_min
+    assert glyph3.bounds.z_max == geom.bounds.x_max
+    assert glyph4.bounds.x_min == geom.bounds.x_min
+    assert glyph4.bounds.x_max == geom.bounds.x_max
 
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])

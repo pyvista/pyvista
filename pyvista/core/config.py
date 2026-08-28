@@ -268,15 +268,19 @@ class Config(_ConfigBase):
         property of the session rather than of whichever algorithm happens to run.
 
         It is enforced everywhere PyVista wraps the output of a VTK algorithm, which
-        covers every filter, every geometry and parametric source, and the synthetic
+        covers every filter, every geometry and parametric source, and the generated
         points of :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
-        Arrays you supply yourself are never modified, so
-        ``pv.PolyData(points)`` keeps the dtype of ``points``.
+        Arrays you supply yourself are never modified, so ``pv.PolyData(points)`` keeps
+        the dtype of ``points``.
 
         ``'preserve'``
             The default. A filter's output points have the same dtype as its input
-            points, so a filter never changes the dtype. Sources, which have no
-            input, keep the dtype VTK generates (single precision, for most).
+            points, so a filter never changes the dtype. This covers the meshes that
+            store their points; :class:`~pyvista.ImageData` and
+            :class:`~pyvista.RectilinearGrid` generate theirs from the origin and
+            spacing, or from the coordinate arrays, so they constrain nothing and VTK
+            picks the precision as it does today. Sources have no input either, and
+            keep the dtype VTK generates (single precision, for most).
 
         ``'float32'``
             Points are always single precision, including the output of the sources
@@ -287,7 +291,7 @@ class Config(_ConfigBase):
             double-precision points warn, see the notes below.
 
         The setter also accepts anything :class:`numpy.dtype` resolves to
-        :class:`numpy.float32` or :class:`numpy.float64` (for example ``np.float64``,
+        ``numpy.float32`` or ``numpy.float64`` (for example ``np.float64``,
         ``'double'``, or ``float``), and ``None`` as a synonym for ``'preserve'``.
 
         Notes
