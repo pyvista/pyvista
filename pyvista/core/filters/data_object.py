@@ -2485,7 +2485,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def translate(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['xyz'], version=(0, 52))
+    def translate(
         self: _MeshType_co,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -2496,6 +2497,10 @@ class DataObjectFilters:
         .. note::
             See also the notes at :func:`transform` which is used by this filter
             under the hood.
+
+        .. versionchanged:: 0.49.0
+            ``transform_all_input_vectors`` is now applied to point sets when
+            ``inplace`` is ``True``.
 
         Parameters
         ----------

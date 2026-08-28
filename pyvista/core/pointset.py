@@ -226,57 +226,6 @@ class _PointSet(DataSet):
             self.points = self.points.astype(np.double)
         return self
 
-    # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    @_deprecate_positional_args(allowed=['xyz'])
-    def translate(
-        self: Self,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
-        inplace: bool = False,  # noqa: FBT001, FBT002
-    ):
-        """Translate the mesh.
-
-        Parameters
-        ----------
-        xyz : VectorLike[float]
-            A vector of three floats of Cartesian values to translate the mesh with.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals, and active vectors are transformed. This is
-            only valid when not updating in place.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.PointSet
-            Translated pointset.
-
-        Examples
-        --------
-        Create a sphere and translate it by ``(2, 1, 2)``.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> mesh.center
-        (0.0, 0.0, 0.0)
-        >>> trans = mesh.translate((2, 1, 2), inplace=True)
-        >>> trans.center
-        (2.0, 1.0, 2.0)
-
-        """
-        if inplace:
-            self.points += np.asarray(xyz)
-            return self
-        return pv.DataObjectFilters.translate(
-            self,
-            xyz,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
 
 class PointSet(_PointSet, _vtk.vtkPointSet):
     """Concrete class for storing a set of points.
