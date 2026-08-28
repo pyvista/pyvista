@@ -27,14 +27,12 @@ from the `.py` itself. The extracted file has the same line numbers as the sourc
 `.vale/pyvista/...` path, swap it back to `examples/...` or `pyvista/...` with a `.py`
 extension, and that is the line to fix.
 
-Vale does still open `.py` files directly, for the rules `doc/.vale.ini`'s `[*.py]`
+Vale does still open `.py` files directly, for whatever `doc/.vale.ini`'s `[*.py]`
 section turns on -- today just `Google.Exclamation`. **An alert reported against a
 `pyvista/...py` path rather than a `.vale/...rst` one came from that scan**, which sees
 the raw file: numpydoc signature lines, `See Also` entries and doctest blocks all reach
 it as ordinary prose, with none of the handling described below. Enabling a prose rule
-there means signing up for that. `PyVista.Repetition` was enabled there once and needed
-an exceptions list of two dozen type names to stay quiet; moving it to the extracted
-`.rst` retired the whole list.
+there means signing up for that.
 
 **Trust a live Vale run over a mental model of what it checks.** This session got this
 wrong twice: once assuming a rule (`Google.Headings`'s exceptions list) was needed by

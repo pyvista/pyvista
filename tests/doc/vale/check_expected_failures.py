@@ -7,11 +7,8 @@ actually had -- a bare ``a`` in ``Google.Headings``' exceptions list matched
 inside every word containing the letter and silently switched heading checks
 off for most of the documentation.
 
-``PyVista.Repetition`` is the same shape of risk from the other direction: it
-carried an exceptions list of type names purely because it ran over raw ``.py``
-files, where numpydoc type lines and ``See Also`` entries reach it as prose.
-The list is gone, so its ``tokens`` pattern is now the only thing standing
-between a real doubled word and silence.
+``PyVista.Repetition`` has no exceptions list, so its ``tokens`` pattern is the
+only thing standing between a real doubled word and silence.
 
 Run with ``make docstyle``, or directly::
 
