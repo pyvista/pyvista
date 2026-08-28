@@ -568,6 +568,14 @@ def StructuredSphere(
     :meth:`~pyvista.DataObjectFilters.extract_surface` and
     :meth:`~pyvista.PolyDataFilters.clean` to merge the duplicate points.
 
+    With a sequence of radii the tessellation matches :func:`~pyvista.SolidSphere`
+    at the same resolutions, cell for cell and by volume, but is stored
+    differently. Every cell here is a :attr:`~pyvista.CellType.HEXAHEDRON`,
+    collapsed to a wedge shape at the poles, where :func:`~pyvista.SolidSphere`
+    uses :attr:`~pyvista.CellType.WEDGE` cells and no coincident points. Filling
+    the center needs cell types a grid cannot express, so only
+    :func:`~pyvista.SolidSphere` offers it.
+
     .. versionadded:: 0.49
 
     Parameters
