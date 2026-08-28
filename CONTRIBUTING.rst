@@ -1376,41 +1376,52 @@ The tests can be executed with:
 
 Writing a Case
 """"""""""""""
-Cases live in ``tests/typing/cases`` and are ordinary pytest modules. Each case
-builds a value once and pins its type twice: with
-`typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
-which Mypy checks for an *exact* match, and with ``assert_runtime_type``, which
-checks the value itself. For example, to test that :func:`~pyvista.wrap`
-returns a :class:`~pyvista.PolyData` for :vtk:`vtkPolyData` input:
+Cases live in ``tests/typing/cases``. A case is one line: an expression, and the
+type it should have.
 
 .. code-block:: python
 
-    def test_wrap_vtk_polydata() -> None:
-        """A :vtk:`vtkPolyData` wraps to `PolyData`."""
-        result = pv.wrap(_vtk.vtkPolyData())
-        assert_type(result, pv.PolyData)
-        assert_runtime_type(result, pv.PolyData)
+    assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
+    assert_types(pv.wrap(np.zeros(shape=(100, 3))), pv.PolyData | pv.ImageData)
+    assert_types(list(multi().recursive_iterator('ids', nested_ids=False)), list[int])
 
-Write the expected type as an ordinary expression -- ``pv.PolyData``,
-``pv.PolyData | pv.ImageData``, ``list[tuple[str, DataSet]]`` -- rather than as
-a string. Both assertions must name the same local and the same type: a case
-that pins only one of the two, or that pins two different types, is reported by
-``test_asserts_both_types``.
+``assert_types`` is two things at once. To Mypy it is
+`typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
+which requires the expression's inferred type to match the second argument
+*exactly*: a supertype is a failure, not a pass. At runtime it is a checker
+that inspects the value the expression actually produced. Writing the type once
+is enough for both, and a case only passes if the two agree.
+
+Write the expected type as an ordinary expression, such as ``pv.PolyData``,
+``pv.PolyData | pv.ImageData``, ``list[tuple[str, DataSet]]``, rather than as a string.
+Anything in the file that is not an ``assert_types`` line is setup: imports, and
+helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
 How the Cases Run
 """""""""""""""""
-Running ``tests/typing/cases`` under pytest checks the runtime half. Each case
-is a normal test, so cases are independent of each other and of where they sit
-in the file. ``assert_runtime_type`` is backed by
-`pycroscope.runtime <https://pycroscope.readthedocs.io/en/latest/reference/runtime.html>`_,
-which walks containers exhaustively -- it catches a ``None`` at any position in
-a ``list[DataSet]``, not just the first element.
+Every case becomes two tests, named after the claim it makes rather than after
+where it sits in the file:
 
-``tests/typing/test_static_types.py`` checks the static half. It runs Mypy once
-over the same files in a separate process, then reports the diagnostics for
-each case under that case's own test id, so one bad case fails one test. Mypy
-failing to run fails only these tests, and the case files' own imports are
-reported separately under ``<module>``.
+.. code-block:: text
+
+    test_runtime_type[wrap.py: pv.wrap(pv.PolyData()) -> pv.PolyData]
+    test_static_type[wrap.py: pv.wrap(pv.PolyData()) -> pv.PolyData]
+
+``test_runtime_type`` compiles the file's setup followed by that one case and
+runs it in a namespace of its own, so a case cannot reach another case's state
+and reordering a file changes nothing. The runtime check is backed by
+`pycroscope.runtime <https://pycroscope.readthedocs.io/en/latest/reference/runtime.html>`_,
+which walks containers exhaustively, so it catches a ``None`` at any position in a
+``list[DataSet]``, not only the first element.
+
+``test_static_type`` reads a single Mypy run, made once per session in a
+separate process, and reports the diagnostics landing on that case's lines.
+Mypy failing to run fails only these tests. Lines that are not cases are covered
+by ``test_case_file_setup``, one per file, so a broken import reads as a broken
+import.
+
+The framework itself is in ``tests/typing/typeassert`` and knows nothing about
+PyVista.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
