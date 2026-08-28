@@ -1335,16 +1335,14 @@ the typing requirements with
 
 and run ``mypy`` to analyze all ``pyvista`` repository code.
 
-Runtime Tests
-^^^^^^^^^^^^^
-Since ``mypy`` is limited to static analysis, it's possible that a type hint
-may not match the actual runtime type. In addition, there may be complex
-typing ``@overload`` definitions which could benefit from some testing to
-ensure the type overloads work as expected. For these cases, PyVista uses
-custom unit tests to validate that type hints are correct both statically
-and dynamically.
+Typing Tests
+^^^^^^^^^^^^
+Mypy only sees the annotations, so a hint can be wrong without Mypy noticing:
+the annotated type and the type a function actually returns may disagree, and
+complex ``@overload`` definitions may not resolve to the overload they were
+meant to. The typing tests pin both halves, so a mismatch between them fails.
 
-To execute the runtime tests, install the regular test requirements with:
+Install the regular test requirements with:
 
 .. code-block:: shell
 
@@ -1360,53 +1358,59 @@ The tests can be executed with:
 
         .. code-block:: bash
 
-            pytest tests/typing/test_typing.py
+            pytest tests/typing
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/typing/test_typing.py
+            tox run -e py3.11 -- tests/typing
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make test ARGS="tests/typing/test_typing.py"
+            make test ARGS="tests/typing"
 
-This test collects and executes test cases from ``.py`` files in
-``tests/typing/test_typing_cases``.
-
-Individual test cases are written as a single line of Python code with the format:
-
-.. code-block:: python
-
-    reveal_type(arg)  # EXPECTED_TYPE: "<T>"
-
-where ``arg`` is any argument you want mypy to analyze, and ``"<T>"`` is the
-expected revealed type returned by ``Mypy``.
-
-For example, to test that the :meth:`~pyvista.wrap` method returns
-:class:`~pyvista.PolyData` for ``vtkPolyData`` input, we can write a test case for
-the function call ``wrap(vtk.vtkPolyData())`` as follows:
+Writing a Case
+""""""""""""""
+Cases live in ``tests/typing/cases`` and are ordinary pytest modules. Each case
+builds a value once and pins its type twice: with
+`typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
+which Mypy checks for an *exact* match, and with ``assert_runtime_type``, which
+checks the value itself. For example, to test that :func:`~pyvista.wrap`
+returns a :class:`~pyvista.PolyData` for :vtk:`vtkPolyData` input:
 
 .. code-block:: python
 
-    reveal_type(wrap(vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
+    def test_wrap_vtk_polydata() -> None:
+        """A :vtk:`vtkPolyData` wraps to `PolyData`."""
+        result = pv.wrap(_vtk.vtkPolyData())
+        assert_type(result, pv.PolyData)
+        assert_runtime_type(result, pv.PolyData)
 
-Any number of related test cases (one test case per line) may be written and
-included in a single ``.py`` file.
+Write the expected type as an ordinary expression -- ``pv.PolyData``,
+``pv.PolyData | pv.ImageData``, ``list[tuple[str, DataSet]]`` -- rather than as
+a string. Both assertions must name the same local and the same type: a case
+that pins only one of the two, or that pins two different types, is reported by
+``test_asserts_both_types``.
 
-When executed, a single instance of ``Mypy`` will statically analyze all the
-test cases. The actual revealed types by ``Mypy`` are compared against the
-``EXPECTED_TYPE`` defined by each test case.
+How the Cases Run
+"""""""""""""""""
+Running ``tests/typing/cases`` under pytest checks the runtime half. Each case
+is a normal test, so cases are independent of each other and of where they sit
+in the file. ``assert_runtime_type`` is backed by
+`pycroscope.runtime <https://pycroscope.readthedocs.io/en/latest/reference/runtime.html>`_,
+which walks containers exhaustively -- it catches a ``None`` at any position in
+a ``list[DataSet]``, not just the first element.
 
-In addition, the ``pycroscope`` package tests the actual returned
-type at runtime to match the statically revealed type. The
-`pycroscope.runtime.get_assignability_error <https://pycroscope.readthedocs.io/en/latest/reference/runtime.html#pycroscope.runtime.get_assignability_error>`_
-method is used for this.
+``tests/typing/test_static_types.py`` checks the static half. It runs Mypy once
+over the same files in a separate process, then reports the diagnostics for
+each case under that case's own test id, so one bad case fails one test. Mypy
+failing to run fails only these tests, and the case files' own imports are
+reported separately under ``<module>``.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
