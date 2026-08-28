@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from enum import Enum
+import inspect
 
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
@@ -219,6 +220,18 @@ def test_filters_are_split_out_of_the_inherited_rows():
     assert not {label for label, _, _ in inherited} & {label for label, _, _ in filters}
 
 
+def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
+    from pyvista.core.filters.data_object import DataObjectFilters
+
+    # `points: pyvista_ndarray` lets the filters type `self.points`; it is not reachable
+    # (`hasattr` is False) and must not be documented on the filter class or its users.
+    assert not hasattr(DataObjectFilters, 'points')
+    assert autoinherit._home(DataObjectFilters, 'points') is None
+    assert 'points' not in autoinherit.own_members('pyvista', 'DataObjectFilters', ['points'])
+    # The real DataSet.points is untouched.
+    assert autoinherit._home(pv.PolyData, 'points') is pv.DataSet
+
+
 def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
     assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
 
@@ -268,6 +281,10 @@ def test_every_reachable_member_has_exactly_one_page(documented):
             provider = autoinherit._provider(cls, item)
             if provider is None or not provider.__module__.startswith('pyvista'):
                 continue
+            if autoinherit._is_filter(provider) and not inspect.isroutine(
+                provider.__dict__.get(item)
+            ):
+                continue  # a filter class's bare annotation is a typing aid, not API
             if item not in homed:
                 missing.add(f'{docname}.{item}')
 

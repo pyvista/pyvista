@@ -142,11 +142,20 @@ def _provider(cls: type, member: str) -> type | None:
     return next((base for base in cls.__mro__ if member in inspect.get_annotations(base)), None)
 
 
+def _is_filter(cls: type) -> bool:
+    """Return whether ``cls`` is one of the filter classes datasets mix in."""
+    return cls.__module__.startswith('pyvista.core.filters')
+
+
 def _home(cls: type, member: str) -> type | None:
     """Return the documented class owning ``member``'s page, or ``None`` if it has none."""
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
+    if _is_filter(provider) and not inspect.isroutine(provider.__dict__.get(member)):
+        # A filter class declares `points` as a bare annotation so its filters can type
+        # `self.points`. That is a typing aid, not API, so it has no page.
+        return None
     documented = _documented_classes()
     home = cls
     for base in cls.__mro__:  # most derived first, so the last match is the most basal
@@ -208,11 +217,6 @@ def _rows(module: str, objname: str, names: Sequence[str]) -> list[tuple[type, s
         label = f'{full.rsplit(".", 1)[1]}.{name}'
         rows.append((name, home, label, f'{full}.{name}', _summary(home, name)))
     return [row[1:] for row in sorted(rows, key=lambda row: row[0])]
-
-
-def _is_filter(cls: type) -> bool:
-    """Return whether ``cls`` is one of the filter classes datasets mix in."""
-    return cls.__module__.startswith('pyvista.core.filters')
 
 
 def inherited_member_rows(  # numpydoc ignore=RT01
