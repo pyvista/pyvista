@@ -465,12 +465,12 @@ def grid_from_sph_coords(theta, phi, r):
 
     # Make a grid object
     grid = pv.StructuredGrid(x_cart, y_cart, z_cart)
-    
+
     # Compute correct outward radial unit vectors as point normals/vectors using _reciprocal
     points = grid.points
     norms = np.linalg.norm(points, axis=1, keepdims=True)
     grid.point_data['Normals'] = points * pv.core.utilities.helpers._reciprocal(norms)
-    
+
     return grid
 
 

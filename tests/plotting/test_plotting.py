@@ -7413,13 +7413,14 @@ def test_extract_subset_rate(rate, rebase_coordinates):
     pl.view_xy()
     pl.show()
 
+
 def test_grid_from_sph_coords_normals_plotting():
     """Regression test for grid_from_sph_coords normals and scalar warping (issue #6883)."""
     azims = np.linspace(0, 360, num=10)
     polars = np.linspace(0, 180, num=11)
     rs = np.array([1.0])
     grid = pv.grid_from_sph_coords(azims, polars, rs)
-    
+
     # Ensure Normals are correctly attached
     assert 'Normals' in grid.point_data
 
@@ -7428,7 +7429,7 @@ def test_grid_from_sph_coords_normals_plotting():
     pl.add_mesh(grid)
     pl.plot_normals(grid)
     pl.close()
-    
+
     # Verify warping works correctly as described in the issue
     grid['scalar_field'] = np.sin(np.deg2rad(polars)).repeat(len(azims))
     warped = grid.warp_by_scalar('scalar_field', factor=1.0)
