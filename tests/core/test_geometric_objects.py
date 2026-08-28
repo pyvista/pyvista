@@ -171,7 +171,6 @@ def test_structured_sphere():
     assert sphere.distinct_cell_types == {pv.CellType.QUAD}
     assert np.allclose(np.linalg.norm(sphere.points, axis=1), 0.5)
 
-    # Texture coordinates and normals belong to `Sphere`, not this function
     assert sphere.point_data.keys() == []
     assert sphere.cell_data.keys() == []
 
@@ -197,9 +196,9 @@ def test_structured_sphere_angles():
     sphere = pv.StructuredSphere(start_theta=90, end_theta=270, start_phi=30, end_phi=150)
     assert sphere.dimensions == (1, 30, 31)
     assert sphere.bounds.x_max == pytest.approx(0.0, abs=1e-8)
-    assert sphere.bounds.z_max == pytest.approx(0.5 * np.sin(np.deg2rad(60)))
+    assert sphere.bounds.z_max == pytest.approx(0.5 * np.cos(np.deg2rad(30)))
 
-    # Restricting theta by a full turn is the same as the default sphere
+    # Shifting theta by a full turn rotates the sphere
     shifted = pv.StructuredSphere(start_theta=180, end_theta=540)
     expected = pv.StructuredSphere().rotate_z(180)
     assert np.allclose(shifted.points, expected.points)
