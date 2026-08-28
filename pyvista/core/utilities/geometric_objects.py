@@ -642,23 +642,31 @@ def StructuredSphere(
     >>> sphere = pv.StructuredSphere()
     >>> sphere.plot(show_edges=True)
 
-    Show the dimensions. The radial dimension is one since a single radius is
-    used, and the theta dimension is one more than ``theta_resolution`` because
-    of the seam.
+    The dimensions follow the ``i-j-k`` ordering: one entry per radius, then
+    ``phi_resolution``, then ``theta_resolution`` plus one, the extra point being
+    the far side of the seam.
 
-    >>> sphere = pv.StructuredSphere(theta_resolution=20, phi_resolution=10)
-    >>> sphere.dimensions
+    >>> pv.StructuredSphere(theta_resolution=20, phi_resolution=10).dimensions
     (1, 10, 21)
 
-    Use a sequence of radii to generate a 3D grid with concentric layers of
-    cells. This is useful for modeling volumetric data such as an atmosphere.
+    Swapping the two resolutions swaps the last two dimensions, and only the
+    theta one carries the extra point.
 
-    >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
-    >>> sphere.dimensions
-    (5, 30, 31)
+    >>> pv.StructuredSphere(theta_resolution=10, phi_resolution=20).dimensions
+    (1, 20, 11)
+
+    Use a sequence of radii to set the first dimension and generate a 3D grid
+    with concentric layers of cells. This is useful for modeling volumetric data
+    such as an atmosphere.
+
+    >>> pv.StructuredSphere(
+    ...     radius=[1.0, 1.5, 2.0], theta_resolution=20, phi_resolution=10
+    ... ).dimensions
+    (3, 10, 21)
 
     Show the layers by clipping the grid in half.
 
+    >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
     >>> sphere.clip(normal='x').plot(show_edges=True)
 
     Create a partial sphere by restricting the angular ranges.
