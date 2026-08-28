@@ -6,9 +6,9 @@ from collections.abc import Iterable
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
+import input_validation as _validation
 import numpy as np
 
-from pyvista import _validation
 from pyvista import _vtk
 
 if TYPE_CHECKING:

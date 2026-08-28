@@ -8,11 +8,11 @@ from typing import Literal
 from typing import cast
 from typing import overload
 
+import input_validation as _validation
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core import _validation
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.core.utilities.arrays import array_from_vtkmatrix

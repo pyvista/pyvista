@@ -18,12 +18,12 @@ from typing import get_args
 
 from cycler import Cycler
 from cycler import cycler
+import input_validation as _validation
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista as pv
-from pyvista import _validation
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external

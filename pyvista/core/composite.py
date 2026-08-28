@@ -20,6 +20,7 @@ from typing import Union
 from typing import cast
 from typing import overload
 
+import input_validation as _validation
 import numpy as np
 from typing_extensions import Self
 from typing_extensions import TypedDict
@@ -28,7 +29,6 @@ from typing_extensions import Unpack
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._vtk_utilities import vtk_version_info
 
 from ._typing_core import BoundsTuple

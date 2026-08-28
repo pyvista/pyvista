@@ -7,10 +7,10 @@ from typing import Literal
 from typing import TypeAlias
 from typing import overload
 
+import input_validation as _validation
 import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:

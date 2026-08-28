@@ -23,6 +23,7 @@ from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
 from cyclopts.help import HelpEntry
 from cyclopts.help import TableSpec
+import input_validation as _validation
 from rich import box
 from rich.console import Group
 from rich.console import NewLine
@@ -30,7 +31,6 @@ from rich.panel import Panel
 from rich.text import Text
 
 import pyvista as pv
-from pyvista import _validation
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 from pyvista.plotting._typing import ThemeOptions
 

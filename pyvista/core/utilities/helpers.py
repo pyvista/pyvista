@@ -10,13 +10,13 @@ from typing import Literal
 from typing import cast
 from typing import overload
 
+import input_validation as _validation
 import numpy as np
 from typing_extensions import TypeIs
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 
 from . import transformations
 from .fileio import from_meshio

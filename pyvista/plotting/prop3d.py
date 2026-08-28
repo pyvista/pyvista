@@ -8,11 +8,11 @@ import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 
+import input_validation as _validation
 import numpy as np
 
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
