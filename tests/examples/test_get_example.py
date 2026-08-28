@@ -70,11 +70,35 @@ def test_get_example_ignores_function_prefix(name):
     assert isinstance(examples.get_example(name), pv.ImageData)
 
 
-def test_get_example_reader():
-    """A reader is returned for the example's main file."""
-    reader = examples.get_example('uniform', output='reader')
+def test_get_example_readers():
+    """A reader is returned for each file which has one."""
+    (reader,) = examples.get_example('uniform', output='readers')
     assert isinstance(reader, pv.VTKDataSetReader)
     assert Path(reader.path).name == 'uniform.vtk'
+
+
+@pytest.mark.needs_download
+def test_get_example_readers_multiple():
+    """An example read by several readers returns all of them."""
+    readers = examples.get_example('electronics_cooling', output='readers')
+    assert [type(reader).__name__ for reader in readers] == [
+        'XMLPolyDataReader',
+        'XMLUnstructuredGridReader',
+    ]
+
+
+@pytest.mark.needs_download
+def test_get_example_readers_skips_files_without_one():
+    """Files with no reader are left out rather than returned as ``None``."""
+    # `frog` is two files, but only the header is read
+    assert len(examples.get_example('frog', output='paths')) == 2
+    assert len(examples.get_example('frog', output='readers')) == 1
+
+
+@pytest.mark.parametrize('name', ['structured', 'sky_box_cube_map'])
+def test_get_example_readers_empty(name):
+    """An example with no reader returns an empty tuple rather than raising."""
+    assert examples.get_example(name, output='readers', download=False) == ()
 
 
 def test_get_example_metadata():
@@ -187,12 +211,6 @@ def test_get_example_invalid_output_raises():
     """An unsupported ``output`` value raises."""
     with pytest.raises(ValueError, match="Invalid output 'mesh'"):
         examples.get_example('uniform', output='mesh')
-
-
-def test_get_example_no_reader_raises():
-    """An example generated in memory has no reader."""
-    with pytest.raises(ValueError, match="Example 'structured' has no reader"):
-        examples.get_example('structured', output='reader')
 
 
 @pytest.mark.needs_download

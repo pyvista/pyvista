@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
     from pyvista.examples._dataset_loader import DatasetObject
 
-_Output = Literal['dataset', 'paths', 'reader', 'metadata']
-_OUTPUTS: tuple[_Output, ...] = ('dataset', 'paths', 'reader', 'metadata')
+_Output = Literal['dataset', 'paths', 'readers', 'metadata']
+_OUTPUTS: tuple[_Output, ...] = ('dataset', 'paths', 'readers', 'metadata')
 
 
 @dataclass(frozen=True)
@@ -194,16 +194,9 @@ def _collect_metadata(
     )
 
 
-def _get_reader(loader: _DatasetLoader, name: str) -> pv.BaseReader[Any]:
-    """Return the reader for the example's main file."""
-    readers = tuple(r for r in getattr(loader, '_reader', ()) if r is not None)
-    if not readers:
-        msg = (
-            f'Example {name!r} has no reader. It is either generated in memory or '
-            'read with a custom function rather than a pyvista reader.'
-        )
-        raise ValueError(msg)
-    return readers[0]
+def _get_readers(loader: _DatasetLoader) -> tuple[pv.BaseReader[Any], ...]:
+    """Return a reader for each of the example's files which has one."""
+    return tuple(r for r in getattr(loader, '_reader', ()) if r is not None)
 
 
 @overload
@@ -224,9 +217,9 @@ def get_example(
 def get_example(
     name: str | Callable[..., Any],
     *,
-    output: Literal['reader'],
+    output: Literal['readers'],
     download: bool = ...,
-) -> pv.BaseReader[Any]: ...
+) -> tuple[pv.BaseReader[Any], ...]: ...
 @overload
 def get_example(
     name: str | Callable[..., Any],
@@ -237,9 +230,9 @@ def get_example(
 def get_example(
     name: str | Callable[..., Any],
     *,
-    output: Literal['dataset', 'paths', 'reader', 'metadata'] = 'dataset',
+    output: Literal['dataset', 'paths', 'readers', 'metadata'] = 'dataset',
     download: bool = True,
-) -> DatasetObject | tuple[Path, ...] | pv.BaseReader[Any] | ExampleMetadata:
+) -> DatasetObject | tuple[Path, ...] | tuple[pv.BaseReader[Any], ...] | ExampleMetadata:
     """Get any example dataset, its files, its reader, or its metadata.
 
     This is a single entry point for every example in
@@ -255,13 +248,15 @@ def get_example(
         such as ``examples.download_bunny``. A ``'download_'`` or ``'load_'``
         prefix on the name is optional.
 
-    output : 'dataset' | 'paths' | 'reader' | 'metadata', default: 'dataset'
+    output : 'dataset' | 'paths' | 'readers' | 'metadata', default: 'dataset'
         What to return.
 
         - ``'dataset'``: the loaded dataset, as the example's own function returns it.
         - ``'paths'``: the local path of every file or folder belonging to the
           example, always as a tuple, and empty for examples generated in memory.
-        - ``'reader'``: a :class:`~pyvista.BaseReader` for the example's main file.
+        - ``'readers'``: a :class:`~pyvista.BaseReader` for each file which has one,
+          always as a tuple, and empty for examples read with a custom function or
+          generated in memory.
         - ``'metadata'``: an :class:`~pyvista.examples.ExampleMetadata` describing
           the example's files and their source.
 
@@ -273,8 +268,8 @@ def get_example(
 
     Returns
     -------
-    DataSet | tuple[Path, ...] | pyvista.BaseReader | ExampleMetadata
-        The dataset, its file paths, a reader for it, or its metadata, depending on
+    DataSet | tuple[Path, ...] | tuple[pyvista.BaseReader, ...] | ExampleMetadata
+        The dataset, its file paths, its readers, or its metadata, depending on
         ``output``. Examples which load as a :class:`~pyvista.MultiBlock`,
         :class:`~pyvista.Texture` or :class:`numpy.ndarray` return that in place of a
         :class:`~pyvista.DataSet`.
@@ -298,12 +293,11 @@ def get_example(
     >>> examples.get_example('uniform', output='paths')  # doctest:+SKIP
     (PosixPath('.../pyvista/examples/uniform.vtk'),)
 
-    Get a reader for the example's main file, to inspect or configure it before
-    reading.
+    Get a reader for each file that has one, to inspect or configure before reading.
 
-    >>> reader = examples.get_example('uniform', output='reader')
-    >>> type(reader).__name__
-    'VTKDataSetReader'
+    >>> readers = examples.get_example('uniform', output='readers')
+    >>> [type(reader).__name__ for reader in readers]
+    ['VTKDataSetReader']
 
     """
     if output not in _OUTPUTS:
@@ -314,9 +308,9 @@ def get_example(
 
     if output == 'metadata':
         return _collect_metadata(loader, dataset_name, function, download=download)
-    if output == 'reader':
+    if output == 'readers':
         _resolve_paths(loader, dataset_name, download=download)
-        return _get_reader(loader, dataset_name)
+        return _get_readers(loader)
     if output == 'paths':
         return _resolve_paths(loader, dataset_name, download=download)[0]
 

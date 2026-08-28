@@ -65,7 +65,9 @@ many it has, which is useful for the datasets made up of more than one file:
 .. code-block:: python
 
    >>> from pyvista import examples
-   >>> reader = examples.get_example('notch_displacement', output='reader')
+   >>> readers = examples.get_example(
+   ...     'notch_displacement', output='readers'
+   ... )
    >>> metadata = examples.get_example('frog', output='metadata')
    >>> metadata.total_size
    '5.2 MB'
