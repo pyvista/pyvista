@@ -685,6 +685,8 @@ pyvista = "pv"
 ]
 # Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
 'tests/plotting/tinypages/gallery_src/*' = ['I002']
+# Cases are stacked one per line and aligned, so they read as a table of claims
+'tests/typing/cases/*' = ['E501']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3
