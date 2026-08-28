@@ -6,7 +6,7 @@ import importlib
 from typing import TYPE_CHECKING
 
 from . import planets as planets
-from ._get_example import ExampleMetadata as ExampleMetadata
+from ._get_example import Example as Example
 from ._get_example import get_example as get_example
 from .cells import generate_cell_blocks as generate_cell_blocks
 from .cells import plot_cell as plot_cell

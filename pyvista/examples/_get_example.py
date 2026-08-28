@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from dataclasses import field
 import difflib
 from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Literal
-from typing import overload
 
 import pyvista as pv
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -21,40 +20,49 @@ if TYPE_CHECKING:
 
     from pyvista.examples._dataset_loader import DatasetObject
 
-_Output = Literal['dataset', 'paths', 'readers', 'metadata']
-_OUTPUTS: tuple[_Output, ...] = ('dataset', 'paths', 'readers', 'metadata')
-
 
 @dataclass(frozen=True)
-class ExampleMetadata:
-    """Metadata describing a single example dataset.
+class Example:
+    """A single example dataset: its files, where they come from, and how to read it.
 
-    Returned by :func:`~pyvista.examples.get_example` with ``output='metadata'``.
-    Every sequence-valued field is a tuple, including for single-file examples.
+    Returned by :func:`~pyvista.examples.get_example`. Every sequence-valued field is
+    a tuple with one entry per path, in the same order, including for single-file
+    examples.
 
     Notes
     -----
     The fields are limited to what an example cannot be asked for directly. Anything
-    derivable is left out: the extensions are the suffixes of ``paths``, the total size
-    is ``sum(file_sizes)``, and the reader types and the file which is read both come
-    from the readers returned with ``output='readers'``.
+    derivable is left out: the extensions are the suffixes of :attr:`paths`, the total
+    size is ``sum(file_sizes)``, and the reader types and the file which is read both
+    come from :attr:`readers`.
 
     Examples
     --------
-    Get the metadata for the ``'frog'`` example, which is stored as two files.
+    Look up an example. This resolves its files but does not read them.
 
     >>> from pyvista import examples
-    >>> metadata = examples.get_example('frog', output='metadata')
-    >>> metadata.name
+    >>> frog = examples.get_example('frog')
+    >>> frog.name
     'frog'
-    >>> len(metadata.paths)
+
+    It is stored as two files, but only one of them is read.
+
+    >>> len(frog.paths)
     2
+    >>> [type(reader).__name__ for reader in frog.readers]
+    ['MetaImageReader']
 
     Sizes are in bytes, one per path, so examples compare directly.
 
-    >>> bunny = examples.get_example('bunny', output='metadata')
-    >>> sum(metadata.file_sizes) > sum(bunny.file_sizes)
+    >>> bunny = examples.get_example('bunny')
+    >>> sum(frog.file_sizes) > sum(bunny.file_sizes)
     True
+
+    Read the dataset itself.
+
+    >>> mesh = frog.load()
+    >>> mesh.n_cells
+    31594185
 
     """
 
@@ -68,10 +76,43 @@ class ExampleMetadata:
     """Local path of every file or folder belonging to the example, in declaration order."""
 
     file_sizes: tuple[int, ...] = ()
-    """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
+    """Size in bytes of each entry in :attr:`paths`, one per path, folders counted in full."""
 
     source_urls: tuple[str, ...] = ()
-    """URL each entry in ``paths`` is downloaded from, empty if it has none."""
+    """URL each entry in :attr:`paths` is downloaded from, empty if it has none."""
+
+    _loader: _DatasetLoader | None = field(default=None, repr=False, compare=False)
+
+    @property
+    def readers(self) -> tuple[pv.BaseReader[Any], ...]:
+        """Return a reader for each file which has one.
+
+        Empty for examples read with a custom function or generated in memory, and
+        shorter than :attr:`paths` when only some files are read directly.
+
+        Returns
+        -------
+        tuple[pyvista.BaseReader, ...]
+            One reader per file which has one.
+
+        """
+        return tuple(r for r in getattr(self._loader, '_reader', ()) if r is not None)
+
+    def load(self) -> DatasetObject:
+        """Read the example and return its dataset.
+
+        Returns
+        -------
+        DataSet | tuple[str, ...] | tuple[pyvista.BaseReader, ...]
+            The dataset, as the example's own function returns it. Examples which load
+            as a :class:`~pyvista.MultiBlock`, :class:`~pyvista.Texture` or
+            :class:`numpy.ndarray` return that in place of a :class:`~pyvista.DataSet`.
+
+        """
+        if self._loader is None:  # pragma: no cover
+            msg = f'Example {self.name!r} has no loader.'
+            raise RuntimeError(msg)
+        return self._loader.load()
 
 
 def _supported_modules() -> tuple[ModuleType, ...]:
@@ -149,69 +190,17 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
     return paths
 
 
-def _collect_metadata(
-    loader: _DatasetLoader,
-    name: str,
-    function: Callable[..., Any],
-    *,
-    download: bool,
-) -> ExampleMetadata:
-    """Gather every file and source property the loader exposes."""
-    return ExampleMetadata(
-        name=name,
-        function=function,
-        paths=_resolve_paths(loader, name, download=download),
-        file_sizes=getattr(loader, '_filesize_bytes', ()),
-        source_urls=getattr(loader, 'source_url', ()),
-    )
-
-
-def _get_readers(loader: _DatasetLoader) -> tuple[pv.BaseReader[Any], ...]:
-    """Return a reader for each of the example's files which has one."""
-    return tuple(r for r in getattr(loader, '_reader', ()) if r is not None)
-
-
-@overload
-def get_example(
-    name: str | Callable[..., Any],
-    *,
-    output: Literal['dataset'] = ...,
-    download: bool = ...,
-) -> DatasetObject: ...
-@overload
-def get_example(
-    name: str | Callable[..., Any],
-    *,
-    output: Literal['paths'],
-    download: bool = ...,
-) -> tuple[str, ...]: ...
-@overload
-def get_example(
-    name: str | Callable[..., Any],
-    *,
-    output: Literal['readers'],
-    download: bool = ...,
-) -> tuple[pv.BaseReader[Any], ...]: ...
-@overload
-def get_example(
-    name: str | Callable[..., Any],
-    *,
-    output: Literal['metadata'],
-    download: bool = ...,
-) -> ExampleMetadata: ...
-def get_example(
-    name: str | Callable[..., Any],
-    *,
-    output: Literal['dataset', 'paths', 'readers', 'metadata'] = 'dataset',
-    download: bool = True,
-) -> DatasetObject | tuple[str, ...] | tuple[pv.BaseReader[Any], ...] | ExampleMetadata:
-    """Get any example dataset, its files, its reader, or its metadata.
+def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Example:
+    """Look up any example dataset.
 
     This is a single entry point for every example in
     :mod:`pyvista.examples.examples`, :mod:`pyvista.examples.downloads`, and
-    :mod:`pyvista.examples.planets`. ``get_example('bunny')`` is equivalent to
-    :func:`~pyvista.examples.downloads.download_bunny`, and ``output`` selects
-    what is returned instead of the dataset.
+    :mod:`pyvista.examples.planets`. It returns the example itself -- its files,
+    where they come from, and the readers for them -- rather than the dataset, which
+    :meth:`Example.load` reads. Reach for it to work with an example by name, or to
+    get at its files or readers; :func:`~pyvista.examples.downloads.download_bunny`
+    and its 200-odd siblings remain the direct way to load one dataset you can name
+    in your source.
 
     Parameters
     ----------
@@ -219,18 +208,6 @@ def get_example(
         Name of the example, such as ``'bunny'``, or the function which returns it,
         such as ``examples.download_bunny``. A ``'download_'`` or ``'load_'``
         prefix on the name is optional.
-
-    output : 'dataset' | 'paths' | 'readers' | 'metadata', default: 'dataset'
-        What to return.
-
-        - ``'dataset'``: the loaded dataset, as the example's own function returns it.
-        - ``'paths'``: the local path of every file or folder belonging to the
-          example, always as a tuple, and empty for examples generated in memory.
-        - ``'readers'``: a :class:`~pyvista.BaseReader` for each file which has one,
-          always as a tuple, and empty for examples read with a custom function or
-          generated in memory.
-        - ``'metadata'``: an :class:`~pyvista.examples.ExampleMetadata` describing
-          the example's files and their source.
 
     download : bool, default: True
         Download the example's files if they are not already present. If ``False``,
@@ -240,11 +217,8 @@ def get_example(
 
     Returns
     -------
-    DataSet | tuple[str, ...] | tuple[pyvista.BaseReader, ...] | ExampleMetadata
-        The dataset, its file paths, its readers, or its metadata, depending on
-        ``output``. Examples which load as a :class:`~pyvista.MultiBlock`,
-        :class:`~pyvista.Texture` or :class:`numpy.ndarray` return that in place of a
-        :class:`~pyvista.DataSet`.
+    Example
+        The example, its files, and its readers.
 
     See Also
     --------
@@ -253,38 +227,30 @@ def get_example(
 
     Examples
     --------
-    Load an example by name.
+    Look up an example and read it.
 
     >>> from pyvista import examples
-    >>> mesh = examples.get_example('uniform')
-    >>> mesh.n_cells
+    >>> uniform = examples.get_example('uniform')
+    >>> uniform.load().n_cells
     729
 
-    Get the files instead. Every example returns a tuple, however many files it has.
+    Get its files, always as a tuple however many it has.
 
-    >>> examples.get_example('uniform', output='paths')  # doctest:+SKIP
+    >>> uniform.paths  # doctest:+SKIP
     ('.../pyvista/examples/uniform.vtk',)
 
     Get a reader for each file that has one, to inspect or configure before reading.
 
-    >>> readers = examples.get_example('uniform', output='readers')
-    >>> [type(reader).__name__ for reader in readers]
+    >>> [type(reader).__name__ for reader in uniform.readers]
     ['VTKDataSetReader']
 
     """
-    if output not in _OUTPUTS:
-        msg = f'Invalid output {output!r}. Must be one of: {", ".join(map(repr, _OUTPUTS))}.'
-        raise ValueError(msg)
-
     loader, dataset_name, function = _get_dataset_loader(name)
-
-    if output == 'metadata':
-        return _collect_metadata(loader, dataset_name, function, download=download)
-    if output == 'readers':
-        _resolve_paths(loader, dataset_name, download=download)
-        return _get_readers(loader)
-    if output == 'paths':
-        return _resolve_paths(loader, dataset_name, download=download)
-
-    _resolve_paths(loader, dataset_name, download=download)
-    return loader.load()
+    return Example(
+        name=dataset_name,
+        function=function,
+        paths=_resolve_paths(loader, dataset_name, download=download),
+        file_sizes=getattr(loader, '_filesize_bytes', ()),
+        source_urls=getattr(loader, 'source_url', ()),
+        _loader=loader,
+    )

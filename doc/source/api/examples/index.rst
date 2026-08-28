@@ -48,28 +48,32 @@ See the API reference for more downloads:
 
 Any Example
 -----------
-:func:`~pyvista.examples.get_example` is a single entry point for every built-in,
-downloadable, and planetary example. Called with a name it returns the same dataset
-the example's own function does:
+:func:`~pyvista.examples.get_example` looks up any built-in, downloadable, or
+planetary example by name and returns an :class:`~pyvista.examples.Example`: its
+files, where they came from, and the readers for them.
+:meth:`~pyvista.examples.Example.load` reads the dataset.
 
 .. pyvista-plot::
 
    >>> from pyvista import examples
-   >>> mesh = examples.get_example('bunny')
+   >>> mesh = examples.get_example('bunny').load()
    >>> mesh.plot()
 
-The ``output`` argument returns the example's files, a reader for them, or its
-metadata instead of the dataset. Every example reports its files as a tuple, however
-many it has, which is useful for the datasets made up of more than one file:
+Use it to reach an example by name, or to get at its files and readers. The
+``download_*`` and ``load_*`` functions remain the direct way to load a single
+dataset you can name in your source:
 
 .. code-block:: python
 
    >>> from pyvista import examples
-   >>> readers = examples.get_example(
-   ...     'notch_displacement', output='readers'
-   ... )
-   >>> metadata = examples.get_example('frog', output='metadata')
-   >>> metadata.total_size
+   >>> frog = examples.get_example('frog')
+   >>> len(frog.paths)  # stored as two files
+   2
+   >>> [
+   ...     type(reader).__name__ for reader in frog.readers
+   ... ]  # only one is read
+   ['MetaImageReader']
+   >>> sum(frog.file_sizes)  # bytes, one per path
    5173494
 
 See the API reference for details:
@@ -78,7 +82,7 @@ See the API reference for details:
    :toctree: _autosummary
 
    examples.get_example
-   examples.ExampleMetadata
+   examples.Example
 
 Demos
 -----

@@ -48,41 +48,68 @@ def _all_example_names():
     ],
 )
 def test_get_example(name, dataset_type, num_paths):
-    """Local examples resolve to a dataset and to their files."""
-    assert isinstance(examples.get_example(name), dataset_type)
+    """An example resolves to its files and loads its dataset."""
+    example = examples.get_example(name)
 
-    paths = examples.get_example(name, output='paths')
-    assert isinstance(paths, tuple)
-    assert len(paths) == num_paths
-    assert all(isinstance(path, str) and Path(path).exists() for path in paths)
+    assert isinstance(example, examples.Example)
+    assert example.name == name
+    assert isinstance(example.paths, tuple)
+    assert len(example.paths) == num_paths
+    assert all(isinstance(path, str) and Path(path).exists() for path in example.paths)
+    assert isinstance(example.load(), dataset_type)
 
 
 def test_get_example_from_function():
     """An example may be named by its public function instead of by string."""
-    from_name = examples.get_example('uniform')
-    from_function = examples.get_example(examples.load_uniform)
-    assert from_name == from_function
+    assert examples.get_example('uniform') == examples.get_example(examples.load_uniform)
 
 
 @pytest.mark.parametrize('name', ['uniform', 'load_uniform'])
 def test_get_example_ignores_function_prefix(name):
     """A ``'download_'`` or ``'load_'`` prefix on the name is optional."""
-    assert isinstance(examples.get_example(name), pv.ImageData)
+    assert examples.get_example(name).name == 'uniform'
+
+
+def test_get_example_load_matches_the_example_function():
+    """``load`` returns what the example's own function returns."""
+    assert examples.get_example('uniform').load() == examples.load_uniform()
+
+
+def test_get_example_fields():
+    """Every tuple field has one entry per path, in the same order."""
+    example = examples.get_example('uniform')
+
+    assert example.function is examples.load_uniform
+    assert example.source_urls == (
+        'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
+    )
+    assert len(example.file_sizes) == len(example.source_urls) == len(example.paths) == 1
+    assert example.file_sizes[0] == Path(example.paths[0]).stat().st_size
+
+
+def test_get_example_in_memory():
+    """An example generated in memory has no files, and still loads."""
+    example = examples.get_example('structured')
+
+    for empty in (example.paths, example.file_sizes, example.source_urls, example.readers):
+        assert empty == ()
+    assert isinstance(example.load(), pv.StructuredGrid)
 
 
 def test_get_example_readers():
     """A reader is returned for each file which has one."""
-    (reader,) = examples.get_example('uniform', output='readers')
+    (reader,) = examples.get_example('uniform').readers
+
     assert isinstance(reader, pv.VTKDataSetReader)
-    assert Path(reader.path).name == 'uniform.vtk'
     # the reader takes the same `str` path the example reports
-    assert reader.path == examples.get_example('uniform', output='paths')[0]
+    assert reader.path == examples.get_example('uniform').paths[0]
 
 
 @pytest.mark.needs_download
 def test_get_example_readers_multiple():
     """An example read by several readers returns all of them."""
-    readers = examples.get_example('electronics_cooling', output='readers')
+    readers = examples.get_example('electronics_cooling').readers
+
     assert [type(reader).__name__ for reader in readers] == [
         'XMLPolyDataReader',
         'XMLUnstructuredGridReader',
@@ -92,71 +119,47 @@ def test_get_example_readers_multiple():
 @pytest.mark.needs_download
 def test_get_example_readers_skips_files_without_one():
     """Files with no reader are left out rather than returned as ``None``."""
-    # `frog` is two files, but only the header is read
-    assert len(examples.get_example('frog', output='paths')) == 2
-    assert len(examples.get_example('frog', output='readers')) == 1
+    example = examples.get_example('frog')
 
-
-@pytest.mark.parametrize('name', ['structured', 'sky_box_cube_map'])
-def test_get_example_readers_empty(name):
-    """An example with no reader returns an empty tuple rather than raising."""
-    assert examples.get_example(name, output='readers', download=False) == ()
-
-
-def test_get_example_metadata():
-    """Metadata reports the example's files and their source."""
-    metadata = examples.get_example('uniform', output='metadata')
-
-    assert isinstance(metadata, examples.ExampleMetadata)
-    assert metadata.name == 'uniform'
-    assert metadata.function is examples.load_uniform
-    assert metadata.source_urls == (
-        'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
-    )
-    # one size per path, in the same order
-    assert len(metadata.file_sizes) == len(metadata.paths) == 1
-    assert metadata.file_sizes[0] == Path(metadata.paths[0]).stat().st_size
-
-
-def test_get_example_metadata_in_memory():
-    """An example generated in memory has no files and no source."""
-    metadata = examples.get_example('structured', output='metadata')
-
-    for empty in (
-        metadata.paths,
-        metadata.file_sizes,
-        metadata.source_urls,
-    ):
-        assert empty == ()
+    # two files, but only the header is read
+    assert len(example.paths) == 2
+    assert [reader.path for reader in example.readers] == [example.paths[0]]
 
 
 @pytest.mark.needs_download
-def test_get_example_metadata_folder():
-    """A folder is one path, sized and typed by looking inside it."""
-    metadata = examples.get_example('cubemap_park', output='metadata')
+def test_get_example_readers_empty_for_custom_read():
+    """An example read by a custom function has no reader, but still loads."""
+    example = examples.get_example('sky_box_cube_map')
 
-    assert len(metadata.paths) == len(metadata.file_sizes) == 1
-    assert Path(metadata.paths[0]).is_dir()
-    # the folder is sized by what it contains, not by the directory entry
-    assert metadata.file_sizes[0] > 0
+    assert len(example.paths) == 6
+    assert example.readers == ()
+    assert isinstance(example.load(), pv.Texture)
 
 
 @pytest.mark.needs_download
-def test_get_example_metadata_multiple_files():
-    """A multi-file example reports every file, with one size and one URL each."""
-    metadata = examples.get_example('frog', output='metadata')
+def test_get_example_folder_is_one_path():
+    """A folder is one path, sized by what it contains."""
+    example = examples.get_example('cubemap_park')
 
-    assert len(metadata.paths) == 2
-    assert len(metadata.file_sizes) == len(metadata.source_urls) == 2
-    # the file which is actually read is the reader's, not a separate field
-    readers = examples.get_example('frog', output='readers')
-    assert [reader.path for reader in readers] == [metadata.paths[0]]
+    assert len(example.paths) == len(example.file_sizes) == 1
+    assert Path(example.paths[0]).is_dir()
+    assert example.file_sizes[0] > 0
+
+
+@pytest.mark.needs_download
+def test_get_example_file_sizes_compare():
+    """Sizes are bytes, so examples compare without parsing anything."""
+    frog = examples.get_example('frog')
+    bunny = examples.get_example('bunny')
+
+    assert sum(frog.file_sizes) > sum(bunny.file_sizes)
 
 
 def test_get_example_download_false_uses_local_files():
     """Built-in examples are available with ``download=False``."""
-    paths = examples.get_example('uniform', output='paths', download=False)
-    assert Path(paths[0]).is_file()
+    example = examples.get_example('uniform', download=False)
+
+    assert Path(example.paths[0]).is_file()
 
 
 def test_get_example_download_false_raises(monkeypatch):
@@ -167,7 +170,7 @@ def test_get_example_download_false_raises(monkeypatch):
 
     match = 'not available locally'
     with pytest.raises(FileNotFoundError, match=match):
-        examples.get_example('missing_example', output='paths', download=False)
+        examples.get_example('missing_example', download=False)
 
 
 def test_get_example_unknown_name_raises():
@@ -187,30 +190,25 @@ def test_get_example_function_without_dataset_raises():
         examples.get_example(planets.load_earth)
 
 
-def test_get_example_invalid_output_raises():
-    """An unsupported ``output`` value raises."""
-    with pytest.raises(ValueError, match="Invalid output 'mesh'"):
-        examples.get_example('uniform', output='mesh')
-
-
 @pytest.mark.needs_download
 @pytest.mark.parametrize('name', _all_example_names())
 def test_get_example_all(name):
-    """Every example is reachable by name and by function, and reports its files."""
+    """Every example resolves, reports its files, and loads the same by name or function."""
     if name in _DEPRECATED_DATASETS:
         pytest.skip('Dataset is deprecated.')
     if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:
         pytest.skip('Error loading on Windows')
 
     try:
-        metadata = examples.get_example(name, output='metadata')
-        from_name = examples.get_example(name)
-        from_function = examples.get_example(metadata.function)
+        example = examples.get_example(name)
+        from_name = example.load()
+        from_function = examples.get_example(example.function).load()
     except pv.VTKVersionError:
         pytest.skip('VTK version not supported.')
 
-    assert len(metadata.paths) == len(metadata.file_sizes)
-    assert all(Path(path).is_file() or Path(path).is_dir() for path in metadata.paths)
+    assert len(example.file_sizes) == len(example.paths)
+    assert all(Path(path).is_file() or Path(path).is_dir() for path in example.paths)
+    assert all(reader is not None for reader in example.readers)
 
     if name in _NON_DETERMINISTIC_DATASETS:
         return
