@@ -46,4 +46,5 @@ def assert_runtime_type(value: object, expected: Any) -> None:
             f'Runtime value of type {type(value).__name__!r} is not assignable '
             f'to the expected type:\n\t{expected}\n\n{relation.display(depth=0)}'
         )
-        raise AssertionError(msg)  # noqa: TRY004  # a failed assertion, not a bad argument
+        # An assertion that failed, not a caller passing the wrong kind of argument.
+        raise AssertionError(msg)  # noqa: TRY004
