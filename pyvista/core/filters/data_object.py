@@ -2498,10 +2498,6 @@ class DataObjectFilters:
             See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
-        .. versionchanged:: 0.49.0
-            ``transform_all_input_vectors`` is now applied to point sets when
-            ``inplace`` is ``True``.
-
         Parameters
         ----------
         xyz : VectorLike[float]
