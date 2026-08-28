@@ -8,7 +8,7 @@ This example shows how to create meshes in different ways.
 
 """
 
-# sphinx_gallery_thumbnail_number = 5
+# sphinx_gallery_thumbnail_number = 7
 import numpy as np
 import pyvista as pv
 
@@ -46,8 +46,8 @@ mesh.get_cell(0).type
 # The structure of the mesh can be important. Instead of a
 # triangulated mesh, it can be useful to have a structured
 # mesh that has an i-j-k ordering that allows for simplified
-# cell connectivity. The following example is similar to how
-# :func:`~pyvista.StructuredSphere` is implemented.
+# cell connectivity. The mesh generated here is the same as the one
+# created by :func:`~pyvista.StructuredSphere` in the next section.
 #
 # The points are generated as a regular grid in spherical coordinates using
 # :func:`pyvista.spherical_to_cartesian`.
@@ -105,6 +105,41 @@ pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_mesh(boundaries, line_width=10, color='red')
 pl.show()
+
+# %%
+# Structured Sphere
+# ~~~~~~~~~~~~~~~~~
+# Use :func:`pyvista.StructuredSphere` to generate the same mesh in a single
+# call. Since the seam is included in the theta direction, ``theta_resolution``
+# is one less than the number of points used above.
+
+mesh = pv.StructuredSphere(
+    radius=radius, theta_resolution=ntheta - 1, phi_resolution=nphi
+)
+mesh.plot(show_edges=True)
+
+# %%
+# The dimensions are ordered as radius, ``phi``, then ``theta``.
+
+mesh.dimensions
+
+# %%
+# Unlike the other meshes in this example, this one is not limited to a
+# surface. Pass a sequence of radii to generate a 3D grid of
+# :attr:`~pyvista.CellType.HEXAHEDRON` cells with concentric layers, e.g. to
+# model the layers of an atmosphere.
+
+mesh = pv.StructuredSphere(
+    radius=np.linspace(0.2, 0.5, 4), theta_resolution=30, phi_resolution=15
+)
+mesh
+
+# %%
+# Clip the grid in half and color the cells by radial position to show the layers.
+
+clipped = mesh.clip(normal='y')
+clipped['radial position'] = np.linalg.norm(clipped.cell_centers().points, axis=1)
+clipped.plot(show_edges=True)
 
 # %%
 # Generate quadrilateral mesh of Sphere

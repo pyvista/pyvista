@@ -13,7 +13,6 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core.utilities.misc import _reciprocal
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -255,6 +254,10 @@ def CylinderStructured(  # noqa: PLR0917
     pyvista.StructuredGrid
         Structured cylinder.
 
+    See Also
+    --------
+    pyvista.StructuredSphere: Sphere as a structured grid.
+
     Notes
     -----
     .. versionchanged:: 0.38.0
@@ -495,6 +498,7 @@ def Sphere(  # noqa: PLR0917
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    pyvista.StructuredSphere : Sphere as a structured grid.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
     :func:`pyvista.examples.planets.load_earth`
         Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
@@ -552,30 +556,24 @@ def Sphere(  # noqa: PLR0917
 
 def StructuredSphere(
     *,
-    radius: float = 0.5,
+    radius: float | VectorLike[float] = 0.5,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
-    theta_offset: float = 0.0,
+    start_theta: float = 0.0,
+    end_theta: float = 360.0,
+    start_phi: float = 0.0,
+    end_phi: float = 180.0,
 ) -> StructuredGrid:
     """Create a sphere as a :class:`~pyvista.StructuredGrid`.
 
-    The grid is similar to :func:`~pyvista.Sphere`, except ``StructuredSphere``:
-
-    - is a :class:`~pyvista.StructuredGrid` instead of :class:`~pyvista.PolyData`,
-    - has :attr:`~pyvista.CellType.QUAD` instead of :attr:`~pyvista.CellType.TRIANGLE` cells,
-    - includes a texture coordinates array by default,
-    - is not a closed surface (it has a seam with open edges),
-    - the points and arrays have double precision instead of single,
-    - does not support setting start and end phi/theta angles.
-
-    In particular, these two calls generate very similar geometry:
-
-    .. code-block:: python
-
-        sphere1 = pv.StructuredSphere().extract_surface()
-        sphere2 = pv.Sphere(tessellation='phi_theta', texture_coordinates=True)
+    The grid is generated in spherical coordinates and has an ``i-j-k`` ordering
+    where ``i``, ``j``, and ``k`` correspond to the radial, polar (``phi``), and
+    azimuthal (``theta``) directions, respectively. Like
+    :func:`~pyvista.CylinderStructured`, a single ``radius`` generates a 2D
+    surface of :attr:`~pyvista.CellType.QUAD` cells whereas a sequence of radii
+    generates a 3D volume of :attr:`~pyvista.CellType.HEXAHEDRON` cells.
 
     PyVista uses a convention where ``theta`` represents the azimuthal
     angle (similar to degrees longitude on the globe) and ``phi``
@@ -583,30 +581,23 @@ def StructuredSphere(
     globe). In contrast to latitude on the globe, here
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole. ``phi=0`` is on the positive z-axis by default.
-    ``theta=0`` is on the positive x-axis by default, which corresponds
-    to the mesh's seam (i.e. open edges). Use ``theta_offset`` to shift
-    the seam's location.
+    ``theta=0`` is on the positive x-axis by default.
 
-    Note that the output has degenerate :attr:`~pyvista.CellType.QUAD`
-    cells at the poles that appear as triangles.
-
-    See :ref:`create_sphere_example` for examples on creating spheres in
-    other ways, including how to address the degenerate-quads problem
-    and plotting the sphere's seam.
-
-    .. warning::
-
-        Rendering :class:`~pyvista.StructuredGrid` with a texture will show
-        a visible discontinuity at the texture's seam. It is therefore
-        recommended to call :meth:`~pyvista.DataObjectFilters.extract_surface`
-        for prior to rendering for best visual results.
+    Note that the poles have degenerate cells with coincident points, and that a
+    full 360-degree sweep of ``theta`` has a seam of duplicate points where the
+    start and end angles meet. Both are required by the grid's structure. Use
+    :meth:`~pyvista.DataObjectFilters.extract_surface` and
+    :meth:`~pyvista.PolyDataFilters.clean` to merge the duplicate points.
 
     .. versionadded:: 0.49
 
     Parameters
     ----------
-    radius : float, default: 0.5
-        Sphere radius.
+    radius : float | sequence[float], default: 0.5
+        Sphere radius. If a sequence, then describes the radial coordinates of
+        the cells as a range of values. The sequence must be positive and
+        sorted in ascending order, and generates a 3D grid with concentric
+        layers of cells.
 
     center : sequence[float], default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
@@ -616,88 +607,113 @@ def StructuredSphere(
         the sphere's North Pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
-        Set the number of points in the azimuthal direction.
+        Set the number of points in the azimuthal direction (ranging
+        from ``start_theta`` to ``end_theta``).
 
         .. note::
-            The theta dimension of the structured grid will be one more than this value.
+            The ``k`` dimension of the structured grid is one more than this
+            value since the first and last points are duplicated at the seam.
 
     phi_resolution : int, default: 30
-        Set the number of points in the polar direction.
+        Set the number of points in the polar direction (ranging from
+        ``start_phi`` to ``end_phi``).
 
-    theta_offset : float, default: 0.0
-        Azimuthal angle in degrees where the texture seam is located.
-        By default, the texture seam is at ``theta=0`` degrees.
+    start_theta : float, default: 0.0
+        Starting azimuthal angle in degrees.
 
-        Setting this value is equivalent to transforming the output mesh
-        with :meth:`~pyvista.DataObjectFilters.rotate_z` (assuming a
-        default ``center`` and ``direction``).
+    end_theta : float, default: 360.0
+        Ending azimuthal angle in degrees. Must be greater than ``start_theta``
+        and within 360 degrees of it.
 
-        .. note::
+    start_phi : float, default: 0.0
+        Starting polar angle in degrees ``[0, 180]``.
 
-            For textures of Earth, a value of ``180`` degrees is typically
-            needed for the Prime Meridian to be correctly mapped to 0 degrees
-            longitude on the positive x-axis.
+    end_phi : float, default: 180.0
+        Ending polar angle in degrees ``[0, 180]``. Must be greater than
+        ``start_phi``.
 
     Returns
     -------
     pyvista.StructuredGrid
-        Sphere mesh with texture coordinates.
+        Structured sphere.
 
     See Also
     --------
     pyvista.Sphere
+        Sphere as :class:`~pyvista.PolyData`.
+
+    pyvista.SolidSphere
+        Solid sphere as :class:`~pyvista.UnstructuredGrid`.
+
+    pyvista.CylinderStructured
+        Cylinder as :class:`~pyvista.StructuredGrid`.
+
+    :ref:`create_sphere_example`
+        Examples of creating spheres in other ways.
 
     Examples
     --------
-    Create a textured sphere using default parameters.
+    Create a sphere as a structured surface using default parameters.
 
+    >>> import numpy as np
     >>> import pyvista as pv
-    >>> from pyvista import examples
     >>> sphere = pv.StructuredSphere()
     >>> sphere.plot(show_edges=True)
 
-    The sphere has active texture coordinates. Show the first coordinates.
+    Show the dimensions. The radial dimension is one since a single radius is
+    used, and the theta dimension is one more than ``theta_resolution`` because
+    of the seam.
 
-    >>> sphere.active_texture_coordinates[0]
-    pyvista_ndarray([0., 1.])
-
-    Show the dimensions. Since it has a seam with duplicate points in the theta direction, its
-    dimension is one more than the resolution.
-
-    >>> sphere = pv.StructuredSphere(phi_resolution=10, theta_resolution=20)
+    >>> sphere = pv.StructuredSphere(theta_resolution=20, phi_resolution=10)
     >>> sphere.dimensions
-    (10, 21, 1)
+    (1, 10, 21)
 
-    Plot a textured sphere of Earth. Move the seam to the negative x-axis so
-    that zero degrees longitude corresponds to the center of the texture.
+    Use a sequence of radii to generate a 3D grid with concentric layers of
+    cells, e.g. to model the layers of an atmosphere.
 
-    >>> sphere = pv.StructuredSphere(theta_offset=180)
-    >>> texture = examples.load_globe_texture()
-    >>> sphere.plot(texture=texture, smooth_shading=True)
+    >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
+    >>> sphere.dimensions
+    (5, 30, 31)
+
+    Show the layers by clipping the grid in half.
+
+    >>> sphere.clip(normal='x').plot(show_edges=True)
+
+    Create a partial sphere by restricting the angular ranges.
+
+    >>> sphere = pv.StructuredSphere(
+    ...     start_theta=90, end_theta=270, start_phi=30, end_phi=150
+    ... )
+    >>> sphere.plot(show_edges=True)
 
     """
-    # For original implementation details see https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
-    phi_max, theta_max = np.pi, 2 * np.pi
-    phi, theta = np.mgrid[
-        0 : phi_max : phi_resolution * 1j,
-        0 : theta_max : (theta_resolution + 1) * 1j,
-    ]
+    r = _validation.validate_arrayN(
+        radius,
+        must_be_in_range=[0.0, np.inf],
+        strict_lower_bound=True,
+        must_be_sorted={'ascending': True, 'strict': True},
+        name='radius',
+    )
+    _validation.validate_number(start_phi, must_be_in_range=[0.0, 180.0], name='start_phi')
+    _validation.validate_number(end_phi, must_be_in_range=[0.0, 180.0], name='end_phi')
+    if end_phi <= start_phi:
+        msg = f'end_phi ({end_phi}) must be greater than start_phi ({start_phi}).'
+        raise ValueError(msg)
+    if not 0.0 < end_theta - start_theta <= 360.0:
+        msg = (
+            f'end_theta ({end_theta}) must be greater than start_theta ({start_theta}) '
+            f'and within 360 degrees of it.'
+        )
+        raise ValueError(msg)
 
-    theta_shifted = theta + np.deg2rad(theta_offset)
-    x, y, z = pv.spherical_to_cartesian(radius, phi, theta_shifted)
+    theta = np.linspace(np.deg2rad(start_theta), np.deg2rad(end_theta), theta_resolution + 1)
+    phi = np.linspace(np.deg2rad(start_phi), np.deg2rad(end_phi), phi_resolution)
+
+    r_, phi_, theta_ = np.meshgrid(r, phi, theta, indexing='ij')
+    x, y, z = pv.spherical_to_cartesian(r_, phi_, theta_)
     sphere = pv.StructuredGrid(x, y, z)
 
-    # Add texture coordinates
-    u = theta / theta_max
-    v = phi[::-1, :] / phi_max
-    sphere.active_texture_coordinates = np.c_[u.ravel('F'), v.ravel('F')]
-
-    # Add point normals
-    points = sphere.points
-    norms = np.linalg.norm(points, axis=1, keepdims=True)
-    points_normalized = points * _reciprocal(norms, value_if_division_by_zero=1.0)
-    sphere.point_data.active_normals = points_normalized
-
+    # Rotate to face +X so that `translate` orients the poles along `direction`
     sphere.rotate_y(90, inplace=True)
     translate(sphere, center, direction)
     return sphere
@@ -806,6 +822,7 @@ def SolidSphere(  # noqa: PLR0917
     --------
     pyvista.Sphere: Sphere that describes outer 2D surface.
     pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
+    pyvista.StructuredSphere: Sphere as a structured grid.
 
     Examples
     --------
@@ -937,6 +954,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     --------
     pyvista.SolidSphere: Sphere creation using linear sampling.
     pyvista.Sphere: Sphere that describes outer 2D surface.
+    pyvista.StructuredSphere: Sphere as a structured grid.
 
     Examples
     --------

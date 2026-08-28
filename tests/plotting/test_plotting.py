@@ -6286,16 +6286,11 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
-def test_structured_sphere_theta_offset():
-    angles = [0, 90, 180, 270]
-    data = [pv.StructuredSphere(theta_offset=angle) for angle in angles]
-    texture = examples.load_globe_texture()
-    pv.plot_compare_four(*data, display_kwargs={'texture': texture}, labels=list(map(str, angles)))
-
-    # Should be equivalent to a geometric transformation
-    for actual, angle in zip(data, angles, strict=True):
-        expected = pv.StructuredSphere().rotate_z(angle)
-        assert np.allclose(actual.points, expected.points)
+def test_structured_sphere_radius_layers():
+    sphere = pv.StructuredSphere(
+        radius=np.linspace(0.5, 1.0, 4), theta_resolution=16, phi_resolution=10
+    )
+    sphere.clip(normal='x').plot(show_edges=True)
 
 
 def test_structured_sphere_resolution_matches_sphere():
