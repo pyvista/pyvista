@@ -100,7 +100,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @classmethod
     @abstractmethod
-    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        # Subclasses must override this, but `extensions` is a `_classproperty` and so is
+        # evaluated on this class too, e.g. when Sphinx imports it. Match
+        # `_get_extension_pattern_mappings` and return nothing rather than None.
+        return []
 
     @classmethod
     def _get_extension_pattern_mappings(
