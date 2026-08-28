@@ -46,8 +46,9 @@ mesh.get_cell(0).type
 # The structure of the mesh can be important. Instead of a
 # triangulated mesh, it can be useful to have a structured
 # mesh that has an i-j-k ordering that allows for simplified
-# cell connectivity. The mesh generated here is the same as the one
-# created by :func:`~pyvista.StructuredSphere` in the next section.
+# cell connectivity. :func:`~pyvista.StructuredSphere` builds this mesh in a
+# single call, as the next section shows; constructing it by hand first is what
+# makes the layout of its points and cells visible.
 #
 # The points are generated as a regular grid in spherical coordinates using
 # :func:`pyvista.spherical_to_cartesian`.
@@ -109,9 +110,10 @@ pl.show()
 # %%
 # Structured Sphere
 # ~~~~~~~~~~~~~~~~~
-# Use :func:`pyvista.StructuredSphere` to generate the same mesh in a single
-# call. Since the seam is included in the theta direction, ``theta_resolution``
-# is one less than the number of points used above.
+# :func:`pyvista.StructuredSphere` generates the mesh built by hand above, with
+# the same points in the same order. Since the seam is included in the theta
+# direction, ``theta_resolution`` is one less than the number of points used
+# there.
 
 mesh = pv.StructuredSphere(
     radius=radius, theta_resolution=ntheta - 1, phi_resolution=nphi
@@ -119,7 +121,8 @@ mesh = pv.StructuredSphere(
 mesh.plot(show_edges=True)
 
 # %%
-# The dimensions are ordered as radius, ``phi``, then ``theta``.
+# The i-j-k ordering runs radius, ``phi``, then ``theta``, so a single radius
+# leaves the first dimension at one.
 
 mesh.dimensions
 

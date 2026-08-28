@@ -569,12 +569,13 @@ def StructuredSphere(
     :meth:`~pyvista.PolyDataFilters.clean` to merge the duplicate points.
 
     With a sequence of radii the tessellation matches :func:`~pyvista.SolidSphere`
-    at the same resolutions, cell for cell and by volume, but is stored
-    differently. Every cell here is a :attr:`~pyvista.CellType.HEXAHEDRON`,
-    collapsed to a wedge shape at the poles, where :func:`~pyvista.SolidSphere`
-    uses :attr:`~pyvista.CellType.WEDGE` cells and no coincident points. Filling
-    the center needs cell types a grid cannot express, so only
-    :func:`~pyvista.SolidSphere` offers it.
+    at the same resolutions, cell for cell and by volume; only the storage
+    differs. Every cell here is a :attr:`~pyvista.CellType.HEXAHEDRON`, collapsed
+    to a wedge shape at the poles where :func:`~pyvista.SolidSphere` uses
+    :attr:`~pyvista.CellType.WEDGE` cells and no coincident points, and only
+    :func:`~pyvista.SolidSphere` can fill the center. Prefer this function for the
+    ``i-j-k`` ordering, which addresses the grid by radius, ``phi`` and ``theta``
+    directly.
 
     .. versionadded:: 0.49
 
@@ -666,6 +667,23 @@ def StructuredSphere(
     ...     start_theta=90, end_theta=270, start_phi=30, end_phi=150
     ... )
     >>> sphere.plot(show_edges=True)
+
+    Use the ``i-j-k`` ordering to work with the grid by index. Since ``i`` is the
+    radial axis, an array shaped like
+    :attr:`~pyvista.StructuredGrid.dimensions` assigns a value per layer.
+
+    >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
+    >>> layer = np.zeros(sphere.dimensions)
+    >>> layer[:] = np.arange(5).reshape(5, 1, 1)
+    >>> sphere['layer'] = layer.ravel(order='F')
+    >>> sphere.clip(normal='y').plot(scalars='layer', show_edges=True)
+
+    The same indexing selects part of the grid, here the outermost layer of
+    points.
+
+    >>> outer = sphere.extract_subset([4, 4, 0, 29, 0, 30])
+    >>> outer.dimensions
+    (1, 30, 31)
 
     """
     r = _validation.validate_arrayN(
