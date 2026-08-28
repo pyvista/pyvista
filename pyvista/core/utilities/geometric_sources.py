@@ -48,7 +48,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
-    """Base class for sources that honor :attr:`pyvista.Config.points_dtype`.
+    """Base class for sources that honor :attr:`pyvista.core.config.Config.points_dtype`.
 
     A source has no input, so ``'preserve'`` leaves the dtype VTK generates alone.
     """
@@ -996,7 +996,7 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
 
     point_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
-        Ignored unless :attr:`pyvista.Config.points_dtype` is ``'preserve'``, which
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``'preserve'``, which
         is its default.
 
         .. versionadded:: 0.44.0
@@ -3934,7 +3934,7 @@ class CubeFacesSource(CubeSource):
 
     point_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
-        Ignored unless :attr:`pyvista.Config.points_dtype` is ``'preserve'``, which
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``'preserve'``, which
         is its default.
 
     Examples

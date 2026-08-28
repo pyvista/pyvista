@@ -212,7 +212,7 @@ class _PointSet(DataSet):
         --------
         points_to_single
 
-        :attr:`pyvista.Config.points_dtype`
+        :attr:`pyvista.core.config.Config.points_dtype`
             Set the points dtype for a whole session instead of one mesh.
 
         Examples
@@ -251,7 +251,7 @@ class _PointSet(DataSet):
         --------
         points_to_double
 
-        :attr:`pyvista.Config.points_dtype`
+        :attr:`pyvista.core.config.Config.points_dtype`
             Set the points dtype for a whole session instead of one mesh.
 
         Examples

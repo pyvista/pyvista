@@ -95,7 +95,7 @@ class Grid(DataSet):
         self.Modified()
 
     def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
-        """Apply :attr:`pyvista.Config.points_dtype` to points generated on demand."""
+        """Apply :attr:`pyvista.core.config.Config.points_dtype` to points generated on demand."""
         dtype = _points_dtype() or self._generated_points_dtype()
         return points if points.dtype == dtype else cast('pyvista_ndarray', points.astype(dtype))
 
