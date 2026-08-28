@@ -488,6 +488,27 @@ def dataset_loader_cubemap():
     return loader
 
 
+def test_multi_file_loader_path_loadable_falls_back_to_every_path():
+    """With no individually loadable file, every path is loadable instead of none."""
+    files = (_DownloadableFile('posx.jpg'), _DownloadableFile('negx.jpg'))
+
+    loader = _MultiFileDownloadableDatasetLoader(lambda: files, load_func=_load_as_cubemap)
+
+    assert loader.path_loadable == loader.path
+    assert len(loader.path_loadable) == 2
+
+
+def test_multi_file_loader_path_loadable_prefers_the_loadable_files():
+    """The fallback does not fire when a file is loadable on its own."""
+    loadable = _SingleFileDownloadableDatasetLoader('airplane.ply')
+    metafile = _DownloadableFile('pyvista_logo.png')
+
+    loader = _MultiFileDownloadableDatasetLoader(lambda: (loadable, metafile))
+
+    assert len(loader.path) == 2
+    assert loader.path_loadable == loadable.path
+
+
 @pytest.mark.needs_download
 def test_multi_file_loader_all_paths_loadable_when_none_are_individually():
     """A load function which reads every file reports every file as loadable."""
@@ -515,7 +536,9 @@ def test_download_sky_box_cube_map_load_false_returns_every_face():
         'negz',
     ]
     # the paths feed straight back into the function which builds the texture
-    assert pv.cubemap_from_filenames(paths).cube_map
+    rebuilt = pv.cubemap_from_filenames(paths)
+    assert rebuilt.cube_map
+    assert rebuilt.dimensions == downloads.download_sky_box_cube_map().dimensions
 
 
 def test_dataset_loader_cubemap(dataset_loader_cubemap):
