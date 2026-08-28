@@ -49,7 +49,6 @@ all plotting functionality in PyVista.
    Text
    TextProperty
    Timer
-   plotting.mapper._BaseMapper
    plotting.mapper.FixedPointVolumeRayCastMapper
    plotting.mapper.GPUVolumeRayCastMapper
    plotting.mapper.OpenGLGPUVolumeRayCastMapper
@@ -175,3 +174,19 @@ routines in PyVista.
    :maxdepth: 2
 
    conv_func
+
+
+Shared Base Classes
+-------------------
+These classes are not used directly. They are documented because they define
+members that several of the classes above share, so that each of those members is
+documented once, here, and linked from every class that inherits it.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plotting.axes_assembly._XYZAssembly
+   plotting.mapper._BaseMapper
+   plotting.mapper._BaseVolumeMapper
+   plotting.mapper._DataSetMapper
+   plotting.prop3d._Prop3DMixin

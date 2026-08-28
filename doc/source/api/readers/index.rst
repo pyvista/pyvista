@@ -253,6 +253,10 @@ support inspecting and setting data related to point and cell arrays.
 The :class:`TimeReader` is inherited by readers that support inspecting
 and setting time or iterations for reading.
 
+The remaining classes are not used directly. They are documented because they
+define members shared by several readers and writers, so that each of those
+members is documented once and linked from every class that inherits it.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -261,6 +265,9 @@ and setting time or iterations for reading.
    PVDDataSet
    SeriesDataSet
    TimeReader
+   core.utilities.fileio._FileIOBase
+   core.utilities.writer._DataFormatMixin
+   core.utilities.writer._XMLWriter
 
 
 Enumerations
