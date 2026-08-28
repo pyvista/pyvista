@@ -2271,6 +2271,7 @@ class DataSet(DataSetFilters, DataObject):
         containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if singular else np.array(containing_cells)
 
+    @_deprecate_positional_args(allowed=['pointa', 'pointb'], version=(0, 52))
     def find_cells_along_line(
         self: Self,
         pointa: VectorLike[float],
@@ -2349,6 +2350,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
+    @_deprecate_positional_args(allowed=['pointa', 'pointb'], version=(0, 52))
     def find_cells_intersecting_line(
         self: Self,
         pointa: VectorLike[float],
