@@ -99,7 +99,7 @@ test = [
   'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
-  'sphinx-autocodelink==0.10.0',
+  'sphinx-autocodelink==0.10.0', 
   'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.2.0',
   'sphinx-design<0.7.0',
