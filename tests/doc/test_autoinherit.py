@@ -186,7 +186,9 @@ def test_inherited_member_rows_are_sorted_by_member_name():
     rows = autoinherit.inherited_member_rows('pyvista', 'PolyData', _members(pv.PolyData))
     members = [label.rsplit('.', 1)[1] for label, _, _ in rows]
     assert members == sorted(members)
-    assert 'DataSetFilters.contour' in {label for label, _, _ in rows}
+    assert 'DataObject.copy' in {label for label, _, _ in rows}
+    # Filters are split out, so they are not among the inherited rows.
+    assert 'DataSetFilters.contour' not in {label for label, _, _ in rows}
 
 
 def test_inherited_member_rows_label_the_class_without_its_module():
@@ -207,6 +209,27 @@ def test_summary_reads_the_descriptor_rather_than_evaluating_it():
     assert autoinherit._summary(pv.BaseReader, 'extensions').startswith('Return the file')
 
 
+def test_filters_are_split_out_of_the_inherited_rows():
+    """Filters are 142 of the 226 members PolyData inherits, so they get their own table."""
+    members = _members(pv.PolyData)
+    inherited = autoinherit.inherited_member_rows('pyvista', 'PolyData', members)
+    filters = autoinherit.filter_member_rows('pyvista', 'PolyData', members)
+    assert 'DataSetFilters.contour' in {label for label, _, _ in filters}
+    assert 'DataSet.bounds' in {label for label, _, _ in inherited}
+    assert not {label for label, _, _ in inherited} & {label for label, _, _ in filters}
+
+
+def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
+    assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
+
+
+def test_is_filter_recognises_only_the_filter_classes():
+    from pyvista.core.filters.data_set import DataSetFilters
+
+    assert autoinherit._is_filter(DataSetFilters)
+    assert not autoinherit._is_filter(pv.DataSet)
+
+
 def test_a_member_is_either_owned_or_inherited_never_both():
     for cls, name in [(pv.PolyData, 'PolyData'), (pv.Plotter, 'Plotter')]:
         members = _members(cls)
@@ -214,6 +237,7 @@ def test_a_member_is_either_owned_or_inherited_never_both():
         inherited = {
             label.rsplit('.', 1)[1]
             for label, _, _ in autoinherit.inherited_member_rows('pyvista', name, members)
+            + autoinherit.filter_member_rows('pyvista', name, members)
         }
         assert not own & inherited
 
@@ -231,7 +255,10 @@ def test_every_reachable_member_has_exactly_one_page(documented):
         module, _, objname = docname.rpartition('.')
         members = _members(cls)
         homed = set(autoinherit.own_members(module, objname, members))
-        for _, target, _ in autoinherit.inherited_member_rows(module, objname, members):
+        elsewhere = autoinherit.inherited_member_rows(
+            module, objname, members
+        ) + autoinherit.filter_member_rows(module, objname, members)
+        for _, target, _ in elsewhere:
             if target not in pages:
                 missing.add(f'{docname}.{target.rsplit(".", 1)[1]}')
             homed.add(target.rsplit('.', 1)[1])

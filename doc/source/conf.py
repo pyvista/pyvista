@@ -55,6 +55,7 @@ from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
 from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
+from pyvista.ext._autoinherit import filter_member_rows
 from pyvista.ext._autoinherit import inherited_member_rows
 from pyvista.ext._autoinherit import own_members
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
@@ -439,6 +440,7 @@ autosummary_context = {
     # each member is routed to exactly one class page.
     'own_members': own_members,
     'inherited_member_rows': inherited_member_rows,
+    'filter_member_rows': filter_member_rows,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,

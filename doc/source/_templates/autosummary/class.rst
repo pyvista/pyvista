@@ -12,13 +12,17 @@
 
    The inherited tables are hand-built because ``autosummary`` renders an entry exactly
    as written, which cannot show ``_BaseMapper.bounds`` without also spelling out its
-   module. ``enum.rst`` builds a table this way for the same reason. #}
+   module. ``enum.rst`` builds a table this way for the same reason.
+
+   Filters get their own section at the end: every dataset mixes in the filter classes,
+   and for ``PolyData`` they are 142 of the 226 members it inherits. #}
 {%- set documented_methods = methods | reject('in', skipmethods) | list %}
 {%- set documented_attributes = attributes | reject('in', skipmethods) | list %}
 {%- set own_methods = own_members(module, objname, documented_methods) %}
 {%- set own_attributes = own_members(module, objname, documented_attributes) %}
 {%- set inherited_methods = inherited_member_rows(module, objname, documented_methods) %}
 {%- set inherited_attributes = inherited_member_rows(module, objname, documented_attributes) %}
+{%- set filters = filter_member_rows(module, objname, documented_methods + documented_attributes) %}
 
 {% block methods %}
 {% if own_methods %}
@@ -72,6 +76,23 @@
    :widths: 10 90
 
 {% for label, target, summary in inherited_attributes %}
+   * - :py:obj:`{{ label }} <{{ target }}>`
+     - {{ summary }}
+{%- endfor %}
+{% endif %}
+{% endblock %}
+
+{% block filters %}
+{% if filters %}
+
+{{ _('Filters') }}
+{{ '-' * _('Filters')|length }}
+
+.. list-table::
+   :class: autosummary longtable
+   :widths: 10 90
+
+{% for label, target, summary in filters %}
    * - :py:obj:`{{ label }} <{{ target }}>`
      - {{ summary }}
 {%- endfor %}

@@ -195,27 +195,41 @@ def _summary(cls: type, member: str) -> str:
     return ' '.join(extract_summary(prepare_docstring(doc), _summary_document()).split())
 
 
-def inherited_member_rows(  # numpydoc ignore=RT01
-    module: str, objname: str, names: Sequence[str]
-) -> list[tuple[str, str, str]]:
-    """Return ``[(label, target, summary)]`` for members documented on another class.
-
-    Sorted by member name, which is what a reader looks one up by. ``autosummary`` can
-    only display an entry exactly as written, so keeping the defining class in the label
-    without spelling out its module means building the table by hand.
-    """
+def _rows(module: str, objname: str, names: Sequence[str]) -> list[tuple[type, str, str, str]]:
+    """Return ``[(home, label, target, summary)]``, sorted by member name."""
     cls = _class_from(module, objname)
     documented = _documented_classes()
-    rows: list[tuple[str, str, str, str]] = []
+    rows: list[tuple[str, type, str, str, str]] = []
     for name in _candidates(names):
         home = _home(cls, name)
         if home is None or home is cls:
             continue
         full = documented[home]
-        rows.append(
-            (name, f'{full.rsplit(".", 1)[1]}.{name}', f'{full}.{name}', _summary(home, name))
-        )
-    return [(label, target, summary) for _, label, target, summary in sorted(rows)]
+        label = f'{full.rsplit(".", 1)[1]}.{name}'
+        rows.append((name, home, label, f'{full}.{name}', _summary(home, name)))
+    return [row[1:] for row in sorted(rows, key=lambda row: row[0])]
+
+
+def _is_filter(cls: type) -> bool:
+    """Return whether ``cls`` is one of the filter classes datasets mix in."""
+    return cls.__module__.startswith('pyvista.core.filters')
+
+
+def inherited_member_rows(  # numpydoc ignore=RT01
+    module: str, objname: str, names: Sequence[str]
+) -> list[tuple[str, str, str]]:
+    """Return ``[(label, target, summary)]`` for members documented on another class.
+
+    Filters are left out; they outnumber everything else and get their own section.
+    """
+    return [row[1:] for row in _rows(module, objname, names) if not _is_filter(row[0])]
+
+
+def filter_member_rows(  # numpydoc ignore=RT01
+    module: str, objname: str, names: Sequence[str]
+) -> list[tuple[str, str, str]]:
+    """Return ``[(label, target, summary)]`` for the filters ``module.objname`` inherits."""
+    return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
