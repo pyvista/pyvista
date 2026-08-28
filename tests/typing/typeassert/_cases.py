@@ -36,7 +36,8 @@ class Case:
     def run(self) -> None:
         """Execute this case's line, and only it, in a namespace of its own."""
         namespace: dict[str, Any] = {'__name__': self.path.stem, '__file__': str(self.path)}
-        exec(self.code, namespace)
+        # Running the case file's own code is the point of the framework.
+        exec(self.code, namespace)  # noqa: S102
 
 
 @dataclass(frozen=True)

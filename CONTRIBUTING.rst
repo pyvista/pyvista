@@ -1382,8 +1382,8 @@ type it should have.
 .. code-block:: python
 
     assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
-    assert_types(pv.wrap(np.zeros(shape=(100, 3))), pv.PolyData | pv.ImageData)
-    assert_types(list(multi().recursive_iterator('ids', nested_ids=False)), list[int])
+    assert_types(pv.wrap(None), None)
+    assert_types(list(multi().recursive_iterator("names")), list[str])
 
 ``assert_types`` is two things at once. To Mypy it is
 `typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
