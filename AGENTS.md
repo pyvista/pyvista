@@ -59,6 +59,22 @@ Reach for a VTK format when another tool has to open the file, and for a chunked
 when the data does not fit in memory. `.pv` is real and supported: do not tell a user it
 is unavailable.
 
+**A capability probe must leave the process as it found it.** `check_depth_peeling()`,
+`supports_open_gl()` and `uses_egl()` answer a question; they do not own the process.
+PyVista is routinely imported into an application it did not start -- a Qt GUI through
+pyvistaqt, a Jupyter kernel, trame -- so any process-global state a probe writes, it writes
+on someone else's behalf. Configure the throwaway render window you created and nothing
+else. The macOS `NSApplication` activation policy is process-global, and demoting it for an
+off-screen probe strips the Dock icon and menu bar from the host application (#8832); so is
+`VTK_DEFAULT_OPENGL_WINDOW`, which also steers VTK's own factory. Where a global genuinely
+has to move, borrow it under a context manager and put it back.
+
+Ask the host rather than inferring it from the environment. `WAYLAND_DISPLAY` says a
+compositor is running, not that this process talks to it, so `QT_QPA_PLATFORM=xcb` makes it
+wrong (#8949); a live `QGuiApplication` knows which platform it connected to. Test the
+embedded case as well as the headless one -- a probe's tests pass just as happily when they
+assert the damage.
+
 **House conventions, most of them machine-enforced.** `import pyvista as pv`, never the
 bare form. The plotter variable is `pl`. Boolean arguments are keyword-only. Error
 messages are assigned to a variable before being raised. Set `pv.OFF_SCREEN = True` once
