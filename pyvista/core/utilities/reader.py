@@ -1855,7 +1855,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
         Returns
         -------
-        list[int]
+        list[str]
 
         """
         return [self.reader.GetBaseArrayName(i) for i in range(self.number_base_arrays)]
@@ -1936,7 +1936,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     @property
     def number_family_arrays(self) -> int:
-        """Return the number of face arrays.
+        """Return the number of family arrays.
 
         Returns
         -------
@@ -4630,7 +4630,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
 
     @property
     def active_dataset(self):
-        """Return all active datasets.
+        """Return the active dataset.
 
         Returns
         -------
