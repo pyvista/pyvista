@@ -16,6 +16,7 @@ from sphinx.ext.autodoc.importer import get_class_members
 from sphinx.util.inspect import safe_getattr
 
 import pyvista as pv
+from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.grid import Grid
 from pyvista.core.pointset import _PointSet
@@ -220,9 +221,90 @@ def test_filters_are_split_out_of_the_inherited_rows():
     assert not {label for label, _, _ in inherited} & {label for label, _, _ in filters}
 
 
-def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
-    from pyvista.core.filters.data_object import DataObjectFilters
+def test_filter_classes_define_nothing_but_methods_and_the_allow_list():
+    """A property added to a filter class would be documented nowhere, so pin the set."""
+    import importlib
+    import pkgutil
 
+    import pyvista.core.filters
+
+    unexpected = set()
+    for module_info in pkgutil.iter_modules(pyvista.core.filters.__path__):
+        module = importlib.import_module(f'pyvista.core.filters.{module_info.name}')
+        for cls in vars(module).values():
+            if not isinstance(cls, type) or cls.__module__ != module.__name__:
+                continue
+            if not autoinherit._is_filter(cls) or not cls.__name__.endswith('Filters'):
+                continue
+            for member, value in list(vars(cls).items()) + [
+                (name, None) for name in inspect.get_annotations(cls)
+            ]:
+                if member.startswith('_') or inspect.isroutine(value):
+                    continue
+                unexpected.add(f'{cls.__qualname__}.{member}')
+    assert unexpected == set(autoinherit._NOT_API_ON_FILTERS), (
+        'A filter class gained a member that is not a method, so it is documented '
+        'nowhere. Move it to the class it belongs on, or add it to _NOT_API_ON_FILTERS.'
+    )
+
+
+def test_an_unexpected_filter_member_is_reported(monkeypatch):
+    reported = []
+
+    class _Recorder:
+        def warning(self, message, *args, **_kwargs):
+            """Record the warning the way Sphinx's logger would emit it."""
+            reported.append(message % args)
+
+    monkeypatch.setattr(autoinherit, 'logger', _Recorder())
+    monkeypatch.setattr(autoinherit, '_NOT_API_ON_FILTERS', frozenset())
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+    autoinherit._warn_unexpected_filter_member(DataSetFilters, 'surprise')
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+
+    assert len(reported) == 1
+    assert 'DataSetFilters.surprise' in reported[0]
+    assert 'documented nowhere' in reported[0]
+
+
+def test_an_allow_listed_filter_member_is_not_reported(monkeypatch):
+    reported = []
+
+    class _Recorder:
+        def warning(self, *args, **_kwargs):
+            """Record that a warning was emitted at all."""
+            reported.append(args)
+
+    monkeypatch.setattr(autoinherit, 'logger', _Recorder())
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+    autoinherit._warn_unexpected_filter_member(DataObjectFilters, 'points')
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+    assert not reported
+
+
+def test_a_member_with_no_docstring_of_its_own_summarises_to_nothing(monkeypatch):
+    class Home:
+        plain_value = 1
+
+        def undocumented(self): ...
+
+    monkeypatch.setattr(autoinherit, '_provider', lambda _cls, _member: Home)
+    assert autoinherit._summary(Home, 'undocumented') == ''
+    assert autoinherit._summary(Home, 'not_there_at_all') == ''
+    # `inspect.getdoc(1)` is all of `int`'s docstring; it is not the member's.
+    assert autoinherit._summary(Home, 'plain_value') == ''
+
+
+def test_a_pipe_in_a_summary_is_escaped_for_the_table(monkeypatch):
+    class Home:
+        def thing(self):
+            """Return a | b."""
+
+    monkeypatch.setattr(autoinherit, '_provider', lambda _cls, _member: Home)
+    assert autoinherit._summary(Home, 'thing') == r'Return a \| b.'
+
+
+def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
     # `points: pyvista_ndarray` lets the filters type `self.points`; it is not reachable
     # (`hasattr` is False) and must not be documented on the filter class or its users.
     assert not hasattr(DataObjectFilters, 'points')
@@ -237,8 +319,6 @@ def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
 
 
 def test_is_filter_recognises_only_the_filter_classes():
-    from pyvista.core.filters.data_set import DataSetFilters
-
     assert autoinherit._is_filter(DataSetFilters)
     assert not autoinherit._is_filter(pv.DataSet)
 

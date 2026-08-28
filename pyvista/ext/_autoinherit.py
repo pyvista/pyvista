@@ -28,6 +28,7 @@ from docutils.frontend import get_default_settings
 from docutils.parsers.rst import Parser
 from docutils.utils import new_document
 from sphinx.ext.autosummary import extract_summary
+from sphinx.util import logging
 from sphinx.util.docstrings import prepare_docstring
 
 if TYPE_CHECKING:
@@ -41,6 +42,13 @@ _TOCTREE_RE = re.compile(r'^\s+:toctree:')
 _OPTION_RE = re.compile(r'^\s+:')
 _ITEM_RE = re.compile(r'^\s+(~?[_a-zA-Z][a-zA-Z0-9_.]*)\s*$')
 _MODULE_RE = re.compile(r'^\s*\.\.\s+(?:current)?module::\s*([a-zA-Z0-9_.]+)\s*$')
+
+logger = logging.getLogger(__name__)
+
+#: Filter classes are documented as filters, so anything they define that is not a
+#: method is a typing aid rather than API. ``points`` is a bare annotation that lets
+#: the filters type ``self.points``. A new one is a mistake, so it is reported.
+_NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points'})
 
 #: Set by :func:`setup`; the helpers below are called from Jinja and get nothing else.
 _srcdir: Path | None = None
@@ -147,14 +155,28 @@ def _is_filter(cls: type) -> bool:
     return cls.__module__.startswith('pyvista.core.filters')
 
 
+@functools.cache
+def _warn_unexpected_filter_member(cls: type, member: str) -> None:
+    """Report a filter-class member that is dropped without being on the allow list."""
+    name = f'{cls.__qualname__}.{member}'
+    if name in _NOT_API_ON_FILTERS:
+        return
+    logger.warning(
+        '%s is not a method, so it is documented nowhere. Filter classes are documented '
+        'as filters: move it to the class it belongs on, or add it to '
+        '_NOT_API_ON_FILTERS in pyvista/ext/_autoinherit.py if it is a typing aid.',
+        name,
+        type='autoinherit',
+    )
+
+
 def _home(cls: type, member: str) -> type | None:
     """Return the documented class owning ``member``'s page, or ``None`` if it has none."""
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
     if _is_filter(provider) and not inspect.isroutine(provider.__dict__.get(member)):
-        # A filter class declares `points` as a bare annotation so its filters can type
-        # `self.points`. That is a typing aid, not API, so it has no page.
+        _warn_unexpected_filter_member(provider, member)
         return None
     documented = _documented_classes()
     home = cls
@@ -198,10 +220,18 @@ def _summary(cls: type, member: str) -> str:
     # Read the descriptor out of the class body rather than with getattr, which would
     # evaluate a property and lose the docstring that produced it.
     obj = provider.__dict__.get(member) if provider is not None else None
-    doc = inspect.getdoc(obj) if obj is not None else None
-    if not doc:
+    if obj is None:
         return ''
-    return ' '.join(extract_summary(prepare_docstring(doc), _summary_document()).split())
+    doc = getattr(obj, '__doc__', None)
+    # An instance reports its type's docstring as its own, so a plain class attribute
+    # would be summarised with, say, all of `int`'s. Only take a docstring it owns.
+    if not doc or doc == getattr(type(obj), '__doc__', None):
+        return ''
+    doc = inspect.getdoc(obj) or ''
+    summary = ' '.join(extract_summary(prepare_docstring(doc), _summary_document()).split())
+    # The summary is dropped straight into a list-table cell, where an unescaped pipe
+    # would read as a substitution reference. Roles and literals are left to render.
+    return summary.replace('|', r'\|')
 
 
 def _rows(module: str, objname: str, names: Sequence[str]) -> list[tuple[type, str, str, str]]:
