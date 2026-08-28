@@ -32,11 +32,9 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
-
-if TYPE_CHECKING:
-    from pyvista import _vtk
 
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
@@ -70,40 +68,69 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
             alg.Update()
 
 
-def _pop_points_dtype(kwargs):
-    return kwargs.pop('points_dtype', None)
+def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
+    """Return the dtype ``mesh``'s points should have, or ``None`` to leave them alone.
+
+    ``mesh`` is the input of the algorithm being run, and is only consulted under the
+    ``'preserve'`` setting. Pass nothing for an algorithm with no input, such as a
+    geometry source, where ``'preserve'`` has nothing to preserve.
+    """
+    setting = pv.global_config.points_dtype
+    if setting != 'preserve':
+        return np.dtype(setting)
+    points = getattr(mesh, 'points', None)
+    return None if points is None else points.dtype
 
 
-def _maybe_convert_points_dtype(mesh):
-    if np.single == pv.POINTS_PRECISION:
-        mesh.points_to_single()
-    elif np.double == pv.POINTS_PRECISION:
-        mesh.points_to_double()
+def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
+    """Ask an algorithm to generate points with the configured dtype.
+
+    Algorithms that support ``SetOutputPointsPrecision`` compute in the requested
+    precision, which is both cheaper and more accurate than casting afterwards. The
+    rest ignore this and are corrected by :func:`_enforce_points_dtype`.
+
+    ``vtkAlgorithm.DEFAULT_PRECISION`` is *supposed* to match the input precision on
+    its own, but in practice some filters do not honor it for some mesh types --
+    see https://gitlab.kitware.com/vtk/vtk/-/issues/19965 -- so the input is
+    inspected and the precision is requested explicitly.
+    """
+    set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
+    if set_precision is None:
+        return
+    mesh_in = (
+        wrap(alg.GetInputDataObject(0, 0)) if alg.GetNumberOfInputPorts() > 0 else None  # type: ignore[func-returns-value]
+    )
+    dtype = _points_dtype(mesh_in)
+    if dtype == np.float64:
+        set_precision(alg.DOUBLE_PRECISION)
+    elif dtype == np.float32:
+        set_precision(alg.SINGLE_PRECISION)
+
+
+def _enforce_points_dtype(mesh_out: Any, dtype: np.dtype[Any] | None) -> None:
+    """Cast ``mesh_out``'s points to ``dtype`` in place if the algorithm ignored the request.
+
+    Only meshes that own their points are cast. :class:`~pyvista.ImageData` and
+    :class:`~pyvista.RectilinearGrid` generate their points on demand and apply the
+    setting in their own ``points`` property instead.
+    """
+    if dtype is None:
+        return
+    if isinstance(mesh_out, pv.MultiBlock):
+        for block in mesh_out.recursive_iterator(skip_none=True):
+            _enforce_points_dtype(block, dtype)
+        return
+    if not isinstance(mesh_out, _vtk.vtkPointSet):
+        return
+    points = mesh_out.points
+    if points.dtype != dtype:
+        mesh_out.points = points.astype(dtype)
+
+
+def _apply_points_dtype(mesh: Any) -> Any:
+    """Apply the configured dtype to a mesh PyVista generated without a VTK algorithm."""
+    _enforce_points_dtype(mesh, _points_dtype())
     return mesh
-
-
-def _set_output_points_precision(alg: _vtk.vtkAlgorithm):
-    # Try to set output precision to match input if the filter supports it.
-    # This should not really be necessary since vtkAlgorithm.DEFAULT_PRECISION
-    # is *supposed* to handle this automatically, but in practice some filters
-    # do not honor this for some mesh types, e.g. https://gitlab.kitware.com/vtk/vtk/-/issues/19965
-    # so we need to explicitly set the output points precision.
-    if (precision := pv.POINTS_PRECISION) is not None and (
-        set_precision := getattr(alg, 'SetOutputPointsPrecision', None)
-    ) is not None:
-        if precision == np.single:
-            set_precision(alg.SINGLE_PRECISION)
-        elif precision == np.double:
-            set_precision(alg.DOUBLE_PRECISION)
-        elif alg.GetNumberOfInputPorts() > 0:
-            # default
-            alg_input = cast('pv.DataObject', wrap(alg.GetInputDataObject(0, 0)))
-            points = getattr(alg_input, 'points', None)
-            if points is not None and points.dtype == np.double:
-                set_precision(alg.DOUBLE_PRECISION)
-        else:
-            msg = f'Invalid precision {precision}.'
-            raise ValueError(msg)
 
 
 def _get_output(
@@ -114,13 +141,12 @@ def _get_output(
     oport=0,
     active_scalars=None,
     active_scalars_field='point',
-    points_dtype=None,
     keep_pointset=True,
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
-    _check_output_points_precision(ido, data, points_dtype=points_dtype, algorithm=algorithm)
+    _enforce_points_dtype(data, _points_dtype(ido))
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:
@@ -132,52 +158,6 @@ def _get_output(
     if keep_pointset and isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
-
-
-def _check_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm):
-    precision = points_dtype if points_dtype is not None else pv.POINTS_PRECISION
-    if precision is not None:
-        points_in = getattr(mesh_in, 'points', None)
-        if points_in is not None:
-            points_out = getattr(mesh_out, 'points', None)
-            requires_double = precision == np.double or (
-                precision == 'default' and points_in.dtype == np.double
-            )
-            if requires_double and points_out.dtype != np.double:
-                # Handle edge case with no points
-                if points_out.size == 0:
-                    mesh_out.points_to_double()
-                    return
-
-                msg = (
-                    f'{algorithm.__class__.__name__} did not generate '
-                    f'points with double precision.\n'
-                    f'Input {mesh_in.__class__.__name__} points dtype is {points_in.dtype.name}, '
-                    f'output {mesh_out.__class__.__name__} points dtype is '
-                    f'{points_out.dtype.name}.'
-                )
-                if points_in.dtype != np.double:
-                    msg += (
-                        '\nTry converting the input to double precision first '
-                        'with `points_to_double`.'
-                    )
-                elif points_out.dtype != np.double:
-                    if precision == np.double:
-                        msg += (
-                            '\npyvista.POINTS_PRECISION cannot be double for '
-                            'this filter and mesh type.'
-                        )
-                    else:
-                        msg += (
-                            '\nTry converting the input to single precision first '
-                            'with `points_to_single`.'
-                        )
-                raise ValueError(msg)
-            requires_single = precision == np.single or (
-                precision == 'default' and points_in.dtype == np.single
-            )
-            if requires_single:
-                mesh_out.points_to_single()
 
 
 from .composite import CompositeFilters as CompositeFilters  # noqa: E402

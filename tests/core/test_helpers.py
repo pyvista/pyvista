@@ -184,6 +184,7 @@ def test_wrap_auto_names_unnamed_arrays():
 
 def test_global_config_to_dict():
     assert pv.global_config.to_dict() == {
+        'points_dtype': 'preserve',
         'show_vtk_api': False,
         'validate_on_wrap': True,
     }
@@ -704,7 +705,6 @@ def test_wrap_no_copy():
     assert wrapped is pv.wrap(wrapped)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_inheritance_no_wrappers():
     class Foo(pv.PolyData):
         pass

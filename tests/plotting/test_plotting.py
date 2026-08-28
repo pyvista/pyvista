@@ -2313,7 +2313,7 @@ def test_border_outer_frame_and_seams_dark_theme():
 
 
 @pytest.fixture
-def compare_datasets(force_points_precision_single):  # noqa: ARG001
+def compare_datasets():
     mesh = examples.load_uniform()
     return [
         mesh.contour(),
@@ -4282,7 +4282,6 @@ def test_ssaa_pass():
     pl.show()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @skip_windows_mesa
 def test_ssao_pass(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
@@ -4298,7 +4297,6 @@ def test_ssao_pass(verify_image_cache):
 
 
 @skip_mesa
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_ssao_pass_from_helper(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True  # high variance (~1000) on MacOS 15
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
@@ -6003,7 +6001,6 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_voxelize_volume_removed():
     with pytest.raises(
@@ -6556,7 +6553,6 @@ def test_direction_objects(direction_obj_test_case):
     pl.show()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
     if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
@@ -6588,7 +6584,6 @@ def _show_edges():
     pv.global_theme.show_edges = flag
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
 @pytest.mark.parametrize(
     ('select_inputs', 'select_outputs'),
@@ -6666,7 +6661,6 @@ def test_contour_labels_boundary_style(
     pl.show(return_cpos=True)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     ('smoothing_distance', 'smoothing_scale'),
     [(0, None), (None, 0), (5, 0.5), (5, 1)],
@@ -6713,7 +6707,6 @@ def test_contour_labels_smoothing_constraint(
     pl.show()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('_show_edges')
 @pytest.mark.parametrize('smoothing', [True, False])
 def test_contour_labels_compare_select_inputs_select_outputs(

@@ -115,7 +115,6 @@ def test_add_measurement_widget_raises():
         pl.add_measurement_widget()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_widget_box(uniform):
     pl = pv.Plotter()
     func = lambda box: box  # Does nothing
@@ -317,7 +316,6 @@ def test_widget_slider(uniform):
     pl.close()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_widget_spline(uniform):
     pl = pv.Plotter()
     func = lambda spline: spline  # Does nothing
@@ -503,7 +501,6 @@ def test_add_camera_orientation_widget():
     assert not pl.widgets.camera_widgets
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_plot_algorithm_widgets():
     algo = _vtk.vtkRTAnalyticSource()
 
@@ -550,7 +547,6 @@ def test_add_volume_clip_plane(uniform):
     pl.close()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_plot_pointset_widgets(pointset):
     pointset = pointset.elevation()
 
@@ -882,7 +878,6 @@ def test_clear_slider_widget():
     pl.show(cpos='xy')
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('verify_image_cache')
 def test_clear_spline_widget():
     mesh = pv.Cube()

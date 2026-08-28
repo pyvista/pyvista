@@ -18,13 +18,12 @@ from typing import get_args
 import numpy as np
 
 import pyvista as pv
-from pyvista import _PrecisionOptions
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core.filters import _maybe_convert_points_dtype
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
@@ -49,36 +48,19 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
-    @property
-    def points_dtype(self) -> _PrecisionOptions:
-        return getattr(self, '_points_dtype', None)
+    """Base class for sources that honor :attr:`pyvista.Config.points_dtype`.
 
-    @points_dtype.setter
-    def points_dtype(self, points_dtype: _PrecisionOptions) -> None:
-        self._points_dtype = points_dtype
+    A source has no input, so ``'preserve'`` leaves the dtype VTK generates alone.
+    """
 
     def Update(self) -> None:  # noqa: N802
+        """Update the source, requesting the configured points dtype."""
         _set_output_points_precision(self)
         super().Update()
 
     def GetOutput(self) -> pv.DataObject:  # noqa: N802
-        out = wrap(super().GetOutput())
-        _Source._check_output_points_precision(out, points_dtype=self.points_dtype, algorithm=self)
-        return out
-
-    @staticmethod
-    def _check_output_points_precision(
-        mesh_out: DataSet, *, points_dtype: _PrecisionOptions, algorithm: _vtk.vtkAlgorithm
-    ) -> None:
-        precision = points_dtype if points_dtype is not None else pv.POINTS_PRECISION
-        if precision is not None:
-            points = mesh_out.points
-            if precision == np.double and points.dtype != np.double:
-                msg = (
-                    f'{algorithm.__class__.__name__} does not support double precision.\n'
-                    f'Output {mesh_out.__class__.__name__} points dtype is {points.dtype.name}.'
-                )
-                raise ValueError(msg)
+        """Return the wrapped output with the configured points dtype applied."""
+        return _apply_points_dtype(wrap(super().GetOutput()))
 
 
 def translate(
@@ -916,11 +898,7 @@ class Text3DSource(_NoNewAttrMixin):
                 # Add a single point to 'fix' the bounds
                 self._output.points = (0.0, 0.0, 0.0)
 
-            # Extrude filter only supports single precision, so we increase precision
-            # after creating the polydata but before applying transformations
-            if np.double == pv.POINTS_PRECISION:
-                self._output.points_to_double()
-
+            _apply_points_dtype(self._output)
             self._transform_output()
             self._modified = False
 
@@ -1018,8 +996,10 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    point_dtype : str, default: 'float32'
+    point_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.Config.points_dtype` is ``'preserve'``, which
+        is its default.
 
         .. versionadded:: 0.44.0
 
@@ -1041,7 +1021,7 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         y_length: float = 1.0,
         z_length: float = 1.0,
         bounds: VectorLike[float] | None = None,
-        point_dtype: str = 'float32',
+        point_dtype: str | None = None,
     ) -> None:
         """Initialize the cube source class."""
         super().__init__()
@@ -1052,7 +1032,8 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
-        self.point_dtype = point_dtype
+        if point_dtype is not None:
+            self.point_dtype = point_dtype
 
     @property
     def bounds(self: CubeSource) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -1223,7 +1204,7 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         self.SetOutputPointsPrecision(precision)
 
 
-class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
+class DiscSource(_Source, _vtk.vtkDiskSource):
     """Disc source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2109,7 +2090,7 @@ class PolygonSource(_Source, _vtk.vtkRegularPolygonSource):
         return wrap(self.GetOutput())
 
 
-class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource):
+class PlatonicSolidSource(_Source, _vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2450,7 +2431,7 @@ class PlaneSource(_Source, _vtk.vtkPlaneSource):
         self.center = (self.center + np.array(self.normal) * distance).tolist()
 
 
-class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
+class ArrowSource(_Source, _vtk.vtkArrowSource):
     """Create a arrow source.
 
     .. versionadded:: 0.44
@@ -2621,8 +2602,7 @@ class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
 
         """
         self.Update()
-        # Arrow source doesn't support double precision, so we convert manually
-        return _maybe_convert_points_dtype(wrap(self.GetOutput()))
+        return wrap(self.GetOutput())
 
 
 class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
@@ -3964,8 +3944,10 @@ class CubeFacesSource(CubeSource):
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
 
-    point_dtype : str, default: 'float32'
+    point_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.Config.points_dtype` is ``'preserve'``, which
+        is its default.
 
     Examples
     --------
@@ -4057,7 +4039,7 @@ class CubeFacesSource(CubeSource):
         shrink_factor: float | None = None,
         explode_factor: float | None = None,
         names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
-        point_dtype: str = 'float32',
+        point_dtype: str | None = None,
     ) -> None:
         # Init CubeSource
         super().__init__(

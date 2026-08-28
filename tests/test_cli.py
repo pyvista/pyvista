@@ -64,11 +64,6 @@ def capture_out_err(capsys: pytest.CaptureFixture):
     return read.out, read.err
 
 
-@pytest.fixture(autouse=True)
-def default_points_dtype():
-    pv.POINTS_PRECISION = None
-
-
 @pytest.fixture
 def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     Console_ = functools.partial(

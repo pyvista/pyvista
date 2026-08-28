@@ -19,7 +19,6 @@ import warnings
 import numpy as np
 
 import pyvista as pv
-from pyvista import _PrecisionOptions
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -30,9 +29,8 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _maybe_convert_points_dtype
-from pyvista.core.filters import _pop_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
@@ -1441,7 +1439,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         nonlinear_subdivision: int,
         progress_bar: bool,
         message: str = 'Extracting Geometry',
-        points_dtype=None,
     ) -> PolyData:
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
@@ -1453,7 +1450,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar=progress_bar, message=message)
-        return _get_output(alg, points_dtype=points_dtype)
+        return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['isosurfaces', 'scalars'])
     def contour(  # type: ignore[misc]  # noqa: PLR0917
@@ -1916,7 +1913,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if geom is None:
             alg = _vtk.vtkArrowSource()
             _update_alg(alg, progress_bar=progress_bar, message='Making Arrow')
-            arrow = _maybe_convert_points_dtype(pv.wrap(alg.GetOutput()))
+            arrow = _apply_points_dtype(pv.wrap(alg.GetOutput()))
             geoms: Sequence[_vtk.vtkDataSet] = [arrow]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
@@ -4590,7 +4587,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-        **kwargs,
     ):
         r"""Return a subset of the grid.
 
@@ -4641,9 +4637,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        points_dtype = _pop_points_dtype(kwargs)
-        assert_empty_kwargs(**kwargs)
-
         indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
         if indices.dtype == bool:
             assume_sorted_and_unique = True
@@ -4683,7 +4676,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # We set the arrays manually earlier
         extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
-        subgrid = _get_output(extract, points_dtype=points_dtype)
+        subgrid = _get_output(extract)
 
         # Make active scalars match input
         info = self.active_scalars_info
@@ -5595,7 +5588,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         nonlinear_subdivision: int = 1,
         progress_bar: bool = False,
         message: str = 'Extracting Surface',
-        points_dtype=None,
     ):
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(self)
@@ -5603,7 +5595,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         surf_filter.SetPassThroughCellIds(pass_cellid)
         surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
         _update_alg(surf_filter, progress_bar=progress_bar, message=message)
-        return _get_output(surf_filter, points_dtype=points_dtype)
+        return _get_output(surf_filter)
 
     def _extract_surface(  # type: ignore[misc]
         self: _DataSetType,
@@ -5613,7 +5605,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         nonlinear_subdivision: int,
         algorithm: _ExtractSurfaceOptions,
         progress_bar: bool,
-        points_dtype,
     ) -> PolyData:
         """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
         message = 'Extracting Surface'
@@ -5636,7 +5627,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 pass_cellid=pass_cellid,
                 progress_bar=progress_bar,
                 message=message,
-                points_dtype=points_dtype,
             )
         # Special case: use vtkDataSetSurfaceFilter only if requested
         return self._dataset_surface_filter(
@@ -5645,7 +5635,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             pass_cellid=pass_cellid,
             progress_bar=progress_bar,
             message=message,
-            points_dtype=points_dtype,
         )
 
     @_deprecate_positional_args
@@ -6163,7 +6152,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     def shrink(  # type: ignore[misc]
         self: _DataSetType,
         shrink_factor: float = 1.0,
-        points_dtype=None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Shrink the individual faces of a mesh.
@@ -6209,11 +6197,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
         _update_alg(alg, progress_bar=progress_bar, message='Shrinking Mesh')
-        output = _get_output(alg, points_dtype=points_dtype)
+        output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
-            # Force single output to match output from shrink filter
             return output.extract_surface(  # type: ignore[unreachable]
-                algorithm=None, pass_cellid=False, pass_pointid=False, points_dtype=np.single
+                algorithm=None, pass_cellid=False, pass_pointid=False
             )
         return output
 
@@ -6222,7 +6209,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         self: _DataSetType,
         max_n_subdivide: int = 3,
         merge_points: bool = True,  # noqa: FBT001, FBT002
-        points_dtype=None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Tessellate a mesh.
@@ -6287,7 +6273,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar=progress_bar, message='Tessellating Mesh')
-        return _get_output(alg, points_dtype=points_dtype)
+        return _get_output(alg)
 
     @_deprecate_positional_args
     def integrate_data(  # type: ignore[misc]
@@ -6918,7 +6904,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     def extract_cells_by_type(  # type: ignore[misc]
         self: _DataSetType,
         cell_types: int | VectorLike[int],
-        points_dtype: _PrecisionOptions = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract cells of a specified type.
@@ -6989,7 +6974,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         for cell_type in valid_cell_types:
             alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar=progress_bar, message='Extracting cell types')
-        return _get_output(alg, points_dtype=points_dtype)
+        return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['scalars'])
     def sort_labels(  # type: ignore[misc]  # noqa: PLR0917
@@ -7954,9 +7939,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
-        surface = wrap(self).extract_surface(
-            algorithm=None, pass_pointid=False, pass_cellid=False, points_dtype='default'
-        )
+        surface = wrap(self).extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh
             msg = 'Input mesh must have faces for voxelization.'

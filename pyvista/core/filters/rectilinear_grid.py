@@ -6,7 +6,6 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from pyvista import _PrecisionOptions
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _get_output
@@ -25,7 +24,6 @@ class RectilinearGridFilters:
         mixed: str | Sequence[int] | bool = False,  # noqa: FBT001, FBT002
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_data: bool = True,  # noqa: FBT001, FBT002
-        points_dtype: _PrecisionOptions = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create a tetrahedral mesh structured grid.
@@ -66,11 +64,6 @@ class RectilinearGridFilters:
         -------
         pyvista.UnstructuredGrid
             UnstructuredGrid containing the tetrahedral cells.
-
-        .. warning::
-
-            The output :attr:`~pyvista.DataSet.points` has single-precision points, and
-            any double precision will be lost.
 
         Examples
         --------
@@ -128,7 +121,7 @@ class RectilinearGridFilters:
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
-        out = _get_output(alg, points_dtype=points_dtype)
+        out = _get_output(alg)
 
         if pass_data:
             # algorithm stores original cell ids in active scalars

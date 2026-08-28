@@ -17,6 +17,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.filters import _points_dtype
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -58,10 +59,6 @@ if TYPE_CHECKING:
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
-    def __init__(self) -> None:
-        super().__init__()
-        self._POINTS_PRECISION = np.double
-
     @property
     def dimensions(self: Self) -> tuple[int, int, int]:
         """Return the grid's dimensions.
@@ -97,16 +94,15 @@ class Grid(DataSet):
         self.SetDimensions(*dims)
         self.Modified()
 
-    def _points_to_double(self) -> None:
-        self._POINTS_PRECISION = np.double
-
-    def _points_to_single(self) -> None:
-        self._POINTS_PRECISION = np.single
-
     def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
-        if np.single == self._POINTS_PRECISION:
-            return points.astype(np.single)
-        return points
+        """Apply :attr:`pyvista.Config.points_dtype` to points generated on demand."""
+        dtype = _points_dtype() or self._generated_points_dtype()
+        return points if points.dtype == dtype else points.astype(dtype)
+
+    def _generated_points_dtype(self) -> np.dtype[Any]:
+        """Return the dtype generated points have under the ``'preserve'`` setting."""
+        # ImageData has no coordinate arrays: its origin and spacing are always double.
+        return np.dtype(np.float64)
 
     def to_hexahedra(self: Self) -> UnstructuredGrid:
         """Convert voxels to hexahedra.
@@ -459,6 +455,16 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             xx, yy, zz = self.meshgrid
             points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
         return self._convert_points_precision(points)
+
+    def _generated_points_dtype(self) -> np.dtype[Any]:
+        """Return the dtype generated points have under the ``'preserve'`` setting."""
+        # VTK synthesizes double-precision points regardless of how the coordinate
+        # arrays are stored, so report the precision the grid actually holds.
+        return np.dtype(
+            np.float64
+            if any(coords.dtype == np.float64 for coords in (self.x, self.y, self.z))
+            else np.float32
+        )
 
     @points.setter
     def points(

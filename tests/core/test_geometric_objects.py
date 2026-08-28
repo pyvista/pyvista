@@ -34,8 +34,9 @@ def _generate_geometric_object_functions() -> ItemsView[str, FunctionType]:
     return {name: func for name, func in functions.items() if name[0].isupper()}.items()
 
 
-@pytest.mark.parametrize('dtype', [np.single, np.double])
-def test_geometric_objects(geometric_obj_test_case, dtype):
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_geometric_objects_points_dtype(geometric_obj_test_case, dtype):
+    """Every geometric and parametric object honors the global points dtype."""
     name, func = geometric_obj_test_case
 
     # Add required args if needed
@@ -51,9 +52,9 @@ def test_geometric_objects(geometric_obj_test_case, dtype):
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
 
-    pv.POINTS_PRECISION = dtype
+    pv.global_config.points_dtype = dtype
     obj = func(**kwargs)
-    assert obj.points.dtype == dtype
+    assert obj.points.dtype == np.dtype(dtype)
 
 
 @given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
@@ -957,7 +958,6 @@ def test_icosahedron():
     assert np.isclose(doubled_solid.length, 2 * solid.length)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_icosphere():
     center = (1.0, 2.0, 3.0)
     radius = 2.4

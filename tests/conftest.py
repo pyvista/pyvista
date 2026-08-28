@@ -108,7 +108,6 @@ HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
 HAS_IO_EXTRA = HAS_IO_HDF and HAS_IO_ENSIGHT and HAS_IO_CHEMISTRY
 
 pv.OFF_SCREEN = True
-pv.POINTS_PRECISION = np.double
 
 PYVISTA_ROOT_DIR = Path(__file__).parent.parent
 
@@ -183,11 +182,9 @@ def flaky_test(
 def global_variables_reset():
     tmp_screenshots = pv.ON_SCREENSHOT
     tmp_figurepath = pv.FIGURE_PATH
-    tmp_precision = pv.POINTS_PRECISION
     yield
     pv.ON_SCREENSHOT = tmp_screenshots
     pv.FIGURE_PATH = tmp_figurepath
-    pv.POINTS_PRECISION = tmp_precision
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -242,12 +239,7 @@ def reset_global_state():
     assert pv.allow_new_attributes() is False
 
     pv.PICKLE_FORMAT = 'vtk'
-    pv.POINTS_PRECISION = np.double
-
-
-@pytest.fixture
-def force_points_precision_single():
-    pv.POINTS_PRECISION = np.single
+    pv.global_config.points_dtype = 'preserve'
 
 
 @pytest.fixture
@@ -257,8 +249,7 @@ def cube():
 
 @pytest.fixture
 def airplane():
-    mesh = examples.load_airplane()
-    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
+    return examples.load_airplane()
 
 
 @pytest.fixture
@@ -268,8 +259,7 @@ def rectilinear():
 
 @pytest.fixture
 def sphere():
-    mesh = examples.load_sphere()
-    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
+    return examples.load_sphere()
 
 
 @pytest.fixture
@@ -279,8 +269,7 @@ def uniform():
 
 @pytest.fixture
 def ant():
-    mesh = examples.load_ant()
-    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
+    return examples.load_ant()
 
 
 @pytest.fixture
@@ -301,9 +290,9 @@ def tetbeam():
 @pytest.fixture
 def struct_grid():
     x, y, z = np.meshgrid(
-        np.arange(-10, 10, 2, dtype=np.float64),
-        np.arange(-10, 10, 2, dtype=np.float64),
-        np.arange(-10, 10, 2, dtype=np.float64),
+        np.arange(-10, 10, 2, dtype=np.float32),
+        np.arange(-10, 10, 2, dtype=np.float32),
+        np.arange(-10, 10, 2, dtype=np.float32),
     )
     return pv.StructuredGrid(x, y, z)
 

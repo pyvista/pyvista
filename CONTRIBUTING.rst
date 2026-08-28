@@ -782,8 +782,21 @@ Filter Conventions
 ^^^^^^^^^^^^^^^^^^
 Points dtype
 
-- The points dtype for filters is set globally
-- Filters should `only` expose the ``points_dtype`` if the filter does not support double precision
+The ``points`` dtype of a filter's output is decided globally, by
+``pyvista.global_config.points_dtype``, and enforced in ``_update_alg`` and
+``_get_output``. A filter gets this for free by calling those two, and must not
+add a keyword of its own for precision.
+
+- Call ``_update_alg`` rather than ``alg.Update()``. It asks the algorithm for the
+  configured precision before updating, so algorithms that support
+  ``SetOutputPointsPrecision`` compute in that precision rather than being cast after
+  the fact.
+- Call ``_get_output`` rather than wrapping ``alg.GetOutput()``. It casts the output
+  points for the algorithms that ignore the request.
+- Sources have no input to preserve, so they subclass ``_Source``, which applies the
+  same two steps in its ``Update`` and ``GetOutput``.
+- Geometry that PyVista builds without a VTK algorithm passes through
+  ``_apply_points_dtype``.
 
 Testing
 ^^^^^^^

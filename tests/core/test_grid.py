@@ -1410,7 +1410,6 @@ def test_cast_image_data_with_float_spacing_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_image_data_to_tetrahedra():
     grid = pv.ImageData(dimensions=(2, 2, 2))
     ugrid = grid.to_tetrahedra()
@@ -1612,7 +1611,9 @@ def test_imagedata_direction_matrix():
     # Check that filters make use of the direction matrix internally
     image['data'] = np.ones((image.n_points,))
     filtered = image.threshold()
-    assert filtered.bounds == expected_bounds
+    # `expected_bounds` comes from a single-precision Box, the filter output from
+    # double-precision ImageData points, so the two agree only to single precision
+    assert np.allclose(filtered.bounds, expected_bounds)
 
     # Check that points make use of the direction matrix internally
     poly_points = pv.PolyData(image.points)

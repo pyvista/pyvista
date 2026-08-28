@@ -196,12 +196,78 @@ class _PointSet(DataSet):
             del target.cell_data[array_name]
         return target
 
-    def _points_to_double(self):
+    def points_to_double(self) -> Self:
+        """Convert the points datatype to double precision.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in double precision.
+
+        Notes
+        -----
+        This operates in place.
+
+        See Also
+        --------
+        points_to_single
+
+        :attr:`pyvista.Config.points_dtype`
+            Set the points dtype for a whole session instead of one mesh.
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float32`` and
+        convert the points to ``float64``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.points.dtype
+        dtype('float32')
+        >>> _ = mesh.points_to_double()
+        >>> mesh.points.dtype
+        dtype('float64')
+
+        """
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
         return self
 
-    def _points_to_single(self):
+    def points_to_single(self) -> Self:
+        """Convert the points datatype to single precision.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in single precision.
+
+        Notes
+        -----
+        This operates in place.
+
+        See Also
+        --------
+        points_to_double
+
+        :attr:`pyvista.Config.points_dtype`
+            Set the points dtype for a whole session instead of one mesh.
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float64`` and
+        convert the points to ``float32``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0]])
+        >>> mesh.points.dtype
+        dtype('float64')
+        >>> _ = mesh.points_to_single()
+        >>> mesh.points.dtype
+        dtype('float32')
+
+        """
         if self.points.dtype != np.single:
             self.points = self.points.astype(np.single)
         return self

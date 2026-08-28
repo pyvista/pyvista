@@ -92,7 +92,6 @@ def labeled_image():
     return image
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
@@ -137,7 +136,6 @@ def _remove_duplicate_points(polydata):
     )
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     'select_inputs',
     [None, 2, 5, [2, 5]],
@@ -224,7 +222,6 @@ def test_contour_labels_boundary_style(
 ALL_LABEL_IDS = {0, 2, 5}
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
@@ -234,14 +231,12 @@ def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value not in first_component
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
     assert mesh_closed.n_cells - mesh_open.n_cells == 1
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
 def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
@@ -252,7 +247,6 @@ def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_o
     assert poly[BOUNDARY_LABELS].ndim == expected_ndim
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
@@ -269,7 +263,6 @@ def test_contour_labels_cell_data(channels):
 
 
 @flaky_test
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_contour_labels_strict_external(channels):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         contours = channels.contour_labels('strict_external', orient_faces=False)

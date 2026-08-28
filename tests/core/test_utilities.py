@@ -1429,7 +1429,6 @@ def test_fit_plane_to_points_resolution(airplane):
     assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_fit_plane_to_points():
     # Fit a plane to a plane's points
     center = (1, 2, 3)
@@ -2035,7 +2034,7 @@ class CasesTransformApply:
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
-        return lambda: pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, float
+        return lambda: pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
@@ -2043,7 +2042,7 @@ class CasesTransformApply:
             lambda: pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
             True,
             pv.PolyData,
-            float,
+            np.float32,
         )
 
     def case_polydata_float(self):

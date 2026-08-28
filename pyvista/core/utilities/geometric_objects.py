@@ -10,11 +10,10 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
-from pyvista import _PrecisionOptions
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core.filters import _maybe_convert_points_dtype
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _set_output_points_precision
 
 from .arrays import _coerce_pointslike_arg
@@ -1259,8 +1258,7 @@ def Cube(  # noqa: PLR0917
     z_length: float = 1.0,
     bounds: VectorLike[float] | None = None,
     clean: bool = True,  # noqa: FBT001, FBT002
-    point_dtype: str = 'float32',
-    points_dtype: _PrecisionOptions = None,
+    point_dtype: str | None = None,
 ) -> PolyData:
     """Create a cube.
 
@@ -1303,8 +1301,10 @@ def Cube(  # noqa: PLR0917
 
         .. versionadded:: 0.33.0
 
-    point_dtype : str, default: 'float32'
+    point_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.Config.points_dtype` is ``'preserve'``, which
+        is its default.
 
         .. versionadded:: 0.44.0
 
@@ -1328,6 +1328,7 @@ def Cube(  # noqa: PLR0917
         y_length=y_length,
         z_length=z_length,
         bounds=bounds,
+        point_dtype=point_dtype,
     )
     cube = algo.output
 
@@ -1337,13 +1338,11 @@ def Cube(  # noqa: PLR0917
 
     # clean duplicate points
     if clean:
-        cube.clean(inplace=True, points_dtype=points_dtype)
+        cube.clean(inplace=True)
 
         # Fix incorrect default point normals
         del cube.point_data['Normals']
-        cube = cube.compute_normals(
-            point_normals=True, cell_normals=False, points_dtype=points_dtype
-        )
+        cube = cube.compute_normals(point_normals=True, cell_normals=False)
 
     return cube
 
@@ -1788,7 +1787,7 @@ def Wavelet(  # noqa: PLR0917
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
     out = cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
-    return _maybe_convert_points_dtype(out)
+    return _apply_points_dtype(out)
 
 
 @_deprecate_positional_args
@@ -2023,7 +2022,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     ug.SetPoints(pv.vtk_points(np.array(points), deep=False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
-    return _maybe_convert_points_dtype(wrap(ug))
+    return _apply_points_dtype(wrap(ug))
 
 
 def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2062,7 +2061,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2138,7 +2137,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2174,7 +2173,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2213,7 +2212,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
@@ -2256,7 +2255,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2601,9 +2600,9 @@ def Icosphere(
     """
     mesh = Icosahedron()
     mesh.clear_data()
-    mesh = mesh.subdivide(nsub=nsub, points_dtype=np.single)  # does not support float64 precision
+    mesh = mesh.subdivide(nsub=nsub)
 
     # scale to desired radius and translate origin
     dist = np.linalg.norm(mesh.points, axis=1, keepdims=True)  # distance from origin
     mesh.points = mesh.points * (radius / dist) + center
-    return _maybe_convert_points_dtype(mesh)
+    return _apply_points_dtype(mesh)

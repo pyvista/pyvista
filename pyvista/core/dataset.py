@@ -1366,9 +1366,7 @@ class DataSet(DataSetFilters, DataObject):
         0.51825
 
         """
-        sizes = self.compute_cell_sizes(
-            length=False, area=False, volume=True, points_dtype='default'
-        )
+        sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return sizes.cell_data['Volume'].sum().item()
 
     @property
@@ -1410,9 +1408,7 @@ class DataSet(DataSetFilters, DataObject):
         3.13
 
         """
-        sizes = self.compute_cell_sizes(
-            length=False, area=True, volume=False, points_dtype='default'
-        )
+        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
         return sizes.cell_data['Area'].sum().item()
 
     def get_array(
@@ -1880,20 +1876,12 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
-        # vtkAppendFilter falls back to single precision for datasets without
-        # explicit points (RectilinearGrid, ImageData) because it infers
-        # precision from vtkPointSet.GetPoints(), which is None for these types.
-        # Work around the VTK bug by setting output precision explicitly.
+        # vtkAppendFilter falls back to single precision for datasets without explicit
+        # points (RectilinearGrid, ImageData) because it infers precision from
+        # vtkPointSet.GetPoints(), which is None for these types. `_update_alg` works
+        # around that by setting the output precision explicitly from `points.dtype`.
         # See https://gitlab.kitware.com/vtk/vtk/-/work_items/19965
         # and https://github.com/pyvista/pyvista/issues/7931
-        if isinstance(self, pv.RectilinearGrid):
-            input_is_double = any(
-                coords.dtype == np.float64 for coords in (self.x, self.y, self.z)
-            )
-        else:
-            input_is_double = isinstance(self, pv.ImageData)
-        if input_is_double:
-            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         _update_alg(alg)
         return _get_output(alg)
 
@@ -3750,75 +3738,6 @@ class DataSet(DataSetFilters, DataObject):
         center = [0.0, 0.0, 0.0]
         r2 = grid.GetCell(0).ComputeBoundingSphere(center)
         return float(r2**0.5), (center[0], center[1], center[2])
-
-    def points_to_double(self) -> Self:
-        """Convert the points datatype to double precision.
-
-        Returns
-        -------
-        pyvista.PointSet
-            Pointset with points in double precision.
-
-        Notes
-        -----
-        This operates in place.
-
-        See Also
-        --------
-        points_to_single
-
-        Examples
-        --------
-        Create a mesh that has points of the type ``float32`` and
-        convert the points to ``float64``.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> mesh.points.dtype
-        dtype('float32')
-        >>> _ = mesh.points_to_double()
-        >>> mesh.points.dtype
-        dtype('float64')
-
-        """
-        return self._points_to_double()
-
-    def points_to_single(self) -> Self:
-        """Convert the points datatype to single precision.
-
-        .. versionadded:: 0.48
-
-        Returns
-        -------
-        pyvista.PointSet
-            Pointset with points in single precision.
-
-        Notes
-        -----
-        - This operates in place.
-        - Many VTK filters do not properly support double-precision points and will
-          convert the points to single precision. PyVista issues a warning about this,
-          but this warning can be silenced by explicitly converting points to single.
-
-        See Also
-        --------
-        points_to_double
-
-        Examples
-        --------
-        Create a mesh that has points of the type ``float64`` and
-        convert the points to ``float32``.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0]])
-        >>> mesh.points.dtype
-        dtype('float64')
-        >>> _ = mesh.points_to_single()
-        >>> mesh.points.dtype
-        dtype('float32')
-
-        """
-        return self._points_to_single()
 
     @functools.cached_property
     def _static_cell_locator(self) -> _vtk.vtkStaticCellLocator:  # numpydoc ignore=RT01

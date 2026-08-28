@@ -238,7 +238,7 @@ def _tetbeam_load_func():
     yrng = np.linspace(0, 1, 3)
     zrng = np.linspace(0, 5, 11)
     grid = pv.RectilinearGrid(xrng, yrng, zrng)
-    return grid.to_tetrahedra(points_dtype=np.single)
+    return grid.to_tetrahedra()
 
 
 _dataset_tetbeam = _DatasetLoader(_tetbeam_load_func)
